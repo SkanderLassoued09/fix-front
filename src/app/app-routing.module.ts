@@ -2,6 +2,7 @@ import { RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { NotfoundComponent } from './demo/components/notfound/notfound.component';
 import { AppLayoutComponent } from './layout/app.layout.component';
+import { authGuard } from './demo/components/auth/auth-guard';
 
 @NgModule({
     imports: [
@@ -10,6 +11,7 @@ import { AppLayoutComponent } from './layout/app.layout.component';
                 {
                     path: '',
                     component: AppLayoutComponent,
+                    canActivate: [authGuard],
                     children: [
                         {
                             path: '',
@@ -20,6 +22,7 @@ import { AppLayoutComponent } from './layout/app.layout.component';
                         },
                         {
                             path: 'tickets',
+
                             loadChildren: () =>
                                 import(
                                     './demo/components/ticket/ticket.module'
@@ -27,6 +30,7 @@ import { AppLayoutComponent } from './layout/app.layout.component';
                         },
                         {
                             path: 'uikit',
+
                             loadChildren: () =>
                                 import(
                                     './demo/components/uikit/uikit.module'
@@ -34,6 +38,7 @@ import { AppLayoutComponent } from './layout/app.layout.component';
                         },
                         {
                             path: 'utilities',
+
                             loadChildren: () =>
                                 import(
                                     './demo/components/utilities/utilities.module'
@@ -41,6 +46,7 @@ import { AppLayoutComponent } from './layout/app.layout.component';
                         },
                         {
                             path: 'documentation',
+
                             loadChildren: () =>
                                 import(
                                     './demo/components/documentation/documentation.module'
@@ -48,6 +54,7 @@ import { AppLayoutComponent } from './layout/app.layout.component';
                         },
                         {
                             path: 'blocks',
+
                             loadChildren: () =>
                                 import(
                                     './demo/components/primeblocks/primeblocks.module'
@@ -55,6 +62,7 @@ import { AppLayoutComponent } from './layout/app.layout.component';
                         },
                         {
                             path: 'pages',
+
                             loadChildren: () =>
                                 import(
                                     './demo/components/pages/pages.module'

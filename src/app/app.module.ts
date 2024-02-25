@@ -12,6 +12,7 @@ import { IconService } from './demo/service/icon.service';
 import { NodeService } from './demo/service/node.service';
 import { PhotoService } from './demo/service/photo.service';
 import { GraphQlModule } from './graphql.modules';
+import { ProfileService } from './demo/service/profile.service';
 
 @NgModule({
     declarations: [AppComponent, NotfoundComponent],
@@ -25,6 +26,7 @@ import { GraphQlModule } from './graphql.modules';
         NodeService,
         PhotoService,
         ProductService,
+        ProfileService,
     ],
     bootstrap: [AppComponent],
 })
