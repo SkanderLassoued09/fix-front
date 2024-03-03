@@ -29,6 +29,30 @@ import { authGuard } from './demo/components/auth/auth-guard';
                                 ).then((m) => m.TicketModule),
                         },
                         {
+                            path: 'clients',
+
+                            loadChildren: () =>
+                                import(
+                                    './demo/components/client/client.module'
+                                ).then((m) => m.ClientModule),
+                        },
+                        {
+                            path: 'profiles',
+
+                            loadChildren: () =>
+                                import(
+                                    './demo/components/profile/profile.module'
+                                ).then((m) => m.ProfileModule),
+                        },
+                        {
+                            path: 'companies',
+
+                            loadChildren: () =>
+                                import(
+                                    './demo/components/company/company.module'
+                                ).then((m) => m.CompanyModule),
+                        },
+                        {
                             path: 'uikit',
 
                             loadChildren: () =>

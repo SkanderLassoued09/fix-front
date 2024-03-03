@@ -3,6 +3,18 @@ import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 import { ProductService } from 'src/app/demo/service/product.service';
 import { ALL_USERS, COLUMNS } from './constant-queries';
+import { ROLES } from '../../profile/constant/role-constants';
+
+import { MessageService } from 'primeng/api';
+interface Column {
+    field: string;
+    header: string;
+}
+
+interface UploadEvent {
+    originalEvent: Event;
+    files: File[];
+}
 
 @Component({
     selector: 'app-ticket-list',
@@ -12,29 +24,45 @@ import { ALL_USERS, COLUMNS } from './constant-queries';
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
-    users;
-    cols: COLUMNS[] = [
-        { field: '_id', header: 'ID' },
-        { field: 'name', header: 'Name' },
-        { field: 'age', header: 'Age' },
-        { field: 'breed', header: 'Breed' },
-    ];
-    constructor(private apollo: Apollo) {}
-    ngOnInit(): void {
-        this.allUser();
+    visible: boolean = false;
+    products!: Product[];
+    loading: boolean = false;
+    roles;
+    cols!: Column[];
+    ingredient;
+    uploadedFiles: any[] = [];
+
+    constructor(private productService: ProductService) {
+        this.roles = ROLES;
     }
-    allUser() {
-        this.apollo.query<any>({ query: ALL_USERS }).subscribe(({ data }) => {
-            console.log('🍷[data]:', data);
-            this.users = data.findAll;
+
+    ngOnInit() {
+        this.productService.getProducts().then((data) => {
+            this.products = data;
         });
+        this.cols = [
+            { field: 'code', header: 'Code' },
+            { field: 'name', header: 'Name' },
+            { field: 'category', header: 'Category' },
+            { field: 'quantity', header: 'Quantity' },
+        ];
     }
 
-    deleteProduct(data) {
-        console.log('🥔[data]:', data);
+    showDialog() {
+        this.visible = true;
     }
 
-    editProduct(data) {
-        console.log('🍏[data]:', data);
+    load() {
+        this.loading = true;
+
+        setTimeout(() => {
+            this.loading = false;
+        }, 2000);
+    }
+
+    onUpload(event: UploadEvent) {
+        for (let file of event.files) {
+            this.uploadedFiles.push(file);
+        }
     }
 }

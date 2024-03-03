@@ -25,4 +25,24 @@ export class ProfileService {
             }
         `;
     }
+
+    addProfile(profileInfo) {
+        return gql`
+            mutation {
+                createProfile(
+                    createProfileInput: {
+                        username: "${profileInfo.username}"
+                        firstName: "${profileInfo.firstName}"
+                        lastName: "${profileInfo.lastName}"
+                        phone: "${profileInfo.phone}"
+                        email: "${profileInfo.email}"
+                        role: "${profileInfo.role}"
+                        password: "${profileInfo.password}"
+                    }
+                ) {
+                    _id
+                }
+            }
+        `;
+    }
 }

@@ -1,20 +1,130 @@
 <div class="card">
+    <p-button
+        (click)="showDialog()"
+        icon="pi pi-plus"
+        label="Ajouter demande d'intervention"
+    ></p-button>
+</div>
+<p-dialog
+    header="Ajouter une nouvelle société"
+    [(visible)]="visible"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <div class="flex justify-center flex-wrap gap-4 max-w-2xl mt-4">
+        <!-- title -->
+
+        <div class="p-float-label">
+            <input pInputText id="title" />
+            <label for="title">Titre</label>
+        </div>
+
+        <!-- Description -->
+        <div class="p-float-label">
+            <input pInputText id="description" />
+            <label for="description">Description</label>
+        </div>
+        <!-- type of client / company -->
+        <div class="flex align-items-center gap-1">
+            <p-radioButton
+                name="hello"
+                value="COMPANY"
+                [(ngModel)]="ingredient"
+            ></p-radioButton>
+            <label class="ml-2">Société</label>
+            <p-radioButton
+                name="pizza"
+                value="CLIENT"
+                [(ngModel)]="ingredient"
+            ></p-radioButton>
+            <label class="ml-2">Client</label>
+        </div>
+        <!-- list of client -->
+        <div class="p-float-label">
+            <p-dropdown
+                [options]="roles"
+                optionLabel="name"
+                [showClear]="true"
+                placeholder="Choisir un client"
+            >
+            </p-dropdown>
+            <label for="description">Liste des clients</label>
+        </div>
+        <!-- list of company -->
+        <div class="p-float-label">
+            <p-dropdown
+                [options]="roles"
+                optionLabel="name"
+                [showClear]="true"
+                placeholder="Choisir un société"
+            >
+            </p-dropdown>
+            <label for="description">Liste de société</label>
+        </div>
+        <!-- Numero d'serie -->
+        <div class="p-float-label">
+            <input pInputText id="numSerie" />
+            <label for="numSerie">N° serie</label>
+        </div>
+        <!-- Location -->
+        <p-dropdown
+            [options]="roles"
+            [(ngModel)]="ingredient"
+            optionLabel="name"
+            [filter]="true"
+            filterBy="name"
+            [showClear]="true"
+            placeholder="Choisir emplacement"
+        >
+            <ng-template let-country pTemplate="item">
+                <div class="flex align-items-center gap-2">
+                    <div>{{ country.name }}</div>
+                </div>
+            </ng-template>
+        </p-dropdown>
+        <!-- upload image -->
+        <p-fileUpload
+            name="demo[]"
+            url="https://www.primefaces.org/cdn/api/upload.php"
+            (onUpload)="onUpload($event)"
+            [multiple]="true"
+            accept="image/*"
+            maxFileSize="1000000"
+        >
+            <ng-template pTemplate="content">
+                <ul *ngIf="uploadedFiles.length">
+                    <li *ngFor="let file of uploadedFiles">
+                        {{ file.name }} - {{ file.size }} bytes
+                    </li>
+                </ul>
+            </ng-template>
+        </p-fileUpload>
+    </div>
+
+    <div class="flex gap-4">
+        <p-button
+            label="Submit"
+            [loading]="loading"
+            (onClick)="load()"
+        ></p-button>
+        <p-button label="Danger" severity="danger"></p-button>
+    </div>
+</p-dialog>
+
+<div class="card">
     <p-table
         [columns]="cols"
-        [value]="users"
-        [paginator]="true"
-        [rows]="5"
-        [showCurrentPageReport]="true"
+        [value]="products"
         [tableStyle]="{ 'min-width': '50rem' }"
-        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
-        [rowsPerPageOptions]="[5, 10, 20]"
     >
         <ng-template pTemplate="header" let-columns>
             <tr>
                 <th *ngFor="let col of columns">
                     {{ col.header }}
                 </th>
-                <th></th>
+                <th>Actions</th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
