@@ -9,6 +9,13 @@ interface Column {
     field: string;
     header: string;
 }
+
+interface PageEvent {
+    first: number;
+    rows: number;
+    page: number;
+    pageCount: number;
+}
 @Component({
     selector: 'app-company-list',
     templateUrl: './company-list.component.html',
@@ -68,6 +75,10 @@ export class CompanyListComponent {
     ];
     product: any;
     productDialog: boolean = false;
+    first: number = 0;
+    rows: number = 10;
+    totalCompanyRecord: number;
+    page: number = 0;
 
     constructor(
         private productService: ProductService,
@@ -78,7 +89,7 @@ export class CompanyListComponent {
     ) {}
 
     ngOnInit() {
-        this.companies();
+        this.companies(this.first, this.rows);
     }
 
     load() {
@@ -127,10 +138,18 @@ export class CompanyListComponent {
             });
     }
 
-    companies() {
+    onPageChange(event: PageEvent) {
+        console.log('🥝[event]:', event);
+        this.first = event.first;
+        this.page = event.page;
+        this.rows = event.rows;
+        this.companies(this.first, this.rows);
+    }
+
+    companies(first, rows) {
         this.apollo
             .watchQuery<any>({
-                query: this.companyService.getAllCompany(),
+                query: this.companyService.getAllCompany(first, rows),
                 useInitialLoading: true,
             })
 
@@ -139,7 +158,9 @@ export class CompanyListComponent {
                 console.log('🍈[loading]:', loading);
                 console.log('🥃[data]:', data);
                 if (data) {
-                    this.companiesList = data.findAllCompany;
+                    this.companiesList = data.findAllCompany.companyRecords;
+                    this.totalCompanyRecord =
+                        data.findAllCompany.totalCompanyRecord;
                 }
             });
     }

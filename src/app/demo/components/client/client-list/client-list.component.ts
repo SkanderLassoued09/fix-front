@@ -57,6 +57,7 @@ export class ClientListComponent {
     productDialog: boolean = false;
     submitted: boolean;
     selectedProducts: null;
+    totalClientRecord: any;
 
     constructor(
         private productService: ProductService,
@@ -69,7 +70,7 @@ export class ClientListComponent {
     }
 
     ngOnInit() {
-        this.clients();
+        this.clients(this.first, this.rows);
     }
 
     showDialog() {
@@ -102,18 +103,21 @@ export class ClientListComponent {
         console.log('🥝[event]:', event);
         this.first = event.first;
         this.rows = event.rows;
+        this.clients(this.first, this.rows);
     }
 
-    clients() {
+    clients(first, rows) {
         this.apollo
             .watchQuery<any>({
-                query: this.clientService.getAllClient(),
+                query: this.clientService.getAllClient(this.rows, this.first),
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 this.loading = loading;
                 if (data) {
-                    this.clientsList = data.findAllClient;
+                    this.clientsList = data.findAllClient.clientRecords;
+                    this.totalClientRecord =
+                        data.findAllClient.totalClientRecord;
                 }
                 console.log('🍼️[errors]:', errors);
                 console.log('🍷[loading]:', loading);

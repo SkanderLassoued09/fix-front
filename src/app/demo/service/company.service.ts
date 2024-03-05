@@ -33,37 +33,40 @@ export class CompanyService {
         `;
     }
 
-    getAllCompany() {
+    getAllCompany(first, row) {
         return gql`
             {
-                findAllCompany {
-                    _id
-                    name
-                    region
-                    address
-                    email
-                    activitePrincipale
-
-                    activiteSecondaire
-                    raisonSociale
-                    Exoneration
-                    fax
-                    webSiteLink
-                    serviceAchat {
+                findAllCompany(PaginationConfig: { rows: ${row}, first: ${first} }) {
+                    companyRecords {
+                        _id
                         name
+                        region
+                        address
                         email
-                        phone
+                        activitePrincipale
+                        activitePrincipale
+                        activiteSecondaire
+                        raisonSociale
+                        Exoneration
+                        fax
+                        webSiteLink
+                        serviceAchat {
+                            name
+                            email
+                            phone
+                        }
+                        serviceFinancier {
+                            name
+                            email
+                            phone
+                        }
+                        serviceTechnique {
+                            name
+                            email
+                            phone
+                        }
                     }
-                    serviceFinancier {
-                        name
-                        email
-                        phone
-                    }
-                    serviceTechnique {
-                        name
-                        email
-                        phone
-                    }
+                    totalCompanyRecord
                 }
             }
         `;

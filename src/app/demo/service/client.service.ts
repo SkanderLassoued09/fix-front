@@ -26,17 +26,20 @@ export class ClientService {
     `;
     }
 
-    getAllClient() {
+    getAllClient(rows, first) {
         return gql`
             {
-                findAllClient {
-                    _id
-                    first_name
-                    last_name
-                    region
-                    address
-                    email
-                    phone
+                findAllClient(PaginationConfig: { rows: ${rows}, first: ${first} }) {
+                    clientRecords {
+                        _id
+                        first_name
+                        last_name
+                        region
+                        address
+                        email
+                        phone
+                    }
+                    totalClientRecord
                 }
             }
         `;
