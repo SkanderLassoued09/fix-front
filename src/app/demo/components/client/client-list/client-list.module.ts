@@ -10,8 +10,9 @@ import { ClientListComponent } from './client-list.component';
 import { DropdownModule } from 'primeng/dropdown';
 import { InputMaskModule } from 'primeng/inputmask';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 @NgModule({
     declarations: [ClientListComponent],
     imports: [
@@ -25,7 +26,8 @@ import { ToastModule } from 'primeng/toast';
         InputMaskModule,
         ReactiveFormsModule,
         ToastModule,
+        ConfirmDialogModule,
     ],
-    providers: [MessageService],
+    providers: [MessageService, ConfirmationService],
 })
 export class ClientListModule {}

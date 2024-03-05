@@ -32,4 +32,40 @@ export class CompanyService {
             }
         `;
     }
+
+    getAllCompany() {
+        return gql`
+            {
+                findAllCompany {
+                    _id
+                    name
+                    region
+                    address
+                    email
+                    activitePrincipale
+
+                    activiteSecondaire
+                    raisonSociale
+                    Exoneration
+                    fax
+                    webSiteLink
+                    serviceAchat {
+                        name
+                        email
+                        phone
+                    }
+                    serviceFinancier {
+                        name
+                        email
+                        phone
+                    }
+                    serviceTechnique {
+                        name
+                        email
+                        phone
+                    }
+                }
+            }
+        `;
+    }
 }

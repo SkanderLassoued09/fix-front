@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { CompanyService } from 'src/app/demo/service/company.service';
 import { ProductService } from 'src/app/demo/service/product.service';
@@ -47,32 +47,38 @@ export class CompanyListComponent {
     products!: Product[];
     loading: boolean = false;
 
-    cols!: Column[];
+    // cols!: Column[];
     toHideAchat: boolean;
     toHideFinancier: boolean;
     toHideTechnique: boolean;
-    showDialog() {
-        this.visible = true;
-    }
+    companiesList: any;
+
+    cols = [
+        { field: '_id', header: 'ID' },
+        { field: 'name', header: 'Nom' },
+        { field: 'region', header: 'Région' },
+        { field: 'address', header: 'Adresse' },
+        { field: 'email', header: 'E-mail' },
+        { field: 'activitePrincipale', header: 'Activité principale' },
+        { field: 'activiteSecondaire', header: 'Activité secondaire' },
+        { field: 'raisonSociale', header: 'Raison sociale' },
+        { field: 'Exoneration', header: 'Exoneration' },
+        { field: 'fax', header: 'Fax' },
+        { field: 'webSiteLink', header: 'Lien du web' },
+    ];
+    product: any;
+    productDialog: boolean = false;
 
     constructor(
         private productService: ProductService,
         private apollo: Apollo,
         private companyService: CompanyService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit() {
-        this.productService.getProducts().then((data) => {
-            this.products = data;
-        });
-
-        this.cols = [
-            { field: 'code', header: 'Code' },
-            { field: 'name', header: 'Name' },
-            { field: 'category', header: 'Category' },
-            { field: 'quantity', header: 'Quantity' },
-        ];
+        this.companies();
     }
 
     load() {
@@ -90,6 +96,10 @@ export class CompanyListComponent {
     }
     hideShowFormTechnique() {
         this.toHideTechnique = !this.toHideTechnique;
+    }
+
+    showDialog() {
+        this.visible = true;
     }
 
     addCompany() {
@@ -115,5 +125,47 @@ export class CompanyListComponent {
                     console.log('🍦[errors]:', errors);
                 }
             });
+    }
+
+    companies() {
+        this.apollo
+            .watchQuery<any>({
+                query: this.companyService.getAllCompany(),
+                useInitialLoading: true,
+            })
+
+            .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🥠[errors]:', errors);
+                console.log('🍈[loading]:', loading);
+                console.log('🥃[data]:', data);
+                if (data) {
+                    this.companiesList = data.findAllCompany;
+                }
+            });
+    }
+
+    editProduct(rowDataClient) {
+        console.log('🍎[rowDataClient]:', rowDataClient);
+        this.product = { ...rowDataClient };
+        this.productDialog = true;
+    }
+    deleteSelectedProducts() {
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete the selected products?',
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            // accept: () => {
+            //     this.products = this.products.filter(
+            //         (val) => !this.selectedProducts?.includes(val)
+            //     );
+            //     this.selectedProducts = null;
+            //     this.messageService.add({
+            //         severity: 'success',
+            //         summary: 'Successful',
+            //         detail: 'Products Deleted',
+            //         life: 3000,
+            //     });
+            // },
+        });
     }
 }

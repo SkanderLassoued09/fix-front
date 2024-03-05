@@ -9,8 +9,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { ReactiveFormsModule } from '@angular/forms';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 @NgModule({
     declarations: [CompanyListComponent],
     imports: [
@@ -24,7 +25,8 @@ import { ToastModule } from 'primeng/toast';
         InputGroupAddonModule,
         ReactiveFormsModule,
         ToastModule,
+        ConfirmDialogModule,
     ],
-    providers: [MessageService],
+    providers: [MessageService, ConfirmationService],
 })
 export class CompanyListModule {}

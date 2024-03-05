@@ -25,4 +25,20 @@ export class ClientService {
         }
     `;
     }
+
+    getAllClient() {
+        return gql`
+            {
+                findAllClient {
+                    _id
+                    first_name
+                    last_name
+                    region
+                    address
+                    email
+                    phone
+                }
+            }
+        `;
+    }
 }
