@@ -13,6 +13,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { PaginatorModule } from 'primeng/paginator';
 @NgModule({
     declarations: [ClientListComponent],
     imports: [
@@ -27,6 +28,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         ReactiveFormsModule,
         ToastModule,
         ConfirmDialogModule,
+        PaginatorModule,
     ],
     providers: [MessageService, ConfirmationService],
 })

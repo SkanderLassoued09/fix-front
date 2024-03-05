@@ -11,6 +11,13 @@ interface Column {
     header: string;
 }
 
+interface PageEvent {
+    first: number;
+    rows: number;
+    page: number;
+    pageCount: number;
+}
+
 @Component({
     selector: 'app-client-list',
     // standalone: true,
@@ -42,6 +49,10 @@ export class ClientListComponent {
         { field: 'phone', header: 'Téléphone' },
         { field: 'address', header: 'Adresse' },
     ];
+    first: number = 0;
+
+    rows: number = 10;
+
     product: any;
     productDialog: boolean = false;
     submitted: boolean;
@@ -85,6 +96,12 @@ export class ClientListComponent {
                     console.log('🍦[errors]:', errors);
                 }
             });
+    }
+
+    onPageChange(event: PageEvent) {
+        console.log('🥝[event]:', event);
+        this.first = event.first;
+        this.rows = event.rows;
     }
 
     clients() {

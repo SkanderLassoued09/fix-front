@@ -112,6 +112,7 @@
                 <th *ngFor="let col of columns">
                     {{ col.header }}
                 </th>
+                <th></th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
@@ -138,6 +139,13 @@
             </tr>
         </ng-template>
     </p-table>
+    <p-paginator
+        (onPageChange)="onPageChange($event)"
+        [first]="first"
+        [rows]="rows"
+        [totalRecords]="120"
+        [rowsPerPageOptions]="[10, 20, 30]"
+    ></p-paginator>
     <p-dialog
         [(visible)]="productDialog"
         [style]="{ width: '450px' }"
