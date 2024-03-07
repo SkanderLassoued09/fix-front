@@ -114,7 +114,7 @@
     <p-toast></p-toast>
     <p-table
         [columns]="cols"
-        [value]="products"
+        [value]="profileList"
         [tableStyle]="{ 'min-width': '50rem' }"
     >
         <ng-template pTemplate="header" let-columns>
@@ -149,4 +149,11 @@
             </tr>
         </ng-template>
     </p-table>
+    <p-paginator
+        (onPageChange)="onPageChange($event)"
+        [first]="first"
+        [rows]="rows"
+        [totalRecords]="totalProfileCount"
+        [rowsPerPageOptions]="[5, 10, 30]"
+    ></p-paginator>
 </div>

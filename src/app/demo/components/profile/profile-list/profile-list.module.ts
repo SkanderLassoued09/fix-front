@@ -15,6 +15,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
+import { PaginatorModule } from 'primeng/paginator';
 @NgModule({
     declarations: [ProfileListComponent],
     imports: [
@@ -32,6 +33,7 @@ import { MessageService } from 'primeng/api';
         FormsModule,
         ReactiveFormsModule,
         ToastModule,
+        PaginatorModule,
     ],
     providers: [MessageService],
 })

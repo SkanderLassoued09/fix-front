@@ -45,4 +45,25 @@ export class ProfileService {
             }
         `;
     }
+
+    getAllProfile(rows, first) {
+        return gql`
+            {
+                getAllProfiles(paginationConfig: { rows: ${rows}, first: ${first} }) {
+                    profileRecord {
+                        _id
+                        username
+                        firstName
+                        lastName
+                        phone
+                        role
+                        email
+                        createdAt
+                        updatedAt
+                    }
+                    totalProfileCount
+                }
+            }
+        `;
+    }
 }
