@@ -30,12 +30,14 @@ import { CoordinatorDiListModule } from '../coordinator-di-list/coordinator-di-l
 import { CoordinatorDiListComponent } from '../coordinator-di-list/coordinator-di-list.component';
 import { MagasinDiListComponent } from '../magasin-di-list/magasin-di-list.component';
 import { FieldsetModule } from 'primeng/fieldset';
-
+import { TechDiListComponent } from './tech-di-list/tech-di-list.component';
+import { InputTextareaModule } from 'primeng/inputtextarea';
 @NgModule({
     declarations: [
         TicketListComponent,
         CoordinatorDiListComponent,
         MagasinDiListComponent,
+        TechDiListComponent,
     ],
     imports: [
         CommonModule,
@@ -61,6 +63,7 @@ import { FieldsetModule } from 'primeng/fieldset';
         TagModule,
         ReactiveFormsModule,
         FieldsetModule,
+        InputTextareaModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

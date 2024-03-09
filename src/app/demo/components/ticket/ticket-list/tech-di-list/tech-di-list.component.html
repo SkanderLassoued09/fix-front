@@ -1,0 +1,167 @@
+<div class="card">
+    <p-table
+        [columns]="cols"
+        [value]="techList"
+        [tableStyle]="{ 'min-width': '20rem' }"
+    >
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns" style="min-width: 10rem">
+                    {{ col.header }}
+                </th>
+                <th style="min-width: 5rem">Diagnostique</th>
+                <th style="min-width: 5rem">Reparation</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr>
+                <td *ngFor="let col of columns">
+                    <ng-container
+                        *ngIf="col.field !== 'status'; else statusColumn"
+                    >
+                        {{ rowData[col.field] }}
+                    </ng-container>
+                    <ng-template #statusColumn>
+                        <p-tag
+                            [value]="rowData[col.field]"
+                            [severity]="getSeverity(rowData[col.field])"
+                        ></p-tag>
+                    </ng-template>
+                </td>
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-wrench"
+                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        (click)="diagModal(rowData)"
+                    ></button>
+                </td>
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-wrench"
+                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        (click)="repModal(rowData)"
+                    ></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <p-dialog
+        [(visible)]="diDialogDiag"
+        [style]="{ width: '50%', height: '70vh' }"
+        header="Diagnostique ..."
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <!-- -------- -->
+
+        <div class="field">
+            <label for="name">Ecrire quelque chose ...</label>
+            <!-- Dropdwon tech for reparation -->
+            <textarea rows="5" cols="30" pInputTextarea></textarea>
+        </div>
+
+        <div class="field">
+            <!-- to continue other rq -->
+            <p-fieldset legend="Remarque" [toggleable]="true">
+                <p class="m-0">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                    do eiusmod tempor incididunt ut labore et dolore magna
+                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    Duis aute irure dolor in reprehenderit in voluptate velit
+                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+                    occaecat cupidatat non proident, sunt in culpa qui officia
+                    deserunt mollit anim id est laborum.
+                </p>
+            </p-fieldset>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-between align-content-center">
+                <div
+                    class="flex justify-content-between align-items-center field"
+                >
+                    <p-button
+                        (onClick)="startStopwatch()"
+                        label="start/stop"
+                    ></p-button>
+                    <p-button (onClick)="lap()" label="lap"></p-button>
+                    <span>Compteur diagnostique</span>
+                    <span>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</span>
+                </div>
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
+                        label="Cancel"
+                        icon="pi pi-times"
+                        class="p-button-text"
+                        (click)="hideDialogDiag()"
+                    ></button>
+                </div>
+            </div>
+        </ng-template>
+    </p-dialog>
+    <p-dialog
+        [(visible)]="diDialogRep"
+        [style]="{ width: '50%', height: '70vh' }"
+        header="Reparation ..."
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <!-- -------- -->
+
+        <div class="field">
+            <label for="name">Ecrire quelque chose ...</label>
+            <!-- Dropdwon tech for reparation -->
+            <textarea rows="5" cols="30" pInputTextarea></textarea>
+        </div>
+
+        <div class="field">
+            <!-- to continue other rq -->
+            <p-fieldset legend="Remarque" [toggleable]="true">
+                <p class="m-0">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                    do eiusmod tempor incididunt ut labore et dolore magna
+                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    Duis aute irure dolor in reprehenderit in voluptate velit
+                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+                    occaecat cupidatat non proident, sunt in culpa qui officia
+                    deserunt mollit anim id est laborum.
+                </p>
+            </p-fieldset>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-between align-content-center">
+                <div
+                    class="flex justify-content-between align-items-center field"
+                >
+                    <p-button
+                        (onClick)="startStopwatch()"
+                        label="start/stop"
+                    ></p-button>
+                    <p-button (onClick)="lap()" label="lap"></p-button>
+                    <span>Compteur diagnostique</span>
+                    <span>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</span>
+                </div>
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
+                        label="Cancel"
+                        icon="pi pi-times"
+                        class="p-button-text"
+                        (click)="hideDialogRep()"
+                    ></button>
+                </div>
+            </div>
+        </ng-template>
+    </p-dialog>
+    <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+</div>

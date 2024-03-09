@@ -4,13 +4,12 @@ import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 
 @Component({
-    selector: 'app-coordinator-di-list',
-    // standalone: true,
-    // imports: [],
-    templateUrl: './coordinator-di-list.component.html',
-    styleUrl: './coordinator-di-list.component.scss',
+    selector: 'app-tech-di-list',
+
+    templateUrl: './tech-di-list.component.html',
+    styleUrl: './tech-di-list.component.scss',
 })
-export class CoordinatorDiListComponent {
+export class TechDiListComponent {
     visible: boolean = false;
     products!: Product[];
 
@@ -45,47 +44,39 @@ export class CoordinatorDiListComponent {
     di: any;
     techList: any;
     selectedDi: any;
+    isRunning: any;
+    startTime: number;
+    minutes: string;
+    seconds: string;
+    milliseconds: string;
+    lapTime: string;
+    laps: any[];
+    diDialogDiag: boolean;
+    diDialogRep: boolean;
 
     constructor(private ticketSerice: TicketService, private apollo: Apollo) {
         // this.roles = ROLES;
     }
 
     ngOnInit() {
-        this.getDi();
+        // this.getDi();
 
-        this.getAllTech();
+        this.getAllTechDi();
     }
 
     showDialog() {
         this.visible = true;
     }
-    getDi() {
-        this.apollo
-            .watchQuery<any>({
-                query: this.ticketSerice.getAllDiForCoordinator(),
-            })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥕[errors]:', errors);
-                console.log('🍸[loading]:', loading);
-                console.log('🍼️[data]:', data);
-                if (data) {
-                    this.diList = data.get_coordinatorDI.di;
-                    this.diListCount = data.get_coordinatorDI.totalDiCount;
-                }
-            });
-    }
 
-    getAllTech() {
+    getAllTechDi() {
         this.apollo
             .watchQuery<any>({
-                query: this.ticketSerice.getAllTech(),
+                query: this.ticketSerice.diListTech(),
+                useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥕[errors]:', errors);
-                console.log('🍸[loading]:', loading);
-                console.log('🍼️[data]:', data);
                 if (data) {
-                    this.techList = data.getAllTech;
+                    this.techList = data.getDiForTech;
                     console.log('🍍[this.techList]:', this.techList);
                 }
             });
@@ -104,11 +95,17 @@ export class CoordinatorDiListComponent {
     //     }
     // }
 
-    openModalConfig(di) {
+    diagModal(di) {
         this.di = { ...di };
         console.log('🥘[di]:', this.di);
         this.selectedDi = di._id;
-        this.diDialog = true;
+        this.diDialogDiag = true;
+    }
+    repModal(di) {
+        this.di = { ...di };
+        console.log('🥘[di]:', this.di);
+        this.selectedDi = di._id;
+        this.diDialogRep = true;
     }
 
     getSeverity(status: string) {
@@ -125,11 +122,11 @@ export class CoordinatorDiListComponent {
         }
     }
 
-    saveProduct() {
-        this.diDialog = false;
+    hideDialogDiag() {
+        this.diDialogDiag = false;
     }
-    hideDialog() {
-        this.diDialog = false;
+    hideDialogRep() {
+        this.diDialogRep = false;
     }
 
     selectedTechDiag(data) {
@@ -163,5 +160,57 @@ export class CoordinatorDiListComponent {
                 console.log('🍝[loading]:', loading);
                 console.log('🧀[data]:', data);
             });
+    }
+
+    // handling stopwatch
+    /**
+     * --------------------------
+     */
+
+    startStopwatch() {
+        if (!this.isRunning) {
+            this.isRunning = true;
+            this.startTime = Date.now();
+            this.updateTimer();
+        } else {
+            this.isRunning = false;
+        }
+    }
+
+    updateTimer() {
+        if (this.isRunning) {
+            const elapsedTime = Date.now() - this.startTime;
+            this.minutes = this.padZero(
+                Math.floor(elapsedTime / (1000 * 60 * 60))
+            );
+            this.seconds = this.padZero(
+                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60))
+            );
+            this.milliseconds = this.padZero(
+                Math.floor((elapsedTime % (1000 * 60)) / 1000)
+            );
+
+            requestAnimationFrame(() => this.updateTimer());
+        }
+    }
+
+    lap() {
+        if (this.isRunning) {
+            this.lapTime = ` ${this.minutes}:${this.seconds}:${this.milliseconds}`;
+            console.log(this.lapTime, 'laptime');
+        }
+    }
+
+    reset() {
+        this.minutes = '00';
+        this.seconds = '00';
+        this.milliseconds = '00';
+        this.isRunning = false;
+        this.startTime = 0;
+        this.laps = [];
+    }
+
+    padZero(value: number): string {
+        return value.toString().padStart(2, '0');
     }
 }

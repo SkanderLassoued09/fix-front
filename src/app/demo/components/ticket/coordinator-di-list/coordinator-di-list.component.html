@@ -47,39 +47,36 @@
         styleClass="p-fluid"
     >
         <div class="field">
-            <label for="name">Name</label>
+            <label for="name">Affect to diag</label>
             <!-- Dropdwon tech for diags -->
             <p-dropdown
                 [options]="techList"
                 optionLabel="firstName"
                 [showClear]="true"
-                placeholder="Select a tech"
-                (onChange)="selectedTech($event)"
+                placeholder="Diagnostique"
+                (onChange)="selectedTechDiag($event)"
             ></p-dropdown>
         </div>
         <div class="field">
-            <label for="name">Name</label>
+            <label for="name">Affect to reparation</label>
             <!-- Dropdwon tech for reparation -->
             <p-dropdown
                 [options]="techList"
                 optionLabel="firstName"
                 [showClear]="true"
-                placeholder="Select a City"
+                placeholder="Reparation"
+                (onChange)="selectedTechRep($event)"
             ></p-dropdown>
         </div>
         <div class="field">
-            <label for="name">Name</label>
+            <label for="name">Ouvrir DI pour affecter les prix</label>
             <!-- open ticket for admins -->
-            <p-dropdown
-                [options]="techList"
-                optionLabel="firstName"
-                [showClear]="true"
-                placeholder="Select a City"
-            ></p-dropdown>
+            <p-button label="open for admins"></p-button>
         </div>
 
         <div class="field">
-            <p-fieldset legend="Remarque">
+            <!-- to continue other rq -->
+            <p-fieldset legend="Remarque" [toggleable]="true">
                 <p class="m-0">
                     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
                     do eiusmod tempor incididunt ut labore et dolore magna
@@ -101,14 +98,6 @@
                 icon="pi pi-times"
                 class="p-button-text"
                 (click)="hideDialog()"
-            ></button>
-            <button
-                pButton
-                pRipple
-                label="Save"
-                icon="pi pi-check"
-                class="p-button-text"
-                (click)="saveProduct()"
             ></button>
         </ng-template>
     </p-dialog>

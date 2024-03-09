@@ -101,4 +101,43 @@ export class TicketService {
             }
         `;
     }
+
+    configDiagAffectation(_idDi, id_tech_diag) {
+        return gql`
+            mutation {
+                createStat(
+                    createStatInput: {
+                        _idDi: "${_idDi}"
+                        id_tech_diag: "${id_tech_diag}"
+                      
+                    }
+                ) {
+                    _id
+                    _idDi
+                    id_tech_diag
+                    
+                }
+            }
+        `;
+    }
+    configRepAffectation(_idDi, id_tech_rep?) {
+        return gql`
+            mutation {
+                affectForDiag(_idDi: "${_idDi}", _idTech: "${id_tech_rep}")
+            }
+        `;
+    }
+
+    diListTech() {
+        return gql`
+            {
+                getDiForTech {
+                    _id
+                    _idDi
+                    id_tech_diag
+                    id_tech_rep
+                }
+            }
+        `;
+    }
 }

@@ -68,9 +68,9 @@ export class AppMenuComponent implements OnInit {
                         routerLink: ['/tickets/ticket/magasin-di-list'],
                     },
                     {
-                        label: 'Invalid State',
+                        label: 'Tech list',
                         icon: 'pi pi-fw pi-exclamation-circle',
-                        routerLink: ['/uikit/invalidstate'],
+                        routerLink: ['/tickets/ticket/tech-di-list'],
                     },
                     {
                         label: 'Button',
