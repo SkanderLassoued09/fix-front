@@ -1,1 +1,116 @@
-<p>coordinator-di-list works!</p>
+<div class="card">
+    <p-table
+        [columns]="cols"
+        [value]="diList"
+        [tableStyle]="{ 'min-width': '20rem' }"
+    >
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns" style="min-width: 10rem">
+                    {{ col.header }}
+                </th>
+                <th style="min-width: 10rem">Config</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr>
+                <td *ngFor="let col of columns">
+                    <ng-container
+                        *ngIf="col.field !== 'status'; else statusColumn"
+                    >
+                        {{ rowData[col.field] }}
+                    </ng-container>
+                    <ng-template #statusColumn>
+                        <p-tag
+                            [value]="rowData[col.field]"
+                            [severity]="getSeverity(rowData[col.field])"
+                        ></p-tag>
+                    </ng-template>
+                </td>
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-wrench"
+                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        (click)="openModalConfig(rowData)"
+                    ></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <p-dialog
+        [(visible)]="diDialog"
+        [style]="{ width: '50%', height: '70vh' }"
+        header="Configuration DI"
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <div class="field">
+            <label for="name">Name</label>
+            <!-- Dropdwon tech for diags -->
+            <p-dropdown
+                [options]="techList"
+                optionLabel="firstName"
+                [showClear]="true"
+                placeholder="Select a tech"
+                (onChange)="selectedTech($event)"
+            ></p-dropdown>
+        </div>
+        <div class="field">
+            <label for="name">Name</label>
+            <!-- Dropdwon tech for reparation -->
+            <p-dropdown
+                [options]="techList"
+                optionLabel="firstName"
+                [showClear]="true"
+                placeholder="Select a City"
+            ></p-dropdown>
+        </div>
+        <div class="field">
+            <label for="name">Name</label>
+            <!-- open ticket for admins -->
+            <p-dropdown
+                [options]="techList"
+                optionLabel="firstName"
+                [showClear]="true"
+                placeholder="Select a City"
+            ></p-dropdown>
+        </div>
+
+        <div class="field">
+            <p-fieldset legend="Remarque">
+                <p class="m-0">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                    do eiusmod tempor incididunt ut labore et dolore magna
+                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                    Duis aute irure dolor in reprehenderit in voluptate velit
+                    esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+                    occaecat cupidatat non proident, sunt in culpa qui officia
+                    deserunt mollit anim id est laborum.
+                </p>
+            </p-fieldset>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <button
+                pButton
+                pRipple
+                label="Cancel"
+                icon="pi pi-times"
+                class="p-button-text"
+                (click)="hideDialog()"
+            ></button>
+            <button
+                pButton
+                pRipple
+                label="Save"
+                icon="pi pi-check"
+                class="p-button-text"
+                (click)="saveProduct()"
+            ></button>
+        </ng-template>
+    </p-dialog>
+    <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+</div>

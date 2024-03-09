@@ -5,7 +5,7 @@ import { MagasinDiListRoutingModule } from './magasin-di-list-routing.module';
 import { MagasinDiListComponent } from './magasin-di-list.component';
 
 @NgModule({
-    declarations: [MagasinDiListComponent],
+    declarations: [],
     imports: [CommonModule, MagasinDiListRoutingModule],
 })
 export class MagasinDiListModule {}

@@ -1,1 +1,42 @@
-<p>magasin-di-list works!</p>
+<div class="card">
+    <p-table
+        [columns]="cols"
+        [value]="diList"
+        [tableStyle]="{ 'min-width': '20rem' }"
+    >
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns" style="min-width: 10rem">
+                    {{ col.header }}
+                </th>
+                <th style="min-width: 10rem">Config</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr>
+                <td *ngFor="let col of columns">
+                    <ng-container
+                        *ngIf="col.field !== 'status'; else statusColumn"
+                    >
+                        {{ rowData[col.field] }}
+                    </ng-container>
+                    <ng-template #statusColumn>
+                        <p-tag
+                            [value]="rowData[col.field]"
+                            [severity]="getSeverity(rowData[col.field])"
+                        ></p-tag>
+                    </ng-template>
+                </td>
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-wrench"
+                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        (click)="editProduct(rowData)"
+                    ></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

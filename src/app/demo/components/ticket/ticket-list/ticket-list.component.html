@@ -116,35 +116,45 @@
 <div class="card">
     <p-table
         [columns]="cols"
-        [value]="products"
-        [tableStyle]="{ 'min-width': '50rem' }"
+        [value]="diList"
+        [tableStyle]="{ 'min-width': '20rem' }"
     >
         <ng-template pTemplate="header" let-columns>
             <tr>
-                <th *ngFor="let col of columns">
+                <th *ngFor="let col of columns" style="min-width: 10rem">
                     {{ col.header }}
                 </th>
-                <th>Actions</th>
+                <th style="min-width: 10rem">Actions</th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
             <tr>
                 <td *ngFor="let col of columns">
-                    {{ rowData[col.field] }}
+                    <ng-container
+                        *ngIf="col.field !== 'status'; else statusColumn"
+                    >
+                        {{ rowData[col.field] }}
+                    </ng-container>
+                    <ng-template #statusColumn>
+                        <p-tag
+                            [value]="rowData[col.field]"
+                            [severity]="getSeverity(rowData[col.field])"
+                        ></p-tag>
+                    </ng-template>
                 </td>
                 <td>
                     <button
                         pButton
                         pRipple
                         icon="pi pi-pencil"
-                        class="p-button-rounded p-button-success mr-2"
+                        class="p-button-rounded p-button-raised p-button-success mr-2"
                         (click)="editProduct(rowData)"
                     ></button>
                     <button
                         pButton
                         pRipple
                         icon="pi pi-trash"
-                        class="p-button-rounded p-button-danger"
+                        class="p-button-rounded p-button-raised p-button-danger"
                         (click)="deleteProduct(rowData)"
                     ></button>
                 </td>
@@ -152,3 +162,353 @@
         </ng-template>
     </p-table>
 </div>
+
+<!-- 
+    <div class="card">
+    <p-toast></p-toast>
+    <p-toolbar styleClass="mb-4 gap-2">
+        <ng-template pTemplate="left">
+            <button
+                pButton
+                pRipple
+                label="New"
+                icon="pi pi-plus"
+                class="p-button-success mr-2"
+                (click)="openNew()"
+            ></button>
+            <button
+                pButton
+                pRipple
+                [label]="Delete"
+                icon="pi pi-trash"
+                class="p-button-danger"
+                (click)="deleteSelectedProducts()"
+                [disabled]="!selectedProducts || !selectedProducts.length"
+            ></button>
+        </ng-template>
+
+        <ng-template pTemplate="right">
+            <p-fileUpload
+                mode="basic"
+                accept="image/*"
+                [maxFileSize]="1000000"
+                label="Import"
+                chooseLabel="Import"
+                class="mr-2 inline-block"
+            ></p-fileUpload>
+            <button
+                pButton
+                pRipple
+                label="Export"
+                icon="pi pi-upload"
+                class="p-button-help"
+            ></button>
+        </ng-template>
+    </p-toolbar>
+
+    <p-table
+        #dt
+        [value]="diList"
+        [globalFilterFields]="[
+            'name',
+            'country.name',
+            'representative.name',
+            'status'
+        ]"
+        [tableStyle]="{ 'min-width': '75rem' }"
+        [rowHover]="true"
+        dataKey="id"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+        [showCurrentPageReport]="true"
+    >
+        <ng-template pTemplate="caption">
+            <div class="flex align-items-center justify-content-between">
+                <h5 class="m-0">Manage Products</h5>
+                <span class="p-input-icon-left">
+                    <i class="pi pi-search"></i>
+                    <input
+                        pInputText
+                        type="text"
+                        (input)="
+                            dt.filterGlobal($event.target.value, 'contains')
+                        "
+                        placeholder="Search..."
+                    />
+                </span>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 4rem">
+                    <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                </th>
+                <th pSortableColumn="_id" style="min-width: 15rem">
+                    ID <p-sortIcon field="_id"></p-sortIcon>
+                </th>
+                <th pSortableColumn="title" style="min-width: 15rem">
+                    title <p-sortIcon field="title"></p-sortIcon>
+                </th>
+                <th pSortableColumn="description" style="min-width: 15rem">
+                    description <p-sortIcon field="description"></p-sortIcon>
+                </th>
+                <th pSortableColumn="can_be_repaired" style="min-width: 15rem">
+                    can_be_repaired
+                    <p-sortIcon field="can_be_repaired"></p-sortIcon>
+                </th>
+                <th pSortableColumn="bon_de_commande" style="min-width: 15rem">
+                    bon_de_commande
+                    <p-sortIcon field="bon_de_commande"></p-sortIcon>
+                </th>
+                <th pSortableColumn="bon_de_livraison" style="min-width: 15rem">
+                    bon_de_livraison
+                    <p-sortIcon field="bon_de_livraison"></p-sortIcon>
+                </th>
+                <th pSortableColumn="contain_pdr" style="min-width: 15rem">
+                    contain_pdr <p-sortIcon field="contain_pdr"></p-sortIcon>
+                </th>
+                <th pSortableColumn="status" style="min-width: 10rem">
+                    status <p-sortIcon field="status"></p-sortIcon>
+                </th>
+                <th pSortableColumn="client_id" style="min-width: 15rem">
+                    client_id <p-sortIcon field="client_id"></p-sortIcon>
+                </th>
+                <th pSortableColumn="remarque_id" style="min-width: 15rem">
+                    remarque_id <p-sortIcon field="remarque_id"></p-sortIcon>
+                </th>
+                <th pSortableColumn="created_by_id" style="min-width: 15rem">
+                    created_by_id
+                    <p-sortIcon field="created_by_id"></p-sortIcon>
+                </th>
+                <th pSortableColumn="location_id" style="min-width: 15rem">
+                    location_id <p-sortIcon field="location_id"></p-sortIcon>
+                </th>
+                <th pSortableColumn="di_category_id" style="min-width: 15rem">
+                    di_category_id
+                    <p-sortIcon field="di_category_id"></p-sortIcon>
+                </th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-diList>
+            <tr>
+                <td>
+                    <p-tableCheckbox [value]="diList"></p-tableCheckbox>
+                </td>
+                <td>{{ diList._id }}</td>
+                <td>
+                    {{ diList.title }}
+                </td>
+                <td>
+                    {{ diList.description }}
+                </td>
+                <td>
+                    {{ diList.can_be_repaired }}
+                </td>
+                <td>
+                    {{ diList.bon_de_commande }}
+                </td>
+                <td>
+                    {{ diList.bon_de_livraison }}
+                </td>
+                <td>
+                    {{ diList.contain_pdr }}
+                </td>
+                <td>
+                    <p-tag
+                        [value]="diList.status"
+                        [severity]="getSeverity(diList.status)"
+                    ></p-tag>
+                </td>
+                <td>
+                    {{ diList.client_id }}
+                </td>
+                <td>
+                    {{ diList.remarque_id }}
+                </td>
+                <td>
+                    {{ diList.createdBy }}
+                </td>
+                <td>
+                    {{ diList.location_id }}
+                </td>
+                <td>
+                    {{ diList.di_category_id }}
+                </td>
+
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-pencil"
+                        class="p-button-rounded p-button-success mr-2"
+                        (click)="editProduct(diList)"
+                    ></button>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-warning"
+                        (click)="deleteProduct(product)"
+                    ></button>
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="summary">
+            <div class="flex align-items-center justify-content-between">
+                In total there are
+                {{ products ? products.length : 0 }} products.
+            </div>
+        </ng-template>
+    </p-table>
+</div>
+<p-dialog
+    [style]="{ width: '450px' }"
+    header="Product Details"
+    [modal]="true"
+    styleClass="p-fluid"
+>
+    <ng-template pTemplate="content">
+        <img
+            [src]="
+                'https://primefaces.org/cdn/primeng/images/demo/product/' +
+                product.image
+            "
+            [alt]="product.image"
+            class="block m-auto pb-3"
+            *ngIf="product.image"
+        />
+        <div class="field">
+            <label for="name">Name</label>
+            <input
+                type="text"
+                pInputText
+                id="name"
+                [(ngModel)]="product.name"
+                required
+                autofocus
+            />
+            <small class="p-error" *ngIf="submitted && !product.name"
+                >Name is required.</small
+            >
+        </div>
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea
+                id="description"
+                pInputTextarea
+                [(ngModel)]="product.description"
+                required
+                rows="3"
+                cols="20"
+            ></textarea>
+        </div>
+
+        <div class="field">
+            <label for="inventoryStatus">Inventory Status</label>
+            <p-dropdown
+                [(ngModel)]="product.inventoryStatus"
+                inputId="inventoryStatus"
+                [options]="statuses"
+            >
+                <ng-template pTemplate="selectedItem">
+                    <p-tag
+                        [value]="product.inventoryStatus.toUpperCase()"
+                        [severity]="
+                            getSeverity(product.inventoryStatus.toUpperCase())
+                        "
+                    ></p-tag>
+                </ng-template>
+                <ng-template let-option pTemplate="item">
+                    <p-tag
+                        [value]="option.label"
+                        [severity]="getSeverity(option.label)"
+                    ></p-tag>
+                </ng-template>
+            </p-dropdown>
+        </div>
+
+        <div class="field">
+            <label class="mb-3">Category</label>
+            <div class="formgrid grid">
+                <div class="field-radiobutton col-6">
+                    <p-radioButton
+                        id="category1"
+                        name="category"
+                        value="Accessories"
+                        [(ngModel)]="product.category"
+                    ></p-radioButton>
+                    <label for="category1">Accessories</label>
+                </div>
+                <div class="field-radiobutton col-6">
+                    <p-radioButton
+                        id="category2"
+                        name="category"
+                        value="Clothing"
+                        [(ngModel)]="product.category"
+                    ></p-radioButton>
+                    <label for="category2">Clothing</label>
+                </div>
+                <div class="field-radiobutton col-6">
+                    <p-radioButton
+                        id="category3"
+                        name="category"
+                        value="Electronics"
+                        [(ngModel)]="product.category"
+                    ></p-radioButton>
+                    <label for="category3">Electronics</label>
+                </div>
+                <div class="field-radiobutton col-6">
+                    <p-radioButton
+                        id="category4"
+                        name="category"
+                        value="Fitness"
+                        [(ngModel)]="product.category"
+                    ></p-radioButton>
+                    <label for="category4">Fitness</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="formgrid grid">
+            <div class="field col">
+                <label for="price">Price</label>
+                <p-inputNumber
+                    id="price"
+                    [(ngModel)]="product.price"
+                    mode="currency"
+                    currency="USD"
+                    locale="en-US"
+                ></p-inputNumber>
+            </div>
+            <div class="field col">
+                <label for="quantity">Quantity</label>
+                <p-inputNumber
+                    id="quantity"
+                    [(ngModel)]="product.quantity"
+                ></p-inputNumber>
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <button
+            pButton
+            pRipple
+            label="Cancel"
+            icon="pi pi-times"
+            class="p-button-text"
+            (click)="hideDialog()"
+        ></button>
+        <button
+            pButton
+            pRipple
+            label="Save"
+            icon="pi pi-check"
+            class="p-button-text"
+            (click)="saveProduct()"
+        ></button>
+    </ng-template>
+</p-dialog>
+
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+ -->
