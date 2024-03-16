@@ -44,6 +44,10 @@ export class LoginComponent {
             .subscribe(({ data }) => {
                 if (data.login.access_token) {
                     localStorage.setItem('token', data.login.access_token);
+                    localStorage.setItem('_id', data.login.user._id);
+                    localStorage.setItem('role', data.login.user.role);
+                    localStorage.setItem('username', data.login.user.username);
+
                     this.router.navigateByUrl('/');
                 }
             });

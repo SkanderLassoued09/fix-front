@@ -6,16 +6,16 @@
     ></p-button>
 </div>
 <p-dialog
-    header="Ajouter une nouvelle société"
+    header="Ajouter un nouveau profil"
     [(visible)]="visible"
     [modal]="true"
     [style]="{ width: '50vw' }"
     [draggable]="false"
     [resizable]="false"
 >
-    <div class="flex justify-center flex-wrap gap-4 max-w-2xl mt-4">
-        <form [formGroup]="staffForm">
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
+    <form [formGroup]="staffForm">
+        <div class="grid">
+            <div class="col">
                 <!-- Username field -->
                 <p-inputGroup>
                     <p-inputGroupAddon>
@@ -28,7 +28,7 @@
                     />
                 </p-inputGroup>
             </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
+            <div class="col">
                 <!-- E-mail field -->
                 <p-inputGroup>
                     <p-inputGroupAddon>
@@ -41,7 +41,7 @@
                     />
                 </p-inputGroup>
             </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
+            <div class="col">
                 <!-- first name field -->
                 <div class="p-float-label mb-4">
                     <input
@@ -53,7 +53,9 @@
                     <label for="firstName">Prénom</label>
                 </div>
             </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
+        </div>
+        <div class="grid">
+            <div class="col">
                 <!-- last name field -->
                 <div class="p-float-label mb-4">
                     <input
@@ -66,7 +68,7 @@
                 </div>
             </div>
 
-            <div class="flex-grow">
+            <div class="col">
                 <!-- phone field -->
                 <p-inputMask
                     id="phone"
@@ -75,19 +77,23 @@
                     formControlName="phone"
                 ></p-inputMask>
             </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
+            <div class="col">
                 <div class="p-float-label mb-4">
                     <p-dropdown
                         [options]="roles"
                         optionLabel="name"
+                        optionValue="code"
                         [showClear]="true"
                         placeholder="Choisir un rôle"
+                        formControlName="role"
                     ></p-dropdown>
 
                     <label for="raisonSociale">Rôle</label>
                 </div>
             </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
+        </div>
+        <div class="grid">
+            <div class="col">
                 <p-password
                     id="password"
                     placeholder="Password"
@@ -97,8 +103,8 @@
                     inputStyleClass="w-full p-3 md:w-30rem"
                 ></p-password>
             </div>
-        </form>
-    </div>
+        </div>
+    </form>
 
     <div class="flex gap-4">
         <p-button

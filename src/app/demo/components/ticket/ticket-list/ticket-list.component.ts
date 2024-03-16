@@ -7,6 +7,8 @@ import { ROLES } from '../../profile/constant/role-constants';
 
 import { MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import { STATUS_DI } from 'src/app/layout/api/status-di';
+import { FormControl, FormGroup } from '@angular/forms';
 interface Column {
     field: string;
     header: string;
@@ -25,7 +27,28 @@ interface UploadEvent {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
-    visible: boolean = false;
+    creationDiForm = new FormGroup({
+        title: new FormControl(),
+        designiation: new FormControl(),
+        typeClient: new FormControl(),
+
+        status: new FormControl(),
+        client_id: new FormControl(),
+        company_id: new FormControl(),
+        nSerie: new FormControl(),
+    });
+    openAddDiModal: boolean = false;
+    radioBtn;
+    selectedStatusDefault;
+    // these button to distignuye betwwen di to coordinator or not cooredinator
+    stateOptions: any[] = [
+        { label: 'Sauvgarder', value: 'CREATED' }, // value : status
+        { label: 'Sauvgarder et envoyer', value: 'PENDING1' }, // value : status
+    ];
+    statusDefault = [
+        { name: 'sans affecter au coordinateur', code: 'CREATED' },
+        { name: 'Affecter au coordinateur', code: 'PENDING1' },
+    ];
     products!: Product[];
     loading: boolean = false;
     roles;
@@ -44,24 +67,32 @@ export class TicketListComponent implements OnInit {
         { field: 'status', header: 'Statut' },
         { field: 'client_id', header: 'Client' },
         // { field: 'remarque_id', header: 'R.manager' },
-        { field: 'created_by_id', header: 'Cree par' },
-        { field: 'location_id', header: 'Location' },
+        { field: 'createdBy', header: 'Cree par' },
+        // { field: 'location_id', header: 'Location' },
         // { field: 'di_category_id', header: 'Categorie' },
     ];
 
     diList: any;
     diListCount: any;
+    statusDI: STATUS_DI = STATUS_DI.CREATED;
+    clientListDropDown: any;
+    companiesListDropDown: any;
+    loadingCreatingDi: boolean;
 
-    constructor(private ticketSerice: TicketService, private apollo: Apollo) {
-        this.roles = ROLES;
-    }
+    constructor(
+        private ticketSerice: TicketService,
+        private apollo: Apollo,
+        private readonly messageservice: MessageService
+    ) {}
 
     ngOnInit() {
         this.getDi();
+        this.getCompanyList();
+        this.getClientList();
     }
 
     showDialog() {
-        this.visible = true;
+        this.openAddDiModal = true;
     }
     getDi() {
         this.apollo
@@ -71,7 +102,7 @@ export class TicketListComponent implements OnInit {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 console.log('🥕[errors]:', errors);
                 console.log('🍸[loading]:', loading);
-                console.log('🍼️[data]:', data);
+                console.log('🍼️[dataDI]:', data);
                 if (data) {
                     this.diList = data.getAllDi.di;
                     this.diListCount = data.getAllDi.totalDiCount;
@@ -105,4 +136,95 @@ export class TicketListComponent implements OnInit {
                 return 'warn';
         }
     }
+    getSt(selected) {
+        console.log('🥗[selected]:', selected);
+        this.radioBtn = selected.value;
+    }
+    onSelectStatusDefaultDI(selectedStatus) {
+        this.statusDI = STATUS_DI.CREATED;
+        if (selectedStatus.checked) {
+            this.statusDI = STATUS_DI.PENDING1;
+        } else {
+            this.statusDI = STATUS_DI.CREATED;
+        }
+        console.log('🥠[selectedStatus]:', this.statusDI);
+    }
+
+    createDi() {
+        const {
+            title,
+            designiation,
+            client_id,
+            company_id,
+            nSerie,
+            status,
+            typeClient,
+        } = this.creationDiForm.value;
+        const diInfo = {
+            title,
+            designiation,
+            client_id,
+            company_id,
+            nSerie,
+            status: this.statusDI,
+            typeClient,
+        };
+        console.log('🍣[diInfo]:', diInfo);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.createDi(diInfo),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading, errors }) => {
+                this.loadingCreatingDi = loading;
+                console.log('🍡[errors]:', errors);
+                console.log('🍲[loading]:', loading);
+                console.log('🥃[data]:', data);
+                if (data) {
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'La demande service ajouté',
+                    });
+                    this.creationDiForm.reset();
+                    this.openAddDiModal = false;
+                }
+            });
+    }
+
+    getCompanyList() {
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.getCompanies(),
+            })
+            .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🍸[data]:', data);
+                if (data) {
+                    this.companiesListDropDown = data.getAllComapnyforDropDown;
+                }
+            });
+    }
+
+    getClientList() {
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.getClients(),
+            })
+            .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🥥[data]:', data);
+                if (data) {
+                    this.clientListDropDown = data.getAllClient.map(
+                        (client) => ({
+                            label: `${client.first_name} ${client.last_name}`, // Concatenated name
+                            value: client._id, // ID as value
+                        })
+                    );
+                }
+            });
+    }
 }
+/**
+ * Review all the code function remove unused code
+ * TODO add image file, toastr for success and errors
+ *
+ */

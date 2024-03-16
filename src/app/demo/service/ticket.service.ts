@@ -24,7 +24,7 @@ export class TicketService {
                         current_roles
                         client_id
                         remarque_id
-                        created_by_id
+                        createdBy
                         location_id
                         di_category_id
                     }
@@ -52,7 +52,7 @@ export class TicketService {
                         current_roles
                         client_id
                         remarque_id
-                        created_by_id
+                        createdBy
                         location_id
                         di_category_id
                     }
@@ -80,7 +80,7 @@ export class TicketService {
                         current_roles
                         client_id
                         remarque_id
-                        created_by_id
+                        createdBy
                         location_id
                         di_category_id
                     }
@@ -107,15 +107,15 @@ export class TicketService {
             mutation {
                 createStat(
                     createStatInput: {
+                        
+                       
                         _idDi: "${_idDi}"
                         id_tech_diag: "${id_tech_diag}"
                       
                     }
                 ) {
-                    _id
                     _idDi
-                    id_tech_diag
-                    
+                    messageNotification
                 }
             }
         `;
@@ -136,6 +136,60 @@ export class TicketService {
                     _idDi
                     id_tech_diag
                     id_tech_rep
+                }
+            }
+        `;
+    }
+
+    // TODO
+    createDi(diInfo) {
+        return gql`
+        mutation {
+            createDi(
+                createDiInput: {
+                    title: "${diInfo.title}"
+                    designiation: "${diInfo.designiation}"
+                    typeClient: "${diInfo.typeClient}"
+               
+                    status: "${diInfo.status}"
+                    client_id: "${diInfo.client_id}"
+                    company_id: "${diInfo.company_id}"
+                    nSerie: "${diInfo.nSerie}"
+                }
+            ) {
+                _id
+            }
+        }
+    `;
+    }
+
+    getCompanies() {
+        return gql`
+            {
+                getAllComapnyforDropDown {
+                    _id
+                    name
+                }
+            }
+        `;
+    }
+    getClients() {
+        return gql`
+            {
+                getAllClient {
+                    _id
+                    first_name
+                    last_name
+                }
+            }
+        `;
+    }
+
+    tech_startDiagnostic(_idDi) {
+        return gql`
+            mutation {
+                tech_startDiagnostic(_id: "${_idDi}") {
+                    _id
                 }
             }
         `;

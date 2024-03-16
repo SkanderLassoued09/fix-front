@@ -21,6 +21,7 @@ export class ProfileService {
                     loginAuthInput: { username: "${username}", password: "${password}" }
                 ) {
                     access_token
+                     user{_id role email username}
                 }
             }
         `;
@@ -62,6 +63,18 @@ export class ProfileService {
                         updatedAt
                     }
                     totalProfileCount
+                }
+            }
+        `;
+    }
+
+    notificationDiagnostic() {
+        return gql`
+            subscription {
+                notificationDiagnostic {
+                    _idDi
+                    messageNotification
+                    _idtechDiag
                 }
             }
         `;

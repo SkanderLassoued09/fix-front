@@ -32,6 +32,10 @@ import { MagasinDiListComponent } from '../magasin-di-list/magasin-di-list.compo
 import { FieldsetModule } from 'primeng/fieldset';
 import { TechDiListComponent } from './tech-di-list/tech-di-list.component';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { SelectButtonModule } from 'primeng/selectbutton';
+import { ToggleButtonModule } from 'primeng/togglebutton';
+import { ChipsModule } from 'primeng/chips';
+import { InplaceModule } from 'primeng/inplace';
 @NgModule({
     declarations: [
         TicketListComponent,
@@ -44,7 +48,7 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
         TicketListRoutingModule,
         MagasinDiListRoutingModule,
         CoordinatorDiListRoutingModule,
-
+        ToggleButtonModule,
         DialogModule,
         ButtonModule,
         TableModule,
@@ -64,6 +68,9 @@ import { InputTextareaModule } from 'primeng/inputtextarea';
         ReactiveFormsModule,
         FieldsetModule,
         InputTextareaModule,
+        SelectButtonModule,
+        ChipsModule,
+        InplaceModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

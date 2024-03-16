@@ -12,6 +12,7 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 export class TechDiListComponent {
     visible: boolean = false;
     products!: Product[];
+    values: string[] | undefined;
 
     loading: boolean = false;
     roles;
@@ -22,18 +23,7 @@ export class TechDiListComponent {
     uploadedFiles: any[] = [];
     cols = [
         { field: '_id', header: 'ID' },
-        { field: 'title', header: 'Title' },
-        // { field: 'description', header: 'Description' },
-        // { field: 'can_be_repaired', header: 'Reparable' },
-        // { field: 'bon_de_commande', header: 'BC' },
-        // { field: 'bon_de_livraison', header: 'BL' },
-        // { field: 'contain_pdr', header: 'PDR' },
-        { field: 'status', header: 'Statut' },
-        { field: 'client_id', header: 'Client' },
-        // { field: 'remarque_id', header: 'R.manager' },
-        { field: 'created_by_id', header: 'Cree par' },
-        { field: 'location_id', header: 'Location' },
-        // { field: 'di_category_id', header: 'Categorie' },
+        { field: '_idDi', header: 'Di sous intervention' },
     ];
 
     countries;
@@ -75,6 +65,7 @@ export class TechDiListComponent {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🍤[data]:', data);
                 if (data) {
                     this.techList = data.getDiForTech;
                     console.log('🍍[this.techList]:', this.techList);
@@ -212,5 +203,9 @@ export class TechDiListComponent {
 
     padZero(value: number): string {
         return value.toString().padStart(2, '0');
+    }
+
+    composantSelected(composantSelected) {
+        console.log('🍨[composantSelected]:', composantSelected);
     }
 }

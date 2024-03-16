@@ -86,6 +86,7 @@ export class CoordinatorDiListComponent {
                 console.log('🍼️[data]:', data);
                 if (data) {
                     this.techList = data.getAllTech;
+
                     console.log('🍍[this.techList]:', this.techList);
                 }
             });
@@ -97,12 +98,6 @@ export class CoordinatorDiListComponent {
             this.loading = false;
         }, 2000);
     }
-
-    // onUpload(event: UploadEvent) {
-    //     for (let file of event.files) {
-    //         this.uploadedFiles.push(file);
-    //     }
-    // }
 
     openModalConfig(di) {
         this.di = { ...di };
@@ -132,8 +127,20 @@ export class CoordinatorDiListComponent {
         this.diDialog = false;
     }
 
+    updateStatusDiag() {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.tech_startDiagnostic(
+                    this.selectedDi
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log('🦑[data]:', data);
+            });
+    }
+
     selectedTechDiag(data) {
-        console.log('🥒'), this.selectedDi, data.value._id;
+        console.log('🍭[data selected tech]:', data);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.configDiagAffectation(
@@ -146,6 +153,9 @@ export class CoordinatorDiListComponent {
                 console.log('🥘[errors]:', errors);
                 console.log('🍝[loading]:', loading);
                 console.log('🧀[data]:', data);
+                if (data) {
+                    this.updateStatusDiag();
+                }
             });
     }
     selectedTechRep(data) {

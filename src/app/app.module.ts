@@ -13,10 +13,12 @@ import { NodeService } from './demo/service/node.service';
 import { PhotoService } from './demo/service/photo.service';
 import { GraphQlModule } from './graphql.modules';
 import { ProfileService } from './demo/service/profile.service';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 @NgModule({
     declarations: [AppComponent, NotfoundComponent],
-    imports: [AppRoutingModule, AppLayoutModule, GraphQlModule],
+    imports: [AppRoutingModule, AppLayoutModule, GraphQlModule, ToastModule],
     providers: [
         { provide: LocationStrategy, useClass: PathLocationStrategy },
         CountryService,
@@ -27,6 +29,7 @@ import { ProfileService } from './demo/service/profile.service';
         PhotoService,
         ProductService,
         ProfileService,
+        MessageService,
     ],
     bootstrap: [AppComponent],
 })
