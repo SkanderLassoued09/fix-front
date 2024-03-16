@@ -83,6 +83,14 @@ export class TicketService {
                         createdBy
                         location_id
                         di_category_id
+                        array_composants {
+                            nameComposant
+                            etat
+                            quantity
+                            date
+                            link
+                            package
+                        }
                     }
                     totalDiCount
                 }
@@ -190,6 +198,28 @@ export class TicketService {
             mutation {
                 tech_startDiagnostic(_id: "${_idDi}") {
                     _id
+                }
+            }
+        `;
+    }
+
+    createComposant(composantName: string) {
+        return gql`
+            mutation {
+                createComposant(createComposantInput: { name: "${composantName}" }) {
+                    _id
+                    name
+                }
+            }
+        `;
+    }
+
+    getAllComposant() {
+        return gql`
+            {
+                findAllComposant {
+                    _id
+                    name
                 }
             }
         `;

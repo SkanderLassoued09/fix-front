@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Apollo } from 'apollo-angular';
+import { MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 
@@ -43,8 +44,15 @@ export class TechDiListComponent {
     laps: any[];
     diDialogDiag: boolean;
     diDialogRep: boolean;
+    composant: any;
+    addComposantLoading: boolean;
+    composantList: Array<any> = [];
 
-    constructor(private ticketSerice: TicketService, private apollo: Apollo) {
+    constructor(
+        private ticketSerice: TicketService,
+        private apollo: Apollo,
+        private messageService: MessageService
+    ) {
         // this.roles = ROLES;
     }
 
@@ -52,6 +60,7 @@ export class TechDiListComponent {
         // this.getDi();
 
         this.getAllTechDi();
+        this.getComposant();
     }
 
     showDialog() {
@@ -207,5 +216,43 @@ export class TechDiListComponent {
 
     composantSelected(composantSelected) {
         console.log('🍨[composantSelected]:', composantSelected);
+    }
+
+    getComposant() {
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.getAllComposant(),
+            })
+            .valueChanges.subscribe(({ data }) => {
+                if (data) {
+                    this.composantList = data.findAllComposant;
+                }
+            });
+    }
+
+    createComposant() {
+        console.log('🌽[this.composant]:', this.composant);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.createComposant(this.composant),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading }) => {
+                this.addComposantLoading = loading;
+                if (data) {
+                    console.log('🧀[data]:', data);
+
+                    let com = {
+                        _id: data.createComposant._id,
+                        name: data.createComposant.name,
+                    };
+                    this.composantList.push(com);
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: `Le composant ${data.createComposant.name} ajouté avec succes`,
+                    });
+                }
+            });
     }
 }

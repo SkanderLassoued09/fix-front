@@ -137,7 +137,9 @@
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
+            <tr
+                [ngClass]="{ 'row-in-magasin': rowData.status === 'INMAGASIN' }"
+            >
                 <td *ngFor="let col of columns">
                     <ng-container
                         *ngIf="col.field !== 'status'; else statusColumn"

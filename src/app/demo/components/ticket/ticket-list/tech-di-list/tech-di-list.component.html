@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="card">
     <p-table
         [columns]="cols"
@@ -80,9 +81,9 @@
                     <label for="name">Choisir un composant</label>
                     <!-- Dropdwon tech for reparation -->
                     <p-dropdown
-                        [options]=""
-                        optionLabel="label"
-                        optionValue="value"
+                        [options]="composantList"
+                        optionLabel="name"
+                        optionValue="name"
                         [showClear]="true"
                         placeholder="Choisir client"
                         (onChange)="composantSelected($event)"
@@ -103,8 +104,13 @@
                                 type="text"
                                 value="nom du composant"
                                 pInputText
+                                [(ngModel)]="composant"
                             />
-                            <p-button icon="pi pi-check"></p-button>
+                            <p-button
+                                (click)="createComposant()"
+                                icon="pi pi-check"
+                                [loading]="addComposantLoading"
+                            ></p-button>
                         </ng-template>
                     </p-inplace>
                 </div>
@@ -192,24 +198,39 @@
                 <!-- Dropdwon tech for reparation -->
                 <textarea rows="5" cols="30" pInputTextarea></textarea>
             </div>
-            <!-- pdr or no -->
-            <div class="field">
-                <p-toggleButton onLabel="PDR" offLabel="NoPDR"></p-toggleButton>
-            </div>
-            <!-- reparable or no -->
-            <div class="field">
-                <p-toggleButton
-                    onLabel="Reparable"
-                    offLabel="NoReparable"
-                ></p-toggleButton>
-            </div>
-            <!-- list of composant -->
-            <div class="field">
-                <label for="name">Ecrire quelque chose ...</label>
-                <!-- Dropdwon tech for reparation -->
-                <p-chips></p-chips>
-            </div>
 
+            <div class="field">
+                <!-- to continue other rq -->
+                <p-fieldset legend="Remarque" [toggleable]="true">
+                    <p class="m-0">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                        sed do eiusmod tempor incididunt ut labore et dolore
+                        magna aliqua. Ut enim ad minim veniam, quis nostrud
+                        exercitation ullamco laboris nisi ut aliquip ex ea
+                        commodo consequat. Duis aute irure dolor in
+                        reprehenderit in voluptate velit esse cillum dolore eu
+                        fugiat nulla pariatur. Excepteur sint occaecat cupidatat
+                        non proident, sunt in culpa qui officia deserunt mollit
+                        anim id est laborum.
+                    </p>
+                </p-fieldset>
+            </div>
+            <div class="field">
+                <!-- to continue other rq -->
+                <p-fieldset legend="Remarque" [toggleable]="true">
+                    <p class="m-0">
+                        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
+                        sed do eiusmod tempor incididunt ut labore et dolore
+                        magna aliqua. Ut enim ad minim veniam, quis nostrud
+                        exercitation ullamco laboris nisi ut aliquip ex ea
+                        commodo consequat. Duis aute irure dolor in
+                        reprehenderit in voluptate velit esse cillum dolore eu
+                        fugiat nulla pariatur. Excepteur sint occaecat cupidatat
+                        non proident, sunt in culpa qui officia deserunt mollit
+                        anim id est laborum.
+                    </p>
+                </p-fieldset>
+            </div>
             <div class="field">
                 <!-- to continue other rq -->
                 <p-fieldset legend="Remarque" [toggleable]="true">
