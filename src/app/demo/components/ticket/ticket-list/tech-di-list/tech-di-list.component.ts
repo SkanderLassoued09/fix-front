@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
@@ -11,6 +12,47 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
     styleUrl: './tech-di-list.component.scss',
 })
 export class TechDiListComponent {
+    diagFormTech = new FormGroup({
+        _idDi: new FormControl(),
+        id_tech_diag: new FormControl(),
+        diag_time: new FormControl(),
+        remarqueTech: new FormControl(),
+        isPdr: new FormControl(),
+        isReparable: new FormControl(),
+    });
+    filterText;
+    groupedCities = [
+        {
+            label: 'Germany',
+            value: 'de',
+            items: [
+                { label: 'Berlin', value: 'Berlin' },
+                { label: 'Frankfurt', value: 'Frankfurt' },
+                { label: 'Hamburg', value: 'Hamburg' },
+                { label: 'Munich', value: 'Munich' },
+            ],
+        },
+        {
+            label: 'USA',
+            value: 'us',
+            items: [
+                { label: 'Chicago', value: 'Chicago' },
+                { label: 'Los Angeles', value: 'Los Angeles' },
+                { label: 'New York', value: 'New York' },
+                { label: 'San Francisco', value: 'San Francisco' },
+            ],
+        },
+        {
+            label: 'Japan',
+            value: 'jp',
+            items: [
+                { label: 'Kyoto', value: 'Kyoto' },
+                { label: 'Osaka', value: 'Osaka' },
+                { label: 'Tokyo', value: 'Tokyo' },
+                { label: 'Yokohama', value: 'Yokohama' },
+            ],
+        },
+    ];
     visible: boolean = false;
     products!: Product[];
     values: string[] | undefined;
@@ -100,6 +142,7 @@ export class TechDiListComponent {
         console.log('🥘[di]:', this.di);
         this.selectedDi = di._id;
         this.diDialogDiag = true;
+        this.startStopwatch();
     }
     repModal(di) {
         this.di = { ...di };
@@ -255,4 +298,36 @@ export class TechDiListComponent {
                 }
             });
     }
+
+    /**
+     * This function will get the lap time and save it in stats entity
+     * will get the lap as pause time save it only he can back to this ticket again and make the counter start again on the last time saved and continue incrementing
+     *!When user click on finish diag and status changed the button would be frozen!
+     */
+
+    lapTimeForPauseAndGetBack() {
+        this.lap();
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.lapTimeForPauseAndGetBack(
+                    this.selectedDi,
+                    this.lapTime
+                ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading, errors }) => {
+                console.log('🍭[errors]:', errors);
+                console.log('🥖[loading]:', loading);
+                console.log('🥓[data]:', data);
+                if (data) {
+                    this.diDialogDiag = false;
+                }
+            });
+    }
+
+    // techDiagnosticInfo() {
+    //     const statsDiagInfo = {
+    //         pendingTime: this.lapTime,
+    //     };
+    // }
 }

@@ -30,11 +30,14 @@ export class AppComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 console.log('🥡[NOTIFICATION]:', data.notificationDiagnostic);
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Success',
-                    detail: 'Le profil ajouté avec succés',
-                });
+
+                if (this._idtech == data.notificationDiagnostic._idtechDiag) {
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Travaille à faire',
+                        detail: 'Vous avez réçu une notification',
+                    });
+                }
             });
     }
 }

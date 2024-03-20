@@ -224,4 +224,12 @@ export class TicketService {
             }
         `;
     }
+
+    lapTimeForPauseAndGetBack(_id: string, diagTime: string) {
+        return gql`
+            mutation {
+                lapTimeForPauseAndGetBack(_id: "${_id}", diagTime: "${diagTime}")
+            }
+        `;
+    }
 }
