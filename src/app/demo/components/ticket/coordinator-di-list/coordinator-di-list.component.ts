@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import { STATUS_DI } from 'src/app/layout/api/status-di';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -13,12 +14,11 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 export class CoordinatorDiListComponent {
     visible: boolean = false;
     products!: Product[];
-
     loading: boolean = false;
     roles;
     tstatuses = [{ label: 'Pending3', value: 'Pending3' }];
-
-    ingredient;
+    diag_condition: boolean = true; // enable when status = pending1
+    rep_condition: boolean = true; // enable when status = pending3
 
     uploadedFiles: any[] = [];
     cols = [
@@ -52,13 +52,13 @@ export class CoordinatorDiListComponent {
 
     ngOnInit() {
         this.getDi();
-
         this.getAllTech();
     }
 
     showDialog() {
         this.visible = true;
     }
+
     getDi() {
         this.apollo
             .watchQuery<any>({
@@ -100,8 +100,17 @@ export class CoordinatorDiListComponent {
     }
 
     openModalConfig(di) {
+        console.log('Before [di]:', di);
+        // condition for diag
+        di.status == STATUS_DI.PENDING1
+            ? (this.diag_condition = false)
+            : (this.diag_condition = true);
+        // condition for rep
+        di.status == STATUS_DI.PENDING2
+            ? (this.rep_condition = false)
+            : (this.rep_condition = true);
         this.di = { ...di };
-        console.log('🥘[di]:', this.di);
+        console.log('After 🥘[di]:', this.di);
         this.selectedDi = di._id;
         this.diDialog = true;
     }
