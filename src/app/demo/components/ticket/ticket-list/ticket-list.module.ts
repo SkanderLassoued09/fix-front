@@ -36,6 +36,8 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ChipsModule } from 'primeng/chips';
 import { InplaceModule } from 'primeng/inplace';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { InputNumberModule } from 'primeng/inputnumber';
 @NgModule({
     declarations: [
         TicketListComponent,
@@ -71,6 +73,8 @@ import { InplaceModule } from 'primeng/inplace';
         SelectButtonModule,
         ChipsModule,
         InplaceModule,
+        MultiSelectModule,
+        InputNumberModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

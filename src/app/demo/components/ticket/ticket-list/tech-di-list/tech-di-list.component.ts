@@ -14,45 +14,15 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 export class TechDiListComponent {
     diagFormTech = new FormGroup({
         _idDi: new FormControl(),
-        id_tech_diag: new FormControl(),
+
         diag_time: new FormControl(),
         remarqueTech: new FormControl(),
         isPdr: new FormControl(),
         isReparable: new FormControl(),
+        quantity: new FormControl(),
+        composantSelectedDropdown: new FormControl(),
     });
-    filterText;
-    groupedCities = [
-        {
-            label: 'Germany',
-            value: 'de',
-            items: [
-                { label: 'Berlin', value: 'Berlin' },
-                { label: 'Frankfurt', value: 'Frankfurt' },
-                { label: 'Hamburg', value: 'Hamburg' },
-                { label: 'Munich', value: 'Munich' },
-            ],
-        },
-        {
-            label: 'USA',
-            value: 'us',
-            items: [
-                { label: 'Chicago', value: 'Chicago' },
-                { label: 'Los Angeles', value: 'Los Angeles' },
-                { label: 'New York', value: 'New York' },
-                { label: 'San Francisco', value: 'San Francisco' },
-            ],
-        },
-        {
-            label: 'Japan',
-            value: 'jp',
-            items: [
-                { label: 'Kyoto', value: 'Kyoto' },
-                { label: 'Osaka', value: 'Osaka' },
-                { label: 'Tokyo', value: 'Tokyo' },
-                { label: 'Yokohama', value: 'Yokohama' },
-            ],
-        },
-    ];
+
     visible: boolean = false;
     products!: Product[];
     values: string[] | undefined;
@@ -89,18 +59,17 @@ export class TechDiListComponent {
     composant: any;
     addComposantLoading: boolean;
     composantList: Array<any> = [];
+    composantSelected: any;
+    composantCombo: Array<{ nameComposant: string; quantity: number }> = [];
+    selectedDi_id: any;
 
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private messageService: MessageService
-    ) {
-        // this.roles = ROLES;
-    }
+    ) {}
 
     ngOnInit() {
-        // this.getDi();
-
         this.getAllTechDi();
         this.getComposant();
     }
@@ -131,16 +100,11 @@ export class TechDiListComponent {
         }, 2000);
     }
 
-    // onUpload(event: UploadEvent) {
-    //     for (let file of event.files) {
-    //         this.uploadedFiles.push(file);
-    //     }
-    // }
-
     diagModal(di) {
         this.di = { ...di };
         console.log('🥘[di]:', this.di);
         this.selectedDi = di._id;
+        this.selectedDi_id = di._idDi;
         this.diDialogDiag = true;
         this.startStopwatch();
     }
@@ -149,20 +113,6 @@ export class TechDiListComponent {
         console.log('🥘[di]:', this.di);
         this.selectedDi = di._id;
         this.diDialogRep = true;
-    }
-
-    getSeverity(status: string) {
-        // console.log('🦀[status]:', status);
-        switch (status) {
-            case 'PENDING3':
-                return 'success';
-            case 'LOWSTOCK':
-                return 'warning';
-            case 'OUTOFSTOCK':
-                return 'danger';
-            default:
-                return 'warn';
-        }
     }
 
     hideDialogDiag() {
@@ -257,10 +207,6 @@ export class TechDiListComponent {
         return value.toString().padStart(2, '0');
     }
 
-    composantSelected(composantSelected) {
-        console.log('🍨[composantSelected]:', composantSelected);
-    }
-
     getComposant() {
         this.apollo
             .watchQuery<any>({
@@ -324,10 +270,39 @@ export class TechDiListComponent {
                 }
             });
     }
+    selectedDropDown(selectedItem) {
+        console.log('🍼️[selectedItem]:', selectedItem);
+        this.composantSelected = selectedItem;
+    }
 
-    // techDiagnosticInfo() {
-    //     const statsDiagInfo = {
-    //         pendingTime: this.lapTime,
-    //     };
-    // }
+    comboComposantandQuantity() {
+        let composantSelected = {
+            nameComposant: this.composantSelected.value.name,
+            quantity: this.diagFormTech.value.quantity,
+        };
+        console.log('🍺[composantSelected]:', composantSelected);
+        this.composantCombo.push(composantSelected);
+    }
+
+    techFinishDiag() {
+        this.lapTimeForPauseAndGetBack();
+
+        const dataDiag = {
+            _idDi: this.selectedDi_id,
+            pdr: this.diagFormTech.value.isPdr,
+            reparable: this.diagFormTech.value.isReparable,
+            remarqueTech: this.diagFormTech.value.remarqueTech,
+            composant: this.composantCombo,
+        };
+        console.log('🥤', dataDiag);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.finish(dataDiag),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🍉[loading]:', loading);
+                console.log('🥟[data]:', data);
+            });
+    }
 }

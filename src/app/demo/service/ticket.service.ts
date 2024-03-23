@@ -232,4 +232,27 @@ export class TicketService {
             }
         `;
     }
+
+    finish(diagInfo) {
+        const array = diagInfo.composant.map((el) => {
+            return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
+        });
+        console.log('🍮[diagInfo]:', array);
+
+        return gql`
+    mutation {
+        tech_startDiagnostic(
+            _id: "${diagInfo._idDi}",
+            diag: {
+                remarqueTech: "${diagInfo.remarqueTech}",
+                contain_pdr: ${diagInfo.contain_pdr},
+                can_be_repaired: ${diagInfo.can_be_repaired},
+                array_composants: [${array.join(', ')}]
+            }
+        ) {
+            _id
+        }
+    }
+    `;
+    }
 }

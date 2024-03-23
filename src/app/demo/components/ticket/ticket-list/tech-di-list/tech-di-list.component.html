@@ -64,7 +64,12 @@
                 <div class="field">
                     <label for="name">Ecrire quelque chose ...</label>
                     <!-- Dropdwon tech for reparation -->
-                    <textarea rows="5" cols="30" pInputTextarea></textarea>
+                    <textarea
+                        formControlName="remarqueTech"
+                        rows="5"
+                        cols="30"
+                        pInputTextarea
+                    ></textarea>
                 </div>
                 <!-- pdr or no -->
                 <div class="field">
@@ -72,6 +77,7 @@
                     <p-toggleButton
                         onLabel="Oui"
                         offLabel="Non"
+                        formControlName="isPdr"
                     ></p-toggleButton>
                 </div>
                 <!-- reparable or no -->
@@ -80,90 +86,43 @@
                     <p-toggleButton
                         onLabel="Oui"
                         offLabel="Non"
+                        formControlName="isReparable"
                     ></p-toggleButton>
                 </div>
                 <!-- list of composant -->
                 <div class="grid align-items-center">
                     <div class="col">
                         <label for="name">Choisir un composant</label>
-                        <!-- Dropdwon tech for reparation -->
-                        <!-- <p-dropdown
-                        [options]="composantList"
-                        optionLabel="name"
-                        optionValue="name"
-                        [showClear]="true"
-                        placeholder="Choisir client"
-                        (onChange)="composantSelected($event)"
-                        placeholder="composant"
-                    ></p-dropdown> -->
-                        <p-dropdown
-                            [options]="groupedCities"
-                            placeholder="Select a City"
-                            [group]="true"
-                        >
-                            <ng-template let-item pTemplate="item">
-                                {{ item.label }}
-                            </ng-template>
-                            <ng-template let-group pTemplate="group">
-                                <div class="flex align-items-center">
-                                    <img
-                                        src="https://primefaces.org/cdn/primeng/images/demo/flag/flag_placeholder.png"
-                                        [class]="
-                                            'mr-2 flag flag-' + group.value
-                                        "
-                                        style="width: 20px"
-                                    />
-                                    <span>{{ group.label }}</span>
-                                </div>
-                            </ng-template>
-                        </p-dropdown>
-                    </div>
-                    <div class="col">
-                        <p-inplace closable="closable">
-                            <ng-template pTemplate="display">
-                                <button
-                                    pButton
-                                    pRipple
-                                    label="Ajouter un nouveau composant"
-                                ></button>
-                            </ng-template>
-                            <ng-template pTemplate="content">
-                                <input
-                                    type="text"
-                                    value="nom du composant"
-                                    pInputText
-                                    [(ngModel)]="composant"
-                                />
-                                <p-button
-                                    (click)="createComposant()"
-                                    icon="pi pi-check"
-                                    [loading]="addComposantLoading"
-                                ></p-button>
-                            </ng-template>
-                        </p-inplace>
-                    </div>
-                </div>
 
-                <div class="grid">
-                    <div class="col">
-                        <label for="">Quantité</label>
-                        <input pInputText type="text" />
-                    </div>
-
-                    <div class="col">
-                        <label for="">état</label>
                         <p-dropdown
-                            [options]=""
-                            optionLabel="label"
-                            optionValue="value"
-                            [showClear]="true"
-                            placeholder="Choisir client"
-                            placeholder="composant"
+                            [options]="composantList"
+                            (onChange)="selectedDropDown($event)"
+                            optionLabel="name"
+                            placeholder="Choisir composant"
                         ></p-dropdown>
                     </div>
-                    <div class="col">
-                        <label for=""> Date d'arrivage</label>
-                        <input pInputText type="text" />
+                    <div class="col" *ngIf="composantSelected">
+                        <label for="name">Quantité</label>
+                        <p-inputNumber
+                            inputId="integeronly"
+                            formControlName="quantity"
+                            [placeholder]="
+                                'Add quantity for' +
+                                ' ' +
+                                composantSelected.value.name
+                            "
+                        >
+                        </p-inputNumber>
+                    </div>
+                    <div class="col" *ngIf="composantSelected">
+                        <button
+                            pButton
+                            pRipple
+                            label="Ajouter"
+                            class="p-button-success"
+                            icon="pi pi-check"
+                            (click)="comboComposantandQuantity()"
+                        ></button>
                     </div>
                 </div>
 
@@ -210,7 +169,7 @@
                 label="J'ai fini"
                 icon="pi pi-check"
                 class="p-button-text"
-                (click)="lapTimeForPauseAndGetBack()"
+                (click)="techFinishDiag()"
             ></button>
         </ng-template>
     </p-dialog>
