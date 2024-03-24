@@ -1,54 +1,85 @@
 import { Component } from '@angular/core';
+import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 
 @Component({
     selector: 'app-magasin-di-list',
-    // standalone: true,
-    // imports: [],
     templateUrl: './magasin-di-list.component.html',
     styleUrl: './magasin-di-list.component.scss',
 })
 export class MagasinDiListComponent {
-    visible: boolean = false;
-    // products!: Product[];
-
-    loading: boolean = false;
-    roles;
-    tstatuses = [{ label: 'Pending3', value: 'Pending3' }];
-
-    ingredient;
-    uploadedFiles: any[] = [];
+    formUpdateComposant: FormGroup;
+    // TODO change it to file of constant and instead of array of string , change it to object key value
+    statusComposant: Array<any> = [
+        { name: 'INTERN', value: 'INTERN' },
+        { name: 'EXTERN', value: 'EXTERN' },
+        { name: 'INSTOCK', value: 'INSTOCK' },
+    ];
+    magasinDiDialog: boolean = false;
     cols = [
         { field: '_id', header: 'ID' },
         { field: 'title', header: 'Title' },
-        // { field: 'description', header: 'Description' },
-        // { field: 'can_be_repaired', header: 'Reparable' },
-        // { field: 'bon_de_commande', header: 'BC' },
-        // { field: 'bon_de_livraison', header: 'BL' },
-        // { field: 'contain_pdr', header: 'PDR' },
         { field: 'status', header: 'Statut' },
-        { field: 'client_id', header: 'Client' },
-        // { field: 'remarque_id', header: 'R.manager' },
-        { field: 'created_by_id', header: 'Cree par' },
-        { field: 'location_id', header: 'Location' },
-        // { field: 'di_category_id', header: 'Categorie' },
     ];
-
     diList: any;
     diListCount: any;
+    formMagasin = new FormGroup({
+        composant: new FormControl(),
+    });
+    arrayComposant: any;
+    selectedItem: any;
+    loadedDataComposant: any;
 
     constructor(private ticketSerice: TicketService, private apollo: Apollo) {
-        // this.roles = ROLES;
+        this.formUpdateComposant = new FormGroup({
+            name: new FormControl(),
+            package: new FormControl(),
+            category_composant_id: new FormControl(),
+            prix_achat: new FormControl(),
+            prix_vente: new FormControl(),
+            coming_date: new FormControl(),
+            link: new FormControl(),
+            quantity_stocked: new FormControl(),
+            pdf: new FormControl(),
+            status: new FormControl(),
+        });
     }
 
     ngOnInit() {
         this.getDi();
     }
 
-    showDialog() {
-        this.visible = true;
+    getSeverity(status: string) {
+        switch (status) {
+            case 'INSTOCK':
+                return 'success';
+
+            case 'EXTERN':
+                return 'warning';
+
+            case 'INTERN':
+                return 'info';
+
+            default:
+                return null;
+        }
     }
+
+    openDialogMagasin(item) {
+        console.log('🍠[item]:', item);
+
+        this.arrayComposant = item.array_composants.map((el) => {
+            return {
+                infoComposant: el.nameComposant + ': ' + el.quantity,
+                nameComposant: el.nameComposant,
+                quantity: el.quantity,
+            };
+        });
+        console.log('🥝[  this.arrayComposant]:', this.arrayComposant);
+        this.magasinDiDialog = true;
+    }
+
     getDi() {
         this.apollo
             .watchQuery<any>({
@@ -64,31 +95,49 @@ export class MagasinDiListComponent {
                 }
             });
     }
-    load() {
-        this.loading = true;
 
-        setTimeout(() => {
-            this.loading = false;
-        }, 2000);
+    selectedDropDown(selectedItem) {
+        console.log('🥥[selectedItem]:', selectedItem);
+        this.selectedItem = selectedItem;
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.composantByName(selectedItem.value),
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🍱[data]:', data);
+                this.loadedDataComposant = data.findOneComposant;
+                if (data) {
+                    // Initialize form fields with loaded data
+                    this.formUpdateComposant.patchValue({
+                        name: this.loadedDataComposant.name,
+                        package: this.loadedDataComposant.package,
+                        category_composant_id:
+                            this.loadedDataComposant.category_composant_id,
+                        prix_achat: this.loadedDataComposant.prix_achat,
+                        prix_vente: this.loadedDataComposant.prix_vente,
+                        coming_date: this.loadedDataComposant.coming_date,
+                        link: this.loadedDataComposant.link,
+                        quantity_stocked:
+                            this.loadedDataComposant.quantity_stocked,
+                        pdf: this.loadedDataComposant.pdf,
+                        status: this.loadedDataComposant.status,
+                    });
+                }
+            });
     }
 
-    // onUpload(event: UploadEvent) {
-    //     for (let file of event.files) {
-    //         this.uploadedFiles.push(file);
-    //     }
-    // }
-
-    getSeverity(status: string) {
-        // console.log('🦀[status]:', status);
-        switch (status) {
-            case 'PENDING3':
-                return 'success';
-            case 'LOWSTOCK':
-                return 'warning';
-            case 'OUTOFSTOCK':
-                return 'danger';
-            default:
-                return 'warn';
-        }
+    updateComposant() {
+        console.log('🌭', this.formUpdateComposant.value);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.updateComposant(
+                    this.formUpdateComposant.value
+                ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🥐[loading]:', loading);
+                console.log('🌮[data]:', data);
+            });
     }
 }

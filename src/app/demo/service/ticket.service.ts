@@ -85,11 +85,8 @@ export class TicketService {
                         di_category_id
                         array_composants {
                             nameComposant
-                            etat
+
                             quantity
-                            date
-                            link
-                            package
                         }
                     }
                     totalDiCount
@@ -234,25 +231,95 @@ export class TicketService {
     }
 
     finish(diagInfo) {
+        console.log('🍔[diagInfo]:', diagInfo);
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
-        console.log('🍮[diagInfo]:', array);
+
+        console.log(` mutation {
+            tech_startDiagnostic(
+                _id: "${diagInfo._idDi}"
+                diag: {
+                    remarqueTech: "${diagInfo.remarqueTech}"
+                    contain_pdr: ${diagInfo.pdr}
+                    can_be_repaired: ${diagInfo.reparable}
+                    array_composants: [${array.join(', ')}]
+                }
+            ) 
+        }`);
 
         return gql`
-    mutation {
-        tech_startDiagnostic(
-            _id: "${diagInfo._idDi}",
-            diag: {
-                remarqueTech: "${diagInfo.remarqueTech}",
-                contain_pdr: ${diagInfo.contain_pdr},
-                can_be_repaired: ${diagInfo.can_be_repaired},
-                array_composants: [${array.join(', ')}]
-            }
-        ) {
-            _id
+           mutation {
+            tech_startDiagnostic(
+                _id: "${diagInfo._idDi}"
+                diag: {
+                    remarqueTech: "${diagInfo.remarqueTech}"
+                    contain_pdr: ${diagInfo.pdr}
+                    can_be_repaired: ${diagInfo.reparable}
+                    array_composants: [${array.join(', ')}]
+                }
+            ) 
         }
+        `;
     }
-    `;
+
+    // to populate category , change name by _id
+    composantByName(selectedComposant: string) {
+        return gql`
+            {
+                findOneComposant(name: "${selectedComposant}") {
+                    _id
+                    name
+                    package
+                    category_composant_id
+                    prix_achat
+                    prix_vente
+                    coming_date
+                    link
+                    quantity_stocked
+                    pdf
+                    status
+                }
+            }
+        `;
+    }
+
+    updateComposant(composantInfo) {
+        console.log(` mutation {
+                addComposantInfo(
+                    updateComposant: {
+                  
+                        name: "${composantInfo.name}"
+                        package: "${composantInfo.package}"
+                        category_composant_id: "${composantInfo.category_composant_id}"
+                        prix_achat: ${composantInfo.prix_achat}
+                        prix_vente: ${composantInfo.prix_vente}
+                        coming_date: "${composantInfo.coming_date}"
+                        link: "${composantInfo.link}"
+                        quantity_stocked: ${composantInfo.quantity_stocked}
+                        pdf: "${composantInfo.pdf}"
+                        status: "${composantInfo.status}"
+                    }
+                )
+            }`);
+        return gql`
+            mutation {
+                addComposantInfo(
+                    updateComposant: {
+                  
+                        name: "${composantInfo.name}"
+                        package: "${composantInfo.package}"
+                        category_composant_id: "${composantInfo.category_composant_id}"
+                        prix_achat: ${composantInfo.prix_achat}
+                        prix_vente: ${composantInfo.prix_vente}
+                        coming_date: "${composantInfo.coming_date}"
+                        link: "${composantInfo.link}"
+                        quantity_stocked: ${composantInfo.quantity_stocked}
+                        pdf: "${composantInfo.pdf}"
+                        status: "${composantInfo.status}"
+                    }
+                )
+            }
+        `;
     }
 }

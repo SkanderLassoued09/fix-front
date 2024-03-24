@@ -16,10 +16,10 @@ export class TechDiListComponent {
         _idDi: new FormControl(),
 
         diag_time: new FormControl(),
-        remarqueTech: new FormControl(),
-        isPdr: new FormControl(),
-        isReparable: new FormControl(),
-        quantity: new FormControl(),
+        remarqueTech: new FormControl(''),
+        isPdr: new FormControl(false),
+        isReparable: new FormControl(false),
+        quantity: new FormControl(0),
         composantSelectedDropdown: new FormControl(),
     });
 
@@ -85,10 +85,8 @@ export class TechDiListComponent {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🍤[data]:', data);
                 if (data) {
                     this.techList = data.getDiForTech;
-                    console.log('🍍[this.techList]:', this.techList);
                 }
             });
     }
@@ -102,7 +100,6 @@ export class TechDiListComponent {
 
     diagModal(di) {
         this.di = { ...di };
-        console.log('🥘[di]:', this.di);
         this.selectedDi = di._id;
         this.selectedDi_id = di._idDi;
         this.diDialogDiag = true;
@@ -110,7 +107,6 @@ export class TechDiListComponent {
     }
     repModal(di) {
         this.di = { ...di };
-        console.log('🥘[di]:', this.di);
         this.selectedDi = di._id;
         this.diDialogRep = true;
     }
@@ -123,7 +119,6 @@ export class TechDiListComponent {
     }
 
     selectedTechDiag(data) {
-        console.log('🥒'), this.selectedDi, data.value._id;
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.configDiagAffectation(
@@ -132,14 +127,9 @@ export class TechDiListComponent {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
-                console.log('🥘[errors]:', errors);
-                console.log('🍝[loading]:', loading);
-                console.log('🧀[data]:', data);
-            });
+            .subscribe(({ data, loading, errors }) => {});
     }
     selectedTechRep(data) {
-        console.log('🥒'), this.selectedDi, data.value._id;
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.configRepAffectation(
@@ -148,11 +138,7 @@ export class TechDiListComponent {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
-                console.log('🥘[errors]:', errors);
-                console.log('🍝[loading]:', loading);
-                console.log('🧀[data]:', data);
-            });
+            .subscribe(({ data, loading, errors }) => {});
     }
 
     // handling stopwatch
@@ -190,7 +176,6 @@ export class TechDiListComponent {
     lap() {
         if (this.isRunning) {
             this.lapTime = ` ${this.minutes}:${this.seconds}:${this.milliseconds}`;
-            console.log(this.lapTime, 'laptime');
         }
     }
 
@@ -220,7 +205,6 @@ export class TechDiListComponent {
     }
 
     createComposant() {
-        console.log('🌽[this.composant]:', this.composant);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.createComposant(this.composant),
@@ -229,8 +213,6 @@ export class TechDiListComponent {
             .subscribe(({ data, loading }) => {
                 this.addComposantLoading = loading;
                 if (data) {
-                    console.log('🧀[data]:', data);
-
                     let com = {
                         _id: data.createComposant._id,
                         name: data.createComposant.name,
@@ -262,16 +244,12 @@ export class TechDiListComponent {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
-                console.log('🍭[errors]:', errors);
-                console.log('🥖[loading]:', loading);
-                console.log('🥓[data]:', data);
                 if (data) {
                     this.diDialogDiag = false;
                 }
             });
     }
     selectedDropDown(selectedItem) {
-        console.log('🍼️[selectedItem]:', selectedItem);
         this.composantSelected = selectedItem;
     }
 
@@ -280,7 +258,6 @@ export class TechDiListComponent {
             nameComposant: this.composantSelected.value.name,
             quantity: this.diagFormTech.value.quantity,
         };
-        console.log('🍺[composantSelected]:', composantSelected);
         this.composantCombo.push(composantSelected);
     }
 
@@ -294,15 +271,14 @@ export class TechDiListComponent {
             remarqueTech: this.diagFormTech.value.remarqueTech,
             composant: this.composantCombo,
         };
-        console.log('🥤', dataDiag);
+
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.finish(dataDiag),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading }) => {
-                console.log('🍉[loading]:', loading);
-                console.log('🥟[data]:', data);
+                console.log('🥝[data]:', data);
             });
     }
 }
