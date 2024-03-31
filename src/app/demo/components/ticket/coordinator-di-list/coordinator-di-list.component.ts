@@ -2,6 +2,13 @@ import { Component } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import {
+    ConfigDiagAffectationMutationResponse,
+    ConfigRepAffectationMutationResponse,
+    GetAllDiForCoordinatorQueryResponse,
+    GetAllTechQueryResponse,
+    TechStartDiagnosticMutationResponse,
+} from './coordinator-di-list.interfaces';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -61,7 +68,7 @@ export class CoordinatorDiListComponent {
     }
     getDi() {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<GetAllDiForCoordinatorQueryResponse>({
                 query: this.ticketSerice.getAllDiForCoordinator(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -77,7 +84,7 @@ export class CoordinatorDiListComponent {
 
     getAllTech() {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<GetAllTechQueryResponse>({
                 query: this.ticketSerice.getAllTech(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -129,7 +136,7 @@ export class CoordinatorDiListComponent {
 
     updateStatusDiag() {
         this.apollo
-            .mutate<any>({
+            .mutate<TechStartDiagnosticMutationResponse>({
                 mutation: this.ticketSerice.tech_startDiagnostic(
                     this.selectedDi
                 ),
@@ -142,7 +149,7 @@ export class CoordinatorDiListComponent {
     selectedTechDiag(data) {
         console.log('🍭[data selected tech]:', data);
         this.apollo
-            .mutate<any>({
+            .mutate<ConfigDiagAffectationMutationResponse>({
                 mutation: this.ticketSerice.configDiagAffectation(
                     this.selectedDi,
                     data.value._id
@@ -161,7 +168,7 @@ export class CoordinatorDiListComponent {
     selectedTechRep(data) {
         console.log('🥒'), this.selectedDi, data.value._id;
         this.apollo
-            .mutate<any>({
+            .mutate<ConfigRepAffectationMutationResponse>({
                 mutation: this.ticketSerice.configRepAffectation(
                     this.selectedDi,
                     data.value._id

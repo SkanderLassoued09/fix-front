@@ -9,13 +9,51 @@ interface Column {
     field: string;
     header: string;
 }
-
+interface AddCompanyMutationResponse {
+    createCompany: {
+        _id: string;
+    };
+}
 interface PageEvent {
     first: number;
     rows: number;
     page: number;
     pageCount: number;
 }
+interface GetAllCompanyQueryResponse {
+    findAllCompany: {
+        companyRecords: {
+            _id: string;
+            name: string;
+            region: string;
+            address: string;
+            email: string;
+            activitePrincipale: string;
+            activiteSecondaire: string;
+            raisonSociale: string;
+            Exoneration: string;
+            fax: string;
+            webSiteLink: string;
+            serviceAchat: {
+                name: string;
+                email: string;
+                phone: string;
+            };
+            serviceFinancier: {
+                name: string;
+                email: string;
+                phone: string;
+            };
+            serviceTechnique: {
+                name: string;
+                email: string;
+                phone: string;
+            };
+        };
+        totalCompanyRecord: number;
+    };
+}
+
 @Component({
     selector: 'app-company-list',
     templateUrl: './company-list.component.html',
@@ -114,9 +152,8 @@ export class CompanyListComponent {
     }
 
     addCompany() {
-        console.log('🌶', this.companyForm.value);
         this.apollo
-            .mutate<any>({
+            .mutate<AddCompanyMutationResponse>({
                 mutation: this.companyService.addCompany(
                     this.companyForm.value
                 ),
@@ -125,7 +162,6 @@ export class CompanyListComponent {
             .subscribe(({ data, errors, loading }) => {
                 this.loading = loading;
                 if (data) {
-                    console.log('🍒[data]:', data);
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
@@ -139,7 +175,6 @@ export class CompanyListComponent {
     }
 
     onPageChange(event: PageEvent) {
-        console.log('🥝[event]:', event);
         this.first = event.first;
         this.page = event.page;
         this.rows = event.rows;
@@ -148,7 +183,7 @@ export class CompanyListComponent {
 
     companies(first, rows) {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<GetAllCompanyQueryResponse>({
                 query: this.companyService.getAllCompany(first, rows),
                 useInitialLoading: true,
             })

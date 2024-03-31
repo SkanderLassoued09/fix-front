@@ -4,6 +4,11 @@ import { Apollo } from 'apollo-angular';
 import { MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import {
+    ConfigDiagAffectationMutationResult,
+    ConfigRepAffectationMutationResult,
+    DiListTechQueryResult,
+} from './tech-di-list.interface';
 
 @Component({
     selector: 'app-tech-di-list',
@@ -80,7 +85,7 @@ export class TechDiListComponent {
 
     getAllTechDi() {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<DiListTechQueryResult>({
                 query: this.ticketSerice.diListTech(),
                 useInitialLoading: true,
             })
@@ -92,7 +97,6 @@ export class TechDiListComponent {
     }
     load() {
         this.loading = true;
-
         setTimeout(() => {
             this.loading = false;
         }, 2000);
@@ -120,7 +124,7 @@ export class TechDiListComponent {
 
     selectedTechDiag(data) {
         this.apollo
-            .mutate<any>({
+            .mutate<ConfigDiagAffectationMutationResult>({
                 mutation: this.ticketSerice.configDiagAffectation(
                     this.selectedDi,
                     data.value._id
@@ -131,7 +135,7 @@ export class TechDiListComponent {
     }
     selectedTechRep(data) {
         this.apollo
-            .mutate<any>({
+            .mutate<ConfigRepAffectationMutationResult>({
                 mutation: this.ticketSerice.configRepAffectation(
                     this.selectedDi,
                     data.value._id

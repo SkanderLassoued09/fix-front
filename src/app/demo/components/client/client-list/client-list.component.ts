@@ -11,13 +11,32 @@ interface Column {
     header: string;
 }
 
+interface AddClientMutationResponse {
+    createClient: {
+        _id: string;
+    };
+}
+
 interface PageEvent {
     first: number;
     rows: number;
     page: number;
     pageCount: number;
 }
-
+interface GetAllClientQueryResponse {
+    findAllClient: {
+        clientRecords: {
+            _id: string;
+            first_name: string;
+            last_name: string;
+            region: string;
+            address: string;
+            email: string;
+            phone: string;
+        }[];
+        totalClientRecord: number;
+    };
+}
 @Component({
     selector: 'app-client-list',
     // standalone: true,
@@ -79,14 +98,13 @@ export class ClientListComponent {
 
     addClient() {
         this.apollo
-            .mutate<any>({
+            .mutate<AddClientMutationResponse>({
                 mutation: this.clientService.addClient(this.clientForm.value),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
                 this.loading = loading;
                 if (data) {
-                    console.log('🍒[data]:', data);
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
@@ -100,7 +118,6 @@ export class ClientListComponent {
     }
 
     onPageChange(event: PageEvent) {
-        console.log('🥝[event]:', event);
         this.first = event.first;
         this.rows = event.rows;
         this.clients(this.first, this.rows);
@@ -108,7 +125,7 @@ export class ClientListComponent {
 
     clients(first, rows) {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<GetAllClientQueryResponse>({
                 query: this.clientService.getAllClient(this.rows, this.first),
                 useInitialLoading: true,
             })
@@ -120,13 +137,10 @@ export class ClientListComponent {
                         data.findAllClient.totalClientRecord;
                 }
                 console.log('🍼️[errors]:', errors);
-                console.log('🍷[loading]:', loading);
-                console.log('🍡[data]:', data);
             });
     }
 
     editProduct(rowDataClient) {
-        console.log('🍎[rowDataClient]:', rowDataClient);
         this.product = { ...rowDataClient };
         this.productDialog = true;
     }

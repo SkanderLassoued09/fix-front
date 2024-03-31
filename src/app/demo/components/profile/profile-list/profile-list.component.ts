@@ -6,17 +6,11 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { MessageService } from 'primeng/api';
-interface Column {
-    field: string;
-    header: string;
-}
-interface PageEvent {
-    first: number;
-    rows: number;
-    page: number;
-    pageCount: number;
-}
-
+import {
+    AllProfileQueryResponse,
+    PageEvent,
+    ProfileAddMutationResponse,
+} from './profile-list.interfaces';
 @Component({
     selector: 'app-profile-list',
 
@@ -38,19 +32,22 @@ export class ProfileListComponent {
     loading: boolean = false;
     roles;
     cols = [
-        { field: '_id', header: 'Code' },
+        { field: '_id', header: 'ID' },
         { field: 'username', header: 'Username' },
         { field: 'firstName', header: 'Prénom' },
         { field: 'lastName', header: 'Nom' },
         { field: 'phone', header: 'Téléphone' },
         { field: 'role', header: 'Role' },
         { field: 'email', header: 'E-mail' },
-        { field: 'createdAt', header: 'Créé le' },
-        { field: 'updatedAt', header: 'Mise à jour le' },
+        { field: 'createdAt', header: 'Créer le' },
+        { field: 'updatedAt', header: 'Modifier le' },
     ];
     first: number = 0;
     page: number;
     rows: number = 10;
+
+    // TODO rectify this 2 any
+
     profileList: any;
     totalProfileCount: any;
     showDialog() {
@@ -72,7 +69,7 @@ export class ProfileListComponent {
 
     addSTAFF() {
         this.apollo
-            .mutate<any>({
+            .mutate<ProfileAddMutationResponse>({
                 mutation: this.profileService.addProfile(this.staffForm.value),
                 useMutationLoading: true,
             })
@@ -102,7 +99,7 @@ export class ProfileListComponent {
     }
     profiles(first, rows) {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<AllProfileQueryResponse>({
                 query: this.profileService.getAllProfile(rows, first),
                 useInitialLoading: true,
             })

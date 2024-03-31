@@ -5,6 +5,18 @@ import { Apollo } from 'apollo-angular';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { LayoutService } from 'src/app/layout/service/app.layout.service';
 
+interface LoginMutationResponse {
+    login: {
+        access_token: string;
+        user: {
+            _id: string;
+            role: string;
+            email: string;
+            username: string;
+        };
+    };
+}
+
 @Component({
     selector: 'app-login',
     templateUrl: './login.component.html',
@@ -38,7 +50,7 @@ export class LoginComponent {
     login() {
         const { username, password } = this.loginForm.value;
         this.apollo
-            .query<any>({
+            .query<LoginMutationResponse>({
                 query: this.profileService.getTokenLogin(username, password),
             })
             .subscribe(({ data }) => {

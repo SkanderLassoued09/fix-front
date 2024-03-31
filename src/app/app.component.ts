@@ -3,6 +3,14 @@ import { MessageService, PrimeNGConfig } from 'primeng/api';
 import { ProfileService } from './demo/service/profile.service';
 import { Apollo } from 'apollo-angular';
 
+interface NotificationSubscriptionResponse {
+    notificationDiagnostic: {
+        _idDi: string;
+        messageNotification: string;
+        _idtechDiag: string;
+    };
+}
+
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
@@ -25,12 +33,10 @@ export class AppComponent implements OnInit {
 
     notification() {
         this.apollo
-            .subscribe<any>({
+            .subscribe<NotificationSubscriptionResponse>({
                 query: this.profileService.notificationDiagnostic(),
             })
             .subscribe(({ data }) => {
-                console.log('🥡[NOTIFICATION]:', data.notificationDiagnostic);
-
                 if (this._idtech == data.notificationDiagnostic._idtechDiag) {
                     this.messageService.add({
                         severity: 'success',

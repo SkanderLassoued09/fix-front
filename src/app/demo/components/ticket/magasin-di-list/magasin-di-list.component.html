@@ -43,7 +43,7 @@
     <p-dialog
         [(visible)]="magasinDiDialog"
         [style]="{ width: '50%', height: '70vh' }"
-        header="Affectation ..."
+        header="Affectation pour les composants"
         [modal]="true"
         styleClass="p-fluid"
     >
@@ -126,7 +126,9 @@
                 </div>
                 <div class="grid align-items-center">
                     <div class="col">
-                        <label for="name">Choisir un composant</label>
+                        <label for="name"
+                            >Affecter un status pour le composant</label
+                        >
                         <p-dropdown
                             [options]="statusComposant"
                             (onChange)="selectedDropDown($event)"

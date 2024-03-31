@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
+import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.interface';
 
 @Injectable({
     providedIn: 'root',
 })
 export class TicketService {
     constructor() {}
+    //Ask skander
     getAllDi() {
         return gql`
             {
@@ -61,7 +63,7 @@ export class TicketService {
             }
         `;
     }
-
+    // query getAllMagasin change with variable
     getAllMagasin() {
         return gql`
             {
@@ -85,7 +87,6 @@ export class TicketService {
                         di_category_id
                         array_composants {
                             nameComposant
-
                             quantity
                         }
                     }
@@ -111,12 +112,9 @@ export class TicketService {
         return gql`
             mutation {
                 createStat(
-                    createStatInput: {
-                        
-                       
+                    createStatInput: { 
                         _idDi: "${_idDi}"
                         id_tech_diag: "${id_tech_diag}"
-                      
                     }
                 ) {
                     _idDi
@@ -147,7 +145,7 @@ export class TicketService {
     }
 
     // TODO
-    createDi(diInfo) {
+    createDi(diInfo: CreateDiInput) {
         return gql`
         mutation {
             createDi(
@@ -155,7 +153,6 @@ export class TicketService {
                     title: "${diInfo.title}"
                     designiation: "${diInfo.designiation}"
                     typeClient: "${diInfo.typeClient}"
-               
                     status: "${diInfo.status}"
                     client_id: "${diInfo.client_id}"
                     company_id: "${diInfo.company_id}"
@@ -285,28 +282,10 @@ export class TicketService {
     }
 
     updateComposant(composantInfo) {
-        console.log(` mutation {
-                addComposantInfo(
-                    updateComposant: {
-                  
-                        name: "${composantInfo.name}"
-                        package: "${composantInfo.package}"
-                        category_composant_id: "${composantInfo.category_composant_id}"
-                        prix_achat: ${composantInfo.prix_achat}
-                        prix_vente: ${composantInfo.prix_vente}
-                        coming_date: "${composantInfo.coming_date}"
-                        link: "${composantInfo.link}"
-                        quantity_stocked: ${composantInfo.quantity_stocked}
-                        pdf: "${composantInfo.pdf}"
-                        status: "${composantInfo.status}"
-                    }
-                )
-            }`);
         return gql`
             mutation {
                 addComposantInfo(
-                    updateComposant: {
-                  
+                    updateComposant: {    
                         name: "${composantInfo.name}"
                         package: "${composantInfo.package}"
                         category_composant_id: "${composantInfo.category_composant_id}"

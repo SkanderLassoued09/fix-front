@@ -2,6 +2,11 @@ import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import {
+    ComposantByNameQueryResponse,
+    GetAllMagasinQueryResponse,
+    UpdateComposantMutationResponse,
+} from './magasin-di-list.interfaces';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -11,11 +16,7 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 export class MagasinDiListComponent {
     formUpdateComposant: FormGroup;
     // TODO change it to file of constant and instead of array of string , change it to object key value
-    statusComposant: Array<any> = [
-        { name: 'INTERN', value: 'INTERN' },
-        { name: 'EXTERN', value: 'EXTERN' },
-        { name: 'INSTOCK', value: 'INSTOCK' },
-    ];
+    //! Done but you did not use it in here
     magasinDiDialog: boolean = false;
     cols = [
         { field: '_id', header: 'ID' },
@@ -82,7 +83,7 @@ export class MagasinDiListComponent {
 
     getDi() {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<GetAllMagasinQueryResponse>({
                 query: this.ticketSerice.getAllMagasin(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -100,7 +101,7 @@ export class MagasinDiListComponent {
         console.log('🥥[selectedItem]:', selectedItem);
         this.selectedItem = selectedItem;
         this.apollo
-            .query<any>({
+            .query<ComposantByNameQueryResponse>({
                 query: this.ticketSerice.composantByName(selectedItem.value),
             })
             .subscribe(({ data, loading }) => {
@@ -129,7 +130,7 @@ export class MagasinDiListComponent {
     updateComposant() {
         console.log('🌭', this.formUpdateComposant.value);
         this.apollo
-            .mutate<any>({
+            .mutate<UpdateComposantMutationResponse>({
                 mutation: this.ticketSerice.updateComposant(
                     this.formUpdateComposant.value
                 ),

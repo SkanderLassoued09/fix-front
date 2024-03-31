@@ -9,6 +9,12 @@ import { MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { FormControl, FormGroup } from '@angular/forms';
+import {
+    CreateDiMutationResult,
+    DiQueryResult,
+    GetClientsQueryResult,
+    GetCompaniesQueryResult,
+} from './ticket-list.interface';
 interface Column {
     field: string;
     header: string;
@@ -120,7 +126,7 @@ export class TicketListComponent implements OnInit {
     }
     getDi() {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<DiQueryResult>({
                 query: this.ticketSerice.getAllDi(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -148,7 +154,6 @@ export class TicketListComponent implements OnInit {
     }
 
     getSeverity(status: string) {
-        // console.log('🦀[status]:', status);
         switch (status) {
             case 'PENDING3':
                 return 'success';
@@ -195,7 +200,7 @@ export class TicketListComponent implements OnInit {
         };
         console.log('🍣[diInfo]:', diInfo);
         this.apollo
-            .mutate<any>({
+            .mutate<CreateDiMutationResult>({
                 mutation: this.ticketSerice.createDi(diInfo),
                 useMutationLoading: true,
             })
@@ -218,7 +223,7 @@ export class TicketListComponent implements OnInit {
 
     getCompanyList() {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<GetCompaniesQueryResult>({
                 query: this.ticketSerice.getCompanies(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -231,7 +236,7 @@ export class TicketListComponent implements OnInit {
 
     getClientList() {
         this.apollo
-            .watchQuery<any>({
+            .watchQuery<GetClientsQueryResult>({
                 query: this.ticketSerice.getClients(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
