@@ -29,6 +29,10 @@ export class TicketService {
                         createdBy
                         location_id
                         di_category_id
+                        array_composants {
+                            nameComposant
+                            quantity
+                        }
                     }
                     totalDiCount
                 }
@@ -146,6 +150,7 @@ export class TicketService {
 
     // TODO
     createDi(diInfo: CreateDiInput) {
+        console.log('🍭[diInfo]:', diInfo);
         return gql`
         mutation {
             createDi(
@@ -187,7 +192,7 @@ export class TicketService {
         `;
     }
 
-    tech_startDiagnostic(_idDi) {
+    tech_startDiagnostic(_idDi: string) {
         return gql`
             mutation {
                 tech_startDiagnostic(_id: "${_idDi}") {
@@ -298,6 +303,83 @@ export class TicketService {
                         status: "${composantInfo.status}"
                     }
                 )
+            }
+        `;
+    }
+
+    totalComposant(_id: string) {
+        return gql`
+            {
+                calculateTicketComposantPrice(_id: "${_id}")
+            }
+        `;
+    }
+
+    /**
+     * Change DI status section
+     */
+
+    changeStatusDiToPending1(_id: string) {
+        return gql`
+            mutation {
+                changeStatusPending1(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusDiToInDiagnostique(_id: string) {
+        return gql`
+            mutation {
+                changeStatusInDiagnostic(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusDiToInMagasin(_id: string) {
+        return gql`
+            mutation {
+                changeStatusInMagasin(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusDiToPending2(_id: string) {
+        return gql`
+            mutation {
+                changeStatusPending2(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusPricing(_id: string) {
+        return gql`
+            mutation {
+                changeStatusPricing(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusNegociate1(_id: string) {
+        return gql`
+            mutation {
+                changeStatusNegociate1(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusNegociate2(_id: string) {
+        return gql`
+            mutation {
+                changeStatusNegociate2(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusPending3(_id: string) {
+        return gql`
+            mutation {
+                changeStatusPending3(_id: "${_id}")
+            }
+        `;
+    }
+
+    pricing(_id: string, price: number) {
+        return gql`
+            mutation {
+                affectinitialPrice(_id: "${_id}", price: ${price})
             }
         `;
     }

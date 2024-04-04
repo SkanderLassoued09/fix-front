@@ -10,6 +10,7 @@
                     {{ col.header }}
                 </th>
                 <th style="min-width: 10rem">Config</th>
+                <th style="min-width: 10rem">Tarification</th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
@@ -34,6 +35,15 @@
                         icon="pi pi-wrench"
                         class="p-button-rounded p-button-raised p-button-secondary mr-2"
                         (click)="openModalConfig(rowData)"
+                    ></button>
+                </td>
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-wrench"
+                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        (click)="showDialogForPricing(rowData)"
                     ></button>
                 </td>
             </tr>
@@ -100,6 +110,22 @@
                 (click)="hideDialog()"
             ></button>
         </ng-template>
+    </p-dialog>
+
+    <p-dialog
+        [(visible)]="pricingDoalog"
+        [style]="{ width: '50%', height: '70vh' }"
+        header="Pricing"
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <button
+            pButton
+            pRipple
+            label="Pricing"
+            icon="pi pi-times"
+            class="p-button-text"
+        ></button>
     </p-dialog>
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 </div>

@@ -38,6 +38,8 @@ import { ChipsModule } from 'primeng/chips';
 import { InplaceModule } from 'primeng/inplace';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
+import { SliderModule } from 'primeng/slider';
+
 @NgModule({
     declarations: [
         TicketListComponent,
@@ -75,6 +77,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
         InplaceModule,
         MultiSelectModule,
         InputNumberModule,
+        SliderModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

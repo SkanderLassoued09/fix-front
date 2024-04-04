@@ -52,6 +52,7 @@ export class CoordinatorDiListComponent {
     di: any;
     techList: any;
     selectedDi: any;
+    pricingDoalog: boolean = false;
 
     constructor(private ticketSerice: TicketService, private apollo: Apollo) {
         // this.roles = ROLES;
@@ -72,9 +73,6 @@ export class CoordinatorDiListComponent {
                 query: this.ticketSerice.getAllDiForCoordinator(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥕[errors]:', errors);
-                console.log('🍸[loading]:', loading);
-                console.log('🍼️[data]:', data);
                 if (data) {
                     this.diList = data.get_coordinatorDI.di;
                     this.diListCount = data.get_coordinatorDI.totalDiCount;
@@ -88,13 +86,8 @@ export class CoordinatorDiListComponent {
                 query: this.ticketSerice.getAllTech(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥕[errors]:', errors);
-                console.log('🍸[loading]:', loading);
-                console.log('🍼️[data]:', data);
                 if (data) {
                     this.techList = data.getAllTech;
-
-                    console.log('🍍[this.techList]:', this.techList);
                 }
             });
     }
@@ -108,13 +101,16 @@ export class CoordinatorDiListComponent {
 
     openModalConfig(di) {
         this.di = { ...di };
-        console.log('🥘[di]:', this.di);
         this.selectedDi = di._id;
         this.diDialog = true;
     }
 
+    // this will show only if status allows
+    showDialogForPricing() {
+        this.pricingDoalog = true;
+    }
+
     getSeverity(status: string) {
-        // console.log('🦀[status]:', status);
         switch (status) {
             case 'PENDING3':
                 return 'success';
@@ -137,17 +133,15 @@ export class CoordinatorDiListComponent {
     updateStatusDiag() {
         this.apollo
             .mutate<TechStartDiagnosticMutationResponse>({
-                mutation: this.ticketSerice.tech_startDiagnostic(
+                mutation: this.ticketSerice.changeStatusDiToPending1(
                     this.selectedDi
                 ),
+                useMutationLoading: true,
             })
-            .subscribe(({ data }) => {
-                console.log('🦑[data]:', data);
-            });
+            .subscribe(({ data, loading }) => {});
     }
 
     selectedTechDiag(data) {
-        console.log('🍭[data selected tech]:', data);
         this.apollo
             .mutate<ConfigDiagAffectationMutationResponse>({
                 mutation: this.ticketSerice.configDiagAffectation(
@@ -157,16 +151,12 @@ export class CoordinatorDiListComponent {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
-                console.log('🥘[errors]:', errors);
-                console.log('🍝[loading]:', loading);
-                console.log('🧀[data]:', data);
                 if (data) {
                     this.updateStatusDiag();
                 }
             });
     }
     selectedTechRep(data) {
-        console.log('🥒'), this.selectedDi, data.value._id;
         this.apollo
             .mutate<ConfigRepAffectationMutationResponse>({
                 mutation: this.ticketSerice.configRepAffectation(
@@ -175,10 +165,6 @@ export class CoordinatorDiListComponent {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
-                console.log('🥘[errors]:', errors);
-                console.log('🍝[loading]:', loading);
-                console.log('🧀[data]:', data);
-            });
+            .subscribe(({ data, loading, errors }) => {});
     }
 }

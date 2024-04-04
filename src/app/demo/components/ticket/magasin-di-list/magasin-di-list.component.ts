@@ -31,6 +31,7 @@ export class MagasinDiListComponent {
     arrayComposant: any;
     selectedItem: any;
     loadedDataComposant: any;
+    selectedDi_id: any;
 
     constructor(private ticketSerice: TicketService, private apollo: Apollo) {
         this.formUpdateComposant = new FormGroup({
@@ -69,6 +70,7 @@ export class MagasinDiListComponent {
 
     openDialogMagasin(item) {
         console.log('🍠[item]:', item);
+        this.selectedDi_id = item._id;
 
         this.arrayComposant = item.array_composants.map((el) => {
             return {
@@ -127,6 +129,16 @@ export class MagasinDiListComponent {
             });
     }
 
+    changeStatusDiToPending2(_id: string) {
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.changeStatusDiToPending2(_id),
+            })
+            .valueChanges.subscribe(({ data, loading }) => {
+                console.log('🍩[data]:', data);
+            });
+    }
+
     updateComposant() {
         console.log('🌭', this.formUpdateComposant.value);
         this.apollo
@@ -139,6 +151,10 @@ export class MagasinDiListComponent {
             .subscribe(({ data, loading }) => {
                 console.log('🥐[loading]:', loading);
                 console.log('🌮[data]:', data);
+
+                if (data) {
+                    this.changeStatusDiToPending2(this.selectedDi_id);
+                }
             });
     }
 }

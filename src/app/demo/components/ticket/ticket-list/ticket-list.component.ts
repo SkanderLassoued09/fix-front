@@ -25,30 +25,6 @@ interface UploadEvent {
     files: File[];
 }
 
-/**
- * import pdf : 
- *     exportPdf() {
-        import('jspdf').then((jsPDF) => {
-            import('jspdf-autotable').then((x) => {
-                const doc = new jsPDF.default('p', 'px', 'a4');
-                (doc as any).autoTable(this.exportColumns, this.products);
-                doc.save('products.pdf');
-            });
-        });
-    }
-    *------*
-
-    import excel
-    exportExcel() {
-        import('xlsx').then((xlsx) => {
-            const worksheet = xlsx.utils.json_to_sheet(this.products);
-            const workbook = { Sheets: { data: worksheet }, SheetNames: ['data'] };
-            const excelBuffer: any = xlsx.write(workbook, { bookType: 'xlsx', type: 'array' });
-            this.saveAsExcelFile(excelBuffer, 'products');
-        });
-    }
- */
-
 @Component({
     selector: 'app-ticket-list',
     standalone: false,
@@ -108,6 +84,15 @@ export class TicketListComponent implements OnInit {
     clientListDropDown: any;
     companiesListDropDown: any;
     loadingCreatingDi: boolean;
+    pricingDoalog: boolean = false;
+    discountPercent;
+    totalComposant: any;
+    array_composants: any;
+    _idDi: any;
+    price: number;
+    seletedRow: any;
+    discountedPrice1Neg: number;
+    slideEnd: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -124,19 +109,89 @@ export class TicketListComponent implements OnInit {
     showDialog() {
         this.openAddDiModal = true;
     }
+    // this will show only if status allows
+    showDialogForPricing(data) {
+        console.log('🥘[data]:', data);
+        this.seletedRow = data;
+        this._idDi = data._id;
+        this.array_composants = data.array_composants;
+
+        this.pricingDoalog = true;
+
+        this.changeStatusPricing(data._id);
+        this.getTotalComposant(data._id);
+    }
     getDi() {
         this.apollo
             .watchQuery<DiQueryResult>({
                 query: this.ticketSerice.getAllDi(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥕[errors]:', errors);
-                console.log('🍸[loading]:', loading);
-                console.log('🍼️[dataDI]:', data);
                 if (data) {
                     this.diList = data.getAllDi.di;
                     this.diListCount = data.getAllDi.totalDiCount;
                 }
+            });
+    }
+
+    changeStatusPricing(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusPricing(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍑[data]:', data);
+            });
+    }
+    getTotalComposant(_id: string) {
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.totalComposant(_id),
+            })
+            .valueChanges.subscribe(({ data }) => {
+                console.log('🍝[data]:', data);
+                this.totalComposant = data.calculateTicketComposantPrice;
+            });
+    }
+
+    pricing() {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.pricing(this._idDi, this.price),
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🍍[data]:', data);
+                if (data) {
+                    this.changeStatusNegiciate1(this._idDi);
+                }
+            });
+    }
+
+    changeStatusNegiciate1(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusNegociate1(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍑[data]:', data);
+            });
+    }
+    changeStatusNegociate2(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusNegociate2(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍑[data]:', data);
+            });
+    }
+    changeStatusPending3(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusPending3(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍑[data]:', data);
             });
     }
     load() {
@@ -166,7 +221,6 @@ export class TicketListComponent implements OnInit {
         }
     }
     getSt(selected) {
-        console.log('🥗[selected]:', selected);
         this.radioBtn = selected.value;
     }
     onSelectStatusDefaultDI(selectedStatus) {
@@ -176,7 +230,6 @@ export class TicketListComponent implements OnInit {
         } else {
             this.statusDI = STATUS_DI.CREATED;
         }
-        console.log('🥠[selectedStatus]:', this.statusDI);
     }
 
     createDi() {
@@ -198,7 +251,6 @@ export class TicketListComponent implements OnInit {
             status: this.statusDI,
             typeClient,
         };
-        console.log('🍣[diInfo]:', diInfo);
         this.apollo
             .mutate<CreateDiMutationResult>({
                 mutation: this.ticketSerice.createDi(diInfo),
@@ -206,9 +258,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data, loading, errors }) => {
                 this.loadingCreatingDi = loading;
-                console.log('🍡[errors]:', errors);
-                console.log('🍲[loading]:', loading);
-                console.log('🥃[data]:', data);
+
                 if (data) {
                     this.messageservice.add({
                         severity: 'success',
@@ -227,7 +277,6 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getCompanies(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🍸[data]:', data);
                 if (data) {
                     this.companiesListDropDown = data.getAllComapnyforDropDown;
                 }
@@ -240,7 +289,6 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getClients(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥥[data]:', data);
                 if (data) {
                     this.clientListDropDown = data.getAllClient.map(
                         (client) => ({
@@ -250,6 +298,33 @@ export class TicketListComponent implements OnInit {
                     );
                 }
             });
+    }
+
+    onSlideEnd(percent) {
+        console.log('🍻[percent]:', percent);
+        this.slideEnd = percent.value;
+    }
+
+    discountByPercent() {
+        this.discountedPrice1Neg =
+            (this.totalComposant * this.discountPercent) / 100;
+
+        if (this.discountedPrice1Neg) {
+            this.changeStatusNegiciate1(this.seletedRow._id);
+        }
+    }
+
+    discountByPercent2() {
+        this.discountedPrice1Neg =
+            (this.totalComposant * this.discountPercent) / 100;
+
+        if (this.discountedPrice1Neg) {
+            this.changeStatusPending3(this.seletedRow._id);
+        }
+    }
+
+    nextNegociate2() {
+        this.changeStatusNegociate2(this.seletedRow._id);
     }
 }
 /**

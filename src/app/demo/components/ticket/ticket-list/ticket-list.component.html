@@ -168,8 +168,122 @@
                         class="p-button-rounded p-button-raised p-button-danger"
                         (click)="deleteProduct(rowData)"
                     ></button>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-plus"
+                        class="p-button-rounded p-button-raised p-button-danger"
+                        (click)="showDialogForPricing(rowData)"
+                    ></button>
                 </td>
             </tr>
         </ng-template>
     </p-table>
 </div>
+<p-dialog
+    header="Pricing"
+    [(visible)]="pricingDoalog"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <ng-container *ngIf="seletedRow?.status === 'PENDING2'; else negociate2">
+        <div>
+            @for (item of array_composants; track $index) {
+            <div>Composant:{{ item.nameComposant }}</div>
+            <div>Quantity:{{ item.quantity }}</div>
+            } @empty {
+            <div>Array is empty</div>
+            }
+            <h1 *ngIf="totalComposant; else notPrice">
+                Total {{ totalComposant }} TND
+            </h1>
+        </div>
+        <ng-template #notPrice>
+            <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        </ng-template>
+        <div>
+            <p-inputNumber inputId="integeronly" [(ngModel)]="price">
+            </p-inputNumber>
+            <button
+                pButton
+                pRipple
+                label="discount"
+                icon="pi pi-plus"
+                class="p-button-rounded p-button-raised p-button-success"
+                (click)="pricing()"
+            ></button></div
+    ></ng-container>
+</p-dialog>
+
+<ng-template #negociate2>
+    <div>
+        <div>
+            <p-inputNumber
+                [(ngModel)]="discountPercent"
+                inputId="percent"
+                prefix="%"
+            >
+            </p-inputNumber>
+        </div>
+        <div>
+            <p-slider
+                max="20"
+                [(ngModel)]="discountPercent"
+                class="w-full"
+                (onSlideEnd)="onSlideEnd($event)"
+            ></p-slider>
+        </div>
+        <button
+            pButton
+            pRipple
+            label="discount"
+            icon="pi pi-plus"
+            class="p-button-rounded p-button-raised p-button-success"
+            (click)="discountByPercent()"
+        ></button>
+        <h6>dicount value : {{ discountedPrice1Neg }}</h6>
+        <ng-container *ngIf="slideEnd === 20">
+            <button
+                pButton
+                pRipple
+                label="Next negio"
+                icon="pi pi-plus"
+                class="p-button-rounded p-button-raised p-button-success"
+                (click)="nextNegociate2()"
+            ></button
+        ></ng-container>
+        <ng-container *ngIf="seletedRow?.status === 'NEGOTIATION2'">
+            <div>
+                ng2
+                <div>
+                    <p-inputNumber
+                        [(ngModel)]="discountPercent"
+                        inputId="percent"
+                        prefix="%"
+                    >
+                    </p-inputNumber>
+                </div>
+                <div>
+                    <p-slider
+                        [min]="20"
+                        [max]="25"
+                        [(ngModel)]="discountPercent"
+                        class="w-full"
+                        (onSlideEnd)="onSlideEnd($event)"
+                    ></p-slider>
+                </div>
+                <button
+                    pButton
+                    pRipple
+                    label="discount"
+                    icon="pi pi-plus"
+                    class="p-button-rounded p-button-raised p-button-success"
+                    (click)="discountByPercent()"
+                ></button>
+                <h6>dicount value : {{ discountedPrice1Neg }}</h6>
+            </div></ng-container
+        >
+    </div>
+</ng-template>

@@ -29,6 +29,7 @@ export class AppComponent implements OnInit {
     ngOnInit() {
         this.primengConfig.ripple = true;
         this.notification();
+        console.log('🍸[notification');
     }
 
     notification() {

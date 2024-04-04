@@ -108,6 +108,7 @@ export class TechDiListComponent {
         this.selectedDi_id = di._idDi;
         this.diDialogDiag = true;
         this.startStopwatch();
+        this.changeStatus(di._idDi);
     }
     repModal(di) {
         this.di = { ...di };
@@ -143,6 +144,16 @@ export class TechDiListComponent {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {});
+    }
+
+    changeStatus(_id) {
+        this.apollo
+            .mutate<Boolean>({
+                mutation: this.ticketSerice.changeStatusDiToInDiagnostique(_id),
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🍰[data]:', data);
+            });
     }
 
     // handling stopwatch
@@ -265,6 +276,17 @@ export class TechDiListComponent {
         this.composantCombo.push(composantSelected);
     }
 
+    changeStatusInMagasin(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusDiToInMagasin(_id),
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🦀[loading]:', loading);
+                console.log('🍭[data]:', data);
+            });
+    }
+
     techFinishDiag() {
         this.lapTimeForPauseAndGetBack();
 
@@ -282,7 +304,11 @@ export class TechDiListComponent {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading }) => {
+                console.log('🎂[loading]:', loading);
                 console.log('🥝[data]:', data);
+                if (data) {
+                    this.changeStatusInMagasin(dataDiag._idDi);
+                }
             });
     }
 }
