@@ -306,8 +306,7 @@ export class TicketListComponent implements OnInit {
     }
 
     discountByPercent() {
-        this.discountedPrice1Neg =
-            (this.totalComposant * this.discountPercent) / 100;
+        this.discountedPrice1Neg = (this.price * this.discountPercent) / 100;
 
         if (this.discountedPrice1Neg) {
             this.changeStatusNegiciate1(this.seletedRow._id);

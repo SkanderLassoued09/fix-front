@@ -9,6 +9,7 @@ import {
     GetAllTechQueryResponse,
     TechStartDiagnosticMutationResponse,
 } from './coordinator-di-list.interfaces';
+import { STATUS_DI } from 'src/app/layout/api/status-di';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -25,7 +26,9 @@ export class CoordinatorDiListComponent {
     roles;
     tstatuses = [{ label: 'Pending3', value: 'Pending3' }];
 
-    ingredient;
+    diag_condition: boolean = true; // enable when status = pending1
+    admin_condition: boolean = true; //enable when status = pending2
+    rep_condition: boolean = true; // enable when status = pending3
 
     uploadedFiles: any[] = [];
     cols = [
@@ -60,10 +63,9 @@ export class CoordinatorDiListComponent {
 
     ngOnInit() {
         this.getDi();
-
         this.getAllTech();
     }
-
+    diagnosticOpen() {}
     showDialog() {
         this.visible = true;
     }
@@ -103,6 +105,18 @@ export class CoordinatorDiListComponent {
         this.di = { ...di };
         this.selectedDi = di._id;
         this.diDialog = true;
+        // condition to send to diag
+        di.status == STATUS_DI.PENDING1
+            ? (this.diag_condition = false)
+            : (this.diag_condition = true);
+        // condition to send to admin
+        di.status == STATUS_DI.PENDING2
+            ? (this.admin_condition = false)
+            : (this.admin_condition = true);
+        //condition to send to repair
+        di.status == STATUS_DI.PENDING3
+            ? (this.rep_condition = false)
+            : (this.rep_condition = true);
     }
 
     // this will show only if status allows

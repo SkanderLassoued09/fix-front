@@ -1,4 +1,19 @@
 export enum STATUS_DI {
-    CREATED = 'CREATED', // withoutr affecting to coordinator
-    PENDING1 = 'PENDING1', // affected to coordinator
+    CREATED = 'CREATED', // withoutr affecting to coordinator	    CREATED = 'CREATED',
+    PENDING1 = 'PENDING1', // affected to coordinator	    PENDING1 = 'PENDING1',
+    DIAGNOSTIC = 'DIAGNOSTIC',
+    INDIAGNOSTIC = 'INDIAGNOSTIC',
+    INMAGASIN = 'INMAGASIN',
+    PENDING2 = 'PENDING2',
+    PRICING = 'PRICING',
+    NEGOTIATION1 = 'NEGOTIATION1',
+    NEGOTIATION2 = 'NEGOTIATION2',
+    PENDING3 = 'PENDING3',
+    REPARATION = 'REPARATION',
+    INREPARATION = 'INREPARATION',
+    FINISHED = 'FINISHED',
+    ANNULER = 'ANNULER',
+    RETOUR1 = 'RETOUR1',
+    RETOUR2 = 'RETOUR2',
+    RETOUR3 = 'RETOUR3',
 }
