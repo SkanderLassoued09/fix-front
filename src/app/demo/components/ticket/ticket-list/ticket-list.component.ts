@@ -44,6 +44,28 @@ export class TicketListComponent implements OnInit {
         company_id: new FormControl(),
         nSerie: new FormControl(),
     });
+    statuses = [
+        { label: 'Created', value: 'CREATED' },
+        { label: 'Pending1', value: 'PENDING1' },
+        { label: 'Diagnostic', value: 'DIAGNOSTIC' },
+        { label: 'Indiagnostic', value: 'INDIAGNOSTIC' },
+        { label: 'Inmagasin', value: 'INMAGASIN' },
+        { label: 'Pending2', value: 'PENDING2' },
+        { label: 'Pricing', value: 'PRICING' },
+        { label: 'Negotiation1', value: 'NEGOTIATION1' },
+        { label: 'Negotiation2', value: 'NEGOTIATION2' },
+        { label: 'Pending3', value: 'PENDING3' },
+        { label: 'Reparation', value: 'REPARATION' },
+        { label: 'Inreparation', value: 'INREPARATION' },
+        { label: 'Finished', value: 'FINISHED' },
+        { label: 'Annuler', value: 'ANNULER' },
+        { label: 'Retour1', value: 'RETOUR1' },
+        { label: 'Retour2', value: 'RETOUR2' },
+        { label: 'Retour3', value: 'RETOUR3' },
+    ];
+
+    // You can use the statuses array in your code wherever needed
+
     sizes = [
         { name: 'Small', class: 'p-datatable-sm' },
         { name: 'Normal', class: '' },

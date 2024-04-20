@@ -123,35 +123,14 @@
 </p-dialog>
 
 <div class="card">
-    <div class="flex justify-content-center mb-3">
-        <!-- p-selectButton for selecting the size -->
-        <p-selectButton
-            [options]="sizes"
-            [(ngModel)]="selectedSize"
-            [multiple]="false"
-            optionLabel="name"
-            optionValue="class"
-            (onChange)="onSizeSelect()"
-        ></p-selectButton>
-    </div>
     <p-table
         [columns]="cols"
         [value]="diList"
-        [styleClass]="selectedSize"
+        styleClass="p-datatable-sm"
         [tableStyle]="{ 'min-width': '20rem' }"
     >
         <ng-template pTemplate="caption">
             <div class="flex">
-                <button
-                    type="button"
-                    pButton
-                    pRipple
-                    icon="pi pi-file"
-                    (click)="dt.exportCSV()"
-                    class="mr-2"
-                    pTooltip="CSV"
-                    tooltipPosition="bottom"
-                ></button>
                 <button
                     type="button"
                     pButton
@@ -178,12 +157,42 @@
             <tr>
                 <th *ngFor="let col of columns" style="min-width: 10rem">
                     {{ col.header }}
-                    <ng-container *ngIf="col.field !== 'status'">
+                    <ng-container>
                         <p-columnFilter
                             *ngIf="col.field !== 'status'"
                             [type]="col.filterType || 'text'"
                             [field]="col.field"
                         ></p-columnFilter>
+                    </ng-container>
+                    <ng-container *ngIf="col.field === 'status'">
+                        <p-columnFilter
+                            field="status"
+                            matchMode="equals"
+                            [showMenu]="false"
+                        >
+                            <ng-template
+                                pTemplate="filter"
+                                let-value
+                                let-filter="filterCallback"
+                            >
+                                <p-dropdown
+                                    [ngModel]="value"
+                                    [options]="statuses"
+                                    (onChange)="filter($event.value)"
+                                    placeholder="Any"
+                                    [showClear]="true"
+                                >
+                                    <ng-template let-option pTemplate="item">
+                                        <p-tag
+                                            [value]="option.value"
+                                            [severity]="
+                                                getSeverity(option.label)
+                                            "
+                                        ></p-tag>
+                                    </ng-template>
+                                </p-dropdown>
+                            </ng-template>
+                        </p-columnFilter>
                     </ng-container>
                 </th>
                 <th style="min-width: 10rem">Actions</th>
@@ -212,7 +221,7 @@
                         ></p-tag>
                     </ng-template>
                 </td>
-                <td>
+                <td class="flex">
                     <button
                         pButton
                         pRipple
@@ -224,7 +233,7 @@
                         pButton
                         pRipple
                         icon="pi pi-trash"
-                        class="p-button-rounded p-button-raised p-button-danger"
+                        class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="deleteProduct(rowData)"
                     ></button>
                     <button
@@ -232,7 +241,7 @@
                         pButton
                         pRipple
                         icon="pi pi-plus"
-                        class="p-button-rounded p-button-raised p-button-danger"
+                        class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForPricing(rowData)"
                     ></button>
                     <button
@@ -240,7 +249,7 @@
                         pButton
                         pRipple
                         icon="pi pi-plus"
-                        class="p-button-rounded p-button-raised p-button-danger"
+                        class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForNegociate1(rowData)"
                     ></button>
                     <button
@@ -248,7 +257,7 @@
                         pButton
                         pRipple
                         icon="pi pi-plus"
-                        class="p-button-rounded p-button-raised p-button-danger"
+                        class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForNegociate2(rowData)"
                     ></button>
                 </td>
