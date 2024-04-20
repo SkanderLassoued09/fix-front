@@ -30,10 +30,6 @@ export class CoordinatorDiListComponent {
     roles;
     tstatuses = [{ label: 'Pending3', value: 'Pending3' }];
 
-    diag_condition: boolean = true; // enable when status = pending1
-    admin_condition: boolean = true; //enable when status = pending2
-    rep_condition: boolean = true; // enable when status = pending3
-
     uploadedFiles: any[] = [];
     cols = [
         { field: '_id', header: 'ID' },
