@@ -16,6 +16,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PaginatorModule } from 'primeng/paginator';
+import { TagModule } from 'primeng/tag';
 @NgModule({
     declarations: [ProfileListComponent],
     imports: [
@@ -34,6 +35,7 @@ import { PaginatorModule } from 'primeng/paginator';
         ReactiveFormsModule,
         ToastModule,
         PaginatorModule,
+        TagModule,
     ],
     providers: [MessageService],
 })

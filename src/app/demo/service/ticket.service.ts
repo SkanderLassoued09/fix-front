@@ -369,6 +369,7 @@ export class TicketService {
         `;
     }
     changeStatusPending3(_id: string) {
+        console.log('🥦[_id]:', _id);
         return gql`
             mutation {
                 changeStatusPending3(_id: "${_id}")

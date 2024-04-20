@@ -65,6 +65,7 @@
                 [showClear]="true"
                 placeholder="Diagnostique"
                 (onChange)="selectedTechDiag($event)"
+                [disabled]="diag_condition"
             ></p-dropdown>
         </div>
         <div class="field">
@@ -75,13 +76,17 @@
                 optionLabel="firstName"
                 [showClear]="true"
                 placeholder="Reparation"
+                [disabled]="rep_condition"
                 (onChange)="selectedTechRep($event)"
             ></p-dropdown>
         </div>
         <div class="field">
             <label for="name">Ouvrir DI pour affecter les prix</label>
             <!-- open ticket for admins -->
-            <p-button label="open for admins"></p-button>
+            <p-button
+                [disabled]="admin_condition"
+                label="open for admins"
+            ></p-button>
         </div>
 
         <div class="field">
