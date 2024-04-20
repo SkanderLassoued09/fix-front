@@ -60,7 +60,6 @@ export class ClientListComponent {
     // cols!: Column[];
     clientsList: any;
     cols = [
-        { field: '_id', header: 'ID' },
         { field: 'first_name', header: 'Prénom' },
         { field: 'last_name', header: 'Nom' },
         { field: 'email', header: 'E-mail' },

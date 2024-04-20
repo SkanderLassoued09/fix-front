@@ -155,6 +155,17 @@ export class CoordinatorDiListComponent {
             .subscribe(({ data, loading }) => {});
     }
 
+    changeStatusRepaire(_id) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusRepaire(_id),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🌯[data changeStatusRepaire]:', data);
+            });
+    }
+
     selectedTechDiag(data) {
         this.apollo
             .mutate<ConfigDiagAffectationMutationResponse>({
@@ -179,6 +190,12 @@ export class CoordinatorDiListComponent {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {});
+            .subscribe(({ data, loading, errors }) => {
+                console.log('🍵[data]:', data);
+
+                if (data) {
+                    this.changeStatusRepaire(this.selectedDi);
+                }
+            });
     }
 }

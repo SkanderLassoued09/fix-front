@@ -99,7 +99,6 @@ export class CompanyListComponent {
     companiesList: any;
 
     cols = [
-        { field: '_id', header: 'ID' },
         { field: 'name', header: 'Nom' },
         { field: 'region', header: 'Région' },
         { field: 'address', header: 'Adresse' },

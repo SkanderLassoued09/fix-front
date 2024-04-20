@@ -114,6 +114,7 @@ export class TechDiListComponent {
         this.di = { ...di };
         this.selectedDi = di._id;
         this.diDialogRep = true;
+        this.changeStatusInReparation(di._id);
     }
 
     hideDialogDiag() {
@@ -150,6 +151,16 @@ export class TechDiListComponent {
         this.apollo
             .mutate<Boolean>({
                 mutation: this.ticketSerice.changeStatusDiToInDiagnostique(_id),
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🍰[data]:', data);
+            });
+    }
+
+    changeStatusInReparation(_id) {
+        this.apollo
+            .mutate<Boolean>({
+                mutation: this.ticketSerice.changeStatusInRepair(_id),
             })
             .subscribe(({ data, loading }) => {
                 console.log('🍰[data]:', data);

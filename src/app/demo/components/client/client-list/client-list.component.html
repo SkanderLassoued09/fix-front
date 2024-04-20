@@ -14,87 +14,83 @@
     [resizable]="false"
 >
     <form [formGroup]="clientForm">
-        <!-- first name field -->
-        <div class="flex-grow">
-            <div class="p-float-label mb-4">
+        <div class="grid">
+            <div class="col">
+                <label for="first_name">Prénom</label>
                 <input
                     formControlName="firstName"
                     pInputText
                     id="first_name"
                     class="pInputText w-full"
                 />
-                <label for="first_name">Prénom</label>
             </div>
-        </div>
-        <!-- last name field -->
-        <div class="flex-grow">
-            <div class="p-float-label mb-4">
+            <div class="col">
+                <label for="last_name">Nom</label>
                 <input
                     formControlName="lastName"
                     pInputText
                     id="last_name"
                     class="pInputText w-full"
                 />
-                <label for="last_name">Nom</label>
             </div>
         </div>
-        <!-- Region field -->
-        <div class="flex-grow">
-            <div class="p-float-label mb-4">
+
+        <div class="grid">
+            <div class="col">
+                <label for="region">Region</label>
                 <p-dropdown
                     formControlName="region"
                     [options]="region"
                     optionLabel="name"
                     [showClear]="true"
                     placeholder="Choisir une region"
+                    styleClass="w-full"
                 ></p-dropdown>
-
-                <label for="region">Region</label>
             </div>
-        </div>
-        <!-- address field -->
-        <div class="flex-grow">
-            <div class="p-float-label mb-4">
+            <div class="col">
+                <label for="address">Adresse</label>
                 <input
                     formControlName="address"
                     pInputText
                     id="address"
                     class="pInputText w-full"
                 />
-                <label for="address">Adresse</label>
             </div>
         </div>
 
-        <!-- E-mail field -->
-        <div class="flex-grow">
-            <div class="p-float-label mb-4">
+        <div class="grid">
+            <div class="col">
+                <label for="email">E-mail</label>
                 <input
                     formControlName="email"
                     pInputText
                     id="email"
                     class="pInputText w-full"
                 />
-                <label for="email">E-mail</label>
             </div>
-        </div>
-        <!-- phone field -->
-        <div class="flex-grow">
-            <p-inputMask
-                id="phone"
-                mask="99 999 999"
-                placeholder="Téléphone"
-                formControlName="phone"
-            ></p-inputMask>
+            <div class="col">
+                <label for="email">Téléphone</label>
+                <p-inputMask
+                    id="phone"
+                    mask="99 999 999"
+                    formControlName="phone"
+                    styleClass="w-full"
+                ></p-inputMask>
+            </div>
         </div>
     </form>
 
     <div class="flex">
         <p-button
-            label="Submit"
+            label="Ajouter"
             [loading]="loading"
             (onClick)="addClient()"
         ></p-button>
-        <p-button label="Danger" severity="danger"></p-button>
+        <p-button
+            label="Annuler"
+            (onClick)="clientForm.reset()"
+            severity="danger"
+        ></p-button>
     </div>
 </p-dialog>
 

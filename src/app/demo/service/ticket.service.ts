@@ -384,4 +384,19 @@ export class TicketService {
             }
         `;
     }
+
+    changeStatusRepaire(_id: string) {
+        return gql`
+            mutation {
+                changeStatusRepaire(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusInRepair(_id: string) {
+        return gql`
+            mutation {
+                changeStatusInRepair(_id: "${_id}")
+            }
+        `;
+    }
 }

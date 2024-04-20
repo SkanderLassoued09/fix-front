@@ -305,6 +305,7 @@
     <p-table
         [columns]="cols"
         [value]="companiesList"
+        styleClass="p-datatable-sm"
         [tableStyle]="{ 'min-width': '50rem' }"
     >
         <ng-template pTemplate="header" let-columns>
@@ -320,7 +321,7 @@
                 <td *ngFor="let col of columns">
                     {{ rowData[col.field] }}
                 </td>
-                <td>
+                <td class="flex">
                     <button
                         pButton
                         pRipple
