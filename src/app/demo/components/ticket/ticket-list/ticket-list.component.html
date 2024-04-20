@@ -123,17 +123,76 @@
 </p-dialog>
 
 <div class="card">
+    <div class="flex justify-content-center mb-3">
+        <!-- p-selectButton for selecting the size -->
+        <p-selectButton
+            [options]="sizes"
+            [(ngModel)]="selectedSize"
+            [multiple]="false"
+            optionLabel="name"
+            optionValue="class"
+            (onChange)="onSizeSelect()"
+        ></p-selectButton>
+    </div>
     <p-table
         [columns]="cols"
         [value]="diList"
+        [styleClass]="selectedSize"
         [tableStyle]="{ 'min-width': '20rem' }"
     >
-        <ng-template pTemplate="header" let-columns>
+        <ng-template pTemplate="caption">
+            <div class="flex">
+                <button
+                    type="button"
+                    pButton
+                    pRipple
+                    icon="pi pi-file"
+                    (click)="dt.exportCSV()"
+                    class="mr-2"
+                    pTooltip="CSV"
+                    tooltipPosition="bottom"
+                ></button>
+                <button
+                    type="button"
+                    pButton
+                    pRipple
+                    icon="pi pi-file-excel"
+                    (click)="exportExcel()"
+                    class="p-button-success mr-2"
+                    pTooltip="XLS"
+                    tooltipPosition="bottom"
+                ></button>
+                <button
+                    type="button"
+                    pButton
+                    pRipple
+                    icon="pi pi-file-pdf"
+                    (click)="exportPdf()"
+                    class="p-button-warning mr-2"
+                    pTooltip="PDF"
+                    tooltipPosition="bottom"
+                ></button>
+            </div>
+        </ng-template>
+        <ng-template pTemplate="header" let-rowData let-columns>
             <tr>
                 <th *ngFor="let col of columns" style="min-width: 10rem">
                     {{ col.header }}
+                    <ng-container *ngIf="col.field !== 'status'">
+                        <p-columnFilter
+                            *ngIf="col.field !== 'status'"
+                            [type]="col.filterType || 'text'"
+                            [field]="col.field"
+                        ></p-columnFilter>
+                    </ng-container>
                 </th>
                 <th style="min-width: 10rem">Actions</th>
+                <th
+                    style="min-width: 10rem"
+                    *ngIf="rowData.status === 'PENDING2'"
+                >
+                    Pricing
+                </th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
@@ -169,18 +228,129 @@
                         (click)="deleteProduct(rowData)"
                     ></button>
                     <button
+                        *ngIf="rowData.status === 'PENDING2'"
                         pButton
                         pRipple
                         icon="pi pi-plus"
                         class="p-button-rounded p-button-raised p-button-danger"
                         (click)="showDialogForPricing(rowData)"
                     ></button>
+                    <button
+                        *ngIf="rowData.status === 'NEGOTIATION1'"
+                        pButton
+                        pRipple
+                        icon="pi pi-plus"
+                        class="p-button-rounded p-button-raised p-button-danger"
+                        (click)="showDialogForNegociate1(rowData)"
+                    ></button>
+                    <button
+                        *ngIf="rowData.status === 'NEGOTIATION2'"
+                        pButton
+                        pRipple
+                        icon="pi pi-plus"
+                        class="p-button-rounded p-button-raised p-button-danger"
+                        (click)="showDialogForNegociate2(rowData)"
+                    ></button>
                 </td>
             </tr>
         </ng-template>
     </p-table>
 </div>
+
+<!-- NEGOTIATION1 -->
+
 <p-dialog
+    header="Pricing"
+    [(visible)]="negocite1Modal"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <ng-container>
+        <div>
+            <div>
+                <p-inputNumber
+                    [(ngModel)]="discountPercent"
+                    inputId="percent"
+                    prefix="%"
+                >
+                </p-inputNumber>
+            </div>
+            <div>
+                <p-slider
+                    max="20"
+                    [(ngModel)]="discountPercent"
+                    class="w-full"
+                    (onSlideEnd)="onSlideEnd($event)"
+                ></p-slider>
+            </div>
+            <button
+                pButton
+                pRipple
+                label="discount"
+                icon="pi pi-plus"
+                class="p-button-rounded p-button-raised p-button-success"
+                (click)="discountByPercent()"
+            ></button>
+            <h6>dicount value : {{ discountedPrice1Neg }}</h6>
+            <ng-container *ngIf="slideEnd === 20">
+                <button
+                    pButton
+                    pRipple
+                    label="Next negio"
+                    icon="pi pi-plus"
+                    class="p-button-rounded p-button-raised p-button-success"
+                    (click)="nextNegociate2()"
+                ></button
+            ></ng-container>
+        </div>
+    </ng-container>
+</p-dialog>
+
+<!-- NEGOTIATION2 -->
+<p-dialog
+    header="NEGOTIATION2"
+    [(visible)]="negocite2Modal"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <ng-container>
+        <div>
+            ng2
+            <div>
+                <p-inputNumber
+                    [(ngModel)]="discountPercent"
+                    inputId="percent"
+                    prefix="%"
+                >
+                </p-inputNumber>
+            </div>
+            <div>
+                <p-slider
+                    [min]="20"
+                    [max]="25"
+                    [(ngModel)]="discountPercent"
+                    class="w-full"
+                    (onSlideEnd)="onSlideEnd($event)"
+                ></p-slider>
+            </div>
+            <button
+                pButton
+                pRipple
+                label="discount"
+                icon="pi pi-plus"
+                class="p-button-rounded p-button-raised p-button-success"
+                (click)="discountByPercent2()"
+            ></button>
+            <h6>dicount value : {{ discountedPrice1Neg }}</h6>
+        </div></ng-container
+    >
+</p-dialog>
+<p-dialog
+    *ngIf="seletedRow?.status === 'PENDING2'"
     header="Pricing"
     [(visible)]="pricingDoalog"
     [modal]="true"
@@ -188,7 +358,7 @@
     [draggable]="false"
     [resizable]="false"
 >
-    <ng-container *ngIf="seletedRow?.status === 'PENDING2'; else negociate2">
+    <ng-container>
         <div>
             @for (item of array_composants; track $index) {
             <div>Composant:{{ item.nameComposant }}</div>
@@ -216,74 +386,3 @@
             ></button></div
     ></ng-container>
 </p-dialog>
-
-<ng-template #negociate2>
-    <div>
-        <div>
-            <p-inputNumber
-                [(ngModel)]="discountPercent"
-                inputId="percent"
-                prefix="%"
-            >
-            </p-inputNumber>
-        </div>
-        <div>
-            <p-slider
-                max="20"
-                [(ngModel)]="discountPercent"
-                class="w-full"
-                (onSlideEnd)="onSlideEnd($event)"
-            ></p-slider>
-        </div>
-        <button
-            pButton
-            pRipple
-            label="discount"
-            icon="pi pi-plus"
-            class="p-button-rounded p-button-raised p-button-success"
-            (click)="discountByPercent()"
-        ></button>
-        <h6>dicount value : {{ discountedPrice1Neg }}</h6>
-        <ng-container *ngIf="slideEnd === 20">
-            <button
-                pButton
-                pRipple
-                label="Next negio"
-                icon="pi pi-plus"
-                class="p-button-rounded p-button-raised p-button-success"
-                (click)="nextNegociate2()"
-            ></button
-        ></ng-container>
-        <ng-container *ngIf="seletedRow?.status === 'NEGOTIATION2'">
-            <div>
-                ng2
-                <div>
-                    <p-inputNumber
-                        [(ngModel)]="discountPercent"
-                        inputId="percent"
-                        prefix="%"
-                    >
-                    </p-inputNumber>
-                </div>
-                <div>
-                    <p-slider
-                        [min]="20"
-                        [max]="25"
-                        [(ngModel)]="discountPercent"
-                        class="w-full"
-                        (onSlideEnd)="onSlideEnd($event)"
-                    ></p-slider>
-                </div>
-                <button
-                    pButton
-                    pRipple
-                    label="discount"
-                    icon="pi pi-plus"
-                    class="p-button-rounded p-button-raised p-button-success"
-                    (click)="discountByPercent()"
-                ></button>
-                <h6>dicount value : {{ discountedPrice1Neg }}</h6>
-            </div></ng-container
-        >
-    </div>
-</ng-template>

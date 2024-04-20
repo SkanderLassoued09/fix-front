@@ -120,6 +120,7 @@
         [columns]="cols"
         [value]="profileList"
         [tableStyle]="{ 'min-width': '50rem' }"
+        styleClass="p-datatable-sm"
     >
         <ng-template pTemplate="header" let-columns>
             <tr>
@@ -132,9 +133,17 @@
         <ng-template pTemplate="body" let-rowData let-columns="columns">
             <tr>
                 <td *ngFor="let col of columns">
-                    {{ rowData[col.field] }}
+                    <ng-container *ngIf="col.field !== 'role'; else roleColumn">
+                        {{ rowData[col.field] }}
+                    </ng-container>
+                    <ng-template #roleColumn>
+                        <p-tag
+                            [value]="rowData[col.field]"
+                            [severity]="getSeverity(rowData[col.field])"
+                        ></p-tag>
+                    </ng-template>
                 </td>
-                <td>
+                <td class="flex">
                     <button
                         pButton
                         pRipple

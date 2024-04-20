@@ -32,7 +32,6 @@ export class ProfileListComponent {
     loading: boolean = false;
     roles;
     cols = [
-        { field: '_id', header: 'ID' },
         { field: 'username', header: 'Username' },
         { field: 'firstName', header: 'Prénom' },
         { field: 'lastName', header: 'Nom' },
@@ -113,5 +112,25 @@ export class ProfileListComponent {
                         data.getAllProfiles.totalProfileCount;
                 }
             });
+    }
+
+    getSeverity(status: string) {
+        console.log('🍛[status]:', status);
+        switch (status) {
+            case 'ADMIN_MANAGER':
+                return 'success';
+            case 'ADMIN_TECH':
+                return 'warning';
+            case 'TECH':
+                return 'danger';
+            case 'COORDIANTOR':
+                return 'danger';
+            case 'MAGASIN':
+                return 'danger';
+            case 'MANAGER':
+                return 'danger';
+            default:
+                return 'warn';
+        }
     }
 }

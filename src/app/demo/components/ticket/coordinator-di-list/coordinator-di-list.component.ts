@@ -21,7 +21,11 @@ import { STATUS_DI } from 'src/app/layout/api/status-di';
 export class CoordinatorDiListComponent {
     visible: boolean = false;
     products!: Product[];
-
+    //--
+    diag_condition: boolean = true; // enable when status = pending1
+    admin_condition: boolean = true; //enable when status = pending2
+    rep_condition: boolean = true; // enable when status = pending3
+    //--
     loading: boolean = false;
     roles;
     tstatuses = [{ label: 'Pending3', value: 'Pending3' }];

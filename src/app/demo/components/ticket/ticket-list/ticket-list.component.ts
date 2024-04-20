@@ -15,6 +15,7 @@ import {
     GetClientsQueryResult,
     GetCompaniesQueryResult,
 } from './ticket-list.interface';
+import * as FileSaver from 'file-saver';
 interface Column {
     field: string;
     header: string;
@@ -43,6 +44,11 @@ export class TicketListComponent implements OnInit {
         company_id: new FormControl(),
         nSerie: new FormControl(),
     });
+    sizes = [
+        { name: 'Small', class: 'p-datatable-sm' },
+        { name: 'Normal', class: '' },
+        { name: 'Large', class: 'p-datatable-lg' },
+    ];
     openAddDiModal: boolean = false;
     radioBtn;
     selectedStatusDefault;
@@ -63,7 +69,6 @@ export class TicketListComponent implements OnInit {
     ingredient;
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_id', header: 'ID' },
         { field: 'title', header: 'Title' },
         // { field: 'description', header: 'Description' },
         // { field: 'can_be_repaired', header: 'Reparable' },
@@ -93,6 +98,13 @@ export class TicketListComponent implements OnInit {
     seletedRow: any;
     discountedPrice1Neg: number;
     slideEnd: any;
+    negocite1Modal: boolean;
+    negocite2Modal: boolean = false;
+    s: any;
+    secondNegocition: any;
+    slectedRow: any;
+    exportColumns: any;
+    selectedSize;
 
     constructor(
         private ticketSerice: TicketService,
@@ -120,6 +132,22 @@ export class TicketListComponent implements OnInit {
 
         this.changeStatusPricing(data._id);
         this.getTotalComposant(data._id);
+    }
+    showDialogForNegociate1(data) {
+        this.seletedRow = data._id;
+        this.secondNegocition = data._id;
+        console.log('🍈[ this.s]:', this.s);
+        this.negocite1Modal = true;
+        this.getTotalComposant(data._id);
+    }
+    showDialogForNegociate2(data) {
+        this.slectedRow = data._id;
+        this.negocite2Modal = true;
+        this.getTotalComposant(data._id);
+    }
+
+    onSizeSelect() {
+        console.log('Selected size:', this.selectedSize);
     }
     getDi() {
         this.apollo
@@ -151,6 +179,7 @@ export class TicketListComponent implements OnInit {
             .valueChanges.subscribe(({ data }) => {
                 console.log('🍝[data]:', data);
                 this.totalComposant = data.calculateTicketComposantPrice;
+                console.log('🍌[ this.totalComposant ]:', this.totalComposant);
             });
     }
 
@@ -311,19 +340,99 @@ export class TicketListComponent implements OnInit {
         if (this.discountedPrice1Neg) {
             this.changeStatusNegiciate1(this.seletedRow._id);
         }
+
+        console.log('🍨', this.discountPercent);
+        console.log('🍨', this.totalComposant);
+        console.log('🍨', this.discountedPrice1Neg);
     }
 
     discountByPercent2() {
         this.discountedPrice1Neg =
             (this.totalComposant * this.discountPercent) / 100;
-
+        console.log('🦑', this.discountedPrice1Neg);
         if (this.discountedPrice1Neg) {
-            this.changeStatusPending3(this.seletedRow._id);
+            console.log('🍠', this.slectedRow);
+            this.changeStatusPending3(this.slectedRow);
         }
     }
 
     nextNegociate2() {
-        this.changeStatusNegociate2(this.seletedRow._id);
+        if (this.secondNegocition) {
+            this.changeStatusNegociate2(this.secondNegocition);
+        }
+    }
+
+    //---- Files
+    exportPdf() {
+        // Extract headers from exportColumns
+        const headers = this.cols.map((col) => col.header);
+        console.log('[headers]:', headers);
+
+        const diList = this.diList.map((di) => [
+            di.title,
+            di.status,
+            di.client_id,
+            di.createdBy,
+        ]);
+        console.log('🦐[diList]:', diList);
+
+        // Transform data for compatibility with jsPDF-autotable
+        const formattedData =
+            this.diList.length === 0
+                ? headers.map(() => '') // Create empty body for headers if no data
+                : this.diList.map((item) => {
+                      return this.cols.reduce((acc, column) => {
+                          acc[column.header] = item[column.field];
+                          return acc;
+                      }, {});
+                  });
+
+        console.log('Formatted Data:', formattedData); // Check data structure
+
+        // Asynchronous import with potential Promise.all
+        Promise.all([import('jspdf'), import('jspdf-autotable')])
+            .then(([jsPDF, { default: autoTable }]) => {
+                // Destructure imports
+                console.log('[autoTable]:', autoTable);
+                const doc = new jsPDF.default('p', 'px', 'a4');
+                autoTable(doc, {
+                    head: [headers],
+                    body: diList,
+                });
+                doc.save('Users.pdf');
+            })
+            .catch((err) => {
+                // Handle import errors
+                console.error('Error importing jsPDF libraries:', err);
+            });
+    }
+
+    exportExcel() {
+        import('xlsx').then((xlsx) => {
+            const worksheet = xlsx.utils.json_to_sheet(this.diList);
+            const workbook = {
+                Sheets: { data: worksheet },
+                SheetNames: ['data'],
+            };
+            const excelBuffer: any = xlsx.write(workbook, {
+                bookType: 'xlsx',
+                type: 'array',
+            });
+            this.saveAsExcelFile(excelBuffer, 'products');
+        });
+    }
+
+    saveAsExcelFile(buffer: any, fileName: string): void {
+        let EXCEL_TYPE =
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8';
+        let EXCEL_EXTENSION = '.xlsx';
+        const data: Blob = new Blob([buffer], {
+            type: EXCEL_TYPE,
+        });
+        FileSaver.saveAs(
+            data,
+            fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION
+        );
     }
 }
 /**
