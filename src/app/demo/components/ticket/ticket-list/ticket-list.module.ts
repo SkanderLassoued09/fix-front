@@ -39,6 +39,9 @@ import { InplaceModule } from 'primeng/inplace';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SliderModule } from 'primeng/slider';
+import { DetailsComposantComponent } from '../magasin-di-list/details-composant/details-composant.component';
+import { CardModule } from 'primeng/card';
+import { OrderListModule } from 'primeng/orderlist';
 
 @NgModule({
     declarations: [
@@ -46,6 +49,7 @@ import { SliderModule } from 'primeng/slider';
         CoordinatorDiListComponent,
         MagasinDiListComponent,
         TechDiListComponent,
+        DetailsComposantComponent,
     ],
     imports: [
         CommonModule,
@@ -78,6 +82,9 @@ import { SliderModule } from 'primeng/slider';
         MultiSelectModule,
         InputNumberModule,
         SliderModule,
+        CardModule,
+        OrderListModule,
+        InplaceModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

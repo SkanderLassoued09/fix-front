@@ -303,6 +303,20 @@ export class TicketService {
                         status: "${composantInfo.status}"
                     }
                 )
+                 {
+    _id
+    name
+    package
+    category_composant_id
+    prix_achat
+    prix_vente
+    coming_date
+    link
+    quantity_stocked
+    pdf
+    status
+    
+  }
             }
         `;
     }
@@ -337,6 +351,13 @@ export class TicketService {
         return gql`
             mutation {
                 changeStatusInMagasin(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusMagasinEstimation(_id: string) {
+        return gql`
+            mutation {
+                changeStatusMagasinEstimation(_id: "${_id}")
             }
         `;
     }
@@ -398,5 +419,17 @@ export class TicketService {
                 changeStatusInRepair(_id: "${_id}")
             }
         `;
+    }
+    getDiByID(_id: string) {
+        return gql`
+    query {
+      getDiById(_id: "${_id}") {
+        array_composants {
+          nameComposant
+          quantity
+        }
+      }
+    }
+  `;
     }
 }

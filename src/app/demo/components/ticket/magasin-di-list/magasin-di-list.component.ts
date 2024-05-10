@@ -7,6 +7,7 @@ import {
     GetAllMagasinQueryResponse,
     UpdateComposantMutationResponse,
 } from './magasin-di-list.interfaces';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -33,7 +34,11 @@ export class MagasinDiListComponent {
     loadedDataComposant: any;
     selectedDi_id: any;
 
-    constructor(private ticketSerice: TicketService, private apollo: Apollo) {
+    constructor(
+        private ticketSerice: TicketService,
+        private apollo: Apollo,
+        private router: Router
+    ) {
         this.formUpdateComposant = new FormGroup({
             name: new FormControl(),
             package: new FormControl(),
@@ -81,6 +86,12 @@ export class MagasinDiListComponent {
         });
         console.log('🥝[  this.arrayComposant]:', this.arrayComposant);
         this.magasinDiDialog = true;
+    }
+
+    takeMetoDetailsComponent(dataRowselected) {
+        console.log('Hello', dataRowselected._id);
+        const _id = dataRowselected._id;
+        this.router.navigate(['tickets/ticket/details', _id]);
     }
 
     getDi() {
@@ -140,7 +151,6 @@ export class MagasinDiListComponent {
     }
 
     updateComposant() {
-        console.log('🌭', this.formUpdateComposant.value);
         this.apollo
             .mutate<UpdateComposantMutationResponse>({
                 mutation: this.ticketSerice.updateComposant(

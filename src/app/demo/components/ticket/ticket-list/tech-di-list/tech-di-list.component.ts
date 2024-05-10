@@ -287,10 +287,10 @@ export class TechDiListComponent {
         this.composantCombo.push(composantSelected);
     }
 
-    changeStatusInMagasin(_id: string) {
+    changeStatusMagasinEstimation(_id: string) {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.changeStatusDiToInMagasin(_id),
+                mutation: this.ticketSerice.changeStatusMagasinEstimation(_id),
             })
             .subscribe(({ data, loading }) => {
                 console.log('🦀[loading]:', loading);
@@ -318,7 +318,7 @@ export class TechDiListComponent {
                 console.log('🎂[loading]:', loading);
                 console.log('🥝[data]:', data);
                 if (data) {
-                    this.changeStatusInMagasin(dataDiag._idDi);
+                    this.changeStatusMagasinEstimation(dataDiag._idDi);
                 }
             });
     }

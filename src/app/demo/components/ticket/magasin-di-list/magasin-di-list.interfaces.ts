@@ -43,7 +43,15 @@ export interface ComposantByNameQueryResponse {
 }
 
 export interface UpdateComposantMutationResponse {
-    addComposantInfo: {
-        _id: string;
-    };
+    _id: string;
+    name: string;
+    package: string;
+    category_composant_id: string;
+    prix_achat: number;
+    prix_vente: number;
+    coming_date: string;
+    link: string;
+    quantity_stocked: number;
+    pdf: string;
+    status: string;
 }
