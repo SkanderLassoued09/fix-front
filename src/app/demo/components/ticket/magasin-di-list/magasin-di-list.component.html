@@ -35,7 +35,7 @@
                         icon="pi pi-wrench"
                         class="p-button-rounded p-button-raised p-button-secondary mr-2"
                         (click)="takeMetoDetailsComponent(rowData)"
-                        [disabled]="rowData[col.field] !== 'Magasin Estimation'"
+                        [disabled]="Magasin_Condition()"
                     ></button>
                 </td>
                 <td>
@@ -45,7 +45,7 @@
                         icon="pi pi-wrench"
                         class="p-button-rounded p-button-raised p-button-secondary mr-2"
                         (click)="openDialogMagasin(rowData)"
-                        [disabled]="MagasinEstimation_Condition"
+                        [disabled]="MagasinEstimation_Condition()"
                     ></button>
                 </td>
             </tr>

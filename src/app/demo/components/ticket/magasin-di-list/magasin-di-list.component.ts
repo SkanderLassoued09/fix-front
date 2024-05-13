@@ -95,6 +95,8 @@ export class MagasinDiListComponent {
         console.log('🥝[  this.arrayComposant]:', this.arrayComposant);
         this.magasinDiDialog = true;
     }
+    MagasinEstimation_Condition() {} //! open only when status === MagasinEstimation
+    Magasin_Condition() {} //! open only when status === In Magasin
 
     takeMetoDetailsComponent(dataRowselected) {
         console.log('Hello', dataRowselected._id);
