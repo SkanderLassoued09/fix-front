@@ -127,6 +127,18 @@ export class TicketService {
             }
         `;
     }
+
+    sendingDiForDiagnostic(_idDi, id_tech_diag) {
+        return gql`
+            mutation {
+                coordinatorSendingDiDiag(_idDI: "${_idDi}", tech_id: "${id_tech_diag}") 
+                {
+                    _id
+                }
+            }
+        `;
+    }
+
     configRepAffectation(_idDi, id_tech_rep?) {
         return gql`
             mutation {

@@ -21,11 +21,17 @@ import { STATUS_DI } from 'src/app/layout/api/status-di';
 export class CoordinatorDiListComponent {
     visible: boolean = false;
     products!: Product[];
+
     //--
     diag_condition: boolean = true; // enable when status = pending1
     admin_condition: boolean = true; //enable when status = pending2
     rep_condition: boolean = true; // enable when status = pending3
+
+    selectedTech: any; // Variable to store the selected tech data
+
     //--
+    //Btn for confirmation
+    confirmationBTN = false;
     loading: boolean = false;
     roles;
     tstatuses = [{ label: 'Pending3', value: 'Pending3' }];
@@ -64,6 +70,7 @@ export class CoordinatorDiListComponent {
     ngOnInit() {
         this.getDi();
         this.getAllTech();
+        this.confirmationBTN = false;
     }
     diagnosticOpen() {}
     showDialog() {
@@ -165,21 +172,44 @@ export class CoordinatorDiListComponent {
                 console.log('🌯[data changeStatusRepaire]:', data);
             });
     }
+    //Confirmer Btn
+    confirmeBtn() {
+        this.confirmationBTN = true;
+        console.log(this.confirmationBTN, 'this.confirmationBTN');
+        this.selectedTechDiag(this.selectedTech);
+    }
 
     selectedTechDiag(data) {
-        this.apollo
-            .mutate<ConfigDiagAffectationMutationResponse>({
-                mutation: this.ticketSerice.configDiagAffectation(
-                    this.selectedDi,
-                    data.value._id
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading, errors }) => {
-                if (data) {
-                    this.updateStatusDiag();
-                }
-            });
+        // this.apollo
+        //     .mutate<ConfigDiagAffectationMutationResponse>({
+        //         mutation: this.ticketSerice.configDiagAffectation(
+        //             this.selectedDi,
+        //             data.value._id
+        //         ),
+        //         useMutationLoading: true,
+        //     })
+        //     .subscribe(({ data, loading, errors }) => {
+        //         if (data) {
+        //             this.updateStatusDiag();
+        //         }
+        //     });
+        // This function was added to send Di for diagnostic from COORDINATOR
+        this.selectedTech = data;
+        if (this.confirmationBTN) {
+            this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.sendingDiForDiagnostic(
+                        this.selectedDi,
+                        data.value._id
+                    ),
+                    useMutationLoading: true,
+                })
+                .subscribe(({ data, loading, errors }) => {
+                    if (data) {
+                        console.log('the data was send to diag');
+                    }
+                });
+        }
     }
     selectedTechRep(data) {
         this.apollo

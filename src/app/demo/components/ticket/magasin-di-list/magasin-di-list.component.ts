@@ -33,6 +33,8 @@ export class MagasinDiListComponent {
     selectedItem: any;
     loadedDataComposant: any;
     selectedDi_id: any;
+    //MagasinEstimation_Condition: boolean = true;
+    //MagasinCondition: boolean = true;
 
     constructor(
         private ticketSerice: TicketService,
@@ -55,6 +57,7 @@ export class MagasinDiListComponent {
 
     ngOnInit() {
         this.getDi();
+        //this.Magasin_buttonCondition();
     }
 
     getSeverity(status: string) {
@@ -72,7 +75,12 @@ export class MagasinDiListComponent {
                 return null;
         }
     }
-
+    // Magasin_buttonCondition() {
+    //     console.log(
+    //         'rowData coming from function',
+    //         this.diList.getDiForMagasin.di
+    //     );
+    // }
     openDialogMagasin(item) {
         console.log('🍠[item]:', item);
         this.selectedDi_id = item._id;
