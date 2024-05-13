@@ -95,6 +95,7 @@ export class MagasinDiListComponent {
         console.log('🥝[  this.arrayComposant]:', this.arrayComposant);
         this.magasinDiDialog = true;
     }
+    //last add
     MagasinEstimation_Condition() {} //! open only when status === MagasinEstimation
     Magasin_Condition() {} //! open only when status === In Magasin
 
