@@ -1,0 +1,184 @@
+<p-toast></p-toast>
+<div class="card">
+    <p-table
+        [value]="diList"
+        [columns]="cols"
+        [tableStyle]="{ 'min-width': '20rem' }"
+    >
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns" style="min-width: 10rem">
+                    {{ col.header }}
+                </th>
+                <th style="min-width: 2rem">Affectation</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr>
+                <td *ngFor="let col of columns">
+                    <ng-container
+                        *ngIf="col.field !== 'status'; else statusColumn"
+                    >
+                        {{ rowData[col.field] }}
+                    </ng-container>
+                    <ng-template #statusColumn>
+                        <p-tag
+                            [value]="rowData[col.field]"
+                            [severity]="getSeverity(rowData[col.field])"
+                        ></p-tag>
+                    </ng-template>
+                </td>
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-wrench"
+                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        (click)="takeMetoDetailsComponent(rowData)"
+                        [disabled]="rowData.status !== 'INMAGASIN'"
+                    ></button>
+                </td>
+                <td>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-wrench"
+                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        (click)="openDialogMagasin(rowData)"
+                        [disabled]="rowData.status !== 'MAGASINESTIMATION'"
+                    ></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <p-dialog
+        [(visible)]="magasinDiDialog"
+        [style]="{ width: '50%', height: '70vh' }"
+        header="Affectation pour les composants"
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <form [formGroup]="formUpdateComposant">
+            <div class="grid align-items-center">
+                <div class="col">
+                    <label for="name">Choisir un composant</label>
+                    <p-dropdown
+                        [options]="arrayComposant"
+                        (onChange)="selectedDropDown($event)"
+                        optionLabel="infoComposant"
+                        optionValue="nameComposant"
+                        placeholder="Choisir composant"
+                    ></p-dropdown>
+                </div>
+            </div>
+
+            <ng-container *ngIf="selectedItem">
+                <div class="grid align-items-center">
+                    <div class="col">
+                        <label for="name">Name</label>
+                        <input formControlName="name" pInputText />
+                    </div>
+                    <div class="col">
+                        <label for="package">Package</label>
+                        <input formControlName="package" pInputText />
+                    </div>
+                    <div class="col">
+                        <label for="category_composant_id"
+                            >Category Composant ID</label
+                        >
+                        <input
+                            formControlName="category_composant_id"
+                            pInputText
+                        />
+                    </div>
+                </div>
+                <div class="grid align-items-center">
+                    <div class="col">
+                        <label for="prix_achat">Prix Achat</label>
+                        <!-- <input formControlName="prix_achat" pInputText /> -->
+                        <p-inputNumber
+                            inputId="integeronly"
+                            formControlName="prix_achat"
+                        >
+                        </p-inputNumber>
+                    </div>
+                    <div class="col">
+                        <label for="prix_vente">Prix Vente</label>
+                        <!-- <input formControlName="prix_vente" pInputText /> -->
+                        <p-inputNumber
+                            inputId="integeronly"
+                            formControlName="prix_vente"
+                        >
+                        </p-inputNumber>
+                    </div>
+                    <div class="col">
+                        <label for="coming_date">Coming Date</label>
+                        <input formControlName="coming_date" pInputText />
+                    </div>
+                </div>
+                <div class="grid align-items-center">
+                    <div class="col">
+                        <label for="link">Link</label>
+                        <input formControlName="link" pInputText />
+                    </div>
+                    <div class="col">
+                        <label for="quantity_stocked">Quantity Stocked</label>
+                        <!-- <input formControlName="quantity_stocked" pInputText /> -->
+                        <p-inputNumber
+                            inputId="integeronly"
+                            formControlName="quantity_stocked"
+                        >
+                        </p-inputNumber>
+                    </div>
+                    <div class="col">
+                        <label for="pdf">PDF</label>
+                        <input formControlName="pdf" pInputText />
+                    </div>
+                </div>
+                <div class="grid align-items-center">
+                    <div class="col">
+                        <label for="name"
+                            >Affecter un status pour le composant</label
+                        >
+                        <p-dropdown
+                            [options]="statusComposant"
+                            (onChange)="selectedDropDown($event)"
+                            optionLabel="name"
+                            optionValue="value"
+                            placeholder="Choisir état"
+                        >
+                            <ng-template let-option pTemplate="item">
+                                <p-tag
+                                    [value]="option.name"
+                                    [severity]="getSeverity(option.name)"
+                                ></p-tag> </ng-template
+                        ></p-dropdown>
+                    </div>
+                </div>
+            </ng-container>
+        </form>
+        <ng-template pTemplate="footer">
+            <div class="flex justify-content-between align-content-center">
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
+                        label="Update"
+                        icon="pi pi-times"
+                        class="p-button-text"
+                        (click)="updateComposant()"
+                    ></button>
+                </div>
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
+                        label="Cancel"
+                        icon="pi pi-times"
+                        class="p-button-text"
+                    ></button>
+                </div>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

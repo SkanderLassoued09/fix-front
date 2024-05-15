@@ -1,0 +1,184 @@
+<div class="card">
+    <p-button
+        (click)="showDialog()"
+        icon="pi pi-plus"
+        label="Ajouter un STAFF"
+    ></p-button>
+</div>
+<p-dialog
+    header="Ajouter un nouveau profil"
+    [(visible)]="visible"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <form [formGroup]="staffForm">
+        <div class="grid">
+            <div class="col">
+                <p-inputGroup>
+                    <p-inputGroupAddon>
+                        <i class="pi pi-user"></i>
+                    </p-inputGroupAddon>
+                    <input
+                        pInputText
+                        formControlName="username"
+                        placeholder="Username"
+                    />
+                </p-inputGroup>
+            </div>
+            <div class="col">
+                <p-inputGroup class="mr-2">
+                    <p-inputGroupAddon>
+                        <i class="pi pi-at"></i>
+                    </p-inputGroupAddon>
+                    <input
+                        pInputText
+                        formControlName="email"
+                        placeholder="E-mail"
+                    />
+                </p-inputGroup>
+            </div>
+        </div>
+        <div class="grid">
+            <div class="flex flex-column col">
+                <label for="firstName">Prénom</label>
+                <input
+                    formControlName="firstName"
+                    pInputText
+                    id="firstName"
+                    class="pInputText"
+                />
+            </div>
+
+            <div class="flex flex-column col">
+                <label for="lastName">Nom</label>
+                <input
+                    formControlName="lastName"
+                    pInputText
+                    id="lastName"
+                    class="pInputText"
+                />
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="flex flex-column col">
+                <label for="lastName">Téléphone</label>
+                <p-inputMask
+                    id="phone"
+                    mask="99 999 999"
+                    formControlName="phone"
+                    styleClass="w-full"
+                ></p-inputMask>
+            </div>
+
+            <div class="flex flex-column col">
+                <label for="raisonSociale">Rôle</label>
+                <p-dropdown
+                    [options]="roles"
+                    optionLabel="name"
+                    optionValue="code"
+                    [showClear]="true"
+                    formControlName="role"
+                    styleClass="w-full"
+                ></p-dropdown>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="col-12">
+                <p-password
+                    id="password"
+                    placeholder="Password"
+                    [toggleMask]="true"
+                    formControlName="password"
+                    styleClass="w-full"
+                    inputStyleClass="w-full "
+                ></p-password>
+            </div>
+        </div>
+    </form>
+
+    <div class="flex gap-4">
+        <p-button
+            label="Ajouter"
+            [loading]="loading"
+            (onClick)="addSTAFF()"
+        ></p-button>
+        <p-button
+            label="Annuler"
+            severity="danger"
+            (onClick)="staffForm.reset()"
+        ></p-button>
+    </div>
+</p-dialog>
+
+<div class="card">
+    <p-toast></p-toast>
+    <p-table
+        [columns]="cols"
+        [value]="profileList"
+        [tableStyle]="{ 'min-width': '50rem' }"
+        styleClass="p-datatable-sm"
+    >
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns">
+                    {{ col.header }}
+                </th>
+                <th>Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr>
+                <td *ngFor="let col of columns">
+                    <ng-container *ngIf="col.field !== 'role'; else roleColumn">
+                        <ng-container
+                            *ngIf="
+                                col.field === 'createdAt' ||
+                                    col.field === 'updatedAt';
+                                else otherField
+                            "
+                        >
+                            {{ rowData[col.field] | date : "dd/MM/yyyy" }}
+                        </ng-container>
+                        <ng-template #otherField>
+                            {{ rowData[col.field] }}
+                        </ng-template>
+                    </ng-container>
+
+                    <ng-template #roleColumn>
+                        <p-tag
+                            [value]="rowData[col.field]"
+                            [severity]="getSeverity(rowData[col.field])"
+                        ></p-tag>
+                    </ng-template>
+                </td>
+                <td class="flex">
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-pencil"
+                        class="p-button-rounded p-button-success mr-2"
+                        (click)="editProduct(rowData)"
+                    ></button>
+                    <button
+                        pButton
+                        pRipple
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-danger"
+                        (click)="deleteProduct(rowData)"
+                    ></button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <p-paginator
+        (onPageChange)="onPageChange($event)"
+        [first]="first"
+        [rows]="rows"
+        [totalRecords]="totalProfileCount"
+        [rowsPerPageOptions]="[5, 10, 30]"
+    ></p-paginator>
+</div>
