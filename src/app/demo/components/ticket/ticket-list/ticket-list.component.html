@@ -250,8 +250,8 @@
                         *ngIf="rowData.status === 'NEGOTIATION1'"
                         pButton
                         pRipple
-                        icon="pi pi-plus"
-                        class="p-button-rounded p-button-raised p-button-danger mr-2"
+                        icon="pi pi-dollar"
+                        class="p-button-rounded p-button-raised p-button-warning mr-2"
                         (click)="showDialogForNegociate1(rowData)"
                     ></button>
                     <!--    (click)="showDialogForNegociate2(rowData)" -->
@@ -281,7 +281,7 @@
 >
     <ng-container>
         <div>
-            <div>
+            <div class="element-container">
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
                     inputId="percent"
@@ -289,7 +289,7 @@
                 >
                 </p-inputNumber>
             </div>
-            <div>
+            <div class="element-container">
                 <p-slider
                     max="20"
                     [(ngModel)]="discountPercent"
@@ -305,7 +305,7 @@
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="discountByPercent()"
             ></button>
-            <h6>dicount value : {{ discountedPrice1Neg }}</h6>
+            <h6>discount value : {{ discountedPrice1Neg }}</h6>
             <ng-container *ngIf="slideEnd === 20">
                 <button
                     pButton
@@ -353,7 +353,7 @@
                 pButton
                 pRipple
                 label="discount"
-                icon="pi pi-plus"
+                icon="pi-dollar"
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="discountByPercent2()"
             ></button>
@@ -397,7 +397,7 @@
                 pButton
                 pRipple
                 label="discount"
-                icon="pi pi-plus"
+                icon="pi-dollar"
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="pricing()"
             ></button></div

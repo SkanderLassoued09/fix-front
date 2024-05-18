@@ -97,7 +97,7 @@ export class TicketListComponent implements OnInit {
         // { field: 'bon_de_commande', header: 'BC' },
         // { field: 'bon_de_livraison', header: 'BL' },
         // { field: 'contain_pdr', header: 'PDR' },
-        { field: 'status', header: 'Statut' },
+        { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },
         // { field: 'remarque_id', header: 'R.manager' },
         { field: 'createdBy', header: 'Cree par' },
@@ -260,12 +260,35 @@ export class TicketListComponent implements OnInit {
     }
 
     getSeverity(status: string) {
+        console.log('🍛DI => [status]:', status);
         switch (status) {
-            case 'PENDING3':
+            case 'CREATED':
                 return 'success';
-            case 'LOWSTOCK':
+            case 'PENDING1':
+            case 'PENDING2':
+            case 'PENDING3':
+                return 'help';
+            case 'DIAGNOSTIC':
+            case 'INDIAGNOSTIC':
+                return 'info';
+            case 'INMAGASIN':
+            case 'MagasinEstimation':
                 return 'warning';
-            case 'OUTOFSTOCK':
+            case 'PRICING':
+                return 'warning';
+            case 'NEGOTIATION1':
+            case 'NEGOTIATION2':
+                return 'warning';
+            case 'REPARATION':
+            case 'INREPARATION':
+                return 'info';
+            case 'FINISHED':
+                return 'success';
+            case 'ANNULER':
+                return 'contrast';
+            case 'RETOUR1':
+            case 'RETOUR2':
+            case 'RETOUR3':
                 return 'danger';
             default:
                 return 'warn';
@@ -367,6 +390,8 @@ export class TicketListComponent implements OnInit {
 
     // here the problem of NaN
     discountByPercent() {
+        console.log(this._idDi, 'PRICE ');
+
         this.discountedPrice1Neg = (this.price * this.discountPercent) / 100;
 
         if (this.discountedPrice1Neg) {

@@ -45,7 +45,7 @@ export class CoordinatorDiListComponent {
         // { field: 'bon_de_commande', header: 'BC' },
         // { field: 'bon_de_livraison', header: 'BL' },
         // { field: 'contain_pdr', header: 'PDR' },
-        { field: 'status', header: 'Statut' },
+        { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },
         // { field: 'remarque_id', header: 'R.manager' },
         { field: 'created_by_id', header: 'Cree par' },
@@ -132,12 +132,35 @@ export class CoordinatorDiListComponent {
     }
 
     getSeverity(status: string) {
+        console.log('🍛DI => [status]:', status);
         switch (status) {
-            case 'PENDING3':
+            case 'CREATED':
                 return 'success';
-            case 'LOWSTOCK':
+            case 'PENDING1':
+            case 'PENDING2':
+            case 'PENDING3':
+                return 'help';
+            case 'DIAGNOSTIC':
+            case 'INDIAGNOSTIC':
+                return 'info';
+            case 'INMAGASIN':
+            case 'MagasinEstimation':
                 return 'warning';
-            case 'OUTOFSTOCK':
+            case 'PRICING':
+                return 'warning';
+            case 'NEGOTIATION1':
+            case 'NEGOTIATION2':
+                return 'warning';
+            case 'REPARATION':
+            case 'INREPARATION':
+                return 'info';
+            case 'FINISHED':
+                return 'success';
+            case 'ANNULER':
+                return 'contrast';
+            case 'RETOUR1':
+            case 'RETOUR2':
+            case 'RETOUR3':
                 return 'danger';
             default:
                 return 'warn';
@@ -195,6 +218,7 @@ export class CoordinatorDiListComponent {
             .subscribe(({ data, loading, errors }) => {
                 console.log('🍻[data]:', data);
                 if (data) {
+                    this.updateStatusDiag;
                     console.log('the data was send to diag');
                 }
             });

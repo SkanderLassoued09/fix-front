@@ -22,7 +22,7 @@ export class MagasinDiListComponent {
     cols = [
         { field: '_id', header: 'ID' },
         { field: 'title', header: 'Title' },
-        { field: 'status', header: 'Statut' },
+        { field: 'status', header: 'Status' },
     ];
     diList: any;
     diListCount: any;
@@ -61,18 +61,38 @@ export class MagasinDiListComponent {
     }
 
     getSeverity(status: string) {
+        console.log('🍛DI => [status]:', status);
         switch (status) {
-            case 'INSTOCK':
+            case 'CREATED':
                 return 'success';
-
-            case 'EXTERN':
-                return 'warning';
-
-            case 'INTERN':
+            case 'PENDING1':
+            case 'PENDING2':
+            case 'PENDING3':
+                return 'help';
+            case 'DIAGNOSTIC':
+            case 'INDIAGNOSTIC':
                 return 'info';
-
+            case 'INMAGASIN':
+            case 'MagasinEstimation':
+                return 'warning';
+            case 'PRICING':
+                return 'warning';
+            case 'NEGOTIATION1':
+            case 'NEGOTIATION2':
+                return 'warning';
+            case 'REPARATION':
+            case 'INREPARATION':
+                return 'info';
+            case 'FINISHED':
+                return 'success';
+            case 'ANNULER':
+                return 'contrast';
+            case 'RETOUR1':
+            case 'RETOUR2':
+            case 'RETOUR3':
+                return 'danger';
             default:
-                return null;
+                return 'warn';
         }
     }
     // Magasin_buttonCondition() {

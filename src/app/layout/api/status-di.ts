@@ -4,6 +4,7 @@ export enum STATUS_DI {
     DIAGNOSTIC = 'DIAGNOSTIC',
     INDIAGNOSTIC = 'INDIAGNOSTIC',
     INMAGASIN = 'INMAGASIN',
+    MagasinEstimation = 'MagasinEstimation',
     PENDING2 = 'PENDING2',
     PRICING = 'PRICING',
     NEGOTIATION1 = 'NEGOTIATION1',

@@ -31,8 +31,8 @@
                     <button
                         pButton
                         pRipple
-                        icon="pi pi-wrench"
-                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
+                        icon="pi pi-ticket"
+                        class="p-button-rounded p-button-raised p-button-help mr-2"
                         (click)="openModalConfig(rowData)"
                     ></button>
                 </td>
@@ -111,7 +111,7 @@
                 label="Confirmer"
                 icon="pi pi-check"
                 class="p-button-text"
-                (click)="confirmeBtn(); hideDialog()"
+                (click)="selectedTechDiag(); hideDialog()"
             ></button>
         </ng-template>
     </p-dialog>

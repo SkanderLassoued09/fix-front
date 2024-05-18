@@ -10,7 +10,8 @@
                 <th *ngFor="let col of columns" style="min-width: 10rem">
                     {{ col.header }}
                 </th>
-                <th style="min-width: 2rem">Affectation</th>
+                <th style="min-width: 2rem">Affectation Estimation</th>
+                <th style="min-width: 2rem">Affectation finale</th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
@@ -32,7 +33,7 @@
                     <button
                         pButton
                         pRipple
-                        icon="pi pi-wrench"
+                        icon="pi pi-folder"
                         class="p-button-rounded p-button-raised p-button-secondary mr-2"
                         (click)="takeMetoDetailsComponent(rowData)"
                         [disabled]="rowData.status !== 'INMAGASIN'"
@@ -42,7 +43,7 @@
                     <button
                         pButton
                         pRipple
-                        icon="pi pi-wrench"
+                        icon="pi pi-folder-open"
                         class="p-button-rounded p-button-raised p-button-secondary mr-2"
                         (click)="openDialogMagasin(rowData)"
                         [disabled]="rowData.status !== 'MAGASINESTIMATION'"

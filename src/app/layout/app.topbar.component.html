@@ -3,12 +3,11 @@
         <img
             src="assets/layout/images/{{
                 layoutService.config().colorScheme === 'light'
-                    ? 'logo-dark'
-                    : 'logo-white'
-            }}.svg"
+                    ? 'Fixtronix-logo'
+                    : 'Fixtronix-logo'
+            }}.png"
             alt="logo"
         />
-        <span>Fixtronix</span>
     </a>
 
     <button
@@ -36,19 +35,8 @@
         }"
     >
         <button class="p-link layout-topbar-button">
-            <i class="pi pi-calendar"></i>
-            <span>Calendar</span>
-        </button>
-        <button class="p-link layout-topbar-button">
             <i class="pi pi-user"></i>
             <span>Profile</span>
-        </button>
-        <button
-            class="p-link layout-topbar-button"
-            [routerLink]="'/documentation'"
-        >
-            <i class="pi pi-cog"></i>
-            <span>Settings</span>
         </button>
     </div>
 </div>
