@@ -1,9 +1,6 @@
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
-import { ProductService } from 'src/app/demo/service/product.service';
-import { ALL_USERS, COLUMNS } from './constant-queries';
-import { ROLES } from '../../profile/constant/role-constants';
 
 import { MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
@@ -118,8 +115,9 @@ export class TicketListComponent implements OnInit {
     _idDi: any;
     price: number;
     seletedRow: any;
-    discountedPrice1Neg: number;
+    discountedPriceNeg: number = 0;
     slideEnd: any;
+    slideAdminEnd: any;
     negocite1Modal: boolean;
     negocite2Modal: boolean = false;
     s: any;
@@ -127,6 +125,16 @@ export class TicketListComponent implements OnInit {
     slectedRow: any;
     exportColumns: any;
     selectedSize;
+    data_discount: DiQueryResult;
+    dataById: any;
+    finalPrice: any;
+    allComposants = [];
+
+    private _idcomposant: any;
+    name_composant: any;
+    ArrayofcomposantDATA: DiQueryResult;
+    oneComposant_QueryValue: DiQueryResult;
+    $composant: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -143,20 +151,41 @@ export class TicketListComponent implements OnInit {
     showDialog() {
         this.openAddDiModal = true;
     }
+
+    confirmerNegociation() {
+        console.log('hello');
+        this.nego1nego2_InMagasin(this._idDi, this.price, this.finalPrice);
+        this.changeStatusDiToInMagasin(this._idDi);
+        console.log('Confirmer Nego1 success');
+        this.negocite1Modal = false;
+    }
+
     // this will show only if status allows
+    //! WORKING HERE
     showDialogForPricing(data) {
-        console.log('🥘[data]:', data);
         this.seletedRow = data;
-        this._idDi = data._id;
-        this.array_composants = data.array_composants;
+
+        this.name_composant = data._id;
+        for (let oneComposant of data.array_composants) {
+            this.getcomposantByName(oneComposant.nameComposant);
+            console.log('data quantity from here', oneComposant.quantity);
+        }
+
+        console.log('DATA FROM allcomposant query', this.allComposants);
 
         this.pricingDoalog = true;
+
+        //! fnction delte here and add in the confirmer BTN
 
         this.changeStatusPricing(data._id);
         this.getTotalComposant(data._id);
     }
     showDialogForNegociate1(data) {
         this.seletedRow = data._id;
+
+        this._idDi = this.seletedRow;
+
+        this.getDiByID(this._idDi);
         this.secondNegocition = data._id;
         console.log('🍈[ this.s]:', this.s);
         this.negocite1Modal = true;
@@ -166,11 +195,29 @@ export class TicketListComponent implements OnInit {
         this.slectedRow = data._id;
         this.negocite2Modal = true;
         this.getTotalComposant(data._id);
+        this.getDiByID(this.slectedRow);
     }
 
     onSizeSelect() {
         console.log('Selected size:', this.selectedSize);
     }
+
+    //Get composant Info for admins
+    async getcomposantByName(name_composant: string) {
+        await this.apollo
+            .watchQuery<DiQueryResult>({
+                query: this.ticketSerice.composantByName_forAdmin(
+                    name_composant
+                ),
+            })
+            .valueChanges.subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    console.log(data, 'lijùpioj');
+                    this.allComposants.push(data);
+                }
+            });
+    }
+
     getDi() {
         this.apollo
             .watchQuery<DiQueryResult>({
@@ -183,15 +230,28 @@ export class TicketListComponent implements OnInit {
                 }
             });
     }
+    //New Query
+    getDiByID(_idDi: string) {
+        this.apollo
+            .watchQuery<DiQueryResult>({
+                query: this.ticketSerice.getDiByID(_idDi),
+            })
+            .valueChanges.subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    console.log('the NEW QUERY IS WORKING and value is', data);
 
+                    this.dataById = data;
+                    this.price = this.dataById.getDiById.price;
+                    console.log('PRICE', this.price);
+                }
+            });
+    }
     changeStatusPricing(_id: string) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusPricing(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🍑[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     getTotalComposant(_id: string) {
         this.apollo
@@ -199,7 +259,6 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.totalComposant(_id),
             })
             .valueChanges.subscribe(({ data }) => {
-                console.log('🍝[data]:', data);
                 this.totalComposant = data.calculateTicketComposantPrice;
                 console.log('🍌[ this.totalComposant ]:', this.totalComposant);
             });
@@ -211,7 +270,6 @@ export class TicketListComponent implements OnInit {
                 mutation: this.ticketSerice.pricing(this._idDi, this.price),
             })
             .subscribe(({ data, loading }) => {
-                console.log('🍍[data]:', data);
                 if (data) {
                     this.changeStatusNegiciate1(this._idDi);
                 }
@@ -223,27 +281,21 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusNegociate1(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🍑[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     changeStatusNegociate2(_id: string) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusNegociate2(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🍑[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     changeStatusPending3(_id: string) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusPending3(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🍑[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     load() {
         this.loading = true;
@@ -260,7 +312,6 @@ export class TicketListComponent implements OnInit {
     }
 
     getSeverity(status: string) {
-        console.log('🍛DI => [status]:', status);
         switch (status) {
             case 'CREATED':
                 return 'success';
@@ -305,7 +356,9 @@ export class TicketListComponent implements OnInit {
             this.statusDI = STATUS_DI.CREATED;
         }
     }
-
+    //TODO Make the creation only possible when the user have chosen the client
+    //Todo Add mutation to the delete DI
+    //FIXME
     createDi() {
         const {
             title,
@@ -378,36 +431,50 @@ export class TicketListComponent implements OnInit {
         console.log('🍻[percent]:', percent);
         this.slideEnd = percent.value;
     }
+    onSlideAdminEnd(percent) {
+        console.log('Admin percent', percent);
+        this.slideAdminEnd = percent.value;
+    }
+
     changeStatusDiToInMagasin(_id) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusDiToInMagasin(_id),
             })
+            .subscribe(({ data }) => {});
+    }
+
+    nego1nego2_InMagasin(_id, price, final_price) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.nego1nego2_InMagasin(
+                    _id,
+                    price,
+                    final_price
+                ),
+            })
             .subscribe(({ data }) => {
-                console.log('🍑[data in magasin]:', data);
+                console.log('data', data);
             });
     }
 
-    // here the problem of NaN
+    //! Nan c bon
+    // the discount function the price and the discounts are affected
+    //in the confirmation btn the mutation is fired
+
     discountByPercent() {
-        console.log(this._idDi, 'PRICE ');
-
-        this.discountedPrice1Neg = (this.price * this.discountPercent) / 100;
-
-        if (this.discountedPrice1Neg) {
-            this.changeStatusDiToInMagasin(this.seletedRow._id);
-        }
-
-        console.log('🍨', this.discountPercent);
-        console.log('🍨', this.totalComposant);
-        console.log('🍨', this.discountedPrice1Neg);
+        this.discountedPriceNeg = (this.price * this.discountPercent) / 100;
+        this.finalPrice = this.price - this.discountedPriceNeg;
     }
 
     discountByPercent2() {
-        this.discountedPrice1Neg =
-            (this.totalComposant * this.discountPercent) / 100;
-        console.log('🦑', this.discountedPrice1Neg);
-        if (this.discountedPrice1Neg) {
+        console.log('discount ', this.discountPercent);
+        console.log(this.price);
+
+        this.discountedPriceNeg = (this.price * this.discountPercent) / 100;
+        this.finalPrice = this.price - this.discountedPriceNeg;
+
+        if (this.discountedPriceNeg) {
             console.log('🍠', this.slectedRow);
             this.changeStatusDiToInMagasin(this.slectedRow);
         }

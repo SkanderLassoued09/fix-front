@@ -167,7 +167,6 @@ export class TicketService {
         `;
     }
 
-    // TODO
     createDi(diInfo: CreateDiInput) {
         console.log('🍭[diInfo]:', diInfo);
         return gql`
@@ -251,6 +250,25 @@ export class TicketService {
         `;
     }
 
+    lapTimeForPauseAndGetBackForReaparation(_id: string, repTime: string) {
+        return gql`
+            mutation {
+                lapTimeForPauseAndGetBackForReaparation(
+                    _id: "${_id}"
+                    repTime: "${repTime}"
+                )
+            }
+        `;
+    }
+
+    finishReparation(_idDi, remarque) {
+        return gql`
+            mutation {
+                tech_finishReperation(_id: "${_idDi}", remarque: "${remarque}")
+            }
+        `;
+    }
+
     finish(diagInfo) {
         console.log('🍔[diagInfo]:', diagInfo);
         const array = diagInfo.composant.map((el) => {
@@ -305,6 +323,36 @@ export class TicketService {
         `;
     }
 
+    nego1nego2_InMagasin(_id: string, price: number, final_price: number) {
+        return gql`
+            mutation {
+                managerAdminManager_InMagasin(
+                    _id: "${_id}"
+                    price: ${price}
+                    final_price: ${final_price}
+                ) {
+                    price
+                    final_price
+                }
+            }
+        `;
+    }
+
+    composantByName_forAdmin(selectedComposant: string) {
+        return gql`
+            {
+                findOneComposant(name: "${selectedComposant}") {
+                    _id
+                    name
+                    category_composant_id
+                    prix_achat
+                    prix_vente
+                    coming_date
+                    status
+                }
+            }
+        `;
+    }
     updateComposant(composantInfo) {
         return gql`
             mutation {
@@ -363,6 +411,17 @@ export class TicketService {
         return gql`
             mutation {
                 changeStatusInDiagnostic(_id: "${_id}")
+            }
+        `;
+    }
+
+    changeStatusDiToDiagnostique(_id: string) {
+        return gql`
+            mutation {
+                coordinatorSendingDiDiag(_idDI: "${_id}") 
+                {
+                    _id
+                }
             }
         `;
     }
@@ -443,6 +502,7 @@ export class TicketService {
         return gql`
     query {
       getDiById(_id: "${_id}") {
+        price
         array_composants {
           nameComposant
           quantity

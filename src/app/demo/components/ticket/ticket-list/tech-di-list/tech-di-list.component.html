@@ -72,28 +72,31 @@
                     ></textarea>
                 </div>
                 <!-- pdr or no -->
-                <div class="field">
-                    <label for="name">Ce travail contient du pdr ,</label>
-                    <p-toggleButton
-                        onLabel="Oui"
-                        offLabel="Non"
-                        formControlName="isPdr"
-                    ></p-toggleButton>
+                <div class="condition-BTN">
+                    <div class="field">
+                        <label for="name">Cette piece reparable ?</label>
+                        <p-toggleButton
+                            onLabel="Oui"
+                            offLabel="Non"
+                            formControlName="isReparable"
+                        ></p-toggleButton>
+                    </div>
+                    <div class="field">
+                        <label for="name">Di contient PDR ?</label>
+                        <p-toggleButton
+                            onLabel="Oui"
+                            offLabel="Non"
+                            formControlName="isPdr"
+                        ></p-toggleButton>
+                    </div>
                 </div>
+
                 <!-- reparable or no -->
-                <div class="field">
-                    <label for="name">Cette piece reparable ?</label>
-                    <p-toggleButton
-                        onLabel="Oui"
-                        offLabel="Non"
-                        formControlName="isReparable"
-                    ></p-toggleButton>
-                </div>
+
                 <!-- list of composant -->
                 <div class="grid align-items-center">
                     <div class="col">
                         <label for="name">Choisir un composant</label>
-
                         <p-dropdown
                             [options]="composantList"
                             (onChange)="selectedDropDown($event)"
@@ -125,21 +128,16 @@
                         ></button>
                     </div>
                 </div>
+                <div class="chips">
+                    <div class="card p-fluid">
+                        <p-chips [(ngModel)]="arrayTESTONLY"></p-chips>
+                    </div>
+                </div>
 
                 <div class="field">
                     <!-- to continue other rq -->
                     <p-fieldset legend="Remarque" [toggleable]="true">
-                        <p class="m-0">
-                            Lorem ipsum dolor sit amet, consectetur adipiscing
-                            elit, sed do eiusmod tempor incididunt ut labore et
-                            dolore magna aliqua. Ut enim ad minim veniam, quis
-                            nostrud exercitation ullamco laboris nisi ut aliquip
-                            ex ea commodo consequat. Duis aute irure dolor in
-                            reprehenderit in voluptate velit esse cillum dolore
-                            eu fugiat nulla pariatur. Excepteur sint occaecat
-                            cupidatat non proident, sunt in culpa qui officia
-                            deserunt mollit anim id est laborum.
-                        </p>
+                        <p class="m-0">Remarque coordinateur + manager</p>
                     </p-fieldset>
                 </div>
             </div>
@@ -186,7 +184,12 @@
             <div class="field">
                 <label for="name">Ecrire quelque chose ...</label>
                 <!-- Dropdwon tech for reparation -->
-                <textarea rows="5" cols="30" pInputTextarea></textarea>
+                <textarea
+                    [(ngModel)]="remarqueReparation"
+                    rows="5"
+                    cols="30"
+                    pInputTextarea
+                ></textarea>
             </div>
 
             <div class="field">
@@ -240,29 +243,31 @@
         </div>
 
         <ng-template pTemplate="footer">
-            <div class="flex justify-content-between align-content-center">
-                <div
-                    class="flex justify-content-between align-items-center field"
-                >
-                    <p-button
-                        (onClick)="startStopwatch()"
-                        label="start/stop"
-                    ></p-button>
-                    <p-button (onClick)="lap()" label="lap"></p-button>
-                    <span>Compteur diagnostique</span>
-                    <span>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</span>
-                </div>
-                <div class="field">
-                    <button
-                        pButton
-                        pRipple
-                        label="Cancel"
-                        icon="pi pi-times"
-                        class="p-button-text"
-                        (click)="hideDialogRep()"
-                    ></button>
-                </div>
-            </div>
+            <span>{{ minutes1 }}:{{ seconds1 }}:{{ milliseconds1 }}</span>
+            <button
+                pButton
+                pRipple
+                label="Cancel"
+                icon="pi pi-times"
+                class="p-button-text"
+                (click)="hideDialogRep()"
+            ></button>
+            <button
+                pButton
+                pRipple
+                label="Je reviendrai"
+                icon="pi pi-check"
+                class="p-button-text"
+                (click)="lapTimeForPauseAndGetBack1()"
+            ></button>
+            <button
+                pButton
+                pRipple
+                label="J'ai fini"
+                icon="pi pi-check"
+                class="p-button-text"
+                (click)="finishReparation()"
+            ></button>
         </ng-template>
     </p-dialog>
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>

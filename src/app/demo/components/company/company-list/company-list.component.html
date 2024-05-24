@@ -37,13 +37,15 @@
         </div>
 
         <div class="p-float-label mb-4">
-            <input
-                formControlName="region"
-                pInputText
-                id="region"
-                class="pInputText w-full"
-            />
             <label for="region">Region</label>
+            <p-dropdown
+                formControlName="region"
+                [options]="region"
+                optionLabel="name"
+                [showClear]="true"
+                placeholder="Choisir une region"
+                styleClass="w-full"
+            ></p-dropdown>
         </div>
 
         <div class="p-float-label mb-4">

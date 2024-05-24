@@ -10,6 +10,7 @@ import {
     TechStartDiagnosticMutationResponse,
 } from './coordinator-di-list.interfaces';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
+import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -63,7 +64,11 @@ export class CoordinatorDiListComponent {
     selectedDi: any;
     pricingDoalog: boolean = false;
 
-    constructor(private ticketSerice: TicketService, private apollo: Apollo) {
+    constructor(
+        private ticketSerice: TicketService,
+        private apollo: Apollo,
+        private messageservice: MessageService
+    ) {
         // this.roles = ROLES;
     }
 
@@ -132,7 +137,6 @@ export class CoordinatorDiListComponent {
     }
 
     getSeverity(status: string) {
-        console.log('🍛DI => [status]:', status);
         switch (status) {
             case 'CREATED':
                 return 'success';
@@ -174,17 +178,6 @@ export class CoordinatorDiListComponent {
         this.diDialog = false;
     }
 
-    updateStatusDiag() {
-        this.apollo
-            .mutate<TechStartDiagnosticMutationResponse>({
-                mutation: this.ticketSerice.changeStatusDiToPending1(
-                    this.selectedDi
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading }) => {});
-    }
-
     changeStatusRepaire(_id) {
         this.apollo
             .mutate<any>({
@@ -195,18 +188,10 @@ export class CoordinatorDiListComponent {
                 console.log('🌯[data changeStatusRepaire]:', data);
             });
     }
-    //Confirmer Btn
-    // confirmeBtn() {
-    //     this.confirmationBTN = true;
-    //     console.log(this.confirmationBTN, 'this.confirmationBTN');
-    //     this.selectedTechDiag(this.selectedTech);
-    // }
 
-    selectedTechDiag(data) {
+    //TODO The di is send to the tech but the status doesn't change & Fire the mutation when the confime Btn is pressed
+    async selectedTechDiag(data) {
         console.log('🥟[selected]:', data);
-
-        // This function was added to send Di for diagnostic from COORDINATOR
-        // this.selectedTech = data;
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.sendingDiForDiagnostic(
@@ -218,11 +203,28 @@ export class CoordinatorDiListComponent {
             .subscribe(({ data, loading, errors }) => {
                 console.log('🍻[data]:', data);
                 if (data) {
-                    this.updateStatusDiag;
-                    console.log('the data was send to diag');
+                    console.log(data, 'data for notification to work ');
+                    {
+                        this.apollo
+                            .mutate<TechStartDiagnosticMutationResponse>({
+                                mutation:
+                                    this.ticketSerice.changeStatusDiToDiagnostique(
+                                        this.selectedDi
+                                    ),
+                                useMutationLoading: true,
+                            })
+                            .subscribe(({ data, loading }) => {
+                                console.log(
+                                    "data coming from mutation that don't work",
+                                    data
+                                );
+                            });
+                    }
+                    this.diDialog = false;
                 }
             });
     }
+
     selectedTechRep(data) {
         this.apollo
             .mutate<ConfigRepAffectationMutationResponse>({

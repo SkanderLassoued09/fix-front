@@ -5,6 +5,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { CompanyService } from 'src/app/demo/service/company.service';
 import { ProductService } from 'src/app/demo/service/product.service';
+import { REGION } from '../../client/constant/region-constant';
 interface Column {
     field: string;
     header: string;
@@ -60,6 +61,7 @@ interface GetAllCompanyQueryResponse {
     styleUrl: './company-list.component.scss',
 })
 export class CompanyListComponent {
+    region;
     companyForm = new FormGroup({
         companyName: new FormControl('', [Validators.required]),
         address: new FormControl('', [Validators.required]),
@@ -123,8 +125,9 @@ export class CompanyListComponent {
         private companyService: CompanyService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService
-    ) {}
-
+    ) {
+        this.region = REGION;
+    }
     ngOnInit() {
         this.companies(this.first, this.rows);
     }

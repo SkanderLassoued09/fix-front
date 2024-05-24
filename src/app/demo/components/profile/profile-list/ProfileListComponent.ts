@@ -1,17 +1,17 @@
 import { Component } from '@angular/core';
+import { FormGroup, FormControl } from '@angular/forms';
+import { Apollo } from 'apollo-angular';
+import { MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { ProductService } from 'src/app/demo/service/product.service';
-import { ROLES } from '../constant/role-constants';
-import { FormControl, FormGroup } from '@angular/forms';
-import { Apollo } from 'apollo-angular';
 import { ProfileService } from 'src/app/demo/service/profile.service';
-import { MessageService } from 'primeng/api';
+import { ROLES } from '../constant/role-constants';
 import {
-    AllProfileQueryResponse,
-    PageEvent,
     ProfileAddMutationResponse,
+    PageEvent,
+    AllProfileQueryResponse,
 } from './profile-list.interfaces';
-import { Tag } from 'primeng/tag';
+
 @Component({
     selector: 'app-profile-list',
 

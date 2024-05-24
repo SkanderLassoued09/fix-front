@@ -30,7 +30,6 @@ export class TechDiListComponent {
 
     visible: boolean = false;
     products!: Product[];
-    values: string[] | undefined;
 
     loading: boolean = false;
     roles;
@@ -64,7 +63,18 @@ export class TechDiListComponent {
     composantSelected: any;
     composantCombo: Array<{ nameComposant: string; quantity: number }> = [];
     selectedDi_id: any;
+    milliseconds1: string;
+    seconds1: string;
+    minutes1: string;
+    lapTime1: string;
+    isRunning1: boolean;
+    startTime1: number;
+    laps1: any[];
+    remarqueReparation: any;
+    formGroupchips: any;
+    chipsValues: string[] = [];
 
+    arrayTESTONLY: string[] = ['ok', '5487', 'oijou', 'uueye'];
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -79,7 +89,7 @@ export class TechDiListComponent {
     showDialog() {
         this.visible = true;
     }
-
+    //Todo when you query the data add the status of the DI so we can use it for the Btn's condition
     getAllTechDi() {
         this.apollo
             .watchQuery<DiListTechQueryResult>({
@@ -89,6 +99,7 @@ export class TechDiListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.techList = data.getDiForTech;
+                    console.log('this.techList VALUE', this.techList);
                 }
             });
     }
@@ -111,6 +122,7 @@ export class TechDiListComponent {
         this.di = { ...di };
         this.selectedDi = di._id;
         this.diDialogRep = true;
+        this.startStopwatch1();
         this.changeStatusInReparation(di._id);
     }
 
@@ -178,6 +190,15 @@ export class TechDiListComponent {
             this.isRunning = false;
         }
     }
+    startStopwatch1() {
+        if (!this.isRunning1) {
+            this.isRunning1 = true;
+            this.startTime1 = Date.now();
+            this.updateTimer1();
+        } else {
+            this.isRunning1 = false;
+        }
+    }
 
     updateTimer() {
         if (this.isRunning) {
@@ -195,10 +216,32 @@ export class TechDiListComponent {
             requestAnimationFrame(() => this.updateTimer());
         }
     }
+    updateTimer1() {
+        if (this.isRunning1) {
+            const elapsedTime = Date.now() - this.startTime1;
+            this.minutes1 = this.padZero(
+                Math.floor(elapsedTime / (1000 * 60 * 60))
+            );
+            this.seconds1 = this.padZero(
+                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60))
+            );
+            this.milliseconds1 = this.padZero(
+                Math.floor((elapsedTime % (1000 * 60)) / 1000)
+            );
+
+            requestAnimationFrame(() => this.updateTimer1());
+        }
+    }
 
     lap() {
         if (this.isRunning) {
             this.lapTime = ` ${this.minutes}:${this.seconds}:${this.milliseconds}`;
+        }
+    }
+
+    lap1() {
+        if (this.isRunning1) {
+            this.lapTime1 = ` ${this.minutes1}:${this.seconds1}:${this.milliseconds1}`;
         }
     }
 
@@ -208,7 +251,17 @@ export class TechDiListComponent {
         this.milliseconds = '00';
         this.isRunning = false;
         this.startTime = 0;
+        this.startTime1 = 0;
         this.laps = [];
+    }
+    reset1() {
+        this.minutes1 = '00';
+        this.seconds1 = '00';
+        this.milliseconds1 = '00';
+        this.isRunning1 = false;
+        this.startTime1 = 0;
+        this.startTime1 = 0;
+        this.laps1 = [];
     }
 
     padZero(value: number): string {
@@ -272,6 +325,7 @@ export class TechDiListComponent {
                 }
             });
     }
+
     selectedDropDown(selectedItem) {
         this.composantSelected = selectedItem;
     }
@@ -311,10 +365,22 @@ export class TechDiListComponent {
         }
     }
     comboComposantandQuantity() {
+        console.log('BTN ajouter');
+
         let composantSelected = {
             nameComposant: this.composantSelected.value.name,
             quantity: this.diagFormTech.value.quantity,
         };
+        console.log(composantSelected, 'composantSelected');
+
+        let oneChipValue =
+            composantSelected.nameComposant +
+            ' ' +
+            composantSelected.quantity.toString();
+        console.log(oneChipValue, 'oneChipValue');
+        this.chipsValues.push(oneChipValue);
+        console.log(this.chipsValues, 'chip VALUES');
+
         this.composantCombo.push(composantSelected);
     }
 
@@ -350,6 +416,70 @@ export class TechDiListComponent {
                 console.log('🥝[data]:', data);
                 if (data) {
                     this.changeStatusMagasinEstimation(dataDiag._idDi);
+                }
+            });
+    }
+    techFinishDiag1() {
+        this.lapTimeForPauseAndGetBack1();
+
+        const dataDiag = {
+            _idDi: this.selectedDi_id,
+            pdr: this.diagFormTech.value.isPdr,
+            reparable: this.diagFormTech.value.isReparable,
+            remarqueTech: this.diagFormTech.value.remarqueTech,
+            composant: this.composantCombo,
+        };
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.finish(dataDiag),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🎂[loading]:', loading);
+                console.log('🥝[data]:', data);
+                if (data) {
+                    this.changeStatusMagasinEstimation(dataDiag._idDi);
+                }
+            });
+    }
+    // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
+    lapTimeForPauseAndGetBack1() {
+        this.lap1();
+        console.log(
+            this.selectedDi,
+            this.lapTime1,
+            'oivqùprj,vùpid,rvùbosien,dwùn,'
+        );
+        this.apollo
+            .mutate<any>({
+                mutation:
+                    this.ticketSerice.lapTimeForPauseAndGetBackForReaparation(
+                        this.selectedDi,
+                        this.lapTime1
+                    ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    this.diDialogRep = false;
+                }
+            });
+    }
+
+    finishReparation() {
+        console.log(this.remarqueReparation, ' this.remarqueReparation');
+        this.lap1();
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.finishReparation(
+                    this.selectedDi,
+                    this.remarqueReparation
+                ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    this.diDialogRep = false;
                 }
             });
     }

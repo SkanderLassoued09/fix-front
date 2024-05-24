@@ -26,7 +26,6 @@ import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TagModule } from 'primeng/tag';
-import { CoordinatorDiListModule } from '../coordinator-di-list/coordinator-di-list.module';
 import { CoordinatorDiListComponent } from '../coordinator-di-list/coordinator-di-list.component';
 import { MagasinDiListComponent } from '../magasin-di-list/magasin-di-list.component';
 import { FieldsetModule } from 'primeng/fieldset';

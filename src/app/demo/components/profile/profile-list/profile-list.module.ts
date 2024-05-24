@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ProfileListRoutingModule } from './profile-list-routing.module';
-import { ProfileListComponent } from './profile-list.component';
+import { ProfileListComponent } from './ProfileListComponent';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputGroupModule } from 'primeng/inputgroup';

@@ -7,7 +7,7 @@
     ></p-button>
 </div>
 <p-dialog
-    header="Ajouter une nouvelle DI"
+    header="Ajouter une nouvelle Demande d'intervention"
     [(visible)]="openAddDiModal"
     [modal]="true"
     [style]="{ width: '50vw' }"
@@ -112,7 +112,7 @@
 
         <div class="flex gap-4">
             <p-button
-                label="Créé"
+                label="Créer"
                 [loading]="loadingCreatingDi"
                 (onClick)="createDi()"
             ></p-button>
@@ -272,7 +272,7 @@
 <!-- NEGOTIATION1 -->
 
 <p-dialog
-    header="Pricing slider"
+    header="Affectation du prix final"
     [(visible)]="negocite1Modal"
     [modal]="true"
     [style]="{ width: '50vw' }"
@@ -282,6 +282,8 @@
     <ng-container>
         <div>
             <div class="element-container">
+                <h6>Prix Intial: {{ price }}</h6>
+                <h6>Prix final: {{ finalPrice }}</h6>
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
                     inputId="percent"
@@ -297,32 +299,45 @@
                     (onSlideEnd)="onSlideEnd($event)"
                 ></p-slider>
             </div>
-            <button
-                pButton
-                pRipple
-                label="discount"
-                icon="pi pi-plus"
-                class="p-button-rounded p-button-raised p-button-success"
-                (click)="discountByPercent()"
-            ></button>
-            <h6>discount value : {{ discountedPrice1Neg }}</h6>
-            <ng-container *ngIf="slideEnd === 20">
+            <div class="Slider-buttons">
                 <button
                     pButton
                     pRipple
-                    label="Next negio"
-                    icon="pi pi-plus"
+                    label="discount"
+                    icon="pi pi-dollar"
                     class="p-button-rounded p-button-raised p-button-success"
-                    (click)="nextNegociate2()"
-                ></button
-            ></ng-container>
+                    (click)="discountByPercent()"
+                ></button>
+            </div>
+
+            <h6>discount value : {{ discountedPriceNeg }}</h6>
+            <div class="element-container-BTN">
+                <ng-container *ngIf="slideEnd === 20">
+                    <button
+                        pButton
+                        pRipple
+                        label="Send to Admin Manager"
+                        icon="pi pi-send"
+                        class="p-button-rounded p-button-raised p-button-success"
+                        (click)="nextNegociate2()"
+                    ></button
+                ></ng-container>
+                <button
+                    pButton
+                    pRipple
+                    label="confirmer"
+                    icon="pi pi-check-circle"
+                    class="p-button-rounded p-button-raised p-button-success"
+                    (click)="confirmerNegociation()"
+                ></button>
+            </div>
         </div>
     </ng-container>
 </p-dialog>
 
 <!-- NEGOTIATION2 -->
 <p-dialog
-    header="NEGOTIATION2"
+    header="Affectation prix finale "
     [(visible)]="negocite2Modal"
     [modal]="true"
     [style]="{ width: '50vw' }"
@@ -330,9 +345,10 @@
     [resizable]="false"
 >
     <ng-container>
-        <div>
-            ng2
-            <div>
+        <div class="element-container">
+            <div class="element-container">
+                <h6>Prix Intial: {{ price }}</h6>
+                <h6>Prix final: {{ finalPrice }}</h6>
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
                     inputId="percent"
@@ -340,29 +356,45 @@
                 >
                 </p-inputNumber>
             </div>
-            <div>
+            <div class="element-container">
                 <p-slider
                     [min]="20"
                     [max]="25"
                     [(ngModel)]="discountPercent"
                     class="w-full"
-                    (onSlideEnd)="onSlideEnd($event)"
+                    (onSlideEnd)="onSlideAdminEnd($event)"
                 ></p-slider>
             </div>
-            <button
-                pButton
-                pRipple
-                label="discount"
-                icon="pi-dollar"
-                class="p-button-rounded p-button-raised p-button-success"
-                (click)="discountByPercent2()"
-            ></button>
-            <h6>dicount value : {{ discountedPrice1Neg }}</h6>
-        </div></ng-container
-    >
+            <div>
+                <button
+                    pButton
+                    pRipple
+                    label="discount"
+                    icon="pi pi-dollar"
+                    class="p-button-rounded p-button-raised p-button-success"
+                    (click)="discountByPercent2()"
+                ></button>
+            </div>
+            <div class="element-container-BTN">
+                <h6>Montant de la remise : {{ discountedPriceNeg }}</h6>
+                <ng-container *ngIf="slideAdminEnd === 25">
+                    <h6>Vous pouvez affecter un nouveux prix ici</h6>
+                    <p-inputNumber [(ngModel)]="price" inputId="price">
+                    </p-inputNumber>
+                </ng-container>
+                <button
+                    pButton
+                    pRipple
+                    label="confirmer"
+                    icon="pi pi-check-circle"
+                    class="p-button-rounded p-button-raised p-button-success"
+                    (click)="confirmerNegociation()"
+                ></button>
+            </div></div
+    ></ng-container>
 </p-dialog>
 <p-dialog
-    header="Pricing"
+    header="Affectation du prix Intial"
     [(visible)]="pricingDoalog"
     [modal]="true"
     [style]="{ width: '50vw' }"
@@ -371,33 +403,31 @@
 >
     <ng-container>
         <div>
-            @for (item of array_composants; track $index) {
+            @for (item of array_composants; track $index) { @for (composant of
+            allComposants; track $index) {
             <p-card
-                ><div>
-                    Composant:{{ item.nameComposant }} Quantity:{{
-                        item.quantity
-                    }}
-                </div></p-card
-            >
-
-            } @empty {
-            <div>Array is empty</div>
+                ><div>Composant:{{ item.nameComposant }}</div>
+                <div>Quantity:{{ item.quantity }}</div>
+                <div>Price:{{ composant.prix_vente }}</div>
+            </p-card>
+            } } @empty {
+            <div>Cette demande d'intervention contient 0 compsants</div>
             }
             <h1 *ngIf="totalComposant; else notPrice">
-                Total {{ totalComposant }} TND
+                Cout Total {{ totalComposant }} TND
             </h1>
         </div>
         <ng-template #notPrice>
             <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
         </ng-template>
-        <div>
+        <div class="element-container-BTN">
             <p-inputNumber inputId="integeronly" [(ngModel)]="price">
             </p-inputNumber>
             <button
                 pButton
                 pRipple
-                label="discount"
-                icon="pi-dollar"
+                label="Affecter Prix"
+                icon="pi pi-check-circle"
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="pricing()"
             ></button></div

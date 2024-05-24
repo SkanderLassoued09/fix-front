@@ -1,0 +1,48 @@
+Projects:
+  Let's finish this ASAP so we can after that start working on the Dashboard 
+
+Todos:
+  New:
+   ☐ in the creation DI Make the creation only possible when the user have chosen the client @low
+   ☐ in the list of di Add mutation to the delete DI @low
+   ☐ in the coordinator interface The di is send to the tech to diag but the status doesn't change @high
+   ☐ when you query the data for Tech add the status of the DI so we can use it for the Btn's condition and display condition so when it's finish close the stats @high
+   ☐ In the tech diagnostic interface Add the list of composants chosen & More information @low
+   ☐ In the tech diagnostic interface add Implement composant mutation to creat new composant @low
+   ☐ In the tech diagnostic interface check the `je reviendrai` Btn need to retrack time when the di is opened again @high
+   ☐ in the magasin estimation interface some CSS @low
+   ☐ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical
+   ☐ in the Negotiation 1 & 2 implement the confirmer Btn @today
+   ☐ in the tech reperation add time functions and mutation to make it `Finish` @high
+   ☐ in the tech Diag and rep add the remarques @low
+   ☐ when the di is finished add `retour` btn to send it to pending 3 @low
+   ☐ in the tech list of Di add your mutation to delet repeated Stats @high 
+  ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high
+  
+  Done:
+   
+  Cancelled:
+  
+
+
+
+
+
+
+      @How_to_use_the_TO_DO
+
+      ☐ Press Cmd/Ctrl+Enter to add a new todo @started(24-05-22 00:25)
+      ✔ Press Alt+D to mark a todo as done
+      ✔ Press it again to undo the action
+      ✘ Press Alt+C to mark a todo as cancelled
+      ✘ Press it again to undo the action
+       Tagging:
+    ☐ You can add tags using the @ symbol, like this @tag
+    ☐ There are some special, customizable tags: @critical @high @low @today
+ Timekeeping:
+    ✔ Completed todos can show a timestamp @done(17-11-03 10:42)
+    ☐ Press Alt+S to mark a todo as started @started(24-05-22 00:24)
+      ✔ Now it will show the elapsed time @started(17-11-03 10:42) @done(17-11-03 20:11) @lasted(9h29m)
+    ☐ You can provide time estimates for your todos @1h30m
+      ☐ We are even doing some natural language processing @est(1 day and 20 minutes)
+
