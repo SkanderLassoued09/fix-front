@@ -243,6 +243,8 @@ export class TicketService {
     }
 
     lapTimeForPauseAndGetBack(_id: string, diagTime: string) {
+        console.log('🍢[diagTime]:', diagTime);
+        console.log('🌽[_id]:', _id);
         return gql`
             mutation {
                 lapTimeForPauseAndGetBack(_id: "${_id}", diagTime: "${diagTime}")
@@ -251,6 +253,8 @@ export class TicketService {
     }
 
     lapTimeForPauseAndGetBackForReaparation(_id: string, repTime: string) {
+        console.log('🥧[repTime]:', repTime);
+        console.log('🍝[_id]:', _id);
         return gql`
             mutation {
                 lapTimeForPauseAndGetBackForReaparation(
@@ -392,6 +396,17 @@ export class TicketService {
         return gql`
             {
                 calculateTicketComposantPrice(_id: "${_id}")
+            }
+        `;
+    }
+
+    getLastPauseTime(_idStat: string) {
+        return gql`
+            {
+                getLastPauseTime(_id: "${_idStat}") {
+                    diag_time
+                    rep_time
+                }
             }
         `;
     }

@@ -63,6 +63,9 @@ export class TechDiListComponent {
     composantSelected: any;
     composantCombo: Array<{ nameComposant: string; quantity: number }> = [];
     selectedDi_id: any;
+    initialOffset: number;
+    isFinishedDiag: any;
+
     milliseconds1: string;
     seconds1: string;
     minutes1: string;
@@ -115,14 +118,14 @@ export class TechDiListComponent {
         this.selectedDi = di._id;
         this.selectedDi_id = di._idDi;
         this.diDialogDiag = true;
-        this.startStopwatch();
         this.changeStatus(di._idDi);
+        this.getTimeSpent(di._id);
     }
     repModal(di) {
         this.di = { ...di };
         this.selectedDi = di._id;
         this.diDialogRep = true;
-        this.startStopwatch1();
+        this.getTimeSpentRep(di._id);
         this.changeStatusInReparation(di._id);
     }
 
@@ -184,7 +187,7 @@ export class TechDiListComponent {
     startStopwatch() {
         if (!this.isRunning) {
             this.isRunning = true;
-            this.startTime = Date.now();
+            this.startTime = Date.now() - this.initialOffset;
             this.updateTimer();
         } else {
             this.isRunning = false;
@@ -251,6 +254,7 @@ export class TechDiListComponent {
         this.milliseconds = '00';
         this.isRunning = false;
         this.startTime = 0;
+        this.initialOffset = 0;
         this.startTime1 = 0;
         this.laps = [];
     }
@@ -268,6 +272,33 @@ export class TechDiListComponent {
         return value.toString().padStart(2, '0');
     }
 
+    setInitialTime(timeString: string) {
+        console.log('🍜[timeString]:', timeString);
+        const [minutes, seconds, milliseconds] = timeString
+            .split(':')
+            .map(Number);
+        this.initialOffset =
+            minutes * 60 * 60 * 1000 +
+            seconds * 60 * 1000 +
+            milliseconds * 1000;
+        this.minutes = this.padZero(minutes);
+        this.seconds = this.padZero(seconds);
+        this.milliseconds = this.padZero(milliseconds);
+    }
+    setInitialTime1(timeString: string) {
+        console.log('🍜[timeString]:', timeString);
+        const [minutes, seconds, milliseconds] = timeString
+            .split(':')
+            .map(Number);
+        this.initialOffset =
+            minutes * 60 * 60 * 1000 +
+            seconds * 60 * 1000 +
+            milliseconds * 1000;
+        this.minutes1 = this.padZero(minutes);
+        this.seconds1 = this.padZero(seconds);
+        this.milliseconds1 = this.padZero(milliseconds);
+    }
+    // ------------
     getComposant() {
         this.apollo
             .watchQuery<any>({
@@ -310,6 +341,7 @@ export class TechDiListComponent {
      */
 
     lapTimeForPauseAndGetBack() {
+        // for diag
         this.lap();
         this.apollo
             .mutate<any>({
@@ -324,6 +356,8 @@ export class TechDiListComponent {
                     this.diDialogDiag = false;
                 }
             });
+
+        this.startStopwatch();
     }
 
     selectedDropDown(selectedItem) {
@@ -392,6 +426,8 @@ export class TechDiListComponent {
             .subscribe(({ data, loading }) => {
                 console.log('🦀[loading]:', loading);
                 console.log('🍭[data]:', data);
+
+                this.isFinishedDiag = data.changeStatusMagasinEstimation;
             });
     }
 
@@ -419,8 +455,69 @@ export class TechDiListComponent {
                 }
             });
     }
+
+    // this function to gezt the time spênt oif this ticket will be called in opening modal function
+    getTimeSpent(_idStat: string) {
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.getLastPauseTime(_idStat),
+            })
+            .valueChanges.subscribe(({ data }) => {
+                console.log('🥚[data]:', data);
+
+                if (
+                    data &&
+                    data.getLastPauseTime.diag_time &&
+                    this.isValidTimeFormat(data.getLastPauseTime.diag_time)
+                ) {
+                    this.setInitialTime(data.getLastPauseTime.diag_time);
+                    this.startStopwatch();
+                } else {
+                    this.setInitialTime('00:00:00');
+                    this.startStopwatch();
+                }
+            });
+    }
+    getTimeSpentRep(_idStat: string) {
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.getLastPauseTime(_idStat),
+            })
+            .valueChanges.subscribe(({ data }) => {
+                console.log('🥚[data  getTimeSpentRep]:', data);
+
+                if (
+                    data &&
+                    data.getLastPauseTime.rep_time &&
+                    this.isValidTimeFormat(data.getLastPauseTime.rep_time)
+                ) {
+                    this.setInitialTime1(data.getLastPauseTime.rep_time);
+                    this.startStopwatch1();
+                } else {
+                    this.setInitialTime('00:00:00');
+                    this.startStopwatch1();
+                }
+            });
+    }
+
+    isValidTimeFormat(timeString: string): boolean {
+        console.log('🥠[timeString]:', timeString);
+        if (!timeString) {
+            return false;
+        }
+        const trimmedTimeString = timeString.trim();
+        const regex = /^\d{2}:\d{2}:\d{2}$/;
+        const is = regex.test(trimmedTimeString);
+        console.log(
+            '🥔[is valid]:',
+            is,
+            '🥠[trimmedTimeString]:',
+            trimmedTimeString
+        );
+        return is;
+    }
     techFinishDiag1() {
-        this.lapTimeForPauseAndGetBack1();
+        // this.lapTimeForPauseAndGetBack1();
 
         const dataDiag = {
             _idDi: this.selectedDi_id,
@@ -444,6 +541,7 @@ export class TechDiListComponent {
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1() {
+        // for rep
         this.lap1();
         console.log(
             this.selectedDi,
@@ -464,6 +562,8 @@ export class TechDiListComponent {
                     this.diDialogRep = false;
                 }
             });
+
+        this.startStopwatch1();
     }
 
     finishReparation() {
