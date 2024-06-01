@@ -242,7 +242,7 @@
                         pButton
                         pRipple
                         icon="pi pi-plus"
-                        class="p-button-rounded p-button-raised p-button-danger mr-2"
+                        class="p-button-rounded p-button-raised mr-2"
                         (click)="showDialogForPricing(rowData)"
                     ></button>
                     <!--  (click)="showDialogForNegociate1(rowData)" for above -->
@@ -413,6 +413,7 @@
             } } @empty {
             <div>Cette demande d'intervention contient 0 compsants</div>
             }
+            <div>Le temps de dignostique est {{ timeDiagnostique }}</div>
             <h1 *ngIf="totalComposant; else notPrice">
                 Cout Total {{ totalComposant }} TND
             </h1>

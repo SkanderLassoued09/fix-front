@@ -230,6 +230,35 @@ export class TicketService {
             }
         `;
     }
+    createComposantByTech(
+        composantName: string,
+        packageComposant: string,
+        category_composant_id: string,
+        link: string
+    ) {
+        return gql`
+            mutation {
+                createComposant(
+                    createComposantInput: {
+                        name: "${composantName}"
+                        package: "${packageComposant}"
+                        category_composant_id:"${category_composant_id}"
+                        link: "${link}"
+                    }
+                ) {
+                    _id
+                }
+            }
+        `;
+    }
+
+    removeComposant(_id: string) {
+        return gql`
+        mutation {
+            removeComposant(_id: "${_id}")
+        }
+    `;
+    }
 
     getAllComposant() {
         return gql`
@@ -237,6 +266,15 @@ export class TicketService {
                 findAllComposant {
                     _id
                     name
+                    package
+                    category_composant_id
+                    prix_achat
+                    prix_vente
+                    coming_date
+                    link
+                    quantity_stocked
+                    pdf
+                    status_composant
                 }
             }
         `;
@@ -321,7 +359,7 @@ export class TicketService {
                     link
                     quantity_stocked
                     pdf
-                    status
+                    status_composant
                 }
             }
         `;
@@ -352,7 +390,7 @@ export class TicketService {
                     prix_achat
                     prix_vente
                     coming_date
-                    status
+              status_composant
                 }
             }
         `;
@@ -371,7 +409,7 @@ export class TicketService {
                         link: "${composantInfo.link}"
                         quantity_stocked: ${composantInfo.quantity_stocked}
                         pdf: "${composantInfo.pdf}"
-                        status: "${composantInfo.status}"
+                        status_composant: "${composantInfo.status_composant}"
                     }
                 )
                  {
@@ -385,7 +423,7 @@ export class TicketService {
     link
     quantity_stocked
     pdf
-    status
+    status_composant
     
   }
             }
@@ -525,5 +563,27 @@ export class TicketService {
       }
     }
   `;
+    }
+
+    getStatbyID(_idSTAT: string) {
+        return gql`
+            query {
+                getStatbyID(_idSTAT:"${_idSTAT}") 
+                {
+                    _idDi
+                }
+            }
+        `;
+    }
+
+    getStatByDI_ID(_idDi: string) {
+        return gql`
+            query {
+                getInfoStatByIdDi(_idDi: "${_idDi}") {
+                    diag_time
+                    rep_time
+                }
+            }
+        `;
     }
 }

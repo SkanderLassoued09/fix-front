@@ -14,3 +14,8 @@ export interface Product {
     image?: string;
     rating?: number;
 }
+
+export interface ProductT {
+    name?: string;
+    quantity?: number;
+}

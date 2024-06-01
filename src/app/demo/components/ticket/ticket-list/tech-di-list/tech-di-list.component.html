@@ -50,6 +50,7 @@
             </tr>
         </ng-template>
     </p-table>
+
     <p-dialog
         [(visible)]="diDialogDiag"
         [style]="{ width: '50%', height: '70vh' }"
@@ -58,12 +59,10 @@
         styleClass="p-fluid"
     >
         <!-- -------- -->
-
         <form [formGroup]="diagFormTech">
             <div class="flex flex-column">
                 <div class="field">
-                    <label for="name">Ecrire quelque chose ...</label>
-                    <!-- Dropdwon tech for reparation -->
+                    <label for="name">Description de la Panne a corriger</label>
                     <textarea
                         formControlName="remarqueTech"
                         rows="5"
@@ -91,8 +90,6 @@
                     </div>
                 </div>
 
-                <!-- reparable or no -->
-
                 <!-- list of composant -->
                 <div class="grid align-items-center">
                     <div class="col">
@@ -110,12 +107,10 @@
                             inputId="integeronly"
                             formControlName="quantity"
                             [placeholder]="
-                                'Add quantity for' +
-                                ' ' +
+                                'Add quantity for ' +
                                 composantSelected.value.name
                             "
-                        >
-                        </p-inputNumber>
+                        ></p-inputNumber>
                     </div>
                     <div class="col" *ngIf="composantSelected">
                         <button
@@ -128,49 +123,200 @@
                         ></button>
                     </div>
                 </div>
-                <div class="chips">
-                    <div class="card p-fluid">
-                        <p-chips [(ngModel)]="arrayTESTONLY"></p-chips>
-                    </div>
-                </div>
 
-                <div class="field">
-                    <!-- to continue other rq -->
-                    <p-fieldset legend="Remarque" [toggleable]="true">
-                        <p class="m-0">Remarque coordinateur + manager</p>
-                    </p-fieldset>
-                </div>
+                <p-toast />
+                <p-toolbar styleClass="mb-4 gap-2">
+                    <ng-template pTemplate="left">
+                        <p-button
+                            pRipple
+                            severity="success"
+                            label="Créer composant"
+                            icon="pi pi-plus"
+                            class="mr-2"
+                            (click)="openNew()"
+                        />
+                        <p-button
+                            pRipple
+                            severity="danger"
+                            label="Effacer"
+                            icon="pi pi-trash"
+                            (click)="deleteSelectedProducts()"
+                            [disabled]="
+                                !composantCombo || !composantCombo.length
+                            "
+                        />
+                    </ng-template>
+
+                    <ng-template pTemplate="right"> </ng-template>
+                </p-toolbar>
+
+                <p-table
+                    #dt
+                    [value]="composantCombo"
+                    [rows]="11"
+                    [globalFilterFields]="[
+                        'name',
+                        'country.name',
+                        'representative.name',
+                        'status'
+                    ]"
+                    [tableStyle]="{ 'min-width': '75rem' }"
+                    [(selection)]="composantCombo"
+                    [rowHover]="true"
+                    dataKey="id"
+                    [showCurrentPageReport]="true"
+                >
+                    <ng-template pTemplate="caption">
+                        <div
+                            class="flex align-items-center justify-content-between"
+                        >
+                            <h5 class="m-0">Listes des composants</h5>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th style="width: 4rem">
+                                <p-tableHeaderCheckbox />
+                            </th>
+                            <th pSortableColumn="name" style="min-width: 15rem">
+                                Nom composant <p-sortIcon field="name" />
+                            </th>
+                            <th
+                                pSortableColumn="Quantité"
+                                style="min-width: 15rem"
+                            >
+                                Quantité <p-sortIcon field="name" />
+                            </th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-composantCombo>
+                        <tr>
+                            <td>
+                                <p-tableCheckbox [value]="composantCombo" />
+                            </td>
+                            <td>
+                                {{ composantCombo.nameComposant }}
+                            </td>
+
+                            <td>
+                                {{ composantCombo.quantity }}
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="summary">
+                        <div
+                            class="flex align-items-center justify-content-between"
+                        >
+                            Ce DI contient
+                            {{ composantCombo ? composantCombo.length : 0 }}
+                            Composants.
+                        </div>
+                    </ng-template>
+                </p-table>
+                <!-- ******* Start of composant creation ********* -->
+                <p-dialog
+                    [(visible)]="creatComposantDialog"
+                    [style]="{ width: '450px' }"
+                    header="Creation d'un nouveux composant"
+                    [modal]="true"
+                    styleClass="p-fluid"
+                >
+                    <ng-template pTemplate="content">
+                        <form [formGroup]="composantTechnicien">
+                            <div class="field">
+                                <label for="name">Nom composant</label>
+                                <input
+                                    type="text"
+                                    pInputText
+                                    id="name"
+                                    formControlName="name"
+                                    required
+                                />
+                                <small
+                                    class="p-error"
+                                    *ngIf="submitted && !composantTech.name"
+                                >
+                                    Name is required.
+                                </small>
+                            </div>
+                            <div class="field">
+                                <label for="packageComposant"
+                                    >Package composant</label
+                                >
+                                <input
+                                    type="text"
+                                    pInputText
+                                    id="package"
+                                    formControlName="packageComposant"
+                                    required
+                                />
+                            </div>
+                            <div class="field">
+                                <label for="link">Lien du composant</label>
+                                <input
+                                    type="text"
+                                    pInputText
+                                    id="link"
+                                    formControlName="link"
+                                />
+                            </div>
+                            <div class="field">
+                                <label for="inventoryStatus"
+                                    >Category composant</label
+                                >
+                                <p-dropdown
+                                    [options]="composantList"
+                                    optionLabel="category"
+                                    placeholder="Choisir category composant"
+                                ></p-dropdown>
+                            </div>
+                        </form>
+                    </ng-template>
+                    <ng-template pTemplate="footer">
+                        <p-button
+                            pRipple
+                            label="Cancel"
+                            icon="pi pi-times"
+                            [text]="true"
+                            (click)="closeComposantModal()"
+                        />
+                        <p-button
+                            pRipple
+                            label="Save"
+                            icon="pi pi-check"
+                            [text]="true"
+                            (click)="saveNewComposant()"
+                        />
+                    </ng-template>
+                </p-dialog>
+                <!-- ******* END of composant creation ********* -->
             </div>
         </form>
 
         <ng-template pTemplate="footer">
-            <span>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</span>
-            <button
-                pButton
-                pRipple
-                label="Cancel"
-                icon="pi pi-times"
-                class="p-button-text"
-                (click)="hideDialog()"
-            ></button>
-            <button
-                pButton
-                pRipple
-                label="Je reviendrai"
-                icon="pi pi-check"
-                class="p-button-text"
-                (click)="lapTimeForPauseAndGetBack()"
-            ></button>
-            <button
-                pButton
-                pRipple
-                label="J'ai fini"
-                icon="pi pi-check"
-                class="p-button-text"
-                (click)="techFinishDiag()"
-            ></button>
+            <div class="foot">
+                <button
+                    pButton
+                    pRipple
+                    label="Je reviendrai"
+                    icon="pi pi-check"
+                    class="p-button-text"
+                    (click)="lapTimeForPauseAndGetBack()"
+                ></button>
+                <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
+
+                <button
+                    pButton
+                    pRipple
+                    label="J'ai fini"
+                    icon="pi pi-check"
+                    class="p-button-text"
+                    (click)="techFinishDiag()"
+                ></button>
+            </div>
         </ng-template>
     </p-dialog>
+
     <p-dialog
         [(visible)]="diDialogRep"
         [style]="{ width: '50%', height: '70vh' }"
@@ -178,14 +324,12 @@
         [modal]="true"
         styleClass="p-fluid"
     >
-        <!-- -------- -->
-
         <div class="flex flex-column">
             <div class="field">
                 <label for="name">Ecrire quelque chose ...</label>
-                <!-- Dropdwon tech for reparation -->
                 <textarea
                     [(ngModel)]="remarqueReparation"
+                    [ngModelOptions]="{ standalone: true }"
                     rows="5"
                     cols="30"
                     pInputTextarea
@@ -193,82 +337,44 @@
             </div>
 
             <div class="field">
-                <!-- to continue other rq -->
                 <p-fieldset legend="Remarque" [toggleable]="true">
-                    <p class="m-0">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-                        sed do eiusmod tempor incididunt ut labore et dolore
-                        magna aliqua. Ut enim ad minim veniam, quis nostrud
-                        exercitation ullamco laboris nisi ut aliquip ex ea
-                        commodo consequat. Duis aute irure dolor in
-                        reprehenderit in voluptate velit esse cillum dolore eu
-                        fugiat nulla pariatur. Excepteur sint occaecat cupidatat
-                        non proident, sunt in culpa qui officia deserunt mollit
-                        anim id est laborum.
-                    </p>
+                    <p class="m-0">TEXT</p>
                 </p-fieldset>
             </div>
             <div class="field">
-                <!-- to continue other rq -->
                 <p-fieldset legend="Remarque" [toggleable]="true">
-                    <p class="m-0">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-                        sed do eiusmod tempor incididunt ut labore et dolore
-                        magna aliqua. Ut enim ad minim veniam, quis nostrud
-                        exercitation ullamco laboris nisi ut aliquip ex ea
-                        commodo consequat. Duis aute irure dolor in
-                        reprehenderit in voluptate velit esse cillum dolore eu
-                        fugiat nulla pariatur. Excepteur sint occaecat cupidatat
-                        non proident, sunt in culpa qui officia deserunt mollit
-                        anim id est laborum.
-                    </p>
+                    <p class="m-0">TEXT</p>
                 </p-fieldset>
             </div>
             <div class="field">
-                <!-- to continue other rq -->
                 <p-fieldset legend="Remarque" [toggleable]="true">
-                    <p class="m-0">
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit,
-                        sed do eiusmod tempor incididunt ut labore et dolore
-                        magna aliqua. Ut enim ad minim veniam, quis nostrud
-                        exercitation ullamco laboris nisi ut aliquip ex ea
-                        commodo consequat. Duis aute irure dolor in
-                        reprehenderit in voluptate velit esse cillum dolore eu
-                        fugiat nulla pariatur. Excepteur sint occaecat cupidatat
-                        non proident, sunt in culpa qui officia deserunt mollit
-                        anim id est laborum.
-                    </p>
+                    <p class="m-0">TEXT</p>
                 </p-fieldset>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
-            <span>{{ minutes1 }}:{{ seconds1 }}:{{ milliseconds1 }}</span>
-            <button
-                pButton
-                pRipple
-                label="Cancel"
-                icon="pi pi-times"
-                class="p-button-text"
-                (click)="hideDialogRep()"
-            ></button>
-            <button
-                pButton
-                pRipple
-                label="Je reviendrai"
-                icon="pi pi-check"
-                class="p-button-text"
-                (click)="lapTimeForPauseAndGetBack1()"
-            ></button>
-            <button
-                pButton
-                pRipple
-                label="J'ai fini"
-                icon="pi pi-check"
-                class="p-button-text"
-                (click)="finishReparation()"
-            ></button>
+            <div class="foot">
+                <button
+                    pButton
+                    pRipple
+                    label="Je reviendrai"
+                    icon="pi pi-check"
+                    class="p-button-text"
+                    (click)="lapTimeForPauseAndGetBack1()"
+                ></button>
+                <h1>{{ minutes1 }}:{{ seconds1 }}:{{ milliseconds1 }}</h1>
+                <button
+                    pButton
+                    pRipple
+                    label="J'ai fini"
+                    icon="pi pi-check"
+                    class="p-button-text"
+                    (click)="finishReparation()"
+                ></button>
+            </div>
         </ng-template>
     </p-dialog>
+
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 </div>

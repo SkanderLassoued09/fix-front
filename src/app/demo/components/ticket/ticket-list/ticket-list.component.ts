@@ -129,12 +129,14 @@ export class TicketListComponent implements OnInit {
     dataById: any;
     finalPrice: any;
     allComposants = [];
-
+    number_total_composant: number = this.allComposants.length;
     private _idcomposant: any;
     name_composant: any;
     ArrayofcomposantDATA: DiQueryResult;
     oneComposant_QueryValue: DiQueryResult;
     $composant: any;
+    current_id: any;
+    timeDiagnostique: string;
 
     constructor(
         private ticketSerice: TicketService,
@@ -161,17 +163,32 @@ export class TicketListComponent implements OnInit {
     }
 
     // this will show only if status allows
-    //! WORKING HERE
+    //! working here *******************************************************
     showDialogForPricing(data) {
         this.seletedRow = data;
+        let MyID = data._id;
+        console.log('verifiing the ID', MyID);
 
-        this.name_composant = data._id;
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getStatByDI_ID(MyID),
+            })
+            .subscribe(({ data }) => {
+                console.log(
+                    '🥚[data  NEZIH]:',
+                    data.getInfoStatByIdDi.diag_time
+                );
+                this.timeDiagnostique = data.getInfoStatByIdDi.diag_time;
+            });
+
+        this.current_id = data._id;
         for (let oneComposant of data.array_composants) {
             this.getcomposantByName(oneComposant.nameComposant);
             console.log('data quantity from here', oneComposant.quantity);
         }
 
         console.log('DATA FROM allcomposant query', this.allComposants);
+        console.log('length all composant', this.allComposants.length);
 
         this.pricingDoalog = true;
 
@@ -267,11 +284,19 @@ export class TicketListComponent implements OnInit {
     pricing() {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.pricing(this._idDi, this.price),
+                mutation: this.ticketSerice.pricing(
+                    this.current_id,
+                    this.price
+                ),
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
-                    this.changeStatusNegiciate1(this._idDi);
+                    console.log(
+                        this.current_id,
+                        'data coming from pricing function'
+                    );
+
+                    this.changeStatusNegiciate1(this.current_id);
                 }
             });
     }

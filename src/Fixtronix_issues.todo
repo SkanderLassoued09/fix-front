@@ -11,8 +11,6 @@ Todos:
    ☐ In the tech diagnostic interface add Implement composant mutation to creat new composant @low
    ☐ In the tech diagnostic interface check the `je reviendrai` Btn need to retrack time when the di is opened again @high
    ☐ in the magasin estimation interface some CSS @low
-   ☐ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical
-   ☐ in the Negotiation 1 & 2 implement the confirmer Btn @today
    ☐ in the tech reperation add time functions and mutation to make it `Finish` @high
    ☐ in the tech Diag and rep add the remarques @low
    ☐ when the di is finished add `retour` btn to send it to pending 3 @low
@@ -20,7 +18,9 @@ Todos:
   ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high
   
   Done:
-   
+  ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
+   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
+
   Cancelled:
   
 
