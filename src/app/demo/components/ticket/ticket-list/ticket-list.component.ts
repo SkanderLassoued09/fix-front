@@ -5,7 +5,7 @@ import { Product } from 'src/app/demo/api/product';
 import { MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import {
     CreateDiMutationResult,
     DiQueryResult,
@@ -32,10 +32,9 @@ interface UploadEvent {
 })
 export class TicketListComponent implements OnInit {
     creationDiForm = new FormGroup({
-        title: new FormControl(),
-        designiation: new FormControl(),
+        title: new FormControl('', [Validators.required]),
+        designiation: new FormControl('', [Validators.required]),
         typeClient: new FormControl(),
-
         status: new FormControl(),
         client_id: new FormControl(),
         company_id: new FormControl(),

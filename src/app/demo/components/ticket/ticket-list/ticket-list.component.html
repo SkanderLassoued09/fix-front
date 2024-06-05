@@ -115,6 +115,11 @@
                 label="Créer"
                 [loading]="loadingCreatingDi"
                 (onClick)="createDi()"
+                [disabled]="
+                    !creationDiForm.get('title').value ||
+                    !creationDiForm.get('designiation').value ||
+                    !creationDiForm.get('typeClient').value
+                "
             ></p-button>
 
             <p-button label="Annuler" severity="danger"></p-button>

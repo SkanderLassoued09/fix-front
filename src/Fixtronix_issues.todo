@@ -3,23 +3,23 @@ Projects:
 
 Todos:
   New:
-   ☐ in the creation DI Make the creation only possible when the user have chosen the client @low
    ☐ in the list of di Add mutation to the delete DI @low
    ☐ in the coordinator interface The di is send to the tech to diag but the status doesn't change @high
    ☐ when you query the data for Tech add the status of the DI so we can use it for the Btn's condition and display condition so when it's finish close the stats @high
-   ☐ In the tech diagnostic interface Add the list of composants chosen & More information @low
    ☐ In the tech diagnostic interface add Implement composant mutation to creat new composant @low
-   ☐ In the tech diagnostic interface check the `je reviendrai` Btn need to retrack time when the di is opened again @high
    ☐ in the magasin estimation interface some CSS @low
-   ☐ in the tech reperation add time functions and mutation to make it `Finish` @high
    ☐ in the tech Diag and rep add the remarques @low
    ☐ when the di is finished add `retour` btn to send it to pending 3 @low
    ☐ in the tech list of Di add your mutation to delet repeated Stats @high 
-  ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high
+   ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high
   
   Done:
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
-   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
+  ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
+  ✔ in the creation DI Make the creation only possible when the user have chosen the client @low @done(24-06-04 00:27)
+  ✔ In the tech diagnostic interface Add the list of composants chosen & More information @low @done(24-06-04 00:28)
+  ✔ in the tech reperation add time functions and mutation to make it `Finish` @high @done(24-06-04 00:29)
+  ✔ In the tech diagnostic interface check the `je reviendrai` Btn need to retrack time when the di is opened again @high @done(24-06-04 00:33)
 
   Cancelled:
   
