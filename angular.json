@@ -23,13 +23,20 @@
                         "polyfills": ["zone.js"],
                         "tsConfig": "tsconfig.app.json",
                         "inlineStyleLanguage": "scss",
-                        "assets": ["src/favicon.ico", "src/assets"],
+                        "assets": [
+                          "src/favicon.ico",
+                          "src/assets",
+                          "src/manifest.webmanifest",
+                          "src/manifest.webmanifest"
+                        ],
                         "styles": [
                             "src/styles.scss",
                             "node_modules/primeng/resources/themes/lara-light-blue/theme.css",
                             "node_modules/primeng/resources/primeng.min.css"
                         ],
-                        "scripts": []
+                        "scripts": [],
+                        "serviceWorker": true,
+                        "ngswConfigPath": "ngsw-config.json"
                     },
                     "configurations": {
                         "production": {
@@ -83,7 +90,12 @@
                         "tsConfig": "tsconfig.spec.json",
                         "karmaConfig": "karma.conf.js",
                         "inlineStyleLanguage": "scss",
-                        "assets": ["src/favicon.ico", "src/assets"],
+                        "assets": [
+                          "src/favicon.ico",
+                          "src/assets",
+                          "src/manifest.webmanifest",
+                          "src/manifest.webmanifest"
+                        ],
                         "styles": ["src/styles.scss"],
                         "scripts": []
                     }

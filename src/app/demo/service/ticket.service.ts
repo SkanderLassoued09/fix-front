@@ -27,6 +27,7 @@ export class TicketService {
                         client_id
                         remarque_id
                         createdBy
+                        ignoreCount
                         location_id
                         di_category_id
                         array_composants {
@@ -444,6 +445,16 @@ export class TicketService {
                 getLastPauseTime(_id: "${_idStat}") {
                     diag_time
                     rep_time
+                }
+            }
+        `;
+    }
+
+    ignore(_id) {
+        return gql`
+            mutation {
+                countIgnore(_idDI: "${_id}") {
+                    ignoreCount
                 }
             }
         `;

@@ -268,6 +268,14 @@
                         class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForNegociate2(rowData)"
                     ></button>
+
+                    <p-button
+                        *ngIf="currentRole === 'ADMIN_MANAGER' || 'ADMIN_TECH'"
+                        [label]="rowData.ignoreCount.toString()"
+                        severity="danger"
+                        (click)="ignore(rowData)"
+                        [disabled]="rowData.ignoreCount === 3"
+                    />
                 </td>
             </tr>
         </ng-template>

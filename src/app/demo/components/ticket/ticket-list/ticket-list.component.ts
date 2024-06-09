@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 
@@ -136,11 +136,13 @@ export class TicketListComponent implements OnInit {
     $composant: any;
     current_id: any;
     timeDiagnostique: string;
+    ignoreCount: any;
 
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
-        private readonly messageservice: MessageService
+        private readonly messageservice: MessageService,
+        private cdr: ChangeDetectorRef
     ) {}
 
     ngOnInit() {
@@ -581,6 +583,29 @@ export class TicketListComponent implements OnInit {
             data,
             fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION
         );
+    }
+
+    // count ignore ticket and save it
+    ignore(_idticket) {
+        console.log('🍖[_idticket]:', _idticket);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.ignore(_idticket._id),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    const updatedIgnoreCount = data.countIgnore.ignoreCount;
+                    // Update the ignore count in the diList
+                    const ticketIndex = this.diList.findIndex(
+                        (item) => item._id === _idticket._id
+                    );
+                    if (ticketIndex !== -1) {
+                        this.diList[ticketIndex].ignoreCount =
+                            updatedIgnoreCount;
+                    }
+                }
+                this.cdr.detectChanges();
+            });
     }
 }
 /**
