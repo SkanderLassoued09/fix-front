@@ -107,7 +107,7 @@ export class TicketListComponent implements OnInit {
     clientListDropDown: any;
     companiesListDropDown: any;
     loadingCreatingDi: boolean;
-    pricingDoalog: boolean = false;
+    pricingModal: boolean = false;
     discountPercent;
     totalComposant: any;
     array_composants: any;
@@ -137,6 +137,7 @@ export class TicketListComponent implements OnInit {
     current_id: any;
     timeDiagnostique: string;
     ignoreCount: any;
+    composantQuantity: number;
 
     constructor(
         private ticketSerice: TicketService,
@@ -163,8 +164,6 @@ export class TicketListComponent implements OnInit {
         this.negocite1Modal = false;
     }
 
-    // this will show only if status allows
-    //! working here *******************************************************
     showDialogForPricing(data) {
         this.seletedRow = data;
         let MyID = data._id;
@@ -188,10 +187,13 @@ export class TicketListComponent implements OnInit {
             console.log('data quantity from here', oneComposant.quantity);
         }
 
-        console.log('DATA FROM allcomposant query', this.allComposants);
+        console.log('Quantite composants', this.allComposants);
+
+        this.composantQuantity = this.allComposants.length;
+
         console.log('length all composant', this.allComposants.length);
 
-        this.pricingDoalog = true;
+        this.pricingModal = true;
 
         //! fnction delte here and add in the confirmer BTN
 
@@ -296,6 +298,9 @@ export class TicketListComponent implements OnInit {
                         this.current_id,
                         'data coming from pricing function'
                     );
+                    this.getDi();
+                    this.pricingModal = false;
+                    //nezih
 
                     this.changeStatusNegiciate1(this.current_id);
                 }
@@ -404,6 +409,7 @@ export class TicketListComponent implements OnInit {
             status: this.statusDI,
             typeClient,
         };
+        let _idQuery;
         this.apollo
             .mutate<CreateDiMutationResult>({
                 mutation: this.ticketSerice.createDi(diInfo),
@@ -418,8 +424,11 @@ export class TicketListComponent implements OnInit {
                         summary: 'Success',
                         detail: 'La demande service ajouté',
                     });
+                    _idQuery = data.createDi._id;
+
                     this.creationDiForm.reset();
                     this.openAddDiModal = false;
+                    this.getDi();
                 }
             });
     }

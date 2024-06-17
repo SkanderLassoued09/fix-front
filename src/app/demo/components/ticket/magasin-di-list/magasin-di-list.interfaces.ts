@@ -55,3 +55,9 @@ export interface UpdateComposantMutationResponse {
     pdf: string;
     status: string;
 }
+
+export interface ComposantStatus {
+    EnStock: string;
+    Interne: string;
+    Externe: string;
+}

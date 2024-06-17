@@ -196,6 +196,8 @@ export class MagasinDiListComponent {
 
                 if (data) {
                     this.changeStatusDiToPending2(this.selectedDi_id);
+                    this.getDi();
+                    this.magasinDiDialog = false;
                 }
             });
     }

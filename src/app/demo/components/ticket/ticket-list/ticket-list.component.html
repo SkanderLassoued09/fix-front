@@ -274,7 +274,10 @@
                         [label]="rowData.ignoreCount.toString()"
                         severity="danger"
                         (click)="ignore(rowData)"
-                        [disabled]="rowData.ignoreCount === 3"
+                        [disabled]="
+                            rowData.ignoreCount === 3 ||
+                            rowData.status !== 'FINISHED'
+                        "
                     />
                 </td>
             </tr>
@@ -408,7 +411,7 @@
 </p-dialog>
 <p-dialog
     header="Affectation du prix Intial"
-    [(visible)]="pricingDoalog"
+    [(visible)]="pricingModal"
     [modal]="true"
     [style]="{ width: '50vw' }"
     [draggable]="false"
@@ -424,7 +427,7 @@
                 <div>Price:{{ composant.prix_vente }}</div>
             </p-card>
             } } @empty {
-            <div>Cette demande d'intervention contient 0 compsants</div>
+            <div>Cette demande d'intervention contient XY compsants</div>
             }
             <div>Le temps de dignostique est {{ timeDiagnostique }}</div>
             <h1 *ngIf="totalComposant; else notPrice">

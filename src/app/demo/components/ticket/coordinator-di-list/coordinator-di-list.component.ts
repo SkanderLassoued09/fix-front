@@ -188,9 +188,8 @@ export class CoordinatorDiListComponent {
                 console.log('🌯[data changeStatusRepaire]:', data);
             });
     }
-
-    //TODO The di is send to the tech but the status doesn't change & Fire the mutation when the confime Btn is pressed
-    async selectedTechDiag(data) {
+    //!HERE
+    selectedTechDiag(data) {
         console.log('🥟[selected]:', data);
         this.apollo
             .mutate<any>({
@@ -201,9 +200,7 @@ export class CoordinatorDiListComponent {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
-                console.log('🍻[data]:', data);
                 if (data) {
-                    console.log(data, 'data for notification to work ');
                     {
                         this.apollo
                             .mutate<TechStartDiagnosticMutationResponse>({
@@ -214,10 +211,7 @@ export class CoordinatorDiListComponent {
                                 useMutationLoading: true,
                             })
                             .subscribe(({ data, loading }) => {
-                                console.log(
-                                    "data coming from mutation that don't work",
-                                    data
-                                );
+                                this.getDi();
                             });
                     }
                     this.diDialog = false;
@@ -239,6 +233,7 @@ export class CoordinatorDiListComponent {
 
                 if (data) {
                     this.changeStatusRepaire(this.selectedDi);
+                    this.getDi();
                 }
             });
     }
@@ -249,6 +244,10 @@ export class CoordinatorDiListComponent {
             })
             .subscribe(({ data }) => {
                 console.log('🍑[pricing change]:', data);
+                if (data) {
+                    this.getDi();
+                    this.diDialog = false;
+                }
             });
     }
 }

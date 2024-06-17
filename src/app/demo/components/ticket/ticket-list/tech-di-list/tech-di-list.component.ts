@@ -145,7 +145,7 @@ export class TechDiListComponent {
 
                 if (data) {
                     console.log('data creating composant', data);
-
+                    this.getComposant();
                     this.composantTechnicien.reset();
                     this.creatComposantDialog = false;
                 }
@@ -549,7 +549,7 @@ export class TechDiListComponent {
                 this.isFinishedDiag = true;
             });
     }
-
+    //!Tech finishing Diagnostique here
     techFinishDiag() {
         this.lapTimeForPauseAndGetBack();
 
