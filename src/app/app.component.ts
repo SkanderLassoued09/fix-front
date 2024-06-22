@@ -3,6 +3,7 @@ import { MessageService, PrimeNGConfig } from 'primeng/api';
 import { ProfileService } from './demo/service/profile.service';
 import { Apollo } from 'apollo-angular';
 import { SwPush } from '@angular/service-worker';
+import { NotificationService } from './demo/service/notification.service';
 
 /**
  *
@@ -27,15 +28,16 @@ export class AppComponent implements OnInit {
         private readonly profileService: ProfileService,
         private readonly apollo: Apollo,
         private messageService: MessageService,
-        private swPush: SwPush
+        private swPush: SwPush,
+        private notificationService: NotificationService
     ) {
         this._idtech = localStorage.getItem('_id');
     }
 
     ngOnInit() {
+        this.notificationService.startWorker();
         this.primengConfig.ripple = true;
         this.notification();
-        console.log('🍸[notification');
     }
 
     notification() {
