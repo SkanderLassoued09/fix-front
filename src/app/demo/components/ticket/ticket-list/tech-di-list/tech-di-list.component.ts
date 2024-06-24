@@ -17,6 +17,7 @@ import { CreateComposantMutationResult } from './tech-di-list-interface';
     styleUrl: './tech-di-list.component.scss',
 })
 export class TechDiListComponent {
+    selectedComposants: any[] = [];
     diagFormTech = new FormGroup({
         _idDi: new FormControl(),
 
@@ -536,6 +537,8 @@ export class TechDiListComponent {
             nameComposant: this.composantSelected.value.name,
             quantity: this.diagFormTech.value.quantity,
         };
+
+        console.log('🥚', this.selectedComposants);
 
         this.composantCombo.push(composantSelected);
     }
