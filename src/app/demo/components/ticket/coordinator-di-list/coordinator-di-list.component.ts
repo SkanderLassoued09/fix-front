@@ -63,6 +63,7 @@ export class CoordinatorDiListComponent {
     techList: any;
     selectedDi: any;
     pricingDoalog: boolean = false;
+    reperationCondition: boolean;
 
     constructor(
         private ticketSerice: TicketService,
@@ -93,6 +94,27 @@ export class CoordinatorDiListComponent {
                 }
             });
     }
+    getReperationCoordinatorCondition() {
+        console.log('this.selectedDi nezih97', this.selectedDi);
+
+        this.apollo
+            .watchQuery<any>({
+                query: this.ticketSerice.getReperationCoordinatorCondition(
+                    this.selectedDi
+                ),
+            })
+            .valueChanges.subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    this.reperationCondition =
+                        data.getDiById.gotComposantFromMagasin;
+                    console.log('BTN CONDITION§§§ ', this.reperationCondition);
+                    console.log(
+                        'BTN inverse CONDITION§§§ ',
+                        !this.reperationCondition
+                    );
+                }
+            });
+    }
 
     getAllTech() {
         this.apollo
@@ -117,6 +139,8 @@ export class CoordinatorDiListComponent {
         this.di = { ...di };
         this.selectedDi = di._id;
         this.diDialog = true;
+        this.getReperationCoordinatorCondition();
+
         // condition to send to diag
         di.status == STATUS_DI.PENDING1
             ? (this.diag_condition = false)
@@ -215,6 +239,11 @@ export class CoordinatorDiListComponent {
                             });
                     }
                     this.diDialog = false;
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'La demande service ajouté',
+                    });
                 }
             });
     }
@@ -234,6 +263,7 @@ export class CoordinatorDiListComponent {
                 if (data) {
                     this.changeStatusRepaire(this.selectedDi);
                     this.getDi();
+                    this.diDialog = false;
                 }
             });
     }
@@ -247,6 +277,23 @@ export class CoordinatorDiListComponent {
                 if (data) {
                     this.getDi();
                     this.diDialog = false;
+                }
+            });
+    }
+
+    gotcomposantfromMagasin() {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.confirmerRecoitComposant(
+                    this.di._id
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍑[Confirmation composants]:', data);
+                if (data) {
+                    this.getDi();
+                    this.diDialog = false;
+                    this.reperationCondition = true;
                 }
             });
     }

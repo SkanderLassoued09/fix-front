@@ -13,9 +13,11 @@ Todos:
    ☐ delet function inside the TECH DIAG @medium
    ☐ When Tech di have no composant send directly to the Coordinator @high
    ☐ coordinator add Composant status inside the DropDown @low
-   ☐ In affectation Price price of composnat wrong
    ☐ ADD Creation + Affectation Composant categorie
    ☐ ADD Creation + Affectation price per hour
+   ☐ update Composant when status=Magasin-ESTIMATION Problem !!! @high
+   ☐ update Composant when status=Magasin-ESTIMATION add save btn !!! @high
+   ☐ Affectation PRIX FINAL ADMIN MANAGER @critical
   Done:
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)

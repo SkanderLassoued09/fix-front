@@ -109,6 +109,8 @@ export class ClientListComponent {
                         summary: 'Success',
                         detail: 'Le client ajouté avec succés',
                     });
+                    this.clients(this.first, this.rows);
+                    this.visible = false;
                 }
                 if (errors) {
                     console.log('🍦[errors]:', errors);

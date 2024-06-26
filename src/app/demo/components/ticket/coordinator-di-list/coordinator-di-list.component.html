@@ -1,3 +1,5 @@
+<p-toast></p-toast>
+
 <div class="card">
     <p-table
         [columns]="cols"
@@ -42,12 +44,14 @@
     <p-dialog
         [(visible)]="diDialog"
         [style]="{ width: '50%', height: '70vh' }"
-        header="Configuration DI"
+        header="Coordinatrice control du flow"
         [modal]="true"
         styleClass="p-fluid"
     >
         <div class="field">
-            <label for="name">Affect to diag</label>
+            <label for="name"
+                >Envoyer Demande d'intervention pour le Dignostique</label
+            >
             <!-- Dropdwon tech for diags -->
             <p-dropdown
                 [options]="techList"
@@ -58,28 +62,38 @@
                 [disabled]="diag_condition"
             ></p-dropdown>
         </div>
-        <div class="field">
-            <label for="name">Affect to reparation</label>
-            <!-- Dropdwon tech for reparation -->
-            <p-dropdown
-                [options]="techList"
-                optionLabel="firstName"
-                [showClear]="true"
-                placeholder="Reparation"
-                [disabled]="rep_condition"
-                (onChange)="selectedTechRep($event)"
-            ></p-dropdown>
-        </div>
+
         <div class="field">
             <label for="name">Ouvrir DI pour affecter les prix</label>
             <!-- open ticket for admins -->
             <p-button
                 [disabled]="admin_condition"
-                label="open for admins"
+                label="Envoyer aux admins"
                 (onClick)="changestatusToPricing($event)"
             ></p-button>
         </div>
+        <div class="field">
+            <label for="name">Confirmer le reçoit des composants </label>
+            <p-button
+                [disabled]="rep_condition || reperationCondition"
+                label="Confirmer tous les composants"
+                (onClick)="gotcomposantfromMagasin()"
+            ></p-button>
+        </div>
+        <div class="field">
+            <label for="name"
+                >Envoyer Demande d'intervention pour la réperation</label
+            >
 
+            <p-dropdown
+                [options]="techList"
+                optionLabel="firstName"
+                [showClear]="true"
+                placeholder="Reparation"
+                [disabled]="!reperationCondition"
+                (onChange)="selectedTechRep($event)"
+            ></p-dropdown>
+        </div>
         <div class="field">
             <!-- to continue other rq -->
             <p-fieldset legend="Remarque" [toggleable]="true">

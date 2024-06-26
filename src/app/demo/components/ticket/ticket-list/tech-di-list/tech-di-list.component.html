@@ -31,6 +31,9 @@
                 </td>
                 <td>
                     <button
+                        [disabled]="
+                            rowData.status !== ('DIAGNOSTIC' || 'INDIAGNOSTIC')
+                        "
                         pButton
                         pRipple
                         icon="pi pi-search"

@@ -161,6 +161,8 @@ export class TicketListComponent implements OnInit {
         this.nego1nego2_InMagasin(this._idDi, this.price, this.finalPrice);
         this.changeStatusDiToInMagasin(this._idDi);
         console.log('Confirmer Nego1 success');
+        //this.negocite2Modal = false;
+        this.getDi();
         this.negocite1Modal = false;
     }
 
@@ -517,7 +519,13 @@ export class TicketListComponent implements OnInit {
 
     nextNegociate2() {
         if (this.secondNegocition) {
+            console.log('here 1');
+
             this.changeStatusNegociate2(this.secondNegocition);
+            console.log('here 2');
+            this.negocite1Modal = false;
+            console.log('here 3');
+            this.getDi();
         }
     }
 

@@ -80,16 +80,16 @@
         </div>
     </form>
 
-    <div class="flex">
-        <p-button
-            label="Ajouter"
-            [loading]="loading"
-            (onClick)="addClient()"
-        ></p-button>
+    <div class="btns">
         <p-button
             label="Annuler"
             (onClick)="clientForm.reset()"
             severity="danger"
+        ></p-button>
+        <p-button
+            label="Ajouter"
+            [loading]="loading"
+            (onClick)="addClient()"
         ></p-button>
     </div>
 </p-dialog>

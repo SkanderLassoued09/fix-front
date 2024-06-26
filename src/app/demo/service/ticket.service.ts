@@ -163,6 +163,7 @@ export class TicketService {
                     _idDi
                     id_tech_diag
                     id_tech_rep
+                    status
                 }
             }
         `;
@@ -593,6 +594,25 @@ export class TicketService {
                 getInfoStatByIdDi(_idDi: "${_idDi}") {
                     diag_time
                     rep_time
+                }
+            }
+        `;
+    }
+    confirmerRecoitComposant(_idDI: string) {
+        return gql`
+            mutation {
+                confirmerRecoitComposant(_idDI: "${_idDI}") 
+                {
+                    _id
+                }
+            }
+        `;
+    }
+    getReperationCoordinatorCondition(_idDi: string) {
+        return gql`
+            query {
+                getDiById(_id: "${_idDi}") {
+                    gotComposantFromMagasin
                 }
             }
         `;

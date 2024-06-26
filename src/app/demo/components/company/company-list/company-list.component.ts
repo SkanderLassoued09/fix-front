@@ -169,6 +169,8 @@ export class CompanyListComponent {
                         summary: 'Success',
                         detail: 'La société ajouté avec succés',
                     });
+                    this.companies(this.first, this.rows);
+                    this.visible = false;
                 }
                 if (errors) {
                     console.log('🍦[errors]:', errors);

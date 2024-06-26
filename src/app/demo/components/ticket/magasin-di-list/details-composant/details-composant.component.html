@@ -1,10 +1,10 @@
 <div class="card flex flex-row">
     <div class="col-7">
         <!-- Header title -->
-        <div>Details composant</div>
+        <div>Information sur composant</div>
         <!-- Header action -->
         <div class="flex justify-content-between items-center">
-            <h6>Details {{ composantValues?.name }}</h6>
+            <h6>Composant selectioné: {{ composantValues?.name }}</h6>
             <p-button
                 label="Save"
                 [raised]="true"
@@ -22,13 +22,14 @@
         <div class="p-4" [formGroup]="formUpdateComposant">
             <div class="flex flex-column">
                 <div class="field">
-                    <span>ID: {{ composantValues?._id }}</span>
+                    <strong>ID:</strong>
+                    <span> {{ composantValues?._id }}</span>
                 </div>
                 <div class="field w-full">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span
-                                >Category composant:
+                            <strong>Category composant:</strong>
+                            <span>
                                 {{
                                     composantValues?.category_composant_id
                                 }}</span
@@ -46,10 +47,8 @@
                 <div class="field">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span
-                                >Comming date:
-                                {{ composantValues?.coming_date }}</span
-                            >
+                            <strong>Date d'arrivage:</strong>
+                            <span> {{ composantValues?.coming_date }}</span>
                         </ng-template>
                         <ng-template pTemplate="content">
                             <input
@@ -63,7 +62,8 @@
                 <div class="field">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span>Link: {{ composantValues?.link }}</span>
+                            <strong>Lien:</strong>
+                            <span> {{ composantValues?.link }}</span>
                         </ng-template>
                         <ng-template pTemplate="content">
                             <input
@@ -77,7 +77,8 @@
                 <div class="field">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span>Package: {{ composantValues?.package }}</span>
+                            <strong>Package: </strong>
+                            <span> {{ composantValues?.package }}</span>
                         </ng-template>
                         <ng-template pTemplate="content">
                             <input
@@ -91,10 +92,8 @@
                 <div class="field">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span
-                                >prix d'achat:
-                                {{ composantValues?.prix_achat }}</span
-                            >
+                            <strong>Prix d'achat: </strong>
+                            <span> {{ composantValues?.prix_achat }}</span>
                         </ng-template>
                         <ng-template pTemplate="content">
                             <input
@@ -108,7 +107,8 @@
                 <div class="field">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span>PDF: {{ composantValues?.pdf }}</span>
+                            <strong>PDF: </strong>
+                            <span> {{ composantValues?.pdf }}</span>
                         </ng-template>
                         <ng-template pTemplate="content">
                             <input
@@ -122,11 +122,8 @@
                 <div class="field">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span
-                                >Prix de vente{{
-                                    composantValues?.prix_vente
-                                }}</span
-                            >
+                            <strong> Prix de vente: </strong>
+                            <span>{{ composantValues?.prix_vente }}</span>
                         </ng-template>
                         <ng-template pTemplate="content">
                             <input
@@ -140,11 +137,8 @@
                 <div class="field">
                     <p-inplace closable="closable" [active]="isActive">
                         <ng-template pTemplate="display">
-                            <span
-                                >Quantité stocked{{
-                                    composantValues?.quantity_stocked
-                                }}</span
-                            >
+                            <strong> Quantité en stock: </strong>
+                            <span>{{ composantValues?.quantity_stocked }}</span>
                         </ng-template>
                         <ng-template pTemplate="content">
                             <input
@@ -162,7 +156,7 @@
         <p-orderList
             [value]="composants"
             [listStyle]="{ height: '25rem' }"
-            header="List of Products"
+            header="Listes des composants"
         >
             <ng-template let-product pTemplate="item">
                 <div
