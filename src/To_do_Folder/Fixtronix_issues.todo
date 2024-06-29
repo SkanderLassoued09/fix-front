@@ -4,7 +4,7 @@ Projects:
 Todos:
   New:
    ☐ in the list of di Add mutation to the delete DI @low
-   ☐ when you query the data for Tech add the status of the DI so we can use it for the Btn's condition and display condition so when it's finish close the stats @high
+   
    ☐ in the magasin estimation interface some CSS @low
    ☐ in the tech Diag and rep add the remarques @low
    ☐ when the di is finished add `retour` btn to send it to pending 3 @low
@@ -13,11 +13,12 @@ Todos:
    ☐ delet function inside the TECH DIAG @medium
    ☐ When Tech di have no composant send directly to the Coordinator @high
    ☐ coordinator add Composant status inside the DropDown @low
-   ☐ ADD Creation + Affectation Composant categorie
-   ☐ ADD Creation + Affectation price per hour
+   ☐ ADD Creation + Affectation Composant categorie @high
+   ☐ ADD Creation + Affectation price per hour @high
    ☐ update Composant when status=Magasin-ESTIMATION Problem !!! @high
    ☐ update Composant when status=Magasin-ESTIMATION add save btn !!! @high
    ☐ Affectation PRIX FINAL ADMIN MANAGER @critical
+   ☐ In the reperation @skander implment the same logic of Diagnostic @critical
   Done:
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
@@ -27,7 +28,7 @@ Todos:
   ✔ In the tech diagnostic interface check the `je reviendrai` Btn need to retrack time when the di is opened again @high @done(24-06-04 00:33)
   ✔ in the coordinator interface The di is send to the tech to diag but the status doesn't change @high @done(24-06-10 00:27)
   ✔ In the tech diagnostic interface add Implement composant mutation to creat new composant @low @done(24-06-10 00:29)
-
+  ✔ when you query the data for Tech add the status of the DI so we can use it for the Btn's condition and display condition so when it's finish close the stats @high @done(24-06-27 23:05)
   Cancelled:
   
 

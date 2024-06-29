@@ -1,11 +1,67 @@
 <p-toast></p-toast>
-<div class="card">
+<div class="card Header-btns">
     <p-button
-        (click)="showDialog()"
+        (click)="showDialogDiCreation()"
         icon="pi pi-plus"
         label="Ajouter demande d'intervention"
     ></p-button>
+    <p-button
+        (click)="showDialogCategoryDI()"
+        icon="pi pi-pencil"
+        label="Géerer les category DI"
+    ></p-button>
+    <p-button
+        (click)="showDialogPriceTech()"
+        icon="pi pi-dollar"
+        label="Tarif des techniciens"
+    ></p-button>
 </div>
+<p-dialog
+    header="Géerer les category DI et category composants"
+    [(visible)]="openCategoryModal"
+    [modal]="true"
+    [style]="{ width: '30vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <form>
+        <div>
+            <input
+                formControlName="Category DI"
+                id="Categ"
+                type="text"
+                class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
+            />
+        </div>
+    </form>
+</p-dialog>
+
+<p-dialog
+    header="Affecter Tarif Techniciens"
+    [(visible)]="openPriceTechModal"
+    [modal]="true"
+    [style]="{ width: '30vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    class="Header-btns"
+>
+    <form>
+        <div>
+            <strong> Tarif actuel : 1000 </strong>
+            <div>
+                <label> Affecter nouveau Tarif</label>
+            </div>
+            <input
+                formControlName="Tarif Techs"
+                id="Categ"
+                type="text"
+                class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
+            />
+        </div>
+        <p-button> Confirmer </p-button>
+    </form>
+</p-dialog>
+
 <p-dialog
     header="Ajouter une nouvelle Demande d'intervention"
     [(visible)]="openAddDiModal"

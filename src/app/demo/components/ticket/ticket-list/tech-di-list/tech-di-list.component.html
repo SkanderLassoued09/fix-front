@@ -32,7 +32,8 @@
                 <td>
                     <button
                         [disabled]="
-                            rowData.status !== ('DIAGNOSTIC' || 'INDIAGNOSTIC')
+                            rowData.status !== 'DIAGNOSTIC' &&
+                            rowData.status !== 'INDIAGNOSTIC'
                         "
                         pButton
                         pRipple
@@ -43,6 +44,10 @@
                 </td>
                 <td>
                     <button
+                        [disabled]="
+                            rowData.status !== 'REPARATION' &&
+                            rowData.status !== 'INREPARATION'
+                        "
                         pButton
                         pRipple
                         icon="pi pi-wrench"
@@ -257,16 +262,6 @@
                                     formControlName="link"
                                 />
                             </div>
-                            <div class="field">
-                                <label for="inventoryStatus"
-                                    >Category composant</label
-                                >
-                                <p-dropdown
-                                    [options]="composantList"
-                                    optionLabel="category"
-                                    placeholder="Choisir category composant"
-                                ></p-dropdown>
-                            </div>
                         </form>
                     </ng-template>
                     <ng-template pTemplate="footer">
@@ -295,8 +290,8 @@
                 <button
                     pButton
                     pRipple
-                    label="Je reviendrai"
-                    icon="pi pi-check"
+                    label="Mettre DI en Pause"
+                    icon="pi pi-spin"
                     class="p-button-text"
                     (click)="lapTimeForPauseAndGetBack()"
                 ></button>

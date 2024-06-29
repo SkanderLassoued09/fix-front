@@ -68,6 +68,9 @@ export class TicketListComponent implements OnInit {
         { name: 'Large', class: 'p-datatable-lg' },
     ];
     openAddDiModal: boolean = false;
+    openCategoryModal: boolean = false;
+    openPriceTechModal: boolean = false;
+
     radioBtn;
     selectedStatusDefault;
     // these button to distignuye betwwen di to coordinator or not cooredinator
@@ -152,10 +155,16 @@ export class TicketListComponent implements OnInit {
         this.getClientList();
     }
 
-    showDialog() {
+    showDialogDiCreation() {
         this.openAddDiModal = true;
     }
 
+    showDialogCategoryDI() {
+        this.openCategoryModal = true;
+    }
+    showDialogPriceTech() {
+        this.openPriceTechModal = true;
+    }
     confirmerNegociation() {
         console.log('hello');
         this.nego1nego2_InMagasin(this._idDi, this.price, this.finalPrice);
