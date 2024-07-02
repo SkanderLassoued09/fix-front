@@ -7,9 +7,20 @@ socket.on('connect', () => {
     console.log('Connected to server');
 });
 
+socket.on('sendDitoDiagnostique', (message: string) => {
+    const data = {
+        event: 'sendDitoDiagnostique',
+        message,
+    };
+    postMessage(data); // Send the message to the main thread
+});
+
 socket.on('reminder', (message: string) => {
-    console.log('Received reminder from server:', message);
-    postMessage(message); // Send the message to the main thread
+    const data = {
+        event: 'reminder',
+        message,
+    };
+    postMessage(data); // Send the message to the main thread
 });
 
 addEventListener('message', ({ data }) => {

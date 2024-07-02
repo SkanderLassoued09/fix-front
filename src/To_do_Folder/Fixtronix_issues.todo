@@ -3,12 +3,12 @@ Projects:
 
 Todos:
   New:
-   ☐ in the list of di Add mutation to the delete DI @low
+   ☐ in the list of di Add mutation to the delete DI @low // done
    
-   ☐ in the magasin estimation interface some CSS @low
-   ☐ in the tech Diag and rep add the remarques @low
+   ☐ in the magasin estimation interface some CSS @low @nezih
+   ☐ in the tech Diag and rep add the remarques @low 
    ☐ when the di is finished add `retour` btn to send it to pending 3 @low
-   ☐ in the tech list of Di add your mutation to delet repeated Stats @high 
+   ☐ in the tech list of Di add your mutation to delet repeated Stats @high //Done
    ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high
    ☐ delet function inside the TECH DIAG @medium
    ☐ When Tech di have no composant send directly to the Coordinator @high

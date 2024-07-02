@@ -104,7 +104,7 @@ export class TicketListComponent implements OnInit {
         // { field: 'di_category_id', header: 'Categorie' },
     ];
 
-    diList: any;
+    diList: any[];
     diListCount: any;
     statusDI: STATUS_DI = STATUS_DI.CREATED;
     clientListDropDown: any;
@@ -315,6 +315,27 @@ export class TicketListComponent implements OnInit {
 
                     this.changeStatusNegiciate1(this.current_id);
                 }
+            });
+    }
+
+    deleteDi(rowData) {
+        console.log('🍓[rowData]:', rowData);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.deleteDi(rowData._id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍠[data]:', data);
+
+                const index = this.diList.findIndex((el) => {
+                    el._id === rowData._id;
+                });
+                this.diList.splice(index, 1);
+                this.messageservice.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'La demande service supprimer',
+                });
             });
     }
 

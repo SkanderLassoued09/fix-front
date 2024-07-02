@@ -13,10 +13,35 @@ export class NotificationService {
                 new URL('./notification.worker.ts', import.meta.url)
             );
             this.worker.onmessage = ({ data }) => {
-                console.log('Data received from worker:', data);
+                this.handlenotification(data);
             };
         } else {
             console.warn('Web Workers are not supported in this environment.');
+        }
+    }
+
+    private handlenotification(data: any) {
+        switch (data.event) {
+            case 'sendDitoDiagnostique':
+                if (
+                    data.message.username === localStorage.getItem('username')
+                ) {
+                    // Implement your notification logic for sendDitoDiagnostique event
+                    console.log(
+                        'Notification for sendDitoDiagnostique:',
+                        data.message
+                    );
+                    return data.message.profile;
+                }
+                break;
+
+            case 'reminder':
+                // Implement your notification logic for reminder event
+                console.log('Notification for reminder:', data.message);
+                break;
+            default:
+                console.warn('Unhandled event:', data.event);
+                break;
         }
     }
 

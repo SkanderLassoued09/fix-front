@@ -41,6 +41,16 @@ export class TicketService {
         `;
     }
 
+    deleteDi(_id: string) {
+        return gql`
+            mutation {
+                deleteDi(_id: "${_id}") {
+                    _id
+                }
+            }
+        `;
+    }
+
     getAllDiForCoordinator() {
         return gql`
             {
