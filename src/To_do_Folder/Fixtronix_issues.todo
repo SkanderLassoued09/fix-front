@@ -1,24 +1,19 @@
 Projects:
-  Let's finish this ASAP so we can after that start working on the Dashboard 
+  Let's finish this ASAP so we can start working on the Dashboard 
 
 Todos:
   New:
-   ☐ in the list of di Add mutation to the delete DI @low // done
-   
-   ☐ in the magasin estimation interface some CSS @low @nezih
-   ☐ in the tech Diag and rep add the remarques @low 
-   ☐ when the di is finished add `retour` btn to send it to pending 3 @low
-   ☐ in the tech list of Di add your mutation to delet repeated Stats @high //Done
-   ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high
-   ☐ delet function inside the TECH DIAG @medium
-   ☐ When Tech di have no composant send directly to the Coordinator @high
-   ☐ coordinator add Composant status inside the DropDown @low
-   ☐ ADD Creation + Affectation Composant categorie @high
-   ☐ ADD Creation + Affectation price per hour @high
-   ☐ update Composant when status=Magasin-ESTIMATION Problem !!! @high
-   ☐ update Composant when status=Magasin-ESTIMATION add save btn !!! @high
-   ☐ Affectation PRIX FINAL ADMIN MANAGER @critical
-   ☐ In the reperation @skander implment the same logic of Diagnostic @critical
+   ☐ in the magasin estimation interface some CSS @low @Nezih
+   ☐ in the tech modal Diag and Rep add the remarques @low @Skander (n3ref easy ama mislch 3andk thnks)
+   ☐ when the di is finished add `retour` btn to send it to pending 3 @low @Skander
+   ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander
+   ☐ Add condition inside the Diag Modal "if DI has no composant" send directly to the Coordinator skip the "ESTIMATION MAGASIN" @high @Nezih
+   ☐ CRUD Composant categorie @high @Nezih
+   ☐ CRUD price per hour @high @Nezih
+   ☐ Update and save Composant don't work inside the modal for magasin Estimation  @high @Skander
+   ☐ (EASY don't worry skander) In discount after the manger send to the Admin and the discount is greater then 25% take the input number so he can reaffect the final price "PRIX FINAL" IN ADMIN MANAGER @critical @Skander
+   ☐ Add the timer and the same logic as Diag to the modal reperation @critical @Skander
+   ☐ Dashboard One day 
   Done:
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
@@ -29,6 +24,8 @@ Todos:
   ✔ in the coordinator interface The di is send to the tech to diag but the status doesn't change @high @done(24-06-10 00:27)
   ✔ In the tech diagnostic interface add Implement composant mutation to creat new composant @low @done(24-06-10 00:29)
   ✔ when you query the data for Tech add the status of the DI so we can use it for the Btn's condition and display condition so when it's finish close the stats @high @done(24-06-27 23:05)
+  ✔ in the tech list of Di add your mutation to delet repeated Stats @high @done(24-07-03 10:02)
+  ✔ in the list of di Add mutation to the delete DI @low @done(24-07-03 10:16)
   Cancelled:
   
 
