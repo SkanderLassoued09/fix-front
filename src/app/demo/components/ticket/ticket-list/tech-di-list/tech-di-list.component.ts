@@ -605,6 +605,7 @@ export class TechDiListComponent {
                     }
                 });
         }
+        this.getAllTechDi();
     }
     confirmComposant() {
         this.apollo
@@ -704,6 +705,7 @@ export class TechDiListComponent {
                 if (data) {
                     this.changeStatusMagasinEstimation(dataDiag._idDi);
                 }
+                this.getAllTechDi();
             });
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
@@ -751,5 +753,6 @@ export class TechDiListComponent {
                     this.diDialogRep = false;
                 }
             });
+        this.getAllTechDi();
     }
 }

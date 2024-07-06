@@ -108,11 +108,6 @@ export class CoordinatorDiListComponent {
                 if (data) {
                     this.reperationCondition =
                         data.getDiById.gotComposantFromMagasin;
-                    console.log('BTN CONDITION§§§ ', this.reperationCondition);
-                    console.log(
-                        'BTN inverse CONDITION§§§ ',
-                        !this.reperationCondition
-                    );
                 }
             });
     }

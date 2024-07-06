@@ -143,16 +143,6 @@
                             class="mr-2"
                             (click)="openNew()"
                         />
-                        <p-button
-                            pRipple
-                            severity="danger"
-                            label="Effacer"
-                            icon="pi pi-trash"
-                            (click)="deleteSelectedProducts(composantCombo)"
-                            [disabled]="
-                                !composantCombo || !composantCombo.length
-                            "
-                        />
                     </ng-template>
 
                     <ng-template pTemplate="right"> </ng-template>
@@ -202,7 +192,7 @@
                                     pButton
                                     type="button"
                                     icon="pi pi-info-circle"
-                                    label="Details"
+                                    label="Effacer"
                                     (click)="onRowClick(composant)"
                                 ></button>
                             </td>

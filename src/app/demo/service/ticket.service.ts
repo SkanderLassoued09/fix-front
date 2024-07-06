@@ -656,4 +656,25 @@ export class TicketService {
             }
         `;
     }
+    getTechTarif() {
+        return gql`
+            query {
+                getTarif {
+                    tarif
+                }
+            }
+        `;
+    }
+    affectNewTarif(tarifForTechs: number) {
+        return gql`
+        mutation {
+            createTarif(
+        createTarifInput: 
+            { tarif: ${tarifForTechs} }) 
+             {
+                tarif
+            }
+        }
+    `;
+    }
 }

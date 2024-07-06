@@ -1,26 +1,25 @@
 Projects:
-  Let's finish this ASAP so we can start working on the Dashboard 
 
 Todos:
   New:
   => https://www.youtube.com/watch?v=ZXsQAXx_ao0
   
-   ☐ in the tech modal Diag and Rep add the remarques @low @Skander (n3ref easy ama mislch 3andk thnks)
-   3mltha fel creation à verifier avec nezih
+
    ☐ when the di is finished add `retour` btn to send it to pending 3 @low @Skander done
    ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander
    ☐ Update and save Composant don't work inside the modal for magasin Estimation  @high @Skander done 
    ☐ (EASY don't worry skander) In discount after the manger send to the Admin and the discount is greater then 25% take the input number so he can reaffect the final price "PRIX FINAL" IN ADMIN MANAGER @critical @Nezih
    ☐ Add the timer and the same logic as Diag to the modal reperation @critical @Skander works check the query
    ☐ When Di has created status ("keep it for now") add btn to change it's status to Pending 1 @high @Skander done
-   ☐ Dashboard One day // Ask walid
-   ☐ CRUD Composant categorie @high @Nezih
-   ☐ CRUD price per hour @high @Nezih
-   ☐ in the magasin estimation interface some CSS @low @Nezih
+   ☐ CRUD Composant categorie @high  @nikOMO_mch_lezm
+   ☐ location CRUD 
+   ☐ Divide each role see only what they need to see
    ☐ Add condition inside the Diag Modal "if DI has no composant" send directly to the Coordinator skip the "ESTIMATION MAGASIN" @high @Nezih a verifier
-
+   ☐ Btn to change to pending1 don't work need to get the di of the selected one
+   ☐ check the table of client and company (region != [objct] prenom is undefined )
 
   Done:
+     ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
   ✔ in the creation DI Make the creation only possible when the user have chosen the client @low @done(24-06-04 00:27)
@@ -32,6 +31,7 @@ Todos:
   ✔ when you query the data for Tech add the status of the DI so we can use it for the Btn's condition and display condition so when it's finish close the stats @high @done(24-06-27 23:05)
   ✔ in the tech list of Di add your mutation to delet repeated Stats @high @done(24-07-03 10:02)
   ✔ in the list of di Add mutation to the delete DI @low @done(24-07-03 10:16)
+  ✔ in the magasin estimation interface some CSS @low @Nezih @done(24-07-06 21:35)
   Cancelled:
   
 

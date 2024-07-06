@@ -41,6 +41,9 @@ export class TicketListComponent implements OnInit {
         nSerie: new FormControl(),
         comment: new FormControl(),
     });
+    tarif_Techs = new FormGroup({
+        tarifFromAdmin: new FormControl(),
+    });
     statuses = [
         { label: 'Created', value: 'CREATED' },
         { label: 'Pending1', value: 'PENDING1' },
@@ -142,6 +145,7 @@ export class TicketListComponent implements OnInit {
     timeDiagnostique: string;
     ignoreCount: any;
     composantQuantity: number;
+    tarif_Tech: number;
 
     constructor(
         private ticketSerice: TicketService,
@@ -165,9 +169,39 @@ export class TicketListComponent implements OnInit {
     }
     showDialogPriceTech() {
         this.openPriceTechModal = true;
+        //!!!!!!!!!!!!!!!!!!!!!!! fnction
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getTechTarif(),
+            })
+            .subscribe(({ data }) => {
+                this.tarif_Tech = data.getTarif.tarif;
+            });
+    }
+    //! MUTATION WORKING ON
+    confirmerTarifs() {
+        this.tarif_Techs.value;
+        console.log('TarifFromAdmin:', this.tarif_Techs.value);
+        const { tarifFromAdmin } = this.tarif_Techs.value;
+        const tarifForTechs = tarifFromAdmin;
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.affectNewTarif(tarifForTechs),
+            })
+            .subscribe(({ data }) => {
+                console.log(data, 'data TARIFICATION');
+            });
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getTechTarif(),
+            })
+            .subscribe(({ data }) => {
+                this.tarif_Tech = data.getTarif.tarif;
+            });
+        this.openPriceTechModal = false;
     }
     confirmerNegociation() {
-        console.log('hello');
+        console.log('confirmerNegociation working');
         this.nego1nego2_InMagasin(this._idDi, this.price, this.finalPrice);
         this.changeStatusDiToInMagasin(this._idDi);
         console.log('🥓[this._idDi]:', this._idDi);
@@ -528,14 +562,17 @@ export class TicketListComponent implements OnInit {
             });
     }
 
-    changeToPending1(_id) {
+    changeToPending1() {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.changeToPending1(_id),
+                mutation: this.ticketSerice.changeToPending1(this._idDi),
             })
             .subscribe(({ data }) => {
-                console.log('🥛[data]:', data);
+                //! NEED TO SELECT THE ID OF THE SELECTED DI
+                console.log('🥛[ data from btn PENDING 1]:', data);
+                console.log('the id selected', this._idDi);
             });
+        this.getDi();
     }
 
     nego1nego2_InMagasin(_id, price, final_price) {

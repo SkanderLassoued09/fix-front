@@ -45,20 +45,20 @@
     [resizable]="false"
     class="Header-btns"
 >
-    <form>
-        <div>
-            <strong> Tarif actuel : 1000 </strong>
+    <form [formGroup]="tarif_Techs">
+        <div class="ModalTarifs">
+            <strong> Tarif actuel : {{ tarif_Tech }} dt/heures </strong>
             <div>
                 <label> Affecter nouveau Tarif</label>
             </div>
             <input
-                formControlName="Tarif Techs"
+                formControlName="tarifFromAdmin"
                 id="Categ"
-                type="text"
+                type="number"
                 class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
             />
+            <p-button (onClick)="confirmerTarifs()"> Confirmer </p-button>
         </div>
-        <p-button> Confirmer </p-button>
     </form>
 </p-dialog>
 
@@ -158,13 +158,17 @@
                 </ng-template>
             </p-fileUpload>
         </div>
-        <div class="field">
+        <div class="footerlocation">
             <textarea
                 rows="5"
                 cols="30"
                 pInputTextarea
                 formControlName="comment"
-            ></textarea>
+            >
+        Ajouter une remqrque pour cette Demande d'intervention 
+        </textarea
+            >
+            <p-dropdown> Affecter la localisation pour ce Di </p-dropdown>
         </div>
         <div class="field">
             <p-toggleButton
@@ -506,10 +510,8 @@
                 <div>Quantity:{{ item.quantity }}</div>
                 <div>Price:{{ composant.prix_vente }}</div>
             </p-card>
-            } } @empty {
-            <div>Cette demande d'intervention contient XY compsants</div>
-            }
-            <div>Le temps de dignostique est {{ timeDiagnostique }}</div>
+            } } @empty { }
+            <span>Le temps de dignostique est {{ timeDiagnostique }}</span>
             <h1 *ngIf="totalComposant; else notPrice">
                 Cout Total {{ totalComposant }} TND
             </h1>
@@ -518,6 +520,10 @@
             <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
         </ng-template>
         <div class="element-container-BTN">
+            <div>
+                Veuiller affecter le prix initial avant la négociation avec le
+                client
+            </div>
             <p-inputNumber inputId="integeronly" [(ngModel)]="price">
             </p-inputNumber>
             <button

@@ -65,6 +65,9 @@ export class MagasinDiListComponent {
         this.getDi();
         //this.Magasin_buttonCondition();
     }
+    annulerMagasinEstimation() {
+        this.magasinDiDialog = false;
+    }
 
     getSeverity(status: string) {
         switch (status) {

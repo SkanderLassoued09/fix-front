@@ -60,7 +60,7 @@
         styleClass="p-fluid"
     >
         <form [formGroup]="formUpdateComposant">
-            <div class="grid align-items-center">
+            <div>
                 <div class="col">
                     <label for="name">Choisir un composant</label>
                     <p-dropdown
@@ -76,84 +76,106 @@
             <ng-container *ngIf="selectedItem">
                 <div class="grid align-items-center">
                     <div class="col">
-                        <label for="name">Name</label>
+                        <label for="name">Nom du composant</label>
                         <input formControlName="name" pInputText />
                     </div>
                     <div class="col">
                         <label for="package">Package</label>
                         <input formControlName="package" pInputText />
                     </div>
-                    <div class="col">
-                        <label for="category_composant_id"
-                            >Category Composant ID</label
-                        >
-                        <input
-                            formControlName="category_composant_id"
-                            pInputText
-                        />
-                    </div>
                 </div>
                 <div class="grid align-items-center">
                     <div class="col">
-                        <label for="prix_achat">Prix Achat</label>
+                        <label for="prix_achat">Prix d'achat</label>
                         <!-- <input formControlName="prix_achat" pInputText /> -->
                         <p-inputNumber
-                            inputId="integeronly"
+                            [showButtons]="true"
                             formControlName="prix_achat"
-                        >
-                        </p-inputNumber>
-                    </div>
-                    <div class="col">
-                        <label for="prix_vente">Prix Vente</label>
-                        <!-- <input formControlName="prix_vente" pInputText /> -->
-                        <p-inputNumber
-                            inputId="integeronly"
-                            formControlName="prix_vente"
-                        >
-                        </p-inputNumber>
+                            buttonLayout="horizontal"
+                            spinnerMode="horizontal"
+                            decrementButtonClass="p-button-danger"
+                            incrementButtonClass="p-button-success"
+                            incrementButtonIcon="pi pi-plus"
+                            decrementButtonIcon="pi pi-minus"
+                            [step]="0.25"
+                            mode="currency"
+                            currency="TND"
+                        ></p-inputNumber>
                     </div>
                     <div class="col">
                         <label for="coming_date">Date d'arrivage</label>
                         <input formControlName="coming_date" pInputText />
                     </div>
+                    <div class="col">
+                        <label for="prix_vente">Prix de vente</label>
+                        <!-- <input formControlName="prix_vente" pInputText /> -->
+                        <p-inputNumber
+                            [showButtons]="true"
+                            formControlName="prix_vente"
+                            buttonLayout="horizontal"
+                            spinnerMode="horizontal"
+                            decrementButtonClass="p-button-danger"
+                            incrementButtonClass="p-button-success"
+                            incrementButtonIcon="pi pi-plus"
+                            decrementButtonIcon="pi pi-minus"
+                            [step]="0.25"
+                            mode="currency"
+                            currency="TND"
+                        ></p-inputNumber>
+                    </div>
                 </div>
                 <div class="grid align-items-center">
                     <div class="col">
-                        <label for="link">Lien</label>
+                        <label for="link">Lien pour le composant</label>
                         <input formControlName="link" pInputText />
                     </div>
+
                     <div class="col">
-                        <label for="quantity_stocked">Quantité en staock</label>
-                        <!-- <input formControlName="quantity_stocked" pInputText /> -->
-                        <p-inputNumber
-                            inputId="integeronly"
-                            formControlName="quantity_stocked"
-                        >
-                        </p-inputNumber>
-                    </div>
-                    <div class="col">
-                        <label for="pdf">PDF</label>
+                        <label for="pdf">Lien DataSheet</label>
                         <input formControlName="pdf" pInputText />
                     </div>
                 </div>
-                <div class="grid align-items-center">
-                    <div class="col">
-                        <label for="name"
-                            >Affecter un status pour le composant</label
-                        >
-                        <p-dropdown
-                            [options]="statusComposant"
-                            (onChange)="getSelectedStatus($event)"
-                            optionLabel="name"
-                            optionValue="value"
-                            placeholder="Choisir état"
-                        >
-                            <ng-template let-option pTemplate="item">
-                                <p-tag
-                                    [value]="option.name"
-                                    [severity]="getSeverity(option.name)"
-                                ></p-tag> </ng-template
-                        ></p-dropdown>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <label for="name" class="mr-2"
+                                >Affecter un statut pour le composant</label
+                            >
+                            <p-dropdown
+                                [options]="statusComposant"
+                                (onChange)="getSelectedStatus($event)"
+                                optionLabel="name"
+                                optionValue="value"
+                                placeholder="Choisir état"
+                                class="mr-2"
+                            >
+                                <ng-template let-option pTemplate="item">
+                                    <p-tag
+                                        [value]="option.name"
+                                        [severity]="getSeverity(option.name)"
+                                    ></p-tag>
+                                </ng-template>
+                            </p-dropdown>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center">
+                            <label for="quantity_stocked" class="mr-2"
+                                >Quantité en stock</label
+                            >
+                            <p-inputNumber
+                                mode="decimal"
+                                [showButtons]="true"
+                                buttonLayout="vertical"
+                                spinnerMode="vertical"
+                                formControlName="quantity_stocked"
+                                decrementButtonClass="p-button-secondary"
+                                incrementButtonClass="p-button-secondary"
+                                incrementButtonIcon="pi pi-plus"
+                                decrementButtonIcon="pi pi-minus"
+                            ></p-inputNumber>
+                        </div>
                     </div>
                 </div>
             </ng-container>
@@ -165,8 +187,8 @@
                         pButton
                         pRipple
                         label="Annuler"
-                        icon="pi pi-minus-circle
-"
+                        icon="pi pi-minus-circle"
+                        (click)="annulerMagasinEstimation()"
                         class="p-button-text"
                     ></button>
                 </div>
