@@ -40,6 +40,8 @@ export class DetailsComposantComponent implements OnInit {
         private route: ActivatedRoute,
         private apollo: Apollo
     ) {
+        this._id = this.route.snapshot.paramMap.get('id');
+        console.log(this._id, 'id');
         this.formUpdateComposant = new FormGroup({
             name: new FormControl(),
             package: new FormControl(),
@@ -54,9 +56,6 @@ export class DetailsComposantComponent implements OnInit {
         });
     }
     ngOnInit(): void {
-        this._id = this.route.snapshot.paramMap.get('id');
-        console.log(this._id, 'id');
-
         this.getDiByID(this._id);
         this.productService
             .getProductsSmall()
@@ -115,9 +114,7 @@ export class DetailsComposantComponent implements OnInit {
             .watchQuery<any>({
                 query: this.ticketSerice.changeStatusDiToPending2(_id),
             })
-            .valueChanges.subscribe(({ data, loading }) => {
-                console.log('🍩[data]:', data);
-            });
+            .valueChanges.subscribe(({ data }) => {});
     }
     updateComposant() {
         console.log('🌭 form ', this.formUpdateComposant.value);
@@ -133,6 +130,16 @@ export class DetailsComposantComponent implements OnInit {
                 console.log('🌮[data]:', data);
 
                 if (data) {
+                    console.log('🍑 in ');
+                    // Update composantValues with the latest form values
+                    Object.assign(
+                        this.composantValues,
+                        this.formUpdateComposant.value
+                    );
+                    console.log(
+                        '🥒[   this.composantValues]:',
+                        this.composantValues
+                    );
                     this.changeStatusDiToPending2(this.selectedDi_id);
                     this.isActive = false;
                 }
@@ -140,6 +147,7 @@ export class DetailsComposantComponent implements OnInit {
     }
 
     changeStatusPending3() {
+        console.log('🍷pend', this._id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusPending3(this._id),

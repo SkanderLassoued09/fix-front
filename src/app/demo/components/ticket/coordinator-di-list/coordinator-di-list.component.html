@@ -94,10 +94,10 @@
                 (onChange)="selectedTechRep($event)"
             ></p-dropdown>
         </div>
-        <div class="field">
+        <div class="field" *ngIf="comment">
             <!-- to continue other rq -->
             <p-fieldset legend="Remarque" [toggleable]="true">
-                <p class="m-0">put in here Remarque manager</p>
+                <p class="m-0">{{ comment }}</p>
             </p-fieldset>
         </div>
     </p-dialog>

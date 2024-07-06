@@ -32,6 +32,7 @@ export interface CreateDiInput {
     client_id: string;
     company_id: string;
     nSerie: string;
+    comment: string;
 }
 
 export interface CreateDiMutationResult {

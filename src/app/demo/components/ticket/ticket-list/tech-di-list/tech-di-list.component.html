@@ -148,7 +148,7 @@
                             severity="danger"
                             label="Effacer"
                             icon="pi pi-trash"
-                            (click)="deleteSelectedProducts()"
+                            (click)="deleteSelectedProducts(composantCombo)"
                             [disabled]="
                                 !composantCombo || !composantCombo.length
                             "
@@ -157,7 +157,7 @@
 
                     <ng-template pTemplate="right"> </ng-template>
                 </p-toolbar>
-
+                <!-- !fd -->
                 <p-table
                     #dt
                     [value]="composantCombo"
@@ -189,19 +189,22 @@
                             >
                                 Quantité <p-sortIcon field="name" />
                             </th>
+                            <th style="min-width: 10rem">Action</th>
                         </tr>
                     </ng-template>
-                    <ng-template pTemplate="body" let-composantCombo>
+                    <ng-template pTemplate="body" let-composant>
                         <tr>
+                            <td><p-tableCheckbox [value]="composant" /></td>
+                            <td>{{ composant.nameComposant }}</td>
+                            <td>{{ composant.quantity }}</td>
                             <td>
-                                <p-tableCheckbox [value]="composantCombo" />
-                            </td>
-                            <td>
-                                {{ composantCombo.nameComposant }}
-                            </td>
-
-                            <td>
-                                {{ composantCombo.quantity }}
+                                <button
+                                    pButton
+                                    type="button"
+                                    icon="pi pi-info-circle"
+                                    label="Details"
+                                    (click)="onRowClick(composant)"
+                                ></button>
                             </td>
                         </tr>
                     </ng-template>
@@ -316,6 +319,9 @@
         [modal]="true"
         styleClass="p-fluid"
     >
+        <div>
+            <button (click)="confirmComposant()">Confirmer</button>
+        </div>
         <div class="flex flex-column">
             <div class="field">
                 <label for="name">Ecrire quelque chose ...</label>

@@ -15,6 +15,11 @@ import { Router } from '@angular/router';
     styleUrl: './magasin-di-list.component.scss',
 })
 export class MagasinDiListComponent {
+    statusComposant = [
+        { name: 'En stock', value: 'En stock' },
+        { name: 'Interne', value: 'Interne' },
+        { name: 'Externe', value: 'Externe' },
+    ];
     formUpdateComposant: FormGroup;
     // TODO change it to file of constant and instead of array of string , change it to object key value
     //! Done but you did not use it in here
@@ -33,6 +38,7 @@ export class MagasinDiListComponent {
     selectedItem: any;
     loadedDataComposant: any;
     selectedDi_id: any;
+    selectedstatusComposant: string;
     //MagasinEstimation_Condition: boolean = true;
     //MagasinCondition: boolean = true;
 
@@ -61,7 +67,6 @@ export class MagasinDiListComponent {
     }
 
     getSeverity(status: string) {
-        console.log('🍛DI => [status]:', status);
         switch (status) {
             case 'CREATED':
                 return 'success';
@@ -142,6 +147,10 @@ export class MagasinDiListComponent {
             });
     }
 
+    getSelectedStatus(statusComposant: any) {
+        this.selectedstatusComposant = statusComposant.value;
+    }
+
     selectedDropDown(selectedItem) {
         console.log('🥥[selectedItem]:', selectedItem);
         this.selectedItem = selectedItem;
@@ -166,7 +175,7 @@ export class MagasinDiListComponent {
                         quantity_stocked:
                             this.loadedDataComposant.quantity_stocked,
                         pdf: this.loadedDataComposant.pdf,
-                        status: this.loadedDataComposant.status,
+                        status: this.selectedstatusComposant,
                     });
                 }
             });

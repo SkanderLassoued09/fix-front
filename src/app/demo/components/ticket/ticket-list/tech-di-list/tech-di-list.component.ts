@@ -426,16 +426,17 @@ export class TechDiListComponent {
         console.log('OPEN MODAL');
         this.creatComposantDialog = true;
     }
-    deleteSelectedProducts() {
+    deleteSelectedProducts(): void {
         this.confirmationService.confirm({
             message: 'Voulez vous supprimer ce composant de la liste',
             header: 'Confirm',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.composantCombo = this.composantCombo.filter(
-                    (val) => !this.composant?.includes(val)
+                    (val) => !this.selectedComposants.includes(val)
                 );
-                this.composant = null;
+                console.log('🍷[composantCombo]:', this.composantCombo);
+                this.selectedComposants = [];
                 this.messageService.add({
                     severity: 'success',
                     summary: 'Successful',
@@ -445,6 +446,16 @@ export class TechDiListComponent {
             },
         });
     }
+
+    onRowClick(composant: any): void {
+        console.log('Selected Composant:', composant);
+        // Additional logic for the clicked row can be added here
+        const index = this.composantCombo.findIndex((el) => {
+            el.nameComposant === composant.nameComposant;
+        });
+        this.composantCombo.splice(index, 1);
+    }
+
     createComposant() {
         this.apollo
             .mutate<any>({
@@ -564,20 +575,48 @@ export class TechDiListComponent {
             composant: this.composantCombo,
         };
 
+        if (dataDiag.pdr) {
+            console.log('🍟[dataDiag.pdr true]:', dataDiag.pdr);
+            this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.finish(dataDiag),
+                    useMutationLoading: true,
+                })
+                .subscribe(({ data, loading }) => {
+                    if (data) {
+                        console.log('SENDING TO ESTIMATION WORKING');
+
+                        this.changeStatusMagasinEstimation(dataDiag._idDi);
+                    }
+                });
+        } else {
+            console.log('🍟[dataDiag.pdr false]:', dataDiag.pdr);
+            this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.finish(dataDiag),
+                    useMutationLoading: true,
+                })
+                .subscribe(({ data, loading }) => {
+                    if (data) {
+                        console.log('SENDING TO ESTIMATION WORKING');
+                        this.ticketSerice.changeStatusDiToPending2(
+                            dataDiag._idDi
+                        );
+                    }
+                });
+        }
+    }
+    confirmComposant() {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.finish(dataDiag),
-                useMutationLoading: true,
+                mutation: this.ticketSerice.responseConfirmerRecoitComposant(
+                    this.selectedDi
+                ),
             })
-            .subscribe(({ data, loading }) => {
-                if (data) {
-                    console.log('SENDING TO ESTIMATION WORKING');
-
-                    this.changeStatusMagasinEstimation(dataDiag._idDi);
-                }
+            .subscribe(({ data }) => {
+                console.log('🍋[data]:', data);
             });
     }
-
     // this function to get the time spênt oif this ticket will be called in opening modal function
     getTimeSpent(_idStat: string) {
         this.apollo
@@ -708,6 +747,7 @@ export class TechDiListComponent {
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
+                    console.log('🌰[data]:', data);
                     this.diDialogRep = false;
                 }
             });

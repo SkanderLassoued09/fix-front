@@ -159,6 +159,14 @@
             </p-fileUpload>
         </div>
         <div class="field">
+            <textarea
+                rows="5"
+                cols="30"
+                pInputTextarea
+                formControlName="comment"
+            ></textarea>
+        </div>
+        <div class="field">
             <p-toggleButton
                 onLabel="toCoordinator"
                 offLabel="keep it for now"
@@ -334,6 +342,22 @@
                             rowData.ignoreCount === 3 ||
                             rowData.status !== 'FINISHED'
                         "
+                    />
+
+                    <p-button
+                        *ngIf="
+                            currentRole === 'MANAGER' &&
+                            rowData.status === 'FINISHED'
+                        "
+                        label="Retour"
+                        severity="danger"
+                        (click)="changeStatusRetour(rowData)"
+                    />
+                    <p-button
+                        *ngIf="rowData.status === 'CREATED'"
+                        label="pending1"
+                        severity="success"
+                        (click)="changeToPending1(rowData)"
                     />
                 </td>
             </tr>

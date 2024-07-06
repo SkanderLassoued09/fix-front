@@ -66,7 +66,7 @@ export class TicketService {
                         status
                         createdAt
                         updatedAt
-                        current_roles
+                        comment
                         client_id
                         remarque_id
                         createdBy
@@ -78,6 +78,7 @@ export class TicketService {
             }
         `;
     }
+
     // query getAllMagasin change with variable
     getAllMagasin() {
         return gql`
@@ -192,6 +193,7 @@ export class TicketService {
                     client_id: "${diInfo.client_id}"
                     company_id: "${diInfo.company_id}"
                     nSerie: "${diInfo.nSerie}"
+                    comment: "${diInfo.comment}"
                 }
             ) {
                 _id
@@ -573,6 +575,22 @@ export class TicketService {
             }
         `;
     }
+
+    changeStatusRetour(_id: string) {
+        return gql`
+            mutation {
+                changeStatusRetour(_id: "${_id}")
+            }
+        `;
+    }
+
+    changeToPending1(_id: string) {
+        return gql`
+            mutation {
+                changeToPending1(_id: "${_id}")
+            }
+        `;
+    }
     getDiByID(_id: string) {
         return gql`
     query {
@@ -618,6 +636,17 @@ export class TicketService {
             }
         `;
     }
+
+    responseConfirmerRecoitComposant(_idDI: string) {
+        return gql`
+            mutation {
+                responseConfirmerRecoitComposant(_idDI: "") {
+                    gotComposantFromMagasin
+                }
+            }
+        `;
+    }
+
     getReperationCoordinatorCondition(_idDi: string) {
         return gql`
             query {

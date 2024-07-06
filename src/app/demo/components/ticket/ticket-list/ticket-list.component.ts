@@ -39,6 +39,7 @@ export class TicketListComponent implements OnInit {
         client_id: new FormControl(),
         company_id: new FormControl(),
         nSerie: new FormControl(),
+        comment: new FormControl(),
     });
     statuses = [
         { label: 'Created', value: 'CREATED' },
@@ -169,8 +170,7 @@ export class TicketListComponent implements OnInit {
         console.log('hello');
         this.nego1nego2_InMagasin(this._idDi, this.price, this.finalPrice);
         this.changeStatusDiToInMagasin(this._idDi);
-        console.log('Confirmer Nego1 success');
-        //this.negocite2Modal = false;
+        console.log('🥓[this._idDi]:', this._idDi);
         this.getDi();
         this.negocite1Modal = false;
     }
@@ -212,9 +212,11 @@ export class TicketListComponent implements OnInit {
         this.getTotalComposant(data._id);
     }
     showDialogForNegociate1(data) {
+        console.log('🍱[data ttttttttttttttttt]:', data);
         this.seletedRow = data._id;
 
         this._idDi = this.seletedRow;
+        console.log('🌶[this._idDi]:', this._idDi);
 
         this.getDiByID(this._idDi);
         this.secondNegocition = data._id;
@@ -224,6 +226,7 @@ export class TicketListComponent implements OnInit {
     }
     showDialogForNegociate2(data) {
         this.slectedRow = data._id;
+        console.log('🦑[slectedRow]:', data);
         this.negocite2Modal = true;
         this.getTotalComposant(data._id);
         this.getDiByID(this.slectedRow);
@@ -431,6 +434,7 @@ export class TicketListComponent implements OnInit {
             nSerie,
             status,
             typeClient,
+            comment,
         } = this.creationDiForm.value;
         const diInfo = {
             title,
@@ -440,6 +444,7 @@ export class TicketListComponent implements OnInit {
             nSerie,
             status: this.statusDI,
             typeClient,
+            comment,
         };
         let _idQuery;
         this.apollo
@@ -508,10 +513,35 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusDiToInMagasin(_id),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ data }) => {
+                console.log('🥛[data]:', data);
+            });
+    }
+
+    changeStatusRetour(_id) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusRetour(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🥛[data]:', data);
+            });
+    }
+
+    changeToPending1(_id) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeToPending1(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🥛[data]:', data);
+            });
     }
 
     nego1nego2_InMagasin(_id, price, final_price) {
+        console.log('🥕[final_price]:', final_price);
+        console.log('🥨[price]:', price);
+        console.log('🍨[_id]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.nego1nego2_InMagasin(
@@ -531,7 +561,7 @@ export class TicketListComponent implements OnInit {
 
     discountByPercent() {
         this.discountedPriceNeg = (this.price * this.discountPercent) / 100;
-        this.finalPrice = this.price - this.discountedPriceNeg;
+        this.finalPrice = this.price - this.discountedPriceNeg; //! Nezih
     }
 
     discountByPercent2() {

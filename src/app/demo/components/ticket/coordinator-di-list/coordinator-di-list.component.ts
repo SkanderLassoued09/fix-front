@@ -64,6 +64,7 @@ export class CoordinatorDiListComponent {
     selectedDi: any;
     pricingDoalog: boolean = false;
     reperationCondition: boolean;
+    comment: string;
 
     constructor(
         private ticketSerice: TicketService,
@@ -136,7 +137,9 @@ export class CoordinatorDiListComponent {
     }
 
     openModalConfig(di) {
+        console.log('🥕[di]:', di);
         this.di = { ...di };
+        this.comment = di.comment;
         this.selectedDi = di._id;
         this.diDialog = true;
         this.getReperationCoordinatorCondition();
