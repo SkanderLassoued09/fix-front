@@ -13,6 +13,7 @@ import {
     GetCompaniesQueryResult,
 } from './ticket-list.interface';
 import * as FileSaver from 'file-saver';
+import { NotificationService } from 'src/app/demo/service/notification.service';
 interface Column {
     field: string;
     header: string;
@@ -43,6 +44,10 @@ export class TicketListComponent implements OnInit {
     });
     tarif_Techs = new FormGroup({
         tarifFromAdmin: new FormControl(),
+    });
+
+    categoryForm = new FormGroup({
+        categoryName: new FormControl(),
     });
     statuses = [
         { label: 'Created', value: 'CREATED' },
@@ -150,14 +155,16 @@ export class TicketListComponent implements OnInit {
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
+        private cdr: ChangeDetectorRef,
         private readonly messageservice: MessageService,
-        private cdr: ChangeDetectorRef
+        private readonly notificationService: NotificationService
     ) {}
 
     ngOnInit() {
         this.getDi();
         this.getCompanyList();
         this.getClientList();
+        this.notificationService.startWorker();
     }
 
     showDialogDiCreation() {
@@ -562,10 +569,12 @@ export class TicketListComponent implements OnInit {
             });
     }
 
-    changeToPending1() {
+    changeToPending1(data) {
+        console.log('🥚[data]:', data);
+
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.changeToPending1(this._idDi),
+                mutation: this.ticketSerice.changeToPending1(data._id),
             })
             .subscribe(({ data }) => {
                 //! NEED TO SELECT THE ID OF THE SELECTED DI

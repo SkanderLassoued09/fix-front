@@ -712,11 +712,7 @@ export class TechDiListComponent {
     lapTimeForPauseAndGetBack1() {
         // for rep
         this.lap1();
-        console.log(
-            this.selectedDi,
-            this.lapTime1,
-            'oivqùprj,vùpid,rvùbosien,dwùn,'
-        );
+        console.log(this.selectedDi, this.lapTime1);
         this.apollo
             .mutate<any>({
                 mutation:
@@ -734,10 +730,10 @@ export class TechDiListComponent {
 
         this.startStopwatch1();
     }
-    //! NEZIH
+
     finishReparation() {
         console.log(this.remarqueReparation, ' this.remarqueReparation');
-
+        this.lapTimeForPauseAndGetBack1();
         this.lap1();
         this.apollo
             .mutate<any>({
@@ -747,7 +743,7 @@ export class TechDiListComponent {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
+            .subscribe(({ data }) => {
                 if (data) {
                     console.log('🌰[data]:', data);
                     this.diDialogRep = false;

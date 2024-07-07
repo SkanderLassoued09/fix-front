@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ROLES } from '../components/profile/constant/role-constants';
+import { MessageService } from 'primeng/api';
 
 @Injectable({
     providedIn: 'root',
@@ -8,7 +9,7 @@ export class NotificationService {
     private worker: Worker;
     private role: string;
 
-    constructor() {
+    constructor(private readonly messageservice: MessageService) {
         this.role === localStorage.getItem('role');
         if (typeof Worker !== 'undefined') {
             // Create a new web worker
@@ -29,6 +30,12 @@ export class NotificationService {
                 if (
                     data.message.username === localStorage.getItem('username')
                 ) {
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Notification',
+                        sticky: true,
+                    });
                     // Implement your notification logic for sendDitoDiagnostique event
                     console.log(
                         'Notification for sendDitoDiagnostique:',
@@ -42,10 +49,16 @@ export class NotificationService {
                 // Implement your notification logic for reminder event
                 console.log('Notification for reminder:', data.message);
                 break;
-
+            // TODO nezih
             case 'sendNotifcationToAdmins':
                 if (this.role === 'ADMIN_MANAGER' || 'ADMIN_TECH') {
                     // Implement your notification logic for sendDitoDiagnostique event
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Notification',
+                        sticky: true,
+                    });
                     console.log(
                         'Notification for sendDitoDiagnostique:',
                         data.message
@@ -58,6 +71,12 @@ export class NotificationService {
                 if (
                     data.message.username === localStorage.getItem('username')
                 ) {
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Notification',
+                        sticky: true,
+                    });
                     // Implement your notification logic for sendDitoDiagnostique event
                     console.log(
                         'Notification for confirmAllComposant:',

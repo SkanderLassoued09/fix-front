@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import { ProductService } from 'src/app/demo/service/product.service';
 import { TicketService } from 'src/app/demo/service/ticket.service';
@@ -38,7 +38,8 @@ export class DetailsComposantComponent implements OnInit {
         private ticketSerice: TicketService,
         private productService: ProductService,
         private route: ActivatedRoute,
-        private apollo: Apollo
+        private apollo: Apollo,
+        private readonly router: Router
     ) {
         this._id = this.route.snapshot.paramMap.get('id');
         console.log(this._id, 'id');
@@ -154,6 +155,9 @@ export class DetailsComposantComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 console.log('🍑[data pending 3]:', data);
+                if (data) {
+                    this.router.navigate(['/tickets/ticket/magasin-di-list']);
+                }
             });
     }
     // map over the array of composant existed in tickets data
