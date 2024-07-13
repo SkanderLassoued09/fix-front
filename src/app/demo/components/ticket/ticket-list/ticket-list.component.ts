@@ -45,9 +45,14 @@ export class TicketListComponent implements OnInit {
     tarif_Techs = new FormGroup({
         tarifFromAdmin: new FormControl(),
     });
-
+    //ADD category CRUD
     categoryForm = new FormGroup({
         categoryName: new FormControl(),
+    });
+    //ADD location CRUD
+    locationForm = new FormGroup({
+        locationName: new FormControl(),
+        locationNumber: new FormControl(),
     });
     statuses = [
         { label: 'Created', value: 'CREATED' },
@@ -78,6 +83,7 @@ export class TicketListComponent implements OnInit {
     ];
     openAddDiModal: boolean = false;
     openCategoryModal: boolean = false;
+    openLocationsModal: boolean = false;
     openPriceTechModal: boolean = false;
 
     radioBtn;
@@ -151,6 +157,7 @@ export class TicketListComponent implements OnInit {
     ignoreCount: any;
     composantQuantity: number;
     tarif_Tech: number;
+    allCategoryDiArray: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -173,10 +180,13 @@ export class TicketListComponent implements OnInit {
 
     showDialogCategoryDI() {
         this.openCategoryModal = true;
+        this.allCategoryDi();
+    }
+    showDialogLocations() {
+        this.openLocationsModal = true;
     }
     showDialogPriceTech() {
         this.openPriceTechModal = true;
-        //!!!!!!!!!!!!!!!!!!!!!!! fnction
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getTechTarif(),
@@ -730,6 +740,49 @@ export class TicketListComponent implements OnInit {
                 this.cdr.detectChanges();
             });
     }
+    // ! CRUDS finish this today
+    addCategoryDi() {
+        console.log('category input', this.categoryForm.value.categoryName);
+        typeof (this.categoryForm.value.categoryName, 'TYPE');
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.addCatgoryDi(
+                    this.categoryForm.value.categoryName
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log(data, 'data-category_DI');
+            });
+    }
+    addLocation() {
+        console.log('category input', this.locationForm.value.locationName);
+        console.log('category input', this.locationForm.value.locationNumber);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.addLocation(
+                    this.locationForm.value.locationName,
+                    this.locationForm.value.locationNumber
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log(data, 'data-emplacement');
+                this.openLocationsModal = false;
+            });
+    }
+
+    allCategoryDi() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllDiCategory(),
+            })
+            .subscribe(({ data }) => {
+                console.log(data.findAllDiCategory, 'all categroy === ');
+                this.allCategoryDiArray = data.findAllDiCategory;
+            });
+    }
+
+    deletLocation() {}
+    deletCategoryDi() {}
 }
 /**
  * Review all the code function remove unused code

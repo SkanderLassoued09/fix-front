@@ -7,7 +7,7 @@ import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.inte
 })
 export class TicketService {
     constructor() {}
-    //Ask skander
+
     getAllDi() {
         return gql`
             {
@@ -676,5 +676,52 @@ export class TicketService {
             }
         }
     `;
+    }
+    //!CRUD
+    addCatgoryDi(category: string) {
+        return gql`
+            mutation {
+                createDiCategory(category: "${category}") {
+                    _id
+                    category
+                }
+            }
+        `;
+    }
+    addLocation(
+        location_name: string,
+        location_number: number
+        // max_capacity: number,
+        // avaible: boolean
+    ) {
+        return gql`
+            mutation {
+                createLocation(
+                    createLocationInput: 
+                    { 
+                        _id: " ok", 
+                        location_name: "${location_name}",
+                        location_number:${location_number}
+                    }
+                ) {
+                    _id
+                    location_name
+                    location_number
+                    max_capacity
+                    current_item_stored
+                    avaible
+                }
+            }
+        `;
+    }
+
+    getAllDiCategory() {
+        return gql`
+            query {
+                findAllDiCategory {
+                    category
+                }
+            }
+        `;
     }
 }

@@ -8,30 +8,120 @@
     <p-button
         (click)="showDialogCategoryDI()"
         icon="pi pi-pencil"
-        label="Géerer les category DI"
+        label="Gérer les category DI"
+        severity="warning"
+    ></p-button>
+    <p-button
+        (click)="showDialogLocations()"
+        icon="pi pi-plus"
+        label="Gérer les emplacements"
+        severity="info"
     ></p-button>
     <p-button
         (click)="showDialogPriceTech()"
         icon="pi pi-dollar"
         label="Tarif des techniciens"
+        severity="success"
     ></p-button>
 </div>
 <p-dialog
-    header="Géerer les category DI et category composants"
+    header="Gérer les catégories des demandes d'interventions"
     [(visible)]="openCategoryModal"
     [modal]="true"
     [style]="{ width: '30vw' }"
     [draggable]="false"
     [resizable]="false"
 >
-    <form [formGroup]="categoryForm">
-        <div>
+    <form [formGroup]="categoryForm" class="category-form">
+        <div class="form-group">
+            <label for="categoryName">Nom de la catégorie</label>
             <input
                 formControlName="categoryName"
-                id="Categ"
+                id="categoryName"
                 type="text"
-                class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
+                class="form-control"
             />
+        </div>
+        <div class="form-group">
+            <label for="categoryDropdown">Catégorie à supprimer</label>
+            <p-dropdown
+                formControlName="categoryToDelete"
+                [options]=""
+                optionLabel="name"
+                [showClear]="true"
+                placeholder="Choisir une catégorie à supprimer"
+                id="categoryDropdown"
+            ></p-dropdown>
+        </div>
+        <div class="modal-footer">
+            <p-button
+                (click)="deletCategoryDi()"
+                icon="pi pi-trash"
+                label="Supprimer catégorie"
+                severity="danger"
+            ></p-button>
+            <p-button
+                (click)="addCategoryDi()"
+                icon="pi pi-plus"
+                label="Ajouter catégorie"
+                severity="success"
+            ></p-button>
+        </div>
+    </form>
+</p-dialog>
+
+<p-dialog
+    header="Gérer les emplacements"
+    [(visible)]="openLocationsModal"
+    [modal]="true"
+    [style]="{ width: '30vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <form [formGroup]="locationForm" class="location-form">
+        <div class="form-group">
+            <label for="locationName">Nom de l'emplacement</label>
+            <input
+                formControlName="locationName"
+                id="locationName"
+                type="text"
+                class="form-control"
+            />
+        </div>
+        <div class="form-group">
+            <label for="locationNumber">Numéro de l'emplacement</label>
+            <input
+                formControlName="locationNumber"
+                id="locationNumber"
+                type="number"
+                class="form-control"
+                min="0"
+            />
+        </div>
+        <!--    Add and check 
+        <div class="form-group">
+            <label for="locationNumber">Nombre max de Di supporté</label>
+            <input
+                formControlName="Nombre Max"
+                id="locationNumber"
+                type="number"
+                class="form-control"
+                min="0"
+            />
+        </div> -->
+        <div class="modal-footer">
+            <p-button
+                (click)="deletLocation()"
+                icon="pi pi-trash"
+                label="Supprimer"
+                severity="danger"
+            ></p-button>
+            <p-button
+                (click)="addLocation()"
+                icon="pi pi-plus"
+                label="Ajouter"
+                severity="success"
+            ></p-button>
         </div>
     </form>
 </p-dialog>

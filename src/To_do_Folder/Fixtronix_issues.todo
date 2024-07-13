@@ -3,18 +3,16 @@ Projects: @Fixtronix
 Todos:
   New:
 
-   ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander (Stand_By)
-   ☐ (EASY don't worry skander) In discount after the manager send to the Admin and the discount is greater then 25% take the input number so he can reaffect the final price "PRIX FINAL" IN ADMIN MANAGER @critical @Nezih
-  
-   ☐ location CRUD 
-  
-
-   ☐ Add condition inside the Diag Modal "if DI has no composant" send directly to the Coordinator skip the "ESTIMATION MAGASIN" @low @Nezih a verifier
-   
-   ☐ check the table of client and company (region != [objct] prenom is undefined ) @low
-
+  ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander (Stand_By)
+  ☐ Location and categoryDi add dropDown containing the list so we can delet using the "delet btn" @Hethi
+  ☐ In the creation of the DI add location as a field @Hethi
+  ☐ In the diagnostique add the category di  + make the chosing the composant hidden only shown when "contain PDR == TRUE" @Hethi
+  ☐ check the table of client and company (region != [objct] ) @Hethi
+  ☐ Improve CSS for creating company + content Table for the company add the ID @Hethi
+  ☐ Check table for the clients add ID and prénom is undefined @Hethi
+  ☐ Delet fnction for company + client @Hethi
   Done:
-     ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
+  ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
   ✔ in the creation DI Make the creation only possible when the user have chosen the client @low @done(24-06-04 00:27)
@@ -27,11 +25,15 @@ Todos:
   ✔ in the tech list of Di add your mutation to delet repeated Stats @high @done(24-07-03 10:02)
   ✔ in the list of di Add mutation to the delete DI @low @done(24-07-03 10:16)
   ✔ in the magasin estimation interface some CSS @low @Nezih @done(24-07-06 21:35)
-   ✔ Btn to change to pending1 don't work need to get the di of the selected one @done(24-07-07 20:05)
-    ✔ Add the timer and the same logic as Diag to the modal reperation @critical @Skander works check the query @done(24-07-07 20:38)
-    ✔ Rep time @done(24-07-07 20:37)
-  Cancelled:
-  
+  ✔ Btn to change to pending1 don't work need to get the di of the selected one @done(24-07-07 20:05)
+  ✔ Add the timer and the same logic as Diag to the modal reperation @critical @Skander works check the query @done(24-07-07 20:38)
+  ✔ Rep time @done(24-07-07 20:37)
+  ✔ location CRUD @done(24-07-11 09:19)
+  ✔ Add condition inside the Diagnostique Modal "if DI has no composant" send directly to the Coordinator skip the "ESTIMATION MAGASIN" @low @Nezih @done(24-07-13 16:40)
+
+  After finishing add this features:
+   ☐ Add new Fn to location @Nezih
+   ☐ Add Dashboard
 
 
 
