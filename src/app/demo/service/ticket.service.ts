@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
 import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.interface';
+import { di } from '@fullcalendar/core/internal-common';
 
 @Injectable({
     providedIn: 'root',
@@ -194,6 +195,7 @@ export class TicketService {
                     company_id: "${diInfo.company_id}"
                     nSerie: "${diInfo.nSerie}"
                     comment: "${diInfo.comment}"
+                    image:"${diInfo.image}"
                 }
             ) {
                 _id

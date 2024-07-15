@@ -100,6 +100,7 @@ export class TechDiListComponent {
     reperationfinishedFLAG: boolean = true;
     DiByStat: any;
     loadingCreatingComposant: boolean;
+    hasPdr: boolean;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -110,6 +111,7 @@ export class TechDiListComponent {
     ngOnInit() {
         this.getAllTechDi();
         this.getComposant();
+        this.checkValueChanges();
         console.log('array data,', this.composantList);
         // this.btnConditionReperation();
         // this.btnConditionDiagnostique();
@@ -729,6 +731,14 @@ export class TechDiListComponent {
             });
 
         this.startStopwatch1();
+    }
+
+    checkValueChanges() {
+        this.diagFormTech.get('isPdr')?.valueChanges.subscribe((value) => {
+            console.log('isPdr value changed:', value);
+            this.hasPdr = value;
+            // Additional logic based on value changes
+        });
     }
 
     finishReparation() {

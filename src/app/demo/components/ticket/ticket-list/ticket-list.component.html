@@ -197,6 +197,7 @@
             <div class="col flex align-items-center flex-row gap-2">
                 <p-radioButton
                     (onClick)="getSt($event)"
+                    (ngModelChange)="getSt($event)"
                     formControlName="typeClient"
                     value="CLIENT"
                 ></p-radioButton>
@@ -233,20 +234,15 @@
         </div>
         <div class="field">
             <p-fileUpload
-                [multiple]="true"
+                mode="basic"
+                chooseLabel="Choose"
+                chooseIcon="pi pi-upload"
+                name="demo[]"
+                url="https://www.primefaces.org/cdn/api/upload.php"
                 accept="image/*"
                 maxFileSize="1000000"
-            >
-                <ng-template pTemplate="toolbar">
-                    <div class="py-3">Upload 3 Files</div>
-                </ng-template>
-                <ng-template let-file pTemplate="file">
-                    <div>Custom UI to display a file</div>
-                </ng-template>
-                <ng-template pTemplate="content" let-files>
-                    <div>Additional content.</div>
-                </ng-template>
-            </p-fileUpload>
+                (onUpload)="onUpload($event)"
+            />
         </div>
         <div class="footerlocation">
             <textarea

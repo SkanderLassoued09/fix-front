@@ -6,6 +6,8 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ClientService } from 'src/app/demo/service/client.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
+
+// add it to seperate file
 interface Column {
     field: string;
     header: string;
@@ -46,8 +48,8 @@ interface GetAllClientQueryResponse {
 })
 export class ClientListComponent {
     clientForm = new FormGroup({
-        firstName: new FormControl(),
-        lastName: new FormControl(),
+        first_name: new FormControl(),
+        last_name: new FormControl(),
         region: new FormControl(),
         address: new FormControl(),
         email: new FormControl(),
@@ -96,9 +98,13 @@ export class ClientListComponent {
     }
 
     addClient() {
+        console.log('🥐this.clientForm.value', this.clientForm.value);
+        const { region, ...data } = this.clientForm.value;
+        const clientData = { ...data, region: region.name };
+        console.log('🥫[clientData]:', clientData);
         this.apollo
             .mutate<AddClientMutationResponse>({
-                mutation: this.clientService.addClient(this.clientForm.value),
+                mutation: this.clientService.addClient(clientData),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
@@ -133,6 +139,7 @@ export class ClientListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 this.loading = loading;
                 if (data) {
+                    console.log('🥑[data]:', data);
                     this.clientsList = data.findAllClient.clientRecords;
                     this.totalClientRecord =
                         data.findAllClient.totalClientRecord;

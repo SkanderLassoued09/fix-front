@@ -13,7 +13,7 @@ export class ClientService {
             createClient(
                 createClientInput: {
                     first_name: "${clientInfo.first_name}"
-                    last_name: "${clientInfo.lastName}"
+                    last_name: "${clientInfo.last_name}"
                     region: "${clientInfo.region}"
                     address: "${clientInfo.address}"
                     email: "${clientInfo.email}"

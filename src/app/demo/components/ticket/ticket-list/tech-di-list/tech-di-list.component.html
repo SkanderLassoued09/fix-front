@@ -99,115 +99,121 @@
                 </div>
 
                 <!-- list of composant -->
-                <div class="grid align-items-center">
-                    <div class="col">
-                        <label for="name">Choisir un composant</label>
-                        <p-dropdown
-                            [options]="composantList"
-                            (onChange)="selectedDropDown($event)"
-                            optionLabel="name"
-                            placeholder="Choisir composant"
-                        ></p-dropdown>
-                    </div>
-                    <div class="col" *ngIf="composantSelected">
-                        <label for="name">Quantité</label>
-                        <p-inputNumber
-                            inputId="integeronly"
-                            formControlName="quantity"
-                            [placeholder]="
-                                'Add quantity for ' +
-                                composantSelected.value.name
-                            "
-                        ></p-inputNumber>
-                    </div>
-                    <div class="col" *ngIf="composantSelected">
-                        <button
-                            pButton
-                            pRipple
-                            label="Ajouter"
-                            class="p-button-success"
-                            icon="pi pi-check"
-                            (click)="comboComposantandQuantity()"
-                        ></button>
-                    </div>
-                </div>
-
-                <p-toast />
-                <p-toolbar styleClass="mb-4 gap-2">
-                    <ng-template pTemplate="left">
-                        <p-button
-                            pRipple
-                            severity="success"
-                            label="Créer composant"
-                            icon="pi pi-plus"
-                            class="mr-2"
-                            (click)="openNew()"
-                        />
-                    </ng-template>
-
-                    <ng-template pTemplate="right"> </ng-template>
-                </p-toolbar>
-                <!-- !fd -->
-                <p-table
-                    #dt
-                    [value]="composantCombo"
-                    [rows]="11"
-                    [tableStyle]="{ 'min-width': '75rem' }"
-                    [(selection)]="selectedComposants"
-                    [rowHover]="true"
-                    dataKey="nameComposant"
-                    [showCurrentPageReport]="true"
-                >
-                    <ng-template pTemplate="caption">
-                        <div
-                            class="flex align-items-center justify-content-between"
-                        >
-                            <h5 class="m-0">Listes des composants</h5>
+                <ng-container *ngIf="hasPdr">
+                    <div class="grid align-items-center">
+                        <div class="col">
+                            <label for="name">Choisir un composant</label>
+                            <p-dropdown
+                                [options]="composantList"
+                                (onChange)="selectedDropDown($event)"
+                                optionLabel="name"
+                                placeholder="Choisir composant"
+                            ></p-dropdown>
                         </div>
-                    </ng-template>
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th style="width: 4rem">
-                                <p-tableHeaderCheckbox />
-                            </th>
-                            <th pSortableColumn="name" style="min-width: 15rem">
-                                Nom composant <p-sortIcon field="name" />
-                            </th>
-                            <th
-                                pSortableColumn="Quantité"
-                                style="min-width: 15rem"
+                        <div class="col" *ngIf="composantSelected">
+                            <label for="name">Quantité</label>
+                            <p-inputNumber
+                                inputId="integeronly"
+                                formControlName="quantity"
+                                [placeholder]="
+                                    'Add quantity for ' +
+                                    composantSelected.value.name
+                                "
+                            ></p-inputNumber>
+                        </div>
+                        <div class="col" *ngIf="composantSelected">
+                            <button
+                                pButton
+                                pRipple
+                                label="Ajouter"
+                                class="p-button-success"
+                                icon="pi pi-check"
+                                (click)="comboComposantandQuantity()"
+                            ></button>
+                        </div>
+                    </div>
+
+                    <p-toast />
+                    <p-toolbar styleClass="mb-4 gap-2">
+                        <ng-template pTemplate="left">
+                            <p-button
+                                pRipple
+                                severity="success"
+                                label="Créer composant"
+                                icon="pi pi-plus"
+                                class="mr-2"
+                                (click)="openNew()"
+                            />
+                        </ng-template>
+
+                        <ng-template pTemplate="right"> </ng-template>
+                    </p-toolbar>
+                    <!-- !fd -->
+                    <p-table
+                        #dt
+                        [value]="composantCombo"
+                        [rows]="11"
+                        [tableStyle]="{ 'min-width': '75rem' }"
+                        [(selection)]="selectedComposants"
+                        [rowHover]="true"
+                        dataKey="nameComposant"
+                        [showCurrentPageReport]="true"
+                    >
+                        <ng-template pTemplate="caption">
+                            <div
+                                class="flex align-items-center justify-content-between"
                             >
-                                Quantité <p-sortIcon field="name" />
-                            </th>
-                            <th style="min-width: 10rem">Action</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-composant>
-                        <tr>
-                            <td><p-tableCheckbox [value]="composant" /></td>
-                            <td>{{ composant.nameComposant }}</td>
-                            <td>{{ composant.quantity }}</td>
-                            <td>
-                                <button
-                                    pButton
-                                    type="button"
-                                    icon="pi pi-info-circle"
-                                    label="Effacer"
-                                    (click)="onRowClick(composant)"
-                                ></button>
-                            </td>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="summary">
-                        <div
-                            class="flex align-items-center justify-content-between"
-                        >
-                            Ce DI contient
-                            {{ composantCombo ? composantCombo.length : 0 }}
-                            Composants.
-                        </div>
-                    </ng-template>
-                </p-table>
+                                <h5 class="m-0">Listes des composants</h5>
+                            </div>
+                        </ng-template>
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 4rem">
+                                    <p-tableHeaderCheckbox />
+                                </th>
+                                <th
+                                    pSortableColumn="name"
+                                    style="min-width: 15rem"
+                                >
+                                    Nom composant <p-sortIcon field="name" />
+                                </th>
+                                <th
+                                    pSortableColumn="Quantité"
+                                    style="min-width: 15rem"
+                                >
+                                    Quantité <p-sortIcon field="name" />
+                                </th>
+                                <th style="min-width: 10rem">Action</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-composant>
+                            <tr>
+                                <td><p-tableCheckbox [value]="composant" /></td>
+                                <td>{{ composant.nameComposant }}</td>
+                                <td>{{ composant.quantity }}</td>
+                                <td>
+                                    <button
+                                        pButton
+                                        type="button"
+                                        icon="pi pi-info-circle"
+                                        label="Effacer"
+                                        (click)="onRowClick(composant)"
+                                    ></button>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="summary">
+                            <div
+                                class="flex align-items-center justify-content-between"
+                            >
+                                Ce DI contient
+                                {{ composantCombo ? composantCombo.length : 0 }}
+                                Composants.
+                            </div>
+                        </ng-template>
+                    </p-table>
+                </ng-container>
+
                 <!-- ******* Start of composant creation ********* -->
                 <p-dialog
                     [(visible)]="creatComposantDialog"

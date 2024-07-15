@@ -158,6 +158,7 @@ export class TicketListComponent implements OnInit {
     composantQuantity: number;
     tarif_Tech: number;
     allCategoryDiArray: any;
+    payloadImage: { image: string };
 
     constructor(
         private ticketSerice: TicketService,
@@ -421,13 +422,33 @@ export class TicketListComponent implements OnInit {
             this.loading = false;
         }, 2000);
     }
-
-    onUpload(event: UploadEvent) {
+    onUpload(event: any) {
         for (let file of event.files) {
-            this.uploadedFiles.push(file);
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64 = reader.result as string;
+                this.uploadFile(base64);
+            };
         }
     }
 
+    uploadFile(base64: string) {
+        const payload = {
+            image: base64,
+            // add other necessary data here
+        };
+        console.log('🌮[payload]:', payload);
+        this.payloadImage = payload;
+        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
+        //     (response) => {
+        //         console.log('Upload successful', response);
+        //     },
+        //     (error) => {
+        //         console.log('Upload failed', error);
+        //     }
+        // );
+    }
     getSeverity(status: string) {
         switch (status) {
             case 'CREATED':
@@ -496,6 +517,7 @@ export class TicketListComponent implements OnInit {
             status: this.statusDI,
             typeClient,
             comment,
+            image: this.payloadImage.image,
         };
         let _idQuery;
         this.apollo
