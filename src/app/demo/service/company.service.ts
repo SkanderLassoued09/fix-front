@@ -71,4 +71,48 @@ export class CompanyService {
             }
         `;
     }
+
+    removeCompany(_id: string) {
+        return gql`
+        mutation {
+            removeCompany(_id:"${_id}")
+        }
+    `;
+    }
+
+    findOneCompany(_id: string) {
+        return gql`
+        query {
+            findOneCompany(_id: "${_id}") {
+                _id
+                name
+                region
+                address
+                email
+                activitePrincipale
+                activitePrincipale
+                activiteSecondaire
+                raisonSociale
+                Exoneration
+                fax
+                webSiteLink
+                serviceAchat {
+                    name
+                    email
+                    phone
+                }
+                serviceFinancier {
+                    name
+                    email
+                    phone
+                }
+                serviceTechnique {
+                    name
+                    email
+                    phone
+                }
+            }
+        }
+    `;
+    }
 }

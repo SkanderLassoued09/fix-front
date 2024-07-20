@@ -74,7 +74,7 @@ export class ClientListComponent {
     rows: number = 10;
 
     product: any;
-    productDialog: boolean = false;
+    clientModalCondition: boolean = false;
     submitted: boolean;
     selectedProducts: null;
     totalClientRecord: any;
@@ -148,27 +148,40 @@ export class ClientListComponent {
             });
     }
 
-    editProduct(rowDataClient) {
-        this.product = { ...rowDataClient };
-        this.productDialog = true;
+    editClient(rowData) {
+        console.log(rowData);
+        this.clientModalCondition = true;
     }
-    deleteSelectedProducts() {
+    annuler() {
+        this.clientModalCondition = false;
+    }
+    updateClient() {}
+
+    deleteSelectedClient(rowData) {
         this.confirmationService.confirm({
-            message: 'Are you sure you want to delete the selected products?',
-            header: 'Confirm',
+            message: 'Voulez vous supprimer ce client',
+            header: 'Confirmation',
             icon: 'pi pi-exclamation-triangle',
-            // accept: () => {
-            //     this.products = this.products.filter(
-            //         (val) => !this.selectedProducts?.includes(val)
-            //     );
-            //     this.selectedProducts = null;
-            //     this.messageService.add({
-            //         severity: 'success',
-            //         summary: 'Successful',
-            //         detail: 'Products Deleted',
-            //         life: 3000,
-            //     });
-            // },
+            accept: () => {
+                console.log(rowData._id, 'rowdata value ');
+
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.clientService.removeClient(rowData._id),
+                    })
+                    .subscribe(({ data }) => {
+                        console.log('🍠[data]:', data);
+                    });
+                console.log('done deleted');
+                this.selectedProducts = null;
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Supprimer',
+                    detail: `Le client ${rowData._id} a été supprimé`,
+                    life: 3000,
+                });
+            },
         });
+        this.clients(this.first, this.rows);
     }
 }

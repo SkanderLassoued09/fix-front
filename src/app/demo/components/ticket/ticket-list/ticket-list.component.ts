@@ -14,6 +14,7 @@ import {
 } from './ticket-list.interface';
 import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
+
 interface Column {
     field: string;
     header: string;
@@ -159,6 +160,7 @@ export class TicketListComponent implements OnInit {
     tarif_Tech: number;
     allCategoryDiArray: any;
     payloadImage: { image: string };
+    locationDropDown: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -388,7 +390,7 @@ export class TicketListComponent implements OnInit {
                 this.diList.splice(index, 1);
                 this.messageservice.add({
                     severity: 'success',
-                    summary: 'Success',
+                    summary: "Demande d'intervention a été créer",
                     detail: 'La demande service supprimer',
                 });
             });
@@ -550,7 +552,11 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    this.companiesListDropDown = data.getAllComapnyforDropDown;
+                    this.companiesListDropDown =
+                        data.getAllComapnyforDropDown.map((Company) => ({
+                            company_name: `${Company.name}`,
+                            value: Company._id, // ID as value
+                        }));
                 }
             });
     }
@@ -800,6 +806,19 @@ export class TicketListComponent implements OnInit {
             .subscribe(({ data }) => {
                 console.log(data.findAllDiCategory, 'all categroy === ');
                 this.allCategoryDiArray = data.findAllDiCategory;
+            });
+    }
+    getLocationList() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllLocation(),
+            })
+            .subscribe(({ data }) => {
+                console.log(data);
+                // this.locationDropDown = data.findAllLocation.map((Company) => ({
+                //     company_name: `${Company.name}`,
+                //     value: Company._id, // ID as value
+                // }));
             });
     }
 

@@ -7,7 +7,7 @@
 </div>
 <p-dialog
     header="Ajouter une nouvelle société"
-    [(visible)]="visible"
+    [(visible)]="creationCompanyModalCondition"
     [modal]="true"
     [style]="{ width: '50vw' }"
     [draggable]="false"
@@ -294,11 +294,16 @@
     <!-- -------- -->
     <ng-template pTemplate="footer">
         <p-button
-            label="Submit"
+            (onClick)="annulerUpdate()"
+            label="Annuler"
+            severity="danger"
+        ></p-button>
+        <p-button
+            label="Ajouter"
+            severity="success"
             [loading]="loading"
             (onClick)="addCompany()"
         ></p-button>
-        <p-button label="Danger" severity="danger"></p-button>
     </ng-template>
 </p-dialog>
 
@@ -329,14 +334,14 @@
                         pRipple
                         icon="pi pi-pencil"
                         class="p-button-rounded p-button-success mr-2"
-                        (click)="editProduct(rowData)"
+                        (click)="editCompany(rowData)"
                     ></button>
                     <button
                         pButton
                         pRipple
                         icon="pi pi-trash"
                         class="p-button-rounded p-button-danger"
-                        (click)="deleteSelectedProducts(rowData)"
+                        (click)="deleteSelectedCompany(rowData)"
                     ></button>
                 </td>
             </tr>
@@ -350,138 +355,123 @@
         [rowsPerPageOptions]="[5, 10, 30]"
     ></p-paginator>
     <p-dialog
-        [(visible)]="productDialog"
+        [(visible)]="CompanyModalCondition"
         [style]="{ width: '450px' }"
-        header="Détaille du client"
+        header="Détails de la société"
         [modal]="true"
         styleClass="p-fluid"
+        draggable="false"
     >
         <ng-template pTemplate="content">
-            <img
-                [src]="
-                    'https://primefaces.org/cdn/primeng/images/demo/product/' +
-                    product.image
-                "
-                [alt]="product.image"
-                class="block m-auto pb-3"
-                *ngIf="product.image"
-            />
             <div class="field">
-                <label for="name">Name</label>
+                <label for="name">Nom société</label>
                 <input type="text" pInputText id="name" required autofocus />
-                <small class="p-error" *ngIf="submitted && !product.name"
-                    >Name is required.</small
-                >
+                <small class="p-error" *ngIf="submitted && !client.name">
+                    Name is required.
+                </small>
             </div>
             <div class="field">
-                <label for="description">Description</label>
-                <textarea
-                    id="description"
-                    pInputTextarea
-                    required
-                    rows="3"
-                    cols="20"
-                ></textarea>
-            </div>
-
-            <!-- <div class="field">
-                <label for="inventoryStatus">Inventory Status</label>
                 <p-dropdown
-                    [(ngModel)]="product.inventoryStatus"
-                    inputId="inventoryStatus"
-                    [options]="statuses"
-                >
-                    <ng-template pTemplate="selectedItem">
-                        <p-tag
-                            [value]="product.inventoryStatus.toUpperCase()"
-                            [severity]="
-                                getSeverity(
-                                    product.inventoryStatus.toUpperCase()
-                                )
-                            "
-                        ></p-tag>
-                    </ng-template>
-                    <ng-template let-option pTemplate="item">
-                        <p-tag
-                            [value]="option.label"
-                            [severity]="getSeverity(option.label)"
-                        ></p-tag>
-                    </ng-template>
-                </p-dropdown>
-            </div> -->
-
+                    formControlName="region"
+                    [options]="region"
+                    optionLabel="name"
+                    [showClear]="true"
+                    placeholder="Choisir une region"
+                    styleClass="w-full"
+                ></p-dropdown>
+                <small class="p-error" *ngIf="submitted && !client.region">
+                    Region is required.
+                </small>
+            </div>
             <div class="field">
-                <label class="mb-3">Category</label>
-                <div class="formgrid grid">
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category1"
-                            name="category"
-                            value="Accessories"
-                        ></p-radioButton>
-                        <label for="category1">Accessories</label>
-                    </div>
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category2"
-                            name="category"
-                            value="Clothing"
-                        ></p-radioButton>
-                        <label for="category2">Clothing</label>
-                    </div>
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category3"
-                            name="category"
-                            value="Electronics"
-                        ></p-radioButton>
-                        <label for="category3">Electronics</label>
-                    </div>
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category4"
-                            name="category"
-                            value="Fitness"
-                        ></p-radioButton>
-                        <label for="category4">Fitness</label>
-                    </div>
-                </div>
+                <label for="address">Address</label>
+                <input type="text" pInputText id="address" required />
+                <small class="p-error" *ngIf="submitted && !client.address">
+                    Address is required.
+                </small>
             </div>
-
-            <div class="formgrid grid">
-                <div class="field col">
-                    <label for="price">Price</label>
-                    <p-inputNumber
-                        id="price"
-                        mode="currency"
-                        currency="USD"
-                        locale="en-US"
-                    ></p-inputNumber>
-                </div>
-                <div class="field col">
-                    <label for="quantity">Quantity</label>
-                    <p-inputNumber id="quantity"></p-inputNumber>
-                </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" pInputText id="email" required />
+                <small class="p-error" *ngIf="submitted && !client.email">
+                    Email is required.
+                </small>
             </div>
-        </ng-template>
-
-        <ng-template pTemplate="footer">
-            <button
-                pButton
-                pRipple
-                label="Cancel"
-                icon="pi pi-times"
-                class="p-button-text"
-                (click)="hideDialog()"
-            ></button>
-            <button
-                pButton
-                pRipple
-                label="Save"
-                icon="pi pi-check"
-                class="p-button-text"
-                (click)="saveProduct()"
-            ></button>
+            <div class="field">
+                <label for="activitePrincipale">Activité Principale</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="activitePrincipale"
+                    required
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !client.activitePrincipale"
+                >
+                    Activité Principale is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="activiteSecondaire">Activité Secondaire</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="activiteSecondaire"
+                    required
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !client.activiteSecondaire"
+                >
+                    Activité Secondaire is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="raisonSociale">Raison Sociale</label>
+                <input type="text" pInputText id="raisonSociale" required />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !client.raisonSociale"
+                >
+                    Raison Sociale is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="exoneration">Exonération</label>
+                <input type="text" pInputText id="exoneration" required />
+                <small class="p-error" *ngIf="submitted && !client.exoneration">
+                    Exonération is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="fax">Fax</label>
+                <input type="text" pInputText id="fax" required />
+                <small class="p-error" *ngIf="submitted && !client.fax">
+                    Fax is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="webSiteLink">Website Link</label>
+                <input type="text" pInputText id="webSiteLink" required />
+                <small class="p-error" *ngIf="submitted && !client.webSiteLink">
+                    Website Link is required.
+                </small>
+            </div>
+            <div class="modal-footer">
+                <p-button
+                    (click)="annuler()"
+                    icon="pi pi-times"
+                    label="Annuler"
+                    severity="info"
+                ></p-button>
+                <p-button
+                    (click)="updateClient()"
+                    icon="pi pi-plus"
+                    label="Modifier"
+                    severity="success"
+                ></p-button>
+            </div>
         </ng-template>
     </p-dialog>
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>

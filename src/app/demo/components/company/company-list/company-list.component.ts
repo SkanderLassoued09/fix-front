@@ -90,7 +90,7 @@ export class CompanyListComponent {
             phone: new FormControl(''),
         }),
     });
-    visible: boolean = false;
+    creationCompanyModalCondition: boolean = false;
     products!: Product[];
     loading: boolean = false;
 
@@ -112,8 +112,8 @@ export class CompanyListComponent {
         { field: 'fax', header: 'Fax' },
         { field: 'webSiteLink', header: 'Lien du web' },
     ];
-    product: any;
-    productDialog: boolean = false;
+    companySelected: any;
+    CompanyModalCondition: boolean = false;
     first: number = 0;
     rows: number = 10;
     totalCompanyRecord: number;
@@ -150,7 +150,7 @@ export class CompanyListComponent {
     }
 
     showDialog() {
-        this.visible = true;
+        this.creationCompanyModalCondition = true;
     }
 
     addCompany() {
@@ -170,7 +170,7 @@ export class CompanyListComponent {
                         detail: 'La société ajouté avec succés',
                     });
                     this.companies(this.first, this.rows);
-                    this.visible = false;
+                    this.creationCompanyModalCondition = false;
                 }
                 if (errors) {
                     console.log('🍦[errors]:', errors);
@@ -204,28 +204,45 @@ export class CompanyListComponent {
             });
     }
 
-    editProduct(rowDataClient) {
+    editCompany(rowDataClient) {
         console.log('🍎[rowDataClient]:', rowDataClient);
-        this.product = { ...rowDataClient };
-        this.productDialog = true;
+        this.companySelected = { ...rowDataClient };
+        this.CompanyModalCondition = true;
     }
-    deleteSelectedProducts() {
+
+    annuler() {
+        this.CompanyModalCondition = false;
+    }
+    annulerUpdate() {
+        this.creationCompanyModalCondition = false;
+    }
+    deleteSelectedCompany(rowData) {
         this.confirmationService.confirm({
-            message: 'Are you sure you want to delete the selected products?',
-            header: 'Confirm',
+            message: 'Voulez vous supprimer cette société',
+            header: 'Confirmation',
             icon: 'pi pi-exclamation-triangle',
-            // accept: () => {
-            //     this.products = this.products.filter(
-            //         (val) => !this.selectedProducts?.includes(val)
-            //     );
-            //     this.selectedProducts = null;
-            //     this.messageService.add({
-            //         severity: 'success',
-            //         summary: 'Successful',
-            //         detail: 'Products Deleted',
-            //         life: 3000,
-            //     });
-            // },
+            accept: () => {
+                console.log(rowData._id, 'rowdata value ');
+
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.companyService.removeCompany(
+                            rowData._id
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        console.log('🍠[data]:', data);
+                    });
+                console.log('done deleted');
+
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Supprimer',
+                    detail: `La société ${rowData._id} a été supprimé`,
+                    life: 3000,
+                });
+            },
         });
+        this.companies(this.first, this.rows);
     }
 }

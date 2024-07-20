@@ -3,12 +3,14 @@ Projects: @Fixtronix
 Todos:
   New:
 
-  ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander (Stand_By) done
+  ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander (Stand_By) almost done
   ☐ Location and categoryDi add dropDown containing the list so we can delet using the "delet btn" @Hethi
   ☐ In the creation of the DI add location as a field @Hethi
   ☐ Improve CSS for creating company + content Table for the company add the ID @Hethi @Nezih
-
-  ☐ Delet fnction for company + client @Hethi
+  ☐ add delet and check HTML for the staff
+  ☐ Add update btn to client + company + DI
+  ☐ Add tarif before the affectation of Price by admins
+  ☐ Add confirmation PopUp in everyStep
   Done:
   ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
@@ -31,6 +33,7 @@ Todos:
   ✔ check the table of client and company (region != [objct] ) @Hethi @done(24-07-15 23:21)
   ✔ Check table for the clients add ID and prénom is undefined @Hethi @done(24-07-15 23:31)
   ✔ In the diagnostique add the category di  + make the chosing the composant hidden only shown when "contain PDR == TRUE" @Hethi @done(24-07-15 23:39)
+  ✔ Delet fnction for company + client @Hethi @done(24-07-20 01:04)
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard

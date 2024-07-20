@@ -80,7 +80,7 @@
         </div>
     </form>
 
-    <div class="btns">
+    <div class="modal-footer">
         <p-button
             label="Annuler"
             (onClick)="clientForm.reset()"
@@ -88,6 +88,7 @@
         ></p-button>
         <p-button
             label="Ajouter"
+            severity="success"
             [loading]="loading"
             (onClick)="addClient()"
         ></p-button>
@@ -120,14 +121,14 @@
                         pRipple
                         icon="pi pi-pencil"
                         class="p-button-rounded p-button-success mr-2"
-                        (click)="editProduct(rowData)"
+                        (click)="editClient(rowData)"
                     ></button>
                     <button
                         pButton
                         pRipple
                         icon="pi pi-trash"
                         class="p-button-rounded p-button-danger"
-                        (click)="deleteSelectedProducts(rowData)"
+                        (click)="deleteSelectedClient(rowData)"
                     ></button>
                 </td>
             </tr>
@@ -141,113 +142,78 @@
         [rowsPerPageOptions]="[10, 20, 30]"
     ></p-paginator>
     <p-dialog
-        [(visible)]="productDialog"
+        [(visible)]="clientModalCondition"
         [style]="{ width: '450px' }"
-        header="Détaille du client"
+        header="Détails du client"
         [modal]="true"
         styleClass="p-fluid"
+        draggable="false"
     >
         <ng-template pTemplate="content">
-            <img
-                [src]="
-                    'https://primefaces.org/cdn/primeng/images/demo/product/' +
-                    product.image
-                "
-                [alt]="product.image"
-                class="block m-auto pb-3"
-                *ngIf="product.image"
-            />
             <div class="field">
-                <label for="name">Name</label>
-                <input type="text" pInputText id="name" required autofocus />
-                <small class="p-error" *ngIf="submitted && !product.name"
-                    >Name is required.</small
-                >
-            </div>
-            <div class="field">
-                <label for="description">Description</label>
-                <textarea
-                    id="description"
-                    pInputTextarea
+                <label for="first_name">First Name</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="first_name"
                     required
-                    rows="3"
-                    cols="20"
-                ></textarea>
+                    autofocus
+                />
+                <small class="p-error" *ngIf="submitted && !client.first_name">
+                    First name is required.
+                </small>
             </div>
-
             <div class="field">
-                <label class="mb-3">Category</label>
-                <div class="formgrid grid">
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category1"
-                            name="category"
-                            value="Accessories"
-                        ></p-radioButton>
-                        <label for="category1">Accessories</label>
-                    </div>
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category2"
-                            name="category"
-                            value="Clothing"
-                        ></p-radioButton>
-                        <label for="category2">Clothing</label>
-                    </div>
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category3"
-                            name="category"
-                            value="Electronics"
-                        ></p-radioButton>
-                        <label for="category3">Electronics</label>
-                    </div>
-                    <div class="field-radiobutton col-6">
-                        <p-radioButton
-                            id="category4"
-                            name="category"
-                            value="Fitness"
-                        ></p-radioButton>
-                        <label for="category4">Fitness</label>
-                    </div>
-                </div>
+                <label for="last_name">Last Name</label>
+                <input type="text" pInputText id="last_name" required />
+                <small class="p-error" *ngIf="submitted && !client.last_name">
+                    Last name is required.
+                </small>
             </div>
-
-            <div class="formgrid grid">
-                <div class="field col">
-                    <label for="price">Price</label>
-                    <p-inputNumber
-                        id="price"
-                        mode="currency"
-                        currency="USD"
-                        locale="en-US"
-                    ></p-inputNumber>
-                </div>
-                <div class="field col">
-                    <label for="quantity">Quantity</label>
-                    <p-inputNumber id="quantity"></p-inputNumber>
-                </div>
+            <div class="field">
+                <label for="region">Region</label>
+                <input type="text" pInputText id="region" required />
+                <small class="p-error" *ngIf="submitted && !client.region">
+                    Region is required.
+                </small>
             </div>
-        </ng-template>
-
-        <ng-template pTemplate="footer">
-            <button
-                pButton
-                pRipple
-                label="Cancel"
-                icon="pi pi-times"
-                class="p-button-text"
-                (click)="hideDialog()"
-            ></button>
-            <button
-                pButton
-                pRipple
-                label="Save"
-                icon="pi pi-check"
-                class="p-button-text"
-                (click)="saveProduct()"
-            ></button>
+            <div class="field">
+                <label for="region">Adresse</label>
+                <input type="text" pInputText id="adresse" required />
+                <small class="p-error" *ngIf="submitted && !client.address">
+                    Address is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="email" pInputText id="email" required />
+                <small class="p-error" *ngIf="submitted && !client.email">
+                    Email is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="phone">Phone</label>
+                <input type="tel" pInputText id="phone" required />
+                <small class="p-error" *ngIf="submitted && !client.phone">
+                    Phone number is required.
+                </small>
+            </div>
+            <div class="modal-footer">
+                <p-button
+                    (click)="annuler()"
+                    icon="pi pi-times"
+                    label="Annuler"
+                    severity="info"
+                ></p-button>
+                <p-button
+                    (click)="updateClient()"
+                    icon="pi pi-plus"
+                    label="Modifier"
+                    severity="success"
+                ></p-button>
+            </div>
         </ng-template>
     </p-dialog>
+
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 </div>

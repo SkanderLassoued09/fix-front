@@ -45,7 +45,7 @@
         <div class="form-group">
             <label for="categoryDropdown">Catégorie à supprimer</label>
             <p-dropdown
-                formControlName="categoryToDelete"
+                value="queryCategoriesDI"
                 [options]=""
                 optionLabel="name"
                 [showClear]="true"
@@ -214,7 +214,7 @@
                 <p-dropdown
                     [options]="companiesListDropDown"
                     formControlName="company_id"
-                    optionLabel="name"
+                    optionLabel="company_name"
                     optionValue="value"
                     [showClear]="true"
                     placeholder="Choisir société"
@@ -251,10 +251,18 @@
                 pInputTextarea
                 formControlName="comment"
             >
-        Ajouter une remqrque pour cette Demande d'intervention 
-        </textarea
+ Ajouter une remarque pour cette Demande d'intervention</textarea
             >
-            <p-dropdown> Affecter la localisation pour ce Di </p-dropdown>
+            <div>
+                <p-dropdown
+                    [options]="locationDropDown"
+                    formControlName="location_id"
+                    optionLabel="label"
+                    optionValue="value"
+                    [showClear]="true"
+                    placeholder="Affecter un emplacement"
+                ></p-dropdown>
+            </div>
         </div>
         <div class="field">
             <p-toggleButton

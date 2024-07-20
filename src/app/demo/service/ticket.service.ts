@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
 import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.interface';
 import { di } from '@fullcalendar/core/internal-common';
+import { ReturnStatement } from '@angular/compiler';
 
 @Injectable({
     providedIn: 'root',
@@ -721,7 +722,19 @@ export class TicketService {
         return gql`
             query {
                 findAllDiCategory {
+                    _id
                     category
+                }
+            }
+        `;
+    }
+    getAllLocation() {
+        return gql`
+            query {
+                findAllLocation {
+                    _id
+                    location_name
+                    location_number
                 }
             }
         `;

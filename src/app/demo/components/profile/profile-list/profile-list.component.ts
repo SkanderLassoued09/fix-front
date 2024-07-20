@@ -132,4 +132,34 @@ export class ProfileListComponent {
                 return 'warn';
         }
     }
+
+    // deleteSelectedStaff(rowData) {
+    //     this.confirmationService.confirm({
+    //         message: 'Voulez vous supprimer cette société',
+    //         header: 'Confirmation',
+    //         icon: 'pi pi-exclamation-triangle',
+    //         accept: () => {
+    //             console.log(rowData._id, 'rowdata value ');
+
+    //             this.apollo
+    //                 .mutate<any>({
+    //                     mutation: this.companyService.removeCompany(
+    //                         rowData._id
+    //                     ),
+    //                 })
+    //                 .subscribe(({ data }) => {
+    //                     console.log('🍠[data]:', data);
+    //                 });
+    //             console.log('done deleted');
+
+    //             this.messageService.add({
+    //                 severity: 'warn',
+    //                 summary: 'Supprimer',
+    //                 detail: `La société ${rowData._id} a été supprimé`,
+    //                 life: 3000,
+    //             });
+    //         },
+    //     });
+    //     this.companies(this.first, this.rows);
+    // }
 }
