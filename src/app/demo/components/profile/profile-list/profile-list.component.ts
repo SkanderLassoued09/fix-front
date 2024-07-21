@@ -5,16 +5,15 @@ import { ROLES } from '../constant/role-constants';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ProfileService } from 'src/app/demo/service/profile.service';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import {
     AllProfileQueryResponse,
     PageEvent,
     ProfileAddMutationResponse,
 } from './profile-list.interfaces';
-import { Tag } from 'primeng/tag';
+
 @Component({
     selector: 'app-profile-list',
-
     templateUrl: './profile-list.component.html',
     styleUrl: './profile-list.component.scss',
 })
@@ -48,6 +47,8 @@ export class ProfileListComponent {
 
     profileList: any;
     totalProfileCount: any;
+    profileData: any;
+    profileDialog: boolean;
     showDialog() {
         this.visible = true;
     }
@@ -56,7 +57,8 @@ export class ProfileListComponent {
         private productService: ProductService,
         private apollo: Apollo,
         private profileService: ProfileService,
-        private messageService: MessageService
+        private messageService: MessageService,
+        private confirmationService: ConfirmationService
     ) {
         this.roles = ROLES;
     }
@@ -114,7 +116,6 @@ export class ProfileListComponent {
     }
 
     getSeverity(status: string) {
-        console.log('🍛[status]:', status);
         switch (status) {
             case 'ADMIN_MANAGER':
                 return 'success';
@@ -133,7 +134,7 @@ export class ProfileListComponent {
         }
     }
 
-    // deleteSelectedStaff(rowData) {
+    //  (rowData) {
     //     this.confirmationService.confirm({
     //         message: 'Voulez vous supprimer cette société',
     //         header: 'Confirmation',
@@ -162,4 +163,86 @@ export class ProfileListComponent {
     //     });
     //     this.companies(this.first, this.rows);
     // }
+
+    /**
+     * Edit profile
+     */
+
+    editProfile(profile: any) {
+        console.log('🍬[profile]:', profile);
+        this.profileData = { ...profile };
+        this.profileDialog = true;
+    }
+
+    saveUpdateProfile() {
+        console.log('🍕');
+        this.apollo
+            .mutate<any>({
+                mutation: this.profileService.updateProfile(this.profileData),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    if (this.profileData._id) {
+                        this.profileList[
+                            this.findIndexById(this.profileData._id)
+                        ] = this.profileData;
+
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Le profil a changé avec succé',
+                        });
+                        this.profileDialog = false;
+                    }
+                }
+            });
+    }
+
+    cancel() {
+        this.profileDialog = false;
+    }
+
+    findIndexById(_id: string): number {
+        console.log('🍌[_id]:', _id);
+        let index = -1;
+        for (let i = 0; i < this.profileList.length; i++) {
+            if (this.profileList[i]._id === _id) {
+                index = i;
+                break;
+            }
+        }
+
+        return index;
+    }
+
+    deleteProfile(_id: string) {
+        console.log('🍩');
+        this.confirmationService.confirm({
+            message: 'Are you sure you want to delete the selected profile?',
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.deleteProfileConfirmed(_id);
+            },
+        });
+    }
+
+    deleteProfileConfirmed(_id: string) {
+        this.apollo
+            .mutate<any>({ mutation: this.profileService.deleteProfile(_id) })
+            .subscribe(({ data }) => {
+                if (data) {
+                    const index = this.profileList.findIndex((el) => {
+                        return el._id === _id;
+                    });
+                    this.profileList.splice(index, 1);
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Successful',
+                        detail: 'Profile Deleted',
+                        life: 3000,
+                    });
+                }
+            });
+    }
 }

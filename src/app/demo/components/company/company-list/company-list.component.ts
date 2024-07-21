@@ -193,9 +193,6 @@ export class CompanyListComponent {
             })
 
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥠[errors]:', errors);
-                console.log('🍈[loading]:', loading);
-                console.log('🥃[data]:', data);
                 if (data) {
                     this.companiesList = data.findAllCompany.companyRecords;
                     this.totalCompanyRecord =
@@ -205,9 +202,35 @@ export class CompanyListComponent {
     }
 
     editCompany(rowDataClient) {
-        console.log('🍎[rowDataClient]:', rowDataClient);
+        console.log('🍍[rowDataClient]:', rowDataClient);
         this.companySelected = { ...rowDataClient };
         this.CompanyModalCondition = true;
+    }
+
+    saveUpdateCompany() {
+        console.log('🍨');
+        this.apollo
+            .mutate<any>({
+                mutation: this.companyService.updatecompany(
+                    this.companySelected
+                ),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    if (this.companySelected._id) {
+                        this.companiesList[
+                            this.findIndexById(this.companySelected._id)
+                        ] = this.companySelected;
+
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Le company a changé avec succé',
+                        });
+                        this.CompanyModalCondition = false;
+                    }
+                }
+            });
     }
 
     annuler() {
@@ -222,8 +245,6 @@ export class CompanyListComponent {
             header: 'Confirmation',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                console.log(rowData._id, 'rowdata value ');
-
                 this.apollo
                     .mutate<any>({
                         mutation: this.companyService.removeCompany(
@@ -231,12 +252,18 @@ export class CompanyListComponent {
                         ),
                     })
                     .subscribe(({ data }) => {
-                        console.log('🍠[data]:', data);
+                        if (data) {
+                            const index = this.companiesList.findIndex((el) => {
+                                console.log('🍔[el]:', el);
+                                return el._id === rowData._id;
+                            });
+                            this.companiesList.splice(index, 1);
+                        }
                     });
                 console.log('done deleted');
 
                 this.messageService.add({
-                    severity: 'warn',
+                    severity: 'danger',
                     summary: 'Supprimer',
                     detail: `La société ${rowData._id} a été supprimé`,
                     life: 3000,
@@ -244,5 +271,18 @@ export class CompanyListComponent {
             },
         });
         this.companies(this.first, this.rows);
+    }
+
+    findIndexById(_id: string): number {
+        console.log('🍌[_id]:', _id);
+        let index = -1;
+        for (let i = 0; i < this.companiesList.length; i++) {
+            if (this.companiesList[i]._id === _id) {
+                index = i;
+                break;
+            }
+        }
+
+        return index;
     }
 }

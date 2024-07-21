@@ -115,4 +115,38 @@ export class CompanyService {
         }
     `;
     }
+
+    /**
+     * Update company
+     */
+
+    updatecompany(company: any) {
+        return gql`
+            mutation {
+                updateCompany(
+                    updateCompanyInput: {
+                        _id: "${company._id}"
+                        name: "${company.name}"
+                        region: "${company.region}"
+                        address: "${company.address}"
+                        email: "${company.email}"
+                        Exoneration: "${company.Exoneration}"
+                        raisonSociale: "${company.raisonSociale}"
+                        fax: "${company.fax}"
+                        webSiteLink: "${company.webSiteLink}"
+                    }
+                ) {
+                    _id
+                    name
+                    region
+                    address
+                    email
+                    raisonSociale
+                    Exoneration
+                    fax
+                    webSiteLink
+                }
+            }
+        `;
+    }
 }

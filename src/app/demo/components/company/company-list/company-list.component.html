@@ -365,16 +365,27 @@
         <ng-template pTemplate="content">
             <div class="field">
                 <label for="name">Nom société</label>
-                <input type="text" pInputText id="name" required autofocus />
-                <small class="p-error" *ngIf="submitted && !client.name">
+                <input
+                    type="text"
+                    [(ngModel)]="companySelected.name"
+                    pInputText
+                    id="name"
+                    required
+                    autofocus
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.name"
+                >
                     Name is required.
                 </small>
             </div>
+            <!-- todo
             <div class="field">
                 <p-dropdown
-                    formControlName="region"
                     [options]="region"
                     optionLabel="name"
+                    [(ngModel)]="companySelected.region"
                     [showClear]="true"
                     placeholder="Choisir une region"
                     styleClass="w-full"
@@ -382,22 +393,40 @@
                 <small class="p-error" *ngIf="submitted && !client.region">
                     Region is required.
                 </small>
-            </div>
+            </div> -->
             <div class="field">
                 <label for="address">Address</label>
-                <input type="text" pInputText id="address" required />
-                <small class="p-error" *ngIf="submitted && !client.address">
+                <input
+                    type="text"
+                    pInputText
+                    [(ngModel)]="companySelected.address"
+                    id="address"
+                    required
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.address"
+                >
                     Address is required.
                 </small>
             </div>
             <div class="field">
                 <label for="email">Email</label>
-                <input type="email" pInputText id="email" required />
-                <small class="p-error" *ngIf="submitted && !client.email">
+                <input
+                    type="email"
+                    pInputText
+                    id="email"
+                    [(ngModel)]="companySelected.email"
+                    required
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.email"
+                >
                     Email is required.
                 </small>
             </div>
-            <div class="field">
+            <!-- <div class="field">
                 <label for="activitePrincipale">Activité Principale</label>
                 <input
                     type="text"
@@ -411,8 +440,8 @@
                 >
                     Activité Principale is required.
                 </small>
-            </div>
-            <div class="field">
+            </div> -->
+            <!-- <div class="field">
                 <label for="activiteSecondaire">Activité Secondaire</label>
                 <input
                     type="text"
@@ -426,35 +455,68 @@
                 >
                     Activité Secondaire is required.
                 </small>
-            </div>
+            </div> -->
             <div class="field">
                 <label for="raisonSociale">Raison Sociale</label>
-                <input type="text" pInputText id="raisonSociale" required />
+                <input
+                    type="text"
+                    pInputText
+                    id="raisonSociale"
+                    [(ngModel)]="companySelected.raisonSociale"
+                    required
+                />
                 <small
                     class="p-error"
-                    *ngIf="submitted && !client.raisonSociale"
+                    *ngIf="submitted && !companySelected.raisonSociale"
                 >
                     Raison Sociale is required.
                 </small>
             </div>
             <div class="field">
                 <label for="exoneration">Exonération</label>
-                <input type="text" pInputText id="exoneration" required />
-                <small class="p-error" *ngIf="submitted && !client.exoneration">
+                <input
+                    type="text"
+                    pInputText
+                    [(ngModel)]="companySelected.Exoneration"
+                    id="exoneration"
+                    required
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.exoneration"
+                >
                     Exonération is required.
                 </small>
             </div>
             <div class="field">
                 <label for="fax">Fax</label>
-                <input type="text" pInputText id="fax" required />
-                <small class="p-error" *ngIf="submitted && !client.fax">
+                <input
+                    type="text"
+                    pInputText
+                    id="fax"
+                    [(ngModel)]="companySelected.fax"
+                    required
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.fax"
+                >
                     Fax is required.
                 </small>
             </div>
             <div class="field">
                 <label for="webSiteLink">Website Link</label>
-                <input type="text" pInputText id="webSiteLink" required />
-                <small class="p-error" *ngIf="submitted && !client.webSiteLink">
+                <input
+                    type="text"
+                    pInputText
+                    id="webSiteLink"
+                    required
+                    [(ngModel)]="companySelected.webSiteLink"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.webSiteLink"
+                >
                     Website Link is required.
                 </small>
             </div>
@@ -463,13 +525,13 @@
                     (click)="annuler()"
                     icon="pi pi-times"
                     label="Annuler"
-                    severity="info"
+                    [text]="true"
                 ></p-button>
                 <p-button
-                    (click)="updateClient()"
+                    (click)="saveUpdateCompany()"
                     icon="pi pi-plus"
                     label="Modifier"
-                    severity="success"
+                    [text]="true"
                 ></p-button>
             </div>
         </ng-template>

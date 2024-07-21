@@ -90,4 +90,45 @@ export class ProfileService {
             }
         `;
     }
+
+    /**
+     * Update profile
+     */
+
+    updateProfile(profile: any) {
+        return gql`
+            mutation {
+                updateProfile(
+                    _id: "${profile._id}"
+                    updateProfileInput: {
+                        firstName: "${profile.firstName}"
+                        lastName: "${profile.lastName}"
+                        phone: "${profile.phone}"
+                        email: "${profile.email}"
+                    }
+                ) {
+                    _id
+                    firstName
+                    lastName
+                    email
+                    phone
+                }
+            }
+        `;
+    }
+
+    /**
+     * delete profile soft delete
+     */
+
+    deleteProfile(_id: string) {
+        return gql`
+            mutation {
+                deleteProfile(_id: "${_id}") {
+                    _id
+                    isDeleted
+                }
+            }
+        `;
+    }
 }

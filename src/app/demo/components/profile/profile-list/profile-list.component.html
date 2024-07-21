@@ -161,14 +161,14 @@
                         pRipple
                         icon="pi pi-pencil"
                         class="p-button-rounded p-button-success mr-2"
-                        (click)="editProduct(rowData)"
+                        (click)="editProfile(rowData)"
                     ></button>
                     <button
                         pButton
                         pRipple
                         icon="pi pi-trash"
                         class="p-button-rounded p-button-danger"
-                        (click)="deleteSelectedStaff(rowData)"
+                        (click)="deleteProfile(rowData._id)"
                     ></button>
                 </td>
             </tr>
@@ -182,3 +182,81 @@
         [rowsPerPageOptions]="[5, 10, 30]"
     ></p-paginator>
 </div>
+<p-dialog
+    [(visible)]="profileDialog"
+    [style]="{ width: '450px' }"
+    header="Mise à jour"
+    [modal]="true"
+    styleClass="p-fluid"
+>
+    <ng-template pTemplate="content">
+        <div class="field">
+            <label for="name">Prénom</label>
+            <input
+                type="text"
+                pInputText
+                [(ngModel)]="profileData.firstName"
+                required
+                autofocus
+            />
+            <small class="p-error" *ngIf="submitted && !profileData.firstName">
+                Name is required.
+            </small>
+        </div>
+        <div class="field">
+            <label for="name">Nom</label>
+            <input
+                type="text"
+                pInputText
+                [(ngModel)]="profileData.lastName"
+                required
+                autofocus
+            />
+            <small class="p-error" *ngIf="submitted && !profileData.lastName">
+                Name is required.
+            </small>
+        </div>
+        <div class="field">
+            <label for="name">Téléphone</label>
+            <input
+                type="text"
+                pInputText
+                [(ngModel)]="profileData.phone"
+                required
+                autofocus
+            />
+            <small class="p-error" *ngIf="submitted && !profileData.phone">
+                phone is required.
+            </small>
+        </div>
+        <div class="field">
+            <label for="name">email</label>
+            <input
+                type="email"
+                pInputText
+                [(ngModel)]="profileData.email"
+                required
+                autofocus
+            />
+            <small class="p-error" *ngIf="submitted && !profileData.email">
+                email is required.
+            </small>
+        </div>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+        <p-button
+            label="Cancel"
+            icon="pi pi-times"
+            [text]="true"
+            (onClick)="cancel()"
+        />
+        <p-button
+            label="Save"
+            icon="pi pi-check"
+            [text]="true"
+            (onClick)="saveUpdateProfile()"
+        />
+    </ng-template>
+</p-dialog>
+<p-confirmDialog [style]="{ width: '450px' }" />
