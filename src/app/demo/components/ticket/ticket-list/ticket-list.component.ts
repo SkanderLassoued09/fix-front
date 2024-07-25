@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 
-import { MessageService } from 'primeng/api';
+import { MessageService, PrimeNGConfig } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -76,7 +76,11 @@ export class TicketListComponent implements OnInit {
     ];
 
     // You can use the statuses array in your code wherever needed
+    files = [];
 
+    totalSize: number = 0;
+
+    totalSizePercent: number = 0;
     sizes = [
         { name: 'Small', class: 'p-datatable-sm' },
         { name: 'Normal', class: '' },
@@ -161,13 +165,18 @@ export class TicketListComponent implements OnInit {
     allCategoryDiArray: any;
     payloadImage: { image: string };
     locationDropDown: any;
+    categorieDiListDropDown: any;
+    timepart: { hours: any; minutes: any; seconds: any };
+    facturationDiagnostique: number = 0;
+    tarif_Technicien: number;
 
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private cdr: ChangeDetectorRef,
         private readonly messageservice: MessageService,
-        private readonly notificationService: NotificationService
+        private readonly notificationService: NotificationService,
+        private config: PrimeNGConfig
     ) {}
 
     ngOnInit() {
@@ -184,6 +193,7 @@ export class TicketListComponent implements OnInit {
     showDialogCategoryDI() {
         this.openCategoryModal = true;
         this.allCategoryDi();
+        console.log(this.allCategoryDiArray, 'this.allCategoryDiArray();');
     }
     showDialogLocations() {
         this.openLocationsModal = true;
@@ -229,10 +239,26 @@ export class TicketListComponent implements OnInit {
         this.negocite1Modal = false;
     }
 
+    timeStringIntoHours(timeString) {
+        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        return {
+            hours: hours,
+            minutes: minutes,
+            seconds: seconds,
+        };
+    }
+
     showDialogForPricing(data) {
         this.seletedRow = data;
         let MyID = data._id;
         console.log('verifiing the ID', MyID);
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getTechTarif(),
+            })
+            .subscribe(({ data }) => {
+                this.tarif_Technicien = data.getTarif.tarif;
+            });
 
         this.apollo
             .query<any>({
@@ -244,6 +270,21 @@ export class TicketListComponent implements OnInit {
                     data.getInfoStatByIdDi.diag_time
                 );
                 this.timeDiagnostique = data.getInfoStatByIdDi.diag_time;
+                this.timepart = this.timeStringIntoHours(
+                    data.getInfoStatByIdDi.diag_time
+                );
+                this.facturationDiagnostique =
+                    this.timepart.hours * this.tarif_Technicien +
+                    this.timepart.minutes *
+                        parseFloat((this.tarif_Technicien / 60).toFixed(2));
+                console.log(
+                    'this.facturationDiagnostique',
+                    this.facturationDiagnostique
+                );
+                console.log('HOURS ', this.timepart.seconds);
+                console.log('MIN ', this.timepart.minutes);
+                console.log('seconds ', this.timepart.seconds);
+                console.log('tarif TECHNICIENCS', this.tarif_Technicien);
             });
 
         this.current_id = data._id;
@@ -265,6 +306,27 @@ export class TicketListComponent implements OnInit {
         this.changeStatusPricing(data._id);
         this.getTotalComposant(data._id);
     }
+    formatSize(bytes) {
+        const k = 1024;
+        const dm = 3;
+        const sizes = this.config.translation.fileSizeTypes;
+        if (bytes === 0) {
+            return `0 ${sizes[0]}`;
+        }
+
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        const formattedSize = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+
+        return `${formattedSize} ${sizes[i]}`;
+    }
+    onSelectedFiles(event) {
+        this.files = event.currentFiles;
+        this.files.forEach((file) => {
+            this.totalSize += parseInt(this.formatSize(file.size));
+        });
+        this.totalSizePercent = this.totalSize / 10;
+    }
+
     showDialogForNegociate1(data) {
         console.log('🍱[data ttttttttttttttttt]:', data);
         this.seletedRow = data._id;
@@ -425,6 +487,8 @@ export class TicketListComponent implements OnInit {
         }, 2000);
     }
     onUpload(event: any) {
+        console.log(event, 'this the event ');
+
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -805,7 +869,14 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 console.log(data.findAllDiCategory, 'all categroy === ');
-                this.allCategoryDiArray = data.findAllDiCategory;
+                if (data) {
+                    this.categorieDiListDropDown = data.findAllDiCategory.map(
+                        (categoryDi) => ({
+                            category_name: `${categoryDi.category}`,
+                            value: categoryDi._id, // ID as value
+                        })
+                    );
+                }
             });
     }
     getLocationList() {
@@ -825,8 +896,3 @@ export class TicketListComponent implements OnInit {
     deletLocation() {}
     deletCategoryDi() {}
 }
-/**
- * Review all the code function remove unused code
- * TODO add image file, toastr for success and errors
- *
- */

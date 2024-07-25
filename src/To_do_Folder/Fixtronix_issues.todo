@@ -9,8 +9,8 @@ Todos:
   ☐ Improve CSS for creating company + content Table for the company add the ID @Hethi @Nezih
   ☐ add delet and check HTML for the staff
   ☐ Add update btn to client + company + DI
-  ☐ Add tarif before the affectation of Price by admins
   ☐ Add confirmation PopUp in everyStep
+  ☐ Recheck add image @skander (ctrl+f to find the files //NEW FILE HERE)
   Done:
   ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
@@ -34,6 +34,7 @@ Todos:
   ✔ Check table for the clients add ID and prénom is undefined @Hethi @done(24-07-15 23:31)
   ✔ In the diagnostique add the category di  + make the chosing the composant hidden only shown when "contain PDR == TRUE" @Hethi @done(24-07-15 23:39)
   ✔ Delet fnction for company + client @Hethi @done(24-07-20 01:04)
+  ✔ Add tarif before the affectation of Price by admins @done(24-07-25 11:45)
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard

@@ -285,4 +285,6 @@ export class CompanyListComponent {
 
         return index;
     }
+
+    modalServices() {}
 }

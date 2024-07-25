@@ -339,6 +339,14 @@
                     <button
                         pButton
                         pRipple
+                        icon="pi pi-paginator"
+                        class="p-button-rounded mr-2"
+                        (click)="modalServices(rowData)"
+                        severity="help"
+                    ></button>
+                    <button
+                        pButton
+                        pRipple
                         icon="pi pi-trash"
                         class="p-button-rounded p-button-danger"
                         (click)="deleteSelectedCompany(rowData)"

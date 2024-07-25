@@ -251,7 +251,8 @@ export class TicketService {
         composantName: string,
         packageComposant: string,
         category_composant_id: string,
-        link: string
+        link: string,
+        pdf: string
     ) {
         return gql`
             mutation {
@@ -261,6 +262,7 @@ export class TicketService {
                         package: "${packageComposant}"
                         category_composant_id:"${category_composant_id}"
                         link: "${link}"
+                        pdf: "${pdf}"
                     }
                 ) {
                     _id

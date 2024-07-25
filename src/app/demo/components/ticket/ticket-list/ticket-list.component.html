@@ -30,7 +30,7 @@
     [modal]="true"
     [style]="{ width: '30vw' }"
     [draggable]="false"
-    [resizable]="false"
+    [resizable]="true"
 >
     <form [formGroup]="categoryForm" class="category-form">
         <div class="form-group">
@@ -45,9 +45,9 @@
         <div class="form-group">
             <label for="categoryDropdown">Catégorie à supprimer</label>
             <p-dropdown
-                value="queryCategoriesDI"
-                [options]=""
-                optionLabel="name"
+                [options]="categorieDiListDropDown"
+                optionLabel="category_name"
+                optionValue="value"
                 [showClear]="true"
                 placeholder="Choisir une catégorie à supprimer"
                 id="categoryDropdown"
@@ -235,7 +235,7 @@
         <div class="field">
             <p-fileUpload
                 mode="basic"
-                chooseLabel="Choose"
+                chooseLabel="Ajouter une image"
                 chooseIcon="pi pi-upload"
                 name="demo[]"
                 url="https://www.primefaces.org/cdn/api/upload.php"
@@ -253,7 +253,7 @@
             >
  Ajouter une remarque pour cette Demande d'intervention</textarea
             >
-            <div>
+            <!-- <div>
                 <p-dropdown
                     [options]="locationDropDown"
                     formControlName="location_id"
@@ -262,7 +262,7 @@
                     [showClear]="true"
                     placeholder="Affecter un emplacement"
                 ></p-dropdown>
-            </div>
+            </div> -->
         </div>
         <div class="field">
             <p-toggleButton
@@ -421,6 +421,7 @@
                         class="p-button-rounded p-button-raised p-button-warning mr-2"
                         (click)="showDialogForNegociate1(rowData)"
                     ></button>
+
                     <!--    (click)="showDialogForNegociate2(rowData)" -->
                     <button
                         *ngIf="rowData.status === 'NEGOTIATION2'"
@@ -475,6 +476,32 @@
 >
     <ng-container>
         <div>
+            <div class="file-upload-container">
+                <div>
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Bon de commande"
+                        chooseIcon="pi pi-upload"
+                        name="demo[]"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept="image/*"
+                        maxFileSize="1000000"
+                        (onUpload)="onUpload($event)"
+                    />
+                </div>
+                <div>
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Devis"
+                        chooseIcon="pi pi-upload"
+                        name="demo[]"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept="image/*,application/pdf"
+                        maxFileSize="1000000"
+                        (onUpload)="onUpload($event)"
+                    />
+                </div>
+            </div>
             <div class="element-container">
                 <h6>Prix Intial: {{ price }}</h6>
                 <h6>Prix final: {{ finalPrice }}</h6>
@@ -605,9 +632,16 @@
                 <div>Price:{{ composant.prix_vente }}</div>
             </p-card>
             } } @empty { }
-            <span>Le temps de dignostique est {{ timeDiagnostique }}</span>
-            <h1 *ngIf="totalComposant; else notPrice">
-                Cout Total {{ totalComposant }} TND
+            <h3>Le temps de dignostique est = {{ timeDiagnostique }}</h3>
+            <h3>
+                Facturation diagnostique est = {{ facturationDiagnostique }} TND
+            </h3>
+            <h3 *ngIf="totalComposant; else notPrice">
+                Le total des compsants est = {{ totalComposant }} TND
+            </h3>
+
+            <h1>
+                Cout Total {{ totalComposant + facturationDiagnostique }} TND
             </h1>
         </div>
         <ng-template #notPrice>

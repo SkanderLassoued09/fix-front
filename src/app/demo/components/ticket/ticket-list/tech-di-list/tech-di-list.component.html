@@ -261,6 +261,18 @@
                                     formControlName="link"
                                 />
                             </div>
+                            <div class="field">
+                                <p-fileUpload
+                                    mode="basic"
+                                    chooseLabel="Ajouter un PDF"
+                                    chooseIcon="pi pi-upload"
+                                    name="demo[]"
+                                    url="https://www.primefaces.org/cdn/api/upload.php"
+                                    accept="image/*,application/pdf"
+                                    maxFileSize="1000000"
+                                    (onUpload)="onUpload($event)"
+                                />
+                            </div>
                         </form>
                     </ng-template>
                     <ng-template pTemplate="footer">

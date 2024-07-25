@@ -35,6 +35,7 @@ export class TechDiListComponent {
         packageComposant: new FormControl(),
         category_composant_id: new FormControl(),
         link: new FormControl(),
+        pdf: new FormControl(),
     });
 
     composantTech = {
@@ -42,6 +43,7 @@ export class TechDiListComponent {
         package: '',
         link: '',
         category_composant_id: '',
+        pdf: '',
     };
 
     visible: boolean = false;
@@ -53,7 +55,7 @@ export class TechDiListComponent {
 
     uploadedFiles: any[] = [];
     cols = [{ field: '_idDi', header: 'ID' }];
-
+    payloadImage: { image: string };
     countries;
     selectedCountry;
     diList: any;
@@ -116,7 +118,6 @@ export class TechDiListComponent {
         // this.btnConditionReperation();
         // this.btnConditionDiagnostique();
     }
-    //!Modal creation of new composant start here
 
     closeComposantModal() {
         console.log('MODAL CLOSE');
@@ -124,14 +125,9 @@ export class TechDiListComponent {
     }
     saveNewComposant() {
         console.log('SAVE COMPOSANT is on ');
-
-        const {
-            _idComposant,
-            name,
-            packageComposant,
-            category_composant_id,
-            link,
-        } = this.composantTechnicien.value;
+        //NEW FILE HERE "pdf"
+        const { name, packageComposant, category_composant_id, link, pdf } =
+            this.composantTechnicien.value;
 
         this.apollo
             .mutate<CreateComposantMutationResult>({
@@ -139,11 +135,14 @@ export class TechDiListComponent {
                     name,
                     packageComposant,
                     category_composant_id,
-                    link
+                    link,
+                    pdf
                 ),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
+                console.log('problem inside the mutation ');
+
                 this.loadingCreatingComposant = loading;
 
                 if (data) {
@@ -760,5 +759,35 @@ export class TechDiListComponent {
                 }
             });
         this.getAllTechDi();
+    }
+
+    onUpload(event: any) {
+        console.log(event, 'this the event ');
+
+        for (let file of event.files) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64 = reader.result as string;
+                this.uploadFile(base64);
+            };
+        }
+    }
+
+    uploadFile(base64: string) {
+        const payload = {
+            image: base64,
+            // add other necessary data here
+        };
+        console.log('🌮[payload]:', payload);
+        this.payloadImage = payload;
+        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
+        //     (response) => {
+        //         console.log('Upload successful', response);
+        //     },
+        //     (error) => {
+        //         console.log('Upload failed', error);
+        //     }
+        // );
     }
 }

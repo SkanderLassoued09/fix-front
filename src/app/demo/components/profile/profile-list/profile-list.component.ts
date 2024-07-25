@@ -197,9 +197,11 @@ export class ProfileListComponent {
                 }
             });
     }
-
+    //!!!!!!!!NEZIH
     cancel() {
-        this.profileDialog = false;
+        // this.profileDialog = false;
+        //this.visible = true;
+        this.staffForm.reset();
     }
 
     findIndexById(_id: string): number {
