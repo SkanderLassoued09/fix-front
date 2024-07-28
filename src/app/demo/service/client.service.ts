@@ -51,4 +51,30 @@ export class ClientService {
         }
     `;
     }
+
+    updateClient(clientData) {
+        return gql`
+            mutation {
+                updateClient(
+                    updateClientInput: {
+                        _id: "${clientData._id}"
+                        first_name: "${clientData.first_name}"
+                        last_name: "${clientData.last_name}"
+                        region: "${clientData.region}"
+                        address: "${clientData.address}"
+                        email: "${clientData.email}"
+                        phone: "${clientData.phone}"
+                    }
+                ) {
+                    _id
+                    first_name
+                    last_name
+                    region
+                    address
+                    email
+                    phone
+                }
+            }
+        `;
+    }
 }

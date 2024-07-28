@@ -1,13 +1,11 @@
 import { Component } from '@angular/core';
-import { Product } from 'src/app/demo/api/product';
-import { ProductService } from 'src/app/demo/service/product.service';
-import { REGION } from '../constant/region-constant';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { ClientService } from 'src/app/demo/service/client.service';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { ClientService } from 'src/app/demo/service/client.service';
+import { REGION } from '../constant/region-constant';
 
-// add it to seperate file
+// Separate interface file
 interface Column {
     field: string;
     header: string;
@@ -25,6 +23,7 @@ interface PageEvent {
     page: number;
     pageCount: number;
 }
+
 interface GetAllClientQueryResponse {
     findAllClient: {
         clientRecords: {
@@ -39,10 +38,9 @@ interface GetAllClientQueryResponse {
         totalClientRecord: number;
     };
 }
+
 @Component({
     selector: 'app-client-list',
-    // standalone: true,
-    // imports: [],
     templateUrl: './client-list.component.html',
     styleUrl: './client-list.component.scss',
 })
@@ -55,12 +53,11 @@ export class ClientListComponent {
         email: new FormControl(),
         phone: new FormControl(),
     });
+
     visible: boolean = false;
-    products!: Product[];
+    clientsList: any;
     loading: boolean = false;
     region;
-    // cols!: Column[];
-    clientsList: any;
     cols = [
         { field: 'first_name', header: 'Prénom' },
         { field: 'last_name', header: 'Nom' },
@@ -70,17 +67,14 @@ export class ClientListComponent {
         { field: 'address', header: 'Adresse' },
     ];
     first: number = 0;
-
     rows: number = 10;
-
-    product: any;
     clientModalCondition: boolean = false;
     submitted: boolean;
     selectedProducts: null;
     totalClientRecord: any;
+    clientData: any;
 
     constructor(
-        private productService: ProductService,
         private apollo: Apollo,
         private clientService: ClientService,
         private messageService: MessageService,
@@ -98,10 +92,8 @@ export class ClientListComponent {
     }
 
     addClient() {
-        console.log('🥐this.clientForm.value', this.clientForm.value);
         const { region, ...data } = this.clientForm.value;
         const clientData = { ...data, region: region.name };
-        console.log('🥫[clientData]:', clientData);
         this.apollo
             .mutate<AddClientMutationResponse>({
                 mutation: this.clientService.addClient(clientData),
@@ -139,8 +131,8 @@ export class ClientListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 this.loading = loading;
                 if (data) {
-                    console.log('🥑[data]:', data);
                     this.clientsList = data.findAllClient.clientRecords;
+                    console.log('🍚[clientsList]:', this.clientsList);
                     this.totalClientRecord =
                         data.findAllClient.totalClientRecord;
                 }
@@ -148,40 +140,78 @@ export class ClientListComponent {
             });
     }
 
-    editClient(rowData) {
-        console.log(rowData);
+    editClient(client: any) {
+        this.clientData = { ...client };
+        console.log('🍡[clientData]:', this.clientData);
         this.clientModalCondition = true;
     }
-    annuler() {
-        this.clientModalCondition = false;
-    }
-    updateClient() {}
 
-    deleteSelectedClient(rowData) {
+    updateClient() {
+        this.apollo
+            .mutate<any>({
+                mutation: this.clientService.updateClient(this.clientData),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    if (this.clientData._id) {
+                        this.clientsList[
+                            this.findIndexById(this.clientData._id)
+                        ] = this.clientData;
+
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Le client a été modifié avec succés',
+                        });
+                        this.clientModalCondition = false;
+                    }
+                }
+            });
+    }
+
+    deleteSelectedClient(_id: string) {
         this.confirmationService.confirm({
             message: 'Voulez vous supprimer ce client',
             header: 'Confirmation',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                console.log(rowData._id, 'rowdata value ');
-
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.clientService.removeClient(rowData._id),
-                    })
-                    .subscribe(({ data }) => {
-                        console.log('🍠[data]:', data);
-                    });
-                console.log('done deleted');
-                this.selectedProducts = null;
-                this.messageService.add({
-                    severity: 'warn',
-                    summary: 'Supprimer',
-                    detail: `Le client ${rowData._id} a été supprimé`,
-                    life: 3000,
-                });
+                this.deleteClientConfirmed(_id);
             },
         });
-        this.clients(this.first, this.rows);
+    }
+
+    deleteClientConfirmed(_id: string) {
+        this.apollo
+            .mutate<any>({ mutation: this.clientService.removeClient(_id) })
+            .subscribe(({ data }) => {
+                if (data) {
+                    const index = this.clientsList.findIndex((el) => {
+                        return el._id === _id;
+                    });
+                    this.clientsList.splice(index, 1);
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Le client a été supprimé',
+                        life: 3000,
+                    });
+                }
+            });
+    }
+
+    cancel() {
+        this.clientModalCondition = false;
+        this.clientForm.reset();
+    }
+
+    findIndexById(_id: string): number {
+        let index = -1;
+        for (let i = 0; i < this.clientsList.length; i++) {
+            if (this.clientsList[i]._id === _id) {
+                index = i;
+                break;
+            }
+        }
+        return index;
     }
 }
