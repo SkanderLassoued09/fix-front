@@ -36,6 +36,7 @@ import { SliderModule } from 'primeng/slider';
 import { DetailsComposantComponent } from '../magasin-di-list/details-composant/details-composant.component';
 import { CardModule } from 'primeng/card';
 import { OrderListModule } from 'primeng/orderlist';
+import { CalendarModule } from 'primeng/calendar';
 
 @NgModule({
     declarations: [
@@ -79,6 +80,7 @@ import { OrderListModule } from 'primeng/orderlist';
         CardModule,
         OrderListModule,
         InplaceModule,
+        CalendarModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

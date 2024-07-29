@@ -54,7 +54,7 @@
     </p-table>
     <p-dialog
         [(visible)]="magasinDiDialog"
-        [style]="{ width: '50%', height: '70vh' }"
+        [style]="{ width: '50%', height: '90vh' }"
         header="Affectation pour les composants"
         [modal]="true"
         styleClass="p-fluid"
@@ -103,8 +103,10 @@
                         ></p-inputNumber>
                     </div>
                     <div class="col">
-                        <label for="coming_date">Date d'arrivage</label>
-                        <input formControlName="coming_date" pInputText />
+                        <p-calendar
+                            dateFormat="dd.mm.yy"
+                            formControlName="coming_date"
+                        />
                     </div>
                     <div class="col">
                         <label for="prix_vente">Prix de vente</label>

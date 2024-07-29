@@ -65,7 +65,7 @@ export class CoordinatorDiListComponent {
     pricingDoalog: boolean = false;
     reperationCondition: boolean;
     comment: string;
-
+    remarqueTech: string;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -130,11 +130,12 @@ export class CoordinatorDiListComponent {
             this.loading = false;
         }, 2000);
     }
-
+    //!Adding rq
     openModalConfig(di) {
         console.log('🥕[di]:', di);
         this.di = { ...di };
         this.comment = di.comment;
+        this.remarqueTech = di.remarqueTech;
         this.selectedDi = di._id;
         this.diDialog = true;
         this.getReperationCoordinatorCondition();
@@ -240,7 +241,7 @@ export class CoordinatorDiListComponent {
                     this.messageservice.add({
                         severity: 'success',
                         summary: 'Success',
-                        detail: 'La demande service ajouté',
+                        detail: `DI Envoyer au technicien`,
                     });
                 }
             });

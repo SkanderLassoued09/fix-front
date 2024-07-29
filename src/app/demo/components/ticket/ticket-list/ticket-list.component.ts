@@ -164,6 +164,7 @@ export class TicketListComponent implements OnInit {
     tarif_Tech: number;
     allCategoryDiArray: any;
     payloadImage: { image: string };
+    // payloadBonCommande: { pdf: string };
     locationDropDown: any;
     categorieDiListDropDown: any;
     timepart: { hours: any; minutes: any; seconds: any };
@@ -486,35 +487,7 @@ export class TicketListComponent implements OnInit {
             this.loading = false;
         }, 2000);
     }
-    onUpload(event: any) {
-        console.log(event, 'this the event ');
 
-        for (let file of event.files) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                const base64 = reader.result as string;
-                this.uploadFile(base64);
-            };
-        }
-    }
-
-    uploadFile(base64: string) {
-        const payload = {
-            image: base64,
-            // add other necessary data here
-        };
-        console.log('🌮[payload]:', payload);
-        this.payloadImage = payload;
-        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
-        //     (response) => {
-        //         console.log('Upload successful', response);
-        //     },
-        //     (error) => {
-        //         console.log('Upload failed', error);
-        //     }
-        // );
-    }
     getSeverity(status: string) {
         switch (status) {
             case 'CREATED':
@@ -584,6 +557,7 @@ export class TicketListComponent implements OnInit {
             typeClient,
             comment,
             image: this.payloadImage.image,
+            //bonCommande: this.payloadBonCommande.pdf,
         };
         let _idQuery;
         this.apollo
@@ -892,6 +866,61 @@ export class TicketListComponent implements OnInit {
                 // }));
             });
     }
+
+    onUpload(event: any) {
+        console.log(event, 'this the event ');
+
+        for (let file of event.files) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64 = reader.result as string;
+                this.uploadFile(base64);
+            };
+        }
+        this.messageservice.add({
+            severity: 'info',
+            summary: 'Image enregistré',
+            detail: "l'image a été ajouter avec succès",
+        });
+    }
+
+    uploadFile(base64: string) {
+        const payload = {
+            image: base64,
+            // add other necessary data here
+        };
+        console.log('🌮[payload]:', payload);
+        this.payloadImage = payload;
+        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
+        //     (response) => {
+        //         console.log('Upload successful', response);
+        //     },
+        //     (error) => {
+        //         console.log('Upload failed', error);
+        //     }
+        // );
+    }
+    //! Bon de commande
+    // onUploadBonCommande(event: any) {
+    //     console.log(event, 'this the event ');
+
+    //     for (let file of event.files) {
+    //         const reader = new FileReader();
+    //         reader.readAsDataURL(file);
+    //         reader.onload = () => {
+    //             const base64 = reader.result as string;
+    //             this.uploadFileBonCommande(base64);
+    //         };
+    //     }
+    // }
+
+    // uploadFileBonCommande(base64: string) {
+    //     const payload = {
+    //         pdf: base64,
+    //     };
+    //     this.payloadBonCommande = payload;
+    // }
 
     deletLocation() {}
     deletCategoryDi() {}

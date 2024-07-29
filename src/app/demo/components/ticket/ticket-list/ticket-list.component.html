@@ -145,7 +145,7 @@
                 formControlName="tarifFromAdmin"
                 id="Categ"
                 type="number"
-                class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
+                class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full textInput-tech"
             />
             <p-button (onClick)="confirmerTarifs()"> Confirmer </p-button>
         </div>
@@ -156,12 +156,12 @@
     header="Ajouter une nouvelle Demande d'intervention"
     [(visible)]="openAddDiModal"
     [modal]="true"
-    [style]="{ width: '50vw' }"
+    [style]="{ width: '30vw' }"
     [draggable]="false"
     [resizable]="false"
 >
     <form [formGroup]="creationDiForm">
-        <div class="grid">
+        <div>
             <!-- title -->
             <div class="col">
                 <label for="firstname1">Titre</label>
@@ -190,6 +190,19 @@
                     id="firstname1"
                     type="text"
                     class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
+                />
+            </div>
+            <div class="field">
+                <p-fileUpload
+                    mode="basic"
+                    chooseLabel="Ajouter une image"
+                    chooseIcon="pi pi-upload"
+                    name="demo[]"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="image/*"
+                    maxFileSize="1000000"
+                    (onUpload)="onUpload($event)"
+                    [auto]="true"
                 />
             </div>
         </div>
@@ -232,18 +245,7 @@
                 ></p-dropdown>
             </div>
         </div>
-        <div class="field">
-            <p-fileUpload
-                mode="basic"
-                chooseLabel="Ajouter une image"
-                chooseIcon="pi pi-upload"
-                name="demo[]"
-                url="https://www.primefaces.org/cdn/api/upload.php"
-                accept="image/*"
-                maxFileSize="1000000"
-                (onUpload)="onUpload($event)"
-            />
-        </div>
+
         <div class="footerlocation">
             <textarea
                 rows="5"
@@ -251,7 +253,8 @@
                 pInputTextarea
                 formControlName="comment"
             >
- Ajouter une remarque pour cette Demande d'intervention</textarea
+ Ajouter une remarque pour cette Demande d'intervention
+ </textarea
             >
             <!-- <div>
                 <p-dropdown
@@ -454,9 +457,10 @@
                     />
                     <p-button
                         *ngIf="rowData.status === 'CREATED'"
-                        label="pending1"
-                        severity="success"
+                        label="Pending1"
+                        severity="info"
                         (click)="changeToPending1(rowData)"
+                        class="pending1-Btn"
                     />
                 </td>
             </tr>
@@ -484,9 +488,8 @@
                         chooseIcon="pi pi-upload"
                         name="demo[]"
                         url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="image/*"
+                        accept="image/*,application/pdf"
                         maxFileSize="1000000"
-                        (onUpload)="onUpload($event)"
                     />
                 </div>
                 <div>
@@ -502,13 +505,16 @@
                     />
                 </div>
             </div>
+            <hr class="dashed" />
             <div class="element-container">
-                <h6>Prix Intial: {{ price }}</h6>
-                <h6>Prix final: {{ finalPrice }}</h6>
+                <h3>Prix Intial: {{ price }} TND</h3>
+                <h2>Prix final: {{ finalPrice }} TND</h2>
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
                     inputId="percent"
                     prefix="%"
+                    [max]="20"
+                    [ariaValueMax]="20"
                 >
                 </p-inputNumber>
             </div>
@@ -531,7 +537,7 @@
                 ></button>
             </div>
 
-            <h6>discount value : {{ discountedPriceNeg }}</h6>
+            <h5>Remise: {{ discountedPriceNeg }} TND</h5>
             <div class="element-container-BTN">
                 <ng-container *ngIf="slideEnd === 20">
                     <button
@@ -568,8 +574,8 @@
     <ng-container>
         <div class="element-container">
             <div class="element-container">
-                <h6>Prix Intial: {{ price }}</h6>
-                <h6>Prix final: {{ finalPrice }}</h6>
+                <h5>Prix Intial: {{ price }}</h5>
+                <h4>Prix final: {{ finalPrice }}</h4>
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
                     inputId="percent"
@@ -632,17 +638,19 @@
                 <div>Price:{{ composant.prix_vente }}</div>
             </p-card>
             } } @empty { }
-            <h3>Le temps de dignostique est = {{ timeDiagnostique }}</h3>
-            <h3>
-                Facturation diagnostique est = {{ facturationDiagnostique }} TND
-            </h3>
-            <h3 *ngIf="totalComposant; else notPrice">
-                Le total des compsants est = {{ totalComposant }} TND
-            </h3>
+            <h5>Le temps de dignostique est de {{ timeDiagnostique }}</h5>
+            <h5>
+                Facturation diagnostique technicien est de
+                {{ facturationDiagnostique }} TND
+            </h5>
+            <h5 *ngIf="totalComposant; else notPrice">
+                Le total des compsants est égal a {{ totalComposant }} TND
+            </h5>
 
-            <h1>
-                Cout Total {{ totalComposant + facturationDiagnostique }} TND
-            </h1>
+            <h4>
+                Le côut Total est de
+                {{ totalComposant + facturationDiagnostique }} TND
+            </h4>
         </div>
         <ng-template #notPrice>
             <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
@@ -652,6 +660,8 @@
                 Veuiller affecter le prix initial avant la négociation avec le
                 client
             </div>
+        </div>
+        <div class="footer-pricing">
             <p-inputNumber inputId="integeronly" [(ngModel)]="price">
             </p-inputNumber>
             <button
@@ -661,6 +671,7 @@
                 icon="pi pi-check-circle"
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="pricing()"
-            ></button></div
-    ></ng-container>
+            ></button>
+        </div>
+    </ng-container>
 </p-dialog>

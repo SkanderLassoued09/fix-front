@@ -96,7 +96,13 @@
         </div>
         <div class="field" *ngIf="comment">
             <!-- to continue other rq -->
-            <p-fieldset legend="Remarque" [toggleable]="true">
+            <p-fieldset legend="Remarque admnistration" [toggleable]="true">
+                <p class="m-0">{{ comment }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="comment">
+            <!-- to continue other rq -->
+            <p-fieldset legend="Remarque admnistration" [toggleable]="true">
                 <p class="m-0">{{ comment }}</p>
             </p-fieldset>
         </div>

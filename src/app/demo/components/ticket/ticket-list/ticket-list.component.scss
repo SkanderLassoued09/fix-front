@@ -10,6 +10,7 @@
 }
 .element-container-BTN {
     margin-bottom: 1rem;
+    margin-top: 10rem;
     display: flex;
     justify-content: space-between;
 }
@@ -23,8 +24,7 @@
     justify-content: space-between;
 }
 .footerlocation {
-    display: flex;
-    justify-content: space-around;
+    padding-bottom: 25px;
 }
 .location-form {
     display: flex;
@@ -90,4 +90,26 @@
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
+}
+.file-upload-container {
+    display: grid;
+    padding: 5px;
+    display: flex;
+    justify-content: space-around;
+}
+hr.dashed {
+    border-top: 3px dashed #bbb;
+}
+
+.footer-pricing {
+    display: flex;
+    justify-content: space-between;
+}
+.textInput-tech {
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+}
+.pending1-Btn {
+    display: flex;
+    margin-left: 1rem;
 }
