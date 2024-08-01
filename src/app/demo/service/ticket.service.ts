@@ -27,7 +27,7 @@ export class TicketService {
                         updatedAt
                         current_roles
                         client_id
-                        remarque_id
+                        remarque_tech_diagnostic
                         createdBy
                         ignoreCount
                         location_id
@@ -70,7 +70,13 @@ export class TicketService {
                         updatedAt
                         comment
                         client_id
-                        remarque_id
+                        remarque_manager
+                        remarque_admin_manager
+                        remarque_admin_tech
+                        remarque_tech_diagnostic
+                        remarque_tech_repair
+                        remarque_magasin
+                        remarque_coordinator
                         createdBy
                         location_id
                         di_category_id
@@ -99,7 +105,6 @@ export class TicketService {
                         updatedAt
                         current_roles
                         client_id
-                        remarque_id
                         createdBy
                         location_id
                         di_category_id
@@ -182,6 +187,22 @@ export class TicketService {
         `;
     }
 
+    getAllRemarque(_id: string) {
+        return gql`
+            {
+                getAllRemarque(_id: "${_id}") {
+                    remarque_manager
+                    remarque_magasin
+                    remarque_admin_tech
+                    remarque_tech_repair
+                    remarque_coordinator
+                    remarque_admin_manager
+                    remarque_tech_diagnostic
+                }
+            }
+        `;
+    }
+
     createDi(diInfo: CreateDiInput) {
         console.log('🍭[diInfo]:', diInfo);
         return gql`
@@ -195,7 +216,7 @@ export class TicketService {
                     client_id: "${diInfo.client_id}"
                     company_id: "${diInfo.company_id}"
                     nSerie: "${diInfo.nSerie}"
-                    comment: "${diInfo.comment}"
+                    remarque_manager: "${diInfo.remarqueManager}"
                     image:"${diInfo.image}"
                 }
             ) {
@@ -325,13 +346,13 @@ export class TicketService {
     finishReparation(_idDi, remarque) {
         return gql`
             mutation {
-                tech_finishReperation(_id: "${_idDi}", remarque: "${remarque}")
+                tech_finishReperation(_id: "${_idDi}", remarque_tech_repair: "${remarque}")
             }
         `;
     }
 
     finish(diagInfo) {
-        console.log('🍔[diagInfo]:', diagInfo);
+        console.log(diagInfo);
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
@@ -340,7 +361,7 @@ export class TicketService {
             tech_startDiagnostic(
                 _id: "${diagInfo._idDi}"
                 diag: {
-                    remarqueTech: "${diagInfo.remarqueTech}"
+                    remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
                     contain_pdr: ${diagInfo.pdr}
                     can_be_repaired: ${diagInfo.reparable}
                     array_composants: [${array.join(', ')}]
@@ -353,7 +374,7 @@ export class TicketService {
             tech_startDiagnostic(
                 _id: "${diagInfo._idDi}"
                 diag: {
-                    remarqueTech: "${diagInfo.remarqueTech}"
+                    remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
                     contain_pdr: ${diagInfo.pdr}
                     can_be_repaired: ${diagInfo.reparable}
                     array_composants: [${array.join(', ')}]

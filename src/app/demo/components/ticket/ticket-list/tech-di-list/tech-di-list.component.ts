@@ -20,7 +20,6 @@ export class TechDiListComponent {
     selectedComposants: any[] = [];
     diagFormTech = new FormGroup({
         _idDi: new FormControl(),
-
         diag_time: new FormControl(),
         remarqueTech: new FormControl(''),
         isPdr: new FormControl(false),
@@ -89,7 +88,7 @@ export class TechDiListComponent {
     isRunning1: boolean;
     startTime1: number;
     laps1: any[];
-    remarqueReparation: any;
+
     formGroupchips: any;
     chipsValues: string[] = [];
     submitted: boolean = false;
@@ -103,6 +102,13 @@ export class TechDiListComponent {
     DiByStat: any;
     loadingCreatingComposant: boolean;
     hasPdr: boolean;
+    remarque_manager: string;
+    remarque_admin_manager: string;
+    remarque_admin_tech: string;
+    remarque_tech_diagnostic: string;
+    remarque_magasin: string;
+    remarque_coordinator: string;
+    remarqueReparation: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -193,11 +199,13 @@ export class TechDiListComponent {
     }
     //!!Nezih
     repModal(di) {
+        console.log('fired');
         this.di = { ...di };
         this.selectedDi = di._id;
         this.diDialogRep = true;
         this.getTimeSpentRep(di._id);
         this.changeStatusInReparation(di._id);
+        this.getAllRemarque(di._idDi);
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getStatbyID(this.selectedDi),
@@ -206,6 +214,32 @@ export class TechDiListComponent {
                 if (data) {
                     console.log(data.getStatbyID._idDi, 'data');
                     this.DiByStat = data.getStatbyID._idDi;
+                }
+            });
+    }
+
+    getAllRemarque(_id) {
+        console.log(_id, 'idd');
+        console.log('fired');
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllRemarque(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('remarque', data);
+                if (data) {
+                    this.remarque_manager =
+                        data.getAllRemarque.remarque_manager;
+                    this.remarque_admin_manager =
+                        data.getAllRemarque.remarque_admin_manager;
+                    this.remarque_admin_tech =
+                        data.getAllRemarque.remarque_admin_tech;
+                    this.remarque_tech_diagnostic =
+                        data.getAllRemarque.remarque_tech_diagnostic;
+                    this.remarque_magasin =
+                        data.getAllRemarque.remarque_magasin;
+                    this.remarque_coordinator =
+                        data.getAllRemarque.remarque_coordinator;
                 }
             });
     }

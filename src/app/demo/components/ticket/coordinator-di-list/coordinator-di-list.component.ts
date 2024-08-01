@@ -11,7 +11,7 @@ import {
 } from './coordinator-di-list.interfaces';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { MessageService } from 'primeng/api';
-
+import { ImageModule } from 'primeng/image';
 @Component({
     selector: 'app-coordinator-di-list',
     // standalone: true,
@@ -64,7 +64,13 @@ export class CoordinatorDiListComponent {
     selectedDi: any;
     pricingDoalog: boolean = false;
     reperationCondition: boolean;
-    comment: string;
+    remarque_manager: string;
+    remarque_admin_manager: string;
+    remarque_admin_tech: string;
+    remarque_tech_diagnostic: string;
+    remarque_tech_repair: string;
+    remarque_magasin: string;
+    remarque_coordinator: string;
     remarqueTech: string;
     constructor(
         private ticketSerice: TicketService,
@@ -132,9 +138,16 @@ export class CoordinatorDiListComponent {
     }
     //!Adding rq
     openModalConfig(di) {
+        console.log(di, 'remarque_manager');
         console.log('🥕[di]:', di);
         this.di = { ...di };
-        this.comment = di.comment;
+        this.remarque_manager = di.remarque_manager;
+        this.remarque_admin_manager = di.remarque_admin_manager;
+        this.remarque_admin_tech = di.remarque_admin_tech;
+        this.remarque_tech_diagnostic = di.remarque_tech_diagnostic;
+        this.remarque_tech_repair = di.remarque_tech_repair;
+        this.remarque_magasin = di.remarque_magasin;
+        this.remarque_coordinator = di.remarque_coordinator;
         this.remarqueTech = di.remarqueTech;
         this.selectedDi = di._id;
         this.diDialog = true;

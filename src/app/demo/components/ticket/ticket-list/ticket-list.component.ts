@@ -41,7 +41,7 @@ export class TicketListComponent implements OnInit {
         client_id: new FormControl(),
         company_id: new FormControl(),
         nSerie: new FormControl(),
-        comment: new FormControl(),
+        remarqueManager: new FormControl(),
     });
     tarif_Techs = new FormGroup({
         tarifFromAdmin: new FormControl(),
@@ -545,7 +545,7 @@ export class TicketListComponent implements OnInit {
             nSerie,
             status,
             typeClient,
-            comment,
+            remarqueManager,
         } = this.creationDiForm.value;
         const diInfo = {
             title,
@@ -555,9 +555,8 @@ export class TicketListComponent implements OnInit {
             nSerie,
             status: this.statusDI,
             typeClient,
-            comment,
+            remarqueManager,
             image: this.payloadImage.image,
-            //bonCommande: this.payloadBonCommande.pdf,
         };
         let _idQuery;
         this.apollo

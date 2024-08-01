@@ -4,11 +4,9 @@ Todos:
   New:
 
   ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander (Stand_By) almost done
-  ☐ Location and categoryDi add dropDown containing the list so we can delet using the "delet btn" @Hethi
+  ☐ Location and categoryDi add Query all and delet mutation @Hethi
   ☐ In the creation of the DI add location as a field @Hethi
-  ☐ Improve CSS for creating company + content Table for the company add the ID @Hethi @Nezih
-  
- 
+  ☐ Add all the remarque in the DI
   ☐ Add confirmation PopUp in everyStep
   
   Done:
@@ -38,6 +36,8 @@ Todos:
   ✔ Add update btn to client + company + DI @done(24-07-29 17:00)
   ✔ add delet and check HTML for the staff @done(24-07-29 17:04)
   ✔ Recheck add image @skander @done(24-07-29 17:04)
+  ✔ Improve CSS for creating company + content Table for the company add the ID @Hethi @Nezih @done(24-07-31 09:23)
+
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard

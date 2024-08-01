@@ -327,12 +327,14 @@
         [modal]="true"
         styleClass="p-fluid"
     >
-        <div>
+        <!-- <div>
             <button (click)="confirmComposant()">Confirmer</button>
-        </div>
+        </div> -->
         <div class="flex flex-column">
             <div class="field">
-                <label for="name">Ecrire quelque chose ...</label>
+                <label for="name"
+                    >Ajouter des remarques concernant le Di si nécessaire</label
+                >
                 <textarea
                     [(ngModel)]="remarqueReparation"
                     [ngModelOptions]="{ standalone: true }"
@@ -342,21 +344,45 @@
                 ></textarea>
             </div>
 
-            <div class="field">
-                <p-fieldset legend="Remarque" [toggleable]="true">
-                    <p class="m-0">TEXT</p>
+            <div class="field" *ngIf="remarque_manager">
+                <!-- to continue other rq -->
+                <p-fieldset legend="Remarque admnistration" [toggleable]="true">
+                    <p class="m-0">{{ remarque_manager }}</p>
                 </p-fieldset>
             </div>
-            <div class="field">
-                <p-fieldset legend="Remarque" [toggleable]="true">
-                    <p class="m-0">TEXT</p>
+            <div class="field" *ngIf="remarque_admin_manager">
+                <!-- to continue other rq -->
+                <p-fieldset legend="remarque_admin_manager" [toggleable]="true">
+                    <p class="m-0">{{ remarque_admin_manager }}</p>
                 </p-fieldset>
             </div>
-            <div class="field">
-                <p-fieldset legend="Remarque" [toggleable]="true">
-                    <p class="m-0">TEXT</p>
+            <div class="field" *ngIf="remarque_admin_tech">
+                <!-- to continue other rq -->
+                <p-fieldset legend="remarque_admin_tech" [toggleable]="true">
+                    <p class="m-0">{{ remarque_admin_tech }}</p>
                 </p-fieldset>
             </div>
+        </div>
+        <div class="field" *ngIf="remarque_tech_diagnostic">
+            <!-- to continue other rq -->
+            <p-fieldset
+                legend="Remarque Technicien Diagnostique"
+                [toggleable]="true"
+            >
+                <p class="m-0">{{ remarque_tech_diagnostic }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="remarque_magasin">
+            <!-- to continue other rq -->
+            <p-fieldset legend="Remarque Magasin" [toggleable]="true">
+                <p class="m-0">{{ remarque_magasin }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="remarque_coordinator">
+            <!-- to continue other rq -->
+            <p-fieldset legend="Remarque Coordinatrice" [toggleable]="true">
+                <p class="m-0">{{ remarque_coordinator }}</p>
+            </p-fieldset>
         </div>
 
         <ng-template pTemplate="footer">

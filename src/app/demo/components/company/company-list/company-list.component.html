@@ -136,7 +136,6 @@
                 severity="success"
                 label="Service achat"
                 badgeClass="p-badge-success"
-                badge="0"
                 (onClick)="hideShowFormAchat()"
             ></p-button>
             <p-button
@@ -144,7 +143,6 @@
                 severity="success"
                 label="Service technique"
                 badgeClass="p-badge-success"
-                badge="0"
                 (onClick)="hideShowFormTechnique()"
             ></p-button>
             <p-button
@@ -153,18 +151,17 @@
                 severity="success"
                 label="Service financier"
                 badgeClass="p-badge-success"
-                badge="0"
             ></p-button>
         </div>
         <!-- service financier -->
         <div
             formGroupName="financier"
             *ngIf="toHideFinancier"
-            class="flex justify-center flex-wrap gap-4 max-w-2xl mt-4"
+            class="financier-form"
         >
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <!-- full name field -->
-                <h4>Service financier</h4>
+            <h4>Service financier</h4>
+            <div class="form-field">
+                <!-- Full name field -->
                 <div class="p-float-label mb-4">
                     <input
                         pInputText
@@ -172,10 +169,10 @@
                         class="pInputText w-full"
                         formControlName="fullName"
                     />
-                    <label for="fullName">Nom é Prénom</label>
+                    <label for="fullName">Nom et Prénom</label>
                 </div>
             </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
+            <div class="form-field">
                 <!-- Email field -->
                 <div class="p-float-label mb-4">
                     <input
@@ -187,8 +184,8 @@
                     <label for="email">E-mail</label>
                 </div>
             </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <!-- phone field -->
+            <div class="form-field">
+                <!-- Phone field -->
                 <div class="p-float-label mb-4">
                     <input
                         formControlName="phone"
@@ -200,6 +197,7 @@
                 </div>
             </div>
         </div>
+
         <!-- service achat -->
         <div
             formGroupName="achat"

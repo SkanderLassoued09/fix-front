@@ -3,3 +3,24 @@
     justify-content: flex-end;
     gap: 1rem;
 }
+.financier-form {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem; /* Assuming gap-4 is 1rem */
+    max-width: 32rem; /* Assuming max-w-2xl is 32rem */
+    margin-top: 1rem; /* Assuming mt-4 is 1rem */
+}
+
+.form-field {
+    flex-grow: 1;
+    width: calc(33.33% - 1rem);
+}
+
+.p-float-label.mb-4 {
+    margin-bottom: 1rem; /* Assuming mb-4 is 1rem */
+}
+
+.w-full {
+    width: 100%;
+}

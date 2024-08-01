@@ -245,17 +245,15 @@
                 ></p-dropdown>
             </div>
         </div>
-
+        <label for="float-input">Remarque Administration</label>
         <div class="footerlocation">
             <textarea
                 rows="5"
                 cols="30"
                 pInputTextarea
-                formControlName="comment"
+                formControlName="remarqueManager"
             >
- Ajouter une remarque pour cette Demande d'intervention
- </textarea
-            >
+            </textarea>
             <!-- <div>
                 <p-dropdown
                     [options]="locationDropDown"
@@ -269,8 +267,8 @@
         </div>
         <div class="field">
             <p-toggleButton
-                onLabel="toCoordinator"
-                offLabel="keep it for now"
+                onLabel="Envoyer => Coordinatrice"
+                offLabel="Garder le DI"
                 (onChange)="onSelectStatusDefaultDI($event)"
             ></p-toggleButton>
         </div>

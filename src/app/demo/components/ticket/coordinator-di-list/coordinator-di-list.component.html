@@ -43,11 +43,18 @@
     </p-table>
     <p-dialog
         [(visible)]="diDialog"
-        [style]="{ width: '50%', height: '70vh' }"
+        [style]="{ width: '40%', height: '70vh' }"
         header="Coordinatrice control du flow"
         [modal]="true"
         styleClass="p-fluid"
     >
+        <!-- <div class="card flex justify-content-center">
+            <p-image
+                src="https://primefaces.org/cdn/primeng/images/galleria/galleria10.jpg"
+                alt="Image"
+                width="250"
+            />
+        </div> -->
         <div class="field">
             <label for="name"
                 >Envoyer Demande d'intervention pour le Dignostique</label
@@ -94,16 +101,46 @@
                 (onChange)="selectedTechRep($event)"
             ></p-dropdown>
         </div>
-        <div class="field" *ngIf="comment">
+        <div class="field" *ngIf="remarque_manager">
             <!-- to continue other rq -->
             <p-fieldset legend="Remarque admnistration" [toggleable]="true">
-                <p class="m-0">{{ comment }}</p>
+                <p class="m-0">{{ remarque_manager }}</p>
             </p-fieldset>
         </div>
-        <div class="field" *ngIf="comment">
+        <div class="field" *ngIf="remarque_admin_manager">
             <!-- to continue other rq -->
-            <p-fieldset legend="Remarque admnistration" [toggleable]="true">
-                <p class="m-0">{{ comment }}</p>
+            <p-fieldset legend="remarque_admin_manager" [toggleable]="true">
+                <p class="m-0">{{ remarque_admin_manager }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="remarque_admin_tech">
+            <!-- to continue other rq -->
+            <p-fieldset legend="remarque_admin_tech" [toggleable]="true">
+                <p class="m-0">{{ remarque_admin_tech }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="remarque_tech_diagnostic">
+            <!-- to continue other rq -->
+            <p-fieldset legend="remarque_tech_diagnostic" [toggleable]="true">
+                <p class="m-0">{{ remarque_tech_diagnostic }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="remarque_tech_repair">
+            <!-- to continue other rq -->
+            <p-fieldset legend="remarque_tech_repair" [toggleable]="true">
+                <p class="m-0">{{ remarque_tech_repair }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="remarque_magasin">
+            <!-- to continue other rq -->
+            <p-fieldset legend="remarque_magasin" [toggleable]="true">
+                <p class="m-0">{{ remarque_magasin }}</p>
+            </p-fieldset>
+        </div>
+        <div class="field" *ngIf="remarque_coordinator">
+            <!-- to continue other rq -->
+            <p-fieldset legend="remarque_coordinator" [toggleable]="true">
+                <p class="m-0">{{ remarque_coordinator }}</p>
             </p-fieldset>
         </div>
     </p-dialog>
