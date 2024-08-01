@@ -346,7 +346,9 @@ export class TicketService {
     finishReparation(_idDi, remarque) {
         return gql`
             mutation {
-                tech_finishReperation(_id: "${_idDi}", remarque_tech_repair: "${remarque}")
+                tech_finishReperation(_id: "${_idDi}", remarque: "${remarque}") {
+                    status
+                }
             }
         `;
     }

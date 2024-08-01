@@ -331,13 +331,12 @@
             <button (click)="confirmComposant()">Confirmer</button>
         </div> -->
         <div class="flex flex-column">
-            <div class="field">
+            <div [formGroup]="remarque" class="field">
                 <label for="name"
                     >Ajouter des remarques concernant le Di si nécessaire</label
                 >
                 <textarea
-                    [(ngModel)]="remarqueReparation"
-                    [ngModelOptions]="{ standalone: true }"
+                    formControlName="remarqueRepair"
                     rows="5"
                     cols="30"
                     pInputTextarea
@@ -400,7 +399,7 @@
                     pButton
                     pRipple
                     label="Fin reperation"
-                    icon="pi pi-check"
+                    icon="pi pi-apple"
                     class="p-button-text"
                     (click)="finishReparation()"
                 ></button>

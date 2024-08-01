@@ -37,6 +37,9 @@ export class TechDiListComponent {
         pdf: new FormControl(),
     });
 
+    remarque = new FormGroup({
+        remarqueRepair: new FormControl(),
+    });
     composantTech = {
         name: '',
         package: '',
@@ -109,6 +112,7 @@ export class TechDiListComponent {
     remarque_magasin: string;
     remarque_coordinator: string;
     remarqueReparation: any;
+    statusFinal: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -775,22 +779,22 @@ export class TechDiListComponent {
     }
 
     finishReparation() {
-        console.log(this.remarqueReparation, ' this.remarqueReparation');
+        const req = this.remarque.value.remarqueRepair;
         this.lapTimeForPauseAndGetBack1();
         this.lap1();
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.finishReparation(
                     this.DiByStat,
-                    this.remarqueReparation
+                    req
                 ),
                 useMutationLoading: true,
             })
             .subscribe(({ data }) => {
-                if (data) {
-                    console.log('🌰[data]:', data);
-                    this.diDialogRep = false;
-                }
+                console.log(
+                    '🥝[data tech_finishReperation]:',
+                    data?.tech_finishReperation?.status
+                );
             });
         this.getAllTechDi();
     }
