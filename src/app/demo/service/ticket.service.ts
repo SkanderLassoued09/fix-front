@@ -25,6 +25,7 @@ export class TicketService {
                         status
                         createdAt
                         updatedAt
+                        image
                         current_roles
                         client_id
                         remarque_tech_diagnostic

@@ -111,6 +111,7 @@ export class TicketListComponent implements OnInit {
     uploadedFiles: any[] = [];
     cols = [
         { field: 'title', header: 'Title' },
+        { field: 'image', header: 'Image' },
         // { field: 'description', header: 'Description' },
         // { field: 'can_be_repaired', header: 'Reparable' },
         // { field: 'bon_de_commande', header: 'BC' },
@@ -376,6 +377,7 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
+                    console.log('🧀[data]:', data);
                     this.diList = data.getAllDi.di;
                     this.diListCount = data.getAllDi.totalDiCount;
                 }

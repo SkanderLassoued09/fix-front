@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -113,11 +113,13 @@ export class TechDiListComponent {
     remarque_coordinator: string;
     remarqueReparation: any;
     statusFinal: any;
+    disable: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private cdr: ChangeDetectorRef
     ) {}
 
     ngOnInit() {
@@ -604,6 +606,7 @@ export class TechDiListComponent {
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
+        this.isFinishedDiag = true; // Disable the button immediately after it is clicked
         this.lapTimeForPauseAndGetBack();
 
         const dataDiag = {
@@ -622,9 +625,11 @@ export class TechDiListComponent {
                     useMutationLoading: true,
                 })
                 .subscribe(({ data, loading }) => {
+                    console.log('🍤[data]:', data);
                     if (data) {
-                        console.log('SENDING TO ESTIMATION WORKING');
-
+                        console.log('SENDING TO ESTIMATION WORKING', data);
+                        this.disable = data.tech_startDiagnostic;
+                        this.cdr.detectChanges();
                         this.changeStatusMagasinEstimation(dataDiag._idDi);
                     }
                 });
@@ -637,14 +642,30 @@ export class TechDiListComponent {
                 })
                 .subscribe(({ data, loading }) => {
                     if (data) {
-                        console.log('SENDING TO ESTIMATION WORKING');
-                        this.ticketSerice.changeStatusDiToPending2(
-                            dataDiag._idDi
+                        console.log('🥒[data]:', data);
+                        this.disable = data.tech_startDiagnostic;
+                        this.cdr.detectChanges();
+                        console.log(
+                            'SENDING TO ESTIMATION WORKING',
+                            this.disable
                         );
+                        this.changeStatusToPending2(dataDiag._idDi);
                     }
                 });
         }
         this.getAllTechDi();
+    }
+
+    changeStatusToPending2(_id) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusDiToPending2(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍒[data]:', data);
+
+                this.isFinishedDiag = true;
+            });
     }
     confirmComposant() {
         this.apollo

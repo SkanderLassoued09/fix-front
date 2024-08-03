@@ -32,8 +32,9 @@
                 <td>
                     <button
                         [disabled]="
-                            rowData.status !== 'DIAGNOSTIC' &&
-                            rowData.status !== 'INDIAGNOSTIC'
+                            (rowData.status !== 'DIAGNOSTIC' &&
+                                rowData.status !== 'INDIAGNOSTIC') ||
+                            isFinishedDiag
                         "
                         pButton
                         pRipple

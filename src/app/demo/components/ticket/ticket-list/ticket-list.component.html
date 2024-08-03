@@ -321,7 +321,7 @@
                 ></button>
             </div>
         </ng-template>
-        <ng-template pTemplate="header" let-rowData let-columns>
+        <ng-template pTemplate="header" let-columns>
             <tr>
                 <th *ngFor="let col of columns" style="min-width: 10rem">
                     {{ col.header }}
@@ -366,7 +366,7 @@
                 <th style="min-width: 10rem">Actions</th>
                 <th
                     style="min-width: 10rem"
-                    *ngIf="rowData.status === 'PENDING2'"
+                    *ngIf="rowData?.status === 'PENDING2'"
                 >
                     Pricing
                 </th>
@@ -378,15 +378,30 @@
             >
                 <td *ngFor="let col of columns">
                     <ng-container
-                        *ngIf="col.field !== 'status'; else statusColumn"
+                        *ngIf="
+                            col.field !== 'status' && col.field !== 'image';
+                            else specialColumn
+                        "
                     >
                         {{ rowData[col.field] }}
                     </ng-container>
-                    <ng-template #statusColumn>
-                        <p-tag
-                            [value]="rowData[col.field]"
-                            [severity]="getSeverity(rowData[col.field])"
-                        ></p-tag>
+                    <ng-template #specialColumn>
+                        <ng-container
+                            *ngIf="col.field === 'status'; else imageColumn"
+                        >
+                            <p-tag
+                                [value]="rowData[col.field]"
+                                [severity]="getSeverity(rowData[col.field])"
+                            ></p-tag>
+                        </ng-container>
+                        <ng-template #imageColumn>
+                            <img
+                                [src]="'http://localhost:3000/' + rowData.image"
+                                [alt]="rowData.image"
+                                width="50"
+                                class="shadow-4"
+                            />
+                        </ng-template>
                     </ng-template>
                 </td>
                 <td class="flex">
@@ -413,7 +428,6 @@
                         class="p-button-rounded p-button-raised mr-2"
                         (click)="showDialogForPricing(rowData)"
                     ></button>
-                    <!--  (click)="showDialogForNegociate1(rowData)" for above -->
                     <button
                         *ngIf="rowData.status === 'NEGOTIATION1'"
                         pButton
@@ -422,8 +436,6 @@
                         class="p-button-rounded p-button-raised p-button-warning mr-2"
                         (click)="showDialogForNegociate1(rowData)"
                     ></button>
-
-                    <!--    (click)="showDialogForNegociate2(rowData)" -->
                     <button
                         *ngIf="rowData.status === 'NEGOTIATION2'"
                         pButton
@@ -434,7 +446,10 @@
                     ></button>
 
                     <p-button
-                        *ngIf="currentRole === 'ADMIN_MANAGER' || 'ADMIN_TECH'"
+                        *ngIf="
+                            currentRole === 'ADMIN_MANAGER' ||
+                            currentRole === 'ADMIN_TECH'
+                        "
                         [label]="rowData.ignoreCount.toString()"
                         severity="danger"
                         (click)="ignore(rowData)"
@@ -442,8 +457,7 @@
                             rowData.ignoreCount === 3 ||
                             rowData.status !== 'FINISHED'
                         "
-                    />
-
+                    ></p-button>
                     <p-button
                         *ngIf="
                             currentRole === 'MANAGER' &&
@@ -452,14 +466,14 @@
                         label="Retour"
                         severity="danger"
                         (click)="changeStatusRetour(rowData)"
-                    />
+                    ></p-button>
                     <p-button
                         *ngIf="rowData.status === 'CREATED'"
                         label="Pending1"
                         severity="info"
                         (click)="changeToPending1(rowData)"
                         class="pending1-Btn"
-                    />
+                    ></p-button>
                 </td>
             </tr>
         </ng-template>
