@@ -1,8 +1,9 @@
 <p-toast></p-toast>
+<p-confirmDialog />
 <div class="card Header-btns">
     <p-button
         (click)="showDialogDiCreation()"
-        icon="pi pi-plus"
+        icon="pi pi-file"
         label="Ajouter demande d'intervention"
     ></p-button>
     <p-button
@@ -13,7 +14,7 @@
     ></p-button>
     <p-button
         (click)="showDialogLocations()"
-        icon="pi pi-plus"
+        icon="pi pi-table"
         label="Gérer les emplacements"
         severity="info"
     ></p-button>
@@ -28,7 +29,7 @@
     header="Gérer les catégories des demandes d'interventions"
     [(visible)]="openCategoryModal"
     [modal]="true"
-    [style]="{ width: '30vw' }"
+    [style]="{ width: '30vw', height: '25vw' }"
     [draggable]="false"
     [resizable]="true"
 >
@@ -88,16 +89,6 @@
                 class="form-control"
             />
         </div>
-        <div class="form-group">
-            <label for="locationNumber">Numéro de l'emplacement</label>
-            <input
-                formControlName="locationNumber"
-                id="locationNumber"
-                type="number"
-                class="form-control"
-                min="0"
-            />
-        </div>
         <!--    Add and check 
         <div class="form-group">
             <label for="locationNumber">Nombre max de Di supporté</label>
@@ -137,7 +128,9 @@
 >
     <form [formGroup]="tarif_Techs">
         <div class="ModalTarifs">
-            <strong> Tarif actuel : {{ tarif_Tech }} dt/heures </strong>
+            <h3 class="margin-bottom: 1rem;">
+                Tarif actuel : {{ tarif_Tech }} dt/heure
+            </h3>
             <div>
                 <label> Affecter nouveau Tarif</label>
             </div>
@@ -395,23 +388,24 @@
                             ></p-tag>
                         </ng-container>
                         <ng-template #imageColumn>
-                            <img
+                            <p-image
                                 [src]="'http://localhost:3000/' + rowData.image"
                                 [alt]="rowData.image"
                                 width="50"
                                 class="shadow-4"
+                                [preview]="true"
                             />
                         </ng-template>
                     </ng-template>
                 </td>
                 <td class="flex">
-                    <button
+                    <!-- <button
                         pButton
                         pRipple
                         icon="pi pi-pencil"
                         class="p-button-rounded p-button-raised p-button-success mr-2"
                         (click)="editProduct(rowData)"
-                    ></button>
+                    ></button> -->
                     <button
                         pButton
                         pRipple
@@ -440,7 +434,7 @@
                         *ngIf="rowData.status === 'NEGOTIATION2'"
                         pButton
                         pRipple
-                        icon="pi pi-plus"
+                        icon="pi pi-money-bill"
                         class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForNegociate2(rowData)"
                     ></button>
@@ -576,7 +570,7 @@
 
 <!-- NEGOTIATION2 -->
 <p-dialog
-    header="Affectation prix finale "
+    header="Affectation prix finale"
     [(visible)]="negocite2Modal"
     [modal]="true"
     [style]="{ width: '50vw' }"
@@ -584,9 +578,9 @@
     [resizable]="false"
 >
     <ng-container>
-        <div class="element-container">
-            <div class="element-container">
-                <h5>Prix Intial: {{ price }}</h5>
+        <div class="modal-content">
+            <div class="price-info">
+                <h5>Prix Initial: {{ price }}</h5>
                 <h4>Prix final: {{ finalPrice }}</h4>
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
@@ -595,7 +589,7 @@
                 >
                 </p-inputNumber>
             </div>
-            <div class="element-container">
+            <div class="slider-container">
                 <p-slider
                     [min]="20"
                     [max]="25"
@@ -604,34 +598,38 @@
                     (onSlideEnd)="onSlideAdminEnd($event)"
                 ></p-slider>
             </div>
-            <div>
+            <div class="button-container">
                 <button
                     pButton
                     pRipple
-                    label="discount"
+                    label="Discount"
                     icon="pi pi-dollar"
                     class="p-button-rounded p-button-raised p-button-success"
                     (click)="discountByPercent2()"
                 ></button>
             </div>
-            <div class="element-container-BTN">
+            <div class="confirmation-container">
                 <h6>Montant de la remise : {{ discountedPriceNeg }}</h6>
                 <ng-container *ngIf="slideAdminEnd === 25">
                     <h6>Vous pouvez affecter un nouveux prix ici</h6>
-                    <p-inputNumber [(ngModel)]="price" inputId="price">
-                    </p-inputNumber>
+                    <p-inputNumber
+                        [(ngModel)]="price"
+                        inputId="price"
+                    ></p-inputNumber>
                 </ng-container>
                 <button
                     pButton
                     pRipple
-                    label="confirmer"
+                    label="Confirmer"
                     icon="pi pi-check-circle"
                     class="p-button-rounded p-button-raised p-button-success"
                     (click)="confirmerNegociation()"
                 ></button>
-            </div></div
-    ></ng-container>
+            </div>
+        </div>
+    </ng-container>
 </p-dialog>
+
 <p-dialog
     header="Affectation du prix Intial"
     [(visible)]="pricingModal"

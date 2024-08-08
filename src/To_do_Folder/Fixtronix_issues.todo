@@ -8,6 +8,7 @@ Todos:
   ☐ In the creation of the DI add location as a field @Hethi
   ☐ Add all the remarque in the DI
   ☐ Add confirmation PopUp in everyStep
+  ☐ In diagnostique when finished all the btn become disabled bcs you use the same variable for all of them when refresh become correct
   
   Done:
   ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)

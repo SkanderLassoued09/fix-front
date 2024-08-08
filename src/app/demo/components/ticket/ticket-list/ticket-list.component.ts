@@ -2,7 +2,11 @@ import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 
-import { MessageService, PrimeNGConfig } from 'primeng/api';
+import {
+    MessageService,
+    PrimeNGConfig,
+    ConfirmationService,
+} from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
@@ -53,7 +57,6 @@ export class TicketListComponent implements OnInit {
     //ADD location CRUD
     locationForm = new FormGroup({
         locationName: new FormControl(),
-        locationNumber: new FormControl(),
     });
     statuses = [
         { label: 'Created', value: 'CREATED' },
@@ -178,7 +181,8 @@ export class TicketListComponent implements OnInit {
         private cdr: ChangeDetectorRef,
         private readonly messageservice: MessageService,
         private readonly notificationService: NotificationService,
-        private config: PrimeNGConfig
+        private config: PrimeNGConfig,
+        private confirmationService: ConfirmationService
     ) {}
 
     ngOnInit() {
@@ -199,6 +203,7 @@ export class TicketListComponent implements OnInit {
     }
     showDialogLocations() {
         this.openLocationsModal = true;
+        this.getLocationList();
     }
     showDialogPriceTech() {
         this.openPriceTechModal = true;
@@ -239,6 +244,7 @@ export class TicketListComponent implements OnInit {
         console.log('🥓[this._idDi]:', this._idDi);
         this.getDi();
         this.negocite1Modal = false;
+        this.negocite2Modal = false;
     }
 
     timeStringIntoHours(timeString) {
@@ -441,24 +447,30 @@ export class TicketListComponent implements OnInit {
     }
 
     deleteDi(rowData) {
-        console.log('🍓[rowData]:', rowData);
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.deleteDi(rowData._id),
-            })
-            .subscribe(({ data }) => {
-                console.log('🍠[data]:', data);
-
-                const index = this.diList.findIndex((el) => {
-                    el._id === rowData._id;
-                });
-                this.diList.splice(index, 1);
-                this.messageservice.add({
-                    severity: 'success',
-                    summary: "Demande d'intervention a été créer",
-                    detail: 'La demande service supprimer',
-                });
-            });
+        console.log('Fn delete');
+        this.confirmationService.confirm({
+            message: 'Voulez vous supprimer ce DI',
+            header: 'Confirmation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.deleteDi(rowData._id),
+                    })
+                    .subscribe(({ data }) => {
+                        const index = this.diList.findIndex((el) => {
+                            el._id === rowData._id;
+                        });
+                        this.diList.splice(index, 0);
+                        this.messageservice.add({
+                            severity: 'success',
+                            summary: "Demande d'intervention a été créer",
+                            detail: 'La demande service supprimer',
+                        });
+                        this.getDi();
+                    });
+            },
+        });
     }
 
     changeStatusNegiciate1(_id: string) {
@@ -823,12 +835,10 @@ export class TicketListComponent implements OnInit {
     }
     addLocation() {
         console.log('category input', this.locationForm.value.locationName);
-        console.log('category input', this.locationForm.value.locationNumber);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addLocation(
-                    this.locationForm.value.locationName,
-                    this.locationForm.value.locationNumber
+                    this.locationForm.value.locationName
                 ),
             })
             .subscribe(({ data }) => {

@@ -18,15 +18,31 @@
             <tr>
                 <td *ngFor="let col of columns">
                     <ng-container
-                        *ngIf="col.field !== 'status'; else statusColumn"
+                        *ngIf="
+                            col.field !== 'status' && col.field !== 'image';
+                            else specialColumn
+                        "
                     >
                         {{ rowData[col.field] }}
                     </ng-container>
-                    <ng-template #statusColumn>
-                        <p-tag
-                            [value]="rowData[col.field]"
-                            [severity]="getSeverity(rowData[col.field])"
-                        ></p-tag>
+                    <ng-template #specialColumn>
+                        <ng-container
+                            *ngIf="col.field === 'status'; else imageColumn"
+                        >
+                            <p-tag
+                                [value]="rowData[col.field]"
+                                [severity]="getSeverity(rowData[col.field])"
+                            ></p-tag>
+                        </ng-container>
+                        <ng-template #imageColumn>
+                            <p-image
+                                [src]="'http://localhost:3000/' + rowData.image"
+                                [alt]="rowData.image"
+                                width="50"
+                                class="shadow-4"
+                                [preview]="true"
+                            />
+                        </ng-template>
                     </ng-template>
                 </td>
                 <td>

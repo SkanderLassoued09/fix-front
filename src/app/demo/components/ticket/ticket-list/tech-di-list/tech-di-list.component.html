@@ -62,241 +62,261 @@
 
     <p-dialog
         [(visible)]="diDialogDiag"
-        [style]="{ width: '50%', height: '70vh' }"
-        header="Diagnostique ..."
+        [style]="{ width: '60%', height: '80vh' }"
         [modal]="true"
         styleClass="p-fluid"
     >
-        <!-- -------- -->
-        <form [formGroup]="diagFormTech">
-            <div class="flex flex-column">
-                <div class="field">
-                    <label for="name">Description de la Panne a corriger</label>
-                    <textarea
-                        formControlName="remarqueTech"
-                        rows="5"
-                        cols="30"
-                        pInputTextarea
-                    ></textarea>
-                </div>
-                <!-- pdr or no -->
-                <div class="condition-BTN">
-                    <div class="field">
-                        <label for="name">Cette piece reparable ?</label>
-                        <p-toggleButton
-                            onLabel="Oui"
-                            offLabel="Non"
-                            formControlName="isReparable"
-                        ></p-toggleButton>
+        <ng-template pTemplate="header"></ng-template>
+        <!-- Empty header template -->
+        <ng-template pTemplate="content">
+            <p-image
+                [src]="'http://localhost:3000/' + imageValue"
+                [alt]="imageValue"
+                width="300"
+                height="150"
+                class="imageContainer shadow-4"
+                [preview]="true"
+            ></p-image>
+            <form [formGroup]="diagFormTech">
+                <div class="flex flex-column">
+                    <div class="supheader field">
+                        <label for="name"
+                            >Description de la Panne a corriger</label
+                        >
+                        <textarea
+                            formControlName="remarqueTech"
+                            rows="3"
+                            cols="30"
+                            pInputTextarea
+                        ></textarea>
                     </div>
-                    <div class="field">
-                        <label for="name">Di contient PDR ?</label>
-                        <p-toggleButton
-                            onLabel="Oui"
-                            offLabel="Non"
-                            formControlName="isPdr"
-                        ></p-toggleButton>
-                    </div>
-                </div>
-
-                <!-- list of composant -->
-                <ng-container *ngIf="hasPdr">
-                    <div class="grid align-items-center">
-                        <div class="col">
-                            <label for="name">Choisir un composant</label>
-                            <p-dropdown
-                                [options]="composantList"
-                                (onChange)="selectedDropDown($event)"
-                                optionLabel="name"
-                                placeholder="Choisir composant"
-                            ></p-dropdown>
+                    <!-- pdr or no -->
+                    <div class="condition-BTN">
+                        <div class="field">
+                            <label for="name">Cette piece reparable ?</label>
+                            <p-toggleButton
+                                onLabel="Oui"
+                                offLabel="Non"
+                                formControlName="isReparable"
+                            ></p-toggleButton>
                         </div>
-                        <div class="col" *ngIf="composantSelected">
-                            <label for="name">Quantité</label>
-                            <p-inputNumber
-                                inputId="integeronly"
-                                formControlName="quantity"
-                                [placeholder]="
-                                    'Add quantity for ' +
-                                    composantSelected.value.name
-                                "
-                            ></p-inputNumber>
-                        </div>
-                        <div class="col" *ngIf="composantSelected">
-                            <button
-                                pButton
-                                pRipple
-                                label="Ajouter"
-                                class="p-button-success"
-                                icon="pi pi-check"
-                                (click)="comboComposantandQuantity()"
-                            ></button>
+                        <div class="field" *ngIf="isReperable">
+                            <label for="name">Di contient PDR ?</label>
+                            <p-toggleButton
+                                onLabel="Oui"
+                                offLabel="Non"
+                                formControlName="isPdr"
+                            ></p-toggleButton>
                         </div>
                     </div>
 
-                    <p-toast />
-                    <p-toolbar styleClass="mb-4 gap-2">
-                        <ng-template pTemplate="left">
+                    <!-- list of composant -->
+                    <ng-container *ngIf="hasPdr && isReperable">
+                        <div class="grid align-items-center">
+                            <div class="col">
+                                <label for="name">Choisir un composant</label>
+                                <p-dropdown
+                                    [options]="composantList"
+                                    (onChange)="selectedDropDown($event)"
+                                    optionLabel="name"
+                                    placeholder="Choisir composant"
+                                ></p-dropdown>
+                            </div>
+                            <div class="col" *ngIf="composantSelected">
+                                <label for="name">Quantité</label>
+                                <p-inputNumber
+                                    inputId="integeronly"
+                                    formControlName="quantity"
+                                    [placeholder]="
+                                        'Add quantity for ' +
+                                        composantSelected.value.name
+                                    "
+                                ></p-inputNumber>
+                            </div>
+                            <div class="col" *ngIf="composantSelected">
+                                <button
+                                    pButton
+                                    pRipple
+                                    label="Ajouter"
+                                    class="p-button-success"
+                                    icon="pi pi-check"
+                                    (click)="comboComposantandQuantity()"
+                                ></button>
+                            </div>
+                        </div>
+
+                        <p-toast></p-toast>
+                        <p-toolbar styleClass="mb-4 gap-2">
+                            <ng-template pTemplate="left">
+                                <p-button
+                                    pRipple
+                                    severity="success"
+                                    label="Créer composant"
+                                    icon="pi pi-save"
+                                    class="mr-2"
+                                    (click)="openNew()"
+                                ></p-button>
+                            </ng-template>
+                        </p-toolbar>
+                        <!-- !fd -->
+                        <p-table
+                            #dt
+                            [value]="composantCombo"
+                            [rows]="11"
+                            [tableStyle]="{ 'min-width': '75rem' }"
+                            [(selection)]="selectedComposants"
+                            [rowHover]="true"
+                            dataKey="nameComposant"
+                            [showCurrentPageReport]="true"
+                        >
+                            <ng-template pTemplate="caption">
+                                <div
+                                    class="flex align-items-center justify-content-between"
+                                >
+                                    <h5 class="m-0">Listes des composants</h5>
+                                </div>
+                            </ng-template>
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th style="width: 4rem">
+                                        <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+                                    </th>
+                                    <th
+                                        pSortableColumn="name"
+                                        style="min-width: 15rem"
+                                    >
+                                        Nom composant
+                                        <p-sortIcon field="name"></p-sortIcon>
+                                    </th>
+                                    <th
+                                        pSortableColumn="Quantité"
+                                        style="min-width: 15rem"
+                                    >
+                                        Quantité
+                                        <p-sortIcon field="name"></p-sortIcon>
+                                    </th>
+                                    <th style="min-width: 10rem">Action</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-composant>
+                                <tr>
+                                    <td>
+                                        <p-tableCheckbox
+                                            [value]="composant"
+                                        ></p-tableCheckbox>
+                                    </td>
+                                    <td>{{ composant.nameComposant }}</td>
+                                    <td>{{ composant.quantity }}</td>
+                                    <td>
+                                        <button
+                                            pButton
+                                            type="button"
+                                            icon="pi pi-info-circle"
+                                            label="Effacer"
+                                            (click)="onRowClick(composant)"
+                                        ></button>
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="summary">
+                                <div
+                                    class="flex align-items-center justify-content-between"
+                                >
+                                    Ce DI contient
+                                    {{
+                                        composantCombo
+                                            ? composantCombo.length
+                                            : 0
+                                    }}
+                                    Composants.
+                                </div>
+                            </ng-template>
+                        </p-table>
+                    </ng-container>
+
+                    <!-- ******* Start of composant creation ********* -->
+                    <p-dialog
+                        [(visible)]="creatComposantDialog"
+                        [style]="{ width: '450px' }"
+                        header="Creation d'un nouveux composant"
+                        [modal]="true"
+                        styleClass="p-fluid"
+                        [draggable]="false"
+                    >
+                        <ng-template pTemplate="content">
+                            <form [formGroup]="composantTechnicien">
+                                <div class="field">
+                                    <label for="name">Nom composant</label>
+                                    <input
+                                        type="text"
+                                        pInputText
+                                        id="name"
+                                        formControlName="name"
+                                        required
+                                    />
+                                    <small
+                                        class="p-error"
+                                        *ngIf="submitted && !composantTech.name"
+                                    >
+                                        Name is required.
+                                    </small>
+                                </div>
+                                <div class="field">
+                                    <label for="packageComposant"
+                                        >Package composant</label
+                                    >
+                                    <input
+                                        type="text"
+                                        pInputText
+                                        id="package"
+                                        formControlName="packageComposant"
+                                        required
+                                    />
+                                </div>
+                                <div class="field">
+                                    <label for="link">Lien du composant</label>
+                                    <input
+                                        type="text"
+                                        pInputText
+                                        id="link"
+                                        formControlName="link"
+                                    />
+                                </div>
+                                <div class="field">
+                                    <p-fileUpload
+                                        mode="basic"
+                                        chooseLabel="Ajouter un PDF"
+                                        chooseIcon="pi pi-upload"
+                                        name="demo[]"
+                                        url="https://www.primefaces.org/cdn/api/upload.php"
+                                        accept="image/*,application/pdf"
+                                        maxFileSize="1000000"
+                                        (onUpload)="onUpload($event)"
+                                    ></p-fileUpload>
+                                </div>
+                            </form>
+                        </ng-template>
+                        <ng-template pTemplate="footer">
                             <p-button
                                 pRipple
-                                severity="success"
-                                label="Créer composant"
-                                icon="pi pi-plus"
-                                class="mr-2"
-                                (click)="openNew()"
-                            />
+                                label="Cancel"
+                                icon="pi pi-times"
+                                [text]="true"
+                                (click)="closeComposantModal()"
+                            ></p-button>
+                            <p-button
+                                pRipple
+                                label="Save"
+                                icon="pi pi-check"
+                                [text]="true"
+                                (click)="saveNewComposant()"
+                            ></p-button>
                         </ng-template>
-
-                        <ng-template pTemplate="right"> </ng-template>
-                    </p-toolbar>
-                    <!-- !fd -->
-                    <p-table
-                        #dt
-                        [value]="composantCombo"
-                        [rows]="11"
-                        [tableStyle]="{ 'min-width': '75rem' }"
-                        [(selection)]="selectedComposants"
-                        [rowHover]="true"
-                        dataKey="nameComposant"
-                        [showCurrentPageReport]="true"
-                    >
-                        <ng-template pTemplate="caption">
-                            <div
-                                class="flex align-items-center justify-content-between"
-                            >
-                                <h5 class="m-0">Listes des composants</h5>
-                            </div>
-                        </ng-template>
-                        <ng-template pTemplate="header">
-                            <tr>
-                                <th style="width: 4rem">
-                                    <p-tableHeaderCheckbox />
-                                </th>
-                                <th
-                                    pSortableColumn="name"
-                                    style="min-width: 15rem"
-                                >
-                                    Nom composant <p-sortIcon field="name" />
-                                </th>
-                                <th
-                                    pSortableColumn="Quantité"
-                                    style="min-width: 15rem"
-                                >
-                                    Quantité <p-sortIcon field="name" />
-                                </th>
-                                <th style="min-width: 10rem">Action</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-composant>
-                            <tr>
-                                <td><p-tableCheckbox [value]="composant" /></td>
-                                <td>{{ composant.nameComposant }}</td>
-                                <td>{{ composant.quantity }}</td>
-                                <td>
-                                    <button
-                                        pButton
-                                        type="button"
-                                        icon="pi pi-info-circle"
-                                        label="Effacer"
-                                        (click)="onRowClick(composant)"
-                                    ></button>
-                                </td>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="summary">
-                            <div
-                                class="flex align-items-center justify-content-between"
-                            >
-                                Ce DI contient
-                                {{ composantCombo ? composantCombo.length : 0 }}
-                                Composants.
-                            </div>
-                        </ng-template>
-                    </p-table>
-                </ng-container>
-
-                <!-- ******* Start of composant creation ********* -->
-                <p-dialog
-                    [(visible)]="creatComposantDialog"
-                    [style]="{ width: '450px' }"
-                    header="Creation d'un nouveux composant"
-                    [modal]="true"
-                    styleClass="p-fluid"
-                >
-                    <ng-template pTemplate="content">
-                        <form [formGroup]="composantTechnicien">
-                            <div class="field">
-                                <label for="name">Nom composant</label>
-                                <input
-                                    type="text"
-                                    pInputText
-                                    id="name"
-                                    formControlName="name"
-                                    required
-                                />
-                                <small
-                                    class="p-error"
-                                    *ngIf="submitted && !composantTech.name"
-                                >
-                                    Name is required.
-                                </small>
-                            </div>
-                            <div class="field">
-                                <label for="packageComposant"
-                                    >Package composant</label
-                                >
-                                <input
-                                    type="text"
-                                    pInputText
-                                    id="package"
-                                    formControlName="packageComposant"
-                                    required
-                                />
-                            </div>
-                            <div class="field">
-                                <label for="link">Lien du composant</label>
-                                <input
-                                    type="text"
-                                    pInputText
-                                    id="link"
-                                    formControlName="link"
-                                />
-                            </div>
-                            <div class="field">
-                                <p-fileUpload
-                                    mode="basic"
-                                    chooseLabel="Ajouter un PDF"
-                                    chooseIcon="pi pi-upload"
-                                    name="demo[]"
-                                    url="https://www.primefaces.org/cdn/api/upload.php"
-                                    accept="image/*,application/pdf"
-                                    maxFileSize="1000000"
-                                    (onUpload)="onUpload($event)"
-                                />
-                            </div>
-                        </form>
-                    </ng-template>
-                    <ng-template pTemplate="footer">
-                        <p-button
-                            pRipple
-                            label="Cancel"
-                            icon="pi pi-times"
-                            [text]="true"
-                            (click)="closeComposantModal()"
-                        />
-                        <p-button
-                            pRipple
-                            label="Save"
-                            icon="pi pi-check"
-                            [text]="true"
-                            (click)="saveNewComposant()"
-                        />
-                    </ng-template>
-                </p-dialog>
-                <!-- ******* END of composant creation ********* -->
-            </div>
-        </form>
-
+                    </p-dialog>
+                    <!-- ******* END of composant creation ********* -->
+                </div>
+            </form>
+        </ng-template>
         <ng-template pTemplate="footer">
             <div class="foot">
                 <button
@@ -308,7 +328,6 @@
                     (click)="lapTimeForPauseAndGetBack()"
                 ></button>
                 <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
-
                 <button
                     pButton
                     pRipple
@@ -324,74 +343,76 @@
     <p-dialog
         [(visible)]="diDialogRep"
         [style]="{ width: '50%', height: '70vh' }"
-        header="Reparation ..."
         [modal]="true"
         styleClass="p-fluid"
+        [maximizable]="true"
     >
-        <!-- <div>
-            <button (click)="confirmComposant()">Confirmer</button>
-        </div> -->
-        <div class="flex flex-column">
-            <div [formGroup]="remarque" class="field">
-                <label for="name"
-                    >Ajouter des remarques concernant le Di si nécessaire</label
+        <!-- Empty header template -->
+        <ng-template pTemplate="content">
+            <div class="flex flex-column">
+                <div [formGroup]="remarque" class="field">
+                    <label for="name">
+                        Ajouter des remarques concernant le Di si nécessaire
+                    </label>
+                    <textarea
+                        formControlName="remarqueRepair"
+                        rows="5"
+                        cols="30"
+                        pInputTextarea
+                    ></textarea>
+                </div>
+
+                <div class="field" *ngIf="remarque_manager">
+                    <p-fieldset
+                        legend="Remarque admnistration"
+                        [toggleable]="true"
+                    >
+                        <p class="m-0">{{ remarque_manager }}</p>
+                    </p-fieldset>
+                </div>
+                <div class="field" *ngIf="remarque_admin_manager">
+                    <p-fieldset
+                        legend="remarque_admin_manager"
+                        [toggleable]="true"
+                    >
+                        <p class="m-0">{{ remarque_admin_manager }}</p>
+                    </p-fieldset>
+                </div>
+                <div class="field" *ngIf="remarque_admin_tech">
+                    <p-fieldset
+                        legend="remarque_admin_tech"
+                        [toggleable]="true"
+                    >
+                        <p class="m-0">{{ remarque_admin_tech }}</p>
+                    </p-fieldset>
+                </div>
+            </div>
+            <div class="field" *ngIf="remarque_tech_diagnostic">
+                <p-fieldset
+                    legend="Remarque Technicien Diagnostique"
+                    [toggleable]="true"
                 >
-                <textarea
-                    formControlName="remarqueRepair"
-                    rows="5"
-                    cols="30"
-                    pInputTextarea
-                ></textarea>
-            </div>
-
-            <div class="field" *ngIf="remarque_manager">
-                <!-- to continue other rq -->
-                <p-fieldset legend="Remarque admnistration" [toggleable]="true">
-                    <p class="m-0">{{ remarque_manager }}</p>
+                    <p class="m-0">{{ remarque_tech_diagnostic }}</p>
                 </p-fieldset>
             </div>
-            <div class="field" *ngIf="remarque_admin_manager">
-                <!-- to continue other rq -->
-                <p-fieldset legend="remarque_admin_manager" [toggleable]="true">
-                    <p class="m-0">{{ remarque_admin_manager }}</p>
+            <div class="field" *ngIf="remarque_magasin">
+                <p-fieldset legend="Remarque Magasin" [toggleable]="true">
+                    <p class="m-0">{{ remarque_magasin }}</p>
                 </p-fieldset>
             </div>
-            <div class="field" *ngIf="remarque_admin_tech">
-                <!-- to continue other rq -->
-                <p-fieldset legend="remarque_admin_tech" [toggleable]="true">
-                    <p class="m-0">{{ remarque_admin_tech }}</p>
+            <div class="field" *ngIf="remarque_coordinator">
+                <p-fieldset legend="Remarque Coordinatrice" [toggleable]="true">
+                    <p class="m-0">{{ remarque_coordinator }}</p>
                 </p-fieldset>
             </div>
-        </div>
-        <div class="field" *ngIf="remarque_tech_diagnostic">
-            <!-- to continue other rq -->
-            <p-fieldset
-                legend="Remarque Technicien Diagnostique"
-                [toggleable]="true"
-            >
-                <p class="m-0">{{ remarque_tech_diagnostic }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_magasin">
-            <!-- to continue other rq -->
-            <p-fieldset legend="Remarque Magasin" [toggleable]="true">
-                <p class="m-0">{{ remarque_magasin }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_coordinator">
-            <!-- to continue other rq -->
-            <p-fieldset legend="Remarque Coordinatrice" [toggleable]="true">
-                <p class="m-0">{{ remarque_coordinator }}</p>
-            </p-fieldset>
-        </div>
-
+        </ng-template>
         <ng-template pTemplate="footer">
             <div class="foot">
                 <button
                     pButton
                     pRipple
-                    label="Je reviendrai"
-                    icon="pi pi-check"
+                    label="Mettre DI en Pause"
+                    icon="pi pi-stopwatch"
                     class="p-button-text"
                     (click)="lapTimeForPauseAndGetBack1()"
                 ></button>
@@ -400,7 +421,7 @@
                     pButton
                     pRipple
                     label="Fin reperation"
-                    icon="pi pi-apple"
+                    icon="pi pi-briefcase"
                     class="p-button-text"
                     (click)="finishReparation()"
                 ></button>

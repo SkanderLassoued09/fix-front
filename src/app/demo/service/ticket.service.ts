@@ -718,8 +718,8 @@ export class TicketService {
         `;
     }
     addLocation(
-        location_name: string,
-        location_number: number
+        location_name: string
+
         // max_capacity: number,
         // avaible: boolean
     ) {
@@ -730,12 +730,10 @@ export class TicketService {
                     { 
                         _id: " ok", 
                         location_name: "${location_name}",
-                        location_number:${location_number}
                     }
                 ) {
                     _id
                     location_name
-                    location_number
                     max_capacity
                     current_item_stored
                     avaible
@@ -760,7 +758,28 @@ export class TicketService {
                 findAllLocation {
                     _id
                     location_name
-                    location_number
+                }
+            }
+        `;
+    }
+    getAllLocationWithInfo() {
+        return gql`
+            query {
+                findAllLocation {
+                    _id
+                    location_name
+                    max_capacity
+                    current_item_stored
+                    avaible
+                }
+            }
+        `;
+    }
+    getImageforDI(_idDi: string) {
+        return gql`
+            query {
+                getDiById(_id: "DI0") {
+                    image
                 }
             }
         `;

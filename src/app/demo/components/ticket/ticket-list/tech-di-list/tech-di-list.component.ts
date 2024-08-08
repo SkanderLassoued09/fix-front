@@ -105,6 +105,7 @@ export class TechDiListComponent {
     DiByStat: any;
     loadingCreatingComposant: boolean;
     hasPdr: boolean;
+    isReperable: boolean;
     remarque_manager: string;
     remarque_admin_manager: string;
     remarque_admin_tech: string;
@@ -114,6 +115,7 @@ export class TechDiListComponent {
     remarqueReparation: any;
     statusFinal: any;
     disable: any;
+    imageValue: string;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -126,6 +128,7 @@ export class TechDiListComponent {
         this.getAllTechDi();
         this.getComposant();
         this.checkValueChanges();
+        this.checkValueChangesReperable();
         console.log('array data,', this.composantList);
         // this.btnConditionReperation();
         // this.btnConditionDiagnostique();
@@ -194,6 +197,19 @@ export class TechDiListComponent {
         }, 2000);
     }
 
+    getImage() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getImageforDI(this.selectedDi_id),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log(data.getDiById.image, 'data image');
+                    this.imageValue = data.getDiById.image;
+                }
+            });
+    }
+
     diagModal(di) {
         this.di = { ...di };
         this.selectedDi = di._id;
@@ -202,8 +218,9 @@ export class TechDiListComponent {
         this.diStatus = di.status;
         this.changeStatus(di._idDi);
         this.getTimeSpent(di._id);
+        this.getImage();
     }
-    //!!Nezih
+
     repModal(di) {
         console.log('fired');
         this.di = { ...di };
@@ -797,6 +814,15 @@ export class TechDiListComponent {
             this.hasPdr = value;
             // Additional logic based on value changes
         });
+    }
+    checkValueChangesReperable() {
+        this.diagFormTech
+            .get('isReparable')
+            ?.valueChanges.subscribe((value) => {
+                console.log('isReperable value changed:', value);
+                this.isReperable = value;
+                // Additional logic based on value changes
+            });
     }
 
     finishReparation() {
