@@ -2,7 +2,6 @@ import { ChangeDetectorRef, Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { Product, ProductT } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import {
     ConfigDiagAffectationMutationResult,
@@ -219,6 +218,7 @@ export class TechDiListComponent {
         this.changeStatus(di._idDi);
         this.getTimeSpent(di._id);
         this.getImage();
+        this.getAllRemarque(di._idDi);
     }
 
     repModal(di) {
@@ -623,54 +623,66 @@ export class TechDiListComponent {
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
-        this.isFinishedDiag = true; // Disable the button immediately after it is clicked
-        this.lapTimeForPauseAndGetBack();
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation Diagnostique',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.isFinishedDiag = true; // Disable the button immediately after it is clicked
+                this.lapTimeForPauseAndGetBack();
 
-        const dataDiag = {
-            _idDi: this.selectedDi_id,
-            pdr: this.diagFormTech.value.isPdr,
-            reparable: this.diagFormTech.value.isReparable,
-            remarqueTech: this.diagFormTech.value.remarqueTech,
-            composant: this.composantCombo,
-        };
+                const dataDiag = {
+                    _idDi: this.selectedDi_id,
+                    pdr: this.diagFormTech.value.isPdr,
+                    reparable: this.diagFormTech.value.isReparable,
+                    remarqueTech: this.diagFormTech.value.remarqueTech,
+                    composant: this.composantCombo,
+                };
 
-        if (dataDiag.pdr) {
-            console.log('🍟[dataDiag.pdr true]:', dataDiag.pdr);
-            this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.finish(dataDiag),
-                    useMutationLoading: true,
-                })
-                .subscribe(({ data, loading }) => {
-                    console.log('🍤[data]:', data);
-                    if (data) {
-                        console.log('SENDING TO ESTIMATION WORKING', data);
-                        this.disable = data.tech_startDiagnostic;
-                        this.cdr.detectChanges();
-                        this.changeStatusMagasinEstimation(dataDiag._idDi);
-                    }
-                });
-        } else {
-            console.log('🍟[dataDiag.pdr false]:', dataDiag.pdr);
-            this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.finish(dataDiag),
-                    useMutationLoading: true,
-                })
-                .subscribe(({ data, loading }) => {
-                    if (data) {
-                        console.log('🥒[data]:', data);
-                        this.disable = data.tech_startDiagnostic;
-                        this.cdr.detectChanges();
-                        console.log(
-                            'SENDING TO ESTIMATION WORKING',
-                            this.disable
-                        );
-                        this.changeStatusToPending2(dataDiag._idDi);
-                    }
-                });
-        }
-        this.getAllTechDi();
+                if (dataDiag.pdr) {
+                    console.log('🍟[dataDiag.pdr true]:', dataDiag.pdr);
+                    this.apollo
+                        .mutate<any>({
+                            mutation: this.ticketSerice.finish(dataDiag),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data, loading }) => {
+                            console.log('🍤[data]:', data);
+                            if (data) {
+                                console.log(
+                                    'SENDING TO ESTIMATION WORKING',
+                                    data
+                                );
+                                this.disable = data.tech_startDiagnostic;
+                                this.cdr.detectChanges();
+                                this.changeStatusMagasinEstimation(
+                                    dataDiag._idDi
+                                );
+                            }
+                        });
+                } else {
+                    console.log('🍟[dataDiag.pdr false]:', dataDiag.pdr);
+                    this.apollo
+                        .mutate<any>({
+                            mutation: this.ticketSerice.finish(dataDiag),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data, loading }) => {
+                            if (data) {
+                                console.log('🥒[data]:', data);
+                                this.disable = data.tech_startDiagnostic;
+                                this.cdr.detectChanges();
+                                console.log(
+                                    'SENDING TO ESTIMATION WORKING',
+                                    this.disable
+                                );
+                                this.changeStatusToPending2(dataDiag._idDi);
+                            }
+                        });
+                }
+                this.getAllTechDi();
+            },
+        });
     }
 
     changeStatusToPending2(_id) {
@@ -826,24 +838,36 @@ export class TechDiListComponent {
     }
 
     finishReparation() {
-        const req = this.remarque.value.remarqueRepair;
-        this.lapTimeForPauseAndGetBack1();
-        this.lap1();
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.finishReparation(
-                    this.DiByStat,
-                    req
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data }) => {
-                console.log(
-                    '🥝[data tech_finishReperation]:',
-                    data?.tech_finishReperation?.status
-                );
-            });
-        this.getAllTechDi();
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation Reperation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                const req = this.remarque.value.remarqueRepair;
+                this.lapTimeForPauseAndGetBack1();
+                this.lap1();
+
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.finishReparation(
+                            this.DiByStat,
+                            req
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data }) => {
+                        console.log(
+                            '🥝[data tech_finishReperation]:',
+                            data?.tech_finishReperation?.status
+                        );
+                    });
+
+                this.getAllTechDi();
+            },
+            reject: () => {
+                console.log('Action rejected');
+            },
+        });
     }
 
     onUpload(event: any) {

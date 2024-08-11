@@ -1,4 +1,5 @@
 <p-toast></p-toast>
+<p-confirmDialog />
 <div class="card">
     <p-table
         [columns]="cols"
@@ -75,8 +76,12 @@
                 width="300"
                 height="150"
                 class="imageContainer shadow-4"
-                [preview]="true"
             ></p-image>
+            <div class="field" *ngIf="remarque_manager">
+                <p-fieldset legend="Remarque admnistration" [toggleable]="true">
+                    <p class="m-0">{{ remarque_manager }}</p>
+                </p-fieldset>
+            </div>
             <form [formGroup]="diagFormTech">
                 <div class="flex flex-column">
                     <div class="supheader field">
