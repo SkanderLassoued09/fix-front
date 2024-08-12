@@ -205,7 +205,8 @@ export class TicketService {
     }
 
     createDi(diInfo: CreateDiInput) {
-        console.log('🍭[diInfo]:', diInfo);
+        console.log('🍒[diInfo]:', diInfo);
+
         return gql`
         mutation {
             createDi(
@@ -219,6 +220,8 @@ export class TicketService {
                     nSerie: "${diInfo.nSerie}"
                     remarque_manager: "${diInfo.remarqueManager}"
                     image:"${diInfo.image}"
+                    di_category_id:"${diInfo.di_category_id}"
+                    location_id:"${diInfo.location}"
                 }
             ) {
                 _id
@@ -227,6 +230,24 @@ export class TicketService {
     `;
     }
 
+    addDevis(_id: string, pdf: string) {
+        return gql`
+            mutation {
+                addDevis(_id: "${_id}", pdf: "${pdf}") {
+                    _id
+                }
+            }
+        `;
+    }
+    addBC(_id: string, pdf: string) {
+        return gql`
+            mutation {
+                addBC(_id: "${_id}", pdf: "${pdf}") {
+                    _id
+                }
+            }
+        `;
+    }
     getCompanies() {
         return gql`
             {
@@ -717,6 +738,14 @@ export class TicketService {
             }
         `;
     }
+
+    deleteLocation(_id: string) {
+        return gql`
+            mutation {
+                removeLocation(_id: "${_id}")
+            }
+        `;
+    }
     addLocation(
         location_name: string
 
@@ -781,6 +810,14 @@ export class TicketService {
                 getDiById(_id: "DI0") {
                     image
                 }
+            }
+        `;
+    }
+
+    removeCategory(_id: string) {
+        return gql`
+            mutation {
+                removeDiCategory(_id: "${_id}")
             }
         `;
     }

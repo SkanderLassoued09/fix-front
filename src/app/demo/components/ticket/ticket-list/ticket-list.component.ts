@@ -32,7 +32,6 @@ interface UploadEvent {
 @Component({
     selector: 'app-ticket-list',
     standalone: false,
-
     templateUrl: './ticket-list.component.html',
     styleUrl: './ticket-list.component.scss',
 })
@@ -45,6 +44,8 @@ export class TicketListComponent implements OnInit {
         client_id: new FormControl(),
         company_id: new FormControl(),
         nSerie: new FormControl(),
+        category: new FormControl(),
+        location: new FormControl(),
         remarqueManager: new FormControl(),
     });
     tarif_Techs = new FormGroup({
@@ -115,17 +116,21 @@ export class TicketListComponent implements OnInit {
     cols = [
         { field: 'title', header: 'Title' },
         { field: 'image', header: 'Image' },
-        // { field: 'description', header: 'Description' },
-        // { field: 'can_be_repaired', header: 'Reparable' },
-        // { field: 'bon_de_commande', header: 'BC' },
-        // { field: 'bon_de_livraison', header: 'BL' },
-        // { field: 'contain_pdr', header: 'PDR' },
+        { field: 'di_category_id', header: 'Category' },
+        { field: 'location_id', header: 'Location' },
         { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },
-        // { field: 'remarque_id', header: 'R.manager' },
         { field: 'createdBy', header: 'Cree par' },
-        // { field: 'location_id', header: 'Location' },
-        // { field: 'di_category_id', header: 'Categorie' },
+    ];
+
+    colCategory = [
+        { field: 'value', name: 'ID' },
+        { field: 'category_name', name: 'Name' },
+    ];
+
+    colEmplacement = [
+        { field: 'value', name: 'ID' },
+        { field: 'location_name', name: 'Emplacement' },
     ];
 
     diList: any[];
@@ -167,13 +172,13 @@ export class TicketListComponent implements OnInit {
     composantQuantity: number;
     tarif_Tech: number;
     allCategoryDiArray: any;
-    payloadImage: { image: string };
     // payloadBonCommande: { pdf: string };
-    locationDropDown: any;
-    categorieDiListDropDown: any;
+    locationDropDown: any[];
+    categorieDiListDropDown: any[];
     timepart: { hours: any; minutes: any; seconds: any };
     facturationDiagnostique: number = 0;
     tarif_Technicien: number;
+    payload: { file: string };
 
     constructor(
         private ticketSerice: TicketService,
@@ -189,6 +194,8 @@ export class TicketListComponent implements OnInit {
         this.getDi();
         this.getCompanyList();
         this.getClientList();
+        this.allCategoryDi();
+        this.getLocationList();
         this.notificationService.startWorker();
     }
 
@@ -198,12 +205,9 @@ export class TicketListComponent implements OnInit {
 
     showDialogCategoryDI() {
         this.openCategoryModal = true;
-        this.allCategoryDi();
-        console.log(this.allCategoryDiArray, 'this.allCategoryDiArray();');
     }
     showDialogLocations() {
         this.openLocationsModal = true;
-        this.getLocationList();
     }
     showDialogPriceTech() {
         this.openPriceTechModal = true;
@@ -243,8 +247,30 @@ export class TicketListComponent implements OnInit {
         this.changeStatusDiToInMagasin(this._idDi);
         console.log('🥓[this._idDi]:', this._idDi);
         this.getDi();
+        this.saveDevisPDF(this._idDi, this.payload.file);
+        this.saveBCPDF(this._idDi, this.payload.file);
         this.negocite1Modal = false;
         this.negocite2Modal = false;
+    }
+
+    saveDevisPDF(_id: string, pdf: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.addDevis(_id, pdf),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍡[data]:', data);
+            });
+    }
+
+    saveBCPDF(_id: string, pdf: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.addBC(_id, pdf),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍡[data]:', data);
+            });
     }
 
     timeStringIntoHours(timeString) {
@@ -557,9 +583,10 @@ export class TicketListComponent implements OnInit {
             client_id,
             company_id,
             nSerie,
-            status,
             typeClient,
             remarqueManager,
+            category,
+            location,
         } = this.creationDiForm.value;
         const diInfo = {
             title,
@@ -570,9 +597,12 @@ export class TicketListComponent implements OnInit {
             status: this.statusDI,
             typeClient,
             remarqueManager,
-            image: this.payloadImage.image,
+            di_category_id: category,
+            location,
+            image: this.payload.file,
         };
         let _idQuery;
+        console.log('🥘diInfo', diInfo);
         this.apollo
             .mutate<CreateDiMutationResult>({
                 mutation: this.ticketSerice.createDi(diInfo),
@@ -819,7 +849,7 @@ export class TicketListComponent implements OnInit {
                 this.cdr.detectChanges();
             });
     }
-    // ! CRUDS finish this today
+
     addCategoryDi() {
         console.log('category input', this.categoryForm.value.categoryName);
         typeof (this.categoryForm.value.categoryName, 'TYPE');
@@ -831,6 +861,16 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 console.log(data, 'data-category_DI');
+                if (data) {
+                    let obj: { value: string; category_name: string } = {
+                        value: '',
+                        category_name: '',
+                    };
+                    obj.category_name = data?.createDiCategory?.category;
+                    obj.value = data?.createDiCategory?._id;
+                    this.categorieDiListDropDown.push(obj);
+                    this.categoryForm.reset();
+                }
             });
     }
     addLocation() {
@@ -842,17 +882,28 @@ export class TicketListComponent implements OnInit {
                 ),
             })
             .subscribe(({ data }) => {
-                console.log(data, 'data-emplacement');
-                this.openLocationsModal = false;
+                if (data) {
+                    console.log(data, 'data-emplacement');
+                    let obj: { location_name: string; value: string } = {
+                        location_name: '',
+                        value: '',
+                    };
+                    obj.value = data?.createLocation?._id;
+                    obj.location_name = data?.createLocation?.location_name;
+                    this.locationDropDown.push(obj);
+                    this.locationForm.reset();
+                }
             });
     }
 
     allCategoryDi() {
+        console.log('🍋');
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getAllDiCategory(),
             })
             .subscribe(({ data }) => {
+                console.log('🥪[data]:', data);
                 console.log(data.findAllDiCategory, 'all categroy === ');
                 if (data) {
                     this.categorieDiListDropDown = data.findAllDiCategory.map(
@@ -860,6 +911,10 @@ export class TicketListComponent implements OnInit {
                             category_name: `${categoryDi.category}`,
                             value: categoryDi._id, // ID as value
                         })
+                    );
+                    console.log(
+                        '🍐[categorieDiListDropDown]:',
+                        this.categorieDiListDropDown
                     );
                 }
             });
@@ -870,15 +925,16 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getAllLocation(),
             })
             .subscribe(({ data }) => {
-                console.log(data);
-                // this.locationDropDown = data.findAllLocation.map((Company) => ({
-                //     company_name: `${Company.name}`,
-                //     value: Company._id, // ID as value
-                // }));
+                console.log('🍑[data]:', data);
+
+                this.locationDropDown = data.findAllLocation.map((el) => ({
+                    location_name: el.location_name,
+                    value: el._id, // ID as value
+                }));
             });
     }
 
-    onUpload(event: any) {
+    onUpload(event: any, type: string) {
         console.log(event, 'this the event ');
 
         for (let file of event.files) {
@@ -886,53 +942,77 @@ export class TicketListComponent implements OnInit {
             reader.readAsDataURL(file);
             reader.onload = () => {
                 const base64 = reader.result as string;
-                this.uploadFile(base64);
+                this.uploadFile(base64, type);
             };
         }
         this.messageservice.add({
             severity: 'info',
-            summary: 'Image enregistré',
-            detail: "l'image a été ajouter avec succès",
+            summary: 'Fichier enregistré',
+            detail: 'Fichier a été ajouter avec succès',
         });
     }
 
-    uploadFile(base64: string) {
-        const payload = {
-            image: base64,
-            // add other necessary data here
-        };
-        console.log('🌮[payload]:', payload);
-        this.payloadImage = payload;
-        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
-        //     (response) => {
-        //         console.log('Upload successful', response);
-        //     },
-        //     (error) => {
-        //         console.log('Upload failed', error);
-        //     }
-        // );
+    uploadFile(base64: string, type: string) {
+        if (type === 'image') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
+
+            this.payload = payload;
+        }
+        if (type === 'BC') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
+
+            this.payload = payload;
+        }
+        if (type === 'Devis') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
+            this.payload = payload;
+        }
+        console.log('🌮[payload]:', this.payload);
     }
-    //! Bon de commande
-    // onUploadBonCommande(event: any) {
-    //     console.log(event, 'this the event ');
 
-    //     for (let file of event.files) {
-    //         const reader = new FileReader();
-    //         reader.readAsDataURL(file);
-    //         reader.onload = () => {
-    //             const base64 = reader.result as string;
-    //             this.uploadFileBonCommande(base64);
-    //         };
-    //     }
-    // }
+    deletLocation(selected) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.deleteLocation(selected.value),
+            })
+            .subscribe(({ data }) => {
+                console.log('🌮[data]:', data);
+                if (data) {
+                    const index = this.locationDropDown.findIndex((el) => {
+                        return el.value === selected.value;
+                    });
+                    console.log('🥞[index]:', index);
+                    this.locationDropDown.splice(index, 1);
+                }
+            });
+    }
 
-    // uploadFileBonCommande(base64: string) {
-    //     const payload = {
-    //         pdf: base64,
-    //     };
-    //     this.payloadBonCommande = payload;
-    // }
-
-    deletLocation() {}
-    deletCategoryDi() {}
+    deleteCategory(selected) {
+        console.log('🥠[selected]:', selected);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.removeCategory(selected.value),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍅[data]:', data);
+                if (data) {
+                    const index = this.categorieDiListDropDown.find((el) => {
+                        return el.value === selected.value;
+                    });
+                    this.categorieDiListDropDown.splice(index, 1);
+                }
+            });
+    }
+    editCategory(selected) {
+        console.log('🥛[selected]:', selected);
+    }
 }

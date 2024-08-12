@@ -34,6 +34,8 @@ export interface CreateDiInput {
     nSerie: string;
     remarqueManager: string;
     image: string;
+    di_category_id: string;
+    location: string;
 }
 
 export interface CreateDiMutationResult {

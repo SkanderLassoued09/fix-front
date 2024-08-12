@@ -33,8 +33,54 @@
     [draggable]="false"
     [resizable]="true"
 >
-    <form [formGroup]="categoryForm" class="category-form">
+    <form [formGroup]="categoryForm">
         <div class="form-group">
+            <label for="categoryName">Nom de la catégorie</label>
+            <input
+                formControlName="categoryName"
+                id="categoryName"
+                type="text"
+                class="form-control"
+            />
+        </div>
+        <p-button
+            (click)="addCategoryDi()"
+            icon="pi pi-plus"
+            label="Ajouter catégorie"
+            severity="success"
+        ></p-button>
+    </form>
+    <p-table
+        [columns]="colCategory"
+        [value]="categorieDiListDropDown"
+        styleClass="p-datatable-sm"
+        [tableStyle]="{ 'min-width': '20rem' }"
+    >
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns" style="min-width: 10rem">
+                    {{ col.header }}
+                </th>
+                <th style="min-width: 10rem">Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr>
+                <td *ngFor="let col of columns">
+                    {{ rowData[col.field] }}
+                </td>
+                <td class="flex">
+                    <p-button
+                        label="D"
+                        severity="danger"
+                        (click)="deleteCategory(rowData)"
+                    ></p-button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+    <!--  <form [formGroup]="categoryForm" class="category-form">
+       <div class="form-group">
             <label for="categoryName">Nom de la catégorie</label>
             <input
                 formControlName="categoryName"
@@ -68,7 +114,7 @@
                 severity="success"
             ></p-button>
         </div>
-    </form>
+    </form> -->
 </p-dialog>
 
 <p-dialog
@@ -89,24 +135,8 @@
                 class="form-control"
             />
         </div>
-        <!--    Add and check 
-        <div class="form-group">
-            <label for="locationNumber">Nombre max de Di supporté</label>
-            <input
-                formControlName="Nombre Max"
-                id="locationNumber"
-                type="number"
-                class="form-control"
-                min="0"
-            />
-        </div> -->
+
         <div class="modal-footer">
-            <p-button
-                (click)="deletLocation()"
-                icon="pi pi-trash"
-                label="Supprimer"
-                severity="danger"
-            ></p-button>
             <p-button
                 (click)="addLocation()"
                 icon="pi pi-plus"
@@ -115,6 +145,35 @@
             ></p-button>
         </div>
     </form>
+    <p-table
+        [columns]="colEmplacement"
+        [value]="locationDropDown"
+        styleClass="p-datatable-sm"
+        [tableStyle]="{ 'min-width': '20rem' }"
+    >
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th *ngFor="let col of columns" style="min-width: 10rem">
+                    {{ col.header }}
+                </th>
+                <th style="min-width: 10rem">Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr>
+                <td *ngFor="let col of columns">
+                    {{ rowData[col.field] }}
+                </td>
+                <td class="flex">
+                    <p-button
+                        label="D"
+                        severity="danger"
+                        (click)="deletLocation(rowData)"
+                    ></p-button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
 </p-dialog>
 
 <p-dialog
@@ -185,6 +244,28 @@
                     class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
                 />
             </div>
+            <!-- Category -->
+            <div>
+                <p-dropdown
+                    class="field"
+                    [options]="categorieDiListDropDown"
+                    formControlName="category"
+                    optionLabel="category_name"
+                    optionValue="value"
+                    placeholder="Choisir categorie"
+                />
+            </div>
+            <!-- Location -->
+            <div>
+                <p-dropdown
+                    class="field"
+                    [options]="locationDropDown"
+                    formControlName="location"
+                    optionLabel="location_name"
+                    optionValue="value"
+                    placeholder="Choisir emplacement"
+                />
+            </div>
             <div class="field">
                 <p-fileUpload
                     mode="basic"
@@ -194,7 +275,7 @@
                     url="https://www.primefaces.org/cdn/api/upload.php"
                     accept="image/*"
                     maxFileSize="1000000"
-                    (onUpload)="onUpload($event)"
+                    (onUpload)="onUpload($event, 'image')"
                     [auto]="true"
                 />
             </div>
@@ -247,16 +328,6 @@
                 formControlName="remarqueManager"
             >
             </textarea>
-            <!-- <div>
-                <p-dropdown
-                    [options]="locationDropDown"
-                    formControlName="location_id"
-                    optionLabel="label"
-                    optionValue="value"
-                    [showClear]="true"
-                    placeholder="Affecter un emplacement"
-                ></p-dropdown>
-            </div> -->
         </div>
         <div class="field">
             <p-toggleButton
@@ -492,10 +563,12 @@
                         mode="basic"
                         chooseLabel="Ajouter Bon de commande"
                         chooseIcon="pi pi-upload"
-                        name="demo[]"
+                        name="bonDeCommande"
                         url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="image/*,application/pdf"
-                        maxFileSize="1000000"
+                        accept="application/pdf"
+                        maxFileSize="10000000"
+                        (onUpload)="onUpload($event, 'BC')"
+                        [auto]="true"
                     />
                 </div>
                 <div>
@@ -503,67 +576,68 @@
                         mode="basic"
                         chooseLabel="Ajouter Devis"
                         chooseIcon="pi pi-upload"
-                        name="demo[]"
+                        name="devis"
                         url="https://www.primefaces.org/cdn/api/upload.php"
                         accept="image/*,application/pdf"
-                        maxFileSize="1000000"
-                        (onUpload)="onUpload($event)"
+                        maxFileSize="10000000"
+                        (onUpload)="onUpload($event, 'Devis')"
+                        [auto]="true"
                     />
                 </div>
             </div>
-            <hr class="dashed" />
-            <div class="element-container">
-                <h3>Prix Intial: {{ price }} TND</h3>
-                <h2>Prix final: {{ finalPrice }} TND</h2>
-                <p-inputNumber
-                    [(ngModel)]="discountPercent"
-                    inputId="percent"
-                    prefix="%"
-                    [max]="20"
-                    [ariaValueMax]="20"
-                >
-                </p-inputNumber>
-            </div>
-            <div class="element-container">
-                <p-slider
-                    max="20"
-                    [(ngModel)]="discountPercent"
-                    class="w-full"
-                    (onSlideEnd)="onSlideEnd($event)"
-                ></p-slider>
-            </div>
-            <div class="Slider-buttons">
-                <button
-                    pButton
-                    pRipple
-                    label="discount"
-                    icon="pi pi-dollar"
-                    class="p-button-rounded p-button-raised p-button-success"
-                    (click)="discountByPercent()"
-                ></button>
-            </div>
+        </div>
+        <hr class="dashed" />
+        <div class="element-container">
+            <h3>Prix Intial: {{ price }} TND</h3>
+            <h2>Prix final: {{ finalPrice }} TND</h2>
+            <p-inputNumber
+                [(ngModel)]="discountPercent"
+                inputId="percent"
+                prefix="%"
+                [max]="20"
+                [ariaValueMax]="20"
+            >
+            </p-inputNumber>
+        </div>
+        <div class="element-container">
+            <p-slider
+                max="20"
+                [(ngModel)]="discountPercent"
+                class="w-full"
+                (onSlideEnd)="onSlideEnd($event)"
+            ></p-slider>
+        </div>
+        <div class="Slider-buttons">
+            <button
+                pButton
+                pRipple
+                label="discount"
+                icon="pi pi-dollar"
+                class="p-button-rounded p-button-raised p-button-success"
+                (click)="discountByPercent()"
+            ></button>
+        </div>
 
-            <h5>Remise: {{ discountedPriceNeg }} TND</h5>
-            <div class="element-container-BTN">
-                <ng-container *ngIf="slideEnd === 20">
-                    <button
-                        pButton
-                        pRipple
-                        label="Envoyer a l'Admin Manager"
-                        icon="pi pi-send"
-                        class="p-button-rounded p-button-raised p-button-success"
-                        (click)="nextNegociate2()"
-                    ></button
-                ></ng-container>
+        <h5>Remise: {{ discountedPriceNeg }} TND</h5>
+        <div class="element-container-BTN">
+            <ng-container *ngIf="slideEnd === 20">
                 <button
                     pButton
                     pRipple
-                    label="confirmer"
-                    icon="pi pi-check-circle"
+                    label="Envoyer a l'Admin Manager"
+                    icon="pi pi-send"
                     class="p-button-rounded p-button-raised p-button-success"
-                    (click)="confirmerNegociation()"
-                ></button>
-            </div>
+                    (click)="nextNegociate2()"
+                ></button
+            ></ng-container>
+            <button
+                pButton
+                pRipple
+                label="confirmer"
+                icon="pi pi-check-circle"
+                class="p-button-rounded p-button-raised p-button-success"
+                (click)="confirmerNegociation()"
+            ></button>
         </div>
     </ng-container>
 </p-dialog>
