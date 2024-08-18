@@ -10,7 +10,7 @@
     header="Ajouter un nouveau client"
     [(visible)]="visible"
     [modal]="true"
-    [style]="{ width: '50vw' }"
+    [style]="{ width: '50vw', height: '27vw' }"
     [draggable]="false"
     [resizable]="false"
 >
@@ -78,7 +78,7 @@
             </div>
         </div>
     </form>
-    <div class="modal-footer">
+    <div class="p-dialog-footer">
         <p-button
             label="Annuler"
             (onClick)="cancel()"

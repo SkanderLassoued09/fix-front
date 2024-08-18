@@ -39,8 +39,19 @@ export class MagasinDiListComponent {
     loadedDataComposant: any;
     selectedDi_id: any;
     selectedstatusComposant: string;
+    openCreationComposantModal: boolean;
+    payloadImage: { image: string };
     //MagasinEstimation_Condition: boolean = true;
     //MagasinCondition: boolean = true;
+
+    composantMagasin = new FormGroup({
+        _idComposant: new FormControl(),
+        name: new FormControl(),
+        packageComposant: new FormControl(),
+        category_composant_id: new FormControl(),
+        link: new FormControl(),
+        pdf: new FormControl(),
+    });
 
     constructor(
         private ticketSerice: TicketService,
@@ -68,7 +79,9 @@ export class MagasinDiListComponent {
     annulerMagasinEstimation() {
         this.magasinDiDialog = false;
     }
-
+    showDialogcomposantCreation() {
+        this.openCreationComposantModal = true;
+    }
     getSeverity(status: string) {
         switch (status) {
             case 'CREATED':
@@ -212,5 +225,34 @@ export class MagasinDiListComponent {
                     this.magasinDiDialog = false;
                 }
             });
+    }
+
+    onUpload(event: any) {
+        console.log(event, 'this the event ');
+
+        for (let file of event.files) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64 = reader.result as string;
+                this.uploadFile(base64);
+            };
+        }
+    }
+    uploadFile(base64: string) {
+        const payload = {
+            image: base64,
+            // add other necessary data here
+        };
+        console.log('🌮[payload]:', payload);
+        this.payloadImage = payload;
+        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
+        //     (response) => {
+        //         console.log('Upload successful', response);
+        //     },
+        //     (error) => {
+        //         console.log('Upload failed', error);
+        //     }
+        // );
     }
 }

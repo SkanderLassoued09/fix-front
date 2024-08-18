@@ -3,14 +3,14 @@ Projects: @Fixtronix
 Todos:
   New:
 
-  ☐ Add upload 4 files for the manager `Bon de commande` `Bon de livraison` `devis` `facture` @high @Skander (Stand_By) almost done
-  ☐ Location and categoryDi add Query all and delet mutation @Hethi
-  ☐ In the creation of the DI add location as a field @Hethi
-  ☐ Add all the remarque in the DI
+  
+  ☐ Add upload 2 files for the manager `Bon de livraison` `facture`
   ☐ Add confirmation PopUp in everyStep
   ☐ In diagnostique when finished all the btn become disabled bcs you use the same variable for all of them when refresh become correct
-  
+  ☐ add creation composant + update composant for the magasin @Inprogress
+  ☐ btn reperation working but not disabled @skander
   Done:
+    ✔ Add upload 2 files for the manager `Bon de commande`  `devis`  @high @Skander @done(24-08-15 00:03)
   ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)
@@ -38,7 +38,9 @@ Todos:
   ✔ add delet and check HTML for the staff @done(24-07-29 17:04)
   ✔ Recheck add image @skander @done(24-07-29 17:04)
   ✔ Improve CSS for creating company + content Table for the company add the ID @Hethi @Nezih @done(24-07-31 09:23)
-
+  ✔ Location and categoryDi add Query all and delet mutation @Hethi @done(24-08-15 00:04)
+  ✔ In the creation of the DI add location as a field @Hethi @done(24-08-15 00:04)
+  ✔ Add all the remarque in the DI @done(24-08-15 00:04)
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard

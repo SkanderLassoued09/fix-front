@@ -1,4 +1,19 @@
 <p-toast></p-toast>
+<div class="card Header-btns">
+    <p-button
+        (click)="showDialogcomposantCreation()"
+        icon="pi pi-android"
+        severity="success"
+        label="Creation d'un nouveau composant"
+    ></p-button>
+
+    <p-button
+        (click)="showDialogcomposantCreation()"
+        icon="pi pi-verified"
+        severity="info"
+        label="Modifier un composant"
+    ></p-button>
+</div>
 <div class="card">
     <p-table
         [value]="diList"
@@ -207,5 +222,183 @@
                 </div>
             </div>
         </ng-template>
+    </p-dialog>
+
+    <p-dialog
+        [(visible)]="openCreationComposantModal"
+        [style]="{ width: '50%', height: '90vh' }"
+        header="Creation d'un nouveau composant"
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <form [formGroup]="composantMagasin">
+            <div class="field">
+                <label for="name">Nom composant</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="name"
+                    formControlName="name"
+                    required
+                />
+            </div>
+
+            <div class="field">
+                <label for="packageComposant">Package composant</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="packageComposant"
+                    formControlName="packageComposant"
+                    required
+                />
+            </div>
+
+            <div class="field">
+                <label for="link">Lien du composant</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="link"
+                    formControlName="link"
+                />
+            </div>
+
+            <div class="field">
+                <p-fileUpload
+                    mode="basic"
+                    chooseLabel="Ajouter un PDF"
+                    chooseIcon="pi pi-upload"
+                    name="demo[]"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="image/*,application/pdf"
+                    maxFileSize="1000000"
+                    (onUpload)="onUpload($event)"
+                ></p-fileUpload>
+            </div>
+
+            <div class="grid align-items-center">
+                <div class="col">
+                    <label for="prix_achat">Prix d'achat</label>
+                    <p-inputNumber
+                        [showButtons]="true"
+                        formControlName="prix_achat"
+                        buttonLayout="horizontal"
+                        spinnerMode="horizontal"
+                        decrementButtonClass="p-button-danger"
+                        incrementButtonClass="p-button-success"
+                        incrementButtonIcon="pi pi-plus"
+                        decrementButtonIcon="pi pi-minus"
+                        [step]="0.25"
+                        mode="currency"
+                        currency="TND"
+                    ></p-inputNumber>
+                </div>
+
+                <div class="col">
+                    <label for="coming_date">Date d'arrivage</label>
+                    <p-calendar
+                        dateFormat="dd.mm.yy"
+                        formControlName="coming_date"
+                    ></p-calendar>
+                </div>
+
+                <div class="col">
+                    <label for="prix_vente">Prix de vente</label>
+                    <p-inputNumber
+                        [showButtons]="true"
+                        formControlName="prix_vente"
+                        buttonLayout="horizontal"
+                        spinnerMode="horizontal"
+                        decrementButtonClass="p-button-danger"
+                        incrementButtonClass="p-button-success"
+                        incrementButtonIcon="pi pi-plus"
+                        decrementButtonIcon="pi pi-minus"
+                        [step]="0.25"
+                        mode="currency"
+                        currency="TND"
+                    ></p-inputNumber>
+                </div>
+            </div>
+
+            <div class="grid align-items-center">
+                <div class="col">
+                    <label for="link">Lien pour le composant</label>
+                    <input formControlName="link" pInputText />
+                </div>
+
+                <div class="col">
+                    <label for="pdf">Lien DataSheet</label>
+                    <input formControlName="pdf" pInputText />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <label for="status" class="mr-2"
+                            >Affecter un statut pour le composant</label
+                        >
+                        <p-dropdown
+                            [options]="statusComposant"
+                            (onChange)="getSelectedStatus($event)"
+                            optionLabel="name"
+                            optionValue="value"
+                            placeholder="Choisir état"
+                            class="mr-2"
+                        >
+                            <ng-template let-option pTemplate="item">
+                                <p-tag
+                                    [value]="option.name"
+                                    [severity]="getSeverity(option.name)"
+                                ></p-tag>
+                            </ng-template>
+                        </p-dropdown>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <label for="quantity_stocked" class="mr-2"
+                            >Quantité en stock</label
+                        >
+                        <p-inputNumber
+                            mode="decimal"
+                            [showButtons]="true"
+                            buttonLayout="vertical"
+                            spinnerMode="vertical"
+                            formControlName="quantity_stocked"
+                            decrementButtonClass="p-button-secondary"
+                            incrementButtonClass="p-button-secondary"
+                            incrementButtonIcon="pi pi-plus"
+                            decrementButtonIcon="pi pi-minus"
+                        ></p-inputNumber>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-content-between align-content-center">
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
+                        label="Annuler"
+                        icon="pi pi-minus-circle"
+                        (click)="annulerMagasinEstimation()"
+                        class="p-button-text"
+                    ></button>
+                </div>
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
+                        label="Ajouter"
+                        icon="pi pi-check-circle"
+                        class="p-button-text"
+                        (click)="updateComposant()"
+                    ></button>
+                </div>
+            </div>
+        </form>
     </p-dialog>
 </div>

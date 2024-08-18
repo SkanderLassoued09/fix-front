@@ -489,8 +489,8 @@ export class TicketListComponent implements OnInit {
                         });
                         this.diList.splice(index, 0);
                         this.messageservice.add({
-                            severity: 'success',
-                            summary: "Demande d'intervention a été créer",
+                            severity: 'danger',
+                            summary: 'Deleted',
                             detail: 'La demande service supprimer',
                         });
                         this.getDi();
