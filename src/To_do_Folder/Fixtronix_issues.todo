@@ -4,11 +4,15 @@ Todos:
   New:
 
   
-  ☐ Add upload 2 files for the manager `Bon de livraison` `facture`
-  ☐ Add confirmation PopUp in everyStep
+  ☐ Add upload 2 files for the manager `Bon de livraison` `facture` @WALID
+  ☐ Add confirmation PopUp in everyStep @NEZIH
+  
   ☐ In diagnostique when finished all the btn become disabled bcs you use the same variable for all of them when refresh become correct
-  ☐ add creation composant + update composant for the magasin @Inprogress
+  ☐  update composant for the magasin @Inprogress
   ☐ btn reperation working but not disabled @skander
+
+  ☐ Status === pricing => add await so the values will be shown (image what'up)
+  ☐ Status === nego1 => confirmation disabled and only enabled after affecting the two files
   Done:
     ✔ Add upload 2 files for the manager `Bon de commande`  `devis`  @high @Skander @done(24-08-15 00:03)
   ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
@@ -41,6 +45,7 @@ Todos:
   ✔ Location and categoryDi add Query all and delet mutation @Hethi @done(24-08-15 00:04)
   ✔ In the creation of the DI add location as a field @Hethi @done(24-08-15 00:04)
   ✔ Add all the remarque in the DI @done(24-08-15 00:04)
+  ✔ add creation composant @done(24-08-20 11:22)
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard
