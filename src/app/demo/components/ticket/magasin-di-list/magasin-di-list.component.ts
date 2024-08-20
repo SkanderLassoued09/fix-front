@@ -8,6 +8,7 @@ import {
     UpdateComposantMutationResponse,
 } from './magasin-di-list.interfaces';
 import { Router } from '@angular/router';
+import { MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -61,6 +62,7 @@ export class MagasinDiListComponent {
 
     constructor(
         private ticketSerice: TicketService,
+        private readonly messageservice: MessageService,
         private apollo: Apollo,
         private router: Router
     ) {
@@ -277,6 +279,14 @@ export class MagasinDiListComponent {
             })
             .subscribe(({ data }) => {
                 console.log('🍰[data]:', data);
+                if (data) {
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Le composant a été créer',
+                    });
+                }
             });
+        this.openCreationComposantModal = false;
     }
 }
