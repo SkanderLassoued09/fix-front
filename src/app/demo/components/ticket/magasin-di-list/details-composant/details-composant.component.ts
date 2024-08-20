@@ -56,6 +56,7 @@ export class DetailsComposantComponent implements OnInit {
             status: new FormControl(),
         });
     }
+
     ngOnInit(): void {
         this.getDiByID(this._id);
         this.productService

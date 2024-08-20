@@ -6,6 +6,7 @@ Todos:
   
   ☐ Add upload 2 files for the manager `Bon de livraison` `facture` @WALID
   ☐ Add confirmation PopUp in everyStep @NEZIH
+  ☐ magasin and else change the links and files with btns refreing to them
   
   ☐ In diagnostique when finished all the btn become disabled bcs you use the same variable for all of them when refresh become correct @Done
   ☐  update composant for the magasin @Inprogress already exist

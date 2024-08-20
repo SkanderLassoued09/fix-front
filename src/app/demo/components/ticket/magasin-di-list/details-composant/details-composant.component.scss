@@ -1,0 +1,63 @@
+/* General Layout */
+.card {
+    background-color: var(--surface);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--box-shadow);
+}
+
+/* Header Styles */
+.component-header {
+    border-bottom: 1px solid var(--surface-border);
+    padding-bottom: 1rem;
+}
+
+/* Button Group */
+.button-group p-button {
+    margin-left: 0.5rem;
+}
+
+/* Component Details Section */
+.component-details .field {
+    margin-bottom: 1rem;
+}
+
+.component-details .field strong {
+    display: inline-block;
+    width: 150px;
+}
+
+.component-details .field span {
+    font-weight: normal;
+}
+
+/* Component List Styles */
+.component-list {
+    background-color: var(--surface-alt);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: var(--box-shadow);
+}
+
+.component-item {
+    background-color: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.component-item:hover {
+    background-color: var(--surface-hover);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card {
+        flex-direction: column;
+    }
+    .component-info,
+    .component-list {
+        width: 100%;
+    }
+}

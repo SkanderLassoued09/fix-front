@@ -114,13 +114,14 @@ export class TicketListComponent implements OnInit {
     ingredient;
     uploadedFiles: any[] = [];
     cols = [
-        { field: 'title', header: 'Title' },
+        { field: '_id', header: 'DI id' },
+        { field: 'title', header: 'Titre' },
         { field: 'image', header: 'Image' },
-        { field: 'di_category_id', header: 'Category' },
+        // { field: 'di_category_id', header: 'Category' },
         { field: 'location_id', header: 'Location' },
         { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },
-        { field: 'createdBy', header: 'Cree par' },
+        { field: 'createdBy', header: 'Créé par' },
     ];
 
     colCategory = [

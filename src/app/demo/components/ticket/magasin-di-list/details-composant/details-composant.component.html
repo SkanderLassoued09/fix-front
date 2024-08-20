@@ -1,158 +1,163 @@
-<div class="card flex flex-row">
-    <div class="col-7">
-        <!-- Header title -->
-        <div>Information sur composant</div>
-        <!-- Header action -->
-        <div class="flex justify-content-between items-center">
-            <h6>Composant selectioné: {{ composantValues?.name }}</h6>
-            <p-button
-                label="Save"
-                [raised]="true"
-                size="small"
-                (click)="updateComposant()"
-            ></p-button>
-            <p-button
-                label="Finir"
-                [raised]="true"
-                size="small"
-                (click)="changeStatusPending3()"
-            ></p-button>
-        </div>
-        <!-- Body Details composant -->
-        <div class="p-4" [formGroup]="formUpdateComposant">
-            <div class="flex flex-column">
-                <div class="field">
-                    <strong>ID:</strong>
-                    <span> {{ composantValues?._id }}</span>
-                </div>
-                <div class="field w-full">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong>Category composant:</strong>
-                            <span>
-                                {{
-                                    composantValues?.category_composant_id
-                                }}</span
-                            >
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="category_composant_id"
-                            />
-                        </ng-template>
-                    </p-inplace>
-                </div>
-                <div class="field">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong>Date d'arrivage:</strong>
-                            <span> {{ composantValues?.coming_date }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="coming_date"
-                            />
-                        </ng-template>
-                    </p-inplace>
-                </div>
-                <div class="field">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong>Lien:</strong>
-                            <span> {{ composantValues?.link }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="link"
-                            />
-                        </ng-template>
-                    </p-inplace>
-                </div>
-                <div class="field">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong>Package: </strong>
-                            <span> {{ composantValues?.package }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="package"
-                            />
-                        </ng-template>
-                    </p-inplace>
-                </div>
-                <div class="field">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong>Prix d'achat: </strong>
-                            <span> {{ composantValues?.prix_achat }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="prix_achat"
-                            />
-                        </ng-template>
-                    </p-inplace>
-                </div>
-                <div class="field">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong>PDF: </strong>
-                            <span> {{ composantValues?.pdf }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="pdf"
-                            />
-                        </ng-template>
-                    </p-inplace>
-                </div>
-                <div class="field">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong> Prix de vente: </strong>
-                            <span>{{ composantValues?.prix_vente }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="prix_vente"
-                            />
-                        </ng-template>
-                    </p-inplace>
-                </div>
-                <div class="field">
-                    <p-inplace closable="closable" [active]="isActive">
-                        <ng-template pTemplate="display">
-                            <strong> Quantité en stock: </strong>
-                            <span>{{ composantValues?.quantity_stocked }}</span>
-                        </ng-template>
-                        <ng-template pTemplate="content">
-                            <input
-                                type="text"
-                                pInputText
-                                formControlName="quantity_stocked"
-                            />
-                        </ng-template>
-                    </p-inplace>
+<div class="card flex flex-row gap-4">
+    <div class="col-7 component-info">
+        <!-- Header -->
+        <header class="component-header mb-3">
+            <h5>Information sur Composant</h5>
+            <div class="flex justify-content-between align-items-center">
+                <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
+                <div class="button-group">
+                    <p-button
+                        label="Save"
+                        [raised]="true"
+                        size="small"
+                        (click)="updateComposant()"
+                    ></p-button>
+                    <p-button
+                        label="Finir"
+                        [raised]="true"
+                        size="small"
+                        (click)="changeStatusPending3()"
+                    ></p-button>
                 </div>
             </div>
-        </div>
+        </header>
+
+        <!-- Body Details -->
+        <section
+            class="component-details p-4"
+            [formGroup]="formUpdateComposant"
+        >
+            <div class="field">
+                <strong>ID:</strong>
+                <span>{{ composantValues?._id }}</span>
+            </div>
+
+            <div class="field w-full">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>Category composant:</strong>
+                        <span>{{
+                            composantValues?.category_composant_id
+                        }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input
+                            type="text"
+                            pInputText
+                            formControlName="category_composant_id"
+                        />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
+            <div class="field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>Date d'arrivage:</strong>
+                        <span>{{ composantValues?.coming_date }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input
+                            type="text"
+                            pInputText
+                            formControlName="coming_date"
+                        />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
+            <div class="field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>Lien:</strong>
+                        <span>{{ composantValues?.link }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input type="text" pInputText formControlName="link" />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
+            <div class="field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>Package:</strong>
+                        <span>{{ composantValues?.package }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input
+                            type="text"
+                            pInputText
+                            formControlName="package"
+                        />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
+            <div class="field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>Prix d'achat:</strong>
+                        <span>{{ composantValues?.prix_achat }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input
+                            type="text"
+                            pInputText
+                            formControlName="prix_achat"
+                        />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
+            <div class="field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>PDF:</strong>
+                        <span>{{ composantValues?.pdf }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input type="text" pInputText formControlName="pdf" />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
+            <div class="field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>Prix de vente:</strong>
+                        <span>{{ composantValues?.prix_vente }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input
+                            type="text"
+                            pInputText
+                            formControlName="prix_vente"
+                        />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
+            <div class="field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>Quantité en stock:</strong>
+                        <span>{{ composantValues?.quantity_stocked }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input
+                            type="text"
+                            pInputText
+                            formControlName="quantity_stocked"
+                        />
+                    </ng-template>
+                </p-inplace>
+            </div>
+        </section>
     </div>
-    <div class="col-5 grid grid-cols-2 gap-4 p-2">
+
+    <!-- Sidebar for Components List -->
+    <aside class="col-5 component-list p-2">
         <p-orderList
             [value]="composants"
             [listStyle]="{ height: '25rem' }"
@@ -160,7 +165,7 @@
         >
             <ng-template let-product pTemplate="item">
                 <div
-                    class="flex flex-wrap p-2 align-items-center gap-3"
+                    class="component-item flex flex-wrap p-2 align-items-center gap-3"
                     (click)="select(product)"
                 >
                     <div class="flex-1 flex flex-column gap-2">
@@ -175,5 +180,5 @@
                 </div>
             </ng-template>
         </p-orderList>
-    </div>
+    </aside>
 </div>

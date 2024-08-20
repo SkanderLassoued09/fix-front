@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 <p-confirmDialog />
-<div class="card Header-btns">
+<div class="card-Header-btns">
     <p-button
         (click)="showDialogDiCreation()"
         icon="pi pi-file"
@@ -213,52 +213,51 @@
     [resizable]="false"
 >
     <form [formGroup]="creationDiForm">
-        <div>
-            <!-- title -->
-            <div class="col">
-                <label for="firstname1">Titre</label>
+        <!-- Form Group -->
+        <fieldset class="location-form">
+            <legend>Informations Générales</legend>
+
+            <!-- Title -->
+            <div class="form-group">
+                <label for="title">Titre</label>
                 <input
                     formControlName="title"
-                    id="firstname1"
+                    id="title"
                     type="text"
-                    class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
+                    class="form-control"
+                    aria-label="Titre"
                 />
             </div>
+
             <!-- Description -->
-            <div class="col">
-                <label for="firstname1">Description</label>
-                <input
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea
                     formControlName="designiation"
-                    id="firstname1"
-                    type="text"
-                    class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
-                />
+                    id="description"
+                    rows="3"
+                    class="form-control"
+                    aria-label="Description"
+                ></textarea>
             </div>
+
             <!-- N°Serie -->
-            <div class="col">
-                <label for="firstname1">N°Serie</label>
+            <div class="form-group">
+                <label for="nSerie">N°Serie</label>
                 <input
                     formControlName="nSerie"
-                    id="firstname1"
+                    id="nSerie"
                     type="text"
-                    class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full"
+                    class="form-control"
+                    aria-label="N°Serie"
                 />
             </div>
-            <!-- Category -->
-            <!-- Not here  -->
-            <!-- <div>
+
+            <!-- Location Dropdown -->
+            <div class="form-group">
+                <label for="location">Emplacement</label>
                 <p-dropdown
-                    class="field"
-                    [options]="categorieDiListDropDown"
-                    formControlName="category"
-                    optionLabel="category_name"
-                    optionValue="value"
-                    placeholder="Choisir categorie"
-                />
-            </div> -->
-            <!-- Location -->
-            <div>
-                <p-dropdown
+                    id="location"
                     class="emplacement-css"
                     [options]="locationDropDown"
                     formControlName="location"
@@ -266,9 +265,12 @@
                     optionValue="value"
                     placeholder="Choisir emplacement"
                     [editable]="true"
-                />
+                    aria-label="Choisir emplacement"
+                ></p-dropdown>
             </div>
-        </div>
+        </fieldset>
+
+        <!-- Radio Buttons for Type -->
         <div class="grid">
             <div class="col flex align-items-center flex-row gap-2">
                 <p-radioButton
@@ -276,18 +278,23 @@
                     (ngModelChange)="getSt($event)"
                     formControlName="typeClient"
                     value="CLIENT"
+                    aria-label="Client"
                 ></p-radioButton>
                 <label class="ml-2">Client</label>
                 <p-radioButton
                     (onClick)="getSt($event)"
                     formControlName="typeClient"
                     value="COMPANY"
+                    aria-label="Société"
                 ></p-radioButton>
                 <label class="ml-2">Société</label>
             </div>
+
+            <!-- Conditional Dropdowns for Company or Client -->
             <div class="col" *ngIf="radioBtn === 'COMPANY'">
-                <!-- <label for="firstname1">company</label> -->
+                <label for="company">Société</label>
                 <p-dropdown
+                    id="company"
                     [options]="companiesListDropDown"
                     formControlName="company_id"
                     optionLabel="company_name"
@@ -297,8 +304,9 @@
                 ></p-dropdown>
             </div>
             <div class="col" *ngIf="radioBtn === 'CLIENT'">
-                <!-- <label for="firstname1">client</label> -->
+                <label for="client">Client</label>
                 <p-dropdown
+                    id="client"
                     [options]="clientListDropDown"
                     formControlName="client_id"
                     optionLabel="label"
@@ -308,17 +316,22 @@
                 ></p-dropdown>
             </div>
         </div>
-        <label for="float-input">Remarque Administration</label>
-        <div class="footerlocation">
+
+        <!-- Remarks -->
+        <div class="form-group">
+            <label for="remarqueManager">Remarque Administration</label>
             <textarea
+                id="remarqueManager"
                 rows="5"
                 cols="30"
                 pInputTextarea
                 formControlName="remarqueManager"
-            >
-            </textarea>
+                class="form-control"
+            ></textarea>
         </div>
-        <div>
+
+        <!-- File Upload -->
+        <div class="form-group">
             <p-fileUpload
                 mode="basic"
                 chooseLabel="Ajouter une image"
@@ -329,8 +342,10 @@
                 maxFileSize="1000000"
                 (onUpload)="onUpload($event, 'image')"
                 [auto]="true"
-            />
+            ></p-fileUpload>
         </div>
+
+        <!-- Toggle Button -->
         <div class="field">
             <p-toggleButton
                 onLabel="Envoyer => Coordinatrice"
@@ -339,7 +354,8 @@
             ></p-toggleButton>
         </div>
 
-        <div class="flex gap-4">
+        <!-- Modal Footer with Action Buttons -->
+        <div class="modal-footer">
             <p-button
                 label="Créer"
                 [loading]="loadingCreatingDi"
@@ -621,6 +637,10 @@
         </div>
 
         <h5>Remise: {{ discountedPriceNeg }} TND</h5>
+        <small
+            >Remarque vous ne pouvez confirmer qu'aprés avoir affecter le BC et
+            le Devis</small
+        >
         <div class="element-container-BTN">
             <ng-container *ngIf="slideEnd === 20">
                 <button
