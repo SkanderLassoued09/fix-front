@@ -47,6 +47,12 @@ export class NotificationService {
 
             case 'reminder':
                 // Implement your notification logic for reminder event
+                this.messageservice.add({
+                    severity: 'danger',
+                    summary: 'Reminder',
+                    detail: data.message,
+                    sticky: true,
+                });
                 console.log('Notification for reminder:', data.message);
                 break;
             // TODO nezih
