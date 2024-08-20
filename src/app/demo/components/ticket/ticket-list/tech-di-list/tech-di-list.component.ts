@@ -82,6 +82,7 @@ export class TechDiListComponent {
     selectedDi_id: any;
     initialOffset: number;
     isFinishedDiag: { [key: string]: boolean } = {};
+    isFinishedRep: { [key: string]: boolean } = {};
 
     milliseconds1: string;
     seconds1: string;
@@ -704,7 +705,7 @@ export class TechDiListComponent {
             .subscribe(({ data }) => {
                 console.log('🍒[data]:', data);
 
-                this.isFinishedDiag[this.selectedDi] = true;
+                this.isFinishedRep[_id] = true;
             });
     }
     confirmComposant() {
@@ -901,13 +902,5 @@ export class TechDiListComponent {
         };
         console.log('🌮[payload]:', payload);
         this.payloadImage = payload;
-        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
-        //     (response) => {
-        //         console.log('Upload successful', response);
-        //     },
-        //     (error) => {
-        //         console.log('Upload failed', error);
-        //     }
-        // );
     }
 }

@@ -580,7 +580,7 @@
                         chooseIcon="pi pi-upload"
                         name="devis"
                         url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="image/*,application/pdf"
+                        accept="application/pdf"
                         maxFileSize="10000000"
                         (onUpload)="onUpload($event, 'Devis')"
                         [auto]="true"
@@ -639,6 +639,7 @@
                 icon="pi pi-check-circle"
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="confirmerNegociation()"
+                [disabled]="!isFormComplete()"
             ></button>
         </div>
     </ng-container>

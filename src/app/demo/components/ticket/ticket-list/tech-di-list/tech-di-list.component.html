@@ -47,8 +47,9 @@
                 <td>
                     <button
                         [disabled]="
-                            rowData.status !== 'REPARATION' &&
-                            rowData.status !== 'INREPARATION'
+                            (rowData.status !== 'REPARATION' &&
+                                rowData.status !== 'INREPARATION') ||
+                            isFinishedRep[rowData?._id]
                         "
                         pButton
                         pRipple

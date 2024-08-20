@@ -178,7 +178,7 @@ export class TicketListComponent implements OnInit {
     timepart: { hours: any; minutes: any; seconds: any };
     facturationDiagnostique: number = 0;
     tarif_Technicien: number;
-    payload: { file: string };
+    payload: { file: string } = { file: '' };
 
     constructor(
         private ticketSerice: TicketService,
@@ -340,6 +340,11 @@ export class TicketListComponent implements OnInit {
         this.changeStatusPricing(data._id);
         this.getTotalComposant(data._id);
     }
+
+    isFormComplete(): boolean {
+        return this.payload.file && this.discountPercent > 0;
+    }
+
     formatSize(bytes) {
         const k = 1024;
         const dm = 3;
