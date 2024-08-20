@@ -233,7 +233,7 @@
     >
         <form [formGroup]="composantMagasin">
             <div class="field">
-                <label for="name">Nom composant</label>
+                <label for="name">Nom du composant</label>
                 <input
                     type="text"
                     pInputText
@@ -337,11 +337,11 @@
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <label for="status" class="mr-2"
-                            >Affecter un statut pour le composant</label
+                            >Choisir categorie</label
                         >
                         <p-dropdown
                             [options]="statusComposant"
-                            (onChange)="getSelectedStatus($event)"
+                            formControlName="category_composant_id"
                             optionLabel="name"
                             optionValue="value"
                             placeholder="Choisir état"
@@ -356,7 +356,28 @@
                         </p-dropdown>
                     </div>
                 </div>
-
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <label for="status" class="mr-2"
+                            >Affecter un statut pour le composant</label
+                        >
+                        <p-dropdown
+                            [options]="statusComposant"
+                            formControlName="status"
+                            optionLabel="name"
+                            optionValue="value"
+                            placeholder="Choisir état"
+                            class="mr-2"
+                        >
+                            <ng-template let-option pTemplate="item">
+                                <p-tag
+                                    [value]="option.name"
+                                    [severity]="getSeverity(option.name)"
+                                ></p-tag>
+                            </ng-template>
+                        </p-dropdown>
+                    </div>
+                </div>
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <label for="quantity_stocked" class="mr-2"
@@ -395,7 +416,7 @@
                         label="Ajouter"
                         icon="pi pi-check-circle"
                         class="p-button-text"
-                        (click)="updateComposant()"
+                        (click)="addComposant()"
                     ></button>
                 </div>
             </div>

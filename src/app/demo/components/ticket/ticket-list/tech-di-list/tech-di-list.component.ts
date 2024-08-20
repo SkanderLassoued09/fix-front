@@ -81,7 +81,7 @@ export class TechDiListComponent {
     composantCombo: Array<{ nameComposant: string; quantity: number }> = [];
     selectedDi_id: any;
     initialOffset: number;
-    isFinishedDiag: boolean = false;
+    isFinishedDiag: { [key: string]: boolean } = {};
 
     milliseconds1: string;
     seconds1: string;
@@ -115,6 +115,7 @@ export class TechDiListComponent {
     statusFinal: any;
     disable: any;
     imageValue: string;
+    selectedRow: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -128,9 +129,8 @@ export class TechDiListComponent {
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
-        console.log('array data,', this.composantList);
-        // this.btnConditionReperation();
-        // this.btnConditionDiagnostique();
+
+        console.log('🌯', this.isFinishedDiag);
     }
 
     closeComposantModal() {
@@ -618,17 +618,28 @@ export class TechDiListComponent {
                 mutation: this.ticketSerice.changeStatusMagasinEstimation(_id),
             })
             .subscribe(({ data, loading }) => {
-                this.isFinishedDiag = true;
+                if (data && !loading) {
+                    console.log('🍬[data]:', data);
+
+                    if (!this.isFinishedDiag) {
+                        this.isFinishedDiag = {};
+                    }
+                    console.log(
+                        '🍬[data sec]:',
+                        (this.isFinishedDiag[_id] = true)
+                    );
+                    this.isFinishedDiag[_id] = true;
+                }
             });
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
+        console.log('🥧', this.selectedDi);
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.isFinishedDiag = true; // Disable the button immediately after it is clicked
                 this.lapTimeForPauseAndGetBack();
 
                 const dataDiag = {
@@ -693,7 +704,7 @@ export class TechDiListComponent {
             .subscribe(({ data }) => {
                 console.log('🍒[data]:', data);
 
-                this.isFinishedDiag = true;
+                this.isFinishedDiag[this.selectedDi] = true;
             });
     }
     confirmComposant() {

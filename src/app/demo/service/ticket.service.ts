@@ -821,4 +821,27 @@ export class TicketService {
             }
         `;
     }
+
+    addComposantMagasin(composantData: any) {
+        return gql`
+       mutation {
+  createComposant(
+    createComposantInput: {
+  
+      name: "${composantData.name}"
+      package: "${composantData.packageComposant}"
+      category_composant_id: "${composantData.category_composant_id}"
+      prix_achat: ${composantData.prix_achat}
+      prix_vente: ${composantData.prix_vente}
+      coming_date: "${composantData.coming_date}"
+      link: "${composantData.link}"
+      quantity_stocked: ${composantData.quantity_stocked}
+      pdf: "${composantData.pdf.image}"
+      status_composant: "${composantData.status}"
+    }
+  ) {
+    _id
+  }
+}`;
+    }
 }

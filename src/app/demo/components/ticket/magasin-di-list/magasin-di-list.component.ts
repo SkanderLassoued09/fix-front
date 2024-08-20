@@ -41,16 +41,22 @@ export class MagasinDiListComponent {
     selectedstatusComposant: string;
     openCreationComposantModal: boolean;
     payloadImage: { image: string };
+    // Please do not use camel case in varaibles
     //MagasinEstimation_Condition: boolean = true;
     //MagasinCondition: boolean = true;
 
     composantMagasin = new FormGroup({
-        _idComposant: new FormControl(),
+        _idComposant: new FormControl(), // ???
         name: new FormControl(),
         packageComposant: new FormControl(),
         category_composant_id: new FormControl(),
         link: new FormControl(),
         pdf: new FormControl(),
+        quantity_stocked: new FormControl(),
+        status: new FormControl(),
+        prix_vente: new FormControl(),
+        coming_date: new FormControl(),
+        prix_achat: new FormControl(),
     });
 
     constructor(
@@ -254,5 +260,23 @@ export class MagasinDiListComponent {
         //         console.log('Upload failed', error);
         //     }
         // );
+    }
+
+    addComposant() {
+        const composantDataForm = this.composantMagasin.value;
+        const composantDataTosend = {
+            ...composantDataForm,
+            pdf: this.payloadImage,
+        };
+        console.log('🍓', this.payloadImage);
+        console.log('🍅add composant', composantDataTosend);
+        this.apollo
+            .mutate<any>({
+                mutation:
+                    this.ticketSerice.addComposantMagasin(composantDataTosend),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍰[data]:', data);
+            });
     }
 }
