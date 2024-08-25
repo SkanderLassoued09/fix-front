@@ -2,18 +2,13 @@ Projects: @Fixtronix
 
 Todos:
   New:
-
-  
+  ☐ REPERATION NOT WORKING all the share the same values & btn is not disabled @Skander!!!!
   ☐ Add upload 2 files for the manager `Bon de livraison` `facture` @WALID
-  ☐ Add confirmation PopUp in everyStep @NEZIH
   ☐ magasin and else change the links and files with btns refreing to them
-  
-  ☐ In diagnostique when finished all the btn become disabled bcs you use the same variable for all of them when refresh become correct @Done
   ☐  update composant for the magasin @Inprogress already exist
-  ☐ btn reperation working but not disabled @skander DONE
+  
 
-  ☐ Status === pricing => add await so the values will be shown (image what'up) DONE
-  ☐ Status === nego1 => confirmation disabled and only enabled after affecting the two files DONE
+ 
   Done:
     ✔ Add upload 2 files for the manager `Bon de commande`  `devis`  @high @Skander @done(24-08-15 00:03)
   ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
@@ -47,6 +42,10 @@ Todos:
   ✔ In the creation of the DI add location as a field @Hethi @done(24-08-15 00:04)
   ✔ Add all the remarque in the DI @done(24-08-15 00:04)
   ✔ add creation composant @done(24-08-20 11:22)
+   ✔ Status === pricing => add await so the values will be shown (image what'up) DONE @done(24-08-25 10:55)
+  ✔ Status === nego1 => confirmation disabled and only enabled after affecting the two files DONE @done(24-08-25 10:55)
+  ✔ Add confirmation PopUp in everyStep @NEZIH @done(24-08-25 11:54)
+  ✔ In diagnostique when finished all the btn become disabled bcs you use the same variable for all of them when refresh become correct @Done @done(24-08-25 12:00)
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard

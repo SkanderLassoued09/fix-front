@@ -243,15 +243,26 @@ export class TicketListComponent implements OnInit {
         this.openPriceTechModal = false;
     }
     confirmerNegociation() {
-        console.log('confirmerNegociation working');
-        this.nego1nego2_InMagasin(this._idDi, this.price, this.finalPrice);
-        this.changeStatusDiToInMagasin(this._idDi);
-        console.log('🥓[this._idDi]:', this._idDi);
-        this.getDi();
-        this.saveDevisPDF(this._idDi, this.payload.file);
-        this.saveBCPDF(this._idDi, this.payload.file);
-        this.negocite1Modal = false;
-        this.negocite2Modal = false;
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation du prix final',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                console.log('confirmerNegociation working');
+                this.nego1nego2_InMagasin(
+                    this._idDi,
+                    this.price,
+                    this.finalPrice
+                );
+                this.changeStatusDiToInMagasin(this._idDi);
+                console.log('🥓[this._idDi]:', this._idDi);
+                this.getDi();
+                this.saveDevisPDF(this._idDi, this.payload.file);
+                this.saveBCPDF(this._idDi, this.payload.file);
+                this.negocite1Modal = false;
+                this.negocite2Modal = false;
+            },
+        });
     }
 
     saveDevisPDF(_id: string, pdf: string) {
@@ -456,26 +467,31 @@ export class TicketListComponent implements OnInit {
     }
 
     pricing() {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.pricing(
-                    this.current_id,
-                    this.price
-                ),
-            })
-            .subscribe(({ data, loading }) => {
-                if (data) {
-                    console.log(
-                        this.current_id,
-                        'data coming from pricing function'
-                    );
-                    this.getDi();
-                    this.pricingModal = false;
-                    //nezih
-
-                    this.changeStatusNegiciate1(this.current_id);
-                }
-            });
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation du prix Initial',
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.pricing(
+                            this.current_id,
+                            this.price
+                        ),
+                    })
+                    .subscribe(({ data, loading }) => {
+                        if (data) {
+                            console.log(
+                                this.current_id,
+                                'data coming from pricing function'
+                            );
+                            this.getDi();
+                            this.pricingModal = false;
+                            this.changeStatusNegiciate1(this.current_id);
+                        }
+                    });
+            },
+        });
     }
 
     deleteDi(rowData) {
@@ -583,53 +599,65 @@ export class TicketListComponent implements OnInit {
     //Todo Add mutation to the delete DI
     //FIXME
     createDi() {
-        const {
-            title,
-            designiation,
-            client_id,
-            company_id,
-            nSerie,
-            typeClient,
-            remarqueManager,
-            category,
-            location,
-        } = this.creationDiForm.value;
-        const diInfo = {
-            title,
-            designiation,
-            client_id,
-            company_id,
-            nSerie,
-            status: this.statusDI,
-            typeClient,
-            remarqueManager,
-            di_category_id: category,
-            location,
-            image: this.payload.file,
-        };
-        let _idQuery;
-        console.log('🥘diInfo', diInfo);
-        this.apollo
-            .mutate<CreateDiMutationResult>({
-                mutation: this.ticketSerice.createDi(diInfo),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading, errors }) => {
-                this.loadingCreatingDi = loading;
+        {
+            this.confirmationService.confirm({
+                message: 'Voulez vous confirmer les changements',
+                header: "Confirmation Demande d'intevention",
+                icon: 'pi pi-question-circle',
+                accept: () => {
+                    const {
+                        title,
+                        designiation,
+                        client_id,
+                        company_id,
+                        nSerie,
+                        typeClient,
+                        remarqueManager,
+                        category,
+                        location,
+                    } = this.creationDiForm.value;
 
-                if (data) {
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'La demande service ajouté',
-                    });
-                    _idQuery = data.createDi._id;
+                    const diInfo = {
+                        title,
+                        designiation,
+                        client_id,
+                        company_id,
+                        nSerie,
+                        status: this.statusDI,
+                        typeClient,
+                        remarqueManager,
+                        di_category_id: category,
+                        location,
+                        image: this.payload.file,
+                    };
 
-                    this.creationDiForm.reset();
-                    this.openAddDiModal = false;
-                    this.getDi();
-                }
+                    let _idQuery;
+                    console.log('🥘diInfo', diInfo);
+
+                    this.apollo
+                        .mutate<CreateDiMutationResult>({
+                            mutation: this.ticketSerice.createDi(diInfo),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data, loading, errors }) => {
+                            this.loadingCreatingDi = loading;
+
+                            if (data) {
+                                this.messageservice.add({
+                                    severity: 'success',
+                                    summary: 'Success',
+                                    detail: 'La demande service ajouté',
+                                });
+                                _idQuery = data.createDi._id;
+
+                                this.creationDiForm.reset();
+                                this.openAddDiModal = false;
+                                this.getDi();
+                            }
+                        });
+                },
             });
+        }
     }
 
     getCompanyList() {
@@ -749,15 +777,18 @@ export class TicketListComponent implements OnInit {
     }
 
     nextNegociate2() {
-        if (this.secondNegocition) {
-            console.log('here 1');
-
-            this.changeStatusNegociate2(this.secondNegocition);
-            console.log('here 2');
-            this.negocite1Modal = false;
-            console.log('here 3');
-            this.getDi();
-        }
+        this.confirmationService.confirm({
+            message: 'Voulez vous envoyer ce di a l admin Manager',
+            header: 'Confirmation Pricing',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                if (this.secondNegocition) {
+                    this.changeStatusNegociate2(this.secondNegocition);
+                    this.negocite1Modal = false;
+                    this.getDi();
+                }
+            },
+        });
     }
 
     //---- Files

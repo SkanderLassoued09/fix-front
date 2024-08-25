@@ -10,7 +10,7 @@ import {
     TechStartDiagnosticMutationResponse,
 } from './coordinator-di-list.interfaces';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ImageModule } from 'primeng/image';
 @Component({
     selector: 'app-coordinator-di-list',
@@ -75,7 +75,8 @@ export class CoordinatorDiListComponent {
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
-        private messageservice: MessageService
+        private messageservice: MessageService,
+        private confirmationService: ConfirmationService
     ) {
         // this.roles = ROLES;
     }
@@ -227,86 +228,115 @@ export class CoordinatorDiListComponent {
     //!HERE
     selectedTechDiag(data) {
         console.log('🥟[selected]:', data);
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.sendingDiForDiagnostic(
-                    this.selectedDi,
-                    data.value._id
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading, errors }) => {
-                if (data) {
-                    {
-                        this.apollo
-                            .mutate<TechStartDiagnosticMutationResponse>({
-                                mutation:
-                                    this.ticketSerice.changeStatusDiToDiagnostique(
-                                        this.selectedDi
-                                    ),
-                                useMutationLoading: true,
-                            })
-                            .subscribe(({ data, loading }) => {
-                                this.getDi();
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer ce Technicien',
+            header: 'Confirmation Diagnostique',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.sendingDiForDiagnostic(
+                            this.selectedDi,
+                            data.value._id
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading, errors }) => {
+                        if (data) {
+                            this.apollo
+                                .mutate<TechStartDiagnosticMutationResponse>({
+                                    mutation:
+                                        this.ticketSerice.changeStatusDiToDiagnostique(
+                                            this.selectedDi
+                                        ),
+                                    useMutationLoading: true,
+                                })
+                                .subscribe(({ data, loading }) => {
+                                    this.getDi();
+                                });
+                            this.diDialog = false;
+                            this.messageservice.add({
+                                severity: 'success',
+                                summary: 'Success',
+                                detail: `DI Envoyer au technicien`,
                             });
-                    }
-                    this.diDialog = false;
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: `DI Envoyer au technicien`,
+                        }
                     });
-                }
-            });
+            },
+        });
     }
 
     selectedTechRep(data) {
-        this.apollo
-            .mutate<ConfigRepAffectationMutationResponse>({
-                mutation: this.ticketSerice.configRepAffectation(
-                    this.selectedDi,
-                    data.value._id
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading, errors }) => {
-                console.log('🍵[data]:', data);
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer le Technicien',
+            header: 'Confirmation Réperation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                    .mutate<ConfigRepAffectationMutationResponse>({
+                        mutation: this.ticketSerice.configRepAffectation(
+                            this.selectedDi,
+                            data.value._id
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading, errors }) => {
+                        console.log('🍵[data]:', data);
 
-                if (data) {
-                    this.changeStatusRepaire(this.selectedDi);
-                    this.getDi();
-                    this.diDialog = false;
-                }
-            });
+                        if (data) {
+                            this.changeStatusRepaire(this.selectedDi);
+                            this.getDi();
+                            this.diDialog = false;
+                        }
+                    });
+            },
+        });
     }
+
     changestatusToPricing(data) {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.changeStatusPricing(this.di._id),
-            })
-            .subscribe(({ data }) => {
-                console.log('🍑[pricing change]:', data);
-                if (data) {
-                    this.getDi();
-                    this.diDialog = false;
-                }
-            });
+        this.confirmationService.confirm({
+            message: "Envoyer aux admins pour l'affectation de prix",
+            header: "Confirmation d'envoie",
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.changeStatusPricing(
+                            this.di._id
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        console.log('🍑[pricing change]:', data);
+                        if (data) {
+                            this.getDi();
+                            this.diDialog = false;
+                        }
+                    });
+            },
+        });
     }
 
     gotcomposantfromMagasin() {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.confirmerRecoitComposant(
-                    this.di._id
-                ),
-            })
-            .subscribe(({ data }) => {
-                console.log('🍑[Confirmation composants]:', data);
-                if (data) {
-                    this.getDi();
-                    this.diDialog = false;
-                    this.reperationCondition = true;
-                }
-            });
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation Magasin',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.confirmerRecoitComposant(
+                            this.di._id
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        console.log('🍑[Confirmation composants]:', data);
+                        if (data) {
+                            this.getDi();
+                            this.diDialog = false;
+                            this.reperationCondition = true;
+                        }
+                    });
+            },
+        });
     }
 }
