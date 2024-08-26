@@ -365,6 +365,15 @@ export class TicketService {
         `;
     }
 
+    changeFinishStatus(_id: string) {
+        return gql`
+            mutation {
+                changestatusToFinishReparation(_id: "${_id}") {
+                    status
+                }
+            }
+        `;
+    }
     finishReparation(_idDi, remarque) {
         return gql`
             mutation {

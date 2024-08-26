@@ -48,7 +48,7 @@ export class NotificationService {
             case 'reminder':
                 // Implement your notification logic for reminder event
                 this.messageservice.add({
-                    severity: 'danger',
+                    severity: 'warn',
                     summary: 'Reminder',
                     detail: data.message,
                     sticky: true,

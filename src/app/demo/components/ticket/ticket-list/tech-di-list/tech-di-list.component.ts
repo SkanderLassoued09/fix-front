@@ -641,7 +641,7 @@ export class TechDiListComponent {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.lapTimeForPauseAndGetBack();
+                // this.lapTimeForPauseAndGetBack();
 
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
@@ -704,8 +704,6 @@ export class TechDiListComponent {
             })
             .subscribe(({ data }) => {
                 console.log('🍒[data]:', data);
-
-                this.isFinishedRep[_id] = true;
             });
     }
     confirmComposant() {
@@ -849,12 +847,29 @@ export class TechDiListComponent {
             });
     }
 
+    changeStatusToFinished(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeFinishStatus(_id),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log('🍍[data]:', data);
+                    this.isFinishedRep[this.DiByStat] = true;
+                }
+            });
+    }
     finishReparation() {
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Reperation',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
+                console.log('🍵');
+                if (!this.isFinishedRep) {
+                    this.isFinishedRep = {};
+                }
+
                 const req = this.remarque.value.remarqueRepair;
                 this.lapTimeForPauseAndGetBack1();
                 this.lap1();
@@ -867,11 +882,10 @@ export class TechDiListComponent {
                         ),
                         useMutationLoading: true,
                     })
-                    .subscribe(({ data }) => {
-                        console.log(
-                            '🥝[data tech_finishReperation]:',
-                            data?.tech_finishReperation?.status
-                        );
+                    .subscribe(({ data, loading }) => {
+                        if (data && !loading && this.DiByStat) {
+                            this.changeStatusToFinished(this.DiByStat);
+                        }
                     });
 
                 this.getAllTechDi();
