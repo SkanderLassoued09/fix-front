@@ -186,7 +186,10 @@ export class TechDiListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.techList = data.getDiForTech;
-                    console.log('this.techList VALUE', this.techList);
+                    console.log(
+                        'data we gonna use in dashboard',
+                        this.techList
+                    );
                 }
             });
     }

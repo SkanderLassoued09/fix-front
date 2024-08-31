@@ -182,6 +182,8 @@ export class TicketService {
                     _idDi
                     id_tech_diag
                     id_tech_rep
+                    diag_time
+                    rep_time
                     status
                 }
             }
