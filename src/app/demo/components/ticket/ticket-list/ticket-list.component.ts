@@ -963,7 +963,6 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 console.log('🍑[data]:', data);
-
                 this.locationDropDown = data.findAllLocation.map((el) => ({
                     location_name: el.location_name,
                     value: el._id, // ID as value
@@ -1051,5 +1050,9 @@ export class TicketListComponent implements OnInit {
     }
     editCategory(selected) {
         console.log('🥛[selected]:', selected);
+    }
+
+    annulerDi() {
+        this.openAddDiModal = false;
     }
 }

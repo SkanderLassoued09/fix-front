@@ -35,7 +35,7 @@ export class TechDiListComponent {
         link: new FormControl(),
         pdf: new FormControl(),
     });
-
+    rangeDates: Date[] | undefined;
     remarque = new FormGroup({
         remarqueRepair: new FormControl(),
     });

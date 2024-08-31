@@ -22,3 +22,36 @@
 .supheader {
     margin-top: 1rem;
 }
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap; /* Allows wrapping to keep the layout responsive */
+}
+
+.box-container {
+    margin: 0 2rem; /* Adds space between the boxes */
+    width: 200px;
+    color: blue;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.calendar-container {
+    display: flex;
+    flex-direction: column; /* Aligns label and calendar vertically */
+    justify-content: center;
+    align-items: center; /* Centers the content horizontally */
+    width: 100%; /* Ensures it takes up the full width of its container */
+    margin-top: 1rem; /* Adds space between the boxes and the calendar */
+}
+
+.calendar-label {
+    margin-bottom: 0.5rem; /* Adds space between the label and the calendar */
+}
+
+p-calendar {
+    display: block; /* Ensure the calendar behaves as a block element */
+}

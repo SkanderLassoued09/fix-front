@@ -2,10 +2,23 @@ Projects: @Fixtronix
 
 Todos:
   New:
+  ☐ Company add the 3 services in the update
   ☐ REPERATION NOT WORKING all the share the same values & btn is not disabled @Skander!!!!
   ☐ Add upload 2 files for the manager `Bon de livraison` `facture` @WALID
   ☐ magasin and else change the links and files with btns refreing to them
   ☐  update composant for the magasin @Inprogress already exist
+  ☐ DropDown problem inside the creation of DI problem with data format in ts code
+  ☐ add Dashboard to Tech @InProgress
+  create a query to get Diag for each tech
+  create a query to get Rep for each tech
+  create a query to get Retour for each tech
+  ☐ add update btn so manager can update if status is Created
+  ☐ coordinator can send Di to repair @stand_by
+  ☐ tech can see which DI is in pause
+  ☐ CHECK TIME OF DIAGNOSTIQUE PROBLEM @critical
+  ☐  add the btn and the Time of confirmation composants Coordinator from magasin
+  ☐ correct the Indiagnostique and diagnostique / Reperation and Inreperation status  small problem
+  ☐ add category DI to diagnositique
   ------
   emplcement issue
   cree par in list coordinator empty

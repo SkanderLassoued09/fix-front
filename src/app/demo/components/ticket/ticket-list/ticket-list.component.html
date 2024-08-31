@@ -367,7 +367,11 @@
                 "
             ></p-button>
 
-            <p-button label="Annuler" severity="danger"></p-button>
+            <p-button
+                (onClick)="annulerDi()"
+                label="Annuler"
+                severity="danger"
+            ></p-button>
         </div>
     </form>
 </p-dialog>

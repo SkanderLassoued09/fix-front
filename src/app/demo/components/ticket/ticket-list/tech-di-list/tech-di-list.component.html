@@ -1,5 +1,46 @@
 <p-toast></p-toast>
 <p-confirmDialog />
+
+<div class="container">
+    <p-card class="box-container diag">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>50</h2>
+                <strong>Diagnostique</strong>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <p-card class="box-container repair">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>20</h2>
+                <strong>Reparation</strong>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <p-card class="box-container retour">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>5</h2>
+                <strong>Retour</strong>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <div class="calendar-container">
+        <div class="calendar-label">
+            <strong>Choisir une Date</strong>
+        </div>
+        <p-calendar
+            [(ngModel)]="rangeDates"
+            selectionMode="range"
+            [readonlyInput]="true"
+        ></p-calendar>
+    </div>
+</div>
+
 <div class="card">
     <p-table
         [columns]="cols"
