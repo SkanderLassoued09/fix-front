@@ -27,6 +27,7 @@ export class CoordinatorDiListComponent {
     diag_condition: boolean = true; // enable when status = pending1
     admin_condition: boolean = true; //enable when status = pending2
     rep_condition: boolean = true; // enable when status = pending3
+    rangeDates: Date[] | undefined;
 
     selectedTech: any; // Variable to store the selected tech data
 

@@ -102,15 +102,15 @@
             </tr>
         </ng-template>
     </p-table>
+    <!-- DIAGNOSTIQUE MODAL -->
 
     <p-dialog
         [(visible)]="diDialogDiag"
         [style]="{ width: '60%', height: '80vh' }"
         [modal]="true"
         styleClass="p-fluid"
+        [closable]="false"
     >
-        <ng-template pTemplate="header"></ng-template>
-        <!-- Empty header template -->
         <ng-template pTemplate="content">
             <p-image
                 [src]="'http://localhost:3000/' + imageValue"
@@ -285,7 +285,6 @@
                     <p-dialog
                         [(visible)]="creatComposantDialog"
                         [style]="{ width: '450px' }"
-                        header="Creation d'un nouveux composant"
                         [modal]="true"
                         styleClass="p-fluid"
                         [draggable]="false"
@@ -386,15 +385,15 @@
             </div>
         </ng-template>
     </p-dialog>
-
+    <!-- REPERATION MODAL -->
     <p-dialog
         [(visible)]="diDialogRep"
         [style]="{ width: '50%', height: '70vh' }"
         [modal]="true"
         styleClass="p-fluid"
         [maximizable]="true"
+        [closable]="false"
     >
-        <!-- Empty header template -->
         <ng-template pTemplate="content">
             <div class="flex flex-column">
                 <div [formGroup]="remarque" class="field">
@@ -453,6 +452,7 @@
                 </p-fieldset>
             </div>
         </ng-template>
+
         <ng-template pTemplate="footer">
             <div class="foot">
                 <button

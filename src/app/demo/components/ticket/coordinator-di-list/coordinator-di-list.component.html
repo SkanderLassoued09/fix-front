@@ -1,180 +1,223 @@
 <p-toast></p-toast>
 
-<div class="card">
-    <p-table
-        [columns]="cols"
-        [value]="diList"
-        [tableStyle]="{ 'min-width': '20rem' }"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th *ngFor="let col of columns" style="min-width: 10rem">
-                    {{ col.header }}
-                </th>
-                <th style="min-width: 10rem">Config</th>
-            </tr>
+<div class="container">
+    <p-card class="box-container diag">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>9</h2>
+                <strong>Magasin</strong>
+            </div>
         </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
-                <td *ngFor="let col of columns">
-                    <ng-container
-                        *ngIf="
-                            col.field !== 'status' && col.field !== 'image';
-                            else specialColumn
-                        "
-                    >
-                        {{ rowData[col.field] }}
-                    </ng-container>
-                    <ng-template #specialColumn>
+    </p-card>
+
+    <p-card class="box-container diag">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>50</h2>
+                <strong>Diagnostique</strong>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <p-card class="box-container repair">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>20</h2>
+                <strong>Reparation</strong>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <p-card class="box-container retour">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>5</h2>
+                <strong>Retour</strong>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <div class="card">
+        <p-table
+            [columns]="cols"
+            [value]="diList"
+            [tableStyle]="{ 'min-width': '20rem' }"
+        >
+            <ng-template pTemplate="header" let-columns>
+                <tr>
+                    <th *ngFor="let col of columns" style="min-width: 10rem">
+                        {{ col.header }}
+                    </th>
+                    <th style="min-width: 10rem">Config</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr>
+                    <td *ngFor="let col of columns">
                         <ng-container
-                            *ngIf="col.field === 'status'; else imageColumn"
+                            *ngIf="
+                                col.field !== 'status' && col.field !== 'image';
+                                else specialColumn
+                            "
                         >
-                            <p-tag
-                                [value]="rowData[col.field]"
-                                [severity]="getSeverity(rowData[col.field])"
-                            ></p-tag>
+                            {{ rowData[col.field] }}
                         </ng-container>
-                        <ng-template #imageColumn>
-                            <p-image
-                                [src]="'http://localhost:3000/' + rowData.image"
-                                [alt]="rowData.image"
-                                width="50"
-                                class="shadow-4"
-                                [preview]="true"
-                            />
+                        <ng-template #specialColumn>
+                            <ng-container
+                                *ngIf="col.field === 'status'; else imageColumn"
+                            >
+                                <p-tag
+                                    [value]="rowData[col.field]"
+                                    [severity]="getSeverity(rowData[col.field])"
+                                ></p-tag>
+                            </ng-container>
+                            <ng-template #imageColumn>
+                                <p-image
+                                    [src]="
+                                        'http://localhost:3000/' + rowData.image
+                                    "
+                                    [alt]="rowData.image"
+                                    width="50"
+                                    class="shadow-4"
+                                    [preview]="true"
+                                />
+                            </ng-template>
                         </ng-template>
-                    </ng-template>
-                </td>
-                <td>
-                    <button
-                        pButton
-                        pRipple
-                        icon="pi pi-ticket"
-                        class="p-button-rounded p-button-raised p-button-help mr-2"
-                        (click)="openModalConfig(rowData)"
-                    ></button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-    <p-dialog
-        [(visible)]="diDialog"
-        [style]="{ width: '40%', height: '70vh' }"
-        header="Coordinatrice control du flow"
-        [modal]="true"
-        styleClass="p-fluid"
-    >
-        <!-- <div class="card flex justify-content-center">
+                    </td>
+                    <td>
+                        <button
+                            pButton
+                            pRipple
+                            icon="pi pi-ticket"
+                            class="p-button-rounded p-button-raised p-button-help mr-2"
+                            (click)="openModalConfig(rowData)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+        <p-dialog
+            [(visible)]="diDialog"
+            [style]="{ width: '40%', height: '70vh' }"
+            header="Coordinatrice control du flow"
+            [modal]="true"
+            styleClass="p-fluid"
+        >
+            <!-- <div class="card flex justify-content-center">
             <p-image
                 src="https://primefaces.org/cdn/primeng/images/galleria/galleria10.jpg"
                 alt="Image"
                 width="250"
             />
         </div> -->
-        <div class="field">
-            <label for="name"
-                >Envoyer Demande d'intervention pour le Dignostique</label
-            >
-            <!-- Dropdwon tech for diags -->
-            <p-dropdown
-                [options]="techList"
-                optionLabel="firstName"
-                [showClear]="true"
-                placeholder="Diagnostique"
-                (onChange)="selectedTechDiag($event)"
-                [disabled]="diag_condition"
-            ></p-dropdown>
-        </div>
+            <div class="field">
+                <label for="name"
+                    >Envoyer Demande d'intervention pour le Dignostique</label
+                >
+                <!-- Dropdwon tech for diags -->
+                <p-dropdown
+                    [options]="techList"
+                    optionLabel="firstName"
+                    [showClear]="true"
+                    placeholder="Diagnostique"
+                    (onChange)="selectedTechDiag($event)"
+                    [disabled]="diag_condition"
+                ></p-dropdown>
+            </div>
 
-        <div class="field">
-            <label for="name">Ouvrir DI pour affecter les prix</label>
-            <!-- open ticket for admins -->
-            <p-button
-                [disabled]="admin_condition"
-                label="Envoyer aux admins"
-                (onClick)="changestatusToPricing($event)"
-            ></p-button>
-        </div>
-        <div class="field">
-            <label for="name">Confirmer le reçoit des composants </label>
-            <p-button
-                [disabled]="rep_condition || reperationCondition"
-                label="Confirmer tous les composants"
-                (onClick)="gotcomposantfromMagasin()"
-            ></p-button>
-        </div>
-        <div class="field">
-            <label for="name"
-                >Envoyer Demande d'intervention pour la réperation</label
-            >
+            <div class="field">
+                <label for="name">Ouvrir DI pour affecter les prix</label>
+                <!-- open ticket for admins -->
+                <p-button
+                    [disabled]="admin_condition"
+                    label="Envoyer aux admins"
+                    (onClick)="changestatusToPricing($event)"
+                ></p-button>
+            </div>
+            <div class="field">
+                <label for="name">Confirmer le reçoit des composants </label>
+                <p-button
+                    [disabled]="rep_condition || reperationCondition"
+                    label="Confirmer tous les composants"
+                    (onClick)="gotcomposantfromMagasin()"
+                ></p-button>
+            </div>
+            <div class="field">
+                <label for="name"
+                    >Envoyer Demande d'intervention pour la réperation</label
+                >
 
-            <p-dropdown
-                [options]="techList"
-                optionLabel="firstName"
-                [showClear]="true"
-                placeholder="Reparation"
-                [disabled]="rep_condition"
-                (onChange)="selectedTechRep($event)"
-            ></p-dropdown>
-        </div>
-        <div class="field" *ngIf="remarque_manager">
-            <!-- to continue other rq -->
-            <p-fieldset legend="Remarque admnistration" [toggleable]="true">
-                <p class="m-0">{{ remarque_manager }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_admin_manager">
-            <!-- to continue other rq -->
-            <p-fieldset legend="remarque_admin_manager" [toggleable]="true">
-                <p class="m-0">{{ remarque_admin_manager }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_admin_tech">
-            <!-- to continue other rq -->
-            <p-fieldset legend="remarque_admin_tech" [toggleable]="true">
-                <p class="m-0">{{ remarque_admin_tech }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_tech_diagnostic">
-            <!-- to continue other rq -->
-            <p-fieldset legend="remarque_tech_diagnostic" [toggleable]="true">
-                <p class="m-0">{{ remarque_tech_diagnostic }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_tech_repair">
-            <!-- to continue other rq -->
-            <p-fieldset legend="remarque_tech_repair" [toggleable]="true">
-                <p class="m-0">{{ remarque_tech_repair }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_magasin">
-            <!-- to continue other rq -->
-            <p-fieldset legend="remarque_magasin" [toggleable]="true">
-                <p class="m-0">{{ remarque_magasin }}</p>
-            </p-fieldset>
-        </div>
-        <div class="field" *ngIf="remarque_coordinator">
-            <!-- to continue other rq -->
-            <p-fieldset legend="remarque_coordinator" [toggleable]="true">
-                <p class="m-0">{{ remarque_coordinator }}</p>
-            </p-fieldset>
-        </div>
-    </p-dialog>
+                <p-dropdown
+                    [options]="techList"
+                    optionLabel="firstName"
+                    [showClear]="true"
+                    placeholder="Reparation"
+                    [disabled]="rep_condition"
+                    (onChange)="selectedTechRep($event)"
+                ></p-dropdown>
+            </div>
+            <div class="field" *ngIf="remarque_manager">
+                <!-- to continue other rq -->
+                <p-fieldset legend="Remarque admnistration" [toggleable]="true">
+                    <p class="m-0">{{ remarque_manager }}</p>
+                </p-fieldset>
+            </div>
+            <div class="field" *ngIf="remarque_admin_manager">
+                <!-- to continue other rq -->
+                <p-fieldset legend="remarque_admin_manager" [toggleable]="true">
+                    <p class="m-0">{{ remarque_admin_manager }}</p>
+                </p-fieldset>
+            </div>
+            <div class="field" *ngIf="remarque_admin_tech">
+                <!-- to continue other rq -->
+                <p-fieldset legend="remarque_admin_tech" [toggleable]="true">
+                    <p class="m-0">{{ remarque_admin_tech }}</p>
+                </p-fieldset>
+            </div>
+            <div class="field" *ngIf="remarque_tech_diagnostic">
+                <!-- to continue other rq -->
+                <p-fieldset
+                    legend="remarque_tech_diagnostic"
+                    [toggleable]="true"
+                >
+                    <p class="m-0">{{ remarque_tech_diagnostic }}</p>
+                </p-fieldset>
+            </div>
+            <div class="field" *ngIf="remarque_tech_repair">
+                <!-- to continue other rq -->
+                <p-fieldset legend="remarque_tech_repair" [toggleable]="true">
+                    <p class="m-0">{{ remarque_tech_repair }}</p>
+                </p-fieldset>
+            </div>
+            <div class="field" *ngIf="remarque_magasin">
+                <!-- to continue other rq -->
+                <p-fieldset legend="remarque_magasin" [toggleable]="true">
+                    <p class="m-0">{{ remarque_magasin }}</p>
+                </p-fieldset>
+            </div>
+            <div class="field" *ngIf="remarque_coordinator">
+                <!-- to continue other rq -->
+                <p-fieldset legend="remarque_coordinator" [toggleable]="true">
+                    <p class="m-0">{{ remarque_coordinator }}</p>
+                </p-fieldset>
+            </div>
+        </p-dialog>
 
-    <p-dialog
-        [(visible)]="pricingDoalog"
-        [style]="{ width: '50%', height: '70vh' }"
-        header="Pricing"
-        [modal]="true"
-        styleClass="p-fluid"
-    >
-        <button
-            pButton
-            pRipple
-            label="Pricing"
-            icon="pi pi-times"
-            class="p-button-text"
-        ></button>
-    </p-dialog>
-    <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+        <p-dialog
+            [(visible)]="pricingDoalog"
+            [style]="{ width: '50%', height: '70vh' }"
+            header="Pricing"
+            [modal]="true"
+            styleClass="p-fluid"
+        >
+            <button
+                pButton
+                pRipple
+                label="Pricing"
+                icon="pi pi-times"
+                class="p-button-text"
+            ></button>
+        </p-dialog>
+        <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+    </div>
 </div>

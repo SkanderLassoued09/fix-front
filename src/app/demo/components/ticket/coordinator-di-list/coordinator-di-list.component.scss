@@ -1,0 +1,20 @@
+.supheader {
+    margin-top: 1rem;
+}
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap; /* Allows wrapping to keep the layout responsive */
+}
+
+.box-container {
+    margin: 0 2rem 3rem; /* Adds space between the boxes and a 3rem space below */
+    width: 200px;
+    color: blue;
+    border-radius: 8px;
+    text-align: center;
+}
