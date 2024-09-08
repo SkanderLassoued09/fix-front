@@ -4,7 +4,7 @@
     <p-card class="box-container diag">
         <ng-template pTemplate="content">
             <div class="text-center">
-                <h2>9</h2>
+                <h2>{{ counterInMagasin }}</h2>
                 <strong>Magasin</strong>
             </div>
         </ng-template>
@@ -13,7 +13,7 @@
     <p-card class="box-container diag">
         <ng-template pTemplate="content">
             <div class="text-center">
-                <h2>50</h2>
+                <h2>{{ counterInDiagnostique }}</h2>
                 <strong>Diagnostique</strong>
             </div>
         </ng-template>
@@ -22,7 +22,7 @@
     <p-card class="box-container repair">
         <ng-template pTemplate="content">
             <div class="text-center">
-                <h2>20</h2>
+                <h2>{{ counterInReperation }}</h2>
                 <strong>Reparation</strong>
             </div>
         </ng-template>
@@ -31,8 +31,16 @@
     <p-card class="box-container retour">
         <ng-template pTemplate="content">
             <div class="text-center">
-                <h2>5</h2>
+                <h2>{{ counterRetour }}</h2>
                 <strong>Retour</strong>
+            </div>
+        </ng-template>
+    </p-card>
+    <p-card class="box-container retour">
+        <ng-template pTemplate="content">
+            <div class="text-center">
+                <h2>{{ counterPending }}</h2>
+                <strong>Pending</strong>
             </div>
         </ng-template>
     </p-card>

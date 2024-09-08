@@ -120,8 +120,8 @@ export class TicketListComponent implements OnInit {
         // { field: 'di_category_id', header: 'Category' },
         { field: 'location_id', header: 'Location' },
         { field: 'status', header: 'Status' },
-        { field: 'client_id', header: 'Client' },
-        { field: 'createdBy', header: 'Créé par' },
+        { field: 'company_id', header: 'Client' },
+        { field: 'createdBy', header: 'Créer par' },
     ];
 
     colCategory = [

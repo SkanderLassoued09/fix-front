@@ -37,6 +37,12 @@ export class CoordinatorDiListComponent {
     loading: boolean = false;
     roles;
     tstatuses = [{ label: 'Pending3', value: 'Pending3' }];
+    // Used for the mini Dashboard
+    counterInMagasin = 0;
+    counterInDiagnostique = 0;
+    counterInReperation = 0;
+    counterPending = 0;
+    counterRetour = 0;
 
     uploadedFiles: any[] = [];
     cols = [
@@ -100,6 +106,39 @@ export class CoordinatorDiListComponent {
                 if (data) {
                     this.diList = data.get_coordinatorDI.di;
                     this.diListCount = data.get_coordinatorDI.totalDiCount;
+                    // counter for Mini Dashboard
+                    this.diList.filter((di) => {
+                        switch (di.status) {
+                            case 'INMAGASIN':
+                            case 'MagasinEstimation':
+                                this.counterInMagasin =
+                                    this.counterInMagasin + 1;
+                                break;
+                            case 'DIAGNOSTIC':
+                            case 'INDIAGNOSTIC':
+                                this.counterInDiagnostique =
+                                    this.counterInDiagnostique + 1;
+                                break;
+                            case 'REPARATION':
+                            case 'INREPARATION':
+                                this.counterInReperation =
+                                    this.counterInReperation + 1;
+                                break;
+                            case 'PENDING1':
+                            case 'PENDING2':
+                            case 'PENDING3':
+                                this.counterPending = this.counterPending + 1;
+                                break;
+                            case 'RETOUR1':
+                            case 'RETOUR2':
+                            case 'RETOUR3':
+                                this.counterRetour = this.counterRetour + 1;
+                                break;
+                            default:
+                                break;
+                        }
+                    });
+                    console.log(this.counterInMagasin, 'the counterInMagasin');
                 }
             });
     }
