@@ -120,7 +120,10 @@ export class TicketListComponent implements OnInit {
         // { field: 'di_category_id', header: 'Category' },
         { field: 'location_id', header: 'Location' },
         { field: 'status', header: 'Status' },
-        { field: 'company_id', header: 'Client' },
+        //         {
+        //   field: (rowData) => rowData.company_id ? rowData.company_id : rowData.alternate_field,
+        //   header: 'Client'
+        // },
         { field: 'createdBy', header: 'Créer par' },
     ];
 

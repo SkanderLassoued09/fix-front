@@ -696,6 +696,7 @@ export class TechDiListComponent {
                         });
                 }
                 this.getAllTechDi();
+                this.diDialogDiag = false;
             },
         });
     }
