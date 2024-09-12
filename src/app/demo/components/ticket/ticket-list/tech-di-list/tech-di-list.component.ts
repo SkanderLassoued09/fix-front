@@ -9,6 +9,7 @@ import {
     DiListTechQueryResult,
 } from './tech-di-list.interface';
 import { CreateComposantMutationResult } from './tech-di-list-interface';
+import { NotificationService } from 'src/app/demo/service/notification.service';
 
 @Component({
     selector: 'app-tech-di-list',
@@ -63,7 +64,7 @@ export class TechDiListComponent {
     diListCount: any;
     diDialog: boolean = false;
     di: any;
-    techList: any;
+    techList: any[];
     selectedDi: any;
     isRunning: any;
     startTime: number;
@@ -117,11 +118,13 @@ export class TechDiListComponent {
     disable: any;
     imageValue: string;
     selectedRow: any;
+    newStatRealTime: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
+        private notificationService: NotificationService,
         private cdr: ChangeDetectorRef
     ) {}
 
@@ -132,6 +135,12 @@ export class TechDiListComponent {
         this.checkValueChangesReperable();
 
         console.log('🌯', this.isFinishedDiag);
+        this.notificationService.notification$.subscribe((message: any) => {
+            console.log('🌶[message]:', message);
+            if (message) {
+                this.techList.push(message);
+            }
+        });
     }
 
     closeComposantModal() {
@@ -186,12 +195,20 @@ export class TechDiListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.techList = data.getDiForTech;
+
                     console.log(
                         'data we gonna use in dashboard',
                         this.techList
                     );
                 }
             });
+    }
+    handleNotification(message: any) {
+        // Assuming message contains the item to be added to techList
+        if (message && message.event === 'sendDitoDiagnostique') {
+            this.techList.push(message); // Add the received message to the tech list
+            console.log('Updated tech list:', this.techList);
+        }
     }
     load() {
         this.loading = true;
