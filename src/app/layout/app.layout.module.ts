@@ -19,6 +19,7 @@ import { AppSidebarComponent } from './app.sidebar.component';
 import { AppLayoutComponent } from './app.layout.component';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
+import { MessagesModule } from 'primeng/messages';
 
 @NgModule({
     declarations: [
@@ -44,6 +45,7 @@ import { DialogModule } from 'primeng/dialog';
         AppConfigModule,
         ButtonModule,
         DialogModule,
+        MessagesModule,
     ],
     exports: [AppLayoutComponent],
 })

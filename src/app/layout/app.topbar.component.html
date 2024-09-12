@@ -34,6 +34,28 @@
                 layoutService.state.profileSidebarVisible
         }"
     >
+        <!-- <button
+            (click)="notification('top')"
+            class="p-link layout-topbar-button"
+            badge="1"
+            badgeClass="p-badge-danger"
+        >
+            <i class="pi pi-bell"></i>
+            <span>Profile</span>
+        </button> -->
+        <!-- <p-button
+            pBadge
+            (click)="notification('top')"
+            [badge]="nbReminder"
+            badgeClass="p-badge-danger"
+            icon="pi pi-bell"
+        >
+        </p-button> -->
+        <p-button
+            (click)="notification('top')"
+            label="Reminder"
+            [badge]="nbReminder"
+        />
         <button
             (click)="logout('top-right')"
             class="p-link layout-topbar-button"
@@ -43,7 +65,7 @@
         </button>
     </div>
     <p-dialog
-        header="Edit Profile"
+        header="Alert"
         [modal]="true"
         [(visible)]="visible"
         [position]="position"
@@ -60,6 +82,25 @@
                 (onClick)="visible = false"
             />
             <p-button label="Déconnexion" (onClick)="yes()" />
+        </div>
+    </p-dialog>
+    <p-dialog
+        header="Notifications"
+        [modal]="true"
+        [(visible)]="visibleNotification"
+        [position]="positionNotification"
+        [style]="{ width: '25rem' }"
+    >
+        <div class="flex justify-content-start gap-2">
+            <div>
+                <div *ngFor="let notification of listReminders">
+                    <div *ngFor="let reminder of notification?.reminder?.data">
+                        <span>_id:{{ reminder._id }}</span>
+
+                        <span>title: {{ reminder.title }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </p-dialog>
 </div>

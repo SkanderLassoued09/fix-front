@@ -10,7 +10,9 @@ export class NotificationService {
     private worker: Worker;
     private role: string;
     private notificationSubject = new Subject<any>(); // Subject to emit notifications
+    private reminderSubject = new Subject<any>(); // Subject to emit notifications
     public notification$ = this.notificationSubject.asObservable(); // Observable to expose notifications
+    public reminder$ = this.reminderSubject.asObservable(); // Observable to expose notifications
     constructor(private readonly messageservice: MessageService) {
         this.role === localStorage.getItem('role');
         if (typeof Worker !== 'undefined') {
@@ -57,7 +59,8 @@ export class NotificationService {
                     detail: data.message,
                     sticky: true,
                 });
-                console.log('Notification for reminder:', data.message);
+                console.log('Notification for reminder:', data);
+                this.reminderSubject.next(data.message.payload.reminder.data);
                 break;
             // TODO nezih
             case 'sendNotifcationToAdmins':
