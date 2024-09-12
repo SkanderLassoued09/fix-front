@@ -136,7 +136,6 @@ export class TechDiListComponent {
 
         console.log('🌯', this.isFinishedDiag);
         this.notificationService.notification$.subscribe((message: any) => {
-            console.log('🌶[message]:', message);
             if (message) {
                 this.techList.push(message);
             }
