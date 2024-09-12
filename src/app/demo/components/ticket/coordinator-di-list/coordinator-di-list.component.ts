@@ -48,17 +48,12 @@ export class CoordinatorDiListComponent {
     cols = [
         { field: '_id', header: 'ID' },
         { field: 'title', header: 'Title' },
-        // { field: 'description', header: 'Description' },
-        // { field: 'can_be_repaired', header: 'Reparable' },
-        // { field: 'bon_de_commande', header: 'BC' },
-        // { field: 'bon_de_livraison', header: 'BL' },
-        // { field: 'contain_pdr', header: 'PDR' },
+
         { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },
-        // { field: 'remarque_id', header: 'R.manager' },
-        { field: 'created_by_id', header: 'Cree par' },
+
+        { field: 'createdBy', header: 'Cree par' },
         { field: 'location_id', header: 'Location' },
-        // { field: 'di_category_id', header: 'Categorie' },
     ];
 
     countries;
