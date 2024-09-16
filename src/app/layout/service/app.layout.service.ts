@@ -1,4 +1,5 @@
 import { Injectable, effect, signal } from '@angular/core';
+import { gql } from 'apollo-angular';
 import { Subject } from 'rxjs';
 
 export interface AppConfig {
@@ -155,5 +156,21 @@ export class LayoutService {
 
     changeScale(value: number) {
         document.documentElement.style.fontSize = `${value}px`;
+    }
+
+    getReminders() {
+        return gql`
+            {
+                remindersNotification {
+                    _id
+                    reminder {
+                        data {
+                            _id
+                            title
+                        }
+                    }
+                }
+            }
+        `;
     }
 }

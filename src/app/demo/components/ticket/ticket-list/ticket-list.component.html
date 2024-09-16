@@ -264,7 +264,6 @@
                     optionLabel="location_name"
                     optionValue="value"
                     placeholder="Choisir emplacement"
-                    [editable]="true"
                     aria-label="Choisir emplacement"
                 ></p-dropdown>
             </div>
@@ -469,7 +468,7 @@
                             else specialColumn
                         "
                     >
-                        {{ rowData[col.field] }}
+                        {{ rowData[col.field] || "-" }}
                     </ng-container>
                     <ng-template #specialColumn>
                         <ng-container
