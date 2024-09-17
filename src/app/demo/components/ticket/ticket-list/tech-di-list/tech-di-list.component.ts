@@ -804,8 +804,6 @@ export class TechDiListComponent {
         return is;
     }
     techFinishDiag1() {
-        // this.lapTimeForPauseAndGetBack1();
-
         const dataDiag = {
             _idDi: this.selectedDi_id,
             pdr: this.diagFormTech.value.isPdr,

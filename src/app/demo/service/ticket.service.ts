@@ -838,7 +838,6 @@ export class TicketService {
        mutation {
   createComposant(
     createComposantInput: {
-  
       name: "${composantData.name}"
       package: "${composantData.packageComposant}"
       category_composant_id: "${composantData.category_composant_id}"
@@ -854,5 +853,24 @@ export class TicketService {
     _id
   }
 }`;
+    }
+
+    diDiagnostiqueInPAUSE(_id: string) {
+        return gql`
+            mutation {
+                changeToDiagnosticInPause(_id: "${_id}") {
+                    _id
+                }
+            }
+        `;
+    }
+    diReperationInPAUSE(_id: string) {
+        return gql`
+            mutation {
+                changeToReparationInPause(_id: "${_id}") {
+                    _id
+                }
+            }
+        `;
     }
 }

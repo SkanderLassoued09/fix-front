@@ -491,13 +491,14 @@
                     </ng-template>
                 </td>
                 <td class="flex">
-                    <!-- <button
+                    <button
+                        *ngIf="rowData.status === 'CREATED'"
                         pButton
                         pRipple
                         icon="pi pi-pencil"
                         class="p-button-rounded p-button-raised p-button-success mr-2"
-                        (click)="editProduct(rowData)"
-                    ></button> -->
+                        (click)="updateDi(rowData)"
+                    ></button>
                     <button
                         pButton
                         pRipple
@@ -784,4 +785,184 @@
             ></button>
         </div>
     </ng-container>
+</p-dialog>
+
+<p-dialog
+    header="Modifier la Demande d'intervention"
+    [(visible)]="openUpdateModal"
+    [modal]="true"
+    [style]="{ width: '30vw', height: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <form [formGroup]="updateDiForm">
+        <!-- Form Group -->
+        <fieldset class="location-form">
+            <legend>Informations Générales</legend>
+
+            <!-- Title -->
+            <div class="form-group">
+                <label for="title">Titre</label>
+                <input
+                    formControlName="title"
+                    id="title"
+                    type="text"
+                    class="form-control"
+                    aria-label="Titre"
+                    placeholder="Titre"
+                />
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea
+                    formControlName="designiation"
+                    id="description"
+                    rows="3"
+                    class="form-control"
+                    aria-label="Description"
+                    placeholder="Description"
+                ></textarea>
+            </div>
+
+            <!-- N°Serie -->
+            <div class="form-group">
+                <label for="nSerie">N°Serie</label>
+                <input
+                    formControlName="nSerie"
+                    id="nSerie"
+                    type="text"
+                    class="form-control"
+                    aria-label="N°Serie"
+                    placeholder="N°Serie"
+                />
+            </div>
+
+            <!-- Location Dropdown -->
+            <div class="form-group">
+                <label for="location">Emplacement</label>
+                <p-dropdown
+                    id="location"
+                    class="emplacement-css"
+                    [options]="locationDropDown"
+                    formControlName="location"
+                    optionLabel="location_name"
+                    optionValue="value"
+                    placeholder="Choisir emplacement"
+                    aria-label="Choisir emplacement"
+                ></p-dropdown>
+            </div>
+        </fieldset>
+
+        <!-- Radio Buttons for Type -->
+        <div class="grid">
+            <div class="col flex align-items-center flex-row gap-2">
+                <p-radioButton
+                    (onClick)="getSt($event)"
+                    (ngModelChange)="getSt($event)"
+                    formControlName="typeClient"
+                    value="CLIENT"
+                    aria-label="Client"
+                ></p-radioButton>
+                <label class="ml-2">Client</label>
+                <p-radioButton
+                    (onClick)="getSt($event)"
+                    formControlName="typeClient"
+                    value="COMPANY"
+                    aria-label="Société"
+                ></p-radioButton>
+                <label class="ml-2">Société</label>
+            </div>
+
+            <!-- Conditional Dropdowns for Company or Client -->
+            <div
+                class="col"
+                *ngIf="updateDiForm.get('typeClient').value === 'COMPANY'"
+            >
+                <label for="company">Société</label>
+                <p-dropdown
+                    id="company"
+                    [options]="companiesListDropDown"
+                    formControlName="company_id"
+                    optionLabel="company_name"
+                    optionValue="value"
+                    [showClear]="true"
+                    placeholder="Choisir société"
+                ></p-dropdown>
+            </div>
+            <div
+                class="col"
+                *ngIf="updateDiForm.get('typeClient').value === 'CLIENT'"
+            >
+                <label for="client">Client</label>
+                <p-dropdown
+                    id="client"
+                    [options]="clientListDropDown"
+                    formControlName="client_id"
+                    optionLabel="label"
+                    optionValue="value"
+                    [showClear]="true"
+                    placeholder="Choisir client"
+                ></p-dropdown>
+            </div>
+        </div>
+
+        <!-- Remarks -->
+        <div class="form-group">
+            <label for="remarqueManager">Remarque Administration</label>
+            <textarea
+                id="remarqueManager"
+                rows="5"
+                cols="30"
+                pInputTextarea
+                formControlName="remarqueManager"
+                class="form-control"
+                placeholder="Remarque"
+            ></textarea>
+        </div>
+
+        <!-- File Upload -->
+        <div class="form-group">
+            <p-fileUpload
+                mode="basic"
+                chooseLabel="Modifier l'image"
+                chooseIcon="pi pi-upload"
+                name="demo[]"
+                url="https://www.primefaces.org/cdn/api/upload.php"
+                accept="image/*"
+                maxFileSize="1000000"
+                (onUpload)="onUpload($event, 'image')"
+                [auto]="true"
+            ></p-fileUpload>
+        </div>
+
+        <!-- Toggle Button -->
+        <div class="field">
+            <p-toggleButton
+                onLabel="Envoyer => Coordinatrice"
+                offLabel="Garder le DI"
+                (onChange)="onSelectStatusDefaultDI($event)"
+            ></p-toggleButton>
+        </div>
+
+        <!-- Modal Footer with Action Buttons -->
+        <div class="modal-footer">
+            <p-button
+                label="Modifier"
+                (onClick)="updateDi()"
+                [disabled]="
+                    !updateDiForm.get('title').value ||
+                    !updateDiForm.get('designiation').value ||
+                    !updateDiForm.get('typeClient').value
+                "
+            ></p-button>
+
+            <p-button
+                (onClick)="cancelUpdateDi()"
+                label="Annuler"
+                severity="danger"
+            ></p-button>
+        </div>
+    </form>
 </p-dialog>

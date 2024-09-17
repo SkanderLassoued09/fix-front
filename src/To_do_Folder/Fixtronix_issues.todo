@@ -2,36 +2,31 @@ Projects: @Fixtronix
 
 Todos:
   New:
-  ☐ Company add the 3 services in the update
+  ☐ In the Company add the 3 services (Tech Achat Finance) in the update
   ☐ REPERATION NOT WORKING all the share the same values & btn is not disabled @Skander!!!!
-  ☐ Add upload 2 files for the manager `Bon de livraison` `facture` @WALID
+  ☐ Add upload 2 files for the manager when status is finished `Bon de livraison` `facture` @WALID
   ☐ magasin and else change the links and files with btns refreing to them
-  ☐  update composant for the magasin @Inprogress already exist
-  ☐ DropDown problem inside the creation of DI problem with data format in ts code
+  ☐ update composant for the magasin @Inprogress already exist
   ☐ add Dashboard to Tech @InProgress
-   use the query getDiForTech() to get all the data
   ☐ add update btn so manager can update if status is Created
   ☐ coordinator can send Di to repair @stand_by
-  ☐ tech can see which DI is in pause
-  ☐ CHECK TIME OF DIAGNOSTIQUE PROBLEM @critical
-  ☐  add the btn and the Time of confirmation composants Coordinator from magasin
-  ☐ correct the Indiagnostique and diagnostique / Reperation and Inreperation status  small problem
+  ☐ tech can see which DI is in pause by creating two new status
+  ☐ add the btn and the Time of confirmation composants Coordinator from magasin
   ☐ add category DI to diagnositique
-  ☐ add disconeect btn in the profil icon
-  ☐ correction in the tables
-  ☐ Tech automatic refresh solution
-  ☐ add btn when di is finsihed to add files
   ☐ if di is no reperable after pricing and nego1 the di becomes finished not to magasin  
-  ☐ same small Dasboard to coordinator
-  ☐ negociation 1 issues
-  ------
-  emplcement issue
-  cree par in list coordinator empty
+  ☐ negociation 1 issues @Nezih
+  
 
 
  
   Done:
-    ✔ Add upload 2 files for the manager `Bon de commande`  `devis`  @high @Skander @done(24-08-15 00:03)
+  ✔ same small Dasboard to coordinator @done(24-09-16 22:27)
+  ✔ Tech automatic refresh solution @done(24-09-16 22:26)
+  ✔ correction in the tables @done(24-09-16 22:26)
+  ✔ add disconeect btn in the profil icon @done(24-09-16 22:26)
+  ✔ CHECK TIME OF DIAGNOSTIQUE PROBLEM @critical @done(24-09-16 22:25)
+  ✔ DropDown problem inside the creation of DI problem with data format in ts code @done(24-09-16 22:24)
+  ✔ Add upload 2 files for the manager `Bon de commande`  `devis`  @high @Skander @done(24-08-15 00:03)
   ✔ CRUD price per hour @high @Nezih @done(24-07-06 15:34)
   ✔ in the pricing interface of the admins CSS grave & add the time of the diagnotic @critical @done(24-05-29 10:25)
   ✔ in the Negotiation 1 & 2 implement the confirmer Btn @today @done(24-05-29 10:34)

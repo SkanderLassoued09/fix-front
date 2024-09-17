@@ -71,3 +71,22 @@
         align-items: stretch;
     }
 }
+.update-modal-style {
+    border-color: #28a745;
+}
+
+.update-form-control {
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+}
+
+.update-modal-footer {
+    display: flex;
+    justify-content: space-between;
+}
+
+.required {
+    color: red;
+    margin-left: 5px;
+}

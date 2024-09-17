@@ -48,6 +48,18 @@ export class TicketListComponent implements OnInit {
         location: new FormControl(),
         remarqueManager: new FormControl(),
     });
+    updateDiForm = new FormGroup({
+        title: new FormControl('', [Validators.required]),
+        designiation: new FormControl('', [Validators.required]),
+        typeClient: new FormControl(),
+        status: new FormControl(),
+        client_id: new FormControl(),
+        company_id: new FormControl(),
+        nSerie: new FormControl(),
+        category: new FormControl(),
+        location: new FormControl(),
+        remarqueManager: new FormControl(),
+    });
     tarif_Techs = new FormGroup({
         tarifFromAdmin: new FormControl(),
     });
@@ -180,6 +192,7 @@ export class TicketListComponent implements OnInit {
     facturationDiagnostique: number = 0;
     tarif_Technicien: number;
     payload: { file: string } = { file: '' };
+    openUpdateModal: boolean = false;
 
     constructor(
         private ticketSerice: TicketService,
@@ -203,7 +216,12 @@ export class TicketListComponent implements OnInit {
     showDialogDiCreation() {
         this.openAddDiModal = true;
     }
-
+    updateDi() {
+        this.openUpdateModal = true;
+    }
+    cancelUpdateDi() {
+        this.openUpdateModal = false;
+    }
     showDialogCategoryDI() {
         this.openCategoryModal = true;
     }
