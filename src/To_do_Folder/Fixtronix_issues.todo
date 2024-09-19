@@ -2,15 +2,14 @@ Projects: @Fixtronix
 
 Todos:
   New:
-  ☐ In the Company add the 3 services (Tech Achat Finance) in the update
   ☐ REPERATION NOT WORKING all the share the same values & btn is not disabled @Skander!!!!
-  ☐ Add upload 2 files for the manager when status is finished `Bon de livraison` `facture` @WALID
+  
   ☐ magasin and else change the links and files with btns refreing to them
   ☐ update composant for the magasin @Inprogress already exist
   ☐ add Dashboard to Tech @InProgress
   ☐ add update btn so manager can update if status is Created
   ☐ coordinator can send Di to repair @stand_by
-  ☐ tech can see which DI is in pause by creating two new status
+  ☐ tech can see which DI is in pause by creating two new status @Almost
   ☐ add the btn and the Time of confirmation composants Coordinator from magasin
   ☐ add category DI to diagnositique
   ☐ if di is no reperable after pricing and nego1 the di becomes finished not to magasin  
@@ -20,6 +19,8 @@ Todos:
 
  
   Done:
+     Add upload 2 files for the manager when status is finished `Bon de livraison` `facture` @WALID @done(24-09-20 00:35)
+    ✔ In the Company add the 3 services (Tech Achat Finance) in the update @done(24-09-20 00:34)
   ✔ same small Dasboard to coordinator @done(24-09-16 22:27)
   ✔ Tech automatic refresh solution @done(24-09-16 22:26)
   ✔ correction in the tables @done(24-09-16 22:26)
