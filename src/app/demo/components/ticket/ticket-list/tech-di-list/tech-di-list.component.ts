@@ -56,7 +56,10 @@ export class TechDiListComponent {
     ingredient;
 
     uploadedFiles: any[] = [];
-    cols = [{ field: '_idDi', header: 'ID' }];
+    cols = [
+        { field: '_idDi', header: 'ID' },
+        { field: 'status', header: 'Status' },
+    ];
     payloadImage: { image: string };
     countries;
     selectedCountry;
@@ -133,6 +136,7 @@ export class TechDiListComponent {
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
+        console.log('NG ON INIT');
 
         console.log('🌯', this.isFinishedDiag);
         this.notificationService.notification$.subscribe((message: any) => {
@@ -580,6 +584,20 @@ export class TechDiListComponent {
                 }
             });
 
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.diDiagnostiqueInPAUSE(
+                    this.selectedDi_id
+                ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    console.log('new status working');
+                    console.log('this.selectedDi_id', this.selectedDi_id);
+                }
+            });
+
         this.startStopwatch();
     }
 
@@ -587,7 +605,6 @@ export class TechDiListComponent {
         this.composantSelected = selectedItem;
     }
     getSeverity(status: string) {
-        console.log('🍛DI => [status]:', status);
         switch (status) {
             case 'CREATED':
                 return 'success';

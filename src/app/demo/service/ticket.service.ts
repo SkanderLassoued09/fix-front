@@ -858,7 +858,7 @@ export class TicketService {
     diDiagnostiqueInPAUSE(_id: string) {
         return gql`
             mutation {
-                changeToDiagnosticInPause(_id: "${_id}") {
+                changeToDiagnosticInPause(_idDI: "${_id}") {
                     _id
                 }
             }
@@ -867,7 +867,7 @@ export class TicketService {
     diReperationInPAUSE(_id: string) {
         return gql`
             mutation {
-                changeToReparationInPause(_id: "${_id}") {
+                changeToReparationInPause(_idDI: "${_id}") {
                     _id
                 }
             }

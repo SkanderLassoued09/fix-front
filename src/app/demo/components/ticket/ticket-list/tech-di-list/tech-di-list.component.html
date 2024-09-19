@@ -75,7 +75,8 @@
                     <button
                         [disabled]="
                             (rowData?.status !== 'DIAGNOSTIC' &&
-                                rowData?.status !== 'INDIAGNOSTIC') ||
+                                rowData?.status !== 'INDIAGNOSTIC' &&
+                                rowData?.status !== 'DIAGNOSTIC_Pause') ||
                             isFinishedDiag[rowData?._id]
                         "
                         pButton
