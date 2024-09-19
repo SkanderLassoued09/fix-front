@@ -20,6 +20,7 @@ import { AppLayoutComponent } from './app.layout.component';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessagesModule } from 'primeng/messages';
+import { CardModule } from 'primeng/card';
 
 @NgModule({
     declarations: [
@@ -46,6 +47,7 @@ import { MessagesModule } from 'primeng/messages';
         ButtonModule,
         DialogModule,
         MessagesModule,
+        CardModule,
     ],
     exports: [AppLayoutComponent],
 })

@@ -30,6 +30,8 @@ export class AppTopBarComponent implements OnInit {
     nbReminder: number = 0;
     positionNotification: string;
     badgeIs: boolean = false;
+    isDisable: boolean = false;
+    disabledButtons: { [key: string]: boolean } = {};
 
     constructor(
         public layoutService: LayoutService,
@@ -67,8 +69,6 @@ export class AppTopBarComponent implements OnInit {
                 query: this.layoutService.getReminders(),
             })
             .valueChanges.subscribe(({ data, loading }) => {
-                console.log('🍸[loading]:', loading);
-                console.log('🍎[data]:', data);
                 this.listReminders = data.remindersNotification;
             });
     }
@@ -77,5 +77,17 @@ export class AppTopBarComponent implements OnInit {
         this.visible = false;
         localStorage.clear();
         this.router.navigate(['/auth/login']);
+    }
+
+    markAsSeen(_id: string) {
+        console.log('🍝[_id]:', _id);
+        this.apollo
+            .mutate<any>({
+                mutation: this.layoutService.markAsSeen(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍞[data notificatrion]:', data);
+                this.disabledButtons[_id] = true;
+            });
     }
 }

@@ -173,4 +173,14 @@ export class LayoutService {
             }
         `;
     }
+
+    markAsSeen(_id: string) {
+        return gql`
+            mutation {
+                markAsSeen(_id: "${_id}") {
+                    _id
+                }
+            }
+        `;
+    }
 }

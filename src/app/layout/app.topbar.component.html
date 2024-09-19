@@ -34,23 +34,6 @@
                 layoutService.state.profileSidebarVisible
         }"
     >
-        <!-- <button
-            (click)="notification('top')"
-            class="p-link layout-topbar-button"
-            badge="1"
-            badgeClass="p-badge-danger"
-        >
-            <i class="pi pi-bell"></i>
-            <span>Profile</span>
-        </button> -->
-        <!-- <p-button
-            pBadge
-            (click)="notification('top')"
-            [badge]="nbReminder"
-            badgeClass="p-badge-danger"
-            icon="pi pi-bell"
-        >
-        </p-button> -->
         <p-button
             (click)="notification('top')"
             label="Reminder Test"
@@ -90,17 +73,25 @@
         [(visible)]="visibleNotification"
         [position]="positionNotification"
         [style]="{ width: '25rem' }"
+        [contentStyle]="{ 'overflow-y': 'auto' }"
+        resizable="true"
     >
-        <div class="flex justify-content-start gap-2">
-            <div>
-                <div *ngFor="let notification of listReminders">
-                    <div *ngFor="let reminder of notification?.reminder?.data">
-                        <span>_id:{{ reminder._id }}</span>
-
-                        <span>title: {{ reminder.title }}</span>
-                    </div>
+        <ng-container *ngFor="let notification of listReminders">
+            <p-card
+                class="flex justify-content-between"
+                *ngFor="let reminder of notification?.reminder?.data"
+            >
+                <div class="flex flex-row gap-4">
+                    <p>_id: {{ reminder._id }}</p>
+                    <p>title: {{ reminder.title }}</p>
                 </div>
-            </div>
-        </div>
+                <p-button
+                    icon="pi pi-check"
+                    (onClick)="markAsSeen(reminder._id)"
+                    [disabled]="disabledButtons[reminder._id]"
+                />
+            </p-card>
+            <!-- Add Button -->
+        </ng-container>
     </p-dialog>
 </div>
