@@ -161,6 +161,18 @@ export class TicketService {
         `;
     }
 
+    updateTicket(data: any) {
+        return gql`
+            mutation {
+                updateDi(
+                    UpdateDi: { _id: "${data._id}", title: "${data.title}", description: "${data.description}" }
+                ) {
+                    _id
+                }
+            }
+        `;
+    }
+
     sendingDiForDiagnostic(_idDi, id_tech_diag) {
         return gql`
             mutation {
@@ -220,8 +232,6 @@ export class TicketService {
     }
 
     createDi(diInfo: CreateDiInput) {
-        console.log('🍒[diInfo]:', diInfo);
-
         return gql`
         mutation {
             createDi(
@@ -358,8 +368,6 @@ export class TicketService {
     }
 
     lapTimeForPauseAndGetBack(_id: string, diagTime: string) {
-        console.log('🍢[diagTime]:', diagTime);
-        console.log('🌽[_id]:', _id);
         return gql`
             mutation {
                 lapTimeForPauseAndGetBack(_id: "${_id}", diagTime: "${diagTime}")
@@ -368,8 +376,6 @@ export class TicketService {
     }
 
     lapTimeForPauseAndGetBackForReaparation(_id: string, repTime: string) {
-        console.log('🥧[repTime]:', repTime);
-        console.log('🍝[_id]:', _id);
         return gql`
             mutation {
                 lapTimeForPauseAndGetBackForReaparation(
@@ -400,7 +406,6 @@ export class TicketService {
     }
 
     finish(diagInfo) {
-        console.log(diagInfo);
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
@@ -619,7 +624,6 @@ export class TicketService {
         `;
     }
     changeStatusPending3(_id: string) {
-        console.log('🥦[_id]:', _id);
         return gql`
             mutation {
                 changeStatusPending3(_id: "${_id}")

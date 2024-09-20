@@ -160,7 +160,6 @@ export class CompanyListComponent {
     }
 
     addCompany() {
-        console.log('🥧 this.companyForm.value', this.companyForm.value);
         this.apollo
             .mutate<AddCompanyMutationResponse>({
                 mutation: this.companyService.addCompany(
@@ -180,7 +179,6 @@ export class CompanyListComponent {
                     this.creationCompanyModalCondition = false;
                 }
                 if (errors) {
-                    console.log('🍦[errors]:', errors);
                 }
             });
     }
@@ -200,7 +198,6 @@ export class CompanyListComponent {
             })
 
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🍉[data]:', data);
                 if (data) {
                     this.companiesList = data.findAllCompany.companyRecords;
                     this.totalCompanyRecord =
@@ -210,13 +207,11 @@ export class CompanyListComponent {
     }
 
     editCompany(rowDataClient) {
-        console.log('🍍[rowDataClient]:', rowDataClient);
         this.companySelected = { ...rowDataClient };
         this.CompanyModalCondition = true;
     }
 
     saveUpdateCompany() {
-        console.log('🍨');
         this.apollo
             .mutate<any>({
                 mutation: this.companyService.updatecompany(
@@ -262,13 +257,11 @@ export class CompanyListComponent {
                     .subscribe(({ data }) => {
                         if (data) {
                             const index = this.companiesList.findIndex((el) => {
-                                console.log('🍔[el]:', el);
                                 return el._id === rowData._id;
                             });
                             this.companiesList.splice(index, 1);
                         }
                     });
-                console.log('done deleted');
 
                 this.messageService.add({
                     severity: 'danger',
@@ -282,7 +275,6 @@ export class CompanyListComponent {
     }
 
     findIndexById(_id: string): number {
-        console.log('🍌[_id]:', _id);
         let index = -1;
         for (let i = 0; i < this.companiesList.length; i++) {
             if (this.companiesList[i]._id === _id) {

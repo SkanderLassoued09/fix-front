@@ -131,7 +131,6 @@ export class MagasinDiListComponent {
     //     );
     // }
     openDialogMagasin(item) {
-        console.log('🍠[item]:', item);
         this.selectedDi_id = item._id;
 
         this.arrayComposant = item.array_composants.map((el) => {
@@ -141,7 +140,7 @@ export class MagasinDiListComponent {
                 quantity: el.quantity,
             };
         });
-        console.log('🥝[  this.arrayComposant]:', this.arrayComposant);
+
         this.magasinDiDialog = true;
     }
     //last add
@@ -149,7 +148,6 @@ export class MagasinDiListComponent {
     Magasin_Condition() {} //! open only when status === In Magasin
 
     takeMetoDetailsComponent(dataRowselected) {
-        console.log('Hello', dataRowselected._id);
         const _id = dataRowselected._id;
         this.router.navigate(['tickets/ticket/details', _id]);
     }
@@ -160,12 +158,9 @@ export class MagasinDiListComponent {
                 query: this.ticketSerice.getAllMagasin(),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥕[errors]:', errors);
-                console.log('🍸[loading]:', loading);
-                console.log('🍼️[data]:', data);
                 if (data) {
                     this.diList = data.getDiForMagasin.di;
-                    console.log('🍭[ this.diList]:', this.diList);
+
                     this.diListCount = data.getDiForMagasin.totalDiCount;
                 }
             });
@@ -176,14 +171,12 @@ export class MagasinDiListComponent {
     }
 
     selectedDropDown(selectedItem) {
-        console.log('🥥[selectedItem]:', selectedItem);
         this.selectedItem = selectedItem;
         this.apollo
             .query<ComposantByNameQueryResponse>({
                 query: this.ticketSerice.composantByName(selectedItem.value),
             })
             .subscribe(({ data, loading }) => {
-                console.log('🍱[data]:', data);
                 this.loadedDataComposant = data.findOneComposant;
                 if (data) {
                     // Initialize form fields with loaded data
@@ -210,9 +203,7 @@ export class MagasinDiListComponent {
             .watchQuery<any>({
                 query: this.ticketSerice.changeStatusDiToPending2(_id),
             })
-            .valueChanges.subscribe(({ data, loading }) => {
-                console.log('🍩[data]:', data);
-            });
+            .valueChanges.subscribe(({ data, loading }) => {});
     }
 
     updateComposant() {
@@ -224,9 +215,6 @@ export class MagasinDiListComponent {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading }) => {
-                console.log('🥐[loading]:', loading);
-                console.log('🌮[data]:', data);
-
                 if (data) {
                     this.changeStatusDiToPending2(this.selectedDi_id);
                     this.getDi();
@@ -236,8 +224,6 @@ export class MagasinDiListComponent {
     }
 
     onUpload(event: any) {
-        console.log(event, 'this the event ');
-
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -252,14 +238,14 @@ export class MagasinDiListComponent {
             image: base64,
             // add other necessary data here
         };
-        console.log('🌮[payload]:', payload);
+
         this.payloadImage = payload;
         // this.http.post('http://your-backend-url/tickets', payload).subscribe(
         //     (response) => {
-        //         console.log('Upload successful', response);
+        //
         //     },
         //     (error) => {
-        //         console.log('Upload failed', error);
+        //
         //     }
         // );
     }
@@ -270,15 +256,13 @@ export class MagasinDiListComponent {
             ...composantDataForm,
             pdf: this.payloadImage,
         };
-        console.log('🍓', this.payloadImage);
-        console.log('🍅add composant', composantDataTosend);
+
         this.apollo
             .mutate<any>({
                 mutation:
                     this.ticketSerice.addComposantMagasin(composantDataTosend),
             })
             .subscribe(({ data }) => {
-                console.log('🍰[data]:', data);
                 if (data) {
                     this.messageservice.add({
                         severity: 'success',

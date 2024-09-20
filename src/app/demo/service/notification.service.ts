@@ -59,7 +59,7 @@ export class NotificationService {
                     detail: data.message,
                     sticky: true,
                 });
-                console.log('Notification for reminder:', data);
+
                 this.reminderSubject.next(data.message.payload.reminder.data);
                 break;
             // TODO nezih

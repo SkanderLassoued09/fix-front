@@ -111,7 +111,6 @@ export class ClientListComponent {
                     this.visible = false;
                 }
                 if (errors) {
-                    console.log('🍦[errors]:', errors);
                 }
             });
     }
@@ -132,17 +131,16 @@ export class ClientListComponent {
                 this.loading = loading;
                 if (data) {
                     this.clientsList = data.findAllClient.clientRecords;
-                    console.log('🍚[clientsList]:', this.clientsList);
+
                     this.totalClientRecord =
                         data.findAllClient.totalClientRecord;
                 }
-                console.log('🍼️[errors]:', errors);
             });
     }
 
     editClient(client: any) {
         this.clientData = { ...client };
-        console.log('🍡[clientData]:', this.clientData);
+
         this.clientModalCondition = true;
     }
 

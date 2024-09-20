@@ -43,7 +43,6 @@ export class AppTopBarComponent implements OnInit {
     ngOnInit(): void {
         this.getNotificationFromDb();
         this.notificationService.reminder$.subscribe((message: any) => {
-            console.log('🍈[message]:', message);
             if (message) {
                 this.badgeIs = false; // Make sure the badge is enabled when there's new data
                 this.nbReminder = message.length; // Set the number of reminders
@@ -69,7 +68,9 @@ export class AppTopBarComponent implements OnInit {
                 query: this.layoutService.getReminders(),
             })
             .valueChanges.subscribe(({ data, loading }) => {
-                this.listReminders = data.remindersNotification;
+                if (data) {
+                    this.listReminders = data.remindersNotification ?? [];
+                }
             });
     }
 
@@ -80,15 +81,11 @@ export class AppTopBarComponent implements OnInit {
     }
 
     markAsSeen(reminderId: string, auditId: string) {
-        console.log('🥕[auditId]:', auditId);
-        console.log('🍑[reminderId]:', reminderId);
-
         this.apollo
             .mutate<any>({
                 mutation: this.layoutService.markAsSeen(reminderId),
             })
             .subscribe(({ data }) => {
-                console.log('🍞[data notificatrion]:', data);
                 this.markAuditAsSeen(auditId, reminderId);
                 this.disabledButtons[reminderId] = true;
             });
@@ -102,8 +99,6 @@ export class AppTopBarComponent implements OnInit {
                     reminderId
                 ),
             })
-            .subscribe(({ data }) => {
-                console.log('🍞[data notificatrion]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 }

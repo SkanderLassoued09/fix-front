@@ -36,6 +36,8 @@ interface UploadEvent {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
+    ticketSelected: any;
+    openUpdateModal: boolean = false;
     ticketData: any = {
         _id: '',
         title: '',
@@ -215,11 +217,13 @@ export class TicketListComponent implements OnInit {
     facturationDiagnostique: number = 0;
     tarif_Technicien: number;
     payload: { file: string } = { file: '' };
-    openUpdateModal: boolean = false;
+
     facturePDF: { file: string };
     blPDF: { file: string };
     private _idPDFFinished: string;
     ticketDetailsInfo: boolean;
+    selectedTicket: any;
+    updateticketView: boolean;
 
     constructor(
         private ticketSerice: TicketService,
@@ -243,8 +247,10 @@ export class TicketListComponent implements OnInit {
     showDialogDiCreation() {
         this.openAddDiModal = true;
     }
-    updateDi() {
-        this.openUpdateModal = true;
+    updateDi(rowDataTicket: any) {
+        this.selectedTicket = rowDataTicket ?? {}; // Populate selected ticket details
+
+        this.updateticketView = true; // Open the update modal
     }
     cancelUpdateDi() {
         this.openUpdateModal = false;
@@ -255,6 +261,47 @@ export class TicketListComponent implements OnInit {
     showDialogLocations() {
         this.openLocationsModal = true;
     }
+
+    saveUpdateTicket() {
+        const { _id, title, description } = this.selectedTicket;
+        const extractedData = { _id, title, description };
+
+        // Call your mutation service to update the ticket
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.updateTicket(extractedData),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    // If the ticket ID exists, update the list with the modified ticket details
+                    if (this.selectedTicket._id) {
+                        this.diList[
+                            this.findIndexById(this.selectedTicket._id)
+                        ] = this.selectedTicket;
+
+                        // Show success message
+                        this.messageservice.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'The ticket has been successfully updated',
+                        });
+                        this.openUpdateModal = false; // Close the modal after successful update
+                    }
+                }
+            });
+    }
+
+    findIndexById(_id: string): number {
+        let index = -1;
+        for (let i = 0; i < this.diList.length; i++) {
+            if (this.diList[i]._id === _id) {
+                index = i;
+                break;
+            }
+        }
+        return index;
+    }
+
     showDialogPriceTech() {
         this.openPriceTechModal = true;
         this.apollo

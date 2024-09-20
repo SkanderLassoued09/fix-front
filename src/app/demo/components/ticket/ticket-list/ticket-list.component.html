@@ -508,7 +508,10 @@
                         (click)="openUploadFileFinished(rowData._id)"
                     ></button>
                     <button
-                        *ngIf="rowData.status === 'CREATED'"
+                        *ngIf="
+                            rowData.status === 'CREATED' ||
+                            rowData.status === 'PENDING1'
+                        "
                         pButton
                         pRipple
                         icon="pi pi-pencil"
@@ -847,186 +850,6 @@
 <!-- finished status -->
 
 <p-dialog
-    header="Modifier la Demande d'intervention"
-    [(visible)]="openUpdateModal"
-    [modal]="true"
-    [style]="{ width: '30vw', height: '50vw' }"
-    [draggable]="false"
-    [resizable]="false"
->
-    <form [formGroup]="updateDiForm">
-        <!-- Form Group -->
-        <fieldset class="location-form">
-            <legend>Informations Générales</legend>
-
-            <!-- Title -->
-            <div class="form-group">
-                <label for="title">Titre</label>
-                <input
-                    formControlName="title"
-                    id="title"
-                    type="text"
-                    class="form-control"
-                    aria-label="Titre"
-                    placeholder="Titre"
-                />
-            </div>
-
-            <!-- Description -->
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea
-                    formControlName="designiation"
-                    id="description"
-                    rows="3"
-                    class="form-control"
-                    aria-label="Description"
-                    placeholder="Description"
-                ></textarea>
-            </div>
-
-            <!-- N°Serie -->
-            <div class="form-group">
-                <label for="nSerie">N°Serie</label>
-                <input
-                    formControlName="nSerie"
-                    id="nSerie"
-                    type="text"
-                    class="form-control"
-                    aria-label="N°Serie"
-                    placeholder="N°Serie"
-                />
-            </div>
-
-            <!-- Location Dropdown -->
-            <div class="form-group">
-                <label for="location">Emplacement</label>
-                <p-dropdown
-                    id="location"
-                    class="emplacement-css"
-                    [options]="locationDropDown"
-                    formControlName="location"
-                    optionLabel="location_name"
-                    optionValue="value"
-                    placeholder="Choisir emplacement"
-                    aria-label="Choisir emplacement"
-                ></p-dropdown>
-            </div>
-        </fieldset>
-
-        <!-- Radio Buttons for Type -->
-        <div class="grid">
-            <div class="col flex align-items-center flex-row gap-2">
-                <p-radioButton
-                    (onClick)="getSt($event)"
-                    (ngModelChange)="getSt($event)"
-                    formControlName="typeClient"
-                    value="CLIENT"
-                    aria-label="Client"
-                ></p-radioButton>
-                <label class="ml-2">Client</label>
-                <p-radioButton
-                    (onClick)="getSt($event)"
-                    formControlName="typeClient"
-                    value="COMPANY"
-                    aria-label="Société"
-                ></p-radioButton>
-                <label class="ml-2">Société</label>
-            </div>
-
-            <!-- Conditional Dropdowns for Company or Client -->
-            <div
-                class="col"
-                *ngIf="updateDiForm.get('typeClient').value === 'COMPANY'"
-            >
-                <label for="company">Société</label>
-                <p-dropdown
-                    id="company"
-                    [options]="companiesListDropDown"
-                    formControlName="company_id"
-                    optionLabel="company_name"
-                    optionValue="value"
-                    [showClear]="true"
-                    placeholder="Choisir société"
-                ></p-dropdown>
-            </div>
-            <div
-                class="col"
-                *ngIf="updateDiForm.get('typeClient').value === 'CLIENT'"
-            >
-                <label for="client">Client</label>
-                <p-dropdown
-                    id="client"
-                    [options]="clientListDropDown"
-                    formControlName="client_id"
-                    optionLabel="label"
-                    optionValue="value"
-                    [showClear]="true"
-                    placeholder="Choisir client"
-                ></p-dropdown>
-            </div>
-        </div>
-
-        <!-- Remarks -->
-        <div class="form-group">
-            <label for="remarqueManager">Remarque Administration</label>
-            <textarea
-                id="remarqueManager"
-                rows="5"
-                cols="30"
-                pInputTextarea
-                formControlName="remarqueManager"
-                class="form-control"
-                placeholder="Remarque"
-            ></textarea>
-        </div>
-
-        <!-- File Upload -->
-        <div class="form-group">
-            <p-fileUpload
-                mode="basic"
-                chooseLabel="Modifier l'image"
-                chooseIcon="pi pi-upload"
-                name="demo[]"
-                url="https://www.primefaces.org/cdn/api/upload.php"
-                accept="image/*"
-                maxFileSize="1000000"
-                (onUpload)="onUpload($event, 'image')"
-                [auto]="true"
-            ></p-fileUpload>
-        </div>
-
-        <!-- Toggle Button -->
-        <div class="field">
-            <p-toggleButton
-                onLabel="Envoyer => Coordinatrice"
-                offLabel="Garder le DI"
-                (onChange)="onSelectStatusDefaultDI($event)"
-            ></p-toggleButton>
-        </div>
-
-        <!-- Modal Footer with Action Buttons -->
-        <div class="modal-footer">
-            <p-button
-                label="Modifier"
-                (onClick)="updateDi()"
-                [disabled]="
-                    !updateDiForm.get('title').value ||
-                    !updateDiForm.get('designiation').value ||
-                    !updateDiForm.get('typeClient').value
-                "
-            ></p-button>
-
-            <p-button
-                (onClick)="cancelUpdateDi()"
-                label="Annuler"
-                severity="danger"
-            ></p-button>
-        </div>
-    </form>
-</p-dialog>
-
-<p-dialog
     header="View all ticket infos"
     [(visible)]="ticketDetailsInfo"
     [modal]="true"
@@ -1182,4 +1005,183 @@
             </ul>
         </div>
     </div>
+</p-dialog>
+<!-- update ticket  -->
+
+<p-dialog
+    [(visible)]="updateticketView"
+    [style]="{ width: '450px' }"
+    header="Détails du Ticket"
+    [modal]="true"
+    styleClass="p-fluid"
+    draggable="false"
+>
+    <ng-template pTemplate="content">
+        <!-- Ticket ID (Hidden) -->
+        <input type="hidden" [(ngModel)]="selectedTicket._id" />
+
+        <!-- Ticket Title -->
+        <div class="field">
+            <label for="title">Titre</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.title"
+                pInputText
+                id="title"
+                required
+                autofocus
+            />
+        </div>
+
+        <!-- Description -->
+        <div class="field">
+            <label for="description">Description</label>
+            <textarea
+                id="description"
+                rows="3"
+                [(ngModel)]="selectedTicket.description"
+                pInputTextarea
+                required
+            ></textarea>
+        </div>
+
+        <!-- Can Be Repaired -->
+        <div class="field">
+            <label for="canBeRepaired">Peut être réparé</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.can_be_repaired"
+                pInputText
+                id="canBeRepaired"
+            />
+        </div>
+
+        <!-- Bon de Commande -->
+        <div class="field">
+            <label for="bonDeCommande">Bon de Commande</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.bon_de_commande"
+                pInputText
+                id="bonDeCommande"
+            />
+        </div>
+
+        <!-- Bon de Livraison -->
+        <div class="field">
+            <label for="bonDeLivraison">Bon de Livraison</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.bon_de_livraison"
+                pInputText
+                id="bonDeLivraison"
+            />
+        </div>
+
+        <!-- Contain PDR -->
+        <div class="field">
+            <label for="containPdr">Contient PDR</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.contain_pdr"
+                pInputText
+                id="containPdr"
+            />
+        </div>
+
+        <!-- Facture -->
+        <div class="field">
+            <label for="facture">Facture</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.facture"
+                pInputText
+                id="facture"
+            />
+        </div>
+
+        <!-- Status -->
+        <div class="field">
+            <label for="status">Statut</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.status"
+                pInputText
+                id="status"
+                disabled
+            />
+        </div>
+
+        <!-- Client ID -->
+        <div class="field">
+            <label for="clientId">ID Client</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.client_id"
+                pInputText
+                id="clientId"
+            />
+        </div>
+
+        <!-- Remarque Tech Diagnostic -->
+        <div class="field">
+            <label for="remarqueTech">Remarque Technique</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.remarque_tech_diagnostic"
+                pInputText
+                id="remarqueTech"
+            />
+        </div>
+
+        <!-- Created By -->
+        <div class="field">
+            <label for="createdBy">Créé Par</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.createdBy"
+                pInputText
+                id="createdBy"
+                disabled
+            />
+        </div>
+
+        <!-- Ignore Count -->
+        <div class="field">
+            <label for="ignoreCount">Compteur d'Ignorance</label>
+            <input
+                type="number"
+                [(ngModel)]="selectedTicket.ignoreCount"
+                pInputText
+                id="ignoreCount"
+            />
+        </div>
+
+        <!-- Location ID -->
+        <div class="field">
+            <label for="locationId">ID de Localisation</label>
+            <input
+                type="text"
+                [(ngModel)]="selectedTicket.location_id"
+                pInputText
+                id="locationId"
+            />
+        </div>
+
+        <!-- Modal Footer with Action Buttons -->
+        <div class="modal-footer">
+            <p-button
+                (click)="cancelUpdateDi()"
+                icon="pi pi-times"
+                label="Annuler"
+                [text]="true"
+            ></p-button>
+            <p-button
+                (click)="saveUpdateTicket()"
+                icon="pi pi-plus"
+                label="Modifier"
+                [text]="true"
+            ></p-button>
+        </div>
+    </ng-template>
 </p-dialog>

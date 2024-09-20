@@ -1,5 +1,4 @@
 function getSeverityDemandeIntervention(status: string) {
-    console.log('🍛DI => [status]:', status);
     switch (status) {
         case 'CREATED':
             return 'success';

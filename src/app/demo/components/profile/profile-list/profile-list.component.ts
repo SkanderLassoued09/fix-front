@@ -74,10 +74,8 @@ export class ProfileListComponent {
                 useMutationLoading: true,
             })
             .subscribe(({ data, errors, loading }) => {
-                console.log('🌮[loading]:', loading);
                 this.loading = loading;
                 if (data) {
-                    console.log('🍒[data]:', data);
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
@@ -85,13 +83,11 @@ export class ProfileListComponent {
                     });
                 }
                 if (errors) {
-                    console.log('🍎[errors]:', errors);
                 }
             });
     }
 
     onPageChange(event: PageEvent) {
-        console.log('🥝[event]:', event);
         this.first = event.first;
         this.page = event.page;
         this.rows = event.rows;
@@ -104,9 +100,6 @@ export class ProfileListComponent {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🍏[errors]:', errors);
-                console.log('🍜[loading]:', loading);
-                console.log('🍠[data]:', data);
                 if (data) {
                     this.profileList = data.getAllProfiles.profileRecord;
                     this.totalProfileCount =
@@ -140,7 +133,7 @@ export class ProfileListComponent {
     //         header: 'Confirmation',
     //         icon: 'pi pi-exclamation-triangle',
     //         accept: () => {
-    //             console.log(rowData._id, 'rowdata value ');
+    //
 
     //             this.apollo
     //                 .mutate<any>({
@@ -149,9 +142,9 @@ export class ProfileListComponent {
     //                     ),
     //                 })
     //                 .subscribe(({ data }) => {
-    //                     console.log('🍠[data]:', data);
+    //
     //                 });
-    //             console.log('done deleted');
+    //
 
     //             this.messageService.add({
     //                 severity: 'warn',
@@ -169,13 +162,11 @@ export class ProfileListComponent {
      */
 
     editProfile(profile: any) {
-        console.log('🍬[profile]:', profile);
         this.profileData = { ...profile };
         this.profileDialog = true;
     }
 
     saveUpdateProfile() {
-        console.log('🍕');
         this.apollo
             .mutate<any>({
                 mutation: this.profileService.updateProfile(this.profileData),
@@ -205,7 +196,6 @@ export class ProfileListComponent {
     }
 
     findIndexById(_id: string): number {
-        console.log('🍌[_id]:', _id);
         let index = -1;
         for (let i = 0; i < this.profileList.length; i++) {
             if (this.profileList[i]._id === _id) {
@@ -218,7 +208,6 @@ export class ProfileListComponent {
     }
 
     deleteProfile(_id: string) {
-        console.log('🍩');
         this.confirmationService.confirm({
             message: 'Are you sure you want to delete the selected profile?',
             header: 'Confirm',

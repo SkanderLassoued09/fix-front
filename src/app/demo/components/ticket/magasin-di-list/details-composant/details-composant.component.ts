@@ -42,7 +42,7 @@ export class DetailsComposantComponent implements OnInit {
         private readonly router: Router
     ) {
         this._id = this.route.snapshot.paramMap.get('id');
-        console.log(this._id, 'id');
+
         this.formUpdateComposant = new FormGroup({
             name: new FormControl(),
             package: new FormControl(),
@@ -96,7 +96,6 @@ export class DetailsComposantComponent implements OnInit {
             });
     }
     select(data) {
-        console.log('trig', data);
         this.getCompsantInfo(data.nameComposant);
     }
 
@@ -106,7 +105,6 @@ export class DetailsComposantComponent implements OnInit {
                 query: this.ticketSerice.getDiByID(_id),
             })
             .subscribe(({ data }) => {
-                console.log('🌯[data nezih]:', data.getDiById.array_composants);
                 this.composants = data.getDiById.array_composants;
             });
     }
@@ -119,7 +117,6 @@ export class DetailsComposantComponent implements OnInit {
             .valueChanges.subscribe(({ data }) => {});
     }
     updateComposant() {
-        console.log('🌭 form ', this.formUpdateComposant.value);
         this.apollo
             .mutate<UpdateComposantMutationResponse>({
                 mutation: this.ticketSerice.updateComposant(
@@ -128,11 +125,7 @@ export class DetailsComposantComponent implements OnInit {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading }) => {
-                console.log('🥐[loading]:', loading);
-                console.log('🌮[data]:', data);
-
                 if (data) {
-                    console.log('🍑 in ');
                     // Update composantValues with the latest form values
                     Object.assign(
                         this.composantValues,
@@ -149,13 +142,11 @@ export class DetailsComposantComponent implements OnInit {
     }
 
     changeStatusPending3() {
-        console.log('🍷pend', this._id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusPending3(this._id),
             })
             .subscribe(({ data }) => {
-                console.log('🍑[data pending 3]:', data);
                 if (data) {
                     this.router.navigate(['/tickets/ticket/magasin-di-list']);
                 }

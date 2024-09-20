@@ -133,13 +133,10 @@ export class CoordinatorDiListComponent {
                                 break;
                         }
                     });
-                    console.log(this.counterInMagasin, 'the counterInMagasin');
                 }
             });
     }
     getReperationCoordinatorCondition() {
-        console.log('this.selectedDi nezih97', this.selectedDi);
-
         this.apollo
             .watchQuery<any>({
                 query: this.ticketSerice.getReperationCoordinatorCondition(
@@ -174,8 +171,6 @@ export class CoordinatorDiListComponent {
     }
     //!Adding rq
     openModalConfig(di) {
-        console.log(di, 'remarque_manager');
-        console.log('🥕[di]:', di);
         this.di = { ...di };
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;
@@ -256,13 +251,10 @@ export class CoordinatorDiListComponent {
                 mutation: this.ticketSerice.changeStatusRepaire(_id),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading }) => {
-                console.log('🌯[data changeStatusRepaire]:', data);
-            });
+            .subscribe(({ data, loading }) => {});
     }
     //!HERE
     selectedTechDiag(data) {
-        console.log('🥟[selected]:', data);
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer ce Technicien',
             header: 'Confirmation Diagnostique',
@@ -316,8 +308,6 @@ export class CoordinatorDiListComponent {
                         useMutationLoading: true,
                     })
                     .subscribe(({ data, loading, errors }) => {
-                        console.log('🍵[data]:', data);
-
                         if (data) {
                             this.changeStatusRepaire(this.selectedDi);
                             this.getDi();
@@ -341,7 +331,6 @@ export class CoordinatorDiListComponent {
                         ),
                     })
                     .subscribe(({ data }) => {
-                        console.log('🍑[pricing change]:', data);
                         if (data) {
                             this.getDi();
                             this.diDialog = false;
@@ -364,7 +353,6 @@ export class CoordinatorDiListComponent {
                         ),
                     })
                     .subscribe(({ data }) => {
-                        console.log('🍑[Confirmation composants]:', data);
                         if (data) {
                             this.getDi();
                             this.diDialog = false;

@@ -47,7 +47,6 @@ export class AppComponent implements OnInit {
                     query: this.profileService.notificationDiagnostic(),
                 })
                 .subscribe(({ data }) => {
-                    console.log('🥔[data]:', data);
                     if (
                         this._idtech == data.notificationDiagnostic._idtechDiag
                     ) {
@@ -66,7 +65,6 @@ export class AppComponent implements OnInit {
                 query: this.profileService.notificationrep(),
             })
             .subscribe(({ data }) => {
-                console.log('🥔[data]:', data);
                 if (this._idtech == data.notificationDiagnostic._idtechDiag) {
                     this.messageService.add({
                         severity: 'success',
