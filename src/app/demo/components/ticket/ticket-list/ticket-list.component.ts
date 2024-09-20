@@ -36,6 +36,28 @@ interface UploadEvent {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
+    ticketData: any = {
+        _id: '',
+        title: '',
+        description: '',
+        can_be_repaired: false,
+        bon_de_commande: '',
+        bon_de_livraison: '',
+        contain_pdr: false,
+        facture: '',
+        status: '',
+        createdAt: '',
+        updatedAt: '',
+        image: '',
+        current_roles: '',
+        client_id: '',
+        remarque_tech_diagnostic: '',
+        createdBy: '',
+        ignoreCount: 0,
+        location_id: '',
+        di_category_id: '',
+        array_composants: [],
+    };
     filsFinished: boolean = false;
     creationDiForm = new FormGroup({
         title: new FormControl('', [Validators.required]),
@@ -197,6 +219,7 @@ export class TicketListComponent implements OnInit {
     facturePDF: { file: string };
     blPDF: { file: string };
     private _idPDFFinished: string;
+    ticketDetailsInfo: boolean;
 
     constructor(
         private ticketSerice: TicketService,
@@ -245,16 +268,14 @@ export class TicketListComponent implements OnInit {
     //! MUTATION WORKING ON
     confirmerTarifs() {
         this.tarif_Techs.value;
-        console.log('TarifFromAdmin:', this.tarif_Techs.value);
+
         const { tarifFromAdmin } = this.tarif_Techs.value;
         const tarifForTechs = tarifFromAdmin;
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.affectNewTarif(tarifForTechs),
             })
-            .subscribe(({ data }) => {
-                console.log(data, 'data TARIFICATION');
-            });
+            .subscribe(({ data }) => {});
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getTechTarif(),
@@ -270,14 +291,13 @@ export class TicketListComponent implements OnInit {
             header: 'Confirmation du prix final',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                console.log('confirmerNegociation working');
                 this.nego1nego2_InMagasin(
                     this._idDi,
                     this.price,
                     this.finalPrice
                 );
                 this.changeStatusDiToInMagasin(this._idDi);
-                console.log('🥓[this._idDi]:', this._idDi);
+
                 this.getDi();
                 this.saveDevisPDF(this._idDi, this.payload.file);
                 this.saveBCPDF(this._idDi, this.payload.file);
@@ -292,9 +312,7 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.addDevis(_id, pdf),
             })
-            .subscribe(({ data }) => {
-                console.log('🍡[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     saveBCPDF(_id: string, pdf: string) {
@@ -302,9 +320,7 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.addBC(_id, pdf),
             })
-            .subscribe(({ data }) => {
-                console.log('🍡[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     timeStringIntoHours(timeString) {
@@ -319,7 +335,7 @@ export class TicketListComponent implements OnInit {
     showDialogForPricing(data) {
         this.seletedRow = data;
         let MyID = data._id;
-        console.log('verifiing the ID', MyID);
+
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getTechTarif(),
@@ -333,10 +349,6 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getStatByDI_ID(MyID),
             })
             .subscribe(({ data }) => {
-                console.log(
-                    '🥚[data  NEZIH]:',
-                    data.getInfoStatByIdDi.diag_time
-                );
                 this.timeDiagnostique = data.getInfoStatByIdDi.diag_time;
                 this.timepart = this.timeStringIntoHours(
                     data.getInfoStatByIdDi.diag_time
@@ -345,27 +357,14 @@ export class TicketListComponent implements OnInit {
                     this.timepart.hours * this.tarif_Technicien +
                     this.timepart.minutes *
                         parseFloat((this.tarif_Technicien / 60).toFixed(2));
-                console.log(
-                    'this.facturationDiagnostique',
-                    this.facturationDiagnostique
-                );
-                console.log('HOURS ', this.timepart.seconds);
-                console.log('MIN ', this.timepart.minutes);
-                console.log('seconds ', this.timepart.seconds);
-                console.log('tarif TECHNICIENCS', this.tarif_Technicien);
             });
 
         this.current_id = data._id;
         for (let oneComposant of data.array_composants) {
             this.getcomposantByName(oneComposant.nameComposant);
-            console.log('data quantity from here', oneComposant.quantity);
         }
 
-        console.log('Quantite composants', this.allComposants);
-
         this.composantQuantity = this.allComposants.length;
-
-        console.log('length all composant', this.allComposants.length);
 
         this.pricingModal = true;
 
@@ -401,29 +400,25 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForNegociate1(data) {
-        console.log('🍱[data ttttttttttttttttt]:', data);
         this.seletedRow = data._id;
 
         this._idDi = this.seletedRow;
-        console.log('🌶[this._idDi]:', this._idDi);
 
         this.getDiByID(this._idDi);
         this.secondNegocition = data._id;
-        console.log('🍈[ this.s]:', this.s);
+
         this.negocite1Modal = true;
         this.getTotalComposant(data._id);
     }
     showDialogForNegociate2(data) {
         this.slectedRow = data._id;
-        console.log('🦑[slectedRow]:', data);
+
         this.negocite2Modal = true;
         this.getTotalComposant(data._id);
         this.getDiByID(this.slectedRow);
     }
 
-    onSizeSelect() {
-        console.log('Selected size:', this.selectedSize);
-    }
+    onSizeSelect() {}
 
     //Get composant Info for admins
     async getcomposantByName(name_composant: string) {
@@ -435,7 +430,6 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    console.log(data, 'lijùpioj');
                     this.allComposants.push(data);
                 }
             });
@@ -448,7 +442,6 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    console.log('🧀[data]:', data);
                     this.diList = data.getAllDi.di;
                     this.diListCount = data.getAllDi.totalDiCount;
                 }
@@ -462,11 +455,8 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    console.log('the NEW QUERY IS WORKING and value is', data);
-
                     this.dataById = data;
                     this.price = this.dataById.getDiById.price;
-                    console.log('PRICE', this.price);
                 }
             });
     }
@@ -484,7 +474,6 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data }) => {
                 this.totalComposant = data.calculateTicketComposantPrice;
-                console.log('🍌[ this.totalComposant ]:', this.totalComposant);
             });
     }
 
@@ -503,10 +492,6 @@ export class TicketListComponent implements OnInit {
                     })
                     .subscribe(({ data, loading }) => {
                         if (data) {
-                            console.log(
-                                this.current_id,
-                                'data coming from pricing function'
-                            );
                             this.getDi();
                             this.pricingModal = false;
                             this.changeStatusNegiciate1(this.current_id);
@@ -517,7 +502,6 @@ export class TicketListComponent implements OnInit {
     }
 
     deleteDi(rowData) {
-        console.log('Fn delete');
         this.confirmationService.confirm({
             message: 'Voulez vous supprimer ce DI',
             header: 'Confirmation',
@@ -654,7 +638,6 @@ export class TicketListComponent implements OnInit {
                     };
 
                     let _idQuery;
-                    console.log('🥘diInfo', diInfo);
 
                     this.apollo
                         .mutate<CreateDiMutationResult>({
@@ -716,11 +699,9 @@ export class TicketListComponent implements OnInit {
     }
 
     onSlideEnd(percent) {
-        console.log('🍻[percent]:', percent);
         this.slideEnd = percent.value;
     }
     onSlideAdminEnd(percent) {
-        console.log('Admin percent', percent);
         this.slideAdminEnd = percent.value;
     }
 
@@ -729,9 +710,7 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusDiToInMagasin(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🥛[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     changeStatusRetour(_id) {
@@ -739,30 +718,21 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusRetour(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🥛[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     changeToPending1(data) {
-        console.log('🥚[data]:', data);
-
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeToPending1(data._id),
             })
             .subscribe(({ data }) => {
                 //! NEED TO SELECT THE ID OF THE SELECTED DI
-                console.log('🥛[ data from btn PENDING 1]:', data);
-                console.log('the id selected', this._idDi);
             });
         this.getDi();
     }
 
     nego1nego2_InMagasin(_id, price, final_price) {
-        console.log('🥕[final_price]:', final_price);
-        console.log('🥨[price]:', price);
-        console.log('🍨[_id]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.nego1nego2_InMagasin(
@@ -771,9 +741,7 @@ export class TicketListComponent implements OnInit {
                     final_price
                 ),
             })
-            .subscribe(({ data }) => {
-                console.log('data', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     //! Nan c bon
@@ -786,14 +754,10 @@ export class TicketListComponent implements OnInit {
     }
 
     discountByPercent2() {
-        console.log('discount ', this.discountPercent);
-        console.log(this.price);
-
         this.discountedPriceNeg = (this.price * this.discountPercent) / 100;
         this.finalPrice = this.price - this.discountedPriceNeg;
 
         if (this.discountedPriceNeg) {
-            console.log('🍠', this.slectedRow);
             this.changeStatusDiToInMagasin(this.slectedRow);
         }
     }
@@ -817,7 +781,6 @@ export class TicketListComponent implements OnInit {
     exportPdf() {
         // Extract headers from exportColumns
         const headers = this.cols.map((col) => col.header);
-        console.log('[headers]:', headers);
 
         const diList = this.diList.map((di) => [
             di.title,
@@ -825,7 +788,6 @@ export class TicketListComponent implements OnInit {
             di.client_id,
             di.createdBy,
         ]);
-        console.log('🦐[diList]:', diList);
 
         // Transform data for compatibility with jsPDF-autotable
         const formattedData =
@@ -838,13 +800,11 @@ export class TicketListComponent implements OnInit {
                       }, {});
                   });
 
-        console.log('Formatted Data:', formattedData); // Check data structure
-
         // Asynchronous import with potential Promise.all
         Promise.all([import('jspdf'), import('jspdf-autotable')])
             .then(([jsPDF, { default: autoTable }]) => {
                 // Destructure imports
-                console.log('[autoTable]:', autoTable);
+
                 const doc = new jsPDF.default('p', 'px', 'a4');
                 autoTable(doc, {
                     head: [headers],
@@ -854,7 +814,6 @@ export class TicketListComponent implements OnInit {
             })
             .catch((err) => {
                 // Handle import errors
-                console.error('Error importing jsPDF libraries:', err);
             });
     }
 
@@ -888,7 +847,6 @@ export class TicketListComponent implements OnInit {
 
     // count ignore ticket and save it
     ignore(_idticket) {
-        console.log('🍖[_idticket]:', _idticket);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.ignore(_idticket._id),
@@ -910,7 +868,6 @@ export class TicketListComponent implements OnInit {
     }
 
     addCategoryDi() {
-        console.log('category input', this.categoryForm.value.categoryName);
         typeof (this.categoryForm.value.categoryName, 'TYPE');
         this.apollo
             .mutate<any>({
@@ -919,7 +876,6 @@ export class TicketListComponent implements OnInit {
                 ),
             })
             .subscribe(({ data }) => {
-                console.log(data, 'data-category_DI');
                 if (data) {
                     let obj: { value: string; category_name: string } = {
                         value: '',
@@ -933,7 +889,6 @@ export class TicketListComponent implements OnInit {
             });
     }
     addLocation() {
-        console.log('category input', this.locationForm.value.locationName);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addLocation(
@@ -942,7 +897,6 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log(data, 'data-emplacement');
                     let obj: { location_name: string; value: string } = {
                         location_name: '',
                         value: '',
@@ -956,24 +910,17 @@ export class TicketListComponent implements OnInit {
     }
 
     allCategoryDi() {
-        console.log('🍋');
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getAllDiCategory(),
             })
             .subscribe(({ data }) => {
-                console.log('🥪[data]:', data);
-                console.log(data.findAllDiCategory, 'all categroy === ');
                 if (data) {
                     this.categorieDiListDropDown = data.findAllDiCategory.map(
                         (categoryDi) => ({
                             category_name: `${categoryDi.category}`,
                             value: categoryDi._id, // ID as value
                         })
-                    );
-                    console.log(
-                        '🍐[categorieDiListDropDown]:',
-                        this.categorieDiListDropDown
                     );
                 }
             });
@@ -984,7 +931,6 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getAllLocation(),
             })
             .subscribe(({ data }) => {
-                console.log('🍑[data]:', data);
                 this.locationDropDown = data.findAllLocation.map((el) => ({
                     location_name: el.location_name,
                     value: el._id, // ID as value
@@ -993,8 +939,6 @@ export class TicketListComponent implements OnInit {
     }
 
     onUpload(event: any, type: string) {
-        console.log(event, 'this the event ');
-
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -1034,7 +978,6 @@ export class TicketListComponent implements OnInit {
             };
             this.payload = payload;
         }
-        console.log('🌮[payload]:', this.payload);
     }
 
     deletLocation(selected) {
@@ -1043,25 +986,22 @@ export class TicketListComponent implements OnInit {
                 mutation: this.ticketSerice.deleteLocation(selected.value),
             })
             .subscribe(({ data }) => {
-                console.log('🌮[data]:', data);
                 if (data) {
                     const index = this.locationDropDown.findIndex((el) => {
                         return el.value === selected.value;
                     });
-                    console.log('🥞[index]:', index);
+
                     this.locationDropDown.splice(index, 1);
                 }
             });
     }
 
     deleteCategory(selected) {
-        console.log('🥠[selected]:', selected);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.removeCategory(selected.value),
             })
             .subscribe(({ data }) => {
-                console.log('🍅[data]:', data);
                 if (data) {
                     const index = this.categorieDiListDropDown.find((el) => {
                         return el.value === selected.value;
@@ -1070,29 +1010,24 @@ export class TicketListComponent implements OnInit {
                 }
             });
     }
-    editCategory(selected) {
-        console.log('🥛[selected]:', selected);
-    }
+    editCategory(selected) {}
 
     annulerDi() {
         this.openAddDiModal = false;
     }
 
     openUploadFileFinished(_id: string) {
-        console.log('🥖[_id]:', _id);
         this.filsFinished = true;
         this._idPDFFinished = _id;
     }
 
     onUploadFacture(event, type) {
-        console.log(event, 'this the event ');
-
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => {
                 const base64 = reader.result as string;
-                console.log('🍗[base64 f]:', base64);
+
                 this.saveFileFinished(base64, type);
             };
         }
@@ -1108,7 +1043,7 @@ export class TicketListComponent implements OnInit {
             reader.readAsDataURL(file);
             reader.onload = () => {
                 const base64 = reader.result as string;
-                console.log('🦑[base64 bl]:', base64);
+
                 this.saveFileFinished(base64, type);
             };
         }
@@ -1120,7 +1055,6 @@ export class TicketListComponent implements OnInit {
     }
 
     saveFileFinished(base64: string, type: string) {
-        console.log('🍱[base64]:', base64);
         if (type === 'facture') {
             const payload = {
                 file: base64,
@@ -1140,7 +1074,6 @@ export class TicketListComponent implements OnInit {
     }
 
     sendFilePdf() {
-        console.log('🍤 this._idPDFFinished', this._idPDFFinished);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addPdfFile(
@@ -1149,8 +1082,12 @@ export class TicketListComponent implements OnInit {
                     this.blPDF.file
                 ),
             })
-            .subscribe(({ data }) => {
-                console.log('🌶[data]:', data);
-            });
+            .subscribe(({ data }) => {});
+    }
+
+    openTicketDetails(data: any) {
+        console.log('🥚[data]:', data);
+        this.ticketData = data; // Bind the incoming data to the global object
+        this.ticketDetailsInfo = true; // Open the dialog
     }
 }

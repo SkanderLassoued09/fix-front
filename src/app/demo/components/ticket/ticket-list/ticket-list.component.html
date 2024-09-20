@@ -495,6 +495,14 @@
                         *ngIf="rowData.status === 'FINISHED'"
                         pButton
                         pRipple
+                        icon="pi pi-exclamation-circle"
+                        class="p-button-rounded p-button-raised p-button-success mr-2"
+                        (click)="openTicketDetails(rowData)"
+                    ></button>
+                    <button
+                        *ngIf="rowData.status === 'FINISHED'"
+                        pButton
+                        pRipple
                         icon="pi pi-file-plus"
                         class="p-button-rounded p-button-raised p-button-success mr-2"
                         (click)="openUploadFileFinished(rowData._id)"
@@ -1016,4 +1024,157 @@
             ></p-button>
         </div>
     </form>
+</p-dialog>
+
+<p-dialog
+    header="View all ticket infos"
+    [(visible)]="ticketDetailsInfo"
+    [modal]="true"
+    [style]="{ width: '30vw', height: '50vw' }"
+    [draggable]="false"
+    [resizable]="false"
+>
+    <div>
+        <!-- Title -->
+        <div class="form-group">
+            <label for="title">Titre</label>
+            <input
+                [(ngModel)]="ticketData.title"
+                id="title"
+                type="text"
+                class="form-control"
+                aria-label="Titre"
+                placeholder="Titre"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea
+                [(ngModel)]="ticketData.description"
+                id="description"
+                rows="3"
+                class="form-control"
+                aria-label="Description"
+                placeholder="Description"
+                disabled="true"
+            ></textarea>
+        </div>
+
+        <!-- Can Be Repaired -->
+        <div class="form-group">
+            <label for="can_be_repaired">Réparable</label>
+            <input
+                [(ngModel)]="ticketData.can_be_repaired"
+                id="can_be_repaired"
+                type="checkbox"
+                class="form-control"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Bon de Livraison -->
+        <div class="form-group">
+            <label for="bon_de_livraison">Bon de Livraison</label>
+            <input
+                [(ngModel)]="ticketData.bon_de_livraison"
+                id="bon_de_livraison"
+                type="text"
+                class="form-control"
+                placeholder="Bon de Livraison"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Facture -->
+        <div class="form-group">
+            <label for="facture">Facture</label>
+            <input
+                [(ngModel)]="ticketData.facture"
+                id="facture"
+                type="text"
+                class="form-control"
+                placeholder="Facture"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+            <label for="status">Status</label>
+            <input
+                [(ngModel)]="ticketData.status"
+                id="status"
+                type="text"
+                class="form-control"
+                placeholder="Status"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Client ID -->
+        <div class="form-group">
+            <label for="client_id">Client ID</label>
+            <input
+                [(ngModel)]="ticketData.client_id"
+                id="client_id"
+                type="text"
+                class="form-control"
+                placeholder="Client ID"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Created By -->
+        <div class="form-group">
+            <label for="createdBy">Créé Par</label>
+            <input
+                [(ngModel)]="ticketData.createdBy"
+                id="createdBy"
+                type="text"
+                class="form-control"
+                placeholder="Créé Par"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Location ID -->
+        <div class="form-group">
+            <label for="location_id">Emplacement</label>
+            <input
+                [(ngModel)]="ticketData.location_id"
+                id="location_id"
+                type="text"
+                class="form-control"
+                placeholder="Emplacement"
+                disabled="true"
+            />
+        </div>
+
+        <!-- Remarks -->
+        <div class="form-group">
+            <label for="remarque_tech_diagnostic">Remarque Technique</label>
+            <textarea
+                [(ngModel)]="ticketData.remarque_tech_diagnostic"
+                id="remarque_tech_diagnostic"
+                rows="3"
+                class="form-control"
+                placeholder="Remarque Technique"
+                disabled="true"
+            ></textarea>
+        </div>
+
+        <!-- Composants -->
+        <div class="form-group">
+            <label for="array_composants">Composants</label>
+            <ul>
+                <li *ngFor="let component of ticketData.array_composants">
+                    {{ component.nameComposant }} - Quantité:
+                    {{ component.quantity }}
+                </li>
+            </ul>
+        </div>
+    </div>
 </p-dialog>

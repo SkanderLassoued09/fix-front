@@ -22,6 +22,7 @@ export class TicketService {
                         bon_de_commande
                         bon_de_livraison
                         contain_pdr
+                        facture
                         status
                         createdAt
                         updatedAt
