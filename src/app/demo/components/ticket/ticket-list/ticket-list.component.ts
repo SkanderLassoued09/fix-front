@@ -1086,7 +1086,6 @@ export class TicketListComponent implements OnInit {
     }
 
     openTicketDetails(data: any) {
-        console.log('🥚[data]:', data);
         this.ticketData = data; // Bind the incoming data to the global object
         this.ticketDetailsInfo = true; // Open the dialog
     }

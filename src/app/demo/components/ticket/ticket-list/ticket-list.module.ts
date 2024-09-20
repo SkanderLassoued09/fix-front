@@ -38,6 +38,7 @@ import { CardModule } from 'primeng/card';
 import { OrderListModule } from 'primeng/orderlist';
 import { CalendarModule } from 'primeng/calendar';
 import { ImageModule } from 'primeng/image';
+import { PdfViewerModule } from 'ng2-pdf-viewer';
 
 @NgModule({
     declarations: [
@@ -49,6 +50,7 @@ import { ImageModule } from 'primeng/image';
     ],
     imports: [
         CommonModule,
+        PdfViewerModule,
         TicketListRoutingModule,
         MagasinDiListRoutingModule,
         CoordinatorDiListRoutingModule,

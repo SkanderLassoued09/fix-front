@@ -1078,27 +1078,32 @@
         <!-- Bon de Livraison -->
         <div class="form-group">
             <label for="bon_de_livraison">Bon de Livraison</label>
-            <input
+            <!-- <input
                 [(ngModel)]="ticketData.bon_de_livraison"
                 id="bon_de_livraison"
                 type="text"
                 class="form-control"
                 placeholder="Bon de Livraison"
                 disabled="true"
-            />
+            /> -->
+
+            <pdf-viewer
+                [src]="'http://localhost:3000/' + ticketData.bon_de_livraison"
+                [render-text]="true"
+                [original-size]="false"
+                style="width: 400px; height: 500px"
+            ></pdf-viewer>
         </div>
 
         <!-- Facture -->
         <div class="form-group">
             <label for="facture">Facture</label>
-            <input
-                [(ngModel)]="ticketData.facture"
-                id="facture"
-                type="text"
-                class="form-control"
-                placeholder="Facture"
-                disabled="true"
-            />
+            <pdf-viewer
+                [src]="'http://localhost:3000/' + ticketData.facture"
+                [render-text]="true"
+                [original-size]="false"
+                style="width: 400px; height: 500px"
+            ></pdf-viewer>
         </div>
 
         <!-- Status -->
