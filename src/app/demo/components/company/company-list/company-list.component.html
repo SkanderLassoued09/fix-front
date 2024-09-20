@@ -542,5 +542,196 @@
             </div>
         </ng-template>
     </p-dialog>
+
+    <p-dialog
+        [(visible)]="detailsView"
+        [style]="{ width: '450px' }"
+        header="Détails des service"
+        [modal]="true"
+        styleClass="p-fluid"
+        draggable="false"
+    >
+        <ng-template pTemplate="content">
+            <div class="field">
+                <label for="serviceAchatName">Service Achat Name</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="serviceAchatName"
+                    [(ngModel)]="companySelected.serviceAchat.name"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceAchat.name"
+                >
+                    Service Achat Name is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="serviceAchatEmail">Service Achat Email</label>
+                <input
+                    type="email"
+                    pInputText
+                    id="serviceAchatEmail"
+                    [(ngModel)]="companySelected.serviceAchat.email"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceAchat.email"
+                >
+                    Service Achat Email is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="serviceAchatPhone">Service Achat Phone</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="serviceAchatPhone"
+                    [(ngModel)]="companySelected.serviceAchat.phone"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceAchat.phone"
+                >
+                    Service Achat Phone is required.
+                </small>
+            </div>
+
+            <div class="field">
+                <label for="serviceFinancierName">Service Financier Name</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="serviceFinancierName"
+                    [(ngModel)]="companySelected.serviceFinancier.name"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceFinancier.name"
+                >
+                    Service Financier Name is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="serviceFinancierEmail"
+                    >Service Financier Email</label
+                >
+                <input
+                    type="email"
+                    pInputText
+                    id="serviceFinancierEmail"
+                    [(ngModel)]="companySelected.serviceFinancier.email"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceFinancier.email"
+                >
+                    Service Financier Email is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="serviceFinancierPhone"
+                    >Service Financier Phone</label
+                >
+                <input
+                    type="text"
+                    pInputText
+                    id="serviceFinancierPhone"
+                    [(ngModel)]="companySelected.serviceFinancier.phone"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceFinancier.phone"
+                >
+                    Service Financier Phone is required.
+                </small>
+            </div>
+
+            <div class="field">
+                <label for="serviceTechniqueName">Service Technique Name</label>
+                <input
+                    type="text"
+                    pInputText
+                    id="serviceTechniqueName"
+                    [(ngModel)]="companySelected.serviceTechnique.name"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceTechnique.name"
+                >
+                    Service Technique Name is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="serviceTechniqueEmail"
+                    >Service Technique Email</label
+                >
+                <input
+                    type="email"
+                    pInputText
+                    id="serviceTechniqueEmail"
+                    [(ngModel)]="companySelected.serviceTechnique.email"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceTechnique.email"
+                >
+                    Service Technique Email is required.
+                </small>
+            </div>
+            <div class="field">
+                <label for="serviceTechniquePhone"
+                    >Service Technique Phone</label
+                >
+                <input
+                    type="text"
+                    pInputText
+                    id="serviceTechniquePhone"
+                    [(ngModel)]="companySelected.serviceTechnique.phone"
+                    required
+                    disabled="true"
+                />
+                <small
+                    class="p-error"
+                    *ngIf="submitted && !companySelected.serviceTechnique.phone"
+                >
+                    Service Technique Phone is required.
+                </small>
+            </div>
+
+            <!-- <div class="modal-footer">
+                <p-button
+                    (click)="annuler()"
+                    icon="pi pi-times"
+                    label="Annuler"
+                    [text]="true"
+                ></p-button>
+                <p-button
+                    (click)="saveUpdateCompany()"
+                    icon="pi pi-plus"
+                    label="Modifier"
+                    [text]="true"
+                ></p-button>
+            </div> -->
+        </ng-template>
+    </p-dialog>
+
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 </div>

@@ -13,7 +13,7 @@ export class CompanyService {
                 createCompany(
                     createCompanyInput: {
                         name: "${companyInfo.companyName}"
-                        region: "${companyInfo.region}"
+                        region: "${companyInfo.region.name}"
                         address: "${companyInfo.address}"
                         email: "${companyInfo.email}"
                         raisonSociale: "${companyInfo.raisonSociale}"

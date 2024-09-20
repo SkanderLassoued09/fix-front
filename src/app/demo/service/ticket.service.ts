@@ -88,6 +88,18 @@ export class TicketService {
         `;
     }
 
+    // add pdf finle finished
+    addPdfFile(_id: string, facture: string, bl: string) {
+        return gql`
+            mutation {
+                addPDFFile(_id: "${_id}", facture: "${facture}", bl: "${bl}") {
+                    _id
+                    bon_de_livraison facture
+                }
+            }
+        `;
+    }
+
     // query getAllMagasin change with variable
     getAllMagasin() {
         return gql`

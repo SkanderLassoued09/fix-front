@@ -105,8 +105,8 @@ export class CompanyListComponent {
         { field: 'region', header: 'Région' },
         { field: 'address', header: 'Adresse' },
         { field: 'email', header: 'E-mail' },
-        { field: 'activitePrincipale', header: 'Activité principale' },
-        { field: 'activiteSecondaire', header: 'Activité secondaire' },
+        // { field: 'activitePrincipale', header: 'Activité principale' },
+        // { field: 'activiteSecondaire', header: 'Activité secondaire' },
         { field: 'raisonSociale', header: 'Raison sociale' },
         { field: 'Exoneration', header: 'Exoneration' },
         { field: 'fax', header: 'Fax' },
@@ -118,6 +118,12 @@ export class CompanyListComponent {
     rows: number = 10;
     totalCompanyRecord: number;
     page: number = 0;
+    detailsView: boolean;
+    companySelectedView = {
+        serviceAchat: { name: '', email: '', phone: '' },
+        serviceFinancier: { name: '', email: '', phone: '' },
+        serviceTechnique: { name: '', email: '', phone: '' },
+    };
 
     constructor(
         private productService: ProductService,
@@ -154,6 +160,7 @@ export class CompanyListComponent {
     }
 
     addCompany() {
+        console.log('🥧 this.companyForm.value', this.companyForm.value);
         this.apollo
             .mutate<AddCompanyMutationResponse>({
                 mutation: this.companyService.addCompany(
@@ -193,6 +200,7 @@ export class CompanyListComponent {
             })
 
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🍉[data]:', data);
                 if (data) {
                     this.companiesList = data.findAllCompany.companyRecords;
                     this.totalCompanyRecord =
@@ -286,5 +294,24 @@ export class CompanyListComponent {
         return index;
     }
 
-    modalServices() {}
+    modalServices(data) {
+        this.companySelected = {
+            serviceAchat: data.serviceAchat || {
+                name: '',
+                email: '',
+                phone: '',
+            },
+            serviceFinancier: data.serviceFinancier || {
+                name: '',
+                email: '',
+                phone: '',
+            },
+            serviceTechnique: data.serviceTechnique || {
+                name: '',
+                email: '',
+                phone: '',
+            },
+        };
+        this.detailsView = true;
+    }
 }

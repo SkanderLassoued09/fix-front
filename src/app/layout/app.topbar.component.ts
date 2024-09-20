@@ -79,15 +79,31 @@ export class AppTopBarComponent implements OnInit {
         this.router.navigate(['/auth/login']);
     }
 
-    markAsSeen(_id: string) {
-        console.log('🍝[_id]:', _id);
+    markAsSeen(reminderId: string, auditId: string) {
+        console.log('🥕[auditId]:', auditId);
+        console.log('🍑[reminderId]:', reminderId);
+
         this.apollo
             .mutate<any>({
-                mutation: this.layoutService.markAsSeen(_id),
+                mutation: this.layoutService.markAsSeen(reminderId),
             })
             .subscribe(({ data }) => {
                 console.log('🍞[data notificatrion]:', data);
-                this.disabledButtons[_id] = true;
+                this.markAuditAsSeen(auditId, reminderId);
+                this.disabledButtons[reminderId] = true;
+            });
+    }
+
+    markAuditAsSeen(auditId, reminderId) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.layoutService.markAuditAsSeen(
+                    auditId,
+                    reminderId
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍞[data notificatrion]:', data);
             });
     }
 }

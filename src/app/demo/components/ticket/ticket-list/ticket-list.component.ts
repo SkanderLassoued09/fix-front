@@ -36,6 +36,7 @@ interface UploadEvent {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
+    filsFinished: boolean = false;
     creationDiForm = new FormGroup({
         title: new FormControl('', [Validators.required]),
         designiation: new FormControl('', [Validators.required]),
@@ -193,6 +194,9 @@ export class TicketListComponent implements OnInit {
     tarif_Technicien: number;
     payload: { file: string } = { file: '' };
     openUpdateModal: boolean = false;
+    facturePDF: { file: string };
+    blPDF: { file: string };
+    private _idPDFFinished: string;
 
     constructor(
         private ticketSerice: TicketService,
@@ -1072,5 +1076,81 @@ export class TicketListComponent implements OnInit {
 
     annulerDi() {
         this.openAddDiModal = false;
+    }
+
+    openUploadFileFinished(_id: string) {
+        console.log('🥖[_id]:', _id);
+        this.filsFinished = true;
+        this._idPDFFinished = _id;
+    }
+
+    onUploadFacture(event, type) {
+        console.log(event, 'this the event ');
+
+        for (let file of event.files) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64 = reader.result as string;
+                console.log('🍗[base64 f]:', base64);
+                this.saveFileFinished(base64, type);
+            };
+        }
+        this.messageservice.add({
+            severity: 'info',
+            summary: 'Fichier enregistré',
+            detail: 'Fichier a été ajouter avec succès',
+        });
+    }
+    onUploadBl(event, type) {
+        for (let file of event.files) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                const base64 = reader.result as string;
+                console.log('🦑[base64 bl]:', base64);
+                this.saveFileFinished(base64, type);
+            };
+        }
+        this.messageservice.add({
+            severity: 'info',
+            summary: 'Fichier enregistré',
+            detail: 'Fichier a été ajouter avec succès',
+        });
+    }
+
+    saveFileFinished(base64: string, type: string) {
+        console.log('🍱[base64]:', base64);
+        if (type === 'facture') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
+
+            this.facturePDF = payload;
+        }
+        if (type === 'bl') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
+
+            this.blPDF = payload;
+        }
+    }
+
+    sendFilePdf() {
+        console.log('🍤 this._idPDFFinished', this._idPDFFinished);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.addPdfFile(
+                    this._idPDFFinished,
+                    this.facturePDF.file,
+                    this.blPDF.file
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log('🌶[data]:', data);
+            });
     }
 }

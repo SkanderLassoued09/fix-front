@@ -183,4 +183,24 @@ export class LayoutService {
             }
         `;
     }
+
+    markAuditAsSeen(auditId: string, reminderId: string) {
+        return gql`
+            mutation {
+                markReminderAsSeen(
+                    auditId: "66ec8a363d2770641f5582e9"
+                    reminderId: "DI0"
+                ) {
+                    _id
+                    reminder {
+                        data {
+                            _id
+                            title
+                        }
+                        isSeen
+                    }
+                }
+            }
+        `;
+    }
 }
