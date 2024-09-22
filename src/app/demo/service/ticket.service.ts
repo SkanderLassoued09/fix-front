@@ -173,7 +173,7 @@ export class TicketService {
         `;
     }
 
-    sendingDiForDiagnostic(_idDi, id_tech_diag) {
+    sendingDiForDiagnostic(_idDi, id_tech_diag, location) {
         return gql`
             mutation {
                 createStat(
@@ -181,6 +181,8 @@ export class TicketService {
                         id_tech_diag: "${id_tech_diag}"
                         notificationMessage: "default msg"
                         _idDi: "${_idDi}"
+                       
+                        location_id:"${location}"
                     }
                 ) {
                     _idDi
@@ -213,6 +215,7 @@ export class TicketService {
                     diag_time
                     rep_time
                     status
+                    location_id 
                 }
             }
         `;
@@ -706,6 +709,22 @@ export class TicketService {
                 getStatbyID(_idSTAT:"${_idSTAT}") 
                 {
                     _idDi
+                }
+            }
+        `;
+    }
+
+    getDiById(_id: string) {
+        return gql`
+            {
+                getDiById(_id: "${_id}") {
+                    remarque_tech_diagnostic
+                    can_be_repaired
+                    contain_pdr
+                    array_composants {
+                        nameComposant
+                        quantity
+                    }
                 }
             }
         `;

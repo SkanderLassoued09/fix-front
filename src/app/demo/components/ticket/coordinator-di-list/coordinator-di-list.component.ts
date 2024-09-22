@@ -74,6 +74,7 @@ export class CoordinatorDiListComponent {
     remarque_magasin: string;
     remarque_coordinator: string;
     remarqueTech: string;
+    selectedDiLocation: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -173,6 +174,7 @@ export class CoordinatorDiListComponent {
     }
     //!Adding rq
     openModalConfig(di) {
+        console.log('🍷[di]:', di);
         this.di = { ...di };
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;
@@ -183,6 +185,7 @@ export class CoordinatorDiListComponent {
         this.remarque_coordinator = di.remarque_coordinator;
         this.remarqueTech = di.remarqueTech;
         this.selectedDi = di._id;
+        this.selectedDiLocation = di.location_id;
         this.diDialog = true;
         this.getReperationCoordinatorCondition();
 
@@ -266,7 +269,8 @@ export class CoordinatorDiListComponent {
                     .mutate<any>({
                         mutation: this.ticketSerice.sendingDiForDiagnostic(
                             this.selectedDi,
-                            data.value._id
+                            data.value._id,
+                            this.selectedDiLocation
                         ),
                         useMutationLoading: true,
                     })

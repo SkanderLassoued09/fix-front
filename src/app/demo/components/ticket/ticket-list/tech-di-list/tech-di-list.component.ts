@@ -59,6 +59,7 @@ export class TechDiListComponent {
     cols = [
         { field: '_idDi', header: 'ID' },
         { field: 'status', header: 'Status' },
+        { field: 'location_id', header: 'Emplacement' },
     ];
     payloadImage: { image: string };
     countries;
@@ -76,7 +77,8 @@ export class TechDiListComponent {
     milliseconds: string;
     lapTime: string;
     laps: any[];
-    diDialogDiag: boolean;
+    // diDialogDiag: boolean;
+    diDialogDiag: { [key: string]: boolean } = {};
     diDialogRep: boolean;
     composant: any;
     addComposantLoading: boolean;
@@ -138,6 +140,7 @@ export class TechDiListComponent {
     //Admnistration
     admnistration_miniDashboard: number = 0;
 
+    detailsDi: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -204,6 +207,7 @@ export class TechDiListComponent {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🍍[data]:', data);
                 if (data) {
                     this.techList = data.getDiForTech;
                     console.log(
@@ -238,11 +242,65 @@ export class TechDiListComponent {
             });
     }
 
-    diagModal(di) {
+    // getDiById(_id: string): Promise<any> {
+    //     return new Promise((resolve, reject) => {
+    //         this.apollo
+    //             .query<any>({ query: this.ticketSerice.getDiById(_id) })
+    //             .subscribe(
+    //                 ({ data }) => {
+    //                     console.log('🌰[data]:', data);
+    //                     if (data) {
+    //                         resolve(data.getDiById);
+    //                     } else {
+    //                         reject('No data found');
+    //                     }
+    //                 },
+    //                 (error) => {
+    //                     reject(error);
+    //                 }
+    //             );
+    //     });
+    // }
+
+    async diagModal(di) {
+        let detailsDi;
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getDiById(di._idDi),
+            })
+            .subscribe(({ data }) => {
+                console.log('🥔[data]:', data);
+                if (data) {
+                    detailsDi = data.getDiById;
+                    console.log('🍲[detailsDi]:', detailsDi);
+                    console.log(
+                        '🍓[this.detailsD]:',
+                        detailsDi.remarque_tech_diagnostic
+                    );
+                }
+            });
+        console.log('🌭', di);
         this.di = { ...di };
         this.selectedDi = di._id;
         this.selectedDi_id = di._idDi;
-        this.diDialogDiag = true;
+        console.log('🍐[ di._idDi]:', di._idDi);
+
+        console.log('🍓[this.detailsD]:', detailsDi);
+
+        if (detailsDi) {
+            // Use diDetails to patch the form
+            this.diagFormTech.patchValue({
+                _idDi: di._id,
+                diag_time: di.diag_time || detailsDi.diag_time || '',
+                remarqueTech: di.remarqueTech || detailsDi.remarqueTech || '',
+                isPdr: di.isPdr || detailsDi.isPdr || false,
+                isReparable: di.isReparable || detailsDi.isReparable || false,
+                quantity: di.quantity || detailsDi.quantity || 0,
+                composantSelectedDropdown: di.composantSelectedDropdown || null,
+            });
+        }
+
+        this.diDialogDiag[di._id] = true; // Open modal for this row by ID
         this.diStatus = di.status;
         this.changeStatus(di._idDi);
         this.getTimeSpent(di._id);
@@ -292,7 +350,7 @@ export class TechDiListComponent {
     }
 
     hideDialogDiag() {
-        this.diDialogDiag = false;
+        this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID        this.diStatus = di.status;
     }
     hideDialogRep() {
         this.diDialogRep = false;
@@ -556,6 +614,26 @@ export class TechDiListComponent {
      */
 
     lapTimeForPauseAndGetBack() {
+        console.log('🥘', this.selectedDi);
+
+        // Gather the form values
+        const formValues = {
+            _idDi: this.selectedDi_id,
+            pdr: this.diagFormTech.get('isPdr')?.value,
+            reparable: this.diagFormTech.get('isReparable')?.value,
+            remarqueTech: this.diagFormTech.get('remarqueTech')?.value,
+            composant: this.composantCombo,
+        };
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.finish(formValues),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading }) => {
+                if (data) {
+                    console.log('🍲[data]:', data);
+                }
+            });
         // for diag
         this.lap();
         this.apollo
@@ -568,7 +646,7 @@ export class TechDiListComponent {
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    this.diDialogDiag = false;
+                    this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID        this.diStatus = di.status;
                 }
             });
 
@@ -741,7 +819,7 @@ export class TechDiListComponent {
                         });
                 }
                 this.getAllTechDi();
-                this.diDialogDiag = false;
+                this.diDialogDiag[this.selectedDi] = true; // Open modal for this row by ID
             },
         });
     }
