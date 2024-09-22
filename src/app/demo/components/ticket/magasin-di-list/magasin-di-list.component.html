@@ -145,12 +145,29 @@
                 <div class="grid align-items-center">
                     <div class="col">
                         <label for="link">Lien pour le composant</label>
-                        <input formControlName="link" pInputText />
+                        <a
+                            [href]="
+                                'http://localhost:3000/' +
+                                this.loadedDataComposant?.link
+                            "
+                            target="_blank"
+                        >
+                            Link composant</a
+                        >
                     </div>
 
                     <div class="col">
                         <label for="pdf">Lien DataSheet</label>
-                        <input formControlName="pdf" pInputText />
+
+                        <a
+                            [href]="
+                                'http://localhost:3000/' +
+                                this.loadedDataComposant?.pdf
+                            "
+                            target="_blank"
+                        >
+                            Link pdf</a
+                        >
                     </div>
                 </div>
 

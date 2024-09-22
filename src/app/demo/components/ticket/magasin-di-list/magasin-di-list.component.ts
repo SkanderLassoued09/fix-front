@@ -131,6 +131,7 @@ export class MagasinDiListComponent {
     //     );
     // }
     openDialogMagasin(item) {
+        console.log('🍨[item]:', item);
         this.selectedDi_id = item._id;
 
         this.arrayComposant = item.array_composants.map((el) => {
@@ -178,6 +179,7 @@ export class MagasinDiListComponent {
             })
             .subscribe(({ data, loading }) => {
                 this.loadedDataComposant = data.findOneComposant;
+                console.log('🍐', this.loadedDataComposant.pdf);
                 if (data) {
                     // Initialize form fields with loaded data
                     this.formUpdateComposant.patchValue({

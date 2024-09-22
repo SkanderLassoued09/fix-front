@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MessageService, PrimeNGConfig } from 'primeng/api';
 import { ProfileService } from './demo/service/profile.service';
 import { Apollo } from 'apollo-angular';
@@ -28,7 +28,7 @@ export class AppComponent implements OnInit {
         private readonly profileService: ProfileService,
         private readonly apollo: Apollo,
         private messageService: MessageService,
-        private swPush: SwPush,
+        @Inject(SwPush) private swPush: SwPush,
         private notificationService: NotificationService
     ) {
         this._idtech = localStorage.getItem('_id');
