@@ -199,10 +199,13 @@ export class TicketService {
         `;
     }
 
-    diListTech() {
+    diListTech(startDate?: string, endDate?: string) {
         return gql`
             {
-                getDiForTech {
+                getDiForTech(
+                    startDate: "${startDate ?? ''}"
+                    endDate: "${endDate ?? ''}"
+                ) {
                     _id
                     _idDi
                     id_tech_diag
@@ -210,6 +213,20 @@ export class TicketService {
                     diag_time
                     rep_time
                     status
+                }
+            }
+        `;
+    }
+
+    getDataForTech(startDate?: string, endDate?: string) {
+        return gql`
+            {
+                getDiStatusCounts(
+                    startDate: "${startDate ?? ''}"
+                    endDate: "${endDate ?? ''}"
+                ) {
+                    status
+                    count
                 }
             }
         `;
@@ -877,6 +894,7 @@ export class TicketService {
             mutation {
                 changeToDiagnosticInPause(_idDI: "${_id}") {
                     _id
+                    status
                 }
             }
         `;

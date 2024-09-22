@@ -122,6 +122,7 @@ export class TechDiListComponent {
     imageValue: string;
     selectedRow: any;
     newStatRealTime: any;
+    techDataInfo: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -136,6 +137,7 @@ export class TechDiListComponent {
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
+        this.getDataForTech();
 
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
@@ -565,12 +567,26 @@ export class TechDiListComponent {
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
+                    // if data exist affect it to html
                 }
             });
 
         this.startStopwatch();
     }
 
+    getDataForTech() {
+        this.apollo
+            .watchQuery<any>({
+                //  pass here data got from inputs date
+                query: this.ticketSerice.getDataForTech(),
+            })
+            .valueChanges.subscribe(({ data, loading }) => {
+                console.log('🥕[data]:', data);
+                if (data) {
+                    this.techDataInfo = data.getDiStatusCounts;
+                }
+            });
+    }
     selectedDropDown(selectedItem) {
         this.composantSelected = selectedItem;
     }

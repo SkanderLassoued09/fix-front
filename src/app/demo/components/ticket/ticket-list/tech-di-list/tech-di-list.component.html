@@ -2,33 +2,17 @@
 <p-confirmDialog />
 
 <div class="container">
-    <p-card class="box-container diag">
+    <!-- Dynamically create cards for each status fetched -->
+    <p-card *ngFor="let statusItem of techDataInfo" class="box-container">
         <ng-template pTemplate="content">
             <div class="text-center">
-                <h2>50</h2>
-                <strong>Diagnostique</strong>
+                <h2>{{ statusItem.count }}</h2>
+                <strong>{{ statusItem.status }}</strong>
             </div>
         </ng-template>
     </p-card>
 
-    <p-card class="box-container repair">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>20</h2>
-                <strong>Reparation</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container retour">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>5</h2>
-                <strong>Retour</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
+    <!-- Date picker remains as it is -->
     <div class="calendar-container">
         <div class="calendar-label">
             <strong>Choisir une Date</strong>
