@@ -123,6 +123,21 @@ export class TechDiListComponent {
     selectedRow: any;
     newStatRealTime: any;
     techDataInfo: any;
+
+    //! MINI Dashboard variables here
+    // Diag variables
+    diagEnPause_miniDashboard: number = 0;
+    diagNotOpened_miniDashboard: number = 0;
+    // Rep variables
+    repEnPause_miniDashboard: number = 0;
+    repNotOpened_miniDashboard: number = 0;
+    // Retour variables
+    retour1_miniDashboard: number = 0;
+    retour2_miniDashboard: number = 0;
+    retour3_miniDashboard: number = 0;
+    //Admnistration
+    admnistration_miniDashboard: number = 0;
+
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -191,7 +206,6 @@ export class TechDiListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.techList = data.getDiForTech;
-
                     console.log(
                         'data we gonna use in dashboard',
                         this.techList
@@ -581,9 +595,30 @@ export class TechDiListComponent {
                 query: this.ticketSerice.getDataForTech(),
             })
             .valueChanges.subscribe(({ data, loading }) => {
-                console.log('🥕[data]:', data);
+                console.log('🥕data mini Dashboard => ', data);
                 if (data) {
                     this.techDataInfo = data.getDiStatusCounts;
+                    this.techDataInfo.forEach((item) => {
+                        if (item.status === 'DIAGNOSTIC_Pause') {
+                            this.diagEnPause_miniDashboard += item.count;
+                        } else if (item.status === 'DIAGNOSTIC') {
+                            this.diagNotOpened_miniDashboard += item.count;
+                        } else if (item.status === 'REPARATION') {
+                            this.repNotOpened_miniDashboard += item.count;
+                        } else if (item.status === 'REPARATION_Pause') {
+                            this.repEnPause_miniDashboard += item.count;
+                        } else if (item.status === 'RETOUR1') {
+                            this.retour1_miniDashboard += item.count;
+                        } else if (item.status === 'RETOUR2') {
+                            this.retour2_miniDashboard += item.count;
+                        } else if (item.status === 'RETOUR3') {
+                            this.retour3_miniDashboard += item.count;
+                        } else {
+                            this.admnistration_miniDashboard += item.count;
+                        }
+                    });
+                    //retour1_miniDashboard
+                    //!!!!!!!!!!!!!! WORKING HERE!!!!
                 }
             });
     }

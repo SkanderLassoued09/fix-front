@@ -2,26 +2,32 @@
     display: flex;
     justify-content: space-between;
 }
+
 .chips {
     margin-bottom: 2rem;
 }
+
 .foot {
     display: flex;
     justify-content: space-around;
 }
+
 .file-upload-container {
     display: flex;
     gap: 10px;
     justify-content: start;
     align-items: center;
 }
+
 .imageContainer {
     display: flex;
     justify-content: center;
 }
+
 .supheader {
     margin-top: 1rem;
 }
+
 .container {
     display: flex;
     justify-content: center;
@@ -29,6 +35,8 @@
     text-align: center;
     margin-bottom: 2rem;
     flex-wrap: wrap; /* Allows wrapping to keep the layout responsive */
+    gap: 1.25rem; /* Space between cards (20px equivalent) */
+    align-items: stretch; /* Ensures cards stretch to the same height */
 }
 
 .box-container {
@@ -54,4 +62,77 @@
 
 p-calendar {
     display: block; /* Ensure the calendar behaves as a block element */
+}
+
+/* Improved styling for the card container */
+.improved-card {
+    flex: 1 1 18.75rem; /* Base width (300px equivalent) */
+    max-width: 18.75rem;
+    height: 15.625rem; /* Fixed height (250px equivalent) */
+    background-color: #f9f9f9;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+    border-radius: 0.5rem; /* Rounded corners (8px equivalent) */
+    padding: 1.25rem; /* Padding (20px equivalent) */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centers content vertically */
+    align-items: center;
+}
+
+.improved-card:hover {
+    transform: translateY(-0.3125rem); /* Hover lift (5px equivalent) */
+    box-shadow: 0 0.375rem 0.75rem rgba(0, 0, 0, 0.15); /* Hover shadow */
+}
+
+/* Card content styling */
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card-title {
+    font-size: 1.5rem; /* Title font size (24px equivalent) */
+    font-weight: 600;
+    margin-bottom: 0.5rem; /* Spacing below title */
+    color: #333;
+}
+
+.card-stats {
+    margin-bottom: 12px;
+}
+
+.card-stats h3 {
+    font-size: 1.25rem; /* Stats font size (20px equivalent) */
+    font-weight: 500;
+    margin: 0.25rem 0;
+}
+
+.highlight {
+    font-weight: bold;
+    color: #007ad9; /* Highlight color */
+}
+
+.card-status {
+    font-size: 1.75rem; /* Status font size (28px equivalent) */
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #555;
+    margin-top: 1rem; /* Spacing above status */
+}
+
+/* Optional for responsiveness */
+@media (max-width: 768px) {
+    .card-title {
+        font-size: 1.25rem; /* Font size adjusts for small screens */
+    }
+
+    .card-stats h3 {
+        font-size: 1rem; /* Adjusted font size for small screens */
+    }
+
+    .card-status {
+        font-size: 1.25rem; /* Adjusted status font size */
+    }
 }

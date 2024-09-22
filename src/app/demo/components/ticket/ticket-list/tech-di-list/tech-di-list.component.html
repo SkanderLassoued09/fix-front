@@ -2,18 +2,111 @@
 <p-confirmDialog />
 
 <div class="container">
-    <!-- Dynamically create cards for each status fetched -->
-    <p-card *ngFor="let statusItem of techDataInfo" class="box-container">
+    <!-- DIAGNOSTIC -->
+    <p-card class="box-container improved-card">
         <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ statusItem.count }}</h2>
-                <strong>{{ statusItem.status }}</strong>
+            <div class="card-content text-center">
+                <h2 class="card-title">
+                    Total:
+                    {{
+                        diagEnPause_miniDashboard + diagNotOpened_miniDashboard
+                    }}
+                </h2>
+                <div class="card-stats">
+                    <h3>
+                        En pause:
+                        <span class="highlight">{{
+                            diagEnPause_miniDashboard
+                        }}</span>
+                    </h3>
+                    <h3>
+                        Non ouvert:
+                        <span class="highlight">{{
+                            diagNotOpened_miniDashboard
+                        }}</span>
+                    </h3>
+                </div>
+                <h1 class="card-status">DIAGNOSTIC</h1>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <p-card class="box-container improved-card">
+        <ng-template pTemplate="content">
+            <div class="card-content text-center">
+                <h2 class="card-title">
+                    Total:
+                    {{ repEnPause_miniDashboard + repNotOpened_miniDashboard }}
+                </h2>
+                <div class="card-stats">
+                    <h3>
+                        En pause:
+                        <span class="highlight">{{
+                            repEnPause_miniDashboard
+                        }}</span>
+                    </h3>
+                    <h3>
+                        Non ouvert:
+                        <span class="highlight">{{
+                            repNotOpened_miniDashboard
+                        }}</span>
+                    </h3>
+                </div>
+                <h1 class="card-status">Reperation</h1>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <p-card class="box-container improved-card">
+        <ng-template pTemplate="content">
+            <div class="card-content text-center">
+                <h2 class="card-title">
+                    Total:
+                    {{
+                        retour1_miniDashboard +
+                            retour2_miniDashboard +
+                            retour3_miniDashboard
+                    }}
+                </h2>
+                <div class="card-stats">
+                    <h3>
+                        Retour1:
+                        <span class="highlight">{{
+                            retour1_miniDashboard
+                        }}</span>
+                    </h3>
+                    <h3>
+                        Retour2:
+                        <span class="highlight">{{
+                            retour2_miniDashboard
+                        }}</span>
+                    </h3>
+                    <h3>
+                        Retour3:
+                        <span class="highlight">{{
+                            retour3_miniDashboard
+                        }}</span>
+                    </h3>
+                </div>
+                <h1 class="card-status">Retour</h1>
+            </div>
+        </ng-template>
+    </p-card>
+
+    <p-card class="box-container improved-card">
+        <ng-template pTemplate="content">
+            <div class="card-content text-center">
+                <h2 class="card-title">
+                    Total: {{ admnistration_miniDashboard }}
+                </h2>
+
+                <h1 class="card-status">Admnistration</h1>
             </div>
         </ng-template>
     </p-card>
 
     <!-- Date picker remains as it is -->
-    <div class="calendar-container">
+    <!-- <div class="calendar-container">
         <div class="calendar-label">
             <strong>Choisir une Date</strong>
         </div>
@@ -22,7 +115,7 @@
             selectionMode="range"
             [readonlyInput]="true"
         ></p-calendar>
-    </div>
+    </div> -->
 </div>
 
 <div class="card">

@@ -111,11 +111,13 @@ export class CoordinatorDiListComponent {
                                 break;
                             case 'DIAGNOSTIC':
                             case 'INDIAGNOSTIC':
+                            case 'DIAGNOSTIC_Pause':
                                 this.counterInDiagnostique =
                                     this.counterInDiagnostique + 1;
                                 break;
                             case 'REPARATION':
                             case 'INREPARATION':
+                            case 'REPARATION_Pause':
                                 this.counterInReperation =
                                     this.counterInReperation + 1;
                                 break;

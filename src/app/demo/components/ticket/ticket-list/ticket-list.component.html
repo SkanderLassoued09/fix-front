@@ -491,19 +491,20 @@
                     </ng-template>
                 </td>
                 <td class="flex">
-                    <button
+                    <p-button
                         *ngIf="rowData.status === 'FINISHED'"
                         pButton
                         pRipple
-                        icon="pi pi-exclamation-circle"
+                        severity="help"
+                        icon="pi pi-book"
                         class="p-button-rounded p-button-raised p-button-success mr-2"
                         (click)="openTicketDetails(rowData)"
-                    ></button>
+                    />
                     <button
                         *ngIf="rowData.status === 'FINISHED'"
                         pButton
                         pRipple
-                        icon="pi pi-file-plus"
+                        icon="pi pi-link"
                         class="p-button-rounded p-button-raised p-button-success mr-2"
                         (click)="openUploadFileFinished(rowData._id)"
                     ></button>
@@ -808,49 +809,73 @@
 
 <!-- finished status -->
 <p-dialog
-    header="Affectation files"
+    header="Affectation des Fichiers"
     [(visible)]="filsFinished"
     [modal]="true"
     [style]="{ width: '50vw' }"
     [draggable]="false"
     [resizable]="false"
+    appendTo="body"
 >
     <ng-container>
-        hello upload
-        <div class="flex justify-content-end gap-2">
-            <div class="form-group">
-                <p-fileUpload
-                    mode="basic"
-                    chooseLabel="Ajouter file 1"
-                    chooseIcon="pi pi-upload"
-                    name="demo[]"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
-                    accept=".pdf, application/pdf"
-                    maxFileSize="1000000"
-                    (onUpload)="onUploadFacture($event, 'facture')"
-                    [auto]="true"
-                ></p-fileUpload>
-                <p-fileUpload
-                    mode="basic"
-                    chooseLabel="Ajouter file 2"
-                    chooseIcon="pi pi-upload"
-                    name="demo[]"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
-                    accept=".pdf, application/pdf"
-                    maxFileSize="1000000"
-                    (onUpload)="onUploadBl($event, 'bl')"
-                    [auto]="true"
-                ></p-fileUpload>
+        <div class="dialog-content">
+            <h3 class="dialog-title">Affecter Bon de livraison et Facture</h3>
+            <div class="file-upload-row">
+                <div class="file-upload-wrapper">
+                    <img
+                        src="../../../../../assets/icons/BL.png"
+                        alt="Bon de livraison"
+                        class="upload-image"
+                    />
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Bon de livraison"
+                        chooseIcon="pi pi-upload"
+                        name="blUpload"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept=".pdf"
+                        maxFileSize="1000000"
+                        (onUpload)="onUploadBl($event, 'bl')"
+                        [auto]="true"
+                    ></p-fileUpload>
+                </div>
+
+                <div class="file-upload-wrapper">
+                    <img
+                        src="../../../../../assets/icons/Facture.png"
+                        alt="Facture"
+                        class="upload-image"
+                    />
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Facture"
+                        chooseIcon="pi pi-upload"
+                        name="factureUpload"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept=".pdf"
+                        maxFileSize="1000000"
+                        (onUpload)="onUploadFacture($event, 'facture')"
+                        [auto]="true"
+                    ></p-fileUpload>
+                </div>
             </div>
 
-            <p-button label="Save" (onClick)="sendFilePdf()" />
+            <div class="button-container">
+                <p-button
+                    label="Enregistrer"
+                    icon="pi pi-save"
+                    class="save-button"
+                    (onClick)="sendFilePdf()"
+                ></p-button>
+            </div>
         </div>
     </ng-container>
 </p-dialog>
+
 <!-- finished status -->
 
 <p-dialog
-    header="View all ticket infos"
+    header="Information demande d'intervention"
     [(visible)]="ticketDetailsInfo"
     [modal]="true"
     [style]="{ width: '30vw', height: '50vw' }"
