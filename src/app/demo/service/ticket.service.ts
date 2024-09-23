@@ -342,6 +342,11 @@ export class TicketService {
         link: string,
         pdf: string
     ) {
+        console.log('🍏', composantName);
+        console.log('🍏', packageComposant);
+        console.log('🍏', category_composant_id);
+        console.log('🍏', link);
+        console.log('🍏', pdf);
         return gql`
             mutation {
                 createComposant(

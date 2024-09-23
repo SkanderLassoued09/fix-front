@@ -171,6 +171,10 @@ export class TechDiListComponent {
         //NEW FILE HERE "pdf"
         const { name, packageComposant, category_composant_id, link, pdf } =
             this.composantTechnicien.value;
+        console.log(
+            '🥚[  this.composantTechnicien.value]:',
+            this.composantTechnicien.value
+        );
 
         this.apollo
             .mutate<CreateComposantMutationResult>({
@@ -179,7 +183,7 @@ export class TechDiListComponent {
                     packageComposant,
                     category_composant_id,
                     link,
-                    pdf
+                    this.payloadImage.image
                 ),
                 useMutationLoading: true,
             })
@@ -1020,6 +1024,11 @@ export class TechDiListComponent {
                 this.uploadFile(base64);
             };
         }
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Fichier enregistré',
+            detail: 'Fichier a été ajouter avec succès',
+        });
     }
 
     uploadFile(base64: string) {
@@ -1029,5 +1038,6 @@ export class TechDiListComponent {
         };
 
         this.payloadImage = payload;
+        console.log('🍡[ this.payloadImage ]:', this.payloadImage);
     }
 }

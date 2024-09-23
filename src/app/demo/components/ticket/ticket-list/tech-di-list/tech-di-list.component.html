@@ -425,6 +425,16 @@
                                             formControlName="link"
                                         />
                                     </div>
+
+                                    <div class="field">
+                                        <label>Category</label>
+                                        <input
+                                            type="text"
+                                            pInputText
+                                            formControlName="category_composant_id"
+                                        />
+                                    </div>
+
                                     <div class="field">
                                         <p-fileUpload
                                             mode="basic"
@@ -435,6 +445,7 @@
                                             accept="image/*,application/pdf"
                                             maxFileSize="1000000"
                                             (onUpload)="onUpload($event)"
+                                            [auto]="true"
                                         ></p-fileUpload>
                                     </div>
                                 </form>
