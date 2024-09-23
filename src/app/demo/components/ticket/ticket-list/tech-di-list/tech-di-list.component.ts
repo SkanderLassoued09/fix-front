@@ -262,8 +262,17 @@ export class TechDiListComponent {
     //     });
     // }
 
+    // Helper method to reset the modal form before loading new data
+    resetModalForm() {
+        this.diagFormTech.reset(); // Reset the form to clear any previous data
+        this.di = null; // Reset the selected DI
+    }
+
     async diagModal(di) {
-        let detailsDi;
+        // Reset form and modal data
+        this.resetModalForm();
+
+        // Fetch the details from the backend
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getDiById(di._idDi),
@@ -271,37 +280,39 @@ export class TechDiListComponent {
             .subscribe(({ data }) => {
                 console.log('🥔[data]:', data);
                 if (data) {
-                    detailsDi = data.getDiById;
+                    const detailsDi = data.getDiById;
                     console.log('🍲[detailsDi]:', detailsDi);
-                    console.log(
-                        '🍓[this.detailsD]:',
-                        detailsDi.remarque_tech_diagnostic
-                    );
+
+                    // Patch the form with the new data
+                    this.diagFormTech.patchValue({
+                        _idDi: di._id,
+                        diag_time: di.diag_time || detailsDi.diag_time || '',
+                        remarqueTech:
+                            di.remarqueTech ||
+                            detailsDi.remarque_tech_diagnostic ||
+                            '',
+                        isPdr: di.isPdr || detailsDi.contain_pdr || false,
+                        isReparable:
+                            di.isReparable ||
+                            detailsDi.can_be_repaired ||
+                            false,
+                        quantity: di.quantity || 0,
+                        composantSelectedDropdown:
+                            di.composantSelectedDropdown || null,
+                    });
                 }
+
+                // Open the modal after data is fetched
+                this.diDialogDiag[di._id] = true;
             });
-        console.log('🌭', di);
+
+        // Set selected DI and status
         this.di = { ...di };
         this.selectedDi = di._id;
         this.selectedDi_id = di._idDi;
-        console.log('🍐[ di._idDi]:', di._idDi);
-
-        console.log('🍓[this.detailsD]:', detailsDi);
-
-        if (detailsDi) {
-            // Use diDetails to patch the form
-            this.diagFormTech.patchValue({
-                _idDi: di._id,
-                diag_time: di.diag_time || detailsDi.diag_time || '',
-                remarqueTech: di.remarqueTech || detailsDi.remarqueTech || '',
-                isPdr: di.isPdr || detailsDi.isPdr || false,
-                isReparable: di.isReparable || detailsDi.isReparable || false,
-                quantity: di.quantity || detailsDi.quantity || 0,
-                composantSelectedDropdown: di.composantSelectedDropdown || null,
-            });
-        }
-
-        this.diDialogDiag[di._id] = true; // Open modal for this row by ID
         this.diStatus = di.status;
+
+        // Perform other tasks
         this.changeStatus(di._idDi);
         this.getTimeSpent(di._id);
         this.getImage();

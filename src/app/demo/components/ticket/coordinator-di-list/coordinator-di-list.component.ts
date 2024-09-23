@@ -75,6 +75,7 @@ export class CoordinatorDiListComponent {
     remarque_coordinator: string;
     remarqueTech: string;
     selectedDiLocation: any;
+    selectedTechDiagModel: null;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -288,6 +289,7 @@ export class CoordinatorDiListComponent {
                                     this.getDi();
                                 });
                             this.diDialog = false;
+                            this.selectedTechDiagModel = null;
                             this.messageservice.add({
                                 severity: 'success',
                                 summary: 'Success',
