@@ -337,7 +337,7 @@
                     <button
                         pButton
                         pRipple
-                        icon="pi pi-paginator"
+                        icon="pi pi-user-edit"
                         class="p-button-rounded mr-2"
                         (click)="modalServices(rowData)"
                         severity="help"
@@ -546,7 +546,7 @@
     <p-dialog
         [(visible)]="detailsView"
         [style]="{ width: '450px' }"
-        header="Détails des service"
+        header="Service Achat - Financier - Technique"
         [modal]="true"
         styleClass="p-fluid"
         draggable="false"
@@ -560,7 +560,6 @@
                     id="serviceAchatName"
                     [(ngModel)]="companySelected.serviceAchat.name"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -577,7 +576,6 @@
                     id="serviceAchatEmail"
                     [(ngModel)]="companySelected.serviceAchat.email"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -594,7 +592,6 @@
                     id="serviceAchatPhone"
                     [(ngModel)]="companySelected.serviceAchat.phone"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -612,7 +609,6 @@
                     id="serviceFinancierName"
                     [(ngModel)]="companySelected.serviceFinancier.name"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -631,7 +627,6 @@
                     id="serviceFinancierEmail"
                     [(ngModel)]="companySelected.serviceFinancier.email"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -650,7 +645,6 @@
                     id="serviceFinancierPhone"
                     [(ngModel)]="companySelected.serviceFinancier.phone"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -668,7 +662,6 @@
                     id="serviceTechniqueName"
                     [(ngModel)]="companySelected.serviceTechnique.name"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -687,7 +680,6 @@
                     id="serviceTechniqueEmail"
                     [(ngModel)]="companySelected.serviceTechnique.email"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -706,7 +698,6 @@
                     id="serviceTechniquePhone"
                     [(ngModel)]="companySelected.serviceTechnique.phone"
                     required
-                    disabled="true"
                 />
                 <small
                     class="p-error"
@@ -716,20 +707,20 @@
                 </small>
             </div>
 
-            <!-- <div class="modal-footer">
+            <div class="modal-footer">
                 <p-button
-                    (click)="annuler()"
+                    (click)="annulerService()"
                     icon="pi pi-times"
                     label="Annuler"
                     [text]="true"
                 ></p-button>
                 <p-button
-                    (click)="saveUpdateCompany()"
+                    (click)="saveUpdateServiceCompany()"
                     icon="pi pi-plus"
                     label="Modifier"
                     [text]="true"
                 ></p-button>
-            </div> -->
+            </div>
         </ng-template>
     </p-dialog>
 

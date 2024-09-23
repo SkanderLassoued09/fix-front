@@ -141,6 +141,7 @@ export class TechDiListComponent {
     admnistration_miniDashboard: number = 0;
 
     detailsDi: any;
+    categorieDiListDropDown: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -273,6 +274,7 @@ export class TechDiListComponent {
     }
 
     async diagModal(di) {
+        this.allCategoryDi();
         // Reset form and modal data
         this.resetModalForm();
 
@@ -639,6 +641,8 @@ export class TechDiListComponent {
             remarqueTech: this.diagFormTech.get('remarqueTech')?.value,
             composant: this.composantCombo,
         };
+        console.log('values of mutation here ==> ', formValues);
+
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.finish(formValues),
@@ -661,7 +665,7 @@ export class TechDiListComponent {
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID        this.diStatus = di.status;
+                    this.diDialogDiag[this.selectedDi] = false;
                 }
             });
 
@@ -1039,5 +1043,26 @@ export class TechDiListComponent {
 
         this.payloadImage = payload;
         console.log('🍡[ this.payloadImage ]:', this.payloadImage);
+    }
+
+    allCategoryDi() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllDiCategory(),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.categorieDiListDropDown = data.findAllDiCategory.map(
+                        (Category_DI) => ({
+                            category: `${Category_DI.category}`,
+                            value: Category_DI._id, // ID as value
+                        })
+                    );
+                    console.log(
+                        this.categorieDiListDropDown,
+                        'this.categorieDiListDropDown'
+                    );
+                }
+            });
     }
 }

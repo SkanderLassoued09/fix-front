@@ -491,7 +491,7 @@
                     </ng-template>
                 </td>
                 <td class="flex">
-                    <p-button
+                    <button
                         *ngIf="rowData.status === 'FINISHED'"
                         pButton
                         pRipple
@@ -499,7 +499,7 @@
                         icon="pi pi-book"
                         class="p-button-rounded p-button-raised p-button-success mr-2"
                         (click)="openTicketDetails(rowData)"
-                    />
+                    ></button>
                     <button
                         *ngIf="rowData.status === 'FINISHED'"
                         pButton

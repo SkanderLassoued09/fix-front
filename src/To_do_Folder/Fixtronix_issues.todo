@@ -2,25 +2,21 @@ Projects: @Fixtronix
 
 Todos:
   New:
-  ☐ REPERATION NOT WORKING all the share the same values & btn is not disabled @Skander!!!!
-  
-  ☐ magasin and else change the links and files with btns refreing to them
+  ☐ Apply modal of Diagnostic in => 1.Create DI 2.Reperation
   ☐ update composant for the magasin @Inprogress already exist
-  ☐ add Dashboard to Tech @InProgress
-  ☐ add update btn so manager can update if status is Created
-  ☐ coordinator can send Di to repair @stand_by
-  ☐ tech can see which DI is in pause by creating two new status @Almost
   ☐ add the btn and the Time of confirmation composants Coordinator from magasin
-  ☐ add category DI to diagnositique
-  ☐ if di is no reperable after pricing and nego1 the di becomes finished not to magasin  
+  ☐ if di is no reperable after pricing and nego1 the di becomes finished not to magasin @Together  
   ☐ negociation 1 issues @Nezih
-  
-
-
- 
+  ☐ ticket-list Table company always "-"
+  ☐ coordinator can send Di to repair @stand_by
   Done:
-     Add upload 2 files for the manager when status is finished `Bon de livraison` `facture` @WALID @done(24-09-20 00:35)
-    ✔ In the Company add the 3 services (Tech Achat Finance) in the update @done(24-09-20 00:34)
+  ✔ add category DI to diagnositique @done(24-09-23 22:14)
+  ✔ add update btn so manager can update if status is Created @done(24-09-23 22:13)
+  ✔ magasin and else change the links and files with btns refreing to them @done(24-09-23 22:13)
+  ✔ tech can see which DI is in pause by creating two new status @Almost @done(24-09-23 01:58)
+  ✔ add Dashboard to Tech @InProgress @done(24-09-23 01:58)
+  ✔ Add upload 2 files for the manager when status is finished `Bon de livraison` `facture` @WALID @done(24-09-23 21:50)
+  ✔ In the Company add the 3 services (Tech Achat Finance) in the update @done(24-09-20 00:34)
   ✔ same small Dasboard to coordinator @done(24-09-16 22:27)
   ✔ Tech automatic refresh solution @done(24-09-16 22:26)
   ✔ correction in the tables @done(24-09-16 22:26)

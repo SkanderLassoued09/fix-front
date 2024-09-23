@@ -228,7 +228,7 @@ export class CompanyListComponent {
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Success',
-                            detail: 'Le company a changé avec succé',
+                            detail: 'Le company a changé avec succés',
                         });
                         this.CompanyModalCondition = false;
                     }
@@ -236,8 +236,21 @@ export class CompanyListComponent {
             });
     }
 
+    saveUpdateServiceCompany(rowDataClient) {
+        this.companySelected = { ...rowDataClient };
+        this.detailsView = false;
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Le company a changé avec succés',
+        });
+    }
+
     annuler() {
         this.CompanyModalCondition = false;
+    }
+    annulerService() {
+        this.detailsView = false;
     }
     annulerUpdate() {
         this.creationCompanyModalCondition = false;

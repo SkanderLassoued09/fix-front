@@ -5,7 +5,7 @@
     <!-- DIAGNOSTIC -->
     <p-card class="box-container improved-card">
         <ng-template pTemplate="content">
-            <div class="card-content text-center">
+            <div class="card-content">
                 <h2 class="card-title">
                     Total:
                     {{
@@ -26,14 +26,15 @@
                         }}</span>
                     </h3>
                 </div>
-                <h1 class="card-status">DIAGNOSTIC</h1>
+                <h1 class="card-status">Diagnostic</h1>
             </div>
         </ng-template>
     </p-card>
 
+    <!-- REPARATION -->
     <p-card class="box-container improved-card">
         <ng-template pTemplate="content">
-            <div class="card-content text-center">
+            <div class="card-content">
                 <h2 class="card-title">
                     Total:
                     {{ repEnPause_miniDashboard + repNotOpened_miniDashboard }}
@@ -52,14 +53,15 @@
                         }}</span>
                     </h3>
                 </div>
-                <h1 class="card-status">Reperation</h1>
+                <h1 class="card-status">Reparation</h1>
             </div>
         </ng-template>
     </p-card>
 
+    <!-- RETOUR -->
     <p-card class="box-container improved-card">
         <ng-template pTemplate="content">
-            <div class="card-content text-center">
+            <div class="card-content">
                 <h2 class="card-title">
                     Total:
                     {{
@@ -70,19 +72,19 @@
                 </h2>
                 <div class="card-stats">
                     <h3>
-                        Retour1:
+                        Retour 1:
                         <span class="highlight">{{
                             retour1_miniDashboard
                         }}</span>
                     </h3>
                     <h3>
-                        Retour2:
+                        Retour 2:
                         <span class="highlight">{{
                             retour2_miniDashboard
                         }}</span>
                     </h3>
                     <h3>
-                        Retour3:
+                        Retour 3:
                         <span class="highlight">{{
                             retour3_miniDashboard
                         }}</span>
@@ -93,28 +95,24 @@
         </ng-template>
     </p-card>
 
+    <!-- ADMINISTRATION -->
     <p-card class="box-container improved-card">
         <ng-template pTemplate="content">
-            <div class="card-content text-center">
+            <div class="card-content">
                 <h2 class="card-title">
                     Total: {{ admnistration_miniDashboard }}
                 </h2>
-
-                <h1 class="card-status">Admnistration</h1>
+                <h1 class="card-status">Administration</h1>
             </div>
         </ng-template>
     </p-card>
 
-    <!-- Date picker remains as it is -->
+    <!-- Date picker -->
     <!-- <div class="calendar-container">
         <div class="calendar-label">
             <strong>Choisir une Date</strong>
         </div>
-        <p-calendar
-            [(ngModel)]="rangeDates"
-            selectionMode="range"
-            [readonlyInput]="true"
-        ></p-calendar>
+        <p-calendar [(ngModel)]="rangeDates" selectionMode="range" [readonlyInput]="true"></p-calendar>
     </div> -->
 </div>
 
@@ -209,6 +207,19 @@
                 </div>
                 <form [formGroup]="diagFormTech">
                     <div class="flex flex-column">
+                        <div>
+                            <p-dropdown
+                                id="Category_DI"
+                                [options]="categorieDiListDropDown"
+                                (onChange)="selectedDropDown($event)"
+                                optionLabel="category"
+                                placeholder="Affecter Category_DI"
+                                optionValue="value"
+                                [showClear]="true"
+                            >
+                            </p-dropdown>
+                        </div>
+
                         <div class="supheader field">
                             <label for="name"
                                 >Description de la Panne a corriger</label
@@ -220,6 +231,7 @@
                                 pInputTextarea
                             ></textarea>
                         </div>
+
                         <!-- pdr or no -->
                         <div class="condition-BTN">
                             <div class="field">
