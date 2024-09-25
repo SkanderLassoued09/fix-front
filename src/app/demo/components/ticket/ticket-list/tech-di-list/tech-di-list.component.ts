@@ -838,7 +838,7 @@ export class TechDiListComponent {
                         });
                 }
                 this.getAllTechDi();
-                this.diDialogDiag[this.selectedDi] = true; // Open modal for this row by ID
+                this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
             },
         });
     }

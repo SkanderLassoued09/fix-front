@@ -8,7 +8,7 @@ import {
     UpdateComposantMutationResponse,
 } from './magasin-di-list.interfaces';
 import { Router } from '@angular/router';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -64,7 +64,8 @@ export class MagasinDiListComponent {
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
         private apollo: Apollo,
-        private router: Router
+        private router: Router,
+        private confirmationService: ConfirmationService
     ) {
         this.formUpdateComposant = new FormGroup({
             name: new FormControl(),
@@ -209,20 +210,39 @@ export class MagasinDiListComponent {
     }
 
     updateComposant() {
-        this.apollo
-            .mutate<UpdateComposantMutationResponse>({
-                mutation: this.ticketSerice.updateComposant(
-                    this.formUpdateComposant.value
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading }) => {
-                if (data) {
-                    this.changeStatusDiToPending2(this.selectedDi_id);
-                    this.getDi();
-                    this.magasinDiDialog = false;
-                }
-            });
+        console.log('working update');
+
+        this.confirmationService.confirm({
+            message: 'Voulez-vous confirmer les changements ?',
+            header: 'Confirmation Diagnostique',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                console.log('inside condition working');
+
+                this.apollo
+                    .mutate<UpdateComposantMutationResponse>({
+                        mutation: this.ticketSerice.updateComposant(
+                            this.formUpdateComposant.value
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(
+                        ({ data }) => {
+                            if (data) {
+                                this.changeStatusDiToPending2(
+                                    this.selectedDi_id
+                                );
+                                this.getDi();
+                                this.magasinDiDialog = false;
+                            }
+                        },
+                        (error) => {
+                            console.error('Error updating composant: ', error);
+                            // Add error handling logic here if needed
+                        }
+                    );
+            },
+        });
     }
 
     onUpload(event: any) {
