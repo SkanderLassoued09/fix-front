@@ -8,13 +8,6 @@
         severity="success"
         label="Creation d'un nouveau composant"
     ></p-button>
-
-    <p-button
-        (click)="showDialogcomposantCreation()"
-        icon="pi pi-verified"
-        severity="info"
-        label="Modifier un composant"
-    ></p-button>
 </div>
 <div class="card">
     <p-table
@@ -251,6 +244,16 @@
         styleClass="p-fluid"
     >
         <form [formGroup]="composantMagasin">
+            <div class="col">
+                <label for="name">Choisir un composant</label>
+                <p-dropdown
+                    [options]="composantList"
+                    (onChange)="selectedDropDownComposant($event)"
+                    optionLabel="name"
+                    optionValue="name"
+                    placeholder="Choisir composant"
+                ></p-dropdown>
+            </div>
             <div class="field">
                 <label for="name">Nom du composant</label>
                 <input

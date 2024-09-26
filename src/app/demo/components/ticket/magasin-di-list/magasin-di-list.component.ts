@@ -47,7 +47,6 @@ export class MagasinDiListComponent {
     //MagasinCondition: boolean = true;
 
     composantMagasin = new FormGroup({
-        _idComposant: new FormControl(), // ???
         name: new FormControl(),
         packageComposant: new FormControl(),
         category_composant_id: new FormControl(),
@@ -59,6 +58,7 @@ export class MagasinDiListComponent {
         coming_date: new FormControl(),
         prix_achat: new FormControl(),
     });
+    composantList: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -83,6 +83,7 @@ export class MagasinDiListComponent {
 
     ngOnInit() {
         this.getDi();
+        this.getAllComposant();
         //this.Magasin_buttonCondition();
     }
     annulerMagasinEstimation() {
@@ -131,6 +132,36 @@ export class MagasinDiListComponent {
     //         this.diList.getDiForMagasin.di
     //     );
     // }
+
+    selectedDropDownComposant(selectedItem) {
+        this.selectedItem = selectedItem;
+        this.apollo
+            .query<ComposantByNameQueryResponse>({
+                query: this.ticketSerice.composantByName(selectedItem.value),
+            })
+            .subscribe(({ data, loading }) => {
+                console.log('🥛[data]:', data);
+                this.loadedDataComposant = data.findOneComposant;
+                console.log('🍐', this.loadedDataComposant.pdf);
+                if (data) {
+                    // Initialize form fields with loaded data
+                    this.composantMagasin.patchValue({
+                        name: this.loadedDataComposant.name,
+                        packageComposant: this.loadedDataComposant.package,
+                        category_composant_id:
+                            this.loadedDataComposant.category_composant_id,
+                        prix_achat: this.loadedDataComposant.prix_achat,
+                        prix_vente: this.loadedDataComposant.prix_vente,
+                        coming_date: this.loadedDataComposant.coming_date,
+                        link: this.loadedDataComposant.link,
+                        quantity_stocked:
+                            this.loadedDataComposant.quantity_stocked,
+                        pdf: this.loadedDataComposant.pdf,
+                        status: this.selectedstatusComposant,
+                    });
+                }
+            });
+    }
     openDialogMagasin(item) {
         console.log('🍨[item]:', item);
         this.selectedDi_id = item._id;
@@ -154,6 +185,17 @@ export class MagasinDiListComponent {
         this.router.navigate(['tickets/ticket/details', _id]);
     }
 
+    getAllComposant() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllComposant(),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.composantList = data.findAllComposant;
+                }
+            });
+    }
     getDi() {
         this.apollo
             .watchQuery<GetAllMagasinQueryResponse>({
@@ -207,6 +249,37 @@ export class MagasinDiListComponent {
                 query: this.ticketSerice.changeStatusDiToPending2(_id),
             })
             .valueChanges.subscribe(({ data, loading }) => {});
+    }
+
+    updateComposantIncreation() {
+        console.log('working update');
+
+        this.confirmationService.confirm({
+            message: 'Voulez-vous confirmer les changements ?',
+            header: 'Confirmation Diagnostique',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                console.log('inside condition working');
+
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.updateComposant(
+                            this.composantMagasin.value
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(
+                        ({ data }) => {
+                            if (data) {
+                            }
+                        },
+                        (error) => {
+                            console.error('Error updating composant: ', error);
+                            // Add error handling logic here if needed
+                        }
+                    );
+            },
+        });
     }
 
     updateComposant() {
