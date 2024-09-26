@@ -421,6 +421,8 @@ export class TicketService {
         `;
     }
     finishReparation(_idDi, remarque) {
+        console.log('🦀[_idDi]:', _idDi);
+        console.log('🍔[remarque]:', remarque);
         return gql`
             mutation {
                 tech_finishReperation(_id: "${_idDi}", remarque: "${remarque}") {
@@ -724,6 +726,7 @@ export class TicketService {
             {
                 getDiById(_id: "${_id}") {
                     remarque_tech_diagnostic
+                    remarque_tech_repair
                     can_be_repaired
                     contain_pdr
                     array_composants {

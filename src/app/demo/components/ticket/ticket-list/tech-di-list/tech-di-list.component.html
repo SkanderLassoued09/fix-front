@@ -508,6 +508,7 @@
     </ng-container>
     <!-- REPERATION MODAL -->
     <p-dialog
+        header="Reparation"
         [(visible)]="diDialogRep"
         [style]="{ width: '50%', height: '70vh' }"
         [modal]="true"
@@ -582,7 +583,7 @@
                     label="Mettre DI en Pause"
                     icon="pi pi-stopwatch"
                     class="p-button-text"
-                    (click)="lapTimeForPauseAndGetBack1()"
+                    (click)="getReamrque(); lapTimeForPauseAndGetBack1()"
                 ></button>
                 <h1>{{ minutes1 }}:{{ seconds1 }}:{{ milliseconds1 }}</h1>
                 <button
@@ -591,7 +592,7 @@
                     label="Fin reperation"
                     icon="pi pi-briefcase"
                     class="p-button-text"
-                    (click)="finishReparation()"
+                    (click)="getReamrque(); finishReparation()"
                 ></button>
             </div>
         </ng-template>

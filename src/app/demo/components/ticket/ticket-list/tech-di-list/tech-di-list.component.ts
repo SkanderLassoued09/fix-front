@@ -142,6 +142,7 @@ export class TechDiListComponent {
 
     detailsDi: any;
     categorieDiListDropDown: any;
+    remarqueReparationnn: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -172,10 +173,6 @@ export class TechDiListComponent {
         //NEW FILE HERE "pdf"
         const { name, packageComposant, category_composant_id, link, pdf } =
             this.composantTechnicien.value;
-        console.log(
-            '🥚[  this.composantTechnicien.value]:',
-            this.composantTechnicien.value
-        );
 
         this.apollo
             .mutate<CreateComposantMutationResult>({
@@ -212,13 +209,8 @@ export class TechDiListComponent {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🍍[data]:', data);
                 if (data) {
                     this.techList = data.getDiForTech;
-                    console.log(
-                        'data we gonna use in dashboard',
-                        this.techList
-                    );
                 }
             });
     }
@@ -253,7 +245,7 @@ export class TechDiListComponent {
     //             .query<any>({ query: this.ticketSerice.getDiById(_id) })
     //             .subscribe(
     //                 ({ data }) => {
-    //                     console.log('🌰[data]:', data);
+    //
     //                     if (data) {
     //                         resolve(data.getDiById);
     //                     } else {
@@ -273,6 +265,11 @@ export class TechDiListComponent {
         this.di = null; // Reset the selected DI
     }
 
+    resetModalFormRep() {
+        this.remarque.reset(); // Reset the form to clear any previous data
+        this.di = null; // Reset the selected DI
+    }
+
     async diagModal(di) {
         this.allCategoryDi();
         // Reset form and modal data
@@ -284,10 +281,8 @@ export class TechDiListComponent {
                 query: this.ticketSerice.getDiById(di._idDi),
             })
             .subscribe(({ data }) => {
-                console.log('🥔[data]:', data);
                 if (data) {
                     const detailsDi = data.getDiById;
-                    console.log('🍲[detailsDi]:', detailsDi);
 
                     // Patch the form with the new data
                     this.diagFormTech.patchValue({
@@ -326,7 +321,27 @@ export class TechDiListComponent {
     }
 
     repModal(di) {
+        // -----------
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getDiById(di._idDi),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    const detailsDi = data.getDiById;
+
+                    // Patch the form with the new data
+                    this.remarque.patchValue({
+                        remarqueRepair:
+                            di.remarque_tech_repair ||
+                            detailsDi.remarque_tech_repair ||
+                            '',
+                    });
+                }
+            });
+        // -----------
         this.di = { ...di };
+        this.resetModalForm();
         this.selectedDi = di._id;
         this.diDialogRep = true;
         this.getTimeSpentRep(di._id);
@@ -372,31 +387,13 @@ export class TechDiListComponent {
     hideDialogRep() {
         this.diDialogRep = false;
     }
-    //! GET THE STATUS from the DI
-    // btnConditionDiagnostique() {
-    //
 
-    //     if (
-    //         this.diStatus === 'DIAGNOSTIC' ||
-    //         this.diStatus === 'INDIAGNOSTIC'
-    //     ) {
-    //         this.diagnostiquefinishedFLAG = false;
-    //         console.log(
-    //             this.diagnostiquefinishedFLAG,
-    //             'this.diagnostiquefinishedFLAG'
-    //         );
-    //     }
-    // }
     btnConditionReperation() {
         if (
             this.diStatus === 'REPARATION' ||
             this.diStatus === 'INREPARATION'
         ) {
             this.reperationfinishedFLAG = false;
-            console.log(
-                this.reperationfinishedFLAG,
-                'this.reperationfinishedFLAG'
-            );
         }
     }
 
@@ -631,8 +628,6 @@ export class TechDiListComponent {
      */
 
     lapTimeForPauseAndGetBack() {
-        console.log('🥘', this.selectedDi);
-
         // Gather the form values
         const formValues = {
             _idDi: this.selectedDi_id,
@@ -641,7 +636,6 @@ export class TechDiListComponent {
             remarqueTech: this.diagFormTech.get('remarqueTech')?.value,
             composant: this.composantCombo,
         };
-        console.log('values of mutation here ==> ', formValues);
 
         this.apollo
             .mutate<any>({
@@ -650,7 +644,6 @@ export class TechDiListComponent {
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
-                    console.log('🍲[data]:', data);
                 }
             });
         // for diag
@@ -692,7 +685,6 @@ export class TechDiListComponent {
                 query: this.ticketSerice.getDataForTech(),
             })
             .valueChanges.subscribe(({ data, loading }) => {
-                console.log('🥕data mini Dashboard => ', data);
                 if (data) {
                     this.techDataInfo = data.getDiStatusCounts;
                     this.techDataInfo.forEach((item) => {
@@ -775,10 +767,7 @@ export class TechDiListComponent {
                     if (!this.isFinishedDiag) {
                         this.isFinishedDiag = {};
                     }
-                    console.log(
-                        '🍬[data sec]:',
-                        (this.isFinishedDiag[_id] = true)
-                    );
+
                     this.isFinishedDiag[_id] = true;
                 }
             });
@@ -808,10 +797,6 @@ export class TechDiListComponent {
                         })
                         .subscribe(({ data, loading }) => {
                             if (data) {
-                                console.log(
-                                    'SENDING TO ESTIMATION WORKING',
-                                    data
-                                );
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
                                 this.changeStatusMagasinEstimation(
@@ -829,10 +814,7 @@ export class TechDiListComponent {
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
-                                console.log(
-                                    'SENDING TO ESTIMATION WORKING',
-                                    this.disable
-                                );
+
                                 this.changeStatusToPending2(dataDiag._idDi);
                             }
                         });
@@ -908,12 +890,7 @@ export class TechDiListComponent {
         const trimmedTimeString = timeString.trim();
         const regex = /^\d{2}:\d{2}:\d{2}$/;
         const is = regex.test(trimmedTimeString);
-        console.log(
-            '🥔[is valid]:',
-            is,
-            '🥠[trimmedTimeString]:',
-            trimmedTimeString
-        );
+
         return is;
     }
     techFinishDiag1() {
@@ -936,11 +913,30 @@ export class TechDiListComponent {
                 this.getAllTechDi();
             });
     }
+
+    getReamrque() {
+        console.log('🍾Hello');
+        this.remarqueReparationnn = this.remarque.value.remarqueRepair;
+    }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1() {
+        console.log('🍫', this.remarque.value.remarqueRepair);
         // for rep
         this.lap1();
+        this.resetModalFormRep();
 
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.finishReparation(
+                    this.DiByStat,
+                    this.remarqueReparationnn
+                ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading }) => {
+                if (data && !loading && this.DiByStat) {
+                }
+            });
         this.apollo
             .mutate<any>({
                 mutation:
@@ -995,7 +991,6 @@ export class TechDiListComponent {
                     this.isFinishedRep = {};
                 }
 
-                const req = this.remarque.value.remarqueRepair;
                 this.lapTimeForPauseAndGetBack1();
                 this.lap1();
 
@@ -1003,7 +998,7 @@ export class TechDiListComponent {
                     .mutate<any>({
                         mutation: this.ticketSerice.finishReparation(
                             this.DiByStat,
-                            req
+                            this.remarqueReparationnn
                         ),
                         useMutationLoading: true,
                     })
@@ -1042,7 +1037,6 @@ export class TechDiListComponent {
         };
 
         this.payloadImage = payload;
-        console.log('🍡[ this.payloadImage ]:', this.payloadImage);
     }
 
     allCategoryDi() {
@@ -1057,10 +1051,6 @@ export class TechDiListComponent {
                             category: `${Category_DI.category}`,
                             value: Category_DI._id, // ID as value
                         })
-                    );
-                    console.log(
-                        this.categorieDiListDropDown,
-                        'this.categorieDiListDropDown'
                     );
                 }
             });
