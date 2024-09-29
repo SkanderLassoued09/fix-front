@@ -81,21 +81,20 @@ export class NotificationService {
 
                 break;
             case 'confirmAllComposant':
-                if (
-                    data.message.username === localStorage.getItem('username')
-                ) {
+                if (localStorage.getItem('username')) {
                     this.messageservice.add({
                         severity: 'success',
                         summary: 'Success',
-                        detail: 'Notification',
+                        detail: 'confirmAllComposant',
                         sticky: true,
                     });
-                    // Implement your notification logic for sendDitoDiagnostique event
+                    // Implement your notification confirm composant
                     console.log(
                         'Notification for confirmAllComposant:',
                         data.message
                     );
-                    return data.message.profile;
+                    this.reminderSubject.next(data);
+                    return 'confirmAllComposant';
                 }
                 break;
             default:

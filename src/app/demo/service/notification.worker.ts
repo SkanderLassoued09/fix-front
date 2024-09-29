@@ -21,6 +21,14 @@ socket.on('reminder', (message: string) => {
     postMessage(data); // Send the message to the main thread
 });
 
+socket.on('confirmAllComposant', (message: string) => {
+    const data = {
+        event: 'confirmAllComposant',
+        message,
+    };
+    postMessage(data); // Send the message to the main thread
+});
+
 socket.on('sendNotifcationToAdmins', (message: string) => {
     const data = {
         event: 'sendNotifcationToAdmins',

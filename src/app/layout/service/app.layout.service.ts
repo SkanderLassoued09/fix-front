@@ -158,17 +158,15 @@ export class LayoutService {
         document.documentElement.style.fontSize = `${value}px`;
     }
 
-    getReminders() {
+    getAllNotification() {
         return gql`
             {
-                remindersNotification {
+                getAllNotification {
                     _id
-                    reminder {
-                        data {
-                            _id
-                            title
-                        }
-                    }
+                    _idDoc
+                    type
+                    message
+                    isSeen
                 }
             }
         `;
@@ -177,8 +175,8 @@ export class LayoutService {
     markAsSeen(_id: string) {
         return gql`
             mutation {
-                markAsSeen(_id: "${_id}") {
-                    _id
+                markAsSeenNotification(_id: "${_id}") {
+                    isSeen
                 }
             }
         `;

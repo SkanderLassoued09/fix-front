@@ -721,6 +721,16 @@ export class TicketService {
         `;
     }
 
+    markAsSeen(_id: string) {
+        return gql`
+            mutation {
+                markAsSeenNotification(_id: "${_id}") {
+                    isSeen
+                }
+            }
+        `;
+    }
+
     getDiById(_id: string) {
         return gql`
             {
@@ -931,6 +941,21 @@ export class TicketService {
             mutation {
                 changeToReparationInPause(_idDI: "${_id}") {
                     _id
+                }
+            }
+        `;
+    }
+
+    confirmComposant(
+        _id: string,
+        confirmMessage: string,
+        _idNotification?: string
+    ) {
+        return gql`
+            mutation {
+                confirmationComposant(_id: "${_id}", confirmationState: "${confirmMessage}" ,_idNotification:"${_idNotification}") {
+                    _id
+                    confirmationComposant
                 }
             }
         `;

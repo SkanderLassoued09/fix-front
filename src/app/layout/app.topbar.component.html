@@ -37,7 +37,7 @@
         <p-button
             (click)="notification('top')"
             label="Reminder Test"
-            [badge]="nbReminder"
+            [badge]="nbNotification"
         />
         <button
             (click)="logout('top-right')"
@@ -76,22 +76,48 @@
         [contentStyle]="{ 'overflow-y': 'auto' }"
         resizable="true"
     >
-        <ng-container *ngFor="let notification of listReminders">
-            <p-card
-                class="flex justify-content-between"
-                *ngFor="let reminder of notification?.reminder?.data"
-            >
-                <div class="flex flex-row gap-4">
-                    <p>_id: {{ reminder._id }}</p>
-                    <p>title: {{ reminder.title }}</p>
-                </div>
+        <ng-container *ngFor="let notification of allNotification">
+            <p-card class="flex justify-content-between">
+                <p>type: {{ notification.type }}</p>
+                <p>title: {{ notification.message }}</p>
+
                 <p-button
                     icon="pi pi-check"
-                    (onClick)="markAsSeen(reminder._id, notification._id)"
-                    [disabled]="disabledButtons[reminder._id]"
+                    (onClick)="markAsSeen(notification._id)"
+                    [disabled]="disabledButtons[notification._id]"
                 />
+                <ng-container
+                    *ngIf="notification.type === 'CONFIRMATION_COMPOSANT'"
+                >
+                    <p-button
+                        label="Consulter les composants"
+                        (onClick)="
+                            getComposant(notification._id, notification._idDoc)
+                        "
+                    >
+                    </p-button>
+                </ng-container>
             </p-card>
             <!-- Add Button -->
         </ng-container>
+    </p-dialog>
+
+    <p-dialog
+        header="Composant"
+        [modal]="true"
+        [(visible)]="openModalComposant"
+        [style]="{ width: '25rem' }"
+        [contentStyle]="{ 'overflow-y': 'auto' }"
+        resizable="false"
+    >
+        <div>
+            <h1>Array of composant</h1>
+            <p-button
+                label="confirmer les composant"
+                (onClick)="confirmAndSendItBackToMagasin()"
+            >
+            </p-button>
+        </div>
+        <!-- Add Button -->
     </p-dialog>
 </div>

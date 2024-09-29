@@ -76,6 +76,7 @@ export class CoordinatorDiListComponent {
     remarqueTech: string;
     selectedDiLocation: any;
     selectedTechDiagModel: null;
+    isConfirmed: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -369,5 +370,24 @@ export class CoordinatorDiListComponent {
                     });
             },
         });
+    }
+
+    sendRequestToMagasin() {
+        console.log(' this.selectedDi', this.selectedDi);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.confirmComposant(
+                    this.selectedDi,
+                    'CONFIRM'
+                ),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log('🎂[data]:', data);
+                    this.isConfirmed =
+                        data.confirmationComposant.confirmationComposant;
+                    console.log('🍰[this.isConfirmed]:', this.isConfirmed);
+                }
+            });
     }
 }

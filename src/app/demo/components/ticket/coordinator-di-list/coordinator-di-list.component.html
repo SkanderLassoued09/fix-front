@@ -111,13 +111,6 @@
             [modal]="true"
             styleClass="p-fluid"
         >
-            <!-- <div class="card flex justify-content-center">
-            <p-image
-                src="https://primefaces.org/cdn/primeng/images/galleria/galleria10.jpg"
-                alt="Image"
-                width="250"
-            />
-        </div> -->
             <div class="field">
                 <label for="name"
                     >Envoyer Demande d'intervention pour le Dignostique</label
@@ -164,6 +157,18 @@
                     [disabled]="rep_condition"
                     (onChange)="selectedTechRep($event)"
                 ></p-dropdown>
+            </div>
+            <div class="field">
+                <label for="name"
+                    >Envoyer une requête au magasin pour confirmer les
+                    composants</label
+                >
+
+                <p-button
+                    label="Confimer les composants"
+                    (onClick)="sendRequestToMagasin()"
+                    [disabled]="isConfirmed === 'CONFIRM ' ?? true"
+                ></p-button>
             </div>
             <div class="field" *ngIf="remarque_manager">
                 <!-- to continue other rq -->
