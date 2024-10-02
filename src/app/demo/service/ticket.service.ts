@@ -28,6 +28,7 @@ export class TicketService {
                         updatedAt
                         image
                         current_roles
+                        company_id
                         client_id
                         remarque_tech_diagnostic
                         createdBy
@@ -264,7 +265,7 @@ export class TicketService {
                     company_id: "${diInfo.company_id}"
                     nSerie: "${diInfo.nSerie}"
                     remarque_manager: "${diInfo.remarqueManager}"
-                    image:"${diInfo.image}"
+                    image:"${diInfo.image ?? null}"
                     di_category_id:"${diInfo.di_category_id}"
                     location_id:"${diInfo.location}"
                 }

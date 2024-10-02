@@ -415,10 +415,6 @@ export class TicketListComponent implements OnInit {
         this.getTotalComposant(data._id);
     }
 
-    isFormComplete(): boolean {
-        return this.payload.file && this.discountPercent > 0;
-    }
-
     formatSize(bytes) {
         const k = 1024;
         const dm = 3;
@@ -483,6 +479,7 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
+                    console.log('🍜[data]:', data);
                     this.diList = data.getAllDi.di;
                     this.diListCount = data.getAllDi.totalDiCount;
                 }
@@ -979,6 +976,10 @@ export class TicketListComponent implements OnInit {
             });
     }
 
+    // Add these boolean flags to your component class
+    isBCUploaded: boolean = false;
+    isDevisUploaded: boolean = false;
+
     onUpload(event: any, type: string) {
         for (let file of event.files) {
             const reader = new FileReader();
@@ -988,11 +989,24 @@ export class TicketListComponent implements OnInit {
                 this.uploadFile(base64, type);
             };
         }
+
+        // Set flags based on the type of file uploaded
+        if (type === 'BC') {
+            this.isBCUploaded = true;
+        } else if (type === 'Devis') {
+            this.isDevisUploaded = true;
+        }
+
         this.messageservice.add({
             severity: 'info',
             summary: 'Fichier enregistré',
             detail: 'Fichier a été ajouter avec succès',
         });
+    }
+
+    // Update the isFormComplete method to check file upload statuses
+    isFormComplete() {
+        return this.isBCUploaded && this.isDevisUploaded;
     }
 
     uploadFile(base64: string, type: string) {
@@ -1044,9 +1058,11 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    const index = this.categorieDiListDropDown.find((el) => {
-                        return el.value === selected.value;
-                    });
+                    const index = this.categorieDiListDropDown.findIndex(
+                        (el) => {
+                            return el.value === selected.value;
+                        }
+                    );
                     this.categorieDiListDropDown.splice(index, 1);
                 }
             });
