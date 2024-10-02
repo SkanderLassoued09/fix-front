@@ -88,6 +88,9 @@ export class MagasinDiListComponent {
     }
     annulerMagasinEstimation() {
         this.magasinDiDialog = false;
+        this.openCreationComposantModal = false;
+        this.formMagasin.reset();
+        this.composantMagasin.reset();
     }
     showDialogcomposantCreation() {
         this.openCreationComposantModal = true;

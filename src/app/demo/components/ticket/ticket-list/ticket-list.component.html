@@ -71,7 +71,7 @@
                 </td>
                 <td class="flex">
                     <p-button
-                        label="D"
+                        icon="pi pi-trash"
                         severity="danger"
                         (click)="deleteCategory(rowData)"
                     ></p-button>
@@ -166,7 +166,7 @@
                 </td>
                 <td class="flex">
                     <p-button
-                        label="D"
+                        icon="pi pi-trash"
                         severity="danger"
                         (click)="deletLocation(rowData)"
                     ></p-button>
@@ -356,6 +356,12 @@
         <!-- Modal Footer with Action Buttons -->
         <div class="modal-footer">
             <p-button
+                (onClick)="annulerDi()"
+                label="Annuler"
+                severity="danger"
+            ></p-button>
+
+            <p-button
                 label="Créer"
                 [loading]="loadingCreatingDi"
                 (onClick)="createDi()"
@@ -364,12 +370,6 @@
                     !creationDiForm.get('designiation').value ||
                     !creationDiForm.get('typeClient').value
                 "
-            ></p-button>
-
-            <p-button
-                (onClick)="annulerDi()"
-                label="Annuler"
-                severity="danger"
             ></p-button>
         </div>
     </form>
@@ -914,13 +914,9 @@
         <!-- Can Be Repaired -->
         <div class="form-group">
             <label for="can_be_repaired">Réparable</label>
-            <input
-                [(ngModel)]="ticketData.can_be_repaired"
-                id="can_be_repaired"
-                type="checkbox"
-                class="form-control"
-                disabled="true"
-            />
+            <span id="can_be_repaired">
+                {{ ticketData.can_be_repaired ? "OUI" : "NON" }}
+            </span>
         </div>
 
         <!-- Bon de Livraison -->

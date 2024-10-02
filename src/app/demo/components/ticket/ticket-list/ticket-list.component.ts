@@ -161,15 +161,9 @@ export class TicketListComponent implements OnInit {
         { field: 'createdBy', header: 'Créer par' },
     ];
 
-    colCategory = [
-        { field: 'value', name: 'ID' },
-        { field: 'category_name', name: 'Name' },
-    ];
+    colCategory = [{ field: 'category_name', name: 'Name' }];
 
-    colEmplacement = [
-        { field: 'value', name: 'ID' },
-        { field: 'location_name', name: 'Emplacement' },
-    ];
+    colEmplacement = [{ field: 'location_name', name: 'Emplacement' }];
 
     diList: any[];
     diListCount: any;
@@ -1061,6 +1055,7 @@ export class TicketListComponent implements OnInit {
 
     annulerDi() {
         this.openAddDiModal = false;
+        this.creationDiForm.reset();
     }
 
     openUploadFileFinished(_id: string) {

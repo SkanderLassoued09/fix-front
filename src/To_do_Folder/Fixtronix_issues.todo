@@ -6,15 +6,15 @@ Todos:
   ☐ update composant for the magasin @Inprogress already exist
   ☐ add the btn and the Time of confirmation composants Coordinator from magasin
   ☐ if di is no reperable after pricing and nego1 the di becomes finished not to magasin @Together  
-  ☐ negociation 1 issues @Nezih
+  ☐ negociation 1 issues can only press the confirmer btn when the TWO files are affected (for the moment condition only with Bon de commande)
   ☐ ticket-list Table company always "-"
-  ☐ coordinator can send Di to repair @stand_by
-  ☐ in "pricing" add condition if the price of composants is not affected put "not affected" instead @Easy
+  ☐ small problem in the delet of the categoryDI
+  ☐ in "pricing" add condition if the price of composants is not affected put "not affected" instead AND make the discount no obligatoire @Easy
+  ☐ in the creation of DI make the image not obligatoire
   
   
   
-  
-  
+    ☐ coordinator can send Di to repair @stand_by
   Done:
   ✔ add category DI to diagnositique @done(24-09-23 22:14)
   ✔ add update btn so manager can update if status is Created @done(24-09-23 22:13)

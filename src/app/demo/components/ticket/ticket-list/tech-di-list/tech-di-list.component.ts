@@ -26,6 +26,7 @@ export class TechDiListComponent {
         isReparable: new FormControl(false),
         quantity: new FormControl(0),
         composantSelectedDropdown: new FormControl(),
+        di_category_id: new FormControl('Categorie DI non affecte'),
     });
 
     composantTechnicien = new FormGroup({

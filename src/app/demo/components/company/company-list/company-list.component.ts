@@ -254,6 +254,7 @@ export class CompanyListComponent {
     }
     annulerUpdate() {
         this.creationCompanyModalCondition = false;
+        this.companyForm.reset();
     }
     deleteSelectedCompany(rowData) {
         this.confirmationService.confirm({
