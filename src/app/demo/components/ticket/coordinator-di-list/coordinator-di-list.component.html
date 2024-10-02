@@ -137,7 +137,9 @@
                 ></p-button>
             </div>
             <div class="field">
-                <label for="name">Confirmer le reçoit des composants </label>
+                <label for="name"
+                    >Confirmer le reçoit des composants du magasin</label
+                >
                 <p-button
                     [disabled]="rep_condition || reperationCondition"
                     label="Confirmer tous les composants"
@@ -158,7 +160,7 @@
                     (onChange)="selectedTechRep($event)"
                 ></p-dropdown>
             </div>
-            <div class="field">
+            <!-- <div class="field">
                 <label for="name"
                     >Envoyer une requête au magasin pour confirmer les
                     composants</label
@@ -169,7 +171,7 @@
                     (onClick)="sendRequestToMagasin()"
                     [disabled]="isConfirmed === 'CONFIRM ' ?? true"
                 ></p-button>
-            </div>
+            </div> -->
             <div class="field" *ngIf="remarque_manager">
                 <!-- to continue other rq -->
                 <p-fieldset legend="Remarque admnistration" [toggleable]="true">

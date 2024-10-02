@@ -106,14 +106,9 @@
             </div>
         </ng-template>
     </p-card>
-
-    <!-- Date picker -->
-    <!-- <div class="calendar-container">
-        <div class="calendar-label">
-            <strong>Choisir une Date</strong>
-        </div>
-        <p-calendar [(ngModel)]="rangeDates" selectionMode="range" [readonlyInput]="true"></p-calendar>
-    </div> -->
+</div>
+<div class="card">
+    <p-chart type="bar" [data]="data" [options]="options" />
 </div>
 
 <div class="card">

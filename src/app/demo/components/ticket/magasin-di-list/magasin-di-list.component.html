@@ -74,6 +74,7 @@
                 <div class="col">
                     <label for="name">Choisir un composant</label>
                     <p-dropdown
+                        [showClear]="true"
                         [options]="arrayComposant"
                         (onChange)="selectedDropDown($event)"
                         optionLabel="infoComposant"
@@ -277,7 +278,7 @@
             </div>
 
             <div class="field">
-                <label for="link">Lien du composant</label>
+                <label for="link">Lien pour le composant</label>
                 <input
                     type="text"
                     pInputText
@@ -289,7 +290,7 @@
             <div class="field">
                 <p-fileUpload
                     mode="basic"
-                    chooseLabel="Ajouter un PDF"
+                    chooseLabel="Affecter PDF"
                     chooseIcon="pi pi-upload"
                     name="demo[]"
                     url="https://www.primefaces.org/cdn/api/upload.php"

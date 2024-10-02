@@ -39,6 +39,7 @@ import { OrderListModule } from 'primeng/orderlist';
 import { CalendarModule } from 'primeng/calendar';
 import { ImageModule } from 'primeng/image';
 import { PdfViewerModule } from 'ng2-pdf-viewer';
+import { ChartModule } from 'primeng/chart';
 
 @NgModule({
     declarations: [
@@ -84,7 +85,7 @@ import { PdfViewerModule } from 'ng2-pdf-viewer';
         OrderListModule,
         InplaceModule,
         CalendarModule,
-        ImageModule,
+        ImageModule,ChartModule
     ],
     providers: [ConfirmationService, MessageService],
 })
