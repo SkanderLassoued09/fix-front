@@ -218,6 +218,8 @@ export class TicketListComponent implements OnInit {
     ticketDetailsInfo: boolean;
     selectedTicket: any;
     updateticketView: boolean;
+    selectedRowInNegociate1: any;
+    selectedRowInNegociate2: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -326,7 +328,10 @@ export class TicketListComponent implements OnInit {
             });
         this.openPriceTechModal = false;
     }
+
     confirmerNegociation() {
+        // this.selectedRowInNegociate1
+
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation du prix final',
@@ -337,7 +342,19 @@ export class TicketListComponent implements OnInit {
                     this.price,
                     this.finalPrice
                 );
-                this.changeStatusDiToInMagasin(this._idDi);
+
+                if (!this.selectedRowInNegociate1.contain_pdr) {
+                    this.changeStatusPending3(this._idDi);
+                }
+                if (!this.selectedRowInNegociate1.can_be_repaired) {
+                    this.changeStatusFinished(this._idDi);
+                }
+                if (
+                    this.selectedRowInNegociate1.contain_pdr &&
+                    this.selectedRowInNegociate1.can_be_repaired
+                ) {
+                    this.changeStatusDiToInMagasin(this._idDi);
+                }
 
                 this.getDi();
                 this.saveDevisPDF(this._idDi, this.payload.file);
@@ -437,6 +454,11 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForNegociate1(data) {
+        this.selectedRowInNegociate1 = data;
+        console.log(
+            '🍬[this.selectedRowInNegociate1]:',
+            this.selectedRowInNegociate1
+        );
         this.seletedRow = data._id;
 
         this._idDi = this.seletedRow;
@@ -448,6 +470,7 @@ export class TicketListComponent implements OnInit {
         this.getTotalComposant(data._id);
     }
     showDialogForNegociate2(data) {
+        this.selectedRowInNegociate2 = data;
         this.slectedRow = data._id;
 
         this.negocite2Modal = true;
@@ -583,6 +606,13 @@ export class TicketListComponent implements OnInit {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusPending3(_id),
+            })
+            .subscribe(({ data }) => {});
+    }
+    changeStatusFinished(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeFinishStatus(_id),
             })
             .subscribe(({ data }) => {});
     }

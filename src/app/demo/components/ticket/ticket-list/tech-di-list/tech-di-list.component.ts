@@ -780,8 +780,6 @@ export class TechDiListComponent {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                // this.lapTimeForPauseAndGetBack();
-
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
                     pdr: this.diagFormTech.value.isPdr,
@@ -790,7 +788,7 @@ export class TechDiListComponent {
                     composant: this.composantCombo,
                 };
 
-                if (dataDiag.pdr) {
+                if (dataDiag.pdr && dataDiag.reparable) {
                     this.apollo
                         .mutate<any>({
                             mutation: this.ticketSerice.finish(dataDiag),
