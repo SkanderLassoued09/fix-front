@@ -585,6 +585,13 @@
             </tr>
         </ng-template>
     </p-table>
+    <p-paginator
+        (onPageChange)="onPageChange($event)"
+        [first]="first"
+        [rows]="rows"
+        [totalRecords]="diListCount"
+        [rowsPerPageOptions]="[5, 10, 30]"
+    ></p-paginator>
 </div>
 
 <!-- NEGOTIATION1 -->

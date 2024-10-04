@@ -59,6 +59,7 @@ export class MagasinDiListComponent {
         prix_achat: new FormControl(),
     });
     composantList: any;
+    isToUpdate: boolean = false;
 
     constructor(
         private ticketSerice: TicketService,
@@ -137,6 +138,7 @@ export class MagasinDiListComponent {
     // }
 
     selectedDropDownComposant(selectedItem) {
+        this.isToUpdate = true;
         this.selectedItem = selectedItem;
         this.apollo
             .query<ComposantByNameQueryResponse>({
@@ -322,6 +324,7 @@ export class MagasinDiListComponent {
     }
 
     onUpload(event: any) {
+        console.log('onUpload');
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -331,44 +334,87 @@ export class MagasinDiListComponent {
             };
         }
     }
+
     uploadFile(base64: string) {
+        console.log('🍢uploadFile');
         const payload = {
             image: base64,
             // add other necessary data here
         };
 
         this.payloadImage = payload;
-        // this.http.post('http://your-backend-url/tickets', payload).subscribe(
-        //     (response) => {
-        //
-        //     },
-        //     (error) => {
-        //
-        //     }
-        // );
     }
 
     addComposant() {
+        console.log('🍶');
         const composantDataForm = this.composantMagasin.value;
+        console.log('🍎[composantDataForm]:', composantDataForm);
         const composantDataTosend = {
             ...composantDataForm,
-            pdf: this.payloadImage,
+            pdf: this.payloadImage.image,
         };
 
-        this.apollo
-            .mutate<any>({
-                mutation:
-                    this.ticketSerice.addComposantMagasin(composantDataTosend),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'Le composant a été créer',
-                    });
-                }
-            });
+        if (!this.isToUpdate) {
+            console.log('🌮');
+            this.apollo
+                .mutate<any>({
+                    mutation:
+                        this.ticketSerice.addComposantMagasin(
+                            composantDataTosend
+                        ),
+                })
+                .subscribe(({ data }) => {
+                    if (data) {
+                        this.messageservice.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Le composant a été créer',
+                        });
+                    }
+                });
+        }
+
+        if (this.isToUpdate) {
+            console.log('🎂', this.composantMagasin.value);
+            console.log('pdf', this.payloadImage.image);
+
+            const formattedComposantInfo = {
+                name: this.composantMagasin.value.name,
+                package: this.composantMagasin.value.packageComposant,
+                category_composant_id:
+                    this.composantMagasin.value.category_composant_id,
+                prix_achat: this.composantMagasin.value.prix_achat,
+                prix_vente: this.composantMagasin.value.prix_vente,
+                coming_date: new Date(
+                    this.composantMagasin.value.coming_date
+                ).toISOString(),
+                link: this.composantMagasin.value.link,
+                quantity_stocked: this.composantMagasin.value.quantity_stocked,
+                pdf: this.payloadImage.image,
+                status_composant: this.composantMagasin.value.status ?? '',
+            };
+
+            this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.updateComposant(
+                        formattedComposantInfo
+                    ),
+                    useMutationLoading: true,
+                })
+                .subscribe(
+                    ({ data }) => {
+                        if (data) {
+                            console.log('🥚[data]:', data);
+                            // Handle success
+                        }
+                    },
+                    (error) => {
+                        console.error('Error updating composant: ', error);
+                        // Add error handling logic here if needed
+                    }
+                );
+        }
+
         this.openCreationComposantModal = false;
     }
 }
