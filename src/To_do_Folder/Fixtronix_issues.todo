@@ -3,10 +3,8 @@ Projects: @Fixtronix
 Todos:
   New:
   
-  ☐ update composant for the magasin @Inprogress already exist
   
-  ☐ if di is no reperable after pricing and nego1 the di becomes finished not to magasin @Together  
-  
+
   ☐ display ticket directly for tech without resfresh
   
   ☐ in "pricing" add condition if the price of composants is not affected put "not affected" instead  @Easy
@@ -70,8 +68,8 @@ Todos:
 ✔ small problem in the delet of the categoryDI @done(24-10-03 01:10)
 ✔ Apply modal of Diagnostic in => 1.Create DI 2.Reperation 3.Pricing 4.Negotiation1&2 @done(24-10-03 01:10)
 ✔ negociation 1 issues can only press the confirmer btn when the TWO files are affected (for the moment condition only with Bon de commande) @done(24-10-03 01:26)
-
-
+✔ if di is no reperable after pricing and nego1 the di becomes finished not to magasin @Together @done(24-10-03 01:56)
+✔ update composant for the magasin @Inprogress already exist @done(24-10-03 01:57)
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard

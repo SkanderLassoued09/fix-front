@@ -144,8 +144,21 @@ export class TechDiListComponent {
     categorieDiListDropDown: any;
     remarqueReparationnn: any;
     //to delet just exemple
-    data: any;
+    dataBarChart: any;
     options: any;
+    dataBarChartIsReady: boolean = false;
+    optionsPieChart: {
+        plugins: { legend: { labels: { color: string } } };
+        scales: { r: { grid: { color: string } } };
+    };
+    dataPieChart: {
+        datasets: {
+            data: number[];
+            backgroundColor: string[];
+            label: string;
+        }[];
+        labels: string[];
+    };
 
     constructor(
         private ticketSerice: TicketService,
@@ -157,6 +170,21 @@ export class TechDiListComponent {
     ) {}
 
     ngOnInit() {
+        this.getAllTechDi();
+        this.getComposant();
+        this.checkValueChanges();
+        this.checkValueChangesReperable();
+        this.getDataForTech();
+        this.barChart();
+
+        this.notificationService.notification$.subscribe((message: any) => {
+            if (message) {
+                this.techList.push(message);
+            }
+        });
+    }
+
+    barChart() {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
         const textColorSecondary = documentStyle.getPropertyValue(
@@ -164,42 +192,6 @@ export class TechDiListComponent {
         );
         const surfaceBorder =
             documentStyle.getPropertyValue('--surface-border');
-
-        this.data = {
-            // Use input data if provided
-            labels: [
-                'January',
-                'February',
-                'March',
-                'April',
-                'May',
-                'June',
-                'July',
-            ],
-            datasets: [
-                {
-                    type: 'bar',
-                    label: 'Dataset 1',
-                    backgroundColor:
-                        documentStyle.getPropertyValue('--blue-500'),
-                    data: [50, 25, 12, 48, 90, 76, 42],
-                },
-                {
-                    type: 'bar',
-                    label: 'Dataset 2',
-                    backgroundColor:
-                        documentStyle.getPropertyValue('--green-500'),
-                    data: [21, 84, 24, 75, 37, 65, 34],
-                },
-                {
-                    type: 'bar',
-                    label: 'Dataset 3',
-                    backgroundColor:
-                        documentStyle.getPropertyValue('--yellow-500'),
-                    data: [41, 52, 24, 74, 23, 21, 32],
-                },
-            ],
-        };
 
         this.options = {
             maintainAspectRatio: false,
@@ -237,19 +229,110 @@ export class TechDiListComponent {
                     },
                 },
             },
+            skipNull: true,
+        };
+        this.dataBarChart = {
+            // Use input data if provided
+            labels: ['Diagnostic', 'Reperation', 'Retour', 'Admnistration'],
+            //data for MiniDash
+            /**
+ 
+    
+    
+    
+    
+    // Retour variables
+    retour1_miniDashboard
+    retour2_miniDashboard
+    retour3_miniDashboard
+    //Admnistration
+    admnistration_miniDashboard
+             */
+
+            datasets: [
+                {
+                    type: 'bar',
+                    label: 'Diagnostic-Pause',
+                    backgroundColor:
+                        documentStyle.getPropertyValue('--blue-500'),
+                    data: [this.diagEnPause_miniDashboard],
+                },
+
+                {
+                    type: 'bar',
+                    label: 'Diagnostic-nonOuvert',
+                    backgroundColor:
+                        documentStyle.getPropertyValue('--blue-200'),
+                    data: [this.diagNotOpened_miniDashboard],
+                },
+                {
+                    type: 'bar',
+                    label: 'Reperation-Pause',
+                    backgroundColor:
+                        documentStyle.getPropertyValue('--green-500'),
+                    data: [null, this.repEnPause_miniDashboard],
+                },
+                {
+                    type: 'bar',
+                    label: 'Reperation-NonOuvert',
+                    backgroundColor:
+                        documentStyle.getPropertyValue('--green-200'),
+                    data: [, this.repNotOpened_miniDashboard],
+                },
+            ],
         };
 
-        this.getAllTechDi();
-        this.getComposant();
-        this.checkValueChanges();
-        this.checkValueChangesReperable();
-        this.getDataForTech();
+        //PIE CHART
+        this.dataPieChart = {
+            datasets: [
+                {
+                    data: [
+                        this.diagEnPause_miniDashboard,
+                        this.diagNotOpened_miniDashboard,
+                        this.repEnPause_miniDashboard,
+                        this.repNotOpened_miniDashboard,
+                        this.retour1_miniDashboard +
+                            this.retour2_miniDashboard +
+                            this.retour3_miniDashboard,
+                        this.admnistration_miniDashboard,
+                    ],
+                    backgroundColor: [
+                        documentStyle.getPropertyValue('--blue-500'),
+                        documentStyle.getPropertyValue('--blue-100'),
+                        documentStyle.getPropertyValue('--green-500'),
+                        documentStyle.getPropertyValue('--green-100'),
+                        documentStyle.getPropertyValue('--red-500'),
+                        documentStyle.getPropertyValue('--yellow-500'),
+                    ],
+                    label: 'Di Tech',
+                },
+            ],
+            labels: [
+                'Diagnostic Pause',
+                'Diagnostic non ouvert',
+                'Reperation Pause',
+                'Reperation non ouvert',
+                'Retour',
+                'Admnistration',
+            ],
+        };
 
-        this.notificationService.notification$.subscribe((message: any) => {
-            if (message) {
-                this.techList.push(message);
-            }
-        });
+        this.optionsPieChart = {
+            plugins: {
+                legend: {
+                    labels: {
+                        color: textColor,
+                    },
+                },
+            },
+            scales: {
+                r: {
+                    grid: {
+                        color: surfaceBorder,
+                    },
+                },
+            },
+        };
     }
 
     closeComposantModal() {
@@ -767,33 +850,55 @@ export class TechDiListComponent {
     getDataForTech() {
         this.apollo
             .watchQuery<any>({
-                //  pass here data got from inputs date
+                // Pass data got from inputs date
                 query: this.ticketSerice.getDataForTech(),
             })
             .valueChanges.subscribe(({ data, loading }) => {
                 if (data) {
+                    this.dataBarChartIsReady = true;
                     this.techDataInfo = data.getDiStatusCounts;
+
+                    // Initialize the dashboard variables
+                    this.diagEnPause_miniDashboard = 0;
+                    this.diagNotOpened_miniDashboard = 0;
+                    this.repNotOpened_miniDashboard = 0;
+                    this.repEnPause_miniDashboard = 0;
+                    this.retour1_miniDashboard = 0;
+                    this.retour2_miniDashboard = 0;
+                    this.retour3_miniDashboard = 0;
+                    this.admnistration_miniDashboard = 0;
+
                     this.techDataInfo.forEach((item) => {
-                        if (item.status === 'DIAGNOSTIC_Pause') {
-                            this.diagEnPause_miniDashboard += item.count;
-                        } else if (item.status === 'DIAGNOSTIC') {
-                            this.diagNotOpened_miniDashboard += item.count;
-                        } else if (item.status === 'REPARATION') {
-                            this.repNotOpened_miniDashboard += item.count;
-                        } else if (item.status === 'REPARATION_Pause') {
-                            this.repEnPause_miniDashboard += item.count;
-                        } else if (item.status === 'RETOUR1') {
-                            this.retour1_miniDashboard += item.count;
-                        } else if (item.status === 'RETOUR2') {
-                            this.retour2_miniDashboard += item.count;
-                        } else if (item.status === 'RETOUR3') {
-                            this.retour3_miniDashboard += item.count;
-                        } else {
-                            this.admnistration_miniDashboard += item.count;
+                        switch (item.status) {
+                            case 'DIAGNOSTIC_Pause':
+                                this.diagEnPause_miniDashboard += item.count;
+                                break;
+                            case 'DIAGNOSTIC':
+                                this.diagNotOpened_miniDashboard += item.count;
+                                break;
+                            case 'REPARATION':
+                                this.repNotOpened_miniDashboard += item.count;
+                                break;
+                            case 'REPARATION_Pause':
+                                this.repEnPause_miniDashboard += item.count;
+                                break;
+                            case 'RETOUR1':
+                                this.retour1_miniDashboard += item.count;
+                                break;
+                            case 'RETOUR2':
+                                this.retour2_miniDashboard += item.count;
+                                break;
+                            case 'RETOUR3':
+                                this.retour3_miniDashboard += item.count;
+                                break;
+                            default:
+                                this.admnistration_miniDashboard += item.count;
+                                break;
                         }
                     });
-                    //retour1_miniDashboard
-                    //!!!!!!!!!!!!!! WORKING HERE!!!!
+
+                    // Call the barChart function after processing the data
+                    this.barChart();
                 }
             });
     }
@@ -865,6 +970,8 @@ export class TechDiListComponent {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
+                // this.lapTimeForPauseAndGetBack();
+
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
                     pdr: this.diagFormTech.value.isPdr,
@@ -873,7 +980,7 @@ export class TechDiListComponent {
                     composant: this.composantCombo,
                 };
 
-                if (dataDiag.pdr && dataDiag.reparable) {
+                if (dataDiag.pdr) {
                     this.apollo
                         .mutate<any>({
                             mutation: this.ticketSerice.finish(dataDiag),
