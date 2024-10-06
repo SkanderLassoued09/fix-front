@@ -56,10 +56,10 @@ export class TicketService {
         `;
     }
 
-    getAllDiForCoordinator() {
+    getAllDiForCoordinator(first, rows) {
         return gql`
             {
-                get_coordinatorDI(paginationConfig: { first: 0, rows: 10 }) {
+                get_coordinatorDI(paginationConfig: { first: ${first}, rows: ${rows} }) {
                     di {
                         _id
                         title
@@ -103,10 +103,10 @@ export class TicketService {
     }
 
     // query getAllMagasin change with variable
-    getAllMagasin() {
+    getAllMagasin(first, rows) {
         return gql`
             {
-                getDiForMagasin(paginationConfig: { first: 0, rows: 10 }) {
+                getDiForMagasin(paginationConfig: { first: ${first}, rows: ${rows} }) {
                     di {
                         _id
                         title
@@ -202,21 +202,25 @@ export class TicketService {
         `;
     }
 
-    diListTech(startDate?: string, endDate?: string) {
+    diListTech(first, rows, startDate?: string, endDate?: string) {
         return gql`
             {
-                getDiForTech(
-                    startDate: "${startDate ?? ''}"
-                    endDate: "${endDate ?? ''}"
-                ) {
-                    _id
-                    _idDi
-                    id_tech_diag
-                    id_tech_rep
-                    diag_time
-                    rep_time
-                    status
-                    location_id 
+                getDiForTech(    
+              
+                startDate: "${startDate ?? ''}"
+                    endDate: "${endDate ?? ''}",
+                paginationConfig: { first: ${first}, rows: ${rows} }) {
+                    stat {
+                        _id
+                        _idDi
+                        id_tech_diag
+                        id_tech_rep
+                        diag_time
+                        rep_time
+                        status
+                        location_id
+                    }
+                    totalTechDataCount
                 }
             }
         `;

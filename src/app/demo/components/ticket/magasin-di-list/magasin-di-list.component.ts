@@ -9,6 +9,7 @@ import {
 } from './magasin-di-list.interfaces';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -42,6 +43,9 @@ export class MagasinDiListComponent {
     selectedstatusComposant: string;
     openCreationComposantModal: boolean;
     payloadImage: { image: string };
+    first: number = 0;
+    rows: number = 10;
+    page: any;
     // Please do not use camel case in varaibles
     //MagasinEstimation_Condition: boolean = true;
     //MagasinCondition: boolean = true;
@@ -83,7 +87,7 @@ export class MagasinDiListComponent {
     }
 
     ngOnInit() {
-        this.getDi();
+        this.getDi(this.first, this.rows);
         this.getAllComposant();
         //this.Magasin_buttonCondition();
     }
@@ -201,10 +205,17 @@ export class MagasinDiListComponent {
                 }
             });
     }
-    getDi() {
+
+    onPageChange(event: PageEvent) {
+        this.first = event.first;
+        this.page = event.page;
+        this.rows = event.rows;
+        this.getDi(this.first, this.rows);
+    }
+    getDi(first, rows) {
         this.apollo
             .watchQuery<GetAllMagasinQueryResponse>({
-                query: this.ticketSerice.getAllMagasin(),
+                query: this.ticketSerice.getAllMagasin(first, rows),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
@@ -310,7 +321,7 @@ export class MagasinDiListComponent {
                                 this.changeStatusDiToPending2(
                                     this.selectedDi_id
                                 );
-                                this.getDi();
+                                this.getDi(this.first, this.rows);
                                 this.magasinDiDialog = false;
                             }
                         },

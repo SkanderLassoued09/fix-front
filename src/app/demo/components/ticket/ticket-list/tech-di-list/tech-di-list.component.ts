@@ -10,6 +10,7 @@ import {
 } from './tech-di-list.interface';
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
+import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
 
 @Component({
     selector: 'app-tech-di-list',
@@ -69,7 +70,7 @@ export class TechDiListComponent {
     diListCount: any;
     diDialog: boolean = false;
     di: any;
-    techList: any[];
+    techList: any;
     selectedDi: any;
     isRunning: any;
     startTime: number;
@@ -144,6 +145,10 @@ export class TechDiListComponent {
     detailsDi: any;
     categorieDiListDropDown: any;
     remarqueReparationnn: any;
+    first: number = 0;
+    rows: number = 10;
+    page: any;
+    techListCount: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -154,7 +159,7 @@ export class TechDiListComponent {
     ) {}
 
     ngOnInit() {
-        this.getAllTechDi();
+        this.getAllTechDi(this.first, this.rows);
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
@@ -162,7 +167,7 @@ export class TechDiListComponent {
 
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
-                this.techList.push(message);
+                this.techList.stat.push(message);
             }
         });
     }
@@ -203,15 +208,22 @@ export class TechDiListComponent {
         this.visible = true;
     }
     //Todo when you query the data add the status of the DI so we can use it for the Btn's condition
-    getAllTechDi() {
+    onPageChange(event: PageEvent) {
+        this.first = event.first;
+        this.page = event.page;
+        this.rows = event.rows;
+        this.getAllTechDi(this.first, this.rows);
+    }
+    getAllTechDi(first, rows) {
         this.apollo
-            .watchQuery<DiListTechQueryResult>({
-                query: this.ticketSerice.diListTech(),
+            .watchQuery<any>({
+                query: this.ticketSerice.diListTech(first, rows),
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    this.techList = data.getDiForTech;
+                    this.techList = data.getDiForTech.stat;
+                    this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
     }
@@ -818,7 +830,7 @@ export class TechDiListComponent {
                             }
                         });
                 }
-                this.getAllTechDi();
+                this.getAllTechDi(this.first, this.rows);
                 this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
             },
         });
@@ -909,7 +921,7 @@ export class TechDiListComponent {
                 if (data) {
                     this.changeStatusMagasinEstimation(dataDiag._idDi);
                 }
-                this.getAllTechDi();
+                this.getAllTechDi(this.first, this.rows);
             });
     }
 
@@ -1007,7 +1019,7 @@ export class TechDiListComponent {
                         }
                     });
 
-                this.getAllTechDi();
+                this.getAllTechDi(this.first, this.rows);
             },
             reject: () => {},
         });

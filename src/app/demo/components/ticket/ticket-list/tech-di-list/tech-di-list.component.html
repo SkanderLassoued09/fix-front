@@ -178,6 +178,13 @@
             </tr>
         </ng-template>
     </p-table>
+    <p-paginator
+        (onPageChange)="onPageChange($event)"
+        [first]="first"
+        [rows]="rows"
+        [totalRecords]="techListCount"
+        [rowsPerPageOptions]="[5, 10, 30]"
+    ></p-paginator>
     <!-- DIAGNOSTIQUE MODAL -->
 
     <ng-container *ngIf="di?._id">

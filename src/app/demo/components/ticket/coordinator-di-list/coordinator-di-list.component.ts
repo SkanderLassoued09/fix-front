@@ -12,6 +12,7 @@ import {
 import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ImageModule } from 'primeng/image';
+import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 @Component({
     selector: 'app-coordinator-di-list',
     // standalone: true,
@@ -77,6 +78,9 @@ export class CoordinatorDiListComponent {
     selectedDiLocation: any;
     selectedTechDiagModel: null;
     isConfirmed: any;
+    first: number = 0;
+    rows: number = 10;
+    page: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -87,7 +91,7 @@ export class CoordinatorDiListComponent {
     }
 
     ngOnInit() {
-        this.getDi();
+        this.getDi(this.first, this.rows);
         this.getAllTech();
         this.confirmationBTN = false;
     }
@@ -95,10 +99,17 @@ export class CoordinatorDiListComponent {
     showDialog() {
         this.visible = true;
     }
-    getDi() {
+
+    onPageChange(event: PageEvent) {
+        this.first = event.first;
+        this.page = event.page;
+        this.rows = event.rows;
+        this.getDi(this.first, this.rows);
+    }
+    getDi(first, rows) {
         this.apollo
             .watchQuery<GetAllDiForCoordinatorQueryResponse>({
-                query: this.ticketSerice.getAllDiForCoordinator(),
+                query: this.ticketSerice.getAllDiForCoordinator(first, rows),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
@@ -287,7 +298,7 @@ export class CoordinatorDiListComponent {
                                     useMutationLoading: true,
                                 })
                                 .subscribe(({ data, loading }) => {
-                                    this.getDi();
+                                    this.getDi(this.first, this.rows);
                                 });
                             this.diDialog = false;
                             this.selectedTechDiagModel = null;
@@ -319,7 +330,7 @@ export class CoordinatorDiListComponent {
                     .subscribe(({ data, loading, errors }) => {
                         if (data) {
                             this.changeStatusRepaire(this.selectedDi);
-                            this.getDi();
+                            this.getDi(this.first, this.rows);
                             this.diDialog = false;
                         }
                     });
@@ -341,7 +352,7 @@ export class CoordinatorDiListComponent {
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            this.getDi();
+                            this.getDi(this.first, this.rows);
                             this.diDialog = false;
                         }
                     });
@@ -363,7 +374,7 @@ export class CoordinatorDiListComponent {
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            this.getDi();
+                            this.getDi(this.first, this.rows);
                             this.diDialog = false;
                             this.reperationCondition = true;
                         }
