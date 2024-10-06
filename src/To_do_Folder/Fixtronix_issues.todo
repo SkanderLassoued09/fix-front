@@ -2,19 +2,17 @@ Projects: @Fixtronix
 
 Todos:
   New:
-  ☐ Apply modal of Diagnostic in => 1.Create DI 2.Reperation 3.Pricing 4.Negotiation1&2
-  ☐ update composant for the magasin @Inprogress already exist
-  ☐ add the btn and the Time of confirmation composants Coordinator from magasin
-  ☐ if di is no reperable after pricing and nego1 the di becomes finished not to magasin @Together  
-  ☐ negociation 1 issues can only press the confirmer btn when the TWO files are affected (for the moment condition only with Bon de commande)
-  ☐ ticket-list Table company always "-"
-  ☐ small problem in the delet of the categoryDI
-  ☐ in "pricing" add condition if the price of composants is not affected put "not affected" instead AND make the discount no obligatoire @Easy
-  ☐ in the creation of DI make the image not obligatoire
   
   
+
+  ☐ display ticket directly for tech without resfresh
   
-    ☐ coordinator can send Di to repair @stand_by
+  ☐ in "pricing" add condition if the price of composants is not affected put "not affected" instead  @Easy
+ 
+  
+  
+  ☐ add the btn and the Time of confirmation composants Coordinator from magasin @standby
+  ☐ coordinator can send Di to repair @stand_by
   Done:
   ✔ add category DI to diagnositique @done(24-09-23 22:14)
   ✔ add update btn so manager can update if status is Created @done(24-09-23 22:13)
@@ -65,6 +63,13 @@ Todos:
   ✔ Status === nego1 => confirmation disabled and only enabled after affecting the two files DONE @done(24-08-25 10:55)
   ✔ Add confirmation PopUp in everyStep @NEZIH @done(24-08-25 11:54)
   ✔ In diagnostique when finished all the btn become disabled bcs you use the same variable for all of them when refresh become correct @Done @done(24-08-25 12:00)
+  ✔ ticket-list Table company always "-" @done(24-10-03 00:53)
+ ✔ in the creation of DI make the image not obligatoire @done(24-10-03 01:02)
+✔ small problem in the delet of the categoryDI @done(24-10-03 01:10)
+✔ Apply modal of Diagnostic in => 1.Create DI 2.Reperation 3.Pricing 4.Negotiation1&2 @done(24-10-03 01:10)
+✔ negociation 1 issues can only press the confirmer btn when the TWO files are affected (for the moment condition only with Bon de commande) @done(24-10-03 01:26)
+✔ if di is no reperable after pricing and nego1 the di becomes finished not to magasin @Together @done(24-10-03 01:56)
+✔ update composant for the magasin @Inprogress already exist @done(24-10-03 01:57)
   After finishing add this features:
    ☐ Add new Fn to location @Nezih
    ☐ Add Dashboard

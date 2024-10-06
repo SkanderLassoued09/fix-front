@@ -39,7 +39,7 @@ import { OrderListModule } from 'primeng/orderlist';
 import { CalendarModule } from 'primeng/calendar';
 import { ImageModule } from 'primeng/image';
 import { PdfViewerModule } from 'ng2-pdf-viewer';
-import { PaginatorModule } from 'primeng/paginator';
+import { ChartModule } from 'primeng/chart';
 
 @NgModule({
     declarations: [
@@ -86,7 +86,7 @@ import { PaginatorModule } from 'primeng/paginator';
         InplaceModule,
         CalendarModule,
         ImageModule,
-        PaginatorModule,
+        ChartModule,
     ],
     providers: [ConfirmationService, MessageService],
 })
