@@ -85,7 +85,8 @@ import { ChartModule } from 'primeng/chart';
         OrderListModule,
         InplaceModule,
         CalendarModule,
-        ImageModule,ChartModule
+        ImageModule,
+        ChartModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

@@ -18,6 +18,7 @@ import {
 } from './ticket-list.interface';
 import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
+import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 
 interface Column {
     field: string;
@@ -220,6 +221,9 @@ export class TicketListComponent implements OnInit {
     updateticketView: boolean;
     selectedRowInNegociate1: any;
     selectedRowInNegociate2: any;
+    first: number = 0;
+    rows: number = 10;
+    page: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -232,7 +236,7 @@ export class TicketListComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.getDi();
+        this.getDi(this.first, this.rows);
         this.getCompanyList();
         this.getClientList();
         this.allCategoryDi();
@@ -356,7 +360,7 @@ export class TicketListComponent implements OnInit {
                     this.changeStatusDiToInMagasin(this._idDi);
                 }
 
-                this.getDi();
+                this.getDi(this.first, this.rows);
                 this.saveDevisPDF(this._idDi, this.payload.file);
                 this.saveBCPDF(this._idDi, this.payload.file);
                 this.negocite1Modal = false;
@@ -495,10 +499,17 @@ export class TicketListComponent implements OnInit {
             });
     }
 
-    getDi() {
+    onPageChange(event: PageEvent) {
+        this.first = event.first;
+        this.page = event.page;
+        this.rows = event.rows;
+        this.getDi(this.first, this.rows);
+    }
+
+    getDi(first, rows) {
         this.apollo
             .watchQuery<DiQueryResult>({
-                query: this.ticketSerice.getAllDi(),
+                query: this.ticketSerice.getAllDi(first, rows),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
@@ -553,7 +564,7 @@ export class TicketListComponent implements OnInit {
                     })
                     .subscribe(({ data, loading }) => {
                         if (data) {
-                            this.getDi();
+                            this.getDi(this.first, this.rows);
                             this.pricingModal = false;
                             this.changeStatusNegiciate1(this.current_id);
                         }
@@ -582,7 +593,7 @@ export class TicketListComponent implements OnInit {
                             summary: 'Deleted',
                             detail: 'La demande service supprimer',
                         });
-                        this.getDi();
+                        this.getDi(this.first, this.rows);
                     });
             },
         });
@@ -725,7 +736,7 @@ export class TicketListComponent implements OnInit {
 
                                 this.creationDiForm.reset();
                                 this.openAddDiModal = false;
-                                this.getDi();
+                                this.getDi(this.first, this.rows);
                             }
                         });
                 },
@@ -797,7 +808,7 @@ export class TicketListComponent implements OnInit {
             .subscribe(({ data }) => {
                 //! NEED TO SELECT THE ID OF THE SELECTED DI
             });
-        this.getDi();
+        this.getDi(this.first, this.rows);
     }
 
     nego1nego2_InMagasin(_id, price, final_price) {
@@ -839,7 +850,7 @@ export class TicketListComponent implements OnInit {
                 if (this.secondNegocition) {
                     this.changeStatusNegociate2(this.secondNegocition);
                     this.negocite1Modal = false;
-                    this.getDi();
+                    this.getDi(this.first, this.rows);
                 }
             },
         });

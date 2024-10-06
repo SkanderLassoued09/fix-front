@@ -297,6 +297,7 @@
                     accept="image/*,application/pdf"
                     maxFileSize="1000000"
                     (onUpload)="onUpload($event)"
+                    [auto]="true"
                 ></p-fileUpload>
             </div>
 
@@ -436,7 +437,7 @@
                     <button
                         pButton
                         pRipple
-                        label="Ajouter"
+                        [label]="isToUpdate ? 'Update' : 'Add'"
                         icon="pi pi-check-circle"
                         class="p-button-text"
                         (click)="addComposant()"

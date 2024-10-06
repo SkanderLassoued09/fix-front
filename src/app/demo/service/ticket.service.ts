@@ -10,10 +10,10 @@ import { ReturnStatement } from '@angular/compiler';
 export class TicketService {
     constructor() {}
 
-    getAllDi() {
+    getAllDi(first, rows) {
         return gql`
             {
-                getAllDi(paginationConfig: { first: 0, rows: 10 }) {
+                getAllDi(paginationConfig: { first: ${first}, rows: ${rows} }) {
                     di {
                         _id
                         title
@@ -517,6 +517,7 @@ export class TicketService {
         `;
     }
     updateComposant(composantInfo) {
+        console.log('🍦[composantInfo]:', composantInfo);
         return gql`
             mutation {
                 addComposantInfo(
