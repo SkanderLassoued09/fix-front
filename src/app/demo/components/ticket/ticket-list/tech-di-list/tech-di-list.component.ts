@@ -184,7 +184,8 @@ export class TechDiListComponent {
 
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
-                this.techList.stat.push(message);
+                console.log('🥒[message]:', message);
+                this.techList.push(message);
             }
         });
     }
@@ -391,6 +392,7 @@ export class TechDiListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.techList = data.getDiForTech.stat;
+                    console.log('🥧[ this.techList]:', this.techList);
                     this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
