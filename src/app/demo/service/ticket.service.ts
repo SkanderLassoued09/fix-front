@@ -343,13 +343,13 @@ export class TicketService {
     createComposantByTech(
         composantName: string,
         packageComposant: string,
-        category_composant_id: string,
+
         link: string,
         pdf: string
     ) {
         console.log('🍏', composantName);
         console.log('🍏', packageComposant);
-        console.log('🍏', category_composant_id);
+
         console.log('🍏', link);
         console.log('🍏', pdf);
         return gql`
@@ -358,7 +358,7 @@ export class TicketService {
                     createComposantInput: {
                         name: "${composantName}"
                         package: "${packageComposant}"
-                        category_composant_id:"${category_composant_id}"
+                
                         link: "${link}"
                         pdf: "${pdf}"
                     }
@@ -384,7 +384,7 @@ export class TicketService {
                     _id
                     name
                     package
-                    category_composant_id
+
                     prix_achat
                     prix_vente
                     coming_date
@@ -477,7 +477,7 @@ export class TicketService {
                     _id
                     name
                     package
-                    category_composant_id
+                
                     prix_achat
                     prix_vente
                     coming_date
@@ -511,7 +511,7 @@ export class TicketService {
                 findOneComposant(name: "${selectedComposant}") {
                     _id
                     name
-                    category_composant_id
+                 
                     prix_achat
                     prix_vente
                     coming_date
@@ -528,7 +528,6 @@ export class TicketService {
                     updateComposant: {    
                         name: "${composantInfo.name}"
                         package: "${composantInfo.package}"
-                        category_composant_id: "${composantInfo.category_composant_id}"
                         prix_achat: ${composantInfo.prix_achat}
                         prix_vente: ${composantInfo.prix_vente}
                         coming_date: "${composantInfo.coming_date}"
@@ -542,7 +541,6 @@ export class TicketService {
     _id
     name
     package
-    category_composant_id
     prix_achat
     prix_vente
     coming_date
@@ -911,19 +909,20 @@ export class TicketService {
     }
 
     addComposantMagasin(composantData: any) {
+        console.log({ composantData });
         return gql`
        mutation {
   createComposant(
     createComposantInput: {
       name: "${composantData.name}"
       package: "${composantData.packageComposant}"
-      category_composant_id: "${composantData.category_composant_id}"
+
       prix_achat: ${composantData.prix_achat}
       prix_vente: ${composantData.prix_vente}
       coming_date: "${composantData.coming_date}"
       link: "${composantData.link}"
       quantity_stocked: ${composantData.quantity_stocked}
-      pdf: "${composantData.pdf.image}"
+      pdf: "${composantData.pdf}"
       status_composant: "${composantData.status}"
     }
   ) {

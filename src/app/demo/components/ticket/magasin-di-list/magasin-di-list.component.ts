@@ -142,34 +142,45 @@ export class MagasinDiListComponent {
     // }
 
     selectedDropDownComposant(selectedItem) {
+        console.log('🥕[selectedItem]:', selectedItem);
         this.isToUpdate = true;
         this.selectedItem = selectedItem;
-        this.apollo
-            .query<ComposantByNameQueryResponse>({
-                query: this.ticketSerice.composantByName(selectedItem.value),
-            })
-            .subscribe(({ data, loading }) => {
-                console.log('🥛[data]:', data);
-                this.loadedDataComposant = data.findOneComposant;
-                console.log('🍐', this.loadedDataComposant.pdf);
-                if (data) {
-                    // Initialize form fields with loaded data
-                    this.composantMagasin.patchValue({
-                        name: this.loadedDataComposant.name,
-                        packageComposant: this.loadedDataComposant.package,
-                        category_composant_id:
-                            this.loadedDataComposant.category_composant_id,
-                        prix_achat: this.loadedDataComposant.prix_achat,
-                        prix_vente: this.loadedDataComposant.prix_vente,
-                        coming_date: this.loadedDataComposant.coming_date,
-                        link: this.loadedDataComposant.link,
-                        quantity_stocked:
-                            this.loadedDataComposant.quantity_stocked,
-                        pdf: this.loadedDataComposant.pdf,
-                        status: this.selectedstatusComposant,
-                    });
-                }
-            });
+        if (selectedItem.value) {
+            this.apollo
+                .query<ComposantByNameQueryResponse>({
+                    query: this.ticketSerice.composantByName(
+                        selectedItem.value
+                    ),
+                })
+                .subscribe(({ data, loading }) => {
+                    console.log('🥛[data]:', data);
+                    this.loadedDataComposant = data.findOneComposant;
+                    console.log('🍐', this.loadedDataComposant);
+                    if (data) {
+                        // Initialize form fields with loaded data
+                        this.composantMagasin.patchValue({
+                            name: this.loadedDataComposant.name,
+                            packageComposant: this.loadedDataComposant.package,
+                            category_composant_id:
+                                this.loadedDataComposant.category_composant_id,
+                            prix_achat: this.loadedDataComposant.prix_achat,
+                            prix_vente: this.loadedDataComposant.prix_vente,
+                            coming_date: new Date(
+                                this.loadedDataComposant.coming_date
+                            ),
+                            link: this.loadedDataComposant.link,
+                            quantity_stocked:
+                                this.loadedDataComposant.quantity_stocked,
+                            pdf: this.loadedDataComposant.pdf,
+                            status: this.loadedDataComposant.status_composant,
+                        });
+                    }
+                });
+        }
+
+        if (!selectedItem.value) {
+            this.composantMagasin.reset();
+        }
     }
     openDialogMagasin(item) {
         console.log('🍨[item]:', item);
@@ -357,16 +368,17 @@ export class MagasinDiListComponent {
     }
 
     addComposant() {
-        console.log('🍶');
-        const composantDataForm = this.composantMagasin.value;
-        console.log('🍎[composantDataForm]:', composantDataForm);
-        const composantDataTosend = {
-            ...composantDataForm,
-            pdf: this.payloadImage.image,
-        };
-
         if (!this.isToUpdate) {
-            console.log('🌮');
+            console.log('🌮to create');
+            const composantDataForm = this.composantMagasin.value;
+
+            const composantDataTosend = {
+                ...composantDataForm,
+                pdf: this.payloadImage.image,
+            };
+
+            console.log({ composantDataForm });
+
             this.apollo
                 .mutate<any>({
                     mutation:
@@ -386,14 +398,11 @@ export class MagasinDiListComponent {
         }
 
         if (this.isToUpdate) {
-            console.log('🎂', this.composantMagasin.value);
-            console.log('pdf', this.payloadImage.image);
-
+            console.log('🍼️update');
             const formattedComposantInfo = {
                 name: this.composantMagasin.value.name,
                 package: this.composantMagasin.value.packageComposant,
-                category_composant_id:
-                    this.composantMagasin.value.category_composant_id,
+
                 prix_achat: this.composantMagasin.value.prix_achat,
                 prix_vente: this.composantMagasin.value.prix_vente,
                 coming_date: new Date(
@@ -401,9 +410,10 @@ export class MagasinDiListComponent {
                 ).toISOString(),
                 link: this.composantMagasin.value.link,
                 quantity_stocked: this.composantMagasin.value.quantity_stocked,
-                pdf: this.payloadImage.image,
-                status_composant: this.composantMagasin.value.status ?? '',
+                pdf: this.composantMagasin.value.pdf,
+                status_composant: this.composantMagasin.value.status,
             };
+            console.log({ formattedComposantInfo });
 
             this.apollo
                 .mutate<any>({
@@ -412,18 +422,12 @@ export class MagasinDiListComponent {
                     ),
                     useMutationLoading: true,
                 })
-                .subscribe(
-                    ({ data }) => {
-                        if (data) {
-                            console.log('🥚[data]:', data);
-                            // Handle success
-                        }
-                    },
-                    (error) => {
-                        console.error('Error updating composant: ', error);
-                        // Add error handling logic here if needed
+                .subscribe(({ data }) => {
+                    if (data) {
+                        console.log('🥚[data]:', data);
+                        // Handle success
                     }
-                );
+                });
         }
 
         this.openCreationComposantModal = false;

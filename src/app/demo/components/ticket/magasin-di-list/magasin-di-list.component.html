@@ -259,6 +259,7 @@
                     (onChange)="selectedDropDownComposant($event)"
                     optionLabel="name"
                     optionValue="name"
+                    [showClear]="true"
                     placeholder="Choisir composant"
                 ></p-dropdown>
             </div>
@@ -307,6 +308,21 @@
                     [auto]="true"
                 ></p-fileUpload>
             </div>
+
+            <ng-container *ngIf="this.composantMagasin.value.pdf">
+                <div class="field">
+                    <p-image
+                        [src]="
+                            'http://localhost:3000/' +
+                            this.composantMagasin.value.pdf
+                        "
+                        [alt]="this.composantMagasin.value.pdf"
+                        width="50"
+                        class="shadow-4"
+                        [preview]="true"
+                    />
+                </div>
+            </ng-container>
 
             <div class="grid align-items-center">
                 <div class="col">

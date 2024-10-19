@@ -354,7 +354,7 @@ export class TechDiListComponent {
                 mutation: this.ticketSerice.createComposantByTech(
                     name,
                     packageComposant,
-                    category_composant_id,
+
                     link,
                     this.payloadImage.image
                 ),
@@ -1153,11 +1153,22 @@ export class TechDiListComponent {
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
+                    this.setDiInReparationPause(this.selectedDi);
                     this.diDialogRep = false;
                 }
             });
 
         this.startStopwatch1();
+    }
+
+    setDiInReparationPause(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.diReperationInPAUSE(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🍔[data]:', data);
+            });
     }
 
     checkValueChanges() {
