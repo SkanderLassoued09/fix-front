@@ -422,26 +422,6 @@ export class TechDiListComponent {
             });
     }
 
-    // getDiById(_id: string): Promise<any> {
-    //     return new Promise((resolve, reject) => {
-    //         this.apollo
-    //             .query<any>({ query: this.ticketSerice.getDiById(_id) })
-    //             .subscribe(
-    //                 ({ data }) => {
-    //
-    //                     if (data) {
-    //                         resolve(data.getDiById);
-    //                     } else {
-    //                         reject('No data found');
-    //                     }
-    //                 },
-    //                 (error) => {
-    //                     reject(error);
-    //                 }
-    //             );
-    //     });
-    // }
-
     // Helper method to reset the modal form before loading new data
     resetModalForm() {
         this.diagFormTech.reset(); // Reset the form to clear any previous data
@@ -465,6 +445,7 @@ export class TechDiListComponent {
             })
             .subscribe(({ data }) => {
                 if (data) {
+                    console.log('🍝 fired in get by one ', data);
                     const detailsDi = data.getDiById;
 
                     // Patch the form with the new data
@@ -482,8 +463,11 @@ export class TechDiListComponent {
                             false,
                         quantity: di.quantity || 0,
                         composantSelectedDropdown:
-                            di.composantSelectedDropdown || null,
+                            di.composantSelectedDropdown ??
+                            detailsDi.array_composants,
                     });
+
+                    this.composantCombo = detailsDi.array_composants;
                 }
 
                 // Open the modal after data is fetched
@@ -752,34 +736,6 @@ export class TechDiListComponent {
     openNew() {
         this.creatComposantDialog = true;
     }
-    deleteSelectedProducts(): void {
-        this.confirmationService.confirm({
-            message: 'Voulez vous supprimer ce composant de la liste',
-            header: 'Confirm',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.composantCombo = this.composantCombo.filter(
-                    (val) => !this.selectedComposants.includes(val)
-                );
-
-                this.selectedComposants = [];
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Products Deleted',
-                    life: 1000,
-                });
-            },
-        });
-    }
-
-    onRowClick(composant: any): void {
-        // Additional logic for the clicked row can be added here
-        const index = this.composantCombo.findIndex((el) => {
-            el.nameComposant === composant.nameComposant;
-        });
-        this.composantCombo.splice(index, 1);
-    }
 
     createComposant() {
         this.apollo
@@ -819,6 +775,7 @@ export class TechDiListComponent {
             remarqueTech: this.diagFormTech.get('remarqueTech')?.value,
             composant: this.composantCombo,
         };
+        console.log({ formValues });
 
         this.apollo
             .mutate<any>({
@@ -1270,5 +1227,38 @@ export class TechDiListComponent {
                     );
                 }
             });
+    }
+
+    /**
+     * composant table
+     */
+
+    deleteSelectedProducts(): void {
+        this.confirmationService.confirm({
+            message: 'Voulez vous supprimer ce composant de la liste',
+            header: 'Confirm',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.composantCombo = this.composantCombo.filter(
+                    (val) => !this.selectedComposants.includes(val)
+                );
+
+                this.selectedComposants = [];
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Successful',
+                    detail: 'Products Deleted',
+                    life: 1000,
+                });
+            },
+        });
+    }
+
+    onRowClick(composant: any): void {
+        // Additional logic for the clicked row can be added here
+        const index = this.composantCombo.findIndex((el) => {
+            el.nameComposant === composant.nameComposant;
+        });
+        this.composantCombo.splice(index, 1);
     }
 }

@@ -72,6 +72,7 @@ export class TicketService {
                         createdAt
                         updatedAt
                         comment
+                        company_id
                         client_id
                         remarque_manager
                         remarque_admin_manager
@@ -441,18 +442,6 @@ export class TicketService {
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
-
-        console.log(` mutation {
-            tech_startDiagnostic(
-                _id: "${diagInfo._idDi}"
-                diag: {
-                    remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
-                    contain_pdr: ${diagInfo.pdr}
-                    can_be_repaired: ${diagInfo.reparable}
-                    array_composants: [${array.join(', ')}]
-                }
-            ) 
-        }`);
 
         return gql`
            mutation {

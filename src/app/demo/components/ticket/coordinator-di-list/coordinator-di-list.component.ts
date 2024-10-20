@@ -49,10 +49,9 @@ export class CoordinatorDiListComponent {
     cols = [
         { field: '_id', header: 'ID' },
         { field: 'title', header: 'Title' },
-
         { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },
-
+        { field: 'company_id', header: 'Company' },
         { field: 'createdBy', header: 'Cree par' },
         { field: 'location_id', header: 'Location' },
     ];
@@ -112,6 +111,7 @@ export class CoordinatorDiListComponent {
                 query: this.ticketSerice.getAllDiForCoordinator(first, rows),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🌶[data]:', data);
                 if (data) {
                     this.diList = data.get_coordinatorDI.di;
                     this.diListCount = data.get_coordinatorDI.totalDiCount;

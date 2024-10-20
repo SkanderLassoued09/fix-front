@@ -242,32 +242,40 @@ export class MagasinDiListComponent {
     }
 
     selectedDropDown(selectedItem) {
-        this.selectedItem = selectedItem;
-        this.apollo
-            .query<ComposantByNameQueryResponse>({
-                query: this.ticketSerice.composantByName(selectedItem.value),
-            })
-            .subscribe(({ data, loading }) => {
-                this.loadedDataComposant = data.findOneComposant;
-                console.log('🍐', this.loadedDataComposant.pdf);
-                if (data) {
-                    // Initialize form fields with loaded data
-                    this.formUpdateComposant.patchValue({
-                        name: this.loadedDataComposant.name,
-                        package: this.loadedDataComposant.package,
-                        category_composant_id:
-                            this.loadedDataComposant.category_composant_id,
-                        prix_achat: this.loadedDataComposant.prix_achat,
-                        prix_vente: this.loadedDataComposant.prix_vente,
-                        coming_date: this.loadedDataComposant.coming_date,
-                        link: this.loadedDataComposant.link,
-                        quantity_stocked:
-                            this.loadedDataComposant.quantity_stocked,
-                        pdf: this.loadedDataComposant.pdf,
-                        status: this.selectedstatusComposant,
-                    });
-                }
-            });
+        if (selectedItem.value) {
+            this.selectedItem = selectedItem;
+            this.apollo
+                .query<ComposantByNameQueryResponse>({
+                    query: this.ticketSerice.composantByName(
+                        selectedItem.value
+                    ),
+                })
+                .subscribe(({ data, loading }) => {
+                    this.loadedDataComposant = data.findOneComposant;
+                    console.log('🍐', this.loadedDataComposant.pdf);
+                    if (data) {
+                        // Initialize form fields with loaded data
+                        this.formUpdateComposant.patchValue({
+                            name: this.loadedDataComposant.name,
+                            package: this.loadedDataComposant.package,
+                            category_composant_id:
+                                this.loadedDataComposant.category_composant_id,
+                            prix_achat: this.loadedDataComposant.prix_achat,
+                            prix_vente: this.loadedDataComposant.prix_vente,
+                            coming_date: new Date(
+                                this.loadedDataComposant.coming_date
+                            ),
+                            link: this.loadedDataComposant.link,
+                            quantity_stocked:
+                                this.loadedDataComposant.quantity_stocked,
+                            pdf: this.loadedDataComposant.pdf,
+                            status: this.selectedstatusComposant,
+                        });
+                    }
+                });
+        } else {
+            this.formUpdateComposant.reset();
+        }
     }
 
     changeStatusDiToPending2(_id: string) {
@@ -329,11 +337,6 @@ export class MagasinDiListComponent {
                     .subscribe(
                         ({ data }) => {
                             if (data) {
-                                this.changeStatusDiToPending2(
-                                    this.selectedDi_id
-                                );
-                                this.getDi(this.first, this.rows);
-                                this.magasinDiDialog = false;
                             }
                         },
                         (error) => {
@@ -343,6 +346,13 @@ export class MagasinDiListComponent {
                     );
             },
         });
+    }
+
+    finishMagasinEstimation() {
+        this.changeStatusDiToPending2(this.selectedDi_id);
+        this.getDi(this.first, this.rows);
+        this.magasinDiDialog = false;
+        this.formUpdateComposant.reset();
     }
 
     onUpload(event: any) {
