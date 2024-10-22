@@ -30,6 +30,8 @@ export class TicketService {
                         current_roles
                         company_id
                         client_id
+                        techRep
+                        techDiag
                         remarque_tech_diagnostic
                         createdBy
                         ignoreCount

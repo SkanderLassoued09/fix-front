@@ -61,6 +61,14 @@ export class TicketListComponent implements OnInit {
         di_category_id: '',
         array_composants: [],
     };
+
+    // Used for the mini Dashboard
+    counterInMagasin = 0;
+    counterInDiagnostique = 0;
+    counterInReperation = 0;
+    counterPending = 0;
+    counterRetour = 0;
+
     filsFinished: boolean = false;
     creationDiForm = new FormGroup({
         title: new FormControl('', [Validators.required]),
@@ -160,6 +168,8 @@ export class TicketListComponent implements OnInit {
         { field: 'company_id', header: 'Company' },
         { field: 'client_id', header: 'Client' },
         { field: 'createdBy', header: 'Créer par' },
+        { field: 'techDiag', header: 'Diagnostique' },
+        { field: 'techRep', header: 'Reparation' },
     ];
 
     colCategory = [{ field: 'category_name', name: 'Name' }];
@@ -516,6 +526,39 @@ export class TicketListComponent implements OnInit {
                     console.log('🍜[data]:', data);
                     this.diList = data.getAllDi.di;
                     this.diListCount = data.getAllDi.totalDiCount;
+                    this.diList.filter((di) => {
+                        switch (di.status) {
+                            case 'INMAGASIN':
+                            case 'MagasinEstimation':
+                                this.counterInMagasin =
+                                    this.counterInMagasin + 1;
+                                break;
+                            case 'DIAGNOSTIC':
+                            case 'INDIAGNOSTIC':
+                            case 'DIAGNOSTIC_Pause':
+                                this.counterInDiagnostique =
+                                    this.counterInDiagnostique + 1;
+                                break;
+                            case 'REPARATION':
+                            case 'INREPARATION':
+                            case 'REPARATION_Pause':
+                                this.counterInReperation =
+                                    this.counterInReperation + 1;
+                                break;
+                            case 'PENDING1':
+                            case 'PENDING2':
+                            case 'PENDING3':
+                                this.counterPending = this.counterPending + 1;
+                                break;
+                            case 'RETOUR1':
+                            case 'RETOUR2':
+                            case 'RETOUR3':
+                                this.counterRetour = this.counterRetour + 1;
+                                break;
+                            default:
+                                break;
+                        }
+                    });
                 }
             });
     }

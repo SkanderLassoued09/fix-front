@@ -814,7 +814,7 @@ export class TechDiListComponent {
                     // if data exist affect it to html
                 }
             });
-
+        this.getAllTechDi(this.first, this.rows);
         this.startStopwatch();
     }
 
