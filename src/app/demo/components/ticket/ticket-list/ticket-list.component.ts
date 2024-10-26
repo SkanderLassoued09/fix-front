@@ -414,6 +414,8 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 this.tarif_Technicien = data.getTarif.tarif;
+                console.log("THIS MYU FKING DATA",this.tarif_Technicien);
+                
             });
 
         this.apollo
@@ -425,10 +427,18 @@ export class TicketListComponent implements OnInit {
                 this.timepart = this.timeStringIntoHours(
                     data.getInfoStatByIdDi.diag_time
                 );
-                this.facturationDiagnostique =
-                    this.timepart.hours * this.tarif_Technicien +
-                    this.timepart.minutes *
-                        parseFloat((this.tarif_Technicien / 60).toFixed(2));
+                console.log("facturationDiagnostique",this.facturationDiagnostique)
+                this.facturationDiagnostique = parseFloat(
+                    (
+                        this.timepart.hours * this.tarif_Technicien +
+                        this.timepart.minutes * parseFloat((this.tarif_Technicien / 60).toFixed(2)) +
+                        parseFloat((this.tarif_Technicien / 60).toFixed(2))
+                    ).toFixed(2)
+                );
+                
+                        //! working HERE
+                       // + this.timepart.seconds *
+                      //  parseFloat((this.tarif_Technicien / 3600).toFixed(2));
             });
 
         this.current_id = data._id;
