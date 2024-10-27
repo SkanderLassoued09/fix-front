@@ -17,6 +17,7 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { ImageModule } from 'primeng/image';
+
 @NgModule({
     declarations: [AppComponent, NotfoundComponent],
     imports: [

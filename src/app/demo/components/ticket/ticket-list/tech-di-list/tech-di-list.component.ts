@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectorRef, Component, DoCheck, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -11,13 +11,14 @@ import {
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
+import { filter } from 'rxjs';
 
 @Component({
     selector: 'app-tech-di-list',
     templateUrl: './tech-di-list.component.html',
     styleUrl: './tech-di-list.component.scss',
 })
-export class TechDiListComponent {
+export class TechDiListComponent implements OnInit {
     selectedComposants: any[] = [];
     diagFormTech = new FormGroup({
         _idDi: new FormControl(),
@@ -171,6 +172,7 @@ export class TechDiListComponent {
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private notificationService: NotificationService,
+
         private cdr: ChangeDetectorRef
     ) {}
 
@@ -183,9 +185,10 @@ export class TechDiListComponent {
         this.barChart();
 
         this.notificationService.notification$.subscribe((message: any) => {
+            console.log('🍻[message]:', message);
             if (message) {
-                console.log('🥒[message]:', message);
-                this.techList.push(message);
+                console.log('🍚[message]:', message);
+                this.getAllTechDi(this.first, this.rows);
             }
         });
     }
@@ -348,6 +351,9 @@ export class TechDiListComponent {
         //NEW FILE HERE "pdf"
         const { name, packageComposant, category_composant_id, link, pdf } =
             this.composantTechnicien.value;
+        const imagePayload = this.payloadImage?.image
+            ? this.payloadImage.image
+            : null;
 
         this.apollo
             .mutate<CreateComposantMutationResult>({
@@ -356,7 +362,7 @@ export class TechDiListComponent {
                     packageComposant,
 
                     link,
-                    this.payloadImage.image
+                    imagePayload
                 ),
                 useMutationLoading: true,
             })
@@ -1188,12 +1194,17 @@ export class TechDiListComponent {
     }
 
     onUpload(event: any) {
+        console.log('🥘');
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => {
                 const base64 = reader.result as string;
                 this.uploadFile(base64);
+            };
+
+            reader.onerror = () => {
+                console.error('Error reading file:', reader.error);
             };
         }
         this.messageService.add({
@@ -1204,12 +1215,14 @@ export class TechDiListComponent {
     }
 
     uploadFile(base64: string) {
+        console.log('🌽[base64]:', base64);
         const payload = {
             image: base64,
             // add other necessary data here
         };
 
         this.payloadImage = payload;
+        console.log('🍢[ this.payloadImage]:', this.payloadImage);
     }
 
     allCategoryDi() {

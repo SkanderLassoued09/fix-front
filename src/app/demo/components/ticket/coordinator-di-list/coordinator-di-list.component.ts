@@ -13,6 +13,8 @@ import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ImageModule } from 'primeng/image';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
+import { NotificationService } from 'src/app/demo/service/notification.service';
+
 @Component({
     selector: 'app-coordinator-di-list',
     // standalone: true,
@@ -84,7 +86,8 @@ export class CoordinatorDiListComponent {
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private messageservice: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private notificationService: NotificationService
     ) {
         // this.roles = ROLES;
     }
@@ -93,6 +96,13 @@ export class CoordinatorDiListComponent {
         this.getDi(this.first, this.rows);
         this.getAllTech();
         this.confirmationBTN = false;
+        this.notificationService.notification$.subscribe((message: any) => {
+            console.log('🍻[message]:', message);
+            if (message) {
+                console.log('🍚[message]:', message);
+                this.getDi(this.first, this.rows);
+            }
+        });
     }
     diagnosticOpen() {}
     showDialog() {
@@ -112,6 +122,7 @@ export class CoordinatorDiListComponent {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 console.log('🌶[data]:', data);
+
                 if (data) {
                     this.diList = data.get_coordinatorDI.di;
                     this.diListCount = data.get_coordinatorDI.totalDiCount;
@@ -152,6 +163,7 @@ export class CoordinatorDiListComponent {
                 }
             });
     }
+
     getReperationCoordinatorCondition() {
         this.apollo
             .watchQuery<any>({
@@ -273,6 +285,7 @@ export class CoordinatorDiListComponent {
     }
     //!HERE
     selectedTechDiag(data) {
+        console.log('selectedTechDiag');
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer ce Technicien',
             header: 'Confirmation Diagnostique',
@@ -299,9 +312,12 @@ export class CoordinatorDiListComponent {
                                 })
                                 .subscribe(({ data, loading }) => {
                                     this.getDi(this.first, this.rows);
+                                    console.log('🥪 emit');
                                 });
                             this.diDialog = false;
                             this.selectedTechDiagModel = null;
+                            console.log('emitter');
+                            this.notificationService.handleStates(true);
                             this.messageservice.add({
                                 severity: 'success',
                                 summary: 'Success',

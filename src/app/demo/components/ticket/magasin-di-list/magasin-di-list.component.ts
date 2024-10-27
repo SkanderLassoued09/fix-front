@@ -10,6 +10,7 @@ import {
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
+import { NotificationService } from 'src/app/demo/service/notification.service';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -70,7 +71,8 @@ export class MagasinDiListComponent {
         private readonly messageservice: MessageService,
         private apollo: Apollo,
         private router: Router,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private notificationService: NotificationService
     ) {
         this.formUpdateComposant = new FormGroup({
             name: new FormControl(),
@@ -89,7 +91,13 @@ export class MagasinDiListComponent {
     ngOnInit() {
         this.getDi(this.first, this.rows);
         this.getAllComposant();
-        //this.Magasin_buttonCondition();
+        this.notificationService.notification$.subscribe((message: any) => {
+            console.log('🍻[message]:', message);
+            if (message) {
+                console.log('🍚[message]:', message);
+                this.getDi(this.first, this.rows);
+            }
+        });
     }
     annulerMagasinEstimation() {
         this.magasinDiDialog = false;

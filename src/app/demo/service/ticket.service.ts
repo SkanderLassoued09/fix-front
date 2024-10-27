@@ -363,7 +363,7 @@ export class TicketService {
                         package: "${packageComposant}"
                 
                         link: "${link}"
-                        pdf: "${pdf}"
+                        pdf: "${pdf ?? null}"
                     }
                 ) {
                     _id

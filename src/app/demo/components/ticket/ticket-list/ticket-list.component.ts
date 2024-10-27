@@ -234,6 +234,7 @@ export class TicketListComponent implements OnInit {
     first: number = 0;
     rows: number = 10;
     page: any;
+    uploadFileLoading: boolean;
 
     constructor(
         private ticketSerice: TicketService,
@@ -252,6 +253,13 @@ export class TicketListComponent implements OnInit {
         this.allCategoryDi();
         this.getLocationList();
         this.notificationService.startWorker();
+        this.notificationService.notification$.subscribe((message: any) => {
+            console.log('🍻[message]:', message);
+            if (message) {
+                console.log('🍚[message]:', message);
+                this.getDi(this.first, this.rows);
+            }
+        });
     }
 
     showDialogDiCreation() {
@@ -1075,12 +1083,20 @@ export class TicketListComponent implements OnInit {
     isDevisUploaded: boolean = false;
 
     onUpload(event: any, type: string) {
+        this.uploadFileLoading = true;
+        console.log('🍬[ this.uploadFileLoading]:', this.uploadFileLoading);
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = () => {
                 const base64 = reader.result as string;
                 this.uploadFile(base64, type);
+                this.uploadFileLoading = false;
+            };
+
+            reader.onerror = (error) => {
+                this.uploadFileLoading = false;
+                console.log('Error: ', error);
             };
         }
 

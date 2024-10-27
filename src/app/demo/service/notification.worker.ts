@@ -13,6 +13,14 @@ socket.on('sendDitoDiagnostique', (message: string) => {
     postMessage(data); // Send the message to the main thread
 });
 
+socket.on('updateTicket', (message: string) => {
+    const data = {
+        event: 'updateTicket',
+        message,
+    };
+    postMessage(data); // Send the message to the main thread
+});
+
 socket.on('reminder', (message: string) => {
     const data = {
         event: 'reminder',

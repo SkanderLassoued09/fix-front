@@ -388,6 +388,9 @@
                 (onUpload)="onUpload($event, 'image')"
                 [auto]="true"
             ></p-fileUpload>
+            <p *ngIf="uploadFileLoading" class="loading-indicator">
+                Uploading... Please wait.
+            </p>
         </div>
 
         <!-- Toggle Button -->
@@ -409,7 +412,7 @@
 
             <p-button
                 label="Créer"
-                [loading]="loadingCreatingDi"
+                [loading]="loadingCreatingDi || uploadFileLoading"
                 (onClick)="createDi()"
                 [disabled]="
                     !creationDiForm.get('title').value ||

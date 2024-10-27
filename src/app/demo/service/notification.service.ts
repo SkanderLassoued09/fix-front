@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ROLES } from '../components/profile/constant/role-constants';
 import { MessageService } from 'primeng/api';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 @Injectable({
     providedIn: 'root',
@@ -9,10 +9,13 @@ import { Subject } from 'rxjs';
 export class NotificationService {
     private worker: Worker;
     private role: string;
+
     private notificationSubject = new Subject<any>(); // Subject to emit notifications
     private reminderSubject = new Subject<any>(); // Subject to emit notifications
     public notification$ = this.notificationSubject.asObservable(); // Observable to expose notifications
     public reminder$ = this.reminderSubject.asObservable(); // Observable to expose notifications
+    private handleState = new BehaviorSubject<any>(false); // Initialize with a default value or null
+    public handleState$ = this.handleState.asObservable();
     constructor(private readonly messageservice: MessageService) {
         this.role === localStorage.getItem('role');
         if (typeof Worker !== 'undefined') {
@@ -28,75 +31,103 @@ export class NotificationService {
         }
     }
 
+    handleStates(isChange: boolean) {
+        console.log('🔥 Mother - Emitting state:', isChange);
+        this.handleState.next(isChange);
+        // Add debugging to verify current value
+        console.log('🔥 Current Value in Subject:', this.handleState.value);
+    }
+
+    get getstate() {
+        return this.handleState.value;
+    }
+
+    // Helper method to get current value
+    getCurrentState(): boolean {
+        return this.handleState.value;
+    }
+
     public handlenotification(data: any) {
         switch (data.event) {
-            case 'sendDitoDiagnostique':
-                if (
-                    data.message.profile.username ===
-                    localStorage.getItem('username')
-                ) {
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'Notification',
-                        sticky: true,
-                    });
-                    // Implement your notification logic for sendDitoDiagnostique event
+            case 'updateTicket':
+                if (data.message.action === 'updateState') {
                     console.log(
-                        'Notification for sendDitoDiagnostique:',
-                        data.message
+                        '🥡[data.message.action]:',
+                        data.message.action
                     );
-                    this.notificationSubject.next(data.message.stat); // Emit the message
-                    return data.message.profile.profile;
-                }
-                break;
-
-            case 'reminder':
-                // Implement your notification logic for reminder event
-                this.messageservice.add({
-                    severity: 'warn',
-                    summary: 'Reminder',
-                    detail: data.message,
-                    sticky: true,
-                });
-
-                this.reminderSubject.next(data.message.payload.reminder.data);
-                break;
-            // TODO nezih
-            case 'sendNotifcationToAdmins':
-                if (this.role === 'ADMIN_MANAGER' || 'ADMIN_TECH') {
-                    // Implement your notification logic for sendDitoDiagnostique event
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'Notification',
-                        sticky: true,
-                    });
-                    console.log(
-                        'Notification for sendDitoDiagnostique:',
-                        data.message
-                    );
-                    return data.message.profile;
+                    this.notificationSubject.next(data.message.content.states); // Emit the message
+                    return data.message.target;
                 }
 
                 break;
-            case 'confirmAllComposant':
-                if (localStorage.getItem('username')) {
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'confirmAllComposant',
-                        sticky: true,
-                    });
-                    // Implement your notification confirm composant
-                    console.log(
-                        'Notification for confirmAllComposant:',
-                        data.message
-                    );
-                    this.reminderSubject.next(data);
-                    return 'confirmAllComposant';
-                }
-                break;
+
+            // case 'sendDitoDiagnostique':
+            //     if (
+            //         data.message.profile.username ===
+            //         localStorage.getItem('username')
+            //     ) {
+            //         this.messageservice.add({
+            //             severity: 'success',
+            //             summary: 'Success',
+            //             detail: 'Notification',
+            //             sticky: true,
+            //         });
+            //         // Implement your notification logic for sendDitoDiagnostique event
+            //         console.log(
+            //             'Notification for sendDitoDiagnostique:',
+            //             data.message
+            //         );
+            //         this.notificationSubject.next(data.message.stat); // Emit the message
+            //         return data.message.profile.profile;
+            //     }
+            //     break;
+
+            // case 'reminder':
+            //     // Implement your notification logic for reminder event
+            //     this.messageservice.add({
+            //         severity: 'warn',
+            //         summary: 'Reminder',
+            //         detail: data.message,
+            //         sticky: true,
+            //     });
+
+            //     this.reminderSubject.next(data.message.payload.reminder.data);
+            //     break;
+            // // TODO nezih
+            // case 'sendNotifcationToAdmins':
+            //     if (this.role === 'ADMIN_MANAGER' || 'ADMIN_TECH') {
+            //         // Implement your notification logic for sendDitoDiagnostique event
+            //         this.messageservice.add({
+            //             severity: 'success',
+            //             summary: 'Success',
+            //             detail: 'Notification',
+            //             sticky: true,
+            //         });
+            //         console.log(
+            //             'Notification for sendDitoDiagnostique:',
+            //             data.message
+            //         );
+            //         return data.message.profile;
+            //     }
+
+            //     break;
+            // case 'confirmAllComposant':
+            //     if (localStorage.getItem('username')) {
+            //         this.messageservice.add({
+            //             severity: 'success',
+            //             summary: 'Success',
+            //             detail: 'confirmAllComposant',
+            //             sticky: true,
+            //         });
+            //         // Implement your notification confirm composant
+            //         console.log(
+            //             'Notification for confirmAllComposant:',
+            //             data.message
+            //         );
+            //         this.reminderSubject.next(data);
+            //         return 'confirmAllComposant';
+            //     }
+            //     break;
             default:
                 console.warn('Unhandled event:', data.event);
                 break;
