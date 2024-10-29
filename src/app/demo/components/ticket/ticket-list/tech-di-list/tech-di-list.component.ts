@@ -781,7 +781,7 @@ export class TechDiListComponent implements OnInit {
             remarqueTech: this.diagFormTech.get('remarqueTech')?.value,
             composant: this.composantCombo,
         };
-        console.log({ formValues });
+        console.log("data we gonna use inside the Diag pause",{ formValues });
 
         this.apollo
             .mutate<any>({
@@ -790,13 +790,14 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
+                    console.log('data inside the Pause Diag mutation 1',data)
                 }
             });
         // for diag
         this.lap();
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.lapTimeForPauseAndGetBack(
+                mutation: this.ticketSerice.saveTimeDiag(
                     this.selectedDi,
                     this.lapTime
                 ),
@@ -818,6 +819,7 @@ export class TechDiListComponent implements OnInit {
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
                     // if data exist affect it to html
+                    console.log("change status Diag PAUSE",data)
                 }
             });
         this.getAllTechDi(this.first, this.rows);
@@ -947,7 +949,7 @@ export class TechDiListComponent implements OnInit {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                // this.lapTimeForPauseAndGetBack();
+            
 
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
