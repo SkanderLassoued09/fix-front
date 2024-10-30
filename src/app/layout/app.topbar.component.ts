@@ -38,7 +38,8 @@ export class AppTopBarComponent implements OnInit {
     openModalComposant: boolean;
     _idDoc: string;
     _idNotification: any;
-
+    isOnline: boolean = true;
+    isSlowConnection: boolean = false;
     constructor(
         public layoutService: LayoutService,
         private apollo: Apollo,
@@ -57,6 +58,13 @@ export class AppTopBarComponent implements OnInit {
         //         this.cdr.detectChanges(); // Trigger change detection manually
         //     }
         // });
+        this.notificationService.onlineStatus$.subscribe((status) => {
+            this.isOnline = status;
+        });
+
+        this.notificationService.slowConnection$.subscribe((isSlow) => {
+            this.isSlowConnection = isSlow;
+        });
     }
 
     logout(position: string) {

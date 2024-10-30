@@ -34,6 +34,13 @@
                 layoutService.state.profileSidebarVisible
         }"
     >
+        <div *ngIf="!isOnline" class="connection-message">
+            You are offline. Some features may not be available.
+        </div>
+        <div *ngIf="isOnline && isSlowConnection" class="connection-message">
+            Your connection is slow. Performance may be affected.
+        </div>
+
         <!-- <p-button
             (click)="notification('top')"
             label="Reminder Fixtronix"

@@ -23,6 +23,7 @@ interface NotificationSubscriptionResponse {
 })
 export class AppComponent implements OnInit {
     private _idtech: string;
+
     constructor(
         private primengConfig: PrimeNGConfig,
         private readonly profileService: ProfileService,
