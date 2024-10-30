@@ -48,15 +48,15 @@ export class AppTopBarComponent implements OnInit {
         private readonly router: Router
     ) {}
     ngOnInit(): void {
-        this.getNotificationFromDb();
-        this.notificationService.reminder$.subscribe((message: any) => {
-            if (message) {
-                this.badgeIs = false; // Make sure the badge is enabled when there's new data
-                this.allNotification.push(message); // Add new reminders to the list
-                this.nbNotification = this.allNotification.length; // Set the number of reminders
-                this.cdr.detectChanges(); // Trigger change detection manually
-            }
-        });
+        // this.getNotificationFromDb();
+        // this.notificationService.reminder$.subscribe((message: any) => {
+        //     if (message) {
+        //         this.badgeIs = false; // Make sure the badge is enabled when there's new data
+        //         this.allNotification.push(message); // Add new reminders to the list
+        //         this.nbNotification = this.allNotification.length; // Set the number of reminders
+        //         this.cdr.detectChanges(); // Trigger change detection manually
+        //     }
+        // });
     }
 
     logout(position: string) {

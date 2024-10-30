@@ -177,20 +177,19 @@ export class TechDiListComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.getAllTechDi(this.first, this.rows);
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
         this.getDataForTech();
         this.barChart();
+        console.log('this.first, this.rows', this.first, this.rows);
 
         this.notificationService.notification$.subscribe((message: any) => {
-            console.log('🍻[message]:', message);
             if (message) {
-                console.log('🍚[message]:', message);
                 this.getAllTechDi(this.first, this.rows);
             }
         });
+        this.getAllTechDi(this.first, this.rows);
     }
 
     barChart() {
@@ -494,6 +493,7 @@ export class TechDiListComponent implements OnInit {
     }
 
     repModal(di) {
+        console.log('🌯[di]:', di);
         // -----------
         this.apollo
             .query<any>({
@@ -781,7 +781,7 @@ export class TechDiListComponent implements OnInit {
             remarqueTech: this.diagFormTech.get('remarqueTech')?.value,
             composant: this.composantCombo,
         };
-        console.log("data we gonna use inside the Diag pause",{ formValues });
+        console.log('data we gonna use inside the Diag pause', { formValues });
 
         this.apollo
             .mutate<any>({
@@ -790,7 +790,7 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
-                    console.log('data inside the Pause Diag mutation 1',data)
+                    console.log('data inside the Pause Diag mutation 1', data);
                 }
             });
         // for diag
@@ -819,7 +819,7 @@ export class TechDiListComponent implements OnInit {
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
                     // if data exist affect it to html
-                    console.log("change status Diag PAUSE",data)
+                    console.log('change status Diag PAUSE', data);
                 }
             });
         this.getAllTechDi(this.first, this.rows);
@@ -949,8 +949,6 @@ export class TechDiListComponent implements OnInit {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-            
-
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
                     pdr: this.diagFormTech.value.isPdr,
@@ -1090,7 +1088,7 @@ export class TechDiListComponent implements OnInit {
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1() {
-        console.log('🍫', this.remarque.value.remarqueRepair);
+        console.log('test', this.DiByStat, this.remarqueReparationnn);
         // for rep
         this.lap1();
         this.resetModalFormRep();
@@ -1127,6 +1125,7 @@ export class TechDiListComponent implements OnInit {
     }
 
     setDiInReparationPause(_id: string) {
+        console.log('🍼️[diReperationInPAUSE]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.diReperationInPAUSE(_id),

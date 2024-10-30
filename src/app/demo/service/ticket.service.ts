@@ -727,6 +727,7 @@ export class TicketService {
     }
 
     getDiById(_id: string) {
+        console.log('🍌[_id]:', _id);
         return gql`
             {
                 getDiById(_id: "${_id}") {
@@ -884,7 +885,7 @@ export class TicketService {
     getImageforDI(_idDi: string) {
         return gql`
             query {
-                getDiById(_id: "DI0") {
+                getDiById(_id: "${_idDi}") {
                     image
                 }
             }
@@ -907,7 +908,6 @@ export class TicketService {
     createComposantInput: {
       name: "${composantData.name}"
       package: "${composantData.packageComposant}"
-
       prix_achat: ${composantData.prix_achat}
       prix_vente: ${composantData.prix_vente}
       coming_date: "${composantData.coming_date}"
