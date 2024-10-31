@@ -182,7 +182,6 @@ export class TechDiListComponent implements OnInit {
         this.checkValueChangesReperable();
         this.getDataForTech();
         this.barChart();
-        console.log('this.first, this.rows', this.first, this.rows);
 
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
@@ -397,7 +396,7 @@ export class TechDiListComponent implements OnInit {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.techList = data.getDiForTech.stat;
-                    console.log('🥧[ this.techList]:', this.techList);
+
                     this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
@@ -450,7 +449,6 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log('🍝 fired in get by one ', data);
                     const detailsDi = data.getDiById;
 
                     // Patch the form with the new data
@@ -493,7 +491,6 @@ export class TechDiListComponent implements OnInit {
     }
 
     repModal(di) {
-        console.log('🌯[di]:', di);
         // -----------
         this.apollo
             .query<any>({
@@ -772,16 +769,18 @@ export class TechDiListComponent implements OnInit {
      *!When user click on finish diag and status changed the button would be frozen!
      */
 
-    lapTimeForPauseAndGetBack() {
+    lapTimeForPauseAndGetBack(isFromDiag: boolean = false) {
+        this.lap();
+        // this.resetModalForm();
         // Gather the form values
         const formValues = {
             _idDi: this.selectedDi_id,
-            pdr: this.diagFormTech.get('isPdr')?.value,
-            reparable: this.diagFormTech.get('isReparable')?.value,
-            remarqueTech: this.diagFormTech.get('remarqueTech')?.value,
-            composant: this.composantCombo,
+            pdr: this.diagFormTech.get('isPdr')?.value ?? false,
+            reparable: this.diagFormTech.get('isReparable')?.value ?? false,
+            remarqueTech: this.diagFormTech.get('remarqueTech')?.value ?? '',
+            composant: this.composantCombo ?? [],
         };
-        console.log('data we gonna use inside the Diag pause', { formValues });
+        console.log({ formValues });
 
         this.apollo
             .mutate<any>({
@@ -790,11 +789,9 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
-                    console.log('data inside the Pause Diag mutation 1', data);
                 }
             });
-        // for diag
-        this.lap();
+
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.saveTimeDiag(
@@ -809,19 +806,20 @@ export class TechDiListComponent implements OnInit {
                 }
             });
 
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.diDiagnostiqueInPAUSE(
-                    this.selectedDi_id
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading, errors }) => {
-                if (data) {
-                    // if data exist affect it to html
-                    console.log('change status Diag PAUSE', data);
-                }
-            });
+        if (!isFromDiag) {
+            this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.diDiagnostiqueInPAUSE(
+                        this.selectedDi_id
+                    ),
+                    useMutationLoading: true,
+                })
+                .subscribe(({ data, loading, errors }) => {
+                    if (data) {
+                        // if data exist affect it to html
+                    }
+                });
+        }
         this.getAllTechDi(this.first, this.rows);
         this.startStopwatch();
     }
@@ -956,6 +954,8 @@ export class TechDiListComponent implements OnInit {
                     remarqueTech: this.diagFormTech.value.remarqueTech,
                     composant: this.composantCombo,
                 };
+                this.lapTimeForPauseAndGetBack(true);
+                this.lap();
 
                 if (dataDiag.pdr) {
                     this.apollo
@@ -1083,12 +1083,10 @@ export class TechDiListComponent implements OnInit {
     }
 
     getReamrque() {
-        console.log('🍾Hello');
         this.remarqueReparationnn = this.remarque.value.remarqueRepair;
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1() {
-        console.log('test', this.DiByStat, this.remarqueReparationnn);
         // for rep
         this.lap1();
         this.resetModalFormRep();
@@ -1125,14 +1123,11 @@ export class TechDiListComponent implements OnInit {
     }
 
     setDiInReparationPause(_id: string) {
-        console.log('🍼️[diReperationInPAUSE]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.diReperationInPAUSE(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🍔[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     checkValueChanges() {
@@ -1195,7 +1190,6 @@ export class TechDiListComponent implements OnInit {
     }
 
     onUpload(event: any) {
-        console.log('🥘');
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -1216,14 +1210,12 @@ export class TechDiListComponent implements OnInit {
     }
 
     uploadFile(base64: string) {
-        console.log('🌽[base64]:', base64);
         const payload = {
             image: base64,
             // add other necessary data here
         };
 
         this.payloadImage = payload;
-        console.log('🍢[ this.payloadImage]:', this.payloadImage);
     }
 
     allCategoryDi() {

@@ -64,10 +64,8 @@ export class NotificationService {
     }
 
     handleStates(isChange: boolean) {
-        console.log('🔥 Mother - Emitting state:', isChange);
         this.handleState.next(isChange);
         // Add debugging to verify current value
-        console.log('🔥 Current Value in Subject:', this.handleState.value);
     }
 
     get getstate() {
@@ -83,10 +81,6 @@ export class NotificationService {
         switch (data.event) {
             case 'updateTicket':
                 if (data.message.action === 'updateState') {
-                    console.log(
-                        '🥡[data.message.action]:',
-                        data.message.action
-                    );
                     this.notificationSubject.next(data.message.content.states); // Emit the message
                     return data.message.target;
                 }

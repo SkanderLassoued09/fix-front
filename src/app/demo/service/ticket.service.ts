@@ -350,11 +350,6 @@ export class TicketService {
         link: string,
         pdf: string
     ) {
-        console.log('🍏', composantName);
-        console.log('🍏', packageComposant);
-
-        console.log('🍏', link);
-        console.log('🍏', pdf);
         return gql`
             mutation {
                 createComposant(
@@ -429,8 +424,6 @@ export class TicketService {
         `;
     }
     finishReparation(_idDi, remarque) {
-        console.log('🦀[_idDi]:', _idDi);
-        console.log('🍔[remarque]:', remarque);
         return gql`
             mutation {
                 tech_finishReperation(_id: "${_idDi}", remarque: "${remarque}") {
@@ -512,7 +505,6 @@ export class TicketService {
         `;
     }
     updateComposant(composantInfo) {
-        console.log('🍦[composantInfo]:', composantInfo);
         return gql`
             mutation {
                 addComposantInfo(
@@ -727,7 +719,6 @@ export class TicketService {
     }
 
     getDiById(_id: string) {
-        console.log('🍌[_id]:', _id);
         return gql`
             {
                 getDiById(_id: "${_id}") {
@@ -901,7 +892,6 @@ export class TicketService {
     }
 
     addComposantMagasin(composantData: any) {
-        console.log({ composantData });
         return gql`
        mutation {
   createComposant(
