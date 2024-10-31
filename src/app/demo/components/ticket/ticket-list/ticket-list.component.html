@@ -830,10 +830,14 @@
                 Facturation diagnostique technicien est de
                 {{ facturationDiagnostique }} TND
             </h5>
-            <h5 *ngIf="totalComposant; else notPrice">
-                Le total des compsants est égal a {{ totalComposant }} TND
+            <h5 *ngIf="totalComposant && totalComposant !== 0; else noComposant">
+                Le total des composants est égal à {{ totalComposant }} TND
             </h5>
-
+            <ng-template #noComposant>
+                <h5>
+                    Di ne contient pas de composants
+                </h5>
+            </ng-template>
             <h4>
                 Le côut Total est de
                 {{ totalComposant + facturationDiagnostique }} TND

@@ -607,6 +607,8 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data }) => {
                 this.totalComposant = data.calculateTicketComposantPrice;
+                console.log("the value of zokom composant",this.totalComposant );
+                
             });
     }
 

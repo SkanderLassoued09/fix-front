@@ -5,6 +5,7 @@ import { Apollo } from 'apollo-angular';
 import { ProductService } from 'src/app/demo/service/product.service';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
+import { ConfirmationService } from 'primeng/api';
 
 // TODO check type of these fields
 export interface Composant {
@@ -39,7 +40,8 @@ export class DetailsComposantComponent implements OnInit {
         private productService: ProductService,
         private route: ActivatedRoute,
         private apollo: Apollo,
-        private readonly router: Router
+        private readonly router: Router,
+        private confirmationService: ConfirmationService
     ) {
         this._id = this.route.snapshot.paramMap.get('id');
 
@@ -142,15 +144,22 @@ export class DetailsComposantComponent implements OnInit {
     }
 
     changeStatusPending3() {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.changeStatusPending3(this._id),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    this.router.navigate(['/tickets/ticket/magasin-di-list']);
-                }
-            });
+        this.confirmationService.confirm({
+            message: 'Voulez-vous confirmer les changements',
+            header: "Confirmation Demande prix des composants",
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.changeStatusPending3(this._id),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            this.router.navigate(['/tickets/ticket/magasin-di-list']);
+                        }
+                    });
+            }
+        });
     }
     // map over the array of composant existed in tickets data
     // get composant data by id to update them

@@ -2,18 +2,11 @@ Projects: @Fixtronix
 
 Todos:
   New:
-  
-  
-
-  ☐ display ticket directly for tech without resfresh
-  
-  ☐ in "pricing" add condition if the price of composants is not affected put "not affected" instead  @Easy
- 
-  
-  
+  ☐ in "pricing" add condition if the price of composants is not affected put "not affected" instead  @Easy 
   ☐ add the btn and the Time of confirmation composants Coordinator from magasin @standby
   ☐ coordinator can send Di to repair @stand_by
   Done:
+  ✔ display ticket directly for tech without resfresh @done(24-10-28 18:24)
   ✔ add category DI to diagnositique @done(24-09-23 22:14)
   ✔ add update btn so manager can update if status is Created @done(24-09-23 22:13)
   ✔ magasin and else change the links and files with btns refreing to them @done(24-09-23 22:13)

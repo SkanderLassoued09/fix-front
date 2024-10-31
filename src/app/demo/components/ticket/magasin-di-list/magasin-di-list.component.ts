@@ -357,10 +357,17 @@ export class MagasinDiListComponent {
     }
 
     finishMagasinEstimation() {
-        this.changeStatusDiToPending2(this.selectedDi_id);
-        this.getDi(this.first, this.rows);
-        this.magasinDiDialog = false;
-        this.formUpdateComposant.reset();
+        this.confirmationService.confirm({
+            message: 'Voulez-vous confirmer les changements',
+            header: "Confirmation Magasin Estimation",
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.changeStatusDiToPending2(this.selectedDi_id);
+                this.getDi(this.first, this.rows);
+                this.magasinDiDialog = false;
+                this.formUpdateComposant.reset();
+            }
+        });
     }
 
     onUpload(event: any) {
