@@ -434,6 +434,7 @@ export class TicketService {
     }
 
     finish(diagInfo) {
+        console.log('🥖[diagInfo]:', diagInfo);
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
@@ -446,6 +447,7 @@ export class TicketService {
                     remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
                     contain_pdr: ${diagInfo.pdr}
                     can_be_repaired: ${diagInfo.reparable}
+                    di_category_id: "${diagInfo.di_category_id}"
                     array_composants: [${array.join(', ')}]
                 }
             ) 

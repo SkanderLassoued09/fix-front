@@ -254,9 +254,7 @@ export class TicketListComponent implements OnInit {
         this.getLocationList();
         this.notificationService.startWorker();
         this.notificationService.notification$.subscribe((message: any) => {
-            console.log('🍻[message]:', message);
             if (message) {
-                console.log('🍚[message]:', message);
                 this.getDi(this.first, this.rows);
             }
         });
@@ -381,6 +379,7 @@ export class TicketListComponent implements OnInit {
                 this.getDi(this.first, this.rows);
                 this.saveDevisPDF(this._idDi, this.payload.file);
                 this.saveBCPDF(this._idDi, this.payload.file);
+                this.payload.file = '';
                 this.negocite1Modal = false;
                 this.negocite2Modal = false;
             },
@@ -422,8 +421,6 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 this.tarif_Technicien = data.getTarif.tarif;
-                console.log("THIS MYU FKING DATA",this.tarif_Technicien);
-                
             });
 
         this.apollo
@@ -435,18 +432,21 @@ export class TicketListComponent implements OnInit {
                 this.timepart = this.timeStringIntoHours(
                     data.getInfoStatByIdDi.diag_time
                 );
-                console.log("facturationDiagnostique",this.facturationDiagnostique)
+
                 this.facturationDiagnostique = parseFloat(
                     (
                         this.timepart.hours * this.tarif_Technicien +
-                        this.timepart.minutes * parseFloat((this.tarif_Technicien / 60).toFixed(2)) +
+                        this.timepart.minutes *
+                            parseFloat(
+                                (this.tarif_Technicien / 60).toFixed(2)
+                            ) +
                         parseFloat((this.tarif_Technicien / 60).toFixed(2))
                     ).toFixed(2)
                 );
-                
-                        //! working HERE
-                       // + this.timepart.seconds *
-                      //  parseFloat((this.tarif_Technicien / 3600).toFixed(2));
+
+                //! working HERE
+                // + this.timepart.seconds *
+                //  parseFloat((this.tarif_Technicien / 3600).toFixed(2));
             });
 
         this.current_id = data._id;
@@ -487,10 +487,7 @@ export class TicketListComponent implements OnInit {
 
     showDialogForNegociate1(data) {
         this.selectedRowInNegociate1 = data;
-        console.log(
-            '🍬[this.selectedRowInNegociate1]:',
-            this.selectedRowInNegociate1
-        );
+
         this.seletedRow = data._id;
 
         this._idDi = this.seletedRow;
@@ -541,7 +538,6 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    console.log('🍜[data]:', data);
                     this.diList = data.getAllDi.di;
                     this.diListCount = data.getAllDi.totalDiCount;
                     this.diList.filter((di) => {
@@ -607,8 +603,6 @@ export class TicketListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data }) => {
                 this.totalComposant = data.calculateTicketComposantPrice;
-                console.log("the value of zokom composant",this.totalComposant );
-                
             });
     }
 
@@ -733,7 +727,9 @@ export class TicketListComponent implements OnInit {
         }
     }
     getSt(selected) {
-        this.radioBtn = selected.value;
+        if (selected && selected.value) {
+            this.radioBtn = selected.value;
+        }
     }
     onSelectStatusDefaultDI(selectedStatus) {
         this.statusDI = STATUS_DI.CREATED;
@@ -798,6 +794,7 @@ export class TicketListComponent implements OnInit {
                                 _idQuery = data.createDi._id;
 
                                 this.creationDiForm.reset();
+                                this.payload.file = '';
                                 this.openAddDiModal = false;
                                 this.getDi(this.first, this.rows);
                             }
@@ -1086,7 +1083,7 @@ export class TicketListComponent implements OnInit {
 
     onUpload(event: any, type: string) {
         this.uploadFileLoading = true;
-        console.log('🍬[ this.uploadFileLoading]:', this.uploadFileLoading);
+
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -1098,7 +1095,6 @@ export class TicketListComponent implements OnInit {
 
             reader.onerror = (error) => {
                 this.uploadFileLoading = false;
-                console.log('Error: ', error);
             };
         }
 

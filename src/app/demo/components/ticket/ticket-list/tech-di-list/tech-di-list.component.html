@@ -104,17 +104,6 @@
     </p-card>
 </div>
 
-<!-- <div class="card">
-    <p-chart type="bar" [data]="dataBarChart" [options]="options" />
-</div> -->
-
-<!-- <p-chart
-    [style]="{ width: '360px' }"
-    type="polarArea"
-    [data]="dataPieChart"
-    [options]="optionsPieChart"
-/> -->
-
 <div class="card">
     <p-table
         [columns]="cols"
@@ -219,7 +208,7 @@
                                 [options]="categorieDiListDropDown"
                                 (onChange)="selectedDropDown($event)"
                                 optionLabel="category"
-                                placeholder="Affecter Category_DI"
+                                placeholder="Choisir categorie"
                                 optionValue="value"
                                 [showClear]="true"
                                 formControlName="di_category_id"

@@ -28,7 +28,7 @@ export class TechDiListComponent implements OnInit {
         isReparable: new FormControl(false),
         quantity: new FormControl(0),
         composantSelectedDropdown: new FormControl(),
-        di_category_id: new FormControl('Categorie DI non affecte'),
+        di_category_id: new FormControl(),
     });
 
     composantTechnicien = new FormGroup({
@@ -71,7 +71,7 @@ export class TechDiListComponent implements OnInit {
     diListCount: any;
     diDialog: boolean = false;
     di: any;
-    techList: any;
+    techList: any[] = [];
     selectedDi: any;
     isRunning: any;
     startTime: number;
@@ -769,7 +769,7 @@ export class TechDiListComponent implements OnInit {
      *!When user click on finish diag and status changed the button would be frozen!
      */
 
-    lapTimeForPauseAndGetBack(isFromDiag: boolean = false) {
+    lapTimeForPauseAndGetBack() {
         this.lap();
         // this.resetModalForm();
         // Gather the form values
@@ -778,9 +778,10 @@ export class TechDiListComponent implements OnInit {
             pdr: this.diagFormTech.get('isPdr')?.value ?? false,
             reparable: this.diagFormTech.get('isReparable')?.value ?? false,
             remarqueTech: this.diagFormTech.get('remarqueTech')?.value ?? '',
+            di_category_id:
+                this.diagFormTech.get('di_category_id')?.value ?? '',
             composant: this.composantCombo ?? [],
         };
-        console.log({ formValues });
 
         this.apollo
             .mutate<any>({
@@ -806,20 +807,19 @@ export class TechDiListComponent implements OnInit {
                 }
             });
 
-        if (!isFromDiag) {
-            this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.diDiagnostiqueInPAUSE(
-                        this.selectedDi_id
-                    ),
-                    useMutationLoading: true,
-                })
-                .subscribe(({ data, loading, errors }) => {
-                    if (data) {
-                        // if data exist affect it to html
-                    }
-                });
-        }
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.diDiagnostiqueInPAUSE(
+                    this.selectedDi_id
+                ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    // if data exist affect it to html
+                }
+            });
+
         this.getAllTechDi(this.first, this.rows);
         this.startStopwatch();
     }
@@ -917,12 +917,20 @@ export class TechDiListComponent implements OnInit {
         }
     }
     comboComposantandQuantity() {
+        const selectedName = this.composantSelected.value.name;
+
         let composantSelected = {
-            nameComposant: this.composantSelected.value.name,
+            nameComposant: selectedName,
             quantity: this.diagFormTech.value.quantity,
         };
 
         this.composantCombo.push(composantSelected);
+
+        this.composantList = this.composantList.filter(
+            (composant) => composant.name !== selectedName
+        );
+
+        this.composantSelected = null;
     }
 
     changeStatusMagasinEstimation(_id: string) {
@@ -942,6 +950,7 @@ export class TechDiListComponent implements OnInit {
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
+        console.log('🍨');
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Diagnostique',
@@ -952,9 +961,11 @@ export class TechDiListComponent implements OnInit {
                     pdr: this.diagFormTech.value.isPdr,
                     reparable: this.diagFormTech.value.isReparable,
                     remarqueTech: this.diagFormTech.value.remarqueTech,
+                    di_category_id: this.diagFormTech.value.di_category_id,
                     composant: this.composantCombo,
                 };
-                this.lapTimeForPauseAndGetBack(true);
+                console.log({ dataDiag });
+                // this.lapTimeForPauseAndGetBack(true);
                 this.lap();
 
                 if (dataDiag.pdr) {
@@ -988,6 +999,7 @@ export class TechDiListComponent implements OnInit {
                         });
                 }
                 this.getAllTechDi(this.first, this.rows);
+                this.startStopwatch();
                 this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
             },
         });
@@ -1060,26 +1072,6 @@ export class TechDiListComponent implements OnInit {
         const is = regex.test(trimmedTimeString);
 
         return is;
-    }
-    techFinishDiag1() {
-        const dataDiag = {
-            _idDi: this.selectedDi_id,
-            pdr: this.diagFormTech.value.isPdr,
-            reparable: this.diagFormTech.value.isReparable,
-            remarqueTech: this.diagFormTech.value.remarqueTech,
-            composant: this.composantCombo,
-        };
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.finish(dataDiag),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading }) => {
-                if (data) {
-                    this.changeStatusMagasinEstimation(dataDiag._idDi);
-                }
-                this.getAllTechDi(this.first, this.rows);
-            });
     }
 
     getReamrque() {

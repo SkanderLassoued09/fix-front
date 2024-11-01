@@ -125,42 +125,6 @@
             </tr>
         </ng-template>
     </p-table>
-    <!--  <form [formGroup]="categoryForm" class="category-form">
-       <div class="form-group">
-            <label for="categoryName">Nom de la catégorie</label>
-            <input
-                formControlName="categoryName"
-                id="categoryName"
-                type="text"
-                class="form-control"
-            />
-        </div>
-        <div class="form-group">
-            <label for="categoryDropdown">Catégorie à supprimer</label>
-            <p-dropdown
-                [options]="categorieDiListDropDown"
-                optionLabel="category_name"
-                optionValue="value"
-                [showClear]="true"
-                placeholder="Choisir une catégorie à supprimer"
-                id="categoryDropdown"
-            ></p-dropdown>
-        </div>
-        <div class="modal-footer">
-            <p-button
-                (click)="deletCategoryDi()"
-                icon="pi pi-trash"
-                label="Supprimer catégorie"
-                severity="danger"
-            ></p-button>
-            <p-button
-                (click)="addCategoryDi()"
-                icon="pi pi-plus"
-                label="Ajouter catégorie"
-                severity="success"
-            ></p-button>
-        </div>
-    </form> -->
 </p-dialog>
 
 <p-dialog
@@ -541,7 +505,6 @@
                 </td>
                 <td class="flex">
                     <button
-                       
                         pButton
                         pRipple
                         severity="help"
@@ -830,13 +793,13 @@
                 Facturation diagnostique technicien est de
                 {{ facturationDiagnostique }} TND
             </h5>
-            <h5 *ngIf="totalComposant && totalComposant !== 0; else noComposant">
+            <h5
+                *ngIf="totalComposant && totalComposant !== 0; else noComposant"
+            >
                 Le total des composants est égal à {{ totalComposant }} TND
             </h5>
             <ng-template #noComposant>
-                <h5>
-                    Di ne contient pas de composants
-                </h5>
+                <h5>Di ne contient pas de composants</h5>
             </ng-template>
             <h4>
                 Le côut Total est de
