@@ -10,6 +10,17 @@ import { ReturnStatement } from '@angular/compiler';
 export class TicketService {
     constructor() {}
 
+    getStatusCount() {
+        return gql`
+            {
+                getStatusCount {
+                    status
+                    count
+                }
+            }
+        `;
+    }
+
     getAllDi(first, rows) {
         return gql`
             {
@@ -925,6 +936,7 @@ export class TicketService {
         `;
     }
     diReperationInPAUSE(_id: string) {
+        console.log('🍭[_id]:', _id);
         return gql`
             mutation {
                 changeToReparationInPause(_idDI: "${_id}") {

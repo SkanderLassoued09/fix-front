@@ -1,46 +1,11 @@
 <p-toast></p-toast>
 
 <div class="flex justify-content-between">
-    <p-card class="box-container diag">
+    <p-card *ngFor="let item of statusCount" class="box-container diag">
         <ng-template pTemplate="content">
             <div class="text-center">
-                <h2>{{ counterInMagasin }}</h2>
-                <strong>Magasin</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container diag">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterInDiagnostique }}</h2>
-                <strong>Diagnostique</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container repair">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterInReperation }}</h2>
-                <strong>Reparation</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container retour">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterRetour }}</h2>
-                <strong>Retour</strong>
-            </div>
-        </ng-template>
-    </p-card>
-    <p-card class="box-container retour">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterPending }}</h2>
-                <strong>Pending</strong>
+                <h2>{{ item.count }}</h2>
+                <strong>{{ item.status }} </strong>
             </div>
         </ng-template>
     </p-card>
@@ -796,7 +761,8 @@
             <h5
                 *ngIf="totalComposant && totalComposant !== 0; else noComposant"
             >
-                Le total des composants est égal à {{ totalComposant }} TND
+                Le total des composants est égal à
+                {{ totalComposant }} TND
             </h5>
             <ng-template #noComposant>
                 <h5>Di ne contient pas de composants</h5>

@@ -39,6 +39,9 @@ interface UploadEvent {
 export class TicketListComponent implements OnInit {
     ticketSelected: any;
     openUpdateModal: boolean = false;
+    // Add these boolean flags to your component class
+    isBCUploaded: boolean = false;
+    isDevisUploaded: boolean = false;
     ticketData: any = {
         _id: '',
         title: '',
@@ -235,6 +238,7 @@ export class TicketListComponent implements OnInit {
     rows: number = 10;
     page: any;
     uploadFileLoading: boolean;
+    statusCount: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -247,6 +251,7 @@ export class TicketListComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.getStatusCount();
         this.getDi(this.first, this.rows);
         this.getCompanyList();
         this.getClientList();
@@ -349,6 +354,16 @@ export class TicketListComponent implements OnInit {
         this.openPriceTechModal = false;
     }
 
+    getStatusCount() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getStatusCount(),
+            })
+            .subscribe(({ data }) => {
+                this.statusCount = data.getStatusCount;
+            });
+    }
+
     confirmerNegociation() {
         // this.selectedRowInNegociate1
 
@@ -382,6 +397,9 @@ export class TicketListComponent implements OnInit {
                 this.payload.file = '';
                 this.negocite1Modal = false;
                 this.negocite2Modal = false;
+                // Add these boolean flags to your component class
+                this.isBCUploaded = false;
+                this.isDevisUploaded = false;
             },
         });
     }
@@ -420,7 +438,9 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getTechTarif(),
             })
             .subscribe(({ data }) => {
-                this.tarif_Technicien = data.getTarif.tarif;
+                if (data) {
+                    this.tarif_Technicien = data.getTarif.tarif;
+                }
             });
 
         this.apollo
@@ -428,25 +448,28 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getStatByDI_ID(MyID),
             })
             .subscribe(({ data }) => {
-                this.timeDiagnostique = data.getInfoStatByIdDi.diag_time;
-                this.timepart = this.timeStringIntoHours(
-                    data.getInfoStatByIdDi.diag_time
-                );
+                if (data) {
+                    console.log('🥐[data]:', data);
+                    this.timeDiagnostique = data.getInfoStatByIdDi.diag_time;
+                    this.timepart = this.timeStringIntoHours(
+                        data.getInfoStatByIdDi.diag_time
+                    );
 
-                this.facturationDiagnostique = parseFloat(
-                    (
-                        this.timepart.hours * this.tarif_Technicien +
-                        this.timepart.minutes *
-                            parseFloat(
-                                (this.tarif_Technicien / 60).toFixed(2)
-                            ) +
-                        parseFloat((this.tarif_Technicien / 60).toFixed(2))
-                    ).toFixed(2)
-                );
+                    this.facturationDiagnostique = parseFloat(
+                        (
+                            this.timepart.hours * this.tarif_Technicien +
+                            this.timepart.minutes *
+                                parseFloat(
+                                    (this.tarif_Technicien / 60).toFixed(2)
+                                ) +
+                            parseFloat((this.tarif_Technicien / 60).toFixed(2))
+                        ).toFixed(2)
+                    );
 
-                //! working HERE
-                // + this.timepart.seconds *
-                //  parseFloat((this.tarif_Technicien / 3600).toFixed(2));
+                    //! working HERE
+                    // + this.timepart.seconds *
+                    //  parseFloat((this.tarif_Technicien / 3600).toFixed(2));
+                }
             });
 
         this.current_id = data._id;
@@ -1076,10 +1099,6 @@ export class TicketListComponent implements OnInit {
                 }));
             });
     }
-
-    // Add these boolean flags to your component class
-    isBCUploaded: boolean = false;
-    isDevisUploaded: boolean = false;
 
     onUpload(event: any, type: string) {
         this.uploadFileLoading = true;

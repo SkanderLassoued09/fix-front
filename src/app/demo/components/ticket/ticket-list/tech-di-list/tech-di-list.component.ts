@@ -166,6 +166,7 @@ export class TechDiListComponent implements OnInit {
     rows: number = 10;
     page: any;
     techListCount: any;
+    selectedRep: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -480,6 +481,7 @@ export class TechDiListComponent implements OnInit {
         // Set selected DI and status
         this.di = { ...di };
         this.selectedDi = di._id;
+
         this.selectedDi_id = di._idDi;
         this.diStatus = di.status;
 
@@ -491,6 +493,8 @@ export class TechDiListComponent implements OnInit {
     }
 
     repModal(di) {
+        console.log('🦐[ his.di]:', di._idDi);
+        this.selectedRep = di._idDi;
         // -----------
         this.apollo
             .query<any>({
@@ -998,6 +1002,21 @@ export class TechDiListComponent implements OnInit {
                             }
                         });
                 }
+
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.saveTimeDiag(
+                            this.selectedDi,
+                            this.lapTime
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading, errors }) => {
+                        if (data) {
+                            console.log('🍜[saving date]:', data);
+                            this.diDialogDiag[this.selectedDi] = false;
+                        }
+                    });
                 this.getAllTechDi(this.first, this.rows);
                 this.startStopwatch();
                 this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
@@ -1079,6 +1098,7 @@ export class TechDiListComponent implements OnInit {
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1() {
+        console.log('rep');
         // for rep
         this.lap1();
         this.resetModalFormRep();
@@ -1099,17 +1119,19 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation:
                     this.ticketSerice.lapTimeForPauseAndGetBackForReaparation(
-                        this.selectedDi,
+                        this.selectedRep,
                         this.lapTime1
                     ),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    this.setDiInReparationPause(this.selectedDi);
+                    console.log('fired reparation pause');
+                    this.setDiInReparationPause(this.selectedRep);
                     this.diDialogRep = false;
                 }
             });
+        this.getAllTechDi(this.first, this.rows);
 
         this.startStopwatch1();
     }
@@ -1119,7 +1141,11 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.diReperationInPAUSE(_id),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log('🦀[data]:', data);
+                }
+            });
     }
 
     checkValueChanges() {
