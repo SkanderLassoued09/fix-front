@@ -86,7 +86,7 @@ export class TechDiListComponent implements OnInit {
     composant: any;
     addComposantLoading: boolean;
     composantList: Array<any> = [];
-    composantSelected: any;
+    composantSelected: any = null;
     composantCombo: Array<{ nameComposant: string; quantity: number }> = [];
     selectedDi_id: any;
     initialOffset: number;
@@ -167,6 +167,8 @@ export class TechDiListComponent implements OnInit {
     page: any;
     techListCount: any;
     selectedRep: any;
+    statId: any;
+    // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -178,6 +180,9 @@ export class TechDiListComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.composantSelected = null;
+        this.getAllTechDi(this.first, this.rows);
+
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
@@ -189,7 +194,6 @@ export class TechDiListComponent implements OnInit {
                 this.getAllTechDi(this.first, this.rows);
             }
         });
-        this.getAllTechDi(this.first, this.rows);
     }
 
     barChart() {
@@ -493,8 +497,8 @@ export class TechDiListComponent implements OnInit {
     }
 
     repModal(di) {
-        console.log('🦐[ his.di]:', di._idDi);
         this.selectedRep = di._idDi;
+        this.statId = di._id;
         // -----------
         this.apollo
             .query<any>({
@@ -519,7 +523,7 @@ export class TechDiListComponent implements OnInit {
         this.selectedDi = di._id;
         this.diDialogRep = true;
         this.getTimeSpentRep(di._id);
-        this.changeStatusInReparation(di._id);
+        this.changeStatusInReparation(di._idDi);
         this.getAllRemarque(di._idDi);
         this.apollo
             .query<any>({
@@ -603,11 +607,16 @@ export class TechDiListComponent implements OnInit {
     }
 
     changeStatusInReparation(_id) {
+        console.log('🍸[_id]:', _id);
         this.apollo
             .mutate<Boolean>({
                 mutation: this.ticketSerice.changeStatusInRepair(_id),
             })
-            .subscribe(({ data, loading }) => {});
+            .subscribe(({ data, loading }) => {
+                if (data) {
+                    console.log('🍣[data]:', data);
+                }
+            });
     }
 
     // handling stopwatch
@@ -954,7 +963,6 @@ export class TechDiListComponent implements OnInit {
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
-        console.log('🍨');
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Diagnostique',
@@ -968,8 +976,7 @@ export class TechDiListComponent implements OnInit {
                     di_category_id: this.diagFormTech.value.di_category_id,
                     composant: this.composantCombo,
                 };
-                console.log({ dataDiag });
-                // this.lapTimeForPauseAndGetBack(true);
+
                 this.lap();
 
                 if (dataDiag.pdr) {
@@ -1013,12 +1020,12 @@ export class TechDiListComponent implements OnInit {
                     })
                     .subscribe(({ data, loading, errors }) => {
                         if (data) {
-                            console.log('🍜[saving date]:', data);
                             this.diDialogDiag[this.selectedDi] = false;
                         }
                     });
                 this.getAllTechDi(this.first, this.rows);
                 this.startStopwatch();
+                this.getComposant();
                 this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
             },
         });
@@ -1098,7 +1105,6 @@ export class TechDiListComponent implements OnInit {
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1() {
-        console.log('rep');
         // for rep
         this.lap1();
         this.resetModalFormRep();
@@ -1119,14 +1125,13 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation:
                     this.ticketSerice.lapTimeForPauseAndGetBackForReaparation(
-                        this.selectedRep,
+                        this.statId,
                         this.lapTime1
                     ),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    console.log('fired reparation pause');
                     this.setDiInReparationPause(this.selectedRep);
                     this.diDialogRep = false;
                 }
@@ -1143,7 +1148,6 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log('🦀[data]:', data);
                 }
             });
     }
@@ -1202,6 +1206,7 @@ export class TechDiListComponent implements OnInit {
                     });
 
                 this.getAllTechDi(this.first, this.rows);
+                this.startStopwatch1();
             },
             reject: () => {},
         });

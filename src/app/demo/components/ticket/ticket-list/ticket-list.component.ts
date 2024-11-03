@@ -431,46 +431,56 @@ export class TicketListComponent implements OnInit {
 
     showDialogForPricing(data) {
         this.seletedRow = data;
-        let MyID = data._id;
+        const MyID = data._id;
 
-        this.apollo
+        // Reset tarif and time values to ensure they are not carrying over from previous calls
+        this.tarif_Technicien = null;
+        this.timeDiagnostique = null;
+        this.facturationDiagnostique = null;
+
+        // First query: get technician tarif
+        const tarifQuery = this.apollo
             .query<any>({
                 query: this.ticketSerice.getTechTarif(),
             })
-            .subscribe(({ data }) => {
+            .toPromise()
+            .then(({ data }) => {
                 if (data) {
                     this.tarif_Technicien = data.getTarif.tarif;
                 }
             });
 
-        this.apollo
+        // Second query: get diagnostic time
+        const statQuery = this.apollo
             .query<any>({
                 query: this.ticketSerice.getStatByDI_ID(MyID),
             })
-            .subscribe(({ data }) => {
+            .toPromise()
+            .then(({ data }) => {
                 if (data) {
                     console.log('🥐[data]:', data);
                     this.timeDiagnostique = data.getInfoStatByIdDi.diag_time;
                     this.timepart = this.timeStringIntoHours(
                         data.getInfoStatByIdDi.diag_time
                     );
-
-                    this.facturationDiagnostique = parseFloat(
-                        (
-                            this.timepart.hours * this.tarif_Technicien +
-                            this.timepart.minutes *
-                                parseFloat(
-                                    (this.tarif_Technicien / 60).toFixed(2)
-                                ) +
-                            parseFloat((this.tarif_Technicien / 60).toFixed(2))
-                        ).toFixed(2)
-                    );
-
-                    //! working HERE
-                    // + this.timepart.seconds *
-                    //  parseFloat((this.tarif_Technicien / 3600).toFixed(2));
                 }
             });
+
+        // Wait for both queries to complete before calculating facturationDiagnostique
+        Promise.all([tarifQuery, statQuery]).then(() => {
+            if (this.timepart && this.tarif_Technicien) {
+                this.facturationDiagnostique = parseFloat(
+                    (
+                        this.timepart.hours * this.tarif_Technicien +
+                        this.timepart.minutes *
+                            parseFloat(
+                                (this.tarif_Technicien / 60).toFixed(2)
+                            ) +
+                        parseFloat((this.tarif_Technicien / 60).toFixed(2))
+                    ).toFixed(2)
+                );
+            }
+        });
 
         this.current_id = data._id;
         for (let oneComposant of data.array_composants) {
@@ -480,8 +490,6 @@ export class TicketListComponent implements OnInit {
         this.composantQuantity = this.allComposants.length;
 
         this.pricingModal = true;
-
-        //! fnction delte here and add in the confirmer BTN
 
         this.changeStatusPricing(data._id);
         this.getTotalComposant(data._id);

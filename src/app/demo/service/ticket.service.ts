@@ -415,6 +415,8 @@ export class TicketService {
     }
 
     lapTimeForPauseAndGetBackForReaparation(_id: string, repTime: string) {
+        console.log('🥡[_id]:', _id);
+        console.log('🥫[repTime]:', repTime);
         return gql`
             mutation {
                 lapTimeForPauseAndGetBackForReaparation(
@@ -435,6 +437,8 @@ export class TicketService {
         `;
     }
     finishReparation(_idDi, remarque) {
+        console.log('🍨[remarque]:', remarque);
+        console.log('🍲[_idDi]:', _idDi);
         return gql`
             mutation {
                 tech_finishReperation(_id: "${_idDi}", remarque: "${remarque}") {
@@ -674,6 +678,7 @@ export class TicketService {
         `;
     }
     changeStatusInRepair(_id: string) {
+        console.log('🥦[_id]:', _id);
         return gql`
             mutation {
                 changeStatusInRepair(_id: "${_id}")
