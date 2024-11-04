@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
+import { MessageService } from 'primeng/api';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { LayoutService } from 'src/app/layout/service/app.layout.service';
 
@@ -44,7 +45,8 @@ export class LoginComponent {
         private profileService: ProfileService,
         private apollo: Apollo,
         private router: Router,
-        public layoutService: LayoutService
+        public layoutService: LayoutService,
+        private readonly messageservice: MessageService
     ) {}
 
     login() {
@@ -54,13 +56,19 @@ export class LoginComponent {
                 query: this.profileService.getTokenLogin(username, password),
             })
             .subscribe(({ data }) => {
-                if (data.login.access_token) {
+                if (data && data.login.access_token) {
                     localStorage.setItem('token', data.login.access_token);
                     localStorage.setItem('_id', data.login.user._id);
                     localStorage.setItem('role', data.login.user.role);
                     localStorage.setItem('username', data.login.user.username);
 
                     this.router.navigateByUrl('/');
+                } else {
+                    this.messageservice.add({
+                        severity: 'error',
+                        summary: 'Login',
+                        detail: 'Authentification incorrect',
+                    });
                 }
             });
     }

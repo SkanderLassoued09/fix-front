@@ -140,7 +140,8 @@
                             (rowData?.status !== 'DIAGNOSTIC' &&
                                 rowData?.status !== 'INDIAGNOSTIC' &&
                                 rowData?.status !== 'DIAGNOSTIC_Pause') ||
-                            isFinishedDiag[rowData?._id]
+                            isFinishedDiag[rowData?._id] ||
+                            rowData?.id_tech_diag !== this.idTech
                         "
                         pButton
                         pRipple
@@ -155,7 +156,8 @@
                             (rowData.status !== 'REPARATION' &&
                                 rowData.status !== 'INREPARATION' &&
                                 rowData?.status !== 'REPARATION_Pause') ||
-                            isFinishedRep[rowData?._id]
+                            isFinishedRep[rowData?._id] ||
+                            rowData?.id_tech_rep !== this.idTech
                         "
                         pButton
                         pRipple

@@ -168,6 +168,7 @@ export class TechDiListComponent implements OnInit {
     techListCount: any;
     selectedRep: any;
     statId: any;
+    idTech: string;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -177,7 +178,9 @@ export class TechDiListComponent implements OnInit {
         private notificationService: NotificationService,
 
         private cdr: ChangeDetectorRef
-    ) {}
+    ) {
+        this.idTech = localStorage.getItem('_id');
+    }
 
     ngOnInit() {
         this.composantSelected = null;
@@ -399,6 +402,7 @@ export class TechDiListComponent implements OnInit {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🌰[data]:', data);
                 if (data) {
                     this.techList = data.getDiForTech.stat;
 
