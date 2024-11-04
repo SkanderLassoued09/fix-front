@@ -1,7 +1,7 @@
 <p-toast></p-toast>
 
 <div class="flex justify-content-between">
-    <p-card *ngFor="let item of statusCount" class="box-container diag">
+    <p-card *ngFor="let item of statusCount">
         <ng-template pTemplate="content">
             <div class="text-center">
                 <h2>{{ item.count }}</h2>
@@ -11,31 +11,7 @@
     </p-card>
 </div>
 <p-confirmDialog />
-<div class="card-Header-btns">
-    <p-button
-        (click)="showDialogDiCreation()"
-        icon="pi pi-file"
-        label="Ajouter demande d'intervention"
-    ></p-button>
-    <p-button
-        (click)="showDialogCategoryDI()"
-        icon="pi pi-pencil"
-        label="Gérer les category DI"
-        severity="warning"
-    ></p-button>
-    <p-button
-        (click)="showDialogLocations()"
-        icon="pi pi-table"
-        label="Gérer les emplacements"
-        severity="info"
-    ></p-button>
-    <p-button
-        (click)="showDialogPriceTech()"
-        icon="pi pi-dollar"
-        label="Tarif des techniciens"
-        severity="success"
-    ></p-button>
-</div>
+
 <p-dialog
     header="Gérer les catégories des demandes d'interventions"
     [(visible)]="openCategoryModal"
@@ -352,7 +328,31 @@
         </div>
     </form>
 </p-dialog>
-
+<div class="card Header-btns flex justify-content-between">
+    <p-button
+        (click)="showDialogDiCreation()"
+        icon="pi pi-file"
+        label="Ajouter demande d'intervention"
+    ></p-button>
+    <p-button
+        (click)="showDialogCategoryDI()"
+        icon="pi pi-pencil"
+        label="Gérer les category DI"
+        severity="warning"
+    ></p-button>
+    <p-button
+        (click)="showDialogLocations()"
+        icon="pi pi-table"
+        label="Gérer les emplacements"
+        severity="info"
+    ></p-button>
+    <p-button
+        (click)="showDialogPriceTech()"
+        icon="pi pi-dollar"
+        label="Tarif des techniciens"
+        severity="success"
+    ></p-button>
+</div>
 <div class="card">
     <p-table
         [columns]="cols"
@@ -911,32 +911,27 @@
         <!-- Bon de Livraison -->
         <div class="form-group">
             <label for="bon_de_livraison">Bon de Livraison</label>
-            <!-- <input
-                [(ngModel)]="ticketData.bon_de_livraison"
-                id="bon_de_livraison"
-                type="text"
-                class="form-control"
-                placeholder="Bon de Livraison"
-                disabled="true"
-            /> -->
-
-            <pdf-viewer
-                [src]="'http://localhost:3000/' + ticketData.bon_de_livraison"
-                [render-text]="true"
-                [original-size]="false"
-                style="width: 400px; height: 500px"
-            ></pdf-viewer>
+            <a
+                [href]="'http://localhost:3000/' + ticketData.bon_de_livraison"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-link"
+            >
+                Open Bon de Livraison
+            </a>
         </div>
 
         <!-- Facture -->
         <div class="form-group">
             <label for="facture">Facture</label>
-            <pdf-viewer
-                [src]="'http://localhost:3000/' + ticketData.facture"
-                [render-text]="true"
-                [original-size]="false"
-                style="width: 400px; height: 500px"
-            ></pdf-viewer>
+            <a
+                [href]="'http://localhost:3000/' + ticketData.facture"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-link"
+            >
+                Open Facture
+            </a>
         </div>
 
         <!-- Status -->
