@@ -65,6 +65,35 @@ export class MagasinDiListComponent {
     });
     composantList: any;
     isToUpdate: boolean = false;
+    basicOptions: {
+        plugins: { legend: { labels: { color: string } } };
+        scales: {
+            y: {
+                beginAtZero: boolean;
+                ticks: {
+                    color: string;
+                    stepSize: number; // Ensures the interval is 1
+                    callback: (value: number) => string;
+                };
+                grid: { color: string; drawBorder: boolean };
+            };
+            x: {
+                ticks: { color: string };
+                grid: { color: string; drawBorder: boolean };
+            };
+        };
+    };
+    statusCount: any;
+    basicData: {
+        labels: any;
+        datasets: {
+            label: string;
+            data: any;
+            backgroundColor: string[];
+            borderColor: string[];
+            borderWidth: number;
+        }[];
+    };
 
     constructor(
         private ticketSerice: TicketService,
@@ -91,13 +120,89 @@ export class MagasinDiListComponent {
     ngOnInit() {
         this.getDi(this.first, this.rows);
         this.getAllComposant();
+        this.getStatusCount();
         this.notificationService.notification$.subscribe((message: any) => {
             console.log('🍻[message]:', message);
             if (message) {
                 console.log('🍚[message]:', message);
                 this.getDi(this.first, this.rows);
+                this.getStatusCount();
             }
         });
+    }
+
+    getStatusCount() {
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue(
+            '--text-color-secondary'
+        );
+        const surfaceBorder =
+            documentStyle.getPropertyValue('--surface-border');
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getStatusCount(),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.statusCount = data.getStatusCount;
+                    this.basicData = {
+                        labels: this.statusCount.map((el) => el.status),
+                        datasets: [
+                            {
+                                label: 'Di',
+                                data: this.statusCount.map((el) => el.count),
+                                backgroundColor: [
+                                    'rgba(255, 159, 64, 0.2)',
+                                    'rgba(75, 192, 192, 0.2)',
+                                    'rgba(54, 162, 235, 0.2)',
+                                    'rgba(153, 102, 255, 0.2)',
+                                ],
+                                borderColor: [
+                                    'rgb(255, 159, 64)',
+                                    'rgb(75, 192, 192)',
+                                    'rgb(54, 162, 235)',
+                                    'rgb(153, 102, 255)',
+                                ],
+                                borderWidth: 1,
+                            },
+                        ],
+                    };
+                    this.basicOptions = {
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: textColor,
+                                },
+                            },
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: textColorSecondary,
+                                    stepSize: 1, // Ensures the interval is 1
+                                    callback: (value: number) =>
+                                        value.toFixed(0), // Show whole numbers only
+                                },
+                                grid: {
+                                    color: surfaceBorder,
+                                    drawBorder: false,
+                                },
+                            },
+                            x: {
+                                ticks: {
+                                    color: textColorSecondary,
+                                },
+                                grid: {
+                                    color: surfaceBorder,
+                                    drawBorder: false,
+                                },
+                            },
+                        },
+                    };
+                }
+            });
     }
     annulerMagasinEstimation() {
         this.magasinDiDialog = false;
@@ -359,14 +464,14 @@ export class MagasinDiListComponent {
     finishMagasinEstimation() {
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements',
-            header: "Confirmation Magasin Estimation",
+            header: 'Confirmation Magasin Estimation',
             icon: 'pi pi-question-circle',
             accept: () => {
                 this.changeStatusDiToPending2(this.selectedDi_id);
                 this.getDi(this.first, this.rows);
                 this.magasinDiDialog = false;
                 this.formUpdateComposant.reset();
-            }
+            },
         });
     }
 

@@ -1,14 +1,7 @@
 <p-toast></p-toast>
 
-<div class="flex justify-content-between">
-    <p-card *ngFor="let item of statusCount">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ item.count }}</h2>
-                <strong>{{ item.status }} </strong>
-            </div>
-        </ng-template>
-    </p-card>
+<div class="card h-10">
+    <p-chart type="bar" [data]="basicData" [options]="basicOptions" />
 </div>
 <p-confirmDialog />
 
@@ -615,7 +608,7 @@
         <hr class="dashed" />
         <div class="element-container">
             <h3>Prix Intial: {{ price }} TND</h3>
-            <h2>Prix final: {{ finalPrice }} TND</h2>
+            <h2>Prix final: {{ finalPrice ?? "-" }} TND</h2>
             <p-inputNumber
                 [(ngModel)]="discountPercent"
                 inputId="percent"

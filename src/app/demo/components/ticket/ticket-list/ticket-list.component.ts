@@ -186,7 +186,7 @@ export class TicketListComponent implements OnInit {
     companiesListDropDown: any;
     loadingCreatingDi: boolean;
     pricingModal: boolean = false;
-    discountPercent;
+    discountPercent: number = 0;
     totalComposant: any;
     array_composants: any;
     _idDi: any;
@@ -238,7 +238,9 @@ export class TicketListComponent implements OnInit {
     rows: number = 10;
     page: any;
     uploadFileLoading: boolean;
-    statusCount: any;
+    statusCount: any[];
+    basicOptions: any;
+    basicData: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -261,6 +263,7 @@ export class TicketListComponent implements OnInit {
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
                 this.getDi(this.first, this.rows);
+                this.getStatusCount();
             }
         });
     }
@@ -355,12 +358,76 @@ export class TicketListComponent implements OnInit {
     }
 
     getStatusCount() {
+        const documentStyle = getComputedStyle(document.documentElement);
+        const textColor = documentStyle.getPropertyValue('--text-color');
+        const textColorSecondary = documentStyle.getPropertyValue(
+            '--text-color-secondary'
+        );
+        const surfaceBorder =
+            documentStyle.getPropertyValue('--surface-border');
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getStatusCount(),
             })
             .subscribe(({ data }) => {
-                this.statusCount = data.getStatusCount;
+                if (data) {
+                    this.statusCount = data.getStatusCount;
+                    this.basicData = {
+                        labels: this.statusCount.map((el) => el.status),
+                        datasets: [
+                            {
+                                label: 'Di',
+                                data: this.statusCount.map((el) => el.count),
+                                backgroundColor: [
+                                    'rgba(255, 159, 64, 0.2)',
+                                    'rgba(75, 192, 192, 0.2)',
+                                    'rgba(54, 162, 235, 0.2)',
+                                    'rgba(153, 102, 255, 0.2)',
+                                ],
+                                borderColor: [
+                                    'rgb(255, 159, 64)',
+                                    'rgb(75, 192, 192)',
+                                    'rgb(54, 162, 235)',
+                                    'rgb(153, 102, 255)',
+                                ],
+                                borderWidth: 1,
+                            },
+                        ],
+                    };
+                    this.basicOptions = {
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: textColor,
+                                },
+                            },
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: textColorSecondary,
+                                    stepSize: 1, // Ensures the interval is 1
+                                    callback: (value: number) =>
+                                        value.toFixed(0), // Show whole numbers only
+                                },
+                                grid: {
+                                    color: surfaceBorder,
+                                    drawBorder: false,
+                                },
+                            },
+                            x: {
+                                ticks: {
+                                    color: textColorSecondary,
+                                },
+                                grid: {
+                                    color: surfaceBorder,
+                                    drawBorder: false,
+                                },
+                            },
+                        },
+                    };
+                }
             });
     }
 
@@ -828,6 +895,7 @@ export class TicketListComponent implements OnInit {
                                 this.payload.file = '';
                                 this.openAddDiModal = false;
                                 this.getDi(this.first, this.rows);
+                                this.getStatusCount();
                             }
                         });
                 },

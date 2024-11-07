@@ -1,50 +1,8 @@
 <p-toast></p-toast>
-
+<div class="card h-10">
+    <p-chart type="bar" [data]="basicData" [options]="basicOptions" />
+</div>
 <div class="container">
-    <p-card class="box-container diag">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterInMagasin }}</h2>
-                <strong>Magasin</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container diag">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterInDiagnostique }}</h2>
-                <strong>Diagnostique</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container repair">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterInReperation }}</h2>
-                <strong>Reparation</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container retour">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterRetour }}</h2>
-                <strong>Retour</strong>
-            </div>
-        </ng-template>
-    </p-card>
-    <p-card class="box-container retour">
-        <ng-template pTemplate="content">
-            <div class="text-center">
-                <h2>{{ counterPending }}</h2>
-                <strong>Pending</strong>
-            </div>
-        </ng-template>
-    </p-card>
-
     <div class="card">
         <p-table
             [columns]="cols"
