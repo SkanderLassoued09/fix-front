@@ -947,7 +947,7 @@ export class TechDiListComponent implements OnInit {
             (composant) => composant.name !== selectedName
         );
 
-        this.composantSelected = null;
+       // this.composantSelected = null;
     }
 
     changeStatusMagasinEstimation(_id: string) {
