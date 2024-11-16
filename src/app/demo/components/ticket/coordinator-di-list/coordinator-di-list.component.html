@@ -39,9 +39,7 @@
                             </ng-container>
                             <ng-template #imageColumn>
                                 <p-image
-                                    [src]="
-                                        'http://localhost:3000/' + rowData.image
-                                    "
+                                    [src]="baseUrl + rowData.image"
                                     [alt]="rowData.image"
                                     width="50"
                                     class="shadow-4"

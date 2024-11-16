@@ -152,10 +152,7 @@
                     <div class="col">
                         <label for="link">Lien pour le composant</label>
                         <a
-                            [href]="
-                                'http://localhost:3000/' +
-                                this.loadedDataComposant?.link
-                            "
+                            [href]="baseUrl + this.loadedDataComposant?.link"
                             target="_blank"
                         >
                             Link composant</a
@@ -166,10 +163,7 @@
                         <label for="pdf">Lien DataSheet</label>
 
                         <a
-                            [href]="
-                                'http://localhost:3000/' +
-                                this.loadedDataComposant?.pdf
-                            "
+                            [href]="baseUrl + this.loadedDataComposant?.pdf"
                             target="_blank"
                         >
                             Link pdf</a
@@ -332,10 +326,7 @@
             <ng-container *ngIf="this.composantMagasin.value.pdf">
                 <div class="field">
                     <p-image
-                        [src]="
-                            'http://localhost:3000/' +
-                            this.composantMagasin.value.pdf
-                        "
+                        [src]="baseUrl + this.composantMagasin.value.pdf"
                         [alt]="this.composantMagasin.value.pdf"
                         width="50"
                         class="shadow-4"

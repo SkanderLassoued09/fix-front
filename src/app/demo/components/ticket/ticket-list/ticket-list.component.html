@@ -452,7 +452,7 @@
                         </ng-container>
                         <ng-template #imageColumn>
                             <p-image
-                                [src]="'http://localhost:3000/' + rowData.image"
+                                [src]="baseUrl + rowData.image"
                                 [alt]="rowData.image"
                                 width="50"
                                 class="shadow-4"
@@ -886,7 +886,7 @@
                 <div class="form-item">
                     <i class="pi pi-calendar"></i>
                     <strong>Date de creation:</strong>
-                    {{ ticketData.createdAt }}
+                    {{ ticketData?.createdAt }}
                 </div>
             </div>
         </div>
@@ -926,9 +926,7 @@
                 Bon de Livraison:
 
                 <a
-                    [href]="
-                        'http://localhost:3000/' + ticketData.bon_de_livraison
-                    "
+                    [href]="baseUrl + ticketData.bon_de_livraison"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -941,9 +939,7 @@
                 Bon de commande:
 
                 <a
-                    [href]="
-                        'http://localhost:3000/' + ticketData.bon_de_commande
-                    "
+                    [href]="baseUrl + ticketData.bon_de_commande"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -955,7 +951,7 @@
                 Devis:
 
                 <a
-                    [href]="'http://localhost:3000/' + ticketData.devis"
+                    [href]="baseUrl + ticketData.devis"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -968,7 +964,7 @@
                 Facture :
 
                 <a
-                    [href]="'http://localhost:3000/' + ticketData.facture"
+                    [href]="baseUrl + ticketData.facture"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -998,17 +994,6 @@
                 </ng-template>
             </p-table>
         </div>
-
-        <!-- Composants
-        <div class="form-group">
-            <label for="array_composants">Composants</label>
-            <ul>
-                <li *ngFor="let component of ticketData.array_composants">
-                    {{ component.nameComposant }} - Quantité:
-                    {{ component.quantity }}
-                </li>
-            </ul>
-        </div> -->
 
         <hr />
         <h6>Logs</h6>

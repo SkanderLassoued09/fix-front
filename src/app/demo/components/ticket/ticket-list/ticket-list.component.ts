@@ -20,6 +20,7 @@ import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { map } from 'rxjs';
+import { environment } from 'src/environments/environment.prod';
 
 interface Column {
     field: string;
@@ -38,6 +39,8 @@ interface UploadEvent {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
+    baseUrl = environment.apiUrl;
+
     ticketSelected: any;
     openUpdateModal: boolean = false;
     // Add these boolean flags to your component class

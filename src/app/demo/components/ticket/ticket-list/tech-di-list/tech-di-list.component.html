@@ -98,9 +98,7 @@
                 <h2 class="card-title">
                     Autre: {{ admnistration_miniDashboard }}
                 </h2>
-                <h2>
-                    Finie: {{finished_miniDashboard}}
-                </h2>
+                <h2>Finie: {{ finished_miniDashboard }}</h2>
                 <h1 class="card-status">Administration</h1>
             </div>
         </ng-template>
@@ -192,7 +190,7 @@
             <ng-template pTemplate="content">
                 <h1>{{ di._idDi }}</h1>
                 <p-image
-                    [src]="'http://localhost:3000/' + imageValue"
+                    [src]="baseUrl + imageValue"
                     [alt]="imageValue"
                     width="300"
                     height="150"
