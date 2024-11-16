@@ -445,9 +445,25 @@ export class MagasinDiListComponent {
             .subscribe(({ data }) => {
                 if (data) {
                     console.log('🍆[data]:', data);
+
+                    // Remove the selected item from the arrayComposant
+                    const index = this.arrayComposant.findIndex(
+                        (composant) =>
+                            composant.nameComposant ===
+                            this.nameComposananrSelected
+                    );
+
+                    if (index !== -1) {
+                        this.arrayComposant.splice(index, 1);
+                    }
+
+                    // Optionally, reset the dropdown selection
+                    this.nameComposananrSelected = null;
+                    this.selectedItem = null;
                 }
             });
     }
+
     updateComposant() {
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',

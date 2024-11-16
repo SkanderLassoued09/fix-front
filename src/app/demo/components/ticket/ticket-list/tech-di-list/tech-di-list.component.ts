@@ -1097,7 +1097,10 @@ export class TechDiListComponent implements OnInit {
                             this.diDialogDiag[this.selectedDi] = false;
                         }
                     });
-                this.getAllTechDi(this.first, this.rows);
+                setTimeout(() => {
+                    this.getAllTechDi(this.first, this.rows);
+                    console.log('hello');
+                }, 1000);
                 this.startStopwatch();
                 this.getComposant();
                 this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
