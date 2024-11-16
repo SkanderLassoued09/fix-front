@@ -141,6 +141,7 @@ export class TechDiListComponent implements OnInit {
     retour2_miniDashboard: number = 0;
     retour3_miniDashboard: number = 0;
     //Admnistration
+    finished_miniDashboard:number = 0;
     admnistration_miniDashboard: number = 0;
     detailsDi: any;
     categorieDiListDropDown: any;
@@ -468,11 +469,11 @@ export class TechDiListComponent implements OnInit {
                             di.remarqueTech ||
                             detailsDi.remarque_tech_diagnostic ||
                             '',
-                        isPdr: di.isPdr || detailsDi.contain_pdr || false,
+                        isPdr: di.isPdr || detailsDi.contain_pdr || true,
                         isReparable:
                             di.isReparable ||
                             detailsDi.can_be_repaired ||
-                            false,
+                            true,
                         quantity: di.quantity || 0,
                         composantSelectedDropdown:
                             di.composantSelectedDropdown ??
@@ -861,7 +862,7 @@ export class TechDiListComponent implements OnInit {
                     this.retour2_miniDashboard = 0;
                     this.retour3_miniDashboard = 0;
                     this.admnistration_miniDashboard = 0;
-
+                    this.finished_miniDashboard = 0;
                     this.techDataInfo.forEach((item) => {
                         switch (item.status) {
                             case 'DIAGNOSTIC_Pause':
@@ -885,6 +886,9 @@ export class TechDiListComponent implements OnInit {
                             case 'RETOUR3':
                                 this.retour3_miniDashboard += item.count;
                                 break;
+                            case 'FINISHED':
+                                    this.finished_miniDashboard += item.count
+                                    break;
                             default:
                                 this.admnistration_miniDashboard += item.count;
                                 break;

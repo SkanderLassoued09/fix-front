@@ -866,19 +866,29 @@
 >
     <div>
         <!-- Title -->
-        <div class="form-group">
-            <label for="title">Titre</label>
-            <input
-                [(ngModel)]="ticketData.title"
-                id="title"
-                type="text"
-                class="form-control"
-                aria-label="Titre"
-                placeholder="Titre"
-                disabled="true"
-            />
+        <div >
+         
+            <h3  > Titre: {{ticketData.title}}</h3>
+             <!-- Di classique information  -->
+        <div class="form-group1">
+           
+            <strong class="form-group">Information principaux</strong> 
+            <div class="form-item">
+                <i class="pi pi-user"></i> <strong>Client ID:</strong> {{ ticketData.client_id }} {{ ticketData.company_id }}
+            </div>
+            <div class="form-item">
+                <i class="pi pi-user-edit"></i> <strong>Di Créer Par:</strong> {{ ticketData.createdBy }}
+            </div>
+            <div class="form-item">
+                <i class="pi pi-map-marker"></i> <strong>Emplacement:</strong> {{ ticketData.location_id }}
+            </div>
+            <div class="form-item">
+                <i class="pi pi-calendar"></i> <strong>Date de creation:</strong> {{ ticketData.createdAt }}
+            </div>
         </div>
-
+           
+        </div>
+        <h6 >  Réparable: {{ ticketData.can_be_repaired ? "OUI" : "NON" }}</h6>
         <!-- Description -->
         <div class="form-group">
             <label for="description">Description</label>
@@ -895,115 +905,98 @@
 
         <!-- Can Be Repaired -->
         <div class="form-group">
-            <label for="can_be_repaired">Réparable</label>
+           
             <span id="can_be_repaired">
-                {{ ticketData.can_be_repaired ? "OUI" : "NON" }}
+                
             </span>
+            <label for="description">Remarque Tech</label>
+            <textarea  
+            id="description"
+            rows="3"
+            class="form-control"
+            aria-label="Description"
+            placeholder="Description"
+            disabled="true"></textarea>
         </div>
 
-        <!-- Bon de Livraison -->
+        <!-- All 4 files here  -->
+        
         <div class="form-group">
-            <label for="bon_de_livraison">Bon de Livraison</label>
-            <a
-                [href]="'http://localhost:3000/' + ticketData.bon_de_livraison"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-link"
-            >
-                Open Bon de Livraison
-            </a>
+            <div >Bon de Livraison:
+         
+                <a
+                    [href]="'http://localhost:3000/' + ticketData.bon_de_livraison"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-link"
+                >
+                    Ouvrir 
+                </a>
+            </div>
+    
+            <div >Bon de commande:
+             
+                <a
+                    [href]="'http://localhost:3000/' + ticketData.bon_de_commande"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-link"
+                >
+                    Ouvrir 
+                </a>
+            </div>
+            <div  >Devis:
+             
+                <a
+                    [href]="'http://localhost:3000/' + ticketData.devis"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-link"
+                >
+                    Ouvrir 
+                </a>
+            </div>
+            <!-- Facture -->
+            <div >Facture :
+                
+                <a
+                    [href]="'http://localhost:3000/' + ticketData.facture"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="btn btn-link"
+                >
+                    Ouvrir
+                </a>
+            </div>
         </div>
+       
+        
 
-        <!-- Facture -->
-        <div class="form-group">
-            <label for="facture">Facture</label>
-            <a
-                [href]="'http://localhost:3000/' + ticketData.facture"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-link"
-            >
-                Open Facture
-            </a>
-        </div>
+      
+       
 
-        <!-- Status -->
-        <div class="form-group">
-            <label for="status">Status</label>
-            <input
-                [(ngModel)]="ticketData.status"
-                id="status"
-                type="text"
-                class="form-control"
-                placeholder="Status"
-                disabled="true"
-            />
-        </div>
+         <div class="form-group">
+            Liste des composants: 
+            <p-table [value]="ticketData.array_composants" [tableStyle]="{ 'min-width': '20rem' }">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-component>
+                    <tr>
+                        <td>{{ component.nameComposant }}</td>
+                        <td>{{ component.quantity }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+         </div>
 
-        <!-- Client ID -->
-        <div class="form-group">
-            <label for="client_id">Client ID</label>
-            <input
-                [(ngModel)]="ticketData.client_id"
-                id="client_id"
-                type="text"
-                class="form-control"
-                placeholder="Client ID"
-                disabled="true"
-            />
-        </div>
-
-        <!-- Created By -->
-        <div class="form-group">
-            <label for="createdBy">Créé Par</label>
-            <input
-                [(ngModel)]="ticketData.createdBy"
-                id="createdBy"
-                type="text"
-                class="form-control"
-                placeholder="Créé Par"
-                disabled="true"
-            />
-        </div>
-
-        <!-- Location ID -->
-        <div class="form-group">
-            <label for="location_id">Emplacement</label>
-            <input
-                [(ngModel)]="ticketData.location_id"
-                id="location_id"
-                type="text"
-                class="form-control"
-                placeholder="Emplacement"
-                disabled="true"
-            />
-        </div>
-
-        <!-- Remarks -->
-        <div class="form-group">
-            <label for="remarque_tech_diagnostic">Remarque Technique</label>
-            <textarea
-                [(ngModel)]="ticketData.remarque_tech_diagnostic"
-                id="remarque_tech_diagnostic"
-                rows="3"
-                class="form-control"
-                placeholder="Remarque Technique"
-                disabled="true"
-            ></textarea>
-        </div>
-
-        <!-- Composants -->
-        <div class="form-group">
-            <label for="array_composants">Composants</label>
-            <ul>
-                <li *ngFor="let component of ticketData.array_composants">
-                    {{ component.nameComposant }} - Quantité:
-                    {{ component.quantity }}
-                </li>
-            </ul>
-        </div>
     </div>
+   
 </p-dialog>
+
 <!-- update ticket  -->
 
 <p-dialog

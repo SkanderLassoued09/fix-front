@@ -139,3 +139,17 @@
         flex-direction: column;
     }
 }
+.form-group1 {
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 1px solid #000000;
+    border-radius: 4px;
+    background-color: #e6e6e6;
+}
+
+.form-item {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    display: flex;
+    gap: 0.5rem;
+}
