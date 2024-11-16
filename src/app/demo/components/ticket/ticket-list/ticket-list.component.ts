@@ -19,6 +19,7 @@ import {
 import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
+import { map } from 'rxjs';
 
 interface Column {
     field: string;
@@ -1347,7 +1348,18 @@ export class TicketListComponent implements OnInit {
     }
 
     openTicketDetails(data: any) {
-        this.ticketData = data; // Bind the incoming data to the global object
-        this.ticketDetailsInfo = true; // Open the dialog
+        this.getLogsData(data._id).subscribe((pauseLogs) => {
+            this.ticketData = { ...data, ...pauseLogs }; // Merge data and pauseLogs
+            console.log('🍞[ this.ticketData]:', this.ticketData);
+            this.ticketDetailsInfo = true; // Open the dialog
+        });
+    }
+
+    getLogsData(_id: string) {
+        return this.apollo
+            .query<any>({
+                query: this.ticketSerice.getLogsPause(_id),
+            })
+            .pipe(map(({ data }) => data?.getStatByIdlogs));
     }
 }

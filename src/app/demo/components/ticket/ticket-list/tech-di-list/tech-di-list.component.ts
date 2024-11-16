@@ -12,6 +12,7 @@ import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
 import { filter } from 'rxjs';
+import * as moment from 'moment';
 
 @Component({
     selector: 'app-tech-di-list',
@@ -170,6 +171,7 @@ export class TechDiListComponent implements OnInit {
     selectedRep: any;
     statId: any;
     idTech: string;
+    diStatRepInfo: any;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -186,7 +188,6 @@ export class TechDiListComponent implements OnInit {
     ngOnInit() {
         this.composantSelected = null;
         this.getAllTechDi(this.first, this.rows);
-
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
@@ -195,6 +196,7 @@ export class TechDiListComponent implements OnInit {
 
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
+                console.log('🍕[message] fired:');
                 this.getAllTechDi(this.first, this.rows);
             }
         });
@@ -403,8 +405,8 @@ export class TechDiListComponent implements OnInit {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🌰[data]:', data);
                 if (data) {
+                    console.log('🥓[data]:', data);
                     this.techList = data.getDiForTech.stat;
 
                     this.techListCount = data.getDiForTech.totalTechDataCount;
@@ -447,7 +449,22 @@ export class TechDiListComponent implements OnInit {
         this.di = null; // Reset the selected DI
     }
 
+    getCurrentPauseLog(pauseLogs) {
+        const findNull = pauseLogs.find((log) => log.pauseEnd === null); // Find log where pauseEnd is null (indicating the pause is still active)
+        console.log('🥕[findNull]:', findNull);
+        return findNull;
+    }
+
     async diagModal(di) {
+        console.log('🍌di', di);
+        if (di.status === 'DIAGNOSTIC_Pause') {
+            const getLog = this.getCurrentPauseLog(di.pauseLogs);
+            console.log('🍜', di._id, getLog._id);
+            if (getLog) {
+                this.updatePauseLog(di._id, getLog._id);
+            }
+        }
+
         this.allCategoryDi();
         // Reset form and modal data
         this.resetModalForm();
@@ -502,6 +519,7 @@ export class TechDiListComponent implements OnInit {
     }
 
     repModal(di) {
+        this.getDataStatsByIdDi(di._idDi);
         this.selectedRep = di._idDi;
         this.statId = di._id;
         // -----------
@@ -541,6 +559,57 @@ export class TechDiListComponent implements OnInit {
             });
     }
 
+    getDataStatsByIdDi(_idDi: string) {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getStatAndDiInfo(_idDi),
+            })
+            .subscribe(({ data }) => {
+                console.log('🥥[data]:', data);
+                if (data) {
+                    console.log('🥥[data]:', data);
+                    this.diStatRepInfo = data;
+                }
+            });
+    }
+
+    addPauseLogs(_id: string, type: string) {
+        console.log('🍸[type]:', type);
+        console.log('🍪[_id]:', _id);
+        const logsPause = {
+            _id,
+            pauseType: type,
+            pauseStart: moment().format('YYYY/MM/DD:HH:mm:ss'),
+        };
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.addLogPause(logsPause),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log('🥡logs saved');
+                }
+            });
+    }
+
+    updatePauseLog(_idStat: string, _idDoc: string) {
+        console.log('updatePauseLog fired');
+        const update = {
+            _idStat,
+            _idDoc,
+            pauseEnd: moment().format('YYYY/MM/DD:HH:mm:ss'),
+        };
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.updateLogPause(update),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log('update pauseEnd');
+                    console.log('🍔[data]:', data);
+                }
+            });
+    }
     getAllRemarque(_id) {
         this.apollo
             .query<any>({
@@ -612,22 +681,15 @@ export class TechDiListComponent implements OnInit {
     }
 
     changeStatusInReparation(_id) {
-        console.log('🍸[_id]:', _id);
         this.apollo
             .mutate<Boolean>({
                 mutation: this.ticketSerice.changeStatusInRepair(_id),
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
-                    console.log('🍣[data]:', data);
                 }
             });
     }
-
-    // handling stopwatch
-    /**
-     * --------------------------
-     */
 
     startStopwatch() {
         if (!this.isRunning) {
@@ -838,6 +900,8 @@ export class TechDiListComponent implements OnInit {
                 }
             });
 
+        this.addPauseLogs(this.selectedDi, 'diag');
+
         this.getAllTechDi(this.first, this.rows);
         this.startStopwatch();
     }
@@ -951,7 +1015,7 @@ export class TechDiListComponent implements OnInit {
             (composant) => composant.name !== selectedName
         );
 
-       // this.composantSelected = null;
+        // this.composantSelected = null;
     }
 
     changeStatusMagasinEstimation(_id: string) {
@@ -1144,6 +1208,8 @@ export class TechDiListComponent implements OnInit {
                     this.diDialogRep = false;
                 }
             });
+
+        this.addPauseLogs(this.statId, 'rep');
         this.getAllTechDi(this.first, this.rows);
 
         this.startStopwatch1();

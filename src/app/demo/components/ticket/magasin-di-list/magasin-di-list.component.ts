@@ -94,6 +94,7 @@ export class MagasinDiListComponent {
             borderWidth: number;
         }[];
     };
+    nameComposananrSelected: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -296,16 +297,18 @@ export class MagasinDiListComponent {
         }
     }
     openDialogMagasin(item) {
-        console.log('🍨[item]:', item);
         this.selectedDi_id = item._id;
 
-        this.arrayComposant = item.array_composants.map((el) => {
-            return {
-                infoComposant: el.nameComposant + ': ' + el.quantity,
-                nameComposant: el.nameComposant,
-                quantity: el.quantity,
-            };
-        });
+        console.log('🍼️', item.array_composants);
+        this.arrayComposant = item.array_composants
+            .filter((el) => el.isUpdated === false)
+            .map((el) => {
+                return {
+                    infoComposant: el.nameComposant + ': ' + el.quantity,
+                    nameComposant: el.nameComposant,
+                    quantity: el.quantity,
+                };
+            });
 
         this.magasinDiDialog = true;
     }
@@ -355,6 +358,8 @@ export class MagasinDiListComponent {
     }
 
     selectedDropDown(selectedItem) {
+        console.log('🥃[selectedItem]:', selectedItem);
+        this.nameComposananrSelected = selectedItem.value;
         if (selectedItem.value) {
             this.selectedItem = selectedItem;
             this.apollo
@@ -429,7 +434,20 @@ export class MagasinDiListComponent {
             },
         });
     }
-
+    setComposantAsUpdate() {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.setComposantAsUpdated(
+                    this.selectedDi_id,
+                    this.nameComposananrSelected
+                ),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log('🍆[data]:', data);
+                }
+            });
+    }
     updateComposant() {
         console.log('working update');
 
@@ -459,6 +477,7 @@ export class MagasinDiListComponent {
                     );
             },
         });
+        this.getDi(this.first, this.rows);
     }
 
     finishMagasinEstimation() {

@@ -866,29 +866,31 @@
 >
     <div>
         <!-- Title -->
-        <div >
-         
-            <h3  > Titre: {{ticketData.title}}</h3>
-             <!-- Di classique information  -->
-        <div class="form-group1">
-           
-            <strong class="form-group">Information principaux</strong> 
-            <div class="form-item">
-                <i class="pi pi-user"></i> <strong>Client ID:</strong> {{ ticketData.client_id }} {{ ticketData.company_id }}
-            </div>
-            <div class="form-item">
-                <i class="pi pi-user-edit"></i> <strong>Di Créer Par:</strong> {{ ticketData.createdBy }}
-            </div>
-            <div class="form-item">
-                <i class="pi pi-map-marker"></i> <strong>Emplacement:</strong> {{ ticketData.location_id }}
-            </div>
-            <div class="form-item">
-                <i class="pi pi-calendar"></i> <strong>Date de creation:</strong> {{ ticketData.createdAt }}
+        <div>
+            <h3>Titre: {{ ticketData.title }}</h3>
+            <!-- Di classique information  -->
+            <div class="form-group1">
+                <strong class="form-group">Information principaux</strong>
+                <div class="form-item">
+                    <i class="pi pi-user"></i> <strong>Client ID:</strong>
+                    {{ ticketData.client_id }} {{ ticketData.company_id }}
+                </div>
+                <div class="form-item">
+                    <i class="pi pi-user-edit"></i>
+                    <strong>Di Créer Par:</strong> {{ ticketData.createdBy }}
+                </div>
+                <div class="form-item">
+                    <i class="pi pi-map-marker"></i>
+                    <strong>Emplacement:</strong> {{ ticketData.location_id }}
+                </div>
+                <div class="form-item">
+                    <i class="pi pi-calendar"></i>
+                    <strong>Date de creation:</strong>
+                    {{ ticketData.createdAt }}
+                </div>
             </div>
         </div>
-           
-        </div>
-        <h6 >  Réparable: {{ ticketData.can_be_repaired ? "OUI" : "NON" }}</h6>
+        <h6>Réparable: {{ ticketData.can_be_repaired ? "OUI" : "NON" }}</h6>
         <!-- Description -->
         <div class="form-group">
             <label for="description">Description</label>
@@ -905,60 +907,66 @@
 
         <!-- Can Be Repaired -->
         <div class="form-group">
-           
-            <span id="can_be_repaired">
-                
-            </span>
+            <span id="can_be_repaired"> </span>
             <label for="description">Remarque Tech</label>
-            <textarea  
-            id="description"
-            rows="3"
-            class="form-control"
-            aria-label="Description"
-            placeholder="Description"
-            disabled="true"></textarea>
+            <textarea
+                id="description"
+                rows="3"
+                class="form-control"
+                aria-label="Description"
+                placeholder="Description"
+                disabled="true"
+            ></textarea>
         </div>
 
         <!-- All 4 files here  -->
-        
+
         <div class="form-group">
-            <div >Bon de Livraison:
-         
+            <div>
+                Bon de Livraison:
+
                 <a
-                    [href]="'http://localhost:3000/' + ticketData.bon_de_livraison"
+                    [href]="
+                        'http://localhost:3000/' + ticketData.bon_de_livraison
+                    "
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
                 >
-                    Ouvrir 
+                    Ouvrir
                 </a>
             </div>
-    
-            <div >Bon de commande:
-             
+
+            <div>
+                Bon de commande:
+
                 <a
-                    [href]="'http://localhost:3000/' + ticketData.bon_de_commande"
+                    [href]="
+                        'http://localhost:3000/' + ticketData.bon_de_commande
+                    "
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
                 >
-                    Ouvrir 
+                    Ouvrir
                 </a>
             </div>
-            <div  >Devis:
-             
+            <div>
+                Devis:
+
                 <a
                     [href]="'http://localhost:3000/' + ticketData.devis"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
                 >
-                    Ouvrir 
+                    Ouvrir
                 </a>
             </div>
             <!-- Facture -->
-            <div >Facture :
-                
+            <div>
+                Facture :
+
                 <a
                     [href]="'http://localhost:3000/' + ticketData.facture"
                     target="_blank"
@@ -969,15 +977,13 @@
                 </a>
             </div>
         </div>
-       
-        
 
-      
-       
-
-         <div class="form-group">
-            Liste des composants: 
-            <p-table [value]="ticketData.array_composants" [tableStyle]="{ 'min-width': '20rem' }">
+        <div class="form-group">
+            Liste des composants:
+            <p-table
+                [value]="ticketData.array_composants"
+                [tableStyle]="{ 'min-width': '20rem' }"
+            >
                 <ng-template pTemplate="header">
                     <tr>
                         <th>Name</th>
@@ -991,10 +997,32 @@
                     </tr>
                 </ng-template>
             </p-table>
-         </div>
+        </div>
 
+        <!-- Composants
+        <div class="form-group">
+            <label for="array_composants">Composants</label>
+            <ul>
+                <li *ngFor="let component of ticketData.array_composants">
+                    {{ component.nameComposant }} - Quantité:
+                    {{ component.quantity }}
+                </li>
+            </ul>
+        </div> -->
+
+        <hr />
+        <h6>Logs</h6>
+        <div>tech diag : {{ ticketData.techDiag }}</div>
+        <div>tech rep : {{ ticketData.techRep }}</div>
+        <div *ngFor="let item of ticketData.pauseLogs">
+            <div>
+                Type:
+                {{ item.pauseType === "rep" ? "Réparation" : "Diagnotique" }}
+            </div>
+            <div>Start pause : {{ item.pauseStart }}</div>
+            <div>End pause {{ item.pauseEnd }}</div>
+        </div>
     </div>
-   
 </p-dialog>
 
 <!-- update ticket  -->

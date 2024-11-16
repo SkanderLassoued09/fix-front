@@ -523,6 +523,43 @@
         <ng-template pTemplate="content">
             <div class="flex flex-column">
                 <div [formGroup]="remarque" class="field">
+                    <div>
+                        <div>
+                            Technicien chargé Diagnostique pour ce DI:
+                            {{
+                                diStatRepInfo?.getStatInfoForTechReparation
+                                    .StatData.id_tech_diag
+                            }}
+                        </div>
+                        <div>
+                            Temps de Diagnostique pour ce DI:
+                            {{
+                                diStatRepInfo?.getStatInfoForTechReparation
+                                    .StatData.diag_time
+                            }}
+                        </div>
+                        <div>
+                            Location:
+                            {{
+                                diStatRepInfo?.getStatInfoForTechReparation
+                                    .StatData.location_id
+                            }}
+                        </div>
+                        <div>
+                            liste Composant:
+                            <th
+                                *ngFor="
+                                    let onecomposant of diStatRepInfo
+                                        ?.getStatInfoForTechReparation.diData
+                                        .array_composants
+                                "
+                                style="min-width: 10rem"
+                            >
+                                {{ onecomposant.nameComposant }} =
+                                {{ onecomposant.quantity }}
+                            </th>
+                        </div>
+                    </div>
                     <label for="name">
                         Ajouter des remarques concernant le Di si nécessaire
                     </label>

@@ -140,6 +140,7 @@ export class TicketService {
                         array_composants {
                             nameComposant
                             quantity
+                            isUpdated 
                         }
                     }
                     totalDiCount
@@ -233,6 +234,12 @@ export class TicketService {
                         rep_time
                         status
                         location_id
+                         pauseLogs {
+                        _id
+                        pauseType
+                        pauseStart
+                        pauseEnd
+                    }
                     }
                     totalTechDataCount
                 }
@@ -265,6 +272,58 @@ export class TicketService {
                     remarque_coordinator
                     remarque_admin_manager
                     remarque_tech_diagnostic
+                }
+            }
+        `;
+    }
+
+    getStatAndDiInfo(_id: string) {
+        return gql`
+            {
+                getStatInfoForTechReparation(_idDi: "${_id}") {
+                    StatData {
+                        _id
+                        _idDi
+                        id_tech_diag
+                        diag_time
+                        id_tech_rep
+                        rep_time
+                        location_id
+                        status
+                        retour_count
+                    }
+                    diData {
+                        _id
+                        array_composants {
+                            nameComposant
+                            quantity
+                        }
+                    }
+                }
+            }
+        `;
+    }
+
+    addLogPause(pauseLogs: any) {
+        return gql`mutation {addPauseLog(statId:"${pauseLogs._id}",pauseLog:{pauseType:"${pauseLogs.pauseType}" pauseStart:"${pauseLogs.pauseStart}" }){pauseLogs{pauseType pauseStart }}}
+        `;
+    }
+
+    updateLogPause(updateLogs) {
+        console.log('updateLogs.pauseLogId', updateLogs._idDoc);
+        return gql`
+            mutation {
+                updatePauseLog(
+                    statId: "${updateLogs._idStat}"
+                    pauseLogId: "${updateLogs._idDoc}"
+                    updatedPauseTime: { pauseEnd: "${updateLogs.pauseEnd}" }
+                ) {
+                    pauseLogs {
+                        _id
+                        pauseType
+                        pauseStart
+                        pauseEnd
+                    }
                 }
             }
         `;
@@ -521,6 +580,22 @@ export class TicketService {
             }
         `;
     }
+
+    setComposantAsUpdated(_id: string, nameComposant: string) {
+        return gql`
+        mutation {
+            setSelectedComponentAsDone(_id: "${_id}", nameComposant: "${nameComposant}") {
+                _id
+                array_composants {
+                    nameComposant
+                    quantity
+                    isUpdated
+                }
+            }
+        }
+    `;
+    }
+
     updateComposant(composantInfo) {
         return gql`
             mutation {
@@ -747,6 +822,22 @@ export class TicketService {
                     array_composants {
                         nameComposant
                         quantity
+                    }
+                }
+            }
+        `;
+    }
+
+    getLogsPause(_idDi: string) {
+        return gql`
+            {
+                getStatByIdlogs(_idDi: "${_idDi}") {
+                    id_tech_rep
+                    id_tech_diag
+                    pauseLogs {
+                        pauseType
+                        pauseStart
+                        pauseEnd
                     }
                 }
             }
