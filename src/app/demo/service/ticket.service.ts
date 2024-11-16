@@ -219,7 +219,7 @@ export class TicketService {
 
     diListTech(first, rows, startDate?: string, endDate?: string) {
         return gql`
-            {
+         {
                 getDiForTech(    
               
                 startDate: "${startDate ?? ''}"
@@ -243,8 +243,7 @@ export class TicketService {
                     }
                     totalTechDataCount
                 }
-            }
-        `;
+            }`;
     }
 
     getDataForTech(startDate?: string, endDate?: string) {

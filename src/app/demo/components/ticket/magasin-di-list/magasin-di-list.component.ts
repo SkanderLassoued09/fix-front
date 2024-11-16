@@ -449,8 +449,6 @@ export class MagasinDiListComponent {
             });
     }
     updateComposant() {
-        console.log('working update');
-
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
             header: 'Confirmation Diagnostique',

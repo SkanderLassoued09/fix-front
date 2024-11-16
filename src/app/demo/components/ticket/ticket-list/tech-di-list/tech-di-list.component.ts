@@ -142,7 +142,7 @@ export class TechDiListComponent implements OnInit {
     retour2_miniDashboard: number = 0;
     retour3_miniDashboard: number = 0;
     //Admnistration
-    finished_miniDashboard:number = 0;
+    finished_miniDashboard: number = 0;
     admnistration_miniDashboard: number = 0;
     detailsDi: any;
     categorieDiListDropDown: any;
@@ -187,7 +187,7 @@ export class TechDiListComponent implements OnInit {
 
     ngOnInit() {
         this.composantSelected = null;
-        this.getAllTechDi(this.first, this.rows);
+
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
@@ -195,11 +195,15 @@ export class TechDiListComponent implements OnInit {
         this.barChart();
 
         this.notificationService.notification$.subscribe((message: any) => {
-            if (message) {
-                console.log('🍕[message] fired:');
-                this.getAllTechDi(this.first, this.rows);
+            if (message && message._id) {
+                console.log('🍕[message] fired:', message);
+                setTimeout(() => {
+                    this.getAllTechDi(this.first, this.rows);
+                    console.log('hello');
+                }, 1000);
             }
         });
+        this.getAllTechDi(this.first, this.rows);
     }
 
     barChart() {
@@ -488,9 +492,7 @@ export class TechDiListComponent implements OnInit {
                             '',
                         isPdr: di.isPdr || detailsDi.contain_pdr || true,
                         isReparable:
-                            di.isReparable ||
-                            detailsDi.can_be_repaired ||
-                            true,
+                            di.isReparable || detailsDi.can_be_repaired || true,
                         quantity: di.quantity || 0,
                         composantSelectedDropdown:
                             di.composantSelectedDropdown ??
@@ -951,8 +953,8 @@ export class TechDiListComponent implements OnInit {
                                 this.retour3_miniDashboard += item.count;
                                 break;
                             case 'FINISHED':
-                                    this.finished_miniDashboard += item.count
-                                    break;
+                                this.finished_miniDashboard += item.count;
+                                break;
                             default:
                                 this.admnistration_miniDashboard += item.count;
                                 break;
