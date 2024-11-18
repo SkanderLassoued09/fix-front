@@ -44,7 +44,7 @@
 .file-upload-container {
     display: flex;
     justify-content: space-around;
-    padding: 5px;
+   
 }
 
 .footerlocation,
@@ -152,4 +152,16 @@
     font-size: 1rem;
     display: flex;
     gap: 0.5rem;
+}
+.button-container-BC {
+    display: flex;
+    gap: 10px;
+}
+.file-upload-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers content horizontally */
+    justify-content: center; /* Centers content vertically */
+    gap: 15px; /* Adds space between the file upload and buttons */
+    height: 100%; /* Ensure the section takes full height if required */
 }

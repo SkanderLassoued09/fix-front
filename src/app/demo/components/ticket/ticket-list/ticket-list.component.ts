@@ -474,6 +474,29 @@ export class TicketListComponent implements OnInit {
             },
         });
     }
+    enregistrerBC(){
+        this.confirmationService.confirm({
+            message: 'Voulez vous Enregistrer Bon de commande',
+            header: 'Confirmation Fichier',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {   
+                this.saveBCPDF(this._idDi, this.payload.file); 
+            },
+        });
+
+    }
+    enregistrerDevis(){
+        this.confirmationService.confirm({
+            message: 'Voulez vous Enregistrer Devis',
+            header: 'Confirmation Fichier',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {   
+                this.saveDevisPDF(this._idDi, this.payload.file);
+            },
+        });
+    }
+
+    
 
     saveDevisPDF(_id: string, pdf: string) {
         this.apollo

@@ -575,7 +575,6 @@
     [resizable]="false"
 >
     <ng-container>
-        <div>
             <div class="file-upload-container">
                 <div>
                     <p-fileUpload
@@ -589,8 +588,15 @@
                         (onUpload)="onUpload($event, 'BC')"
                         [auto]="true"
                     />
+                    <div class="button-container-BC">
+                        <a [href]="baseUrl + ticketData.bon_de_commande" target="_blank" rel="noopener noreferrer">
+                            <p-button label="Consulter BC" [link]="true"></p-button>
+                        </a>                        
+                        <p-button (click)="enregistrerBC()" label="Enregistrer BC" [link]="true"></p-button>
+                    </div>
+                    
                 </div>
-                <div>
+                <div class="file-upload-section">
                     <p-fileUpload
                         mode="basic"
                         chooseLabel="Ajouter Devis"
@@ -602,9 +608,13 @@
                         (onUpload)="onUpload($event, 'Devis')"
                         [auto]="true"
                     />
+                    <div class="button-container-BC">
+                        <p-button label="Consulter Devis" [link]="true"></p-button>
+                        <p-button (click)="enregistrerDevis()" label="Enregistrer Devis" [link]="true"></p-button>
+                    </div>
                 </div>
             </div>
-        </div>
+        
         <hr class="dashed" />
         <div class="element-container">
             <h3>Prix Intial: {{ price }} TND</h3>
