@@ -305,7 +305,10 @@ export class MagasinDiListComponent {
         if (item.ignoreCount && item.ignoreCount > 0) {
             this.apollo
                 .query<any>({
-                    query: this.ticketSerice.getLogsDiById(item.ignoreCount),
+                    query: this.ticketSerice.getLogsDiById(
+                        item.ignoreCount,
+                        item._id
+                    ),
                 })
                 .subscribe(({ data }) => {
                     console.log('🍉[data]:', data);

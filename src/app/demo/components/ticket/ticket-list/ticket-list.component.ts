@@ -1013,18 +1013,6 @@ export class TicketListComponent implements OnInit {
                 //! NEED TO SELECT THE ID OF THE SELECTED DI
             });
 
-        if (data && data.ignoreCount && data.ignoreCount > 0) {
-            this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.createLogDi(data.ignoreCount),
-                })
-                .subscribe(({ data }) => {
-                    if (data) {
-                        console.log('Logs di created and its empty');
-                    }
-                    //! NEED TO SELECT THE ID OF THE SELECTED DI
-                });
-        }
         this.getDi(this.first, this.rows);
     }
 

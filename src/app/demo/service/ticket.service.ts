@@ -536,10 +536,10 @@ export class TicketService {
         `;
     }
 
-    getLogsDiById(_idLogsDi: number) {
+    getLogsDiById(_idLogsDi: number, _idDi: string) {
         return gql`
             {
-                getLigsById(id: ${_idLogsDi}) {
+                getLigsById(id: ${_idLogsDi}, _idDi:"${_idDi}") {
                     _id
                     can_be_repaired
                     contain_pdr
@@ -1168,10 +1168,12 @@ export class TicketService {
     }
 
     // logs di
-    createLogDi(_id: number) {
+    createLogDi(_id: number, _idDi: string) {
+        console.log('🍕[_id]:', _id);
+        console.log('🥗[_idDi]:', _idDi);
         return gql`
             mutation {
-                createLogsDi(_id: ${_id}) {
+                createLogsDi(_id: ${_id},_idDi:"${_idDi}") {
                     _id
                 }
             }
