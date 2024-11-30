@@ -113,6 +113,7 @@ export class CoordinatorDiListComponent {
     };
     openBtnConfirm: boolean;
     componentInfo: any;
+    componentConfirmedFromCoordinator: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -309,12 +310,11 @@ export class CoordinatorDiListComponent {
             this.loading = false;
         }, 2000);
     }
-    //!Adding rq
+
     openModalConfig(di) {
         console.log('🍷[di]:', di);
         this.di = { ...di };
         this.openBtnConfirm = di.isSentToCoordinator;
-
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;
         this.remarque_admin_tech = di.remarque_admin_tech;
@@ -528,6 +528,9 @@ export class CoordinatorDiListComponent {
                     })
                     .subscribe(({ data }) => {
                         if (data) {
+                            console.log('🌯[data]:', data);
+                            this.componentConfirmedFromCoordinator =
+                                data.componentConfirmedFromCoordinator.isConfirmedComponentFromCoordinator;
                             this.getDi(this.first, this.rows);
                             this.diDialog = false;
                             this.reperationCondition = true;

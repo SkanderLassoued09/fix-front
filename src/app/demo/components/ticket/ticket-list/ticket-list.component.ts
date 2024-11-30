@@ -521,6 +521,7 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForPricing(data) {
+        console.log('🍰[data]:', data);
         this.seletedRow = data;
         const MyID = data._id;
 
@@ -542,20 +543,45 @@ export class TicketListComponent implements OnInit {
             });
 
         // Second query: get diagnostic time
-        const statQuery = this.apollo
-            .query<any>({
-                query: this.ticketSerice.getStatByDI_ID(MyID),
-            })
-            .toPromise()
-            .then(({ data }) => {
-                if (data) {
-                    console.log('🥐[data]:', data);
-                    this.timeDiagnostique = data.getInfoStatByIdDi.diag_time;
-                    this.timepart = this.timeStringIntoHours(
-                        data.getInfoStatByIdDi.diag_time
-                    );
-                }
-            });
+        let statQuery;
+        if (data?.ignoreCount && data?.ignoreCount > 0) {
+            console.log('log pricing');
+            statQuery = this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getStatByDI_ID(
+                        MyID,
+                        data?.ignoreCount
+                    ),
+                })
+                .toPromise()
+                .then(({ data }) => {
+                    if (data) {
+                        console.log('🥐[data]:', data);
+                        this.timeDiagnostique =
+                            data.getInfoStatByIdDi.diag_time;
+                        this.timepart = this.timeStringIntoHours(
+                            data.getInfoStatByIdDi.diag_time
+                        );
+                    }
+                });
+        } else {
+            console.log('original pricing');
+            statQuery = this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getStatByDI_ID(MyID),
+                })
+                .toPromise()
+                .then(({ data }) => {
+                    if (data) {
+                        console.log('🥐[data]:', data);
+                        this.timeDiagnostique =
+                            data.getInfoStatByIdDi.diag_time;
+                        this.timepart = this.timeStringIntoHours(
+                            data.getInfoStatByIdDi.diag_time
+                        );
+                    }
+                });
+        }
 
         // Wait for both queries to complete before calculating facturationDiagnostique
         Promise.all([tarifQuery, statQuery]).then(() => {

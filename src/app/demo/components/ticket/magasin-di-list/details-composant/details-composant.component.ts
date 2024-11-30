@@ -142,6 +142,10 @@ export class DetailsComposantComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
+                    console.log(
+                        '🍿[sentComponentToCoordinatorToConfirm]:',
+                        data
+                    );
                     this.isSentToCoordinator =
                         data.sendComponentToConMagasinForConfirmation.isSentToCoordinator;
                 }

@@ -886,7 +886,7 @@ export class TicketService {
     componentConfirmedFromCoordinator(_id: string) {
         return gql`
             mutation {
-                componentConfirmedFromCoordinator(_id: "") {
+                componentConfirmedFromCoordinator(_id: "${_id}") {
                     _id
                     array_composants {
                         nameComposant
@@ -954,10 +954,10 @@ export class TicketService {
         `;
     }
 
-    getStatByDI_ID(_idDi: string) {
+    getStatByDI_ID(_idDi: string, _idLog?: number) {
         return gql`
             query {
-                getInfoStatByIdDi(_idDi: "${_idDi}") {
+                getInfoStatByIdDi(_idDi: "${_idDi}", _idLogs:${_idLog}) {
                     diag_time
                     rep_time
                 }
