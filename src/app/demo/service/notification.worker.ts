@@ -53,6 +53,14 @@ socket.on('confirmAllComposant', (message: string) => {
     postMessage(data); // Send the message to the main thread
 });
 
+socket.on('sendComponentToCoordinatorFromMagasin', (message: string) => {
+    const data = {
+        event: 'sendComponentToCoordinatorFromMagasin',
+        message,
+    };
+    postMessage(data); // Send the message to the main thread
+});
+
 addEventListener('message', ({ data }) => {
     if (data === 'start') {
     }

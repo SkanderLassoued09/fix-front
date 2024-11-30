@@ -111,6 +111,8 @@ export class CoordinatorDiListComponent {
             borderWidth: number;
         }[];
     };
+    openBtnConfirm: boolean;
+    componentInfo: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -129,6 +131,11 @@ export class CoordinatorDiListComponent {
         this.confirmationBTN = false;
         this.notificationService.notification$.subscribe((message: any) => {
             console.log('🍻[message]:', message);
+
+            // if (message.array_composants.length > 0) {
+            //     this.openBtnConfirm = true;
+            //     this.componentInfo = message;
+            // }
             if (message) {
                 console.log('🍚[message]:', message);
                 this.getDi(this.first, this.rows);
@@ -149,7 +156,7 @@ export class CoordinatorDiListComponent {
     }
     getDi(first, rows) {
         this.apollo
-            .watchQuery<GetAllDiForCoordinatorQueryResponse>({
+            .watchQuery<any>({
                 query: this.ticketSerice.getAllDiForCoordinator(first, rows),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -306,6 +313,8 @@ export class CoordinatorDiListComponent {
     openModalConfig(di) {
         console.log('🍷[di]:', di);
         this.di = { ...di };
+        this.openBtnConfirm = di.isSentToCoordinator;
+
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;
         this.remarque_admin_tech = di.remarque_admin_tech;
@@ -389,6 +398,78 @@ export class CoordinatorDiListComponent {
             .subscribe(({ data, loading }) => {});
     }
     //!HERE
+
+    createLogDi(selectedDi) {
+        console.log('create logs fired');
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.createLogDi(selectedDi),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    console.log('🥜[data]:', data);
+                    // this.apollo
+                    //     .mutate<TechStartDiagnosticMutationResponse>({
+                    //         mutation:
+                    //             this.ticketSerice.changeStatusDiToDiagnostique(
+                    //                 this.selectedDi
+                    //             ),
+                    //         useMutationLoading: true,
+                    //     })
+                    //     .subscribe(({ data, loading }) => {
+                    //         this.getDi(this.first, this.rows);
+                    //         console.log('🥪 emit');
+                    //     });
+                    // this.diDialog = false;
+                    // this.selectedTechDiagModel = null;
+                    // console.log('emitter');
+
+                    // this.messageservice.add({
+                    //     severity: 'success',
+                    //     summary: 'Success',
+                    //     detail: `DI Envoyer au technicien`,
+                    // });
+                }
+            });
+    }
+
+    sendDiToDiag(selectedDi, dataId, selectedDiLocation) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.sendingDiForDiagnostic(
+                    selectedDi,
+                    dataId,
+                    selectedDiLocation
+                ),
+                useMutationLoading: true,
+            })
+            .subscribe(({ data, loading, errors }) => {
+                if (data) {
+                    this.apollo
+                        .mutate<TechStartDiagnosticMutationResponse>({
+                            mutation:
+                                this.ticketSerice.changeStatusDiToDiagnostique(
+                                    this.selectedDi
+                                ),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data, loading }) => {
+                            this.getDi(this.first, this.rows);
+                            console.log('🥪 emit');
+                        });
+                    this.diDialog = false;
+                    this.selectedTechDiagModel = null;
+                    console.log('emitter');
+
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: `DI Envoyer au technicien`,
+                    });
+                }
+            });
+    }
     selectedTechDiag(data) {
         console.log('selectedTechDiag');
         this.confirmationService.confirm({
@@ -396,40 +477,25 @@ export class CoordinatorDiListComponent {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.sendingDiForDiagnostic(
-                            this.selectedDi,
-                            data.value._id,
-                            this.selectedDiLocation
-                        ),
-                        useMutationLoading: true,
-                    })
-                    .subscribe(({ data, loading, errors }) => {
-                        if (data) {
-                            this.apollo
-                                .mutate<TechStartDiagnosticMutationResponse>({
-                                    mutation:
-                                        this.ticketSerice.changeStatusDiToDiagnostique(
-                                            this.selectedDi
-                                        ),
-                                    useMutationLoading: true,
-                                })
-                                .subscribe(({ data, loading }) => {
-                                    this.getDi(this.first, this.rows);
-                                    console.log('🥪 emit');
-                                });
-                            this.diDialog = false;
-                            this.selectedTechDiagModel = null;
-                            console.log('emitter');
-                            this.notificationService.handleStates(true);
-                            this.messageservice.add({
-                                severity: 'success',
-                                summary: 'Success',
-                                detail: `DI Envoyer au technicien`,
-                            });
-                        }
-                    });
+                if (this.di.ignoreCount > 0) {
+                    console.log('this is ignore count', this.di.ignoreCount);
+
+                    this.sendDiToDiag(
+                        this.selectedDi,
+                        data.value._id,
+                        this.selectedDiLocation
+                    );
+                    setTimeout(() => {
+                        this.createLogDi(this.di.ignoreCount);
+                    }, 1000);
+                } else {
+                    console.log('else');
+                    this.sendDiToDiag(
+                        this.selectedDi,
+                        data.value._id,
+                        this.selectedDiLocation
+                    );
+                }
             },
         });
     }
@@ -489,9 +555,10 @@ export class CoordinatorDiListComponent {
             accept: () => {
                 this.apollo
                     .mutate<any>({
-                        mutation: this.ticketSerice.confirmerRecoitComposant(
-                            this.di._id
-                        ),
+                        mutation:
+                            this.ticketSerice.componentConfirmedFromCoordinator(
+                                this.di._id
+                            ),
                     })
                     .subscribe(({ data }) => {
                         if (data) {

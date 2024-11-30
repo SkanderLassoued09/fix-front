@@ -430,7 +430,11 @@
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
             <tr
-                [ngClass]="{ 'row-in-magasin': rowData.status === 'INMAGASIN' }"
+                [ngClass]="{
+                    'row-in-retour1': rowData.ignoreCount === 1,
+                    'row-in-retour2': rowData.ignoreCount === 2,
+                    'row-in-retour3': rowData.ignoreCount === 3
+                }"
             >
                 <td *ngFor="let col of columns">
                     <ng-container
@@ -523,11 +527,7 @@
                     ></button>
 
                     <p-button
-                        *ngIf="
-                            currentRole === 'ADMIN_MANAGER' ||
-                            currentRole === 'ADMIN_TECH'
-                        "
-                        [label]="rowData.ignoreCount.toString()"
+                        [label]="'Retour' + rowData.ignoreCount.toString()"
                         severity="danger"
                         (click)="ignore(rowData)"
                         [disabled]="
@@ -535,15 +535,18 @@
                             rowData.status !== 'FINISHED'
                         "
                     ></p-button>
+
                     <p-button
                         *ngIf="
-                            currentRole === 'MANAGER' &&
-                            rowData.status === 'FINISHED'
+                            rowData.status === 'RETOUR1' ||
+                            rowData.status === 'RETOUR2' ||
+                            rowData.status === 'RETOUR3'
                         "
-                        label="Retour"
-                        severity="danger"
-                        (click)="changeStatusRetour(rowData)"
+                        label="Relancer"
+                        severity="info"
+                        (click)="changeToPending1(rowData)"
                     ></p-button>
+
                     <p-button
                         *ngIf="rowData.status === 'CREATED'"
                         label="Pending1"
@@ -575,46 +578,60 @@
     [resizable]="false"
 >
     <ng-container>
-            <div class="file-upload-container">
-                <div>
-                    <p-fileUpload
-                        mode="basic"
-                        chooseLabel="Ajouter Bon de commande"
-                        chooseIcon="pi pi-upload"
-                        name="bonDeCommande"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="application/pdf"
-                        maxFileSize="10000000"
-                        (onUpload)="onUpload($event, 'BC')"
-                        [auto]="true"
-                    />
-                    <div class="button-container-BC">
-                        <a [href]="baseUrl + ticketData.bon_de_commande" target="_blank" rel="noopener noreferrer">
-                            <p-button label="Consulter BC" [link]="true"></p-button>
-                        </a>                        
-                        <p-button (click)="enregistrerBC()" label="Enregistrer BC" [link]="true"></p-button>
-                    </div>
-                    
-                </div>
-                <div class="file-upload-section">
-                    <p-fileUpload
-                        mode="basic"
-                        chooseLabel="Ajouter Devis"
-                        chooseIcon="pi pi-upload"
-                        name="devis"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="application/pdf"
-                        maxFileSize="10000000"
-                        (onUpload)="onUpload($event, 'Devis')"
-                        [auto]="true"
-                    />
-                    <div class="button-container-BC">
-                        <p-button label="Consulter Devis" [link]="true"></p-button>
-                        <p-button (click)="enregistrerDevis()" label="Enregistrer Devis" [link]="true"></p-button>
-                    </div>
+        <div class="file-upload-container">
+            <div>
+                <p-fileUpload
+                    mode="basic"
+                    chooseLabel="Ajouter Bon de commande"
+                    chooseIcon="pi pi-upload"
+                    name="bonDeCommande"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="application/pdf"
+                    maxFileSize="10000000"
+                    (onUpload)="onUpload($event, 'BC')"
+                    [auto]="true"
+                />
+                <div class="button-container-BC">
+                    <a
+                        [href]="
+                            'http://localhost:3000/' +
+                            selectedRowInNegociate1?.bon_de_commande
+                        "
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button label="Consulter BC" [link]="true"></p-button>
+                    </a>
+                    <p-button
+                        (click)="enregistrerBC()"
+                        label="Enregistrer BC"
+                        [link]="true"
+                    ></p-button>
                 </div>
             </div>
-        
+            <div class="file-upload-section">
+                <p-fileUpload
+                    mode="basic"
+                    chooseLabel="Ajouter Devis"
+                    chooseIcon="pi pi-upload"
+                    name="devis"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="application/pdf"
+                    maxFileSize="10000000"
+                    (onUpload)="onUpload($event, 'Devis')"
+                    [auto]="true"
+                />
+                <div class="button-container-BC">
+                    <p-button label="Consulter Devis" [link]="true"></p-button>
+                    <p-button
+                        (click)="enregistrerDevis()"
+                        label="Enregistrer Devis"
+                        [link]="true"
+                    ></p-button>
+                </div>
+            </div>
+        </div>
+
         <hr class="dashed" />
         <div class="element-container">
             <h3>Prix Intial: {{ price }} TND</h3>

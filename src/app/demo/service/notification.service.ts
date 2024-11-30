@@ -63,11 +63,6 @@ export class NotificationService {
         }
     }
 
-    handleStates(isChange: boolean) {
-        this.handleState.next(isChange);
-        // Add debugging to verify current value
-    }
-
     get getstate() {
         return this.handleState.value;
     }
@@ -84,6 +79,12 @@ export class NotificationService {
                     this.notificationSubject.next(data.message.content.states); // Emit the message
                     return data.message.target;
                 }
+
+                break;
+            case 'sendComponentToCoordinatorFromMagasin':
+                console.log('sendComponentToCoordinatorFromMagasin', data);
+                this.notificationSubject.next(data.message); // Emit the message
+                return data.message;
 
                 break;
 

@@ -77,6 +77,7 @@ export class TicketService {
                         _id
                         title
                         description
+                        ignoreCount
                         can_be_repaired
                         bon_de_commande
                         bon_de_livraison
@@ -97,6 +98,8 @@ export class TicketService {
                         createdBy
                         location_id
                         di_category_id
+                        isSentToCoordinator
+                        isConfirmedComponentFromCoordinator
                     }
                     totalDiCount
                 }
@@ -137,6 +140,7 @@ export class TicketService {
                         createdBy
                         location_id
                         di_category_id
+                        ignoreCount 
                         array_composants {
                             nameComposant
                             quantity
@@ -189,7 +193,11 @@ export class TicketService {
         `;
     }
 
-    sendingDiForDiagnostic(_idDi, id_tech_diag, location) {
+    sendingDiForDiagnostic(
+        _idDi: string,
+        id_tech_diag: string,
+        location: string
+    ) {
         return gql`
             mutation {
                 createStat(
@@ -197,7 +205,6 @@ export class TicketService {
                         id_tech_diag: "${id_tech_diag}"
                         notificationMessage: "default msg"
                         _idDi: "${_idDi}"
-                       
                         location_id:"${location}"
                     }
                 ) {
@@ -229,6 +236,7 @@ export class TicketService {
                         _id
                         _idDi
                         id_tech_diag
+                        ignoreCount
                         id_tech_rep
                         diag_time
                         rep_time
@@ -528,6 +536,58 @@ export class TicketService {
         `;
     }
 
+    getLogsDiById(_idLogsDi: number) {
+        return gql`
+            {
+                getLigsById(id: ${_idLogsDi}) {
+                    _id
+                    can_be_repaired
+                    contain_pdr
+                    stats_id
+                    image
+                    devis
+                    facture
+                    bon_de_commande
+                    bon_de_livraison
+                    price
+                    final_price
+                    discount
+                    discount_value
+                    confirmationComposant
+                    array_composants {
+                        nameComposant
+                        quantity
+                        isUpdated
+                    }
+                    status
+                }
+            }
+        `;
+    }
+
+    finishLogsDi(diagInfo) {
+        console.log('🍌[diagInfo]:', diagInfo);
+
+        const array = diagInfo.composant.map((el) => {
+            return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
+        });
+
+        return gql`
+           mutation {
+            tech_startDiagnostic(
+                _id: "${diagInfo._idDi}"
+                diag: {
+                    remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
+                    contain_pdr: ${diagInfo.pdr}
+                    can_be_repaired: ${diagInfo.reparable}
+                    di_category_id: "${diagInfo.di_category_id}"
+                    array_composants: [${array.join(', ')}]
+                }
+            ) 
+        }
+        `;
+    }
+
     // to populate category , change name by _id
     composantByName(selectedComposant: string) {
         return gql`
@@ -677,6 +737,7 @@ export class TicketService {
     }
 
     changeStatusDiToDiagnostique(_id: string) {
+        console.log('🥘[_id]:', _id);
         return gql`
             mutation {
                 coordinatorSendingDiDiag(_idDI: "${_id}") 
@@ -760,10 +821,24 @@ export class TicketService {
         `;
     }
 
-    changeStatusRetour(_id: string) {
+    changeStatusRetour1(_id: string) {
         return gql`
             mutation {
-                changeStatusRetour(_id: "${_id}")
+                changeStatusRetour1(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusRetour2(_id: string) {
+        return gql`
+            mutation {
+                changeStatusRetour2(_id: "${_id}")
+            }
+        `;
+    }
+    changeStatusRetour3(_id: string) {
+        return gql`
+            mutation {
+                changeStatusRetour3(_id: "${_id}")
             }
         `;
     }
@@ -780,6 +855,8 @@ export class TicketService {
     query {
       getDiById(_id: "${_id}") {
         price
+   isSentToCoordinator
+   isConfirmedComponentFromCoordinator
         array_composants {
           nameComposant
           quantity
@@ -787,6 +864,40 @@ export class TicketService {
       }
     }
   `;
+    }
+
+    sentComponentToCoordinatorToConfirm(_id: string) {
+        return gql`
+            mutation {
+                sendComponentToConMagasinForConfirmation(_id: "${_id}") {
+                    _id
+                    array_composants {
+                        nameComposant
+                        quantity
+                        isUpdated
+                    }
+                    isSentToCoordinator
+                    isConfirmedComponentFromCoordinator
+                }
+            }
+        `;
+    }
+
+    componentConfirmedFromCoordinator(_id: string) {
+        return gql`
+            mutation {
+                componentConfirmedFromCoordinator(_id: "") {
+                    _id
+                    array_composants {
+                        nameComposant
+                        quantity
+                        isUpdated
+                    }
+                    isSentToCoordinator
+                    isConfirmedComponentFromCoordinator
+                }
+            }
+        `;
     }
 
     getStatbyID(_idSTAT: string) {
@@ -1051,6 +1162,17 @@ export class TicketService {
                 confirmationComposant(_id: "${_id}", confirmationState: "${confirmMessage}" ,_idNotification:"${_idNotification}") {
                     _id
                     confirmationComposant
+                }
+            }
+        `;
+    }
+
+    // logs di
+    createLogDi(_id: number) {
+        return gql`
+            mutation {
+                createLogsDi(_id: ${_id}) {
+                    _id
                 }
             }
         `;

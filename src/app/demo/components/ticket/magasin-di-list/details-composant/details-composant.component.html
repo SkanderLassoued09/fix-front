@@ -1,4 +1,3 @@
-
 <p-toast></p-toast>
 <p-confirmDialog />
 
@@ -11,12 +10,20 @@
                 <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
                 <div class="button-group">
                     <p-button
+                        [disabled]="isSentToCoordinator"
+                        label="Confirmé les composants"
+                        [raised]="true"
+                        size="small"
+                        (click)="sentComponentToCoordinatorToConfirm()"
+                    ></p-button>
+                    <p-button
                         label="Save"
                         [raised]="true"
                         size="small"
                         (click)="updateComposant()"
                     ></p-button>
                     <p-button
+                        [disabled]="!componentsAreConfirmed"
                         label="Finir"
                         [raised]="true"
                         size="small"

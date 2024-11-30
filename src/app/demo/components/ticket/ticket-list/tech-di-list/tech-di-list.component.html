@@ -121,7 +121,13 @@
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
+            <tr
+                [ngClass]="{
+                    'row-in-retour1': rowData.ignoreCount === 1,
+                    'row-in-retour2': rowData.ignoreCount === 2,
+                    'row-in-retour3': rowData.ignoreCount === 3
+                }"
+            >
                 <td *ngFor="let col of columns">
                     <ng-container
                         *ngIf="col.field !== 'status'; else statusColumn"
@@ -497,12 +503,23 @@
                     ></button>
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
+                        [disabled]="ignoreCount > 0 ? true : false"
                         pButton
                         pRipple
                         label="Fin diagnostique"
                         icon="pi pi-check"
                         class="p-button-text"
                         (click)="techFinishDiag()"
+                    ></button>
+
+                    <button
+                        *ngIf="ignoreCount > 0"
+                        pButton
+                        pRipple
+                        label="Fin diagnostique retour"
+                        icon="pi pi-check"
+                        class="p-button-text"
+                        (click)="saveLogsDi()"
                     ></button>
                 </div>
             </ng-template>

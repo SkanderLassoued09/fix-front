@@ -172,6 +172,7 @@ export class TechDiListComponent implements OnInit {
     statId: any;
     idTech: string;
     diStatRepInfo: any;
+    ignoreCount: number = 0;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -195,11 +196,9 @@ export class TechDiListComponent implements OnInit {
         this.barChart();
 
         this.notificationService.notification$.subscribe((message: any) => {
-            if (message && message._id) {
-                console.log('🍕[message] fired:', message);
+            if (message) {
                 setTimeout(() => {
                     this.getAllTechDi(this.first, this.rows);
-                    console.log('hello');
                 }, 1000);
             }
         });
@@ -410,7 +409,6 @@ export class TechDiListComponent implements OnInit {
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    console.log('🥓[data]:', data);
                     this.techList = data.getDiForTech.stat;
 
                     this.techListCount = data.getDiForTech.totalTechDataCount;
@@ -455,15 +453,19 @@ export class TechDiListComponent implements OnInit {
 
     getCurrentPauseLog(pauseLogs) {
         const findNull = pauseLogs.find((log) => log.pauseEnd === null); // Find log where pauseEnd is null (indicating the pause is still active)
-        console.log('🥕[findNull]:', findNull);
+
         return findNull;
     }
 
+    // TODO
+    /**
+     *
+     * if ignore count exist loaad data from logs table
+     */
     async diagModal(di) {
-        console.log('🍌di', di);
         if (di.status === 'DIAGNOSTIC_Pause') {
             const getLog = this.getCurrentPauseLog(di.pauseLogs);
-            console.log('🍜', di._id, getLog._id);
+
             if (getLog) {
                 this.updatePauseLog(di._id, getLog._id);
             }
@@ -512,6 +514,7 @@ export class TechDiListComponent implements OnInit {
 
         this.selectedDi_id = di._idDi;
         this.diStatus = di.status;
+        this.ignoreCount = di.ignoreCount;
 
         // Perform other tasks
         this.changeStatus(di._idDi);
@@ -521,6 +524,13 @@ export class TechDiListComponent implements OnInit {
     }
 
     repModal(di) {
+        if (di.status === 'REPARATION_Pause') {
+            const getLog = this.getCurrentPauseLog(di.pauseLogs);
+
+            if (getLog) {
+                this.updatePauseLog(di._id, getLog._id);
+            }
+        }
         this.getDataStatsByIdDi(di._idDi);
         this.selectedRep = di._idDi;
         this.statId = di._id;
@@ -567,17 +577,13 @@ export class TechDiListComponent implements OnInit {
                 query: this.ticketSerice.getStatAndDiInfo(_idDi),
             })
             .subscribe(({ data }) => {
-                console.log('🥥[data]:', data);
                 if (data) {
-                    console.log('🥥[data]:', data);
                     this.diStatRepInfo = data;
                 }
             });
     }
 
     addPauseLogs(_id: string, type: string) {
-        console.log('🍸[type]:', type);
-        console.log('🍪[_id]:', _id);
         const logsPause = {
             _id,
             pauseType: type,
@@ -589,13 +595,11 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log('🥡logs saved');
                 }
             });
     }
 
     updatePauseLog(_idStat: string, _idDoc: string) {
-        console.log('updatePauseLog fired');
         const update = {
             _idStat,
             _idDoc,
@@ -607,8 +611,6 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log('update pauseEnd');
-                    console.log('🍔[data]:', data);
                 }
             });
     }
@@ -1035,8 +1037,84 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
+
+    saveLogsDi() {
+        console.log('🥥[saveLogsDi]:');
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation Diagnostique',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                const dataDiag = {
+                    _idDi: this.selectedDi_id,
+                    pdr: this.diagFormTech.value.isPdr,
+                    reparable: this.diagFormTech.value.isReparable,
+                    remarqueTech: this.diagFormTech.value.remarqueTech,
+                    di_category_id: this.diagFormTech.value.di_category_id,
+                    composant: this.composantCombo,
+                };
+
+                this.lap();
+
+                if (dataDiag.pdr) {
+                    this.apollo
+                        .mutate<any>({
+                            mutation: this.ticketSerice.finishLogsDi(dataDiag),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data, loading }) => {
+                            console.log('🍊[data]:', data);
+                            if (data) {
+                                this.disable = data.tech_startDiagnostic;
+                                this.cdr.detectChanges();
+                                this.changeStatusMagasinEstimation(
+                                    dataDiag._idDi
+                                );
+                            }
+                        });
+                } else {
+                    this.apollo
+                        .mutate<any>({
+                            mutation: this.ticketSerice.finishLogsDi(dataDiag),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data, loading }) => {
+                            console.log('🥜[data]:', data);
+                            if (data) {
+                                this.disable = data.tech_startDiagnostic;
+                                this.cdr.detectChanges();
+
+                                this.changeStatusToPending2(dataDiag._idDi);
+                            }
+                        });
+                }
+
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.saveTimeDiag(
+                            this.selectedDi,
+                            this.lapTime
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading, errors }) => {
+                        if (data) {
+                            this.diDialogDiag[this.selectedDi] = false;
+                        }
+                    });
+                setTimeout(() => {
+                    this.getAllTechDi(this.first, this.rows);
+                }, 1000);
+
+                this.startStopwatch();
+                this.getComposant();
+                this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
+            },
+        });
+    }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
+        console.log('🍯[techFinishDiag]:');
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Diagnostique',
@@ -1099,8 +1177,8 @@ export class TechDiListComponent implements OnInit {
                     });
                 setTimeout(() => {
                     this.getAllTechDi(this.first, this.rows);
-                    console.log('hello');
                 }, 1000);
+
                 this.startStopwatch();
                 this.getComposant();
                 this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
@@ -1181,7 +1259,7 @@ export class TechDiListComponent implements OnInit {
         this.remarqueReparationnn = this.remarque.value.remarqueRepair;
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
-    lapTimeForPauseAndGetBack1() {
+    lapTimeForPauseAndGetBack1(isFinishRep: boolean) {
         // for rep
         this.lap1();
         this.resetModalFormRep();
@@ -1214,7 +1292,9 @@ export class TechDiListComponent implements OnInit {
                 }
             });
 
-        this.addPauseLogs(this.statId, 'rep');
+        if (!isFinishRep) {
+            this.addPauseLogs(this.statId, 'rep');
+        }
         this.getAllTechDi(this.first, this.rows);
 
         this.startStopwatch1();
@@ -1267,7 +1347,7 @@ export class TechDiListComponent implements OnInit {
                     this.isFinishedRep = {};
                 }
 
-                this.lapTimeForPauseAndGetBack1();
+                this.lapTimeForPauseAndGetBack1(true);
                 this.lap1();
 
                 this.apollo
@@ -1285,6 +1365,9 @@ export class TechDiListComponent implements OnInit {
                     });
 
                 this.getAllTechDi(this.first, this.rows);
+                setTimeout(() => {
+                    this.getAllTechDi(this.first, this.rows);
+                }, 1000);
                 this.startStopwatch1();
             },
             reject: () => {},

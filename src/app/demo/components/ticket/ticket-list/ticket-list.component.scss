@@ -1,5 +1,11 @@
-:host ::ng-deep .row-in-magasin {
-    background-color: rgba(190, 83, 83, 0.15) !important;
+:host ::ng-deep .row-in-retour1 {
+    background-color: #ffc1c1 !important;
+}
+:host ::ng-deep .row-in-retour2 {
+    background-color: #ff7f7f !important;
+}
+:host ::ng-deep .row-in-retour3 {
+    background-color: #ff0000 !important;
 }
 .element-container,
 .element-container-BTN,
@@ -44,7 +50,6 @@
 .file-upload-container {
     display: flex;
     justify-content: space-around;
-   
 }
 
 .footerlocation,

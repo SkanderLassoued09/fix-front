@@ -6,6 +6,7 @@ import { ProductService } from 'src/app/demo/service/product.service';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
 import { ConfirmationService } from 'primeng/api';
+import { NotificationService } from 'src/app/demo/service/notification.service';
 
 // TODO check type of these fields
 export interface Composant {
@@ -35,11 +36,15 @@ export class DetailsComposantComponent implements OnInit {
     composantValues: Composant;
     isActive: boolean;
     private _id: string;
+    isSentToCoordinator: any;
+    componentInfo: any;
+    componentsAreConfirmed: boolean;
     constructor(
         private ticketSerice: TicketService,
         private productService: ProductService,
         private route: ActivatedRoute,
         private apollo: Apollo,
+        private readonly notificationService: NotificationService,
         private readonly router: Router,
         private confirmationService: ConfirmationService
     ) {
@@ -64,6 +69,15 @@ export class DetailsComposantComponent implements OnInit {
         this.productService
             .getProductsSmall()
             .then((cars) => (this.products = cars));
+        this.notificationService.notification$.subscribe((message: any) => {
+            console.log('🍻[message]:', message);
+            if (message) {
+                this.getDiByID(this._id);
+            }
+            if (message.array_composants.length > 0) {
+                this.componentsAreConfirmed = true;
+            }
+        });
     }
 
     getCompsantInfo(selectedComposant: string) {
@@ -107,7 +121,30 @@ export class DetailsComposantComponent implements OnInit {
                 query: this.ticketSerice.getDiByID(_id),
             })
             .subscribe(({ data }) => {
-                this.composants = data.getDiById.array_composants;
+                if (data) {
+                    console.log('🍕[data]:', data);
+                    this.isSentToCoordinator =
+                        data.getDiById.isSentToCoordinator;
+                    this.componentsAreConfirmed =
+                        data.getDiById.isConfirmedComponentFromCoordinator;
+                    this.composants = data.getDiById.array_composants;
+                }
+            });
+    }
+
+    sentComponentToCoordinatorToConfirm() {
+        console.log('🥘');
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.sentComponentToCoordinatorToConfirm(
+                    this._id
+                ),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.isSentToCoordinator =
+                        data.sendComponentToConMagasinForConfirmation.isSentToCoordinator;
+                }
             });
     }
 
@@ -146,19 +183,23 @@ export class DetailsComposantComponent implements OnInit {
     changeStatusPending3() {
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements',
-            header: "Confirmation Demande prix des composants",
+            header: 'Confirmation Demande prix des composants',
             icon: 'pi pi-question-circle',
             accept: () => {
                 this.apollo
                     .mutate<any>({
-                        mutation: this.ticketSerice.changeStatusPending3(this._id),
+                        mutation: this.ticketSerice.changeStatusPending3(
+                            this._id
+                        ),
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            this.router.navigate(['/tickets/ticket/magasin-di-list']);
+                            this.router.navigate([
+                                '/tickets/ticket/magasin-di-list',
+                            ]);
                         }
                     });
-            }
+            },
         });
     }
     // map over the array of composant existed in tickets data

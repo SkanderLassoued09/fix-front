@@ -20,7 +20,7 @@ import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { map } from 'rxjs';
-import { environment } from 'src/environments/environment.prod';
+import { environment } from 'src/environments/environment';
 
 interface Column {
     field: string;
@@ -474,29 +474,26 @@ export class TicketListComponent implements OnInit {
             },
         });
     }
-    enregistrerBC(){
+    enregistrerBC() {
         this.confirmationService.confirm({
             message: 'Voulez vous Enregistrer Bon de commande',
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {   
-                this.saveBCPDF(this._idDi, this.payload.file); 
+            accept: () => {
+                this.saveBCPDF(this._idDi, this.payload.file);
             },
         });
-
     }
-    enregistrerDevis(){
+    enregistrerDevis() {
         this.confirmationService.confirm({
             message: 'Voulez vous Enregistrer Devis',
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {   
+            accept: () => {
                 this.saveDevisPDF(this._idDi, this.payload.file);
             },
         });
     }
-
-    
 
     saveDevisPDF(_id: string, pdf: string) {
         this.apollo
@@ -611,6 +608,7 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForNegociate1(data) {
+        console.log('🥖[data]:', data);
         this.selectedRowInNegociate1 = data;
 
         this.seletedRow = data._id;
@@ -978,12 +976,32 @@ export class TicketListComponent implements OnInit {
             .subscribe(({ data }) => {});
     }
 
-    changeStatusRetour(_id) {
+    changeStatusRetour1(_id) {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.changeStatusRetour(_id),
+                mutation: this.ticketSerice.changeStatusRetour1(_id),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ data }) => {
+                console.log('🥤[data]:', data);
+            });
+    }
+    changeStatusRetour2(_id) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusRetour2(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🥤[data]:', data);
+            });
+    }
+    changeStatusRetour3(_id) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusRetour3(_id),
+            })
+            .subscribe(({ data }) => {
+                console.log('🥤[data]:', data);
+            });
     }
 
     changeToPending1(data) {
@@ -994,6 +1012,19 @@ export class TicketListComponent implements OnInit {
             .subscribe(({ data }) => {
                 //! NEED TO SELECT THE ID OF THE SELECTED DI
             });
+
+        if (data && data.ignoreCount && data.ignoreCount > 0) {
+            this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.createLogDi(data.ignoreCount),
+                })
+                .subscribe(({ data }) => {
+                    if (data) {
+                        console.log('Logs di created and its empty');
+                    }
+                    //! NEED TO SELECT THE ID OF THE SELECTED DI
+                });
+        }
         this.getDi(this.first, this.rows);
     }
 
@@ -1112,13 +1143,25 @@ export class TicketListComponent implements OnInit {
 
     // count ignore ticket and save it
     ignore(_idticket) {
+        console.log('🍟[_idticket]:', _idticket);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.ignore(_idticket._id),
             })
             .subscribe(({ data }) => {
+                console.log('🍦[data]:', data);
                 if (data) {
                     const updatedIgnoreCount = data.countIgnore.ignoreCount;
+
+                    // Use an if-else instead of a switch for conditional checks
+                    if (updatedIgnoreCount === 1) {
+                        this.changeStatusRetour1(_idticket._id);
+                    } else if (updatedIgnoreCount === 2) {
+                        this.changeStatusRetour2(_idticket._id);
+                    } else if (updatedIgnoreCount === 3) {
+                        this.changeStatusRetour3(_idticket._id);
+                    }
+
                     // Update the ignore count in the diList
                     const ticketIndex = this.diList.findIndex(
                         (item) => item._id === _idticket._id

@@ -95,6 +95,7 @@ export class MagasinDiListComponent {
         }[];
     };
     nameComposananrSelected: any;
+    ignoreCount: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -298,17 +299,45 @@ export class MagasinDiListComponent {
     }
     openDialogMagasin(item) {
         this.selectedDi_id = item._id;
+        this.ignoreCount = item.ignoreCount;
+        console.log('🍰[ this.ignoreCount ]:', this.ignoreCount);
 
-        console.log('🍼️', item.array_composants);
-        this.arrayComposant = item.array_composants
-            .filter((el) => el.isUpdated === false)
-            .map((el) => {
-                return {
-                    infoComposant: el.nameComposant + ': ' + el.quantity,
-                    nameComposant: el.nameComposant,
-                    quantity: el.quantity,
-                };
-            });
+        if (item.ignoreCount && item.ignoreCount > 0) {
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getLogsDiById(item.ignoreCount),
+                })
+                .subscribe(({ data }) => {
+                    console.log('🍉[data]:', data);
+                    const logsDi = data?.getLigsById; // Assuming this is the response structure
+                    console.log('🥔[logsDi]:', logsDi);
+                    if (logsDi?.array_composants) {
+                        console.log('🍼️', logsDi.array_composants);
+
+                        this.arrayComposant = logsDi.array_composants
+                            .filter((el: any) => el.isUpdated === false)
+                            .map((el: any) => {
+                                return {
+                                    infoComposant:
+                                        el.nameComposant + ': ' + el.quantity,
+                                    nameComposant: el.nameComposant,
+                                    quantity: el.quantity,
+                                };
+                            });
+                    }
+                });
+        } else {
+            console.log('🍼️', item.array_composants);
+            this.arrayComposant = item.array_composants
+                .filter((el) => el.isUpdated === false)
+                .map((el) => {
+                    return {
+                        infoComposant: el.nameComposant + ': ' + el.quantity,
+                        nameComposant: el.nameComposant,
+                        quantity: el.quantity,
+                    };
+                });
+        }
 
         this.magasinDiDialog = true;
     }
@@ -356,6 +385,8 @@ export class MagasinDiListComponent {
     getSelectedStatus(statusComposant: any) {
         this.selectedstatusComposant = statusComposant.value;
     }
+
+    getLogsDiById(_id: number) {}
 
     selectedDropDown(selectedItem) {
         console.log('🥃[selectedItem]:', selectedItem);

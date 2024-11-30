@@ -99,16 +99,7 @@
                     (onClick)="changestatusToPricing($event)"
                 ></p-button>
             </div>
-            <div class="field">
-                <label for="name"
-                    >Confirmer le reçoit des composants du magasin</label
-                >
-                <p-button
-                    [disabled]="rep_condition || reperationCondition"
-                    label="Confirmer tous les composants"
-                    (onClick)="gotcomposantfromMagasin()"
-                ></p-button>
-            </div>
+
             <div class="field">
                 <label for="name"
                     >Envoyer Demande d'intervention pour la réperation</label
@@ -123,18 +114,24 @@
                     (onChange)="selectedTechRep($event)"
                 ></p-dropdown>
             </div>
-            <!-- <div class="field">
+            <div class="field">
                 <label for="name"
-                    >Envoyer une requête au magasin pour confirmer les
-                    composants</label
+                    >Confirmer le reçoit des composants du magasin</label
                 >
-
                 <p-button
-                    label="Confimer les composants"
-                    (onClick)="sendRequestToMagasin()"
-                    [disabled]="isConfirmed === 'CONFIRM ' ?? true"
+                    [disabled]="!openBtnConfirm"
+                    label="Confirmer tous les composants"
+                    (onClick)="gotcomposantfromMagasin()"
                 ></p-button>
-            </div> -->
+                <ng-container *ngIf="componentInfo">
+                    <div
+                        *ngFor="let component of componentInfo.array_composant"
+                    >
+                        <div>name:{{ component.nameComposant }}</div>
+                        <div>quantity{{ component.quantity }}</div>
+                    </div>
+                </ng-container>
+            </div>
             <div class="field" *ngIf="remarque_manager">
                 <!-- to continue other rq -->
                 <p-fieldset legend="Remarque admnistration" [toggleable]="true">
