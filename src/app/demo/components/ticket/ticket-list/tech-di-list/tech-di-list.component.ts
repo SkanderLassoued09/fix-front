@@ -855,8 +855,7 @@ export class TechDiListComponent implements OnInit {
 
     lapTimeForPauseAndGetBack() {
         this.lap();
-        // this.resetModalForm();
-        // Gather the form values
+
         const formValues = {
             _idDi: this.selectedDi_id,
             pdr: this.diagFormTech.get('isPdr')?.value ?? false,
@@ -900,6 +899,7 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
+                    console.log('🥜[data]:', data);
                     // if data exist affect it to html
                 }
             });

@@ -119,7 +119,10 @@
                     >Confirmer le reçoit des composants du magasin</label
                 >
                 <p-button
-                    [disabled]="!componentConfirmedFromCoordinator"
+                    [disabled]="
+                        (openBtnConfirm && componentConfirmedFromCoordinator) ||
+                        (!openBtnConfirm && !componentConfirmedFromCoordinator)
+                    "
                     label="Confirmer tous les composants"
                     (onClick)="gotcomposantfromMagasin()"
                 ></p-button>

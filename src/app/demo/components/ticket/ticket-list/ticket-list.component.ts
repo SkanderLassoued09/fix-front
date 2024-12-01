@@ -55,6 +55,7 @@ export class TicketListComponent implements OnInit {
         bon_de_livraison: '',
         contain_pdr: false,
         facture: '',
+        devis: '',
         status: '',
         createdAt: '',
         updatedAt: '',
@@ -245,6 +246,8 @@ export class TicketListComponent implements OnInit {
     statusCount: any[];
     basicOptions: any;
     basicData: any;
+    selectedBc: any;
+    selectedDevis: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -496,19 +499,27 @@ export class TicketListComponent implements OnInit {
     }
 
     saveDevisPDF(_id: string, pdf: string) {
+        console.log('🍨[pdf]:', pdf);
+        console.log('🍷[_id]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addDevis(_id, pdf),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ data }) => {
+                console.log('🦑[saveDevisPDF]:', data);
+            });
     }
 
     saveBCPDF(_id: string, pdf: string) {
+        console.log('🍿[pdf]:', pdf);
+        console.log('🍟[_id]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addBC(_id, pdf),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ data }) => {
+                console.log('���[saveBCPDF]:', data);
+            });
     }
 
     timeStringIntoHours(timeString) {
@@ -751,6 +762,7 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.totalComposant(_id),
             })
             .valueChanges.subscribe(({ data }) => {
+                console.log('🍾[data]:', data);
                 this.totalComposant = data.calculateTicketComposantPrice;
             });
     }
@@ -1041,7 +1053,7 @@ export class TicketListComponent implements OnInit {
 
         this.getDi(this.first, this.rows);
     }
-
+    // TODO cannot return null for non nullable field below
     nego1nego2_InMagasin(_id, price, final_price) {
         this.apollo
             .mutate<any>({
@@ -1265,35 +1277,63 @@ export class TicketListComponent implements OnInit {
 
         for (let file of event.files) {
             const reader = new FileReader();
-            reader.readAsDataURL(file);
+            reader.readAsArrayBuffer(file); // Read file as ArrayBuffer for Blob creation
+            const readerForBase64 = new FileReader();
+            readerForBase64.readAsDataURL(file); // Read file as Base64 for upload
+
+            // Blob URL creation
             reader.onload = () => {
-                const base64 = reader.result as string;
-                this.uploadFile(base64, type);
+                const arrayBuffer = reader.result as ArrayBuffer;
+
+                // Create a Blob and generate its URL
+                const blob = new Blob([arrayBuffer], {
+                    type: 'application/pdf',
+                });
+                const blobUrl = URL.createObjectURL(blob);
+
+                if (type === 'BC') {
+                    this.selectedBc = blobUrl; // Assign Blob URL for BC
+                    console.log('🍢[Blob URL for BC]:', this.selectedBc);
+                } else if (type === 'Devis') {
+                    this.selectedDevis = blobUrl; // Assign Blob URL for Devis
+                }
+
                 this.uploadFileLoading = false;
+
+                // Show a success message
+                this.messageservice.add({
+                    severity: 'info',
+                    summary: 'Fichier enregistré',
+                    detail: 'Fichier a été ajouté avec succès',
+                });
             };
 
             reader.onerror = (error) => {
+                console.error('File read error:', error);
                 this.uploadFileLoading = false;
             };
-        }
 
-        // Set flags based on the type of file uploaded
-        if (type === 'BC') {
-            this.isBCUploaded = true;
-        } else if (type === 'Devis') {
-            this.isDevisUploaded = true;
-        }
+            // Base64 creation
+            readerForBase64.onload = () => {
+                const base64 = readerForBase64.result as string;
+                console.log('🌶[base64]:', base64);
 
-        this.messageservice.add({
-            severity: 'info',
-            summary: 'Fichier enregistré',
-            detail: 'Fichier a été ajouter avec succès',
-        });
+                // Call uploadFile with Base64 string
+                this.uploadFile(base64, type);
+            };
+
+            readerForBase64.onerror = (error) => {
+                console.error('Base64 conversion error:', error);
+            };
+        }
     }
 
     // Update the isFormComplete method to check file upload statuses
     isFormComplete() {
-        return this.isBCUploaded && this.isDevisUploaded;
+        return (
+            typeof this.selectedBc === 'string' &&
+            typeof this.selectedDevis === 'string'
+        );
     }
 
     uploadFile(base64: string, type: string) {

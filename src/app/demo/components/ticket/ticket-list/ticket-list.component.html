@@ -593,10 +593,8 @@
                 />
                 <div class="button-container-BC">
                     <a
-                        [href]="
-                            'http://localhost:3000/' +
-                            selectedRowInNegociate1?.bon_de_commande
-                        "
+                        *ngIf="selectedBc"
+                        [href]="selectedBc"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -622,7 +620,17 @@
                     [auto]="true"
                 />
                 <div class="button-container-BC">
-                    <p-button label="Consulter Devis" [link]="true"></p-button>
+                    <a
+                        *ngIf="selectedDevis"
+                        [href]="selectedDevis"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter Devis"
+                            [link]="true"
+                        ></p-button>
+                    </a>
                     <p-button
                         (click)="enregistrerDevis()"
                         label="Enregistrer Devis"
