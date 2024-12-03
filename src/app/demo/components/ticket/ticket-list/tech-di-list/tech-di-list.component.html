@@ -277,14 +277,14 @@
                                     ></p-dropdown>
                                 </div>
                                 <div class="col" *ngIf="composantSelected">
-                                    <label for="name">Quantité</label>
+                                    <label for="integeronly">Quantité</label>
                                     <p-inputNumber
                                         inputId="integeronly"
                                         formControlName="quantity"
-                                        [placeholder]="
-                                            'Add quantity for ' +
-                                            composantSelected.value.name
-                                        "
+                                        [placeholder]="'Add quantity for ' + composantSelected.value.name"
+                                        [min]="1"
+                                        [mode]="'decimal'"
+                                        (onBlur)="checkValue($event)"
                                     ></p-inputNumber>
                                 </div>
                                 <div class="col" *ngIf="composantSelected">

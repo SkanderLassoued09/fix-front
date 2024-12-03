@@ -114,6 +114,8 @@ export class CoordinatorDiListComponent {
     openBtnConfirm: boolean;
     componentInfo: any;
     componentConfirmedFromCoordinator: any;
+    MagasinsentToCoordinator: any;
+    gotComposantFromMagasinCondition: boolean;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -314,6 +316,8 @@ export class CoordinatorDiListComponent {
     openModalConfig(di) {
         console.log('🍷[di]:', di);
         this.di = { ...di };
+        this.gotComposantFromMagasinCondition=di.gotComposantFromMagasin
+        this.MagasinsentToCoordinator = di.isSentToCoordinator;
         this.openBtnConfirm = di.isSentToCoordinator;
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;
@@ -536,6 +540,8 @@ export class CoordinatorDiListComponent {
                             this.reperationCondition = true;
                         }
                     });
+                    
+
             },
         });
     }
