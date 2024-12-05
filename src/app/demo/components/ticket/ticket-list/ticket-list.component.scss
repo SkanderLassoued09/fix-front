@@ -170,3 +170,69 @@
     gap: 15px; /* Adds space between the file upload and buttons */
     height: 100%; /* Ensure the section takes full height if required */
 }
+.grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 16px;
+}
+
+.col {
+    flex: 1;
+    min-width: 200px;
+}
+
+.flex {
+    display: flex;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+.flex-row {
+    flex-direction: row;
+}
+
+.gap-2 {
+    gap: 8px;
+}
+
+.radio-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.radio-label {
+    font-size: 14px;
+    color: #333;
+}
+
+.ml-2 {
+    margin-left: 8px;
+}
+
+.dropdown-label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #444;
+}
+
+.dropdown {
+    width: 100%;
+    max-width: 300px;
+    font-size: 14px;
+}
+.button-row {
+    display: flex;
+    justify-content: space-around; /* Distributes space evenly around the buttons */
+    align-items: center; /* Aligns buttons vertically */
+    padding: 10px; /* Optional: Add padding around the row */
+}
+
+.button-container-BC {
+    display: flex;
+    align-items: center; /* Aligns button content vertically */
+}

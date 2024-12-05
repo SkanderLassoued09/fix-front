@@ -195,6 +195,7 @@
         >
             <ng-template pTemplate="content">
                 <h1>{{ di._idDi }}</h1>
+                <h3 *ngIf="ignoreCount > 0">Retour {{di.ignoreCount}}</h3>
                 <p-image
                     [src]="baseUrl + imageValue"
                     [alt]="imageValue"
@@ -203,17 +204,76 @@
                     class="imageContainer shadow-4"
                     [preview]="true"
                 ></p-image>
-                <div class="field" *ngIf="remarque_manager">
-                    <p-fieldset
-                        legend="Remarque admnistration"
-                        [toggleable]="true"
-                    >
-                        <p class="m-0">{{ remarque_manager }}</p>
-                    </p-fieldset>
+                <div>
+                    <div class="field" *ngIf="remarque_manager">
+                        <p-fieldset
+                            legend="Remarque admnistration"
+                            [toggleable]="true"
+                        >
+                            <p class="m-0">{{ remarque_manager }}</p>
+                        </p-fieldset>
+                    </div>
+                    <div class="field" *ngIf="remarque_tech_diagnostic">
+                        <p-fieldset
+                            legend="Remarque Diagnostique Technicien"
+                            [toggleable]="true"
+                        >
+                            <p class="m-0">{{ remarque_tech_diagnostic }}</p>
+                        </p-fieldset>
+                    </div>
+                    <div class="field" *ngIf="remarque_tech_repair">
+                        <p-fieldset
+                            legend="Remarque Reparation Technicien"
+                            [toggleable]="true"
+                        >
+                            <p class="m-0">{{ remarque_tech_repair }}</p>
+                        </p-fieldset>
+                    </div>
+                </div>
+
+                <div *ngIf="ignoreCount > 0">
+                <div>
+                    <span>Type de Panne: {{di_category_id}} </span>
+                </div> 
+                    <div>
+                        <span>Technicien chargé Diagnostique:  </span>
+                        <span>
+                            Temps Diagnostique:
+                        </span>
+                    </div>
+                   <div>
+                    <span>Technicien chargé Réparation   </span>
+                    <span>
+                        Temps Réparation:
+                    </span>
+                   </div>
+
+                   <div *ngIf="ignoreCount > 0">
+                    <h3>Liste des composants Retour ({{ ignoreCount }})</h3>
+                    <p-table [value]="composantCombo" [paginator]="true" [rows]="10" [responsiveLayout]="'scroll'">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Nom du Composant</th>
+                                <th>Quantité</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-composant>
+                            <tr>
+                                <td>{{ composant.nameComposant }}</td>
+                                <td>{{ composant.quantity }}</td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+
+                   
                 </div>
                 <form [formGroup]="diagFormTech">
                     <div class="flex flex-column">
                         <div>
+                            <span *ngIf="ignoreCount > 0">
+                                Veuillez changer le type de panne seulement si nécessaire
+                            </span>
                             <p-dropdown
                                 id="Category_DI"
                                 [options]="categorieDiListDropDown"
@@ -226,10 +286,35 @@
                             >
                             </p-dropdown>
                         </div>
-
-                        <div class="supheader field">
-                            <label for="name"
+                        <div *ngIf="ignoreCount > 0" >
+                            <div class="justify-content-between">
+                                <h3>Veuiller choisir le type d'erreur client ou fixtronix </h3>
+                                <p-toggleButton 
+                                    [(ngModel)]="checked" 
+                                    onLabel="Erreur_client"
+                                    offLabel="Erreur_Fixtronix" 
+                                    onIcon = "Unlocked"
+                                    offIcon = "Locked" 
+                                    styleClass="w-12rem"
+                                    ariaLabel="Do you confirm"
+                                    class="card flex justify-content-center" />
+                            </div>
+                           
+                        </div>
+                        <div *ngIf="ignoreCount == 0" class="supheader field">
+                            <label  for="name"
                                 >Description de la Panne a corriger</label
+                            >
+                            <textarea
+                                formControlName="remarqueTech"
+                                rows="3"
+                                cols="30"
+                                pInputTextarea
+                            ></textarea>
+                        </div>
+                        <div *ngIf="ignoreCount > 0 " class="supheader field">
+                            <label  for="name"
+                                >Expliquer le retour pour cette Demande d'intervention </label
                             >
                             <textarea
                                 formControlName="remarqueTech"
@@ -243,7 +328,7 @@
                         <div class="condition-BTN">
                             <div class="field">
                                 <label for="name"
-                                    >Cette piece reparable ?</label
+                                    >Cette piece est réparable ?</label
                                 >
                                 <p-toggleButton
                                     onLabel="Oui"
@@ -503,6 +588,7 @@
                     ></button>
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
+                    *ngIf="ignoreCount > 0 ? false : true"
                         [disabled]="ignoreCount > 0 ? true : false"
                         pButton
                         pRipple

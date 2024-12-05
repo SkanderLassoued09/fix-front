@@ -248,6 +248,8 @@ export class TicketListComponent implements OnInit {
     basicData: any;
     selectedBc: any;
     selectedDevis: any;
+    selectedBL: string;
+    selectedFacture: string;
 
     constructor(
         private ticketSerice: TicketService,
@@ -497,6 +499,28 @@ export class TicketListComponent implements OnInit {
             },
         });
     }
+    enregistrerBL() {
+        this.confirmationService.confirm({
+            message: 'Voulez vous Enregistrer Bon de livraison',
+            header: 'Confirmation Fichier',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.saveBLPDF(this._idDi, this.payload.file);
+                console.log("inside condition savePDF-BL")
+            },
+        });
+    }
+    enregistrerFacture() {
+        this.confirmationService.confirm({
+            message: 'Voulez vous Enregistrer Bon de livraison',
+            header: 'Confirmation Fichier',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.saveFacturePDF(this._idDi, this.payload.file);
+                console.log("inside condition savePDF-BL")
+            },
+        });
+    }
 
     saveDevisPDF(_id: string, pdf: string) {
         console.log('🍨[pdf]:', pdf);
@@ -509,7 +533,25 @@ export class TicketListComponent implements OnInit {
                 console.log('🦑[saveDevisPDF]:', data);
             });
     }
+    saveBLPDF(_id: string, pdf: string){
+        this.apollo
+        .mutate<any>({
+            mutation: this.ticketSerice.addBL(_id, pdf),
+        })
+        .subscribe(({ data }) => {
+            console.log('🦑[saveDevisPDF] 98:', data);
+        });
+    }
+    saveFacturePDF(_id: string, pdf: string){
+        this.apollo
+        .mutate<any>({
+            mutation: this.ticketSerice.addFacture(_id, pdf),
+        })
+        .subscribe(({ data }) => {
+            console.log('🦑[saveDevisPDF] 98:', data);
+        });
 
+    }
     saveBCPDF(_id: string, pdf: string) {
         console.log('🍿[pdf]:', pdf);
         console.log('🍟[_id]:', _id);
@@ -1043,15 +1085,22 @@ export class TicketListComponent implements OnInit {
     }
 
     changeToPending1(data) {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.changeToPending1(data._id),
-            })
-            .subscribe(({ data }) => {
-                //! NEED TO SELECT THE ID OF THE SELECTED DI
-            });
-
-        this.getDi(this.first, this.rows);
+        this.confirmationService.confirm({
+            message: 'Voulez-vous envoyer le DI au Coordinateur?',
+            header: "Relancer la Demande d'intervention",
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.changeToPending1(data._id),
+                    })
+                    .subscribe(({ data }) => {
+                        //! NEED TO SELECT THE ID OF THE SELECTED DI
+                    });
+    
+                this.getDi(this.first, this.rows);
+            }
+        });
     }
     // TODO cannot return null for non nullable field below
     nego1nego2_InMagasin(_id, price, final_price) {
@@ -1168,37 +1217,46 @@ export class TicketListComponent implements OnInit {
     }
 
     // count ignore ticket and save it
+    //!POP HERE
     ignore(_idticket) {
         console.log('🍟[_idticket]:', _idticket);
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.ignore(_idticket._id),
-            })
-            .subscribe(({ data }) => {
-                console.log('🍦[data]:', data);
-                if (data) {
-                    const updatedIgnoreCount = data.countIgnore.ignoreCount;
-
-                    // Use an if-else instead of a switch for conditional checks
-                    if (updatedIgnoreCount === 1) {
-                        this.changeStatusRetour1(_idticket._id);
-                    } else if (updatedIgnoreCount === 2) {
-                        this.changeStatusRetour2(_idticket._id);
-                    } else if (updatedIgnoreCount === 3) {
-                        this.changeStatusRetour3(_idticket._id);
-                    }
-
-                    // Update the ignore count in the diList
-                    const ticketIndex = this.diList.findIndex(
-                        (item) => item._id === _idticket._id
-                    );
-                    if (ticketIndex !== -1) {
-                        this.diList[ticketIndex].ignoreCount =
-                            updatedIgnoreCount;
-                    }
-                }
-                this.cdr.detectChanges();
-            });
+       
+        this.confirmationService.confirm({
+            message: 'Voulez-vous continuer ?',
+            header: "Envoyer Demande d'intervention Retour",
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.ignore(_idticket._id),
+                    })
+                    .subscribe(({ data }) => {
+                        console.log('🍦[data]:', data);
+                        if (data) {
+                            const updatedIgnoreCount = data.countIgnore.ignoreCount;
+        
+                            // Conditional checks for status updates
+                            if (updatedIgnoreCount === 1) {
+                                this.changeStatusRetour1(_idticket._id);
+                            } else if (updatedIgnoreCount === 2) {
+                                this.changeStatusRetour2(_idticket._id);
+                            } else if (updatedIgnoreCount === 3) {
+                                this.changeStatusRetour3(_idticket._id);
+                            }
+        
+                            // Update the ignore count in the diList
+                            const ticketIndex = this.diList.findIndex(
+                                (item) => item._id === _idticket._id
+                            );
+                            if (ticketIndex !== -1) {
+                                this.diList[ticketIndex].ignoreCount = updatedIgnoreCount;
+                            }
+                        }
+                        this.cdr.detectChanges();
+                    });
+            }
+        });
+        ;
     }
 
     addCategoryDi() {
@@ -1296,6 +1354,12 @@ export class TicketListComponent implements OnInit {
                     console.log('🍢[Blob URL for BC]:', this.selectedBc);
                 } else if (type === 'Devis') {
                     this.selectedDevis = blobUrl; // Assign Blob URL for Devis
+                } else if (type == 'BL'){
+                    console.log("condition correct BL");
+                    this.selectedBL = blobUrl
+                }
+                else if (type == 'Facture'){
+                    this.selectedFacture = blobUrl
                 }
 
                 this.uploadFileLoading = false;
@@ -1434,7 +1498,7 @@ export class TicketListComponent implements OnInit {
         }
         this.messageservice.add({
             severity: 'info',
-            summary: 'Fichier enregistré',
+            summary: 'Bon de livraison Ajouter',
             detail: 'Fichier a été ajouter avec succès',
         });
     }

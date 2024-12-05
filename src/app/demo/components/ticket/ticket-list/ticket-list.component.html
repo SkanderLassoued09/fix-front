@@ -160,6 +160,7 @@
         <!-- Form Group -->
         <fieldset class="location-form">
             <legend>Informations Générales</legend>
+            <span>Veuillez noter de ne pas utiliser "" ou ''</span>
 
             <!-- Title -->
             <div class="form-group">
@@ -215,29 +216,34 @@
 
         <!-- Radio Buttons for Type -->
         <div class="grid">
+            <!-- Radio Button Group -->
             <div class="col flex align-items-center flex-row gap-2">
-                <p-radioButton
-                    (onClick)="getSt($event)"
-                    (ngModelChange)="getSt($event)"
-                    formControlName="typeClient"
-                    value="CLIENT"
-                    aria-label="Client"
-                ></p-radioButton>
-                <label class="ml-2">Client</label>
-                <p-radioButton
-                    (onClick)="getSt($event)"
-                    formControlName="typeClient"
-                    value="COMPANY"
-                    aria-label="Société"
-                ></p-radioButton>
-                <label class="ml-2">Société</label>
+                <div class="radio-group">
+                    <p-radioButton
+                        (onClick)="getSt($event)"
+                        (ngModelChange)="getSt($event)"
+                        formControlName="typeClient"
+                        value="CLIENT"
+                        aria-label="Client"
+                    ></p-radioButton>
+                    <label class="radio-label ml-2">Client</label>
+        
+                    <p-radioButton
+                        (onClick)="getSt($event)"
+                        formControlName="typeClient"
+                        value="COMPANY"
+                        aria-label="Société"
+                    ></p-radioButton>
+                    <label class="radio-label ml-2">Société</label>
+                </div>
             </div>
-
-            <!-- Conditional Dropdowns for Company or Client -->
+        
+            <!-- Conditional Dropdowns -->
             <div class="col" *ngIf="radioBtn === 'COMPANY'">
-                <label for="company">Société</label>
+                <label for="company" class="dropdown-label">Société</label>
                 <p-dropdown
                     id="company"
+                    class="dropdown"
                     [options]="companiesListDropDown"
                     formControlName="company_id"
                     optionLabel="company_name"
@@ -246,10 +252,12 @@
                     placeholder="Choisir société"
                 ></p-dropdown>
             </div>
+        
             <div class="col" *ngIf="radioBtn === 'CLIENT'">
-                <label for="client">Client</label>
+                <label for="client" class="dropdown-label">Client</label>
                 <p-dropdown
                     id="client"
+                    class="dropdown"
                     [options]="clientListDropDown"
                     formControlName="client_id"
                     optionLabel="label"
@@ -313,10 +321,10 @@
                 [loading]="loadingCreatingDi || uploadFileLoading"
                 (onClick)="createDi()"
                 [disabled]="
-                    !creationDiForm.get('title').value ||
-                    !creationDiForm.get('designiation').value ||
-                    !creationDiForm.get('typeClient').value
-                "
+                !creationDiForm.get('title').value || 
+                !creationDiForm.get('designiation').value || 
+                (!creationDiForm.get('client_id').value && !creationDiForm.get('company_id').value)
+              "
             ></p-button>
         </div>
     </form>
@@ -834,16 +842,28 @@
     [resizable]="false"
     appendTo="body"
 >
+<div>
+    <div>
+        <h3  class="dialog-title">Consulter Bon de commande & Devis </h3>
+        <div class="button-row">
+            <div class="button-container-BC">
+                <a [href]="selectedBc" target="_blank" rel="noopener noreferrer">
+                    <p-button label="Consulter BC" [link]="true"></p-button>
+                </a>
+            </div>
+            <div class="button-container-BC">
+                <a [href]="selectedDevis" target="_blank" rel="noopener noreferrer">
+                    <p-button label="Consulter Devis" [link]="true"></p-button>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
     <ng-container>
         <div class="dialog-content">
             <h3 class="dialog-title">Affecter Bon de livraison et Facture</h3>
             <div class="file-upload-row">
                 <div class="file-upload-wrapper">
-                    <img
-                        src="../../../../../assets/icons/BL.png"
-                        alt="Bon de livraison"
-                        class="upload-image"
-                    />
                     <p-fileUpload
                         mode="basic"
                         chooseLabel="Ajouter Bon de livraison"
@@ -852,17 +872,31 @@
                         url="https://www.primefaces.org/cdn/api/upload.php"
                         accept=".pdf"
                         maxFileSize="1000000"
-                        (onUpload)="onUploadBl($event, 'bl')"
+                        (onUpload)="onUpload($event, 'BL')"
                         [auto]="true"
                     ></p-fileUpload>
+
+                    <div class="button-container-BC">
+                        <a
+                            *ngIf="selectedBL"
+                            [href]="selectedBL"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button
+                                label="Consulter Bon de livraison"
+                                [link]="true"
+                            ></p-button>
+                        </a>
+                        <p-button
+                            (click)="enregistrerBL()"
+                            label="Enregistrer BL"
+                            [link]="true"
+                        ></p-button>
+                    </div>
                 </div>
 
                 <div class="file-upload-wrapper">
-                    <img
-                        src="../../../../../assets/icons/Facture.png"
-                        alt="Facture"
-                        class="upload-image"
-                    />
                     <p-fileUpload
                         mode="basic"
                         chooseLabel="Ajouter Facture"
@@ -871,9 +905,27 @@
                         url="https://www.primefaces.org/cdn/api/upload.php"
                         accept=".pdf"
                         maxFileSize="1000000"
-                        (onUpload)="onUploadFacture($event, 'facture')"
+                        (onUpload)="onUpload($event, 'Facture')"
                         [auto]="true"
                     ></p-fileUpload>
+                    <div class="button-container-BC">
+                        <a
+                            *ngIf="selectedFacture"
+                            [href]="selectedFacture"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button
+                                label="Consulter Bon de livraison"
+                                [link]="true"
+                            ></p-button>
+                        </a>
+                        <p-button
+                            (click)="enregistrerFacture()"
+                            label="Enregistrer BL"
+                            [link]="true"
+                        ></p-button>
+                    </div>
                 </div>
             </div>
 

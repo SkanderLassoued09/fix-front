@@ -173,6 +173,8 @@ export class TechDiListComponent implements OnInit {
     idTech: string;
     diStatRepInfo: any;
     ignoreCount: number = 0;
+    remarque_tech_repair: string;
+    di_category_id: string;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -463,6 +465,7 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
+        
         if (di.status === 'DIAGNOSTIC_Pause') {
             const getLog = this.getCurrentPauseLog(di.pauseLogs);
 
@@ -502,6 +505,7 @@ export class TechDiListComponent implements OnInit {
                     });
 
                     this.composantCombo = detailsDi.array_composants;
+                    console.log("Data array composants",this.composantCombo)
                 }
 
                 // Open the modal after data is fetched
@@ -521,6 +525,7 @@ export class TechDiListComponent implements OnInit {
         this.getTimeSpent(di._id);
         this.getImage();
         this.getAllRemarque(di._idDi);
+        console.log("DATA inside ",this.di)
     }
 
     repModal(di) {
@@ -629,10 +634,12 @@ export class TechDiListComponent implements OnInit {
                         data.getAllRemarque.remarque_admin_tech;
                     this.remarque_tech_diagnostic =
                         data.getAllRemarque.remarque_tech_diagnostic;
+                        this.remarque_tech_repair = data.getAllRemarque.remarque_tech_repair;
                     this.remarque_magasin =
                         data.getAllRemarque.remarque_magasin;
                     this.remarque_coordinator =
                         data.getAllRemarque.remarque_coordinator;
+                        this.di_category_id = data.getAllRemarque.di_category_id
                 }
             });
     }
@@ -920,7 +927,7 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     this.dataBarChartIsReady = true;
                     this.techDataInfo = data.getDiStatusCounts;
-
+                    console.log("Data stats inisde modal",data)
                     // Initialize the dashboard variables
                     this.diagEnPause_miniDashboard = 0;
                     this.diagNotOpened_miniDashboard = 0;

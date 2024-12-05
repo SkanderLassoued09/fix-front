@@ -114,7 +114,7 @@ export class CoordinatorDiListComponent {
     openBtnConfirm: boolean;
     componentInfo: any;
     componentConfirmedFromCoordinator: any;
-    MagasinsentToCoordinator: any;
+    magasinsentToCoordinator: boolean;
     gotComposantFromMagasinCondition: boolean;
     constructor(
         private ticketSerice: TicketService,
@@ -317,7 +317,9 @@ export class CoordinatorDiListComponent {
         console.log('🍷[di]:', di);
         this.di = { ...di };
         this.gotComposantFromMagasinCondition=di.gotComposantFromMagasin
-        this.MagasinsentToCoordinator = di.isSentToCoordinator;
+        this.magasinsentToCoordinator = di.isSentToCoordinator;
+        this.componentConfirmedFromCoordinator = di.isConfirmedComponentFromCoordinator
+        console.log("magasinsentToCoordinator componentConfirmedFromCoordinator ",this.componentConfirmedFromCoordinator)
         this.openBtnConfirm = di.isSentToCoordinator;
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;

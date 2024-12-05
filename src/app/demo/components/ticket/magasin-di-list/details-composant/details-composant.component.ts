@@ -7,6 +7,7 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
 import { ConfirmationService } from 'primeng/api';
 import { NotificationService } from 'src/app/demo/service/notification.service';
+import { compileNgModule } from '@angular/compiler';
 
 // TODO check type of these fields
 export interface Composant {
@@ -22,6 +23,17 @@ export interface Composant {
     quantity_stocked: string;
     status: string;
 }
+function formatDate(dateString) {
+    const date = new Date(dateString); // Parse the date string into a Date object
+
+    // Format the day, month, and year with leading zeros if needed
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`; // Return the formatted date
+}
+
 @Component({
     selector: 'app-details-composant',
     templateUrl: './details-composant.component.html',
@@ -36,9 +48,10 @@ export class DetailsComposantComponent implements OnInit {
     composantValues: Composant;
     isActive: boolean;
     private _id: string;
-    isSentToCoordinator: any;
+    isSentToCoordinator: boolean = false;
     componentInfo: any;
     componentsAreConfirmed: boolean;
+    dateArrivage:string
     constructor(
         private ticketSerice: TicketService,
         private productService: ProductService,
@@ -88,10 +101,12 @@ export class DetailsComposantComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 console.log(
-                    data,
+                    data.findOneComposant.coming_date,
                     'this is my data coming from composant querys'
                 );
                 this.composantValues = data.findOneComposant;
+                this.dateArrivage = formatDate(data.findOneComposant.coming_date);
+                console.log(this.dateArrivage,"this.dateArrivage")
                 if (data) {
                     // Initialize form fields with loaded data
                     // TODO Change response from the server to object of data not boolean
@@ -102,14 +117,17 @@ export class DetailsComposantComponent implements OnInit {
                             this.composantValues.category_composant_id,
                         prix_achat: this.composantValues.prix_achat,
                         prix_vente: this.composantValues.prix_vente,
-                        coming_date: this.composantValues.coming_date,
+                        coming_date: this.composantValues.coming_date, //!NEZIH
                         link: this.composantValues.link,
                         quantity_stocked: this.composantValues.quantity_stocked,
                         pdf: this.composantValues.pdf,
                         status: this.composantValues.status,
                     });
+                    
                 }
+                
             });
+            
     }
     select(data) {
         this.getCompsantInfo(data.nameComposant);

@@ -31,7 +31,6 @@ export class TicketService {
                         description
                         can_be_repaired
                         bon_de_commande
-                        devis
                         bon_de_livraison
                         contain_pdr
                         facture
@@ -280,6 +279,7 @@ export class TicketService {
                     remarque_coordinator
                     remarque_admin_manager
                     remarque_tech_diagnostic
+                    di_category_id
                 }
             }
         `;
@@ -370,6 +370,25 @@ export class TicketService {
             }
         `;
     }
+    addBL(_id: string, pdf: string){
+        return gql`
+            mutation {
+                addBL(_id: "${_id}", pdf: "${pdf}") {
+                    _id
+                }
+            }
+        `;
+    }
+    addFacture(_id: string, pdf: string){
+      return gql`
+            mutation {
+                addFacture(_id: "${_id}", pdf: "${pdf}") {
+                    _id
+                }
+            }
+        `;
+    }
+
     addBC(_id: string, pdf: string) {
         return gql`
             mutation {
@@ -956,8 +975,7 @@ export class TicketService {
     }
 
     getStatByDI_ID(_idDi: string, _idLog?: number) {
-        if (_idLog) {
-            return gql`
+        return gql`
             query {
                 getInfoStatByIdDi(_idDi: "${_idDi}", _idLogs:${_idLog}) {
                     diag_time
@@ -965,16 +983,6 @@ export class TicketService {
                 }
             }
         `;
-        } else {
-            return gql`
-            query {
-                getInfoStatByIdDi(_idDi: "${_idDi}") {
-                    diag_time
-                    rep_time
-                }
-            }
-        `;
-        }
     }
     confirmerRecoitComposant(_idDI: string) {
         return gql`

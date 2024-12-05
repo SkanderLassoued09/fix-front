@@ -1,17 +1,18 @@
 <p-toast></p-toast>
 <p-confirmDialog />
 
-<div class="card flex flex-row gap-4">
+<div class="card flex flex-row gap-4 improved-card">
+    <!-- Component Info Section -->
     <div class="col-7 component-info">
         <!-- Header -->
-        <header class="component-header mb-3">
+        <header class="component-header mb-3 improved-header">
             <h5>Information sur Composant</h5>
             <div class="flex justify-content-between align-items-center">
                 <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
-                <div class="button-group">
+                <div class="button-group improved-button-group">
                     <p-button
                         [disabled]="isSentToCoordinator"
-                        label="Confirmé les composants"
+                        label="Confirmer les composants"
                         [raised]="true"
                         size="small"
                         (click)="sentComponentToCoordinatorToConfirm()"
@@ -34,50 +35,38 @@
         </header>
 
         <!-- Body Details -->
-        <section
-            class="component-details p-4"
-            [formGroup]="formUpdateComposant"
-        >
-            <div class="field">
+        <section class="component-details p-4 improved-details" [formGroup]="formUpdateComposant">
+            <!-- Details Fields -->
+            <div class="field improved-field">
                 <strong>ID:</strong>
                 <span>{{ composantValues?._id }}</span>
             </div>
 
-            <div class="field w-full">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Category composant:</strong>
-                        <span>{{
-                            composantValues?.category_composant_id
-                        }}</span>
+                        <span>{{ composantValues?.category_composant_id }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input
-                            type="text"
-                            pInputText
-                            formControlName="category_composant_id"
-                        />
+                        <input type="text" pInputText formControlName="category_composant_id" />
                     </ng-template>
                 </p-inplace>
             </div>
 
-            <div class="field">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Date d'arrivage:</strong>
-                        <span>{{ composantValues?.coming_date }}</span>
+                        <span>{{ dateArrivage }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input
-                            type="text"
-                            pInputText
-                            formControlName="coming_date"
-                        />
+                        <input type="text" pInputText formControlName="coming_date" />
                     </ng-template>
                 </p-inplace>
             </div>
 
-            <div class="field">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Lien:</strong>
@@ -89,39 +78,31 @@
                 </p-inplace>
             </div>
 
-            <div class="field">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Package:</strong>
                         <span>{{ composantValues?.package }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input
-                            type="text"
-                            pInputText
-                            formControlName="package"
-                        />
+                        <input type="text" pInputText formControlName="package" />
                     </ng-template>
                 </p-inplace>
             </div>
 
-            <div class="field">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Prix d'achat:</strong>
                         <span>{{ composantValues?.prix_achat }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input
-                            type="text"
-                            pInputText
-                            formControlName="prix_achat"
-                        />
+                        <input type="text" pInputText formControlName="prix_achat" />
                     </ng-template>
                 </p-inplace>
             </div>
 
-            <div class="field">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>PDF:</strong>
@@ -133,34 +114,26 @@
                 </p-inplace>
             </div>
 
-            <div class="field">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Prix de vente:</strong>
                         <span>{{ composantValues?.prix_vente }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input
-                            type="text"
-                            pInputText
-                            formControlName="prix_vente"
-                        />
+                        <input type="text" pInputText formControlName="prix_vente" />
                     </ng-template>
                 </p-inplace>
             </div>
 
-            <div class="field">
+            <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Quantité en stock:</strong>
                         <span>{{ composantValues?.quantity_stocked }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input
-                            type="text"
-                            pInputText
-                            formControlName="quantity_stocked"
-                        />
+                        <input type="text" pInputText formControlName="quantity_stocked" />
                     </ng-template>
                 </p-inplace>
             </div>
@@ -168,21 +141,15 @@
     </div>
 
     <!-- Sidebar for Components List -->
-    <aside class="col-5 component-list p-2">
-        <p-orderList
-            [value]="composants"
-            [listStyle]="{ height: '25rem' }"
-            header="Listes des composants"
-        >
+    <aside class="col-5 component-list p-2 improved-list">
+        <p-orderList [value]="composants" [listStyle]="{ height: '25rem' }" header="Listes des composants">
             <ng-template let-product pTemplate="item">
                 <div
-                    class="component-item flex flex-wrap p-2 align-items-center gap-3"
+                    class="component-item flex flex-wrap p-2 align-items-center gap-3 improved-item"
                     (click)="select(product)"
                 >
                     <div class="flex-1 flex flex-column gap-2">
-                        <span class="font-bold">{{
-                            product.nameComposant
-                        }}</span>
+                        <span class="font-bold">{{ product.nameComposant }}</span>
                         <div class="flex align-items-center gap-2">
                             <i class="pi pi-tag text-sm"></i>
                             <span>{{ product.quantity }}</span>
@@ -193,3 +160,6 @@
         </p-orderList>
     </aside>
 </div>
+
+
+
