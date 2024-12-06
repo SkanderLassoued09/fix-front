@@ -9,7 +9,14 @@ import {
 } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import {
+    AbstractControl,
+    FormControl,
+    FormGroup,
+    ValidationErrors,
+    ValidatorFn,
+    Validators,
+} from '@angular/forms';
 import {
     CreateDiMutationResult,
     DiQueryResult,
@@ -30,6 +37,13 @@ interface Column {
 interface UploadEvent {
     originalEvent: Event;
     files: File[];
+}
+
+function noSpecialCharactersValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const regex = /["'<>]/;
+        return regex.test(control.value) ? { specialCharacters: true } : null;
+    };
 }
 
 @Component({
@@ -79,7 +93,10 @@ export class TicketListComponent implements OnInit {
 
     filsFinished: boolean = false;
     creationDiForm = new FormGroup({
-        title: new FormControl('', [Validators.required]),
+        title: new FormControl('', [
+            Validators.required,
+            Validators.pattern(/^[a-zA-Z0-9\s]+$/),
+        ]),
         designiation: new FormControl('', [Validators.required]),
         typeClient: new FormControl(),
         status: new FormControl(),
@@ -250,6 +267,7 @@ export class TicketListComponent implements OnInit {
     selectedDevis: any;
     selectedBL: string;
     selectedFacture: string;
+    ignoreCountNeg1: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -276,7 +294,12 @@ export class TicketListComponent implements OnInit {
             }
         });
     }
-
+    blockSpecialCharacters(event: KeyboardEvent): void {
+        const invalidCharacters = ['"', "'"];
+        if (invalidCharacters.includes(event.key)) {
+            event.preventDefault(); // Prevent the character from being typed
+        }
+    }
     showDialogDiCreation() {
         this.openAddDiModal = true;
     }
@@ -506,7 +529,7 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.saveBLPDF(this._idDi, this.payload.file);
-                console.log("inside condition savePDF-BL")
+                console.log('inside condition savePDF-BL');
             },
         });
     }
@@ -517,7 +540,7 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.saveFacturePDF(this._idDi, this.payload.file);
-                console.log("inside condition savePDF-BL")
+                console.log('inside condition savePDF-BL');
             },
         });
     }
@@ -533,24 +556,23 @@ export class TicketListComponent implements OnInit {
                 console.log('🦑[saveDevisPDF]:', data);
             });
     }
-    saveBLPDF(_id: string, pdf: string){
+    saveBLPDF(_id: string, pdf: string) {
         this.apollo
-        .mutate<any>({
-            mutation: this.ticketSerice.addBL(_id, pdf),
-        })
-        .subscribe(({ data }) => {
-            console.log('🦑[saveDevisPDF] 98:', data);
-        });
+            .mutate<any>({
+                mutation: this.ticketSerice.addBL(_id, pdf),
+            })
+            .subscribe(({ data }) => {
+                console.log('🦑[saveDevisPDF] 98:', data);
+            });
     }
-    saveFacturePDF(_id: string, pdf: string){
+    saveFacturePDF(_id: string, pdf: string) {
         this.apollo
-        .mutate<any>({
-            mutation: this.ticketSerice.addFacture(_id, pdf),
-        })
-        .subscribe(({ data }) => {
-            console.log('🦑[saveDevisPDF] 98:', data);
-        });
-
+            .mutate<any>({
+                mutation: this.ticketSerice.addFacture(_id, pdf),
+            })
+            .subscribe(({ data }) => {
+                console.log('🦑[saveDevisPDF] 98:', data);
+            });
     }
     saveBCPDF(_id: string, pdf: string) {
         console.log('🍿[pdf]:', pdf);
@@ -691,6 +713,7 @@ export class TicketListComponent implements OnInit {
         this.selectedRowInNegociate1 = data;
 
         this.seletedRow = data._id;
+        this.ignoreCountNeg1 = data.ignoreCount;
 
         this._idDi = this.seletedRow;
 
@@ -782,12 +805,25 @@ export class TicketListComponent implements OnInit {
     getDiByID(_idDi: string) {
         this.apollo
             .watchQuery<DiQueryResult>({
-                query: this.ticketSerice.getDiByID(_idDi),
+                query: this.ticketSerice.getDiById(_idDi),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.dataById = data;
-                    this.price = this.dataById.getDiById.price;
+                    console.log('🌶[ this.dataById]:', this.dataById);
+
+                    if (this.dataById.getDiById.logsDi) {
+                        console.log('🍦 logsdi');
+                        const filtredLogsDi =
+                            this.dataById.getDiById.logsDi.find(
+                                (el) => el._id === this.ignoreCountNeg1
+                            );
+                        console.log('🍭[filtredLogsDi]:', filtredLogsDi);
+                        this.price = filtredLogsDi.price;
+                    } else {
+                        console.log('🍦 di');
+                        this.price = this.dataById.getDiById.di.price;
+                    }
                 }
             });
     }
@@ -1097,9 +1133,9 @@ export class TicketListComponent implements OnInit {
                     .subscribe(({ data }) => {
                         //! NEED TO SELECT THE ID OF THE SELECTED DI
                     });
-    
+
                 this.getDi(this.first, this.rows);
-            }
+            },
         });
     }
     // TODO cannot return null for non nullable field below
@@ -1220,7 +1256,7 @@ export class TicketListComponent implements OnInit {
     //!POP HERE
     ignore(_idticket) {
         console.log('🍟[_idticket]:', _idticket);
-       
+
         this.confirmationService.confirm({
             message: 'Voulez-vous continuer ?',
             header: "Envoyer Demande d'intervention Retour",
@@ -1233,8 +1269,9 @@ export class TicketListComponent implements OnInit {
                     .subscribe(({ data }) => {
                         console.log('🍦[data]:', data);
                         if (data) {
-                            const updatedIgnoreCount = data.countIgnore.ignoreCount;
-        
+                            const updatedIgnoreCount =
+                                data.countIgnore.ignoreCount;
+
                             // Conditional checks for status updates
                             if (updatedIgnoreCount === 1) {
                                 this.changeStatusRetour1(_idticket._id);
@@ -1243,20 +1280,20 @@ export class TicketListComponent implements OnInit {
                             } else if (updatedIgnoreCount === 3) {
                                 this.changeStatusRetour3(_idticket._id);
                             }
-        
+
                             // Update the ignore count in the diList
                             const ticketIndex = this.diList.findIndex(
                                 (item) => item._id === _idticket._id
                             );
                             if (ticketIndex !== -1) {
-                                this.diList[ticketIndex].ignoreCount = updatedIgnoreCount;
+                                this.diList[ticketIndex].ignoreCount =
+                                    updatedIgnoreCount;
                             }
                         }
                         this.cdr.detectChanges();
                     });
-            }
+            },
         });
-        ;
     }
 
     addCategoryDi() {
@@ -1354,12 +1391,11 @@ export class TicketListComponent implements OnInit {
                     console.log('🍢[Blob URL for BC]:', this.selectedBc);
                 } else if (type === 'Devis') {
                     this.selectedDevis = blobUrl; // Assign Blob URL for Devis
-                } else if (type == 'BL'){
-                    console.log("condition correct BL");
-                    this.selectedBL = blobUrl
-                }
-                else if (type == 'Facture'){
-                    this.selectedFacture = blobUrl
+                } else if (type == 'BL') {
+                    console.log('condition correct BL');
+                    this.selectedBL = blobUrl;
+                } else if (type == 'Facture') {
+                    this.selectedFacture = blobUrl;
                 }
 
                 this.uploadFileLoading = false;

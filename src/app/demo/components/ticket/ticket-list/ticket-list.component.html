@@ -160,7 +160,6 @@
         <!-- Form Group -->
         <fieldset class="location-form">
             <legend>Informations Générales</legend>
-            <span>Veuillez noter de ne pas utiliser "" ou ''</span>
 
             <!-- Title -->
             <div class="form-group">
@@ -171,6 +170,7 @@
                     type="text"
                     class="form-control"
                     aria-label="Titre"
+                    (keydown)="blockSpecialCharacters($event)"
                 />
             </div>
 
@@ -227,7 +227,7 @@
                         aria-label="Client"
                     ></p-radioButton>
                     <label class="radio-label ml-2">Client</label>
-        
+
                     <p-radioButton
                         (onClick)="getSt($event)"
                         formControlName="typeClient"
@@ -237,7 +237,7 @@
                     <label class="radio-label ml-2">Société</label>
                 </div>
             </div>
-        
+
             <!-- Conditional Dropdowns -->
             <div class="col" *ngIf="radioBtn === 'COMPANY'">
                 <label for="company" class="dropdown-label">Société</label>
@@ -252,7 +252,7 @@
                     placeholder="Choisir société"
                 ></p-dropdown>
             </div>
-        
+
             <div class="col" *ngIf="radioBtn === 'CLIENT'">
                 <label for="client" class="dropdown-label">Client</label>
                 <p-dropdown
@@ -321,10 +321,11 @@
                 [loading]="loadingCreatingDi || uploadFileLoading"
                 (onClick)="createDi()"
                 [disabled]="
-                !creationDiForm.get('title').value || 
-                !creationDiForm.get('designiation').value || 
-                (!creationDiForm.get('client_id').value && !creationDiForm.get('company_id').value)
-              "
+                    !creationDiForm.get('title').value ||
+                    !creationDiForm.get('designiation').value ||
+                    (!creationDiForm.get('client_id').value &&
+                        !creationDiForm.get('company_id').value)
+                "
             ></p-button>
         </div>
     </form>
@@ -842,23 +843,34 @@
     [resizable]="false"
     appendTo="body"
 >
-<div>
     <div>
-        <h3  class="dialog-title">Consulter Bon de commande & Devis </h3>
-        <div class="button-row">
-            <div class="button-container-BC">
-                <a [href]="selectedBc" target="_blank" rel="noopener noreferrer">
-                    <p-button label="Consulter BC" [link]="true"></p-button>
-                </a>
-            </div>
-            <div class="button-container-BC">
-                <a [href]="selectedDevis" target="_blank" rel="noopener noreferrer">
-                    <p-button label="Consulter Devis" [link]="true"></p-button>
-                </a>
+        <div>
+            <h3 class="dialog-title">Consulter Bon de commande & Devis</h3>
+            <div class="button-row">
+                <div class="button-container-BC">
+                    <a
+                        [href]="selectedBc"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button label="Consulter BC" [link]="true"></p-button>
+                    </a>
+                </div>
+                <div class="button-container-BC">
+                    <a
+                        [href]="selectedDevis"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter Devis"
+                            [link]="true"
+                        ></p-button>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-</div>
     <ng-container>
         <div class="dialog-content">
             <h3 class="dialog-title">Affecter Bon de livraison et Facture</h3>

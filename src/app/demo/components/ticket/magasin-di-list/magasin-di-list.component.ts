@@ -302,7 +302,8 @@ export class MagasinDiListComponent {
         this.ignoreCount = item.ignoreCount;
         console.log('🍰[ this.ignoreCount ]:', this.ignoreCount);
 
-        if (item.ignoreCount && item.ignoreCount > 0) {
+        if (item && item.ignoreCount && item.ignoreCount > 0) {
+            console.log('retour', item.ignoreCount);
             this.apollo
                 .query<any>({
                     query: this.ticketSerice.getLogsDiById(

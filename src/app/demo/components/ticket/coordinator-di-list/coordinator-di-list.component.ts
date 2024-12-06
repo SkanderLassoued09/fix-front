@@ -289,7 +289,7 @@ export class CoordinatorDiListComponent {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.reperationCondition =
-                        data.getDiById.gotComposantFromMagasin;
+                        data.getDiById.di.gotComposantFromMagasin;
                 }
             });
     }
@@ -316,10 +316,14 @@ export class CoordinatorDiListComponent {
     openModalConfig(di) {
         console.log('🍷[di]:', di);
         this.di = { ...di };
-        this.gotComposantFromMagasinCondition=di.gotComposantFromMagasin
+        this.gotComposantFromMagasinCondition = di.gotComposantFromMagasin;
         this.magasinsentToCoordinator = di.isSentToCoordinator;
-        this.componentConfirmedFromCoordinator = di.isConfirmedComponentFromCoordinator
-        console.log("magasinsentToCoordinator componentConfirmedFromCoordinator ",this.componentConfirmedFromCoordinator)
+        this.componentConfirmedFromCoordinator =
+            di.isConfirmedComponentFromCoordinator;
+        console.log(
+            'magasinsentToCoordinator componentConfirmedFromCoordinator ',
+            this.componentConfirmedFromCoordinator
+        );
         this.openBtnConfirm = di.isSentToCoordinator;
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;
@@ -542,8 +546,6 @@ export class CoordinatorDiListComponent {
                             this.reperationCondition = true;
                         }
                     });
-                    
-
             },
         });
     }

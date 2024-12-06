@@ -11,8 +11,9 @@ import {
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
-import { filter } from 'rxjs';
+import { filter, finalize, map } from 'rxjs';
 import * as moment from 'moment';
+import { dA } from '@fullcalendar/core/internal-common';
 
 @Component({
     selector: 'app-tech-di-list',
@@ -175,6 +176,10 @@ export class TechDiListComponent implements OnInit {
     ignoreCount: number = 0;
     remarque_tech_repair: string;
     di_category_id: string;
+    allComposantLogsAndOriginal: any[];
+    historyOfDi: any;
+    isLoading: boolean;
+    error: string;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -465,7 +470,6 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
-        
         if (di.status === 'DIAGNOSTIC_Pause') {
             const getLog = this.getCurrentPauseLog(di.pauseLogs);
 
@@ -473,11 +477,30 @@ export class TechDiListComponent implements OnInit {
                 this.updatePauseLog(di._id, getLog._id);
             }
         }
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
+            })
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe({
+                next: ({ data }) => {
+                    if (data?.getRetourDataStats?.length > 0) {
+                        this.historyOfDi = data.getRetourDataStats;
+                        console.log('Fetched History:', this.historyOfDi);
+                    } else {
+                        this.error = 'No data found';
+                    }
+                },
+                error: (err) => {
+                    console.error('Error fetching data:', err);
+                    this.error = 'Failed to load data';
+                },
+            });
 
         this.allCategoryDi();
         // Reset form and modal data
         this.resetModalForm();
-
+        let arrayComposantLogs;
         // Fetch the details from the backend
         this.apollo
             .query<any>({
@@ -485,33 +508,67 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    const detailsDi = data.getDiById;
+                    const detailsDi = data.getDiById.di;
+                    const detailsLogs = data.getDiById.logsDi;
 
-                    // Patch the form with the new data
-                    this.diagFormTech.patchValue({
-                        _idDi: di._id,
-                        diag_time: di.diag_time || detailsDi.diag_time || '',
-                        remarqueTech:
-                            di.remarqueTech ||
-                            detailsDi.remarque_tech_diagnostic ||
-                            '',
-                        isPdr: di.isPdr || detailsDi.contain_pdr || true,
-                        isReparable:
-                            di.isReparable || detailsDi.can_be_repaired || true,
-                        quantity: di.quantity || 0,
-                        composantSelectedDropdown:
-                            di.composantSelectedDropdown ??
-                            detailsDi.array_composants,
-                    });
+                    if (detailsLogs) {
+                        // Create the array of composant logs and set ignoreCount
+                        arrayComposantLogs = detailsLogs.flatMap((el) => {
+                            return el.array_composants.map((composant) => ({
+                                ...composant,
+                                ignoreCount: el._id, // Assign ignoreCount from the logs
+                            }));
+                        });
 
-                    this.composantCombo = detailsDi.array_composants;
-                    console.log("Data array composants",this.composantCombo)
+                        this.composantCombo = [];
+
+                        console.log('Hello logs', arrayComposantLogs);
+                        this.allComposantLogsAndOriginal = [
+                            ...detailsDi.array_composants,
+                            ...arrayComposantLogs,
+                        ];
+                    }
+
+                    if (detailsDi) {
+                        // Patch the form with the new data
+                        this.diagFormTech.patchValue({
+                            _idDi: di._id,
+                            diag_time:
+                                di.diag_time || detailsDi.diag_time || '',
+                            remarqueTech:
+                                di.remarqueTech ||
+                                detailsDi.remarque_tech_diagnostic ||
+                                '',
+                            isPdr: di.isPdr || detailsDi.contain_pdr || true,
+                            isReparable:
+                                di.isReparable ||
+                                detailsDi.can_be_repaired ||
+                                true,
+                            quantity: di.quantity || 0,
+                            composantSelectedDropdown:
+                                di.composantSelectedDropdown ??
+                                detailsDi.array_composants,
+                        });
+
+                        // Set ignoreCount to 0 for all items in detailsDi.array_composants
+                        detailsDi.array_composants =
+                            detailsDi.array_composants.map((composant) => ({
+                                ...composant,
+                                ignoreCount: 0,
+                            }));
+                        // Combine the original components with the logged components
+                        // this.composantCombo = detailsDi.array_composants;
+
+                        console.log(
+                            'Data array composants',
+                            this.composantCombo
+                        );
+                    }
                 }
 
                 // Open the modal after data is fetched
                 this.diDialogDiag[di._id] = true;
             });
-
         // Set selected DI and status
         this.di = { ...di };
         this.selectedDi = di._id;
@@ -525,7 +582,22 @@ export class TechDiListComponent implements OnInit {
         this.getTimeSpent(di._id);
         this.getImage();
         this.getAllRemarque(di._idDi);
-        console.log("DATA inside ",this.di)
+        console.log('DATA inside ', this.di);
+        this.cdr.detectChanges();
+    }
+
+    getDataOriginalAndRetour(_id: string) {
+        return this.apollo
+            .query<any>({
+                query: this.ticketSerice.getDataOriginalAndRetour(_id),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.historyOfDi = data?.getRetourDataStats;
+                    console.log('🥞[this.historyOfDi ]:', this.historyOfDi);
+                    this.cdr.detectChanges();
+                }
+            });
     }
 
     repModal(di) {
@@ -546,7 +618,7 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    const detailsDi = data.getDiById;
+                    const detailsDi = data.getDiById.di;
 
                     // Patch the form with the new data
                     this.remarque.patchValue({
@@ -634,12 +706,13 @@ export class TechDiListComponent implements OnInit {
                         data.getAllRemarque.remarque_admin_tech;
                     this.remarque_tech_diagnostic =
                         data.getAllRemarque.remarque_tech_diagnostic;
-                        this.remarque_tech_repair = data.getAllRemarque.remarque_tech_repair;
+                    this.remarque_tech_repair =
+                        data.getAllRemarque.remarque_tech_repair;
                     this.remarque_magasin =
                         data.getAllRemarque.remarque_magasin;
                     this.remarque_coordinator =
                         data.getAllRemarque.remarque_coordinator;
-                        this.di_category_id = data.getAllRemarque.di_category_id
+                    this.di_category_id = data.getAllRemarque.di_category_id;
                 }
             });
     }
@@ -927,7 +1000,7 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     this.dataBarChartIsReady = true;
                     this.techDataInfo = data.getDiStatusCounts;
-                    console.log("Data stats inisde modal",data)
+                    console.log('Data stats inisde modal', data);
                     // Initialize the dashboard variables
                     this.diagEnPause_miniDashboard = 0;
                     this.diagNotOpened_miniDashboard = 0;
@@ -1060,6 +1133,8 @@ export class TechDiListComponent implements OnInit {
                     di_category_id: this.diagFormTech.value.di_category_id,
                     composant: this.composantCombo,
                 };
+
+                console.log('dataDiag', dataDiag);
 
                 this.lap();
 

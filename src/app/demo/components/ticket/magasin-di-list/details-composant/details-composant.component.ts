@@ -51,7 +51,7 @@ export class DetailsComposantComponent implements OnInit {
     isSentToCoordinator: boolean = false;
     componentInfo: any;
     componentsAreConfirmed: boolean;
-    dateArrivage:string
+    dateArrivage: string;
     constructor(
         private ticketSerice: TicketService,
         private productService: ProductService,
@@ -87,7 +87,11 @@ export class DetailsComposantComponent implements OnInit {
             if (message) {
                 this.getDiByID(this._id);
             }
-            if (message.array_composants.length > 0) {
+            if (
+                message &&
+                message.array_composants &&
+                message.array_composants.length > 0
+            ) {
                 this.componentsAreConfirmed = true;
             }
         });
@@ -105,8 +109,10 @@ export class DetailsComposantComponent implements OnInit {
                     'this is my data coming from composant querys'
                 );
                 this.composantValues = data.findOneComposant;
-                this.dateArrivage = formatDate(data.findOneComposant.coming_date);
-                console.log(this.dateArrivage,"this.dateArrivage")
+                this.dateArrivage = formatDate(
+                    data.findOneComposant.coming_date
+                );
+                console.log(this.dateArrivage, 'this.dateArrivage');
                 if (data) {
                     // Initialize form fields with loaded data
                     // TODO Change response from the server to object of data not boolean
@@ -123,11 +129,8 @@ export class DetailsComposantComponent implements OnInit {
                         pdf: this.composantValues.pdf,
                         status: this.composantValues.status,
                     });
-                    
                 }
-                
             });
-            
     }
     select(data) {
         this.getCompsantInfo(data.nameComposant);
@@ -136,16 +139,16 @@ export class DetailsComposantComponent implements OnInit {
     getDiByID(_id: string) {
         this.apollo
             .query<any>({
-                query: this.ticketSerice.getDiByID(_id),
+                query: this.ticketSerice.getDiById(_id),
             })
             .subscribe(({ data }) => {
                 if (data) {
                     console.log('🍕[data]:', data);
                     this.isSentToCoordinator =
-                        data.getDiById.isSentToCoordinator;
+                        data.getDiById.di.isSentToCoordinator;
                     this.componentsAreConfirmed =
-                        data.getDiById.isConfirmedComponentFromCoordinator;
-                    this.composants = data.getDiById.array_composants;
+                        data.getDiById.di.isConfirmedComponentFromCoordinator;
+                    this.composants = data.getDiById.di.array_composants;
                 }
             });
     }

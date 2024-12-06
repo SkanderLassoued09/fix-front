@@ -370,7 +370,7 @@ export class TicketService {
             }
         `;
     }
-    addBL(_id: string, pdf: string){
+    addBL(_id: string, pdf: string) {
         return gql`
             mutation {
                 addBL(_id: "${_id}", pdf: "${pdf}") {
@@ -379,8 +379,8 @@ export class TicketService {
             }
         `;
     }
-    addFacture(_id: string, pdf: string){
-      return gql`
+    addFacture(_id: string, pdf: string) {
+        return gql`
             mutation {
                 addFacture(_id: "${_id}", pdf: "${pdf}") {
                     _id
@@ -870,21 +870,21 @@ export class TicketService {
             }
         `;
     }
-    getDiByID(_id: string) {
-        return gql`
-    query {
-      getDiById(_id: "${_id}") {
-        price
-   isSentToCoordinator
-   isConfirmedComponentFromCoordinator
-        array_composants {
-          nameComposant
-          quantity
-        }
-      }
-    }
-  `;
-    }
+    //     getDiByID(_id: string) {
+    //         return gql`
+    //     query {
+    //       getDiById(_id: "${_id}") {
+    //         di{price
+    //    isSentToCoordinator
+    //    isConfirmedComponentFromCoordinator
+    //         array_composants {
+    //           nameComposant
+    //           quantity
+    //         }}
+    //       }
+    //     }
+    //   `;
+    //     }
 
     sentComponentToCoordinatorToConfirm(_id: string) {
         return gql`
@@ -941,18 +941,74 @@ export class TicketService {
         `;
     }
 
-    getDiById(_id: string) {
-        return gql`
-            {
-                getDiById(_id: "${_id}") {
-                    remarque_tech_diagnostic
+    /**
+     *
+     *  {getDiById(_id:"DI2"){logsDi{remarque_tech_diagnostic
                     remarque_tech_repair
                     can_be_repaired
                     contain_pdr
                     array_composants {
                         nameComposant
                         quantity
+                    }} di{remarque_tech_diagnostic
+                    remarque_tech_repair
+                    can_be_repaired
+                    contain_pdr
+                    array_composants {
+                        nameComposant
+                        quantity
+                    }}}}
+     *
+     */
+
+    getDiById(_id: string) {
+        return gql`
+            {
+                getDiById(_id: "${_id}") {
+                    logsDi {
+                        _id
+                        price
+                        isSentToCoordinator
+   isConfirmedComponentFromCoordinator
+                        remarque_tech_diagnostic
+                        remarque_tech_repair
+                        can_be_repaired
+                        contain_pdr
+                        array_composants {
+                            nameComposant
+                            quantity
+                        }
                     }
+                    di {
+                    _id
+                        price
+                        isSentToCoordinator
+   isConfirmedComponentFromCoordinator
+                        remarque_tech_diagnostic
+                        remarque_tech_repair
+                        can_be_repaired
+                        contain_pdr
+                        array_composants {
+                            nameComposant
+                            quantity
+                        }
+                    }
+                }
+            }
+        `;
+    }
+
+    getDataOriginalAndRetour(_id: string) {
+        return gql`
+            {
+                getRetourDataStats(_idDi: "${_id}") {
+                    _id
+                    _idDi
+                    id_tech_diag
+                    id_tech_rep
+                    diag_time
+                    rep_time
+                    ignoreCount
                 }
             }
         `;
@@ -975,7 +1031,8 @@ export class TicketService {
     }
 
     getStatByDI_ID(_idDi: string, _idLog?: number) {
-        return gql`
+        if (_idLog) {
+            return gql`
             query {
                 getInfoStatByIdDi(_idDi: "${_idDi}", _idLogs:${_idLog}) {
                     diag_time
@@ -983,6 +1040,16 @@ export class TicketService {
                 }
             }
         `;
+        } else {
+            return gql`
+            query {
+                getInfoStatByIdDi(_idDi: "${_idDi}") {
+                    diag_time
+                    rep_time
+                }
+            }
+        `;
+        }
     }
     confirmerRecoitComposant(_idDI: string) {
         return gql`
@@ -1009,7 +1076,7 @@ export class TicketService {
         return gql`
             query {
                 getDiById(_id: "${_idDi}") {
-                    gotComposantFromMagasin
+                    di{gotComposantFromMagasin}
                 }
             }
         `;
@@ -1116,7 +1183,8 @@ export class TicketService {
         return gql`
             query {
                 getDiById(_id: "${_idDi}") {
-                    image
+                di {image}
+                    
                 }
             }
         `;

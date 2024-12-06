@@ -98,7 +98,7 @@ export class AppTopBarComponent implements OnInit {
         this._idDoc = _idDoc;
         this.apollo
             .query<any>({
-                query: this.ticketService.getDiByID(_idDoc),
+                query: this.ticketService.getDiById(_idDoc),
             })
             .subscribe(({ data }) => {
                 console.log('🍯[data]:', data);
