@@ -781,33 +781,56 @@
     [resizable]="false"
 >
     <ng-container>
+        <!--in first flow-->
+        <div  >
+            <div>
+                @for (item of array_composants; track $index) { @for (composant of
+                allComposants; track $index) {
+                <p-card
+                    ><div>Composant:{{ item.nameComposant }}</div>
+                    <div>Quantity:{{ item.quantity }}</div>
+                    <div>Price:{{ composant.prix_vente }}</div>
+                </p-card>
+                } } @empty { }
+                <h5>Le temps de dignostique est de {{ timeDiagnostique }}</h5>
+                <h5>
+                    Facturation diagnostique technicien est de
+                    {{ facturationDiagnostique }} TND
+                </h5>
+                <h5
+                    *ngIf="totalComposant && totalComposant !== 0; else noComposant"
+                >
+                    Le total des composants est égal à
+                    {{ totalComposant }} TND
+                </h5>
+                <ng-template #noComposant>
+                    <h5>Di ne contient pas de composants</h5>
+                </ng-template>
+                <h4>
+                    Le côut Total est de
+                    {{ totalComposant + facturationDiagnostique }} TND
+                </h4>
+            </div>
+        </div>
+        <!-- IN RETOUR FLOW-->
+        <div *ngIf="ignoreCount > 0">
+            <!-- OLD DATA -->
+            <div>
+                <span>Le temps de dignostique initial est de {{ timeDiagnostique }}</span>
+                <span>Facturation diagnostique initial est de{{ facturationDiagnostique }} TND</span>
+                <span *ngIf="totalComposant && totalComposant !== 0; else noComposant">Le total des composants avant retour égal à{{ totalComposant }} TND</span>
+                <ng-template #noComposant>
+                    <h5>Di ne contient pas de composants avant retour</h5>
+                </ng-template>
+                <h4>
+                    Le côut Total initial est de
+                    {{ totalComposant + facturationDiagnostique }} TND
+                </h4>
+            </div>
+            <!-- NEW DATA OF RETOUR -->
         <div>
-            @for (item of array_composants; track $index) { @for (composant of
-            allComposants; track $index) {
-            <p-card
-                ><div>Composant:{{ item.nameComposant }}</div>
-                <div>Quantity:{{ item.quantity }}</div>
-                <div>Price:{{ composant.prix_vente }}</div>
-            </p-card>
-            } } @empty { }
-            <h5>Le temps de dignostique est de {{ timeDiagnostique }}</h5>
-            <h5>
-                Facturation diagnostique technicien est de
-                {{ facturationDiagnostique }} TND
-            </h5>
-            <h5
-                *ngIf="totalComposant && totalComposant !== 0; else noComposant"
-            >
-                Le total des composants est égal à
-                {{ totalComposant }} TND
-            </h5>
-            <ng-template #noComposant>
-                <h5>Di ne contient pas de composants</h5>
-            </ng-template>
-            <h4>
-                Le côut Total est de
-                {{ totalComposant + facturationDiagnostique }} TND
-            </h4>
+
+        </div>
         </div>
         <ng-template #notPrice>
             <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>

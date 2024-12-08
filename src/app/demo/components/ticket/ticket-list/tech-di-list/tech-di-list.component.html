@@ -213,22 +213,25 @@
                             <p class="m-0">{{ remarque_manager }}</p>
                         </p-fieldset>
                     </div>
-                    <div class="field" *ngIf="remarque_tech_diagnostic">
-                        <p-fieldset
-                            legend="Remarque Diagnostique Technicien"
-                            [toggleable]="true"
-                        >
-                            <p class="m-0">{{ remarque_tech_diagnostic }}</p>
-                        </p-fieldset>
+                    <div *ngIf="ignoreCount > 0">
+                        <div class="field" *ngIf="remarque_tech_diagnostic">
+                            <p-fieldset
+                                legend="Remarque Diagnostique Technicien"
+                                [toggleable]="true"
+                            >
+                                <p class="m-0">{{ remarque_tech_diagnostic }}</p>
+                            </p-fieldset>
+                        </div>
+                        <div class="field" *ngIf="remarque_tech_repair">
+                            <p-fieldset
+                                legend="Remarque Reparation Technicien"
+                                [toggleable]="true"
+                            >
+                                <p class="m-0">{{ remarque_tech_repair }}</p>
+                            </p-fieldset>
+                        </div>
                     </div>
-                    <div class="field" *ngIf="remarque_tech_repair">
-                        <p-fieldset
-                            legend="Remarque Reparation Technicien"
-                            [toggleable]="true"
-                        >
-                            <p class="m-0">{{ remarque_tech_repair }}</p>
-                        </p-fieldset>
-                    </div>
+                    
                     <span>Type de Panne: {{ di_category_id }} </span>
                 </div>
 
@@ -240,27 +243,29 @@
                     {{ error }}
                 </div>
 
-                <div *ngIf="historyOfDi && historyOfDi.length > 0">
-                    <div *ngFor="let item of historyOfDi">
-                        <div>
-                            <span
-                                >Technicien chargé Diagnostique:
-                                {{ item?.id_tech_diag }}</span
-                            >
-                            <span
-                                >Temps Diagnostique: {{ item?.diag_time }}</span
-                            >
-                        </div>
-                        <div>
-                            <span
-                                >Technicien chargé Réparation:
-                                {{ item?.id_tech_rep }}</span
-                            >
-                            <span>Temps Réparation: {{ item?.rep_time }}</span>
+                <div *ngIf="ignoreCount>0">
+                    <div *ngIf="historyOfDi && historyOfDi.length > 0">
+                        <div *ngFor="let item of historyOfDi">
+                            <div>
+                                <span
+                                    >Technicien chargé Diagnostique:
+                                    {{ item?.id_tech_diag }}</span
+                                >
+                                <span
+                                    >Temps Diagnostique: {{ item?.diag_time }}</span
+                                >
+                            </div>
+                            <div>
+                                <span
+                                    >Technicien chargé Réparation:
+                                    {{ item?.id_tech_rep }}</span
+                                >
+                                <span>Temps Réparation: {{ item?.rep_time }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div>
+                <div *ngIf="ignoreCount>0">
                     <h3>
                         Liste des composants original et retour: ({{
                             ignoreCount
@@ -689,6 +694,56 @@
                                 {{ onecomposant.quantity }}
                             </th>
                         </div>
+                    </div>
+                    <div *ngIf="ignoreCount>0">
+                        <div *ngIf="historyOfDi && historyOfDi.length > 0">
+                            <div *ngFor="let item of historyOfDi">
+                                <div>
+                                    <span
+                                        >Technicien chargé Diagnostique:
+                                        {{ item?.id_tech_diag }}</span
+                                    >
+                                    <span
+                                        >Temps Diagnostique: {{ item?.diag_time }}</span
+                                    >
+                                </div>
+                                <div>
+                                    <span
+                                        >Technicien chargé Réparation:
+                                        {{ item?.id_tech_rep }}</span
+                                    >
+                                    <span>Temps Réparation: {{ item?.rep_time }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div *ngIf="ignoreCount>0">
+                        <h3>
+                            Liste des composants original et retour: ({{
+                                ignoreCount
+                            }})
+                        </h3>
+                        <p-table
+                            [value]="allComposantLogsAndOriginal"
+                            [paginator]="true"
+                            [rows]="10"
+                            [responsiveLayout]="'scroll'"
+                        >
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Retour</th>
+                                    <th>Nom du Composant</th>
+                                    <th>Quantité</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-composant>
+                                <tr>
+                                    <td>{{ composant.ignoreCount }}</td>
+                                    <td>{{ composant.nameComposant }}</td>
+                                    <td>{{ composant.quantity }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
                     </div>
                     <label for="name">
                         Ajouter des remarques concernant le Di si nécessaire

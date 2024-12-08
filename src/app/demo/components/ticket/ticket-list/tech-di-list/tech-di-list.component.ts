@@ -635,6 +635,7 @@ export class TechDiListComponent implements OnInit {
         this.selectedDi = di._id;
         this.diDialogRep = true;
         this.getTimeSpentRep(di._id);
+        this.getImage();
         this.changeStatusInReparation(di._idDi);
         this.getAllRemarque(di._idDi);
         this.apollo
