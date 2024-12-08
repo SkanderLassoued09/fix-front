@@ -646,7 +646,7 @@
         </p-dialog>
     </ng-container>
     <!-- REPERATION MODAL -->
-    <p-dialog
+   <p-dialog
         header="Reparation"
         [(visible)]="diDialogRep"
         [style]="{ width: '50%', height: '70vh' }"
@@ -696,6 +696,7 @@
                         </div>
                     </div>
                     <div *ngIf="ignoreCount>0">
+                        <span>inside condition</span>
                         <div *ngIf="historyOfDi && historyOfDi.length > 0">
                             <div *ngFor="let item of historyOfDi">
                                 <div>
