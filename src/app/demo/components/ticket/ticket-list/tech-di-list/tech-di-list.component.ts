@@ -28,9 +28,11 @@ export class TechDiListComponent implements OnInit {
         remarqueTech: new FormControl(''),
         isPdr: new FormControl(false),
         isReparable: new FormControl(false),
+        isErrorFromFixtronix: new FormControl(false),
         quantity: new FormControl(0),
         composantSelectedDropdown: new FormControl(),
         di_category_id: new FormControl(),
+        composantSelected: new FormControl(),
     });
 
     composantTechnicien = new FormGroup({
@@ -508,6 +510,7 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
+                    console.log('🥥[data]:', data);
                     const detailsDi = data.getDiById.di;
                     const detailsLogs = data.getDiById.logsDi;
 
@@ -630,7 +633,27 @@ export class TechDiListComponent implements OnInit {
                 }
             });
         // -----------
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
+            })
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe({
+                next: ({ data }) => {
+                    if (data?.getRetourDataStats?.length > 0) {
+                        this.historyOfDi = data.getRetourDataStats;
+                        console.log('Fetched History:', this.historyOfDi);
+                    } else {
+                        this.error = 'No data found';
+                    }
+                },
+                error: (err) => {
+                    console.error('Error fetching data:', err);
+                    this.error = 'Failed to load data';
+                },
+            });
         this.di = { ...di };
+        this.ignoreCount = di.ignoreCount;
         this.resetModalForm();
         this.selectedDi = di._id;
         this.diDialogRep = true;
@@ -716,6 +739,10 @@ export class TechDiListComponent implements OnInit {
                     this.di_category_id = data.getAllRemarque.di_category_id;
                 }
             });
+    }
+
+    show() {
+        console.log('form', this.diagFormTech.value);
     }
 
     hideDialogDiag() {
@@ -941,6 +968,8 @@ export class TechDiListComponent implements OnInit {
             _idDi: this.selectedDi_id,
             pdr: this.diagFormTech.get('isPdr')?.value ?? false,
             reparable: this.diagFormTech.get('isReparable')?.value ?? false,
+            isErrorFromFixtronix:
+                this.diagFormTech.get('isErrorFromFixtronix')?.value ?? false,
             remarqueTech: this.diagFormTech.get('remarqueTech')?.value ?? '',
             di_category_id:
                 this.diagFormTech.get('di_category_id')?.value ?? '',
@@ -1050,6 +1079,7 @@ export class TechDiListComponent implements OnInit {
             });
     }
     selectedDropDown(selectedItem) {
+        console.log('🥚[selectedItem]:', selectedItem);
         this.composantSelected = selectedItem;
     }
     getSeverity(status: string) {
@@ -1088,19 +1118,17 @@ export class TechDiListComponent implements OnInit {
     }
     comboComposantandQuantity() {
         const selectedName = this.composantSelected.value.name;
-
         let composantSelected = {
             nameComposant: selectedName,
             quantity: this.diagFormTech.value.quantity,
         };
-
         this.composantCombo.push(composantSelected);
-
         this.composantList = this.composantList.filter(
             (composant) => composant.name !== selectedName
         );
-
-        // this.composantSelected = null;
+        console.log('composantCombo', this.composantCombo);
+        console.log('composantList', this.composantList);
+        this.composantSelected = null;
     }
 
     changeStatusMagasinEstimation(_id: string) {
@@ -1131,6 +1159,8 @@ export class TechDiListComponent implements OnInit {
                     pdr: this.diagFormTech.value.isPdr,
                     reparable: this.diagFormTech.value.isReparable,
                     remarqueTech: this.diagFormTech.value.remarqueTech,
+                    isErrorFromFixtronix:
+                        this.diagFormTech.value.isErrorFromFixtronix ?? false,
                     di_category_id: this.diagFormTech.value.di_category_id,
                     composant: this.composantCombo,
                 };
@@ -1195,6 +1225,19 @@ export class TechDiListComponent implements OnInit {
             },
         });
     }
+
+    changeStatusPending3() {
+        console.log(' this.selectedDi_id', this.selectedDi_id);
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusPending3(
+                    this.selectedDi_id
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log('send to pending 3', data);
+            });
+    }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
         console.log('🍯[techFinishDiag]:');
@@ -1209,8 +1252,12 @@ export class TechDiListComponent implements OnInit {
                     reparable: this.diagFormTech.value.isReparable,
                     remarqueTech: this.diagFormTech.value.remarqueTech,
                     di_category_id: this.diagFormTech.value.di_category_id,
+                    isErrorFromFixtronix:
+                        this.diagFormTech.value.isErrorFromFixtronix ?? false,
                     composant: this.composantCombo,
                 };
+
+                console.log('dataDiag', dataDiag);
 
                 this.lap();
 

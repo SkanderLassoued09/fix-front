@@ -535,7 +535,8 @@ export class TicketService {
     }
 
     finish(diagInfo) {
-        console.log('🥖[diagInfo]:', diagInfo);
+        console.log('🍱[diagInfo logs]:', diagInfo);
+
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
@@ -548,6 +549,7 @@ export class TicketService {
                     remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
                     contain_pdr: ${diagInfo.pdr}
                     can_be_repaired: ${diagInfo.reparable}
+                    isErrorFromFixtronix: ${diagInfo.isErrorFromFixtronix}
                     di_category_id: "${diagInfo.di_category_id}"
                     array_composants: [${array.join(', ')}]
                 }
@@ -559,7 +561,7 @@ export class TicketService {
     getLogsDiById(_idLogsDi: number, _idDi: string) {
         return gql`
             {
-                getLigsById(id: ${_idLogsDi}, _idDi:"${_idDi}") {
+                getLigsById(id: "${_idDi}", _idDi:${_idLogsDi}) {
                     _id
                     can_be_repaired
                     contain_pdr
@@ -600,6 +602,7 @@ export class TicketService {
                     remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
                     contain_pdr: ${diagInfo.pdr}
                     can_be_repaired: ${diagInfo.reparable}
+                    isErrorFromFixtronix: ${diagInfo.isErrorFromFixtronix}
                     di_category_id: "${diagInfo.di_category_id}"
                     array_composants: [${array.join(', ')}]
                 }
@@ -968,6 +971,7 @@ export class TicketService {
                     logsDi {
                         _id
                         price
+                        idIgnore
                         isSentToCoordinator
    isConfirmedComponentFromCoordinator
                         remarque_tech_diagnostic
