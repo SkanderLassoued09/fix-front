@@ -95,6 +95,7 @@ export class TicketService {
                         remarque_tech_repair
                         remarque_magasin
                         remarque_coordinator
+                        ignoreCount
                         createdBy
                         location_id
                         di_category_id
