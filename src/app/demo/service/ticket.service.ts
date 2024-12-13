@@ -891,6 +891,7 @@ export class TicketService {
     //     }
 
     sentComponentToCoordinatorToConfirm(_id: string) {
+        console.log('🍅[_id]:', _id);
         return gql`
             mutation {
                 sendComponentToConMagasinForConfirmation(_id: "${_id}") {
@@ -986,6 +987,7 @@ export class TicketService {
                     }
                     di {
                     _id
+                    ignoreCount
                         price
                         isSentToCoordinator
    isConfirmedComponentFromCoordinator
