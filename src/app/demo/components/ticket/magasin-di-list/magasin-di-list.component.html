@@ -28,7 +28,13 @@
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
+            <tr
+                [ngClass]="{
+                    'row-in-retour1': rowData.ignoreCount === 1,
+                    'row-in-retour2': rowData.ignoreCount === 2,
+                    'row-in-retour3': rowData.ignoreCount === 3
+                }"
+            >
                 <td *ngFor="let col of columns">
                     <ng-container
                         *ngIf="col.field !== 'status'; else statusColumn"
@@ -439,8 +445,8 @@
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <label for="quantity_stocked" class="mr-2"
-                            >Quantité en stock </label
-                        >
+                            >Quantité en stock
+                        </label>
                         <p-inputNumber
                             mode="decimal"
                             [showButtons]="true"

@@ -219,7 +219,9 @@
                                 legend="Remarque Diagnostique Technicien"
                                 [toggleable]="true"
                             >
-                                <p class="m-0">{{ remarque_tech_diagnostic }}</p>
+                                <p class="m-0">
+                                    {{ remarque_tech_diagnostic }}
+                                </p>
                             </p-fieldset>
                         </div>
                         <div class="field" *ngIf="remarque_tech_repair">
@@ -231,7 +233,7 @@
                             </p-fieldset>
                         </div>
                     </div>
-                    
+
                     <span>Type de Panne: {{ di_category_id }} </span>
                 </div>
 
@@ -243,7 +245,7 @@
                     {{ error }}
                 </div>
 
-                <div *ngIf="ignoreCount>0">
+                <div *ngIf="ignoreCount > 0">
                     <div *ngIf="historyOfDi && historyOfDi.length > 0">
                         <div *ngFor="let item of historyOfDi">
                             <div>
@@ -252,7 +254,8 @@
                                     {{ item?.id_tech_diag }}</span
                                 >
                                 <span
-                                    >Temps Diagnostique: {{ item?.diag_time }}</span
+                                    >Temps Diagnostique:
+                                    {{ item?.diag_time }}</span
                                 >
                             </div>
                             <div>
@@ -260,12 +263,15 @@
                                     >Technicien chargé Réparation:
                                     {{ item?.id_tech_rep }}</span
                                 >
-                                <span>Temps Réparation: {{ item?.rep_time }}</span>
+                                <span
+                                    >Temps Réparation:
+                                    {{ item?.rep_time }}</span
+                                >
                             </div>
                         </div>
                     </div>
                 </div>
-                <div *ngIf="ignoreCount>0">
+                <div *ngIf="ignoreCount > 0">
                     <h3>
                         Liste des composants original et retour: ({{
                             ignoreCount
@@ -314,13 +320,16 @@
                             </p-dropdown>
                         </div>
                         <div *ngIf="ignoreCount > 0">
+                            <button (click)="changeStatusPending3()">
+                                send to pending 3
+                            </button>
                             <div class="justify-content-between">
                                 <h3>
                                     Veuiller choisir le type d'erreur client ou
                                     fixtronix
                                 </h3>
                                 <p-toggleButton
-                                    [(ngModel)]="checked"
+                                    formControlName="isErrorFromFixtronix"
                                     onLabel="Erreur_client"
                                     offLabel="Erreur_Fixtronix"
                                     onIcon="Unlocked"
@@ -386,7 +395,7 @@
                                     >
                                     <p-dropdown
                                         [options]="composantList"
-                                        [(ngModel)]="composantSelected"
+                                        formControlName="composantSelected"
                                         (onChange)="selectedDropDown($event)"
                                         optionLabel="name"
                                         placeholder="Choisir composant"
@@ -403,7 +412,6 @@
                                         "
                                         [min]="1"
                                         [mode]="'decimal'"
-                                        (onBlur)="checkValue($event)"
                                     ></p-inputNumber>
                                 </div>
                                 <div class="col" *ngIf="composantSelected">
@@ -695,8 +703,7 @@
                             </th>
                         </div>
                     </div>
-                    <div *ngIf="ignoreCount>0">
-                        <span>inside condition</span>
+                    <div *ngIf="ignoreCount > 0">
                         <div *ngIf="historyOfDi && historyOfDi.length > 0">
                             <div *ngFor="let item of historyOfDi">
                                 <div>
@@ -705,7 +712,8 @@
                                         {{ item?.id_tech_diag }}</span
                                     >
                                     <span
-                                        >Temps Diagnostique: {{ item?.diag_time }}</span
+                                        >Temps Diagnostique:
+                                        {{ item?.diag_time }}</span
                                     >
                                 </div>
                                 <div>
@@ -713,12 +721,15 @@
                                         >Technicien chargé Réparation:
                                         {{ item?.id_tech_rep }}</span
                                     >
-                                    <span>Temps Réparation: {{ item?.rep_time }}</span>
+                                    <span
+                                        >Temps Réparation:
+                                        {{ item?.rep_time }}</span
+                                    >
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div *ngIf="ignoreCount>0">
+                    <div *ngIf="ignoreCount > 0">
                         <h3>
                             Liste des composants original et retour: ({{
                                 ignoreCount

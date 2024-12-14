@@ -567,15 +567,14 @@ export class MagasinDiListComponent {
 
     addComposant() {
         if (!this.isToUpdate) {
-            console.log('🌮to create');
             const composantDataForm = this.composantMagasin.value;
 
             const composantDataTosend = {
                 ...composantDataForm,
-                pdf: this.payloadImage.image,
+                pdf: this.payloadImage?.image || null,
             };
 
-            console.log({ composantDataForm });
+            console.log('cc', { composantDataForm });
 
             this.apollo
                 .mutate<any>({
@@ -591,6 +590,7 @@ export class MagasinDiListComponent {
                             summary: 'Success',
                             detail: 'Le composant a été créer',
                         });
+                        this.composantMagasin.reset();
                     }
                 });
         }
@@ -623,6 +623,7 @@ export class MagasinDiListComponent {
                 .subscribe(({ data }) => {
                     if (data) {
                         console.log('🥚[data]:', data);
+                        this.composantMagasin.reset();
                         // Handle success
                     }
                 });

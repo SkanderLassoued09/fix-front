@@ -18,7 +18,13 @@
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-rowData let-columns="columns">
-                <tr>
+                <tr
+                    [ngClass]="{
+                        'row-in-retour1': rowData.ignoreCount === 1,
+                        'row-in-retour2': rowData.ignoreCount === 2,
+                        'row-in-retour3': rowData.ignoreCount === 3
+                    }"
+                >
                     <td *ngFor="let col of columns">
                         <ng-container
                             *ngIf="
@@ -119,7 +125,12 @@
                     >Confirmer le reçoit des composants du magasin</label
                 >
                 <p-button
-                [disabled]="!(magasinsentToCoordinator && !componentConfirmedFromCoordinator)"
+                    [disabled]="
+                        !(
+                            magasinsentToCoordinator &&
+                            !componentConfirmedFromCoordinator
+                        )
+                    "
                     label="Confirmer tous les composants"
                     (onClick)="gotcomposantfromMagasin()"
                 ></p-button>

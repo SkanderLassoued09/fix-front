@@ -499,6 +499,13 @@ export class TicketListComponent implements OnInit {
                 // Add these boolean flags to your component class
                 this.isBCUploaded = false;
                 this.isDevisUploaded = false;
+
+                //
+                this.selectedBc = null;
+                this.selectedDevis = null;
+                this.discountPercent = 0;
+                this.price = 0;
+                this.finalPrice = 0;
             },
         });
     }
@@ -808,6 +815,7 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getDiById(_idDi),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🥒[getDiByID]:', data);
                 if (data) {
                     this.dataById = data;
                     console.log('🌶[ this.dataById]:', this.dataById);
@@ -816,7 +824,7 @@ export class TicketListComponent implements OnInit {
                         console.log('🍦 logsdi');
                         const filtredLogsDi =
                             this.dataById.getDiById.logsDi.find(
-                                (el) => el._id === this.ignoreCountNeg1
+                                (el) => el.idIgnore === this.ignoreCountNeg1
                             );
                         console.log('🍭[filtredLogsDi]:', filtredLogsDi);
                         this.price = filtredLogsDi.price;
