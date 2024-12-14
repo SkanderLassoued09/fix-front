@@ -52,6 +52,7 @@ export class DetailsComposantComponent implements OnInit {
     componentInfo: any;
     componentsAreConfirmed: boolean;
     dateArrivage: string;
+    ignoreCount: any;
     constructor(
         private ticketSerice: TicketService,
         private productService: ProductService,
@@ -142,13 +143,28 @@ export class DetailsComposantComponent implements OnInit {
                 query: this.ticketSerice.getDiById(_id),
             })
             .subscribe(({ data }) => {
+                console.log('🍤[data]:', data);
+                const ignoreCount = data.getDiById.di.ignoreCount;
                 if (data) {
-                    console.log('🍕[data]:', data);
-                    this.isSentToCoordinator =
-                        data.getDiById.di.isSentToCoordinator;
-                    this.componentsAreConfirmed =
-                        data.getDiById.di.isConfirmedComponentFromCoordinator;
-                    this.composants = data.getDiById.di.array_composants;
+                    if (data.getDiById.logsDi) {
+                        const filtredLogsDi = data.getDiById.logsDi.find(
+                            (el) => el.idIgnore === ignoreCount
+                        );
+                        if (filtredLogsDi) {
+                            this.isSentToCoordinator =
+                                filtredLogsDi.isSentToCoordinator;
+                            this.componentsAreConfirmed =
+                                filtredLogsDi.isConfirmedComponentFromCoordinator;
+                            this.composants = filtredLogsDi.array_composants;
+                        }
+                    } else {
+                        console.log('🍕[data]:', data);
+                        this.isSentToCoordinator =
+                            data.getDiById.di.isSentToCoordinator;
+                        this.componentsAreConfirmed =
+                            data.getDiById.di.isConfirmedComponentFromCoordinator;
+                        this.composants = data.getDiById.di.array_composants;
+                    }
                 }
             });
     }
