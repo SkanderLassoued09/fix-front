@@ -144,11 +144,13 @@ export class DetailsComposantComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 console.log('🍤[data]:', data);
-                const ignoreCount = data.getDiById.di.ignoreCount;
+                this.ignoreCount = data.getDiById.di.ignoreCount;
+                console.log("ignore count value is ",this.ignoreCount);
+                
                 if (data) {
                     if (data.getDiById.logsDi) {
                         const filtredLogsDi = data.getDiById.logsDi.find(
-                            (el) => el.idIgnore === ignoreCount
+                            (el) => el.idIgnore === this.ignoreCount
                         );
                         if (filtredLogsDi) {
                             this.isSentToCoordinator =

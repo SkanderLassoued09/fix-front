@@ -11,8 +11,17 @@
                 <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
                 <div class="button-group improved-button-group">
                     <p-button
+                        *ngIf="ignoreCount === 0"
                         [disabled]="isSentToCoordinator"
                         label="Confirmer les composants"
+                        [raised]="true"
+                        size="small"
+                        (click)="sentComponentToCoordinatorToConfirm()"
+                    ></p-button>
+                    <p-button
+                        *ngIf="ignoreCount > 0"
+                        [disabled]="isSentToCoordinator"
+                        label="Confirmer les composants Retour"
                         [raised]="true"
                         size="small"
                         (click)="sentComponentToCoordinatorToConfirm()"
@@ -24,7 +33,7 @@
                         (click)="updateComposant()"
                     ></p-button>
                     <p-button
-                        [disabled]="!componentsAreConfirmed"
+                        [disabled]="!componentsAreConfirmed && ignoreCount==0"
                         label="Finir"
                         [raised]="true"
                         size="small"

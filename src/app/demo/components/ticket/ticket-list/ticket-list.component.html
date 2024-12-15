@@ -6,147 +6,174 @@
 <p-confirmDialog />
 
 <p-dialog
-    header="Gérer les catégories des demandes d'interventions"
-    [(visible)]="openCategoryModal"
-    [modal]="true"
-    [style]="{ width: '30vw', height: '25vw' }"
-    [draggable]="false"
-    [resizable]="true"
+  header="Gérer les catégories des demandes d'interventions"
+  [(visible)]="openCategoryModal"
+  [modal]="true"
+  [style]="{ width: '30vw', height: '25vw' }"
+  [draggable]="false"
+  [resizable]="true"
 >
-    <form [formGroup]="categoryForm">
-        <div class="form-group">
-            <label for="categoryName">Nom de la catégorie</label>
-            <input
-                formControlName="categoryName"
-                id="categoryName"
-                type="text"
-                class="form-control"
-            />
-        </div>
-        <p-button
-            (click)="addCategoryDi()"
-            icon="pi pi-plus"
-            label="Ajouter catégorie"
-            severity="success"
-        ></p-button>
-    </form>
-    <p-table
-        [columns]="colCategory"
-        [value]="categorieDiListDropDown"
-        styleClass="p-datatable-sm"
-        [tableStyle]="{ 'min-width': '20rem' }"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th *ngFor="let col of columns" style="min-width: 10rem">
-                    {{ col.header }}
-                </th>
-                <th style="min-width: 10rem">Actions</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
-                <td *ngFor="let col of columns">
-                    {{ rowData[col.field] }}
-                </td>
-                <td class="flex">
-                    <p-button
-                        icon="pi pi-trash"
-                        severity="danger"
-                        (click)="deleteCategory(rowData)"
-                    ></p-button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+  <form [formGroup]="categoryForm" class="form-group-categorieDI">
+    <!-- Category Input Section -->
+    <div class="form-group-categorieDI">
+      <label for="categoryName">Nom de la catégorie</label>
+      <input
+        formControlName="categoryName"
+        id="categoryName"
+        type="text"
+        class="form-control-categorieDI"
+      />
+    </div>
+    <div class="button-container-categorieDI">
+      <p-button
+        (click)="addCategoryDi()"
+        icon="pi pi-plus"
+        label="Ajouter catégorie"
+        severity="success"
+      ></p-button>
+    </div>
+  </form>
+
+  <!-- Category Table Section -->
+  <p-table
+    [columns]="colCategory"
+    [value]="categorieDiListDropDown"
+    styleClass="p-datatable-sm"
+    [tableStyle]="{ 'min-width': '20rem' }"
+    class="table-categorieDI"
+  >
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th *ngFor="let col of columns" class="table-header-categorieDI">
+          {{ col.header }}
+        </th>
+        <th class="table-header-categorieDI">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-rowData let-columns="columns">
+      <tr class="table-row-categorieDI">
+        <td *ngFor="let col of columns" class="table-cell-categorieDI">
+          {{ rowData[col.field] }}
+        </td>
+        <td class="table-actions-categorieDI">
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            (click)="deleteCategory(rowData)"
+            class="delete-btn-categorieDI"
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
 </p-dialog>
+
 
 <p-dialog
-    header="Gérer les emplacements"
-    [(visible)]="openLocationsModal"
-    [modal]="true"
-    [style]="{ width: '30vw' }"
-    [draggable]="false"
-    [resizable]="false"
+  header="Gérer les emplacements"
+  [(visible)]="openLocationsModal"
+  [modal]="true"
+  [style]="{ width: '30vw' }"
+  [draggable]="false"
+  [resizable]="false"
 >
-    <form [formGroup]="locationForm" class="location-form">
-        <div class="form-group">
-            <label for="locationName">Nom de l'emplacement a ajouter</label>
-            <input
-                formControlName="locationName"
-                id="locationName"
-                type="text"
-                class="form-control"
-            />
-        </div>
+  <form [formGroup]="locationForm" class="location-form-Emplacement">
+    <!-- Location Input Section -->
+    <div class="form-group-Emplacement">
+      <label for="locationName">Nom de l'emplacement a ajouter</label>
+      <input
+        formControlName="locationName"
+        id="locationName"
+        type="text"
+        class="form-control-Emplacement"
+      />
+    </div>
 
-        <div class="modal-footer">
-            <p-button
-                (click)="addLocation()"
-                icon="pi pi-plus"
-                label="Ajouter"
-                severity="success"
-            ></p-button>
-        </div>
-    </form>
-    <p-table
-        [columns]="colEmplacement"
-        [value]="locationDropDown"
-        styleClass="p-datatable-sm"
-        [tableStyle]="{ 'min-width': '20rem' }"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th *ngFor="let col of columns" style="min-width: 10rem">
-                    {{ col.header }}
-                </th>
-                <th style="min-width: 10rem">Actions</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
-                <td *ngFor="let col of columns">
-                    {{ rowData[col.field] }}
-                </td>
-                <td class="flex">
-                    <p-button
-                        icon="pi pi-trash"
-                        severity="danger"
-                        (click)="deletLocation(rowData)"
-                    ></p-button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+    <!-- Modal Footer -->
+    <div class="modal-footer-Emplacement">
+      <p-button
+        (click)="addLocation()"
+        icon="pi pi-plus"
+        label="Ajouter"
+        severity="success"
+        class="add-button-Emplacement"
+      ></p-button>
+    </div>
+  </form>
+
+  <!-- Table Section -->
+  <p-table
+    [columns]="colEmplacement"
+    [value]="locationDropDown"
+    styleClass="p-datatable-sm"
+    [tableStyle]="{ 'min-width': '20rem' }"
+    class="table-Emplacement"
+  >
+    <ng-template pTemplate="header" let-columns>
+      <tr>
+        <th *ngFor="let col of columns" class="table-header-Emplacement">
+          {{ col.header }}
+        </th>
+        <th class="table-header-Emplacement">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-rowData let-columns="columns">
+      <tr class="table-row-Emplacement">
+        <td *ngFor="let col of columns" class="table-cell-Emplacement">
+          {{ rowData[col.field] }}
+        </td>
+        <td class="table-actions-Emplacement">
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            (click)="deletLocation(rowData)"
+            class="delete-button-Emplacement"
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
 </p-dialog>
+
 
 <p-dialog
-    header="Affecter Tarif Techniciens"
-    [(visible)]="openPriceTechModal"
-    [modal]="true"
-    [style]="{ width: '30vw' }"
-    [draggable]="false"
-    [resizable]="false"
-    class="Header-btns"
+  header="Affecter Tarif Techniciens"
+  [(visible)]="openPriceTechModal"
+  [modal]="true"
+  [style]="{ width: '35vw' }"
+  [draggable]="false"
+  [resizable]="false"
+  class="dialog-header-pricing"
 >
-    <form [formGroup]="tarif_Techs">
-        <div class="ModalTarifs">
-            <h3 class="margin-bottom: 1rem;">
-                Tarif actuel : {{ tarif_Tech }} dt/heure
-            </h3>
-            <div>
-                <label> Affecter nouveau Tarif</label>
-            </div>
-            <input
-                formControlName="tarifFromAdmin"
-                id="Categ"
-                type="number"
-                class="text-base text-color surface-overlay p-2 border-1 border-solid surface-border border-round appearance-none outline-none focus:border-primary w-full textInput-tech"
-            />
-            <p-button (onClick)="confirmerTarifs()"> Confirmer </p-button>
-        </div>
-    </form>
+  <form [formGroup]="tarif_Techs" class="form-pricing">
+    <!-- Modal Content -->
+    <div class="modal-content-pricing">
+      <h3 class="current-tarif-text-pricing">
+        Tarif actuel : {{ tarif_Tech }} dt/heure
+      </h3>
+
+      <div class="new-tarif-container-pricing">
+        <label for="tarifFromAdmin" class="label-pricing">Affecter nouveau Tarif</label>
+        <input
+          formControlName="tarifFromAdmin"
+          id="tarifFromAdmin"
+          type="number"
+          class="input-tarif-pricing"
+          placeholder="Entrez le tarif"
+        />
+      </div>
+
+      <p-button
+        (onClick)="confirmerTarifs()"
+        class="confirm-button-pricing"
+        icon="pi pi-check"
+        label="Confirmer"
+      ></p-button>
+    </div>
+  </form>
 </p-dialog>
+
+
 
 <p-dialog
     header="Ajouter une nouvelle Demande d'intervention"
@@ -712,65 +739,73 @@
 
 <!-- NEGOTIATION2 -->
 <p-dialog
-    header="Affectation prix finale"
-    [(visible)]="negocite2Modal"
-    [modal]="true"
-    [style]="{ width: '50vw' }"
-    [draggable]="false"
-    [resizable]="false"
+  header="Affectation Prix Finale"
+  [(visible)]="negocite2Modal"
+  [modal]="true"
+  [style]="{ width: '50vw' }"
+  [draggable]="false"
+  [resizable]="false"
 >
-    <ng-container>
-        <div class="modal-content">
-            <div class="price-info">
-                <h5>Prix Initial: {{ price }}</h5>
-                <h4>Prix final: {{ finalPrice }}</h4>
-                <p-inputNumber
-                    [(ngModel)]="discountPercent"
-                    inputId="percent"
-                    prefix="%"
-                >
-                </p-inputNumber>
-            </div>
-            <div class="slider-container">
-                <p-slider
-                    [min]="20"
-                    [max]="25"
-                    [(ngModel)]="discountPercent"
-                    class="w-full"
-                    (onSlideEnd)="onSlideAdminEnd($event)"
-                ></p-slider>
-            </div>
-            <div class="button-container">
-                <button
-                    pButton
-                    pRipple
-                    label="Discount"
-                    icon="pi pi-dollar"
-                    class="p-button-rounded p-button-raised p-button-success"
-                    (click)="discountByPercent2()"
-                ></button>
-            </div>
-            <div class="confirmation-container">
-                <h6>Montant de la remise : {{ discountedPriceNeg }}</h6>
-                <ng-container *ngIf="slideAdminEnd === 25">
-                    <h6>Vous pouvez affecter un nouveux prix ici</h6>
-                    <p-inputNumber
-                        [(ngModel)]="price"
-                        inputId="price"
-                    ></p-inputNumber>
-                </ng-container>
-                <button
-                    pButton
-                    pRipple
-                    label="Confirmer"
-                    icon="pi pi-check-circle"
-                    class="p-button-rounded p-button-raised p-button-success"
-                    (click)="confirmerNegociation()"
-                ></button>
-            </div>
-        </div>
-    </ng-container>
+  <ng-container>
+    <div class="dialog-body">
+      <!-- Price Details Section -->
+      <div class="price-details">
+        <h5>Prix Initial: {{ price }}</h5>
+        <h4>Prix Final: {{ finalPrice }}</h4>
+        <p-inputNumber
+          [(ngModel)]="discountPercent"
+          inputId="percent"
+          prefix="%"
+        ></p-inputNumber>
+      </div>
+
+      <!-- Discount Slider Section -->
+      <div class="discount-slider">
+        <p-slider
+          [min]="20"
+          [max]="25"
+          [(ngModel)]="discountPercent"
+          class="slider-full-width"
+          (onSlideEnd)="onSlideAdminEnd($event)"
+        ></p-slider>
+      </div>
+
+      <!-- Discount Button Section -->
+      <div class="action-buttons">
+        <button
+          pButton
+          pRipple
+          label="Apply Discount"
+          icon="pi pi-dollar"
+          class="button-success"
+          (click)="discountByPercent2()"
+        ></button>
+      </div>
+
+      <!-- Confirmation Section -->
+      <div class="confirmation-section">
+        <h6>Montant de la remise: {{ discountedPriceNeg }}</h6>
+        <ng-container *ngIf="slideAdminEnd === 25">
+          <h6>Vous pouvez affecter un nouveau prix ici:</h6>
+          <p-inputNumber
+            [(ngModel)]="price"
+            inputId="price"
+          ></p-inputNumber>
+        </ng-container>
+        <button
+          pButton
+          pRipple
+          label="Confirmer"
+          icon="pi pi-check-circle"
+          class="button-success"
+          (click)="confirmerNegociation()"
+        ></button>
+      </div>
+    </div>
+  </ng-container>
 </p-dialog>
+
+
 
 <p-dialog
     header="Affectation du prix Intial"

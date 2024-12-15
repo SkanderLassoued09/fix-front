@@ -737,6 +737,7 @@ export class TicketListComponent implements OnInit {
         this.negocite2Modal = true;
         this.getTotalComposant(data._id);
         this.getDiByID(this.slectedRow);
+        console.log("data inside NEGOCIATION 2")
     }
 
     onSizeSelect() {}
