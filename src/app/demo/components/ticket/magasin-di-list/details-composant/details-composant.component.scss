@@ -31,6 +31,18 @@
     font-weight: normal;
 }
 
+/* Input Styling */
+.improved-input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
 /* Component List Styles */
 .component-list {
     background-color: var(--surface-alt);
@@ -137,7 +149,7 @@
     gap: 0.5rem; /* Adds spacing between the input field and the button */
 }
 
-.p-inplace-content input[type="text"] {
+.p-inplace-content input[type="text"], .p-inplace-content input[type="date"], .p-inplace-content input[type="number"], .p-inplace-content input[type="url"] {
     flex: 1; /* Ensures the input field takes the available space */
 }
 

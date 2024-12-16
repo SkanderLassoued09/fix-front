@@ -11,3 +11,159 @@
     display: flex;
     justify-content: space-between;
 }
+/* Grid and alignment */
+.grid-magasin {
+    display: grid;
+    gap: 1rem;
+}
+
+.align-items-center-magasin {
+    align-items: center;
+}
+
+/* Columns and rows */
+.col-magasin,
+.col-md-6-magasin,
+.col-md-4-magasin {
+    margin-bottom: 1rem;
+}
+
+.row-magasin {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* Labels and links */
+.label-magasin {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.link-magasin {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.link-magasin:hover {
+    text-decoration: underline;
+}
+
+/* Dropdown and input styling */
+.dropdown-magasin {
+    width: 100%;
+}
+
+.input-number-magasin {
+    width: 100%;
+}
+
+/* Buttons */
+.button-group-magasin {
+    margin-top: 1rem;
+    text-align: right;
+}
+
+.button-magasin {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button-magasin:hover {
+    background-color: #0056b3;
+}
+
+/* Footer buttons */
+.footer-magasin {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid #ccc;
+}
+
+.button-cancel-magasin,
+.button-save-magasin,
+.button-finish-magasin {
+    background-color: transparent;
+    color: #007bff;
+    border: none;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.button-cancel-magasin:hover,
+.button-save-magasin:hover,
+.button-finish-magasin:hover {
+    color: #0056b3;
+}
+.row-magasin {
+    display: flex;
+    gap: 2rem; /* Adds space between the columns */
+    margin-top: 1rem; /* Adds space above the entire row, optional */
+}
+
+.col-md-6-magasin,
+.col-md-4-magasin {
+    flex: 1; /* Ensures the columns remain responsive */
+}
+.button-group-magasin {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers content horizontally */
+    gap: 1rem; /* Adds space between the text and the button */
+    margin-top: 1rem; /* Optional: Adds space above the group */
+}
+
+.info-text-magasin {
+    text-align: center; /* Centers the text */
+    font-size: 1rem; /* Adjusts the text size for readability */
+    color: #555; /* Gives the text a subtle color */
+    margin: 0; /* Removes unnecessary margins */
+}
+
+.button-magasin {
+    width: auto; /* Keeps the button size adaptive */
+    padding: 0.5rem 1rem; /* Adds space around the button text */
+    font-weight: bold; /* Makes the button text stand out */
+}
+
+
+.horizontal-layout-magasin {
+    display: flex; /* Makes the container a flexbox */
+    justify-content: space-between; /* Adds space between items */
+    align-items: center; /* Vertically centers items */
+    gap: 1rem; /* Adds horizontal space between columns */
+}
+
+.col-magasin {
+    flex: 1; /* Ensures both columns have equal width */
+    text-align: center; /* Optional: Centers the text within each column */
+}
+
+.label-magasin {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    display: block; /* Ensures the label stays above the link */
+}
+
+.link-magasin {
+    color: #007bff; /* Optional: Adds a link color */
+    text-decoration: none;
+    font-size: 1rem;
+}
+
+.link-magasin:hover {
+    text-decoration: underline; /* Adds underline on hover for clarity */
+}

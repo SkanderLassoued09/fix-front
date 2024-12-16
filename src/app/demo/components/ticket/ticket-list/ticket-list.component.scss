@@ -480,7 +480,7 @@ p-dialog {
   }
   
   .input-tarif-pricing:focus {
-    border-color: #007bff;
+    border-color: #3f4449;
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
   }
   
@@ -511,4 +511,169 @@ p-dialog {
     outline: none;
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
   }
-  
+ /* General Dialog Styles */
+.pricing-ad-dialog {
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+/* Container Styling */
+.pricing-ad-container {
+  margin: 1rem 0;
+}
+
+/* Content Section Styling */
+.pricing-ad-content {
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+}
+
+/* Card Styling */
+.pricing-ad-card {
+  margin: 0.5rem 0;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 5px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-ad-detail {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+/* Headings Styling */
+.pricing-ad-heading {
+  font-size: 1.2rem;
+  margin: 1rem 0;
+  color: #33373a;
+  font-weight: bold;
+}
+
+.pricing-ad-total {
+  font-size: 1.5rem;
+  margin: 1.5rem 0;
+  text-align: center;
+  color: #d9534f;
+  font-weight: bold;
+  border: 2px solid #d9534f;
+  background-color: #ffe8e6;
+  padding: 1rem;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(217, 83, 79, 0.2);
+}
+
+.pricing-ad-total .highlight-text {
+  color: #c9302c;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* Return Section Styling */
+.pricing-ad-return {
+  margin: 1rem 0;
+}
+
+.pricing-ad-old-data {
+  padding: 1rem;
+  background-color: #eaf4fe;
+  border-radius: 5px;
+}
+
+.pricing-ad-new-data {
+  padding: 1rem;
+  margin-top: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+}
+
+/* Spinner Styling */
+.pricing-ad-spinner {
+  font-size: 2rem;
+  color: #007bff;
+}
+
+/* Footer Section Styling */
+.pricing-ad-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.pricing-ad-input {
+  width: 50%;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+}
+
+.pricing-ad-button {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.pricing-ad-button:hover {
+  background-color: #218838;
+}
+/* Footer Section Styling */
+.pricing-ad-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 1.5rem;
+}
+
+.pricing-ad-footer-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.pricing-ad-input {
+  width: 70%; /* Adjust width for better spacing */
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pricing-ad-button {
+  margin-left: 1rem;
+  padding: 0.8rem 1.5rem;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.pricing-ad-button:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
+.pricing-ad-button:active {
+  transform: scale(0.98);
+}
+
+/* Input Number Placeholder Styling */
+.p-inputnumber input::placeholder {
+  color: #6c757d;
+  font-size: 1rem;
+}
