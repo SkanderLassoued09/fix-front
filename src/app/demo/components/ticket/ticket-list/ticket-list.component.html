@@ -790,6 +790,12 @@
           <p-inputNumber
             [(ngModel)]="price"
             inputId="price"
+            [min]="0"
+                [max]="50000"
+                [step]="1"
+                placeholder="Affecter le prix"
+                mode="currency" 
+                currency="TND"
           ></p-inputNumber>
         </ng-container>
         <button
@@ -890,14 +896,16 @@
         <div class="pricing-ad-footer">
             <div class="pricing-ad-footer-container">
                 <p-inputNumber
-                    inputId="integeronly"
-                    [(ngModel)]="price"
-                    class="pricing-ad-input"
-                    [min]="0"
-                    [max]="10000"
-                    [step]="1"
-                    placeholder="Enter price"
-                ></p-inputNumber>
+                inputId="integeronly"
+                [(ngModel)]="price"
+                class="pricing-ad-input"
+                [min]="0"
+                [max]="50000"
+                [step]="1"
+                placeholder="Affecter le prix"
+                mode="currency" 
+                currency="TND"
+            ></p-inputNumber>
                 <button
                     pButton
                     pRipple
@@ -1229,72 +1237,17 @@
             ></textarea>
         </div>
 
-        <!-- Can Be Repaired -->
-        <div class="field">
-            <label for="canBeRepaired">Peut être réparé</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.can_be_repaired"
-                pInputText
-                id="canBeRepaired"
-            />
-        </div>
+     
+        
 
-        <!-- Bon de Commande -->
-        <div class="field">
-            <label for="bonDeCommande">Bon de Commande</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.bon_de_commande"
-                pInputText
-                id="bonDeCommande"
-            />
-        </div>
+       
 
-        <!-- Bon de Livraison -->
-        <div class="field">
-            <label for="bonDeLivraison">Bon de Livraison</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.bon_de_livraison"
-                pInputText
-                id="bonDeLivraison"
-            />
-        </div>
+      
 
-        <!-- Contain PDR -->
-        <div class="field">
-            <label for="containPdr">Contient PDR</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.contain_pdr"
-                pInputText
-                id="containPdr"
-            />
-        </div>
+      
 
-        <!-- Facture -->
-        <div class="field">
-            <label for="facture">Facture</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.facture"
-                pInputText
-                id="facture"
-            />
-        </div>
+     
 
-        <!-- Status -->
-        <div class="field">
-            <label for="status">Statut</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.status"
-                pInputText
-                id="status"
-                disabled
-            />
-        </div>
 
         <!-- Client ID -->
         <div class="field">
@@ -1307,16 +1260,7 @@
             />
         </div>
 
-        <!-- Remarque Tech Diagnostic -->
-        <div class="field">
-            <label for="remarqueTech">Remarque Technique</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.remarque_tech_diagnostic"
-                pInputText
-                id="remarqueTech"
-            />
-        </div>
+       
 
         <!-- Created By -->
         <div class="field">
@@ -1330,16 +1274,7 @@
             />
         </div>
 
-        <!-- Ignore Count -->
-        <div class="field">
-            <label for="ignoreCount">Compteur d'Ignorance</label>
-            <input
-                type="number"
-                [(ngModel)]="selectedTicket.ignoreCount"
-                pInputText
-                id="ignoreCount"
-            />
-        </div>
+       
 
         <!-- Location ID -->
         <div class="field">

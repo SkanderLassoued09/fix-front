@@ -157,3 +157,16 @@
     flex-shrink: 0; /* Prevents the button from resizing */
     margin-left: 0.5rem; /* Additional margin to fine-tune spacing */
 }
+.field {
+    margin-bottom: 1rem;
+}
+
+.improved-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+p-inplace {
+    width: 100%;
+}

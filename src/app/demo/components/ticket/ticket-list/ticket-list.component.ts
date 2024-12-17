@@ -535,8 +535,9 @@ export class TicketListComponent implements OnInit {
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.saveBLPDF(this._idDi, this.payload.file);
+                this.saveBLPDF(this._idPDFFinished, this.payload.file);
                 console.log('inside condition savePDF-BL');
+                console.log("PDF",this.payload.file);
             },
         });
     }
@@ -564,6 +565,7 @@ export class TicketListComponent implements OnInit {
             });
     }
     saveBLPDF(_id: string, pdf: string) {
+        console.log("_id/pdf",_id,pdf)
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addBL(_id, pdf),
@@ -1469,6 +1471,15 @@ export class TicketListComponent implements OnInit {
             };
             this.payload = payload;
         }
+        if (type === 'BL') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
+            this.payload = payload;
+        }
+        
+
     }
 
     deletLocation(selected) {

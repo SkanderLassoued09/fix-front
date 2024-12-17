@@ -111,17 +111,7 @@
                 </p-inplace>
             </div>
 
-            <div class="field improved-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>PDF:</strong>
-                        <span>{{ composantValues?.pdf }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="pdf" />
-                    </ng-template>
-                </p-inplace>
-            </div>
+            
 
             <div class="field improved-field">
                 <p-inplace closable="closable" [active]="isActive">
@@ -146,6 +136,20 @@
                     </ng-template>
                 </p-inplace>
             </div>
+
+
+<div class="field improved-field">
+                <p-inplace closable="closable" [active]="isActive">
+                    <ng-template pTemplate="display">
+                        <strong>PDF:</strong>
+                        <span>{{ composantValues?.pdf }}</span>
+                    </ng-template>
+                    <ng-template pTemplate="content">
+                        <input type="text" pInputText formControlName="pdf" />
+                    </ng-template>
+                </p-inplace>
+            </div>
+
         </section>
     </div>
 
