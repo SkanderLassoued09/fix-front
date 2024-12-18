@@ -154,6 +154,29 @@ export class TicketService {
         `;
     }
 
+    getLogsDi() {
+        return gql`
+            {
+                getAllLogsByDi(_idDi: "DI0") {
+                    _id
+
+                    can_be_repaired
+                    bon_de_commande
+                    bon_de_livraison
+                    contain_pdr
+                    status
+                    createdAt
+                    updatedAt
+                    array_composants {
+                        nameComposant
+                        quantity
+                        isUpdated
+                    }
+                }
+            }
+        `;
+    }
+
     getAllTech() {
         return gql`
             {
@@ -319,7 +342,6 @@ export class TicketService {
     }
 
     updateLogPause(updateLogs) {
-        console.log('updateLogs.pauseLogId', updateLogs._idDoc);
         return gql`
             mutation {
                 updatePauseLog(
@@ -502,8 +524,6 @@ export class TicketService {
     }
 
     lapTimeForPauseAndGetBackForReaparation(_id: string, repTime: string) {
-        console.log('🥡[_id]:', _id);
-        console.log('🥫[repTime]:', repTime);
         return gql`
             mutation {
                 lapTimeForPauseAndGetBackForReaparation(
@@ -524,8 +544,6 @@ export class TicketService {
         `;
     }
     finishReparation(_idDi, remarque) {
-        console.log('🍨[remarque]:', remarque);
-        console.log('🍲[_idDi]:', _idDi);
         return gql`
             mutation {
                 tech_finishReperation(_id: "${_idDi}", remarque: "${remarque}") {
@@ -536,8 +554,6 @@ export class TicketService {
     }
 
     finish(diagInfo) {
-        console.log('🍱[diagInfo logs]:', diagInfo);
-
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
@@ -589,8 +605,6 @@ export class TicketService {
     }
 
     finishLogsDi(diagInfo) {
-        console.log('🍌[diagInfo]:', diagInfo);
-
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
         });
@@ -761,7 +775,6 @@ export class TicketService {
     }
 
     changeStatusDiToDiagnostique(_id: string) {
-        console.log('🥘[_id]:', _id);
         return gql`
             mutation {
                 coordinatorSendingDiDiag(_idDI: "${_id}") 
@@ -837,7 +850,6 @@ export class TicketService {
         `;
     }
     changeStatusInRepair(_id: string) {
-        console.log('🥦[_id]:', _id);
         return gql`
             mutation {
                 changeStatusInRepair(_id: "${_id}")
@@ -891,7 +903,6 @@ export class TicketService {
     //     }
 
     sentComponentToCoordinatorToConfirm(_id: string) {
-        console.log('🍅[_id]:', _id);
         return gql`
             mutation {
                 sendComponentToConMagasinForConfirmation(_id: "${_id}") {
@@ -1237,7 +1248,6 @@ export class TicketService {
         `;
     }
     diReperationInPAUSE(_id: string) {
-        console.log('🍭[_id]:', _id);
         return gql`
             mutation {
                 changeToReparationInPause(_idDI: "${_id}") {
@@ -1264,8 +1274,6 @@ export class TicketService {
 
     // logs di
     createLogDi(_id: number, _idDi: string) {
-        console.log('🍕[_id]:', _id);
-        console.log('🥗[_idDi]:', _idDi);
         return gql`
             mutation {
                 createLogsDi(_id: ${_id},_idDi:"${_idDi}") {

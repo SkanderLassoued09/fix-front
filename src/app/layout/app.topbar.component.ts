@@ -91,22 +91,19 @@ export class AppTopBarComponent implements OnInit {
             });
     }
     getComposant(data, _idDoc: string) {
-        console.log('🌯[data]:', data);
         this._idNotification = data;
-        console.log('🍏[_idDoc]:', _idDoc);
+
         this.openModalComposant = true;
         this._idDoc = _idDoc;
         this.apollo
             .query<any>({
                 query: this.ticketService.getDiById(_idDoc),
             })
-            .subscribe(({ data }) => {
-                console.log('🍯[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     confirmAndSendItBackToMagasin() {
-        // console.log(' this.selectedDi', this.selectedDi);
+        //
         this.apollo
             .mutate<any>({
                 mutation: this.ticketService.confirmComposant(
@@ -117,7 +114,6 @@ export class AppTopBarComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log('🎂[data]:', data);
                     this.markAsSeen(this._idNotification);
                 }
             });
@@ -134,7 +130,6 @@ export class AppTopBarComponent implements OnInit {
                 mutation: this.layoutService.markAsSeen(notificationId),
             })
             .subscribe(({ data }) => {
-                console.log('🥧[data]:', data);
                 // this.markAuditAsSeen(auditId, reminderId);
                 // this.disabledButtons[reminderId] = true;
             });

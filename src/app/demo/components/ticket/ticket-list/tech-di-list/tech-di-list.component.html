@@ -197,6 +197,7 @@
                 <h1>{{ di._idDi }}</h1>
                 <h3 *ngIf="ignoreCount > 0">Retour {{ di.ignoreCount }}</h3>
                 <p-image
+                    *ngIf="imageValue"
                     [src]="baseUrl + imageValue"
                     [alt]="imageValue"
                     width="300"
@@ -694,19 +695,49 @@
                                     .StatData.location_id
                             }}
                         </div>
-                        <div>
-                            liste Composant:
+                        <div
+                            *ngIf="
+                                diStatRepInfo?.getStatInfoForTechReparation
+                                    .diData?.array_composants.length > 0
+                            "
+                        >
+                            <!-- liste Composant:
                             <th
                                 *ngFor="
                                     let onecomposant of diStatRepInfo
                                         ?.getStatInfoForTechReparation.diData
-                                        .array_composants
+                                        ?.array_composants
                                 "
                                 style="min-width: 10rem"
                             >
+                                {{ onecomposant }}
                                 {{ onecomposant.nameComposant }} =
                                 {{ onecomposant.quantity }}
-                            </th>
+                            </th> -->
+                            <p-table
+                                [value]="
+                                    diStatRepInfo?.getStatInfoForTechReparation
+                                        .diData?.array_composants
+                                "
+                                [paginator]="true"
+                                [rows]="10"
+                                [responsiveLayout]="'scroll'"
+                            >
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <th>Retour</th>
+                                        <th>Nom du Composant</th>
+                                        <th>Quantité</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-composant>
+                                    <tr>
+                                        <td>{{ composant.ignoreCount }}</td>
+                                        <td>{{ composant.nameComposant }}</td>
+                                        <td>{{ composant.quantity }}</td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
                         </div>
                     </div>
                     <div *ngIf="ignoreCount > 0">

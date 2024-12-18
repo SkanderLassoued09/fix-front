@@ -124,9 +124,7 @@ export class MagasinDiListComponent {
         this.getAllComposant();
         this.getStatusCount();
         this.notificationService.notification$.subscribe((message: any) => {
-            console.log('🍻[message]:', message);
             if (message) {
-                console.log('🍚[message]:', message);
                 this.getDi(this.first, this.rows);
                 this.getStatusCount();
             }
@@ -250,14 +248,13 @@ export class MagasinDiListComponent {
         }
     }
     // Magasin_buttonCondition() {
-    //     console.log(
+    //
     //         'rowData coming from function',
     //         this.diList.getDiForMagasin.di
     //     );
     // }
 
     selectedDropDownComposant(selectedItem) {
-        console.log('🥕[selectedItem]:', selectedItem);
         this.isToUpdate = true;
         this.selectedItem = selectedItem;
         if (selectedItem.value) {
@@ -268,9 +265,8 @@ export class MagasinDiListComponent {
                     ),
                 })
                 .subscribe(({ data, loading }) => {
-                    console.log('🥛[data]:', data);
                     this.loadedDataComposant = data.findOneComposant;
-                    console.log('🍐', this.loadedDataComposant);
+
                     if (data) {
                         // Initialize form fields with loaded data
                         this.composantMagasin.patchValue({
@@ -300,10 +296,8 @@ export class MagasinDiListComponent {
     openDialogMagasin(item) {
         this.selectedDi_id = item._id;
         this.ignoreCount = item.ignoreCount;
-        console.log('🍰[ this.ignoreCount ]:', this.ignoreCount);
 
         if (item && item.ignoreCount && item.ignoreCount > 0) {
-            console.log('retour', item.ignoreCount);
             this.apollo
                 .query<any>({
                     query: this.ticketSerice.getLogsDiById(
@@ -312,12 +306,9 @@ export class MagasinDiListComponent {
                     ),
                 })
                 .subscribe(({ data }) => {
-                    console.log('🍉[data]:', data);
                     const logsDi = data?.getLigsById; // Assuming this is the response structure
-                    console.log('🥔[logsDi]:', logsDi);
-                    if (logsDi?.array_composants) {
-                        console.log('🍼️', logsDi.array_composants);
 
+                    if (logsDi?.array_composants) {
                         this.arrayComposant = logsDi.array_composants
                             .filter((el: any) => el.isUpdated === false)
                             .map((el: any) => {
@@ -331,7 +322,6 @@ export class MagasinDiListComponent {
                     }
                 });
         } else {
-            console.log('🍼️', item.array_composants);
             this.arrayComposant = item.array_composants
                 .filter((el) => el.isUpdated === false)
                 .map((el) => {
@@ -393,7 +383,6 @@ export class MagasinDiListComponent {
     getLogsDiById(_id: number) {}
 
     selectedDropDown(selectedItem) {
-        console.log('🥃[selectedItem]:', selectedItem);
         this.nameComposananrSelected = selectedItem.value;
         if (selectedItem.value) {
             this.selectedItem = selectedItem;
@@ -405,7 +394,7 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data, loading }) => {
                     this.loadedDataComposant = data.findOneComposant;
-                    console.log('🍐', this.loadedDataComposant.pdf);
+
                     if (data) {
                         // Initialize form fields with loaded data
                         this.formUpdateComposant.patchValue({
@@ -440,15 +429,11 @@ export class MagasinDiListComponent {
     }
 
     updateComposantIncreation() {
-        console.log('working update');
-
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                console.log('inside condition working');
-
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.updateComposant(
@@ -479,8 +464,6 @@ export class MagasinDiListComponent {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log('🍆[data]:', data);
-
                     // Remove the selected item from the arrayComposant
                     const index = this.arrayComposant.findIndex(
                         (composant) =>
@@ -505,8 +488,6 @@ export class MagasinDiListComponent {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                console.log('inside condition working');
-
                 this.apollo
                     .mutate<UpdateComposantMutationResponse>({
                         mutation: this.ticketSerice.updateComposant(
@@ -544,7 +525,6 @@ export class MagasinDiListComponent {
     }
 
     onUpload(event: any) {
-        console.log('onUpload');
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -556,7 +536,6 @@ export class MagasinDiListComponent {
     }
 
     uploadFile(base64: string) {
-        console.log('🍢uploadFile');
         const payload = {
             image: base64,
             // add other necessary data here
@@ -573,8 +552,6 @@ export class MagasinDiListComponent {
                 ...composantDataForm,
                 pdf: this.payloadImage?.image || null,
             };
-
-            console.log('cc', { composantDataForm });
 
             this.apollo
                 .mutate<any>({
@@ -596,7 +573,6 @@ export class MagasinDiListComponent {
         }
 
         if (this.isToUpdate) {
-            console.log('🍼️update');
             const formattedComposantInfo = {
                 name: this.composantMagasin.value.name,
                 package: this.composantMagasin.value.packageComposant,
@@ -611,7 +587,6 @@ export class MagasinDiListComponent {
                 pdf: this.composantMagasin.value.pdf,
                 status_composant: this.composantMagasin.value.status,
             };
-            console.log({ formattedComposantInfo });
 
             this.apollo
                 .mutate<any>({
@@ -622,7 +597,6 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data }) => {
                     if (data) {
-                        console.log('🥚[data]:', data);
                         this.composantMagasin.reset();
                         // Handle success
                     }

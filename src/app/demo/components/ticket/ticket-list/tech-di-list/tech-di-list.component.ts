@@ -633,6 +633,78 @@ export class TechDiListComponent implements OnInit {
                 }
             });
         // -----------
+
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getDiById(di._idDi),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    let arrayComposantLogs;
+                    console.log('🥥[data]:', data);
+                    const detailsDi = data.getDiById.di;
+                    const detailsLogs = data.getDiById.logsDi;
+
+                    if (detailsLogs) {
+                        // Create the array of composant logs and set ignoreCount
+                        arrayComposantLogs = detailsLogs.flatMap((el) => {
+                            return el.array_composants.map((composant) => ({
+                                ...composant,
+                                ignoreCount: el._id, // Assign ignoreCount from the logs
+                            }));
+                        });
+
+                        this.composantCombo = [];
+
+                        console.log('Hello logs', arrayComposantLogs);
+                        this.allComposantLogsAndOriginal = [
+                            ...detailsDi.array_composants,
+                            ...arrayComposantLogs,
+                        ];
+                    }
+
+                    if (detailsDi) {
+                        // Patch the form with the new data
+                        this.diagFormTech.patchValue({
+                            _idDi: di._id,
+                            diag_time:
+                                di.diag_time || detailsDi.diag_time || '',
+                            remarqueTech:
+                                di.remarqueTech ||
+                                detailsDi.remarque_tech_diagnostic ||
+                                '',
+                            isPdr: di.isPdr || detailsDi.contain_pdr || true,
+                            isReparable:
+                                di.isReparable ||
+                                detailsDi.can_be_repaired ||
+                                true,
+                            quantity: di.quantity || 0,
+                            composantSelectedDropdown:
+                                di.composantSelectedDropdown ??
+                                detailsDi.array_composants,
+                        });
+
+                        // Set ignoreCount to 0 for all items in detailsDi.array_composants
+                        detailsDi.array_composants =
+                            detailsDi.array_composants.map((composant) => ({
+                                ...composant,
+                                ignoreCount: 0,
+                            }));
+                        // Combine the original components with the logged components
+                        // this.composantCombo = detailsDi.array_composants;
+
+                        console.log(
+                            'Data array composants',
+                            this.composantCombo
+                        );
+                    }
+                }
+
+                // Open the modal after data is fetched
+                this.diDialogDiag[di._id] = true;
+            });
+
+        // -----------
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
@@ -679,6 +751,7 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
+                    console.log('🥑[dataaaaaaaaaaaaaaaaa]:', data);
                     this.diStatRepInfo = data;
                 }
             });

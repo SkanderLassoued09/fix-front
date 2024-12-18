@@ -82,7 +82,6 @@ export class NotificationService {
 
                 break;
             case 'sendComponentToCoordinatorFromMagasin':
-                console.log('sendComponentToCoordinatorFromMagasin', data);
                 this.notificationSubject.next(data.message); // Emit the message
                 return data.message;
 
@@ -100,7 +99,7 @@ export class NotificationService {
             //             sticky: true,
             //         });
             //         // Implement your notification logic for sendDitoDiagnostique event
-            //         console.log(
+            //
             //             'Notification for sendDitoDiagnostique:',
             //             data.message
             //         );
@@ -130,7 +129,7 @@ export class NotificationService {
             //             detail: 'Notification',
             //             sticky: true,
             //         });
-            //         console.log(
+            //
             //             'Notification for sendDitoDiagnostique:',
             //             data.message
             //         );
@@ -147,7 +146,7 @@ export class NotificationService {
             //             sticky: true,
             //         });
             //         // Implement your notification confirm composant
-            //         console.log(
+            //
             //             'Notification for confirmAllComposant:',
             //             data.message
             //         );

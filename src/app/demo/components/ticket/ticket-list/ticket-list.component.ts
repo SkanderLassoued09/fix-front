@@ -268,6 +268,7 @@ export class TicketListComponent implements OnInit {
     selectedBL: string;
     selectedFacture: string;
     ignoreCountNeg1: any;
+    logsDi: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -463,9 +464,7 @@ export class TicketListComponent implements OnInit {
             });
     }
 
-    confirmerNegociation() {
-        // this.selectedRowInNegociate1
-
+    confirmerNegociation(step: any) {
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation du prix final',
@@ -477,30 +476,42 @@ export class TicketListComponent implements OnInit {
                     this.finalPrice
                 );
 
-                if (!this.selectedRowInNegociate1.contain_pdr) {
+                // Null and undefined checks added here
+                if (
+                    !this.selectedRowInNegociate1?.contain_pdr ||
+                    (this.selectedRowInNegociate2 &&
+                        !this.selectedRowInNegociate2?.contain_pdr)
+                ) {
                     this.changeStatusPending3(this._idDi);
                 }
-                if (!this.selectedRowInNegociate1.can_be_repaired) {
+                if (
+                    this.selectedRowInNegociate1?.can_be_repaired === false ||
+                    this.selectedRowInNegociate2?.can_be_repaired === false
+                ) {
                     this.changeStatusFinished(this._idDi);
                 }
                 if (
-                    this.selectedRowInNegociate1.contain_pdr &&
-                    this.selectedRowInNegociate1.can_be_repaired
+                    (this.selectedRowInNegociate1?.contain_pdr &&
+                        this.selectedRowInNegociate1?.can_be_repaired) ||
+                    (this.selectedRowInNegociate2?.contain_pdr &&
+                        this.selectedRowInNegociate2?.can_be_repaired)
                 ) {
                     this.changeStatusDiToInMagasin(this._idDi);
                 }
 
                 this.getDi(this.first, this.rows);
-                this.saveDevisPDF(this._idDi, this.payload.file);
-                this.saveBCPDF(this._idDi, this.payload.file);
+
+                if (step === 0) {
+                    this.saveDevisPDF(this._idDi, this.payload.file);
+                    this.saveBCPDF(this._idDi, this.payload.file);
+                }
                 this.payload.file = '';
                 this.negocite1Modal = false;
                 this.negocite2Modal = false;
-                // Add these boolean flags to your component class
+
+                // Reset fields
                 this.isBCUploaded = false;
                 this.isDevisUploaded = false;
-
-                //
                 this.selectedBc = null;
                 this.selectedDevis = null;
                 this.discountPercent = 0;
@@ -509,6 +520,7 @@ export class TicketListComponent implements OnInit {
             },
         });
     }
+
     enregistrerBC() {
         this.confirmationService.confirm({
             message: 'Voulez vous Enregistrer Bon de commande',
@@ -536,8 +548,6 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.saveBLPDF(this._idPDFFinished, this.payload.file);
-                console.log('inside condition savePDF-BL');
-                console.log("PDF",this.payload.file);
             },
         });
     }
@@ -548,51 +558,37 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.saveFacturePDF(this._idDi, this.payload.file);
-                console.log('inside condition savePDF-BL');
             },
         });
     }
 
     saveDevisPDF(_id: string, pdf: string) {
-        console.log('🍨[pdf]:', pdf);
-        console.log('🍷[_id]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addDevis(_id, pdf),
             })
-            .subscribe(({ data }) => {
-                console.log('🦑[saveDevisPDF]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     saveBLPDF(_id: string, pdf: string) {
-        console.log("_id/pdf",_id,pdf)
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addBL(_id, pdf),
             })
-            .subscribe(({ data }) => {
-                console.log('🦑[saveDevisPDF] 98:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     saveFacturePDF(_id: string, pdf: string) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addFacture(_id, pdf),
             })
-            .subscribe(({ data }) => {
-                console.log('🦑[saveDevisPDF] 98:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     saveBCPDF(_id: string, pdf: string) {
-        console.log('🍿[pdf]:', pdf);
-        console.log('🍟[_id]:', _id);
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addBC(_id, pdf),
             })
-            .subscribe(({ data }) => {
-                console.log('���[saveBCPDF]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     timeStringIntoHours(timeString) {
@@ -605,7 +601,6 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForPricing(data) {
-        console.log('🍰[data]:', data);
         this.seletedRow = data;
         const MyID = data._id;
 
@@ -629,7 +624,6 @@ export class TicketListComponent implements OnInit {
         // Second query: get diagnostic time
         let statQuery;
         if (data?.ignoreCount && data?.ignoreCount > 0) {
-            console.log('log pricing');
             statQuery = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getStatByDI_ID(
@@ -640,7 +634,6 @@ export class TicketListComponent implements OnInit {
                 .toPromise()
                 .then(({ data }) => {
                     if (data) {
-                        console.log('🥐[data]:', data);
                         this.timeDiagnostique =
                             data.getInfoStatByIdDi.diag_time;
                         this.timepart = this.timeStringIntoHours(
@@ -649,7 +642,6 @@ export class TicketListComponent implements OnInit {
                     }
                 });
         } else {
-            console.log('original pricing');
             statQuery = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getStatByDI_ID(MyID),
@@ -657,7 +649,6 @@ export class TicketListComponent implements OnInit {
                 .toPromise()
                 .then(({ data }) => {
                     if (data) {
-                        console.log('🥐[data]:', data);
                         this.timeDiagnostique =
                             data.getInfoStatByIdDi.diag_time;
                         this.timepart = this.timeStringIntoHours(
@@ -718,8 +709,8 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForNegociate1(data) {
-        console.log('🥖[data]:', data);
         this.selectedRowInNegociate1 = data;
+        this._idDi = data._id;
 
         this.seletedRow = data._id;
         this.ignoreCountNeg1 = data.ignoreCount;
@@ -735,11 +726,11 @@ export class TicketListComponent implements OnInit {
     showDialogForNegociate2(data) {
         this.selectedRowInNegociate2 = data;
         this.slectedRow = data._id;
-
+        this._idDi = data._id;
+        this.ignoreCountNeg1 = data.ignoreCount;
         this.negocite2Modal = true;
         this.getTotalComposant(data._id);
         this.getDiByID(this.slectedRow);
-        console.log("data inside NEGOCIATION 2")
     }
 
     onSizeSelect() {}
@@ -818,21 +809,17 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getDiById(_idDi),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥒[getDiByID]:', data);
                 if (data) {
                     this.dataById = data;
-                    console.log('🌶[ this.dataById]:', this.dataById);
 
                     if (this.dataById.getDiById.logsDi) {
-                        console.log('🍦 logsdi');
                         const filtredLogsDi =
                             this.dataById.getDiById.logsDi.find(
                                 (el) => el.idIgnore === this.ignoreCountNeg1
                             );
-                        console.log('🍭[filtredLogsDi]:', filtredLogsDi);
+
                         this.price = filtredLogsDi.price;
                     } else {
-                        console.log('🍦 di');
                         this.price = this.dataById.getDiById.di.price;
                     }
                 }
@@ -851,7 +838,6 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.totalComposant(_id),
             })
             .valueChanges.subscribe(({ data }) => {
-                console.log('🍾[data]:', data);
                 this.totalComposant = data.calculateTicketComposantPrice;
             });
     }
@@ -1108,27 +1094,21 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusRetour1(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🥤[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     changeStatusRetour2(_id) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusRetour2(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🥤[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
     changeStatusRetour3(_id) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusRetour3(_id),
             })
-            .subscribe(({ data }) => {
-                console.log('🥤[data]:', data);
-            });
+            .subscribe(({ data }) => {});
     }
 
     changeToPending1(data) {
@@ -1266,8 +1246,6 @@ export class TicketListComponent implements OnInit {
     // count ignore ticket and save it
     //!POP HERE
     ignore(_idticket) {
-        console.log('🍟[_idticket]:', _idticket);
-
         this.confirmationService.confirm({
             message: 'Voulez-vous continuer ?',
             header: "Envoyer Demande d'intervention Retour",
@@ -1278,7 +1256,6 @@ export class TicketListComponent implements OnInit {
                         mutation: this.ticketSerice.ignore(_idticket._id),
                     })
                     .subscribe(({ data }) => {
-                        console.log('🍦[data]:', data);
                         if (data) {
                             const updatedIgnoreCount =
                                 data.countIgnore.ignoreCount;
@@ -1399,11 +1376,9 @@ export class TicketListComponent implements OnInit {
 
                 if (type === 'BC') {
                     this.selectedBc = blobUrl; // Assign Blob URL for BC
-                    console.log('🍢[Blob URL for BC]:', this.selectedBc);
                 } else if (type === 'Devis') {
                     this.selectedDevis = blobUrl; // Assign Blob URL for Devis
                 } else if (type == 'BL') {
-                    console.log('condition correct BL');
                     this.selectedBL = blobUrl;
                 } else if (type == 'Facture') {
                     this.selectedFacture = blobUrl;
@@ -1427,7 +1402,6 @@ export class TicketListComponent implements OnInit {
             // Base64 creation
             readerForBase64.onload = () => {
                 const base64 = readerForBase64.result as string;
-                console.log('🌶[base64]:', base64);
 
                 // Call uploadFile with Base64 string
                 this.uploadFile(base64, type);
@@ -1478,8 +1452,6 @@ export class TicketListComponent implements OnInit {
             };
             this.payload = payload;
         }
-        
-
     }
 
     deletLocation(selected) {
@@ -1591,11 +1563,22 @@ export class TicketListComponent implements OnInit {
     }
 
     openTicketDetails(data: any) {
+        this.getLogsDi(data._id);
         this.getLogsData(data._id).subscribe((pauseLogs) => {
-            this.ticketData = { ...data, ...pauseLogs }; // Merge data and pauseLogs
-            console.log('🍞[ this.ticketData]:', this.ticketData);
+            this.ticketData = { ...data, ...pauseLogs, ...this.logsDi }; // Merge data and pauseLogs
+
             this.ticketDetailsInfo = true; // Open the dialog
         });
+    }
+
+    getLogsDi(_id: string) {
+        this.apollo
+            .query<any>({ query: this.ticketSerice.getLogsDi() })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.logsDi = data.getAllLogsByDi;
+                }
+            });
     }
 
     getLogsData(_id: string) {

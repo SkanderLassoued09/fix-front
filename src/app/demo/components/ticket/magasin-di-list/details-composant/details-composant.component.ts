@@ -145,8 +145,8 @@ export class DetailsComposantComponent implements OnInit {
             .subscribe(({ data }) => {
                 console.log('🍤[data]:', data);
                 this.ignoreCount = data.getDiById.di.ignoreCount;
-                console.log("ignore count value is ",this.ignoreCount);
-                
+                console.log('ignore count value is ', this.ignoreCount);
+
                 if (data) {
                     if (data.getDiById.logsDi) {
                         const filtredLogsDi = data.getDiById.logsDi.find(
