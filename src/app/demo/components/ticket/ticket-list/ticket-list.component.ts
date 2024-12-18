@@ -26,7 +26,7 @@ import {
 import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
-import { map } from 'rxjs';
+import { map, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 interface Column {
@@ -269,6 +269,7 @@ export class TicketListComponent implements OnInit {
     selectedFacture: string;
     ignoreCountNeg1: any;
     logsDi: any;
+    finishedData: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -557,7 +558,7 @@ export class TicketListComponent implements OnInit {
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                this.saveFacturePDF(this._idDi, this.payload.file);
+                this.saveFacturePDF(this._idPDFFinished, this.payload.file);
             },
         });
     }
@@ -574,14 +575,18 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.addBL(_id, pdf),
             })
-            .subscribe(({ data }) => {console.log("data BL",data)});
+            .subscribe(({ data }) => {
+                console.log('data BL', data);
+            });
     }
     saveFacturePDF(_id: string, pdf: string) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.addFacture(_id, pdf),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ data }) => {
+                console.log('🥟[data]:', data);
+            });
     }
     saveBCPDF(_id: string, pdf: string) {
         this.apollo
@@ -714,7 +719,7 @@ export class TicketListComponent implements OnInit {
 
         this.seletedRow = data._id;
         this.ignoreCountNeg1 = data.ignoreCount;
-        console.log("ignoreCountNeg1",this.ignoreCountNeg1)
+        console.log('ignoreCountNeg1', this.ignoreCountNeg1);
         this._idDi = this.seletedRow;
 
         this.getDiByID(this._idDi);
@@ -811,7 +816,7 @@ export class TicketListComponent implements OnInit {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.dataById = data;
-                    console.log("data NEGOCIATION111",data)
+                    console.log('data NEGOCIATION111', data);
                     if (this.dataById.getDiById.logsDi) {
                         const filtredLogsDi =
                             this.dataById.getDiById.logsDi.find(
@@ -1452,6 +1457,13 @@ export class TicketListComponent implements OnInit {
             };
             this.payload = payload;
         }
+        if (type === 'Facture') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
+            this.payload = payload;
+        }
     }
 
     deletLocation(selected) {
@@ -1492,10 +1504,29 @@ export class TicketListComponent implements OnInit {
         this.openAddDiModal = false;
         this.creationDiForm.reset();
     }
-
-    openUploadFileFinished(_id: string) {
+    openUploadFileFinished(dataselected: any) {
         this.filsFinished = true;
-        this._idPDFFinished = _id;
+        this._idPDFFinished = dataselected._id;
+
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getLogsDi(dataselected._id),
+            })
+            .pipe(
+                tap(({ data }) => {
+                    if (data) {
+                        const logs = data.getAllLogsByDi;
+                        this.finishedData = { original: dataselected, logs };
+                        console.log(
+                            '🥠[ this.finishedData]:',
+                            this.finishedData
+                        );
+                    }
+                })
+            )
+            .subscribe({
+                error: (err) => console.error('Error fetching logs:', err),
+            });
     }
 
     onUploadFacture(event, type) {
@@ -1565,15 +1596,15 @@ export class TicketListComponent implements OnInit {
     openTicketDetails(data: any) {
         this.getLogsDi(data._id);
         this.getLogsData(data._id).subscribe((pauseLogs) => {
+            // nezih
             this.ticketData = { ...data, ...pauseLogs, ...this.logsDi }; // Merge data and pauseLogs
-
             this.ticketDetailsInfo = true; // Open the dialog
         });
     }
 
     getLogsDi(_id: string) {
         this.apollo
-            .query<any>({ query: this.ticketSerice.getLogsDi() })
+            .query<any>({ query: this.ticketSerice.getLogsDi(_id) })
             .subscribe(({ data }) => {
                 if (data) {
                     this.logsDi = data.getAllLogsByDi;

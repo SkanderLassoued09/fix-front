@@ -196,6 +196,7 @@
             <ng-template pTemplate="content">
                 <h1>{{ di._idDi }}</h1>
                 <h3 *ngIf="ignoreCount > 0">Retour {{ di.ignoreCount }}</h3>
+
                 <p-image
                     *ngIf="imageValue"
                     [src]="baseUrl + imageValue"
@@ -235,7 +236,9 @@
                         </div>
                     </div>
 
-                    <span  *ngIf="ignoreCount > 0" >Type de Panne: {{ di_category_id }} </span>
+                    <span *ngIf="ignoreCount > 0"
+                        >Type de Panne: {{ di_category_id }}
+                    </span>
                 </div>
 
                 <div *ngIf="isLoading">
@@ -247,20 +250,34 @@
                 </div>
 
                 <div *ngIf="ignoreCount > 0" class="history-container">
-                    <div *ngIf="historyOfDi && historyOfDi.length > 0" class="history-list">
-                        <div *ngFor="let item of historyOfDi" class="history-item">
+                    <div
+                        *ngIf="historyOfDi && historyOfDi.length > 0"
+                        class="history-list"
+                    >
+                        <div
+                            *ngFor="let item of historyOfDi"
+                            class="history-item"
+                        >
                             <div class="flow-label">Tech/Temps</div>
                             <div class="diagnostic-info">
-                                <span class="label">Technicien chargé Diagnostique:</span>
-                                <span class="value">{{ item?.id_tech_diag }}</span>
+                                <span class="label"
+                                    >Technicien chargé Diagnostique:</span
+                                >
+                                <span class="value">{{
+                                    item?.id_tech_diag
+                                }}</span>
                             </div>
                             <div class="diagnostic-info">
                                 <span class="label">Temps Diagnostique:</span>
                                 <span class="value">{{ item?.diag_time }}</span>
                             </div>
                             <div class="repair-info">
-                                <span class="label">Technicien chargé Réparation:</span>
-                                <span class="value">{{ item?.id_tech_rep }}</span>
+                                <span class="label"
+                                    >Technicien chargé Réparation:</span
+                                >
+                                <span class="value">{{
+                                    item?.id_tech_rep
+                                }}</span>
                             </div>
                             <div class="repair-info">
                                 <span class="label">Temps Réparation:</span>
@@ -269,7 +286,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div *ngIf="ignoreCount > 0">
                     <h3>
                         Liste des composants original et retour N°: ({{
@@ -319,7 +336,6 @@
                             </p-dropdown>
                         </div>
                         <div *ngIf="ignoreCount > 0">
-                            
                             <div class="justify-content-between">
                                 <h3>
                                     Veuiller choisir le type d'erreur client ou
@@ -636,16 +652,15 @@
                         class="p-button-text"
                         (click)="techFinishDiag()"
                     ></button>
-                    <button 
-                    *ngIf="ignoreCount > 0"
-                    title="Reperable sans composants"
-                    pButton
-                    pRipple
-                    label="Envoyer-Pending3"
-
-                    class="p-button-text"
-                    (click)="changeStatusPending3()">
-                </button>
+                    <button
+                        *ngIf="ignoreCount > 0"
+                        title="Reperable sans composants"
+                        pButton
+                        pRipple
+                        label="Envoyer-Pending3"
+                        class="p-button-text"
+                        (click)="changeStatusPending3()"
+                    ></button>
                     <button
                         *ngIf="ignoreCount > 0"
                         pButton
@@ -655,13 +670,12 @@
                         class="p-button-text"
                         (click)="saveLogsDi()"
                     ></button>
-                  
                 </div>
             </ng-template>
         </p-dialog>
     </ng-container>
     <!-- REPERATION MODAL -->
-   <p-dialog
+    <p-dialog
         header="Reparation"
         [(visible)]="diDialogRep"
         [style]="{ width: '50%', height: '70vh' }"

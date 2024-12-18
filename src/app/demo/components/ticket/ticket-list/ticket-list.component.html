@@ -520,7 +520,7 @@
                         pRipple
                         icon="pi pi-link"
                         class="p-button-rounded p-button-raised p-button-success mr-2"
-                        (click)="openUploadFileFinished(rowData._id)"
+                        (click)="openUploadFileFinished(rowData)"
                     ></button>
                     <button
                         *ngIf="
@@ -1022,7 +1022,9 @@
             <div class="button-row">
                 <div class="button-container-BC">
                     <a
-                        [href]="baseUrl + selectedBc"
+                        [href]="
+                            baseUrl + finishedData?.original?.bon_de_commande
+                        "
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -1031,7 +1033,33 @@
                 </div>
                 <div class="button-container-BC">
                     <a
-                        [href]="baseUrl + selectedDevis"
+                        [href]="
+                            baseUrl + finishedData?.original?.bon_de_livraison
+                        "
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter Bon de livraison"
+                            [link]="true"
+                        ></p-button>
+                    </a>
+                </div>
+                <div class="button-container-BC">
+                    <a
+                        [href]="baseUrl + finishedData?.original?.facture"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter facture"
+                            [link]="true"
+                        ></p-button>
+                    </a>
+                </div>
+                <div class="button-container-BC">
+                    <a
+                        [href]="baseUrl + finishedData?.original?.devis"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -1064,7 +1092,11 @@
                     <div class="button-container-BC">
                         <a
                             *ngIf="selectedBL"
-                            [href]="selectedBL"
+                            [href]="
+                                selectedBL ??
+                                baseUrl +
+                                    finishedData?.original?.bon_de_livraison
+                            "
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -1096,7 +1128,10 @@
                     <div class="button-container-BC">
                         <a
                             *ngIf="selectedFacture"
-                            [href]="selectedFacture"
+                            [href]="
+                                selectedFacture ??
+                                baseUrl + finishedData?.original?.facture
+                            "
                             target="_blank"
                             rel="noopener noreferrer"
                         >
@@ -1107,20 +1142,22 @@
                         </a>
                         <p-button
                             (click)="enregistrerFacture()"
-                            label="Enregistrer BL"
+                            label="Enregistrer facture"
                             [link]="true"
                         ></p-button>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="button-container">
-                <p-button
-                    label="Enregistrer"
-                    icon="pi pi-save"
-                    class="save-button"
-                    (onClick)="sendFilePdf()"
-                ></p-button>
+        <div>
+            <h3>logs</h3>
+
+            <div *ngFor="let files of finishedData?.logs">
+                <a href=""> bl: {{ files.bon_de_livraison }}</a>
+                <a href=""> bc: {{ files.bon_de_commande }}</a>
+                <a href=""> devis: {{ files.devis }}</a>
+                <a href=""> facture: {{ files.facture }}</a>
             </div>
         </div>
     </ng-container>

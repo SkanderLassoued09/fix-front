@@ -34,6 +34,7 @@ export class TicketService {
                         bon_de_livraison
                         contain_pdr
                         facture
+                        devis
                         status
                         createdAt
                         updatedAt
@@ -154,15 +155,17 @@ export class TicketService {
         `;
     }
 
-    getLogsDi() {
+    getLogsDi(_id: string) {
         return gql`
             {
-                getAllLogsByDi(_idDi: "DI0") {
+                getAllLogsByDi(_idDi: "${_id}") {
                     _id
-
+                    idIgnore
                     can_be_repaired
                     bon_de_commande
                     bon_de_livraison
+                    facture
+                    devis
                     contain_pdr
                     status
                     createdAt
@@ -396,13 +399,15 @@ export class TicketService {
     addBL(_id: string, pdf: string) {
         return gql`
             mutation {
-                addBL(_id: "${_id}", pdf: "${pdf}") {
+                addBl(_id: "${_id}", pdf: "${pdf}") {
                     _id
                 }
             }
         `;
     }
     addFacture(_id: string, pdf: string) {
+        console.log('🥘[pdf]:', pdf);
+        console.log('🍢[_id]:', _id);
         return gql`
             mutation {
                 addFacture(_id: "${_id}", pdf: "${pdf}") {

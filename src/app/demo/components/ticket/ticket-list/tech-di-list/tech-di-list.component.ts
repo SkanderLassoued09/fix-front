@@ -14,6 +14,7 @@ import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces
 import { filter, finalize, map } from 'rxjs';
 import * as moment from 'moment';
 import { dA } from '@fullcalendar/core/internal-common';
+import { environment } from 'src/environments/environment';
 
 @Component({
     selector: 'app-tech-di-list',
@@ -21,6 +22,7 @@ import { dA } from '@fullcalendar/core/internal-common';
     styleUrl: './tech-di-list.component.scss',
 })
 export class TechDiListComponent implements OnInit {
+    baseUrl = environment.apiUrl;
     selectedComposants: any[] = [];
     diagFormTech = new FormGroup({
         _idDi: new FormControl(),
@@ -437,14 +439,14 @@ export class TechDiListComponent implements OnInit {
         }, 2000);
     }
 
-    getImage() {
+    getImage(_id: string) {
         this.apollo
             .query<any>({
-                query: this.ticketSerice.getImageforDI(this.selectedDi_id),
+                query: this.ticketSerice.getImageforDI(_id),
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    this.imageValue = data.getDiById.image;
+                    this.imageValue = data.getDiById.di.image;
                 }
             });
     }
@@ -575,7 +577,7 @@ export class TechDiListComponent implements OnInit {
         // Set selected DI and status
         this.di = { ...di };
         this.selectedDi = di._id;
-
+        this.imageValue = di.image;
         this.selectedDi_id = di._idDi;
         this.diStatus = di.status;
         this.ignoreCount = di.ignoreCount;
@@ -583,7 +585,7 @@ export class TechDiListComponent implements OnInit {
         // Perform other tasks
         this.changeStatus(di._idDi);
         this.getTimeSpent(di._id);
-        this.getImage();
+        this.getImage(di._idDi);
         this.getAllRemarque(di._idDi);
         console.log('DATA inside ', this.di);
         this.cdr.detectChanges();
@@ -730,7 +732,7 @@ export class TechDiListComponent implements OnInit {
         this.selectedDi = di._id;
         this.diDialogRep = true;
         this.getTimeSpentRep(di._id);
-        this.getImage();
+        this.getImage(di._idDi);
         this.changeStatusInReparation(di._idDi);
         this.getAllRemarque(di._idDi);
         this.apollo
