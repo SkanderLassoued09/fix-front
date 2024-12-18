@@ -986,7 +986,7 @@ export class TicketService {
                         price
                         idIgnore
                         isSentToCoordinator
-   isConfirmedComponentFromCoordinator
+                        isConfirmedComponentFromCoordinator
                         remarque_tech_diagnostic
                         remarque_tech_repair
                         can_be_repaired

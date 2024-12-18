@@ -1298,18 +1298,27 @@ export class TechDiListComponent implements OnInit {
             },
         });
     }
-
+/////////////////////////////// NEZIH
     changeStatusPending3() {
         console.log(' this.selectedDi_id', this.selectedDi_id);
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.changeStatusPending3(
-                    this.selectedDi_id
-                ),
-            })
-            .subscribe(({ data }) => {
-                console.log('send to pending 3', data);
-            });
+        this.confirmationService.confirm({
+            message: 'Voulez vous Envoyer directement aux coordinator ?',
+            header: 'Confirmation Diagnostique sans composants',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.changeStatusPending3(
+                        this.selectedDi_id
+                    ),
+                })
+                .subscribe(({ data }) => {
+                    console.log('send to pending 3', data);
+                });
+                this.diDialogDiag[this.selectedDi] = false;
+            }
+        })
+       
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {

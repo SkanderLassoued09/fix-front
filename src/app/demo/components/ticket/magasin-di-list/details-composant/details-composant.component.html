@@ -27,14 +27,14 @@
                         (click)="sentComponentToCoordinatorToConfirm()"
                     ></p-button>
                     <p-button
-                        label="Save"
+                        label="Savaugarder le composant choisie"
                         [raised]="true"
                         size="small"
                         (click)="updateComposant()"
                     ></p-button>
                     <p-button
                         [disabled]="!componentsAreConfirmed && ignoreCount==0"
-                        label="Finir"
+                        label="Fin liste composants"
                         [raised]="true"
                         size="small"
                         (click)="changeStatusPending3()"

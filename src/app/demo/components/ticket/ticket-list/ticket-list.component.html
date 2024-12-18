@@ -735,7 +735,7 @@
                 icon="pi pi-check-circle"
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="confirmerNegociation(0)"
-                [disabled]="!isFormComplete()"
+                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0 "
             ></button>
         </div>
     </ng-container>
@@ -752,6 +752,67 @@
 >
     <ng-container>
         <div class="dialog-body">
+            <div class="file-upload-container">
+                <div>
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Bon de commande"
+                        chooseIcon="pi pi-upload"
+                        name="bonDeCommande"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept="application/pdf"
+                        maxFileSize="10000000"
+                        (onUpload)="onUpload($event, 'BC')"
+                        [auto]="true"
+                    />
+                    <div class="button-container-BC">
+                        <a
+                            *ngIf="selectedBc"
+                            [href]="selectedBc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button label="Consulter BC" [link]="true"></p-button>
+                        </a>
+                        <p-button
+                            (click)="enregistrerBC()"
+                            label="Enregistrer BC"
+                            [link]="true"
+                        ></p-button>
+                    </div>
+                </div>
+                <div class="file-upload-section">
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Devis"
+                        chooseIcon="pi pi-upload"
+                        name="devis"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept="application/pdf"
+                        maxFileSize="10000000"
+                        (onUpload)="onUpload($event, 'Devis')"
+                        [auto]="true"
+                    />
+                    <div class="button-container-BC">
+                        <a
+                            *ngIf="selectedDevis"
+                            [href]="selectedDevis"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button
+                                label="Consulter Devis"
+                                [link]="true"
+                            ></p-button>
+                        </a>
+                        <p-button
+                            (click)="enregistrerDevis()"
+                            label="Enregistrer Devis"
+                            [link]="true"
+                        ></p-button>
+                    </div>
+                </div>
+            </div>
             <!-- Price Details Section -->
             <div class="price-details">
                 <h5>Prix Initial: {{ price }}</h5>

@@ -574,7 +574,7 @@ export class TicketListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.addBL(_id, pdf),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ data }) => {console.log("data BL",data)});
     }
     saveFacturePDF(_id: string, pdf: string) {
         this.apollo
@@ -714,7 +714,7 @@ export class TicketListComponent implements OnInit {
 
         this.seletedRow = data._id;
         this.ignoreCountNeg1 = data.ignoreCount;
-
+        console.log("ignoreCountNeg1",this.ignoreCountNeg1)
         this._idDi = this.seletedRow;
 
         this.getDiByID(this._idDi);
@@ -811,7 +811,7 @@ export class TicketListComponent implements OnInit {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.dataById = data;
-
+                    console.log("data NEGOCIATION111",data)
                     if (this.dataById.getDiById.logsDi) {
                         const filtredLogsDi =
                             this.dataById.getDiById.logsDi.find(

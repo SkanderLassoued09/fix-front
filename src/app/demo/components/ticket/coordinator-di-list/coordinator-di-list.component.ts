@@ -525,7 +525,7 @@ export class CoordinatorDiListComponent {
 
     gotcomposantfromMagasin() {
         this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
+            message: 'Confirmer les composants',
             header: 'Confirmation Magasin',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {

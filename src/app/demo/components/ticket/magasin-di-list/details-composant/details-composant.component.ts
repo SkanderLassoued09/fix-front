@@ -173,7 +173,14 @@ export class DetailsComposantComponent implements OnInit {
 
     sentComponentToCoordinatorToConfirm() {
         console.log('🥘');
-        this.apollo
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les Composants avec coordinator',
+            header: 'Confirmation Composants',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+               
+    
+                this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.sentComponentToCoordinatorToConfirm(
                     this._id
@@ -189,6 +196,10 @@ export class DetailsComposantComponent implements OnInit {
                         data.sendComponentToConMagasinForConfirmation.isSentToCoordinator;
                 }
             });
+
+            }
+        })
+       
     }
 
     changeStatusDiToPending2(_id: string) {
@@ -217,7 +228,7 @@ export class DetailsComposantComponent implements OnInit {
                         '🥒[   this.composantValues]:',
                         this.composantValues
                     );
-                    this.changeStatusDiToPending2(this.selectedDi_id);
+                   // this.changeStatusDiToPending2(this.selectedDi_id);
                     this.isActive = false;
                 }
             });
@@ -226,7 +237,7 @@ export class DetailsComposantComponent implements OnInit {
     changeStatusPending3() {
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements',
-            header: 'Confirmation Demande prix des composants',
+            header: 'Confirmation Liste des composants',
             icon: 'pi pi-question-circle',
             accept: () => {
                 this.apollo
