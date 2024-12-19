@@ -1345,7 +1345,7 @@ export class TechDiListComponent implements OnInit {
 
                 this.lap();
 
-                if (dataDiag.pdr) {
+                if (dataDiag.pdr && dataDiag.reparable) {
                     this.apollo
                         .mutate<any>({
                             mutation: this.ticketSerice.finish(dataDiag),

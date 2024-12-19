@@ -5,13 +5,13 @@
     <!-- Component Info Section -->
     <div class="col-7 component-info">
         <!-- Header -->
-        <header class="component-header mb-3 improved-header">
-            <h5>Information sur Composant</h5>
-            <div class="flex justify-content-between align-items-center">
-                <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
+        <header >
+            <div class="component-header mb-3 improved-header">
+                <h5>Information sur Composant</h5>
                 <div class="button-group improved-button-group">
                     <p-button
                         *ngIf="ignoreCount === 0"
+                        severity="help"
                         [disabled]="isSentToCoordinator"
                         label="Confirmer les composants"
                         [raised]="true"
@@ -20,26 +20,33 @@
                     ></p-button>
                     <p-button
                         *ngIf="ignoreCount > 0"
+                        severity="help"
                         [disabled]="isSentToCoordinator"
-                        label="Confirmer les composants Retour"
+                        label="Confirmation Coordinator"
                         [raised]="true"
                         size="small"
                         (click)="sentComponentToCoordinatorToConfirm()"
                     ></p-button>
-                    <p-button
-                        label="Savaugarder le composant choisie"
+                <p-button
+                        label="Savaugarder {{ composantValues?.name }}"
                         [raised]="true"
                         size="small"
                         (click)="updateComposant()"
                     ></p-button>
                     <p-button
-                        [disabled]="!componentsAreConfirmed && ignoreCount==0"
-                        label="Fin liste composants"
-                        [raised]="true"
-                        size="small"
-                        (click)="changeStatusPending3()"
-                    ></p-button>
+                    [disabled]="!componentsAreConfirmed && ignoreCount==0"
+                    label="Fin liste composants"
+                    [raised]="true"
+                    size="small"
+                    (click)="changeStatusPending3()"
+                    severity="success"
+                ></p-button>   
                 </div>
+            </div>
+           
+            <div class="flex justify-content-between align-items-center">
+                <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
+                
             </div>
         </header>
 
@@ -47,8 +54,8 @@
         <section class="component-details p-4 improved-details" [formGroup]="formUpdateComposant">
             <!-- Details Fields -->
             <div class="field improved-field">
-                <strong>ID:</strong>
-                <span>{{ composantValues?._id }}</span>
+                <h3>ID Composant: {{ composantValues?._id }}</h3>
+                
             </div>
 
             <div class="field improved-field">
