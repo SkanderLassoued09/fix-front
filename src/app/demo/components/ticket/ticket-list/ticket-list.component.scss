@@ -7,6 +7,9 @@
 :host ::ng-deep .row-in-retour3 {
     background-color: #ff0000 !important;
 }
+:host ::ng-deep .facture-checked {
+    background-color: #5afd5c !important;
+}
 .element-container,
 .element-container-BTN,
 .location-form,
@@ -241,234 +244,234 @@
     flex-direction: column;
     gap: 1.5rem;
     padding: 1.5rem;
-  }
-  
-  .price-details {
+}
+
+.price-details {
     text-align: center;
     font-size: 1rem;
-  }
-  
-  .price-details h5 {
+}
+
+.price-details h5 {
     font-weight: 500;
     color: #757575;
-  }
-  
-  .price-details h4 {
+}
+
+.price-details h4 {
     font-weight: 700;
     color: #212121;
-  }
-  
-  .discount-slider {
+}
+
+.discount-slider {
     padding: 0 1rem;
-  }
-  
-  .slider-full-width {
+}
+
+.slider-full-width {
     width: 100%;
-  }
-  
-  .action-buttons {
+}
+
+.action-buttons {
     display: flex;
     justify-content: center;
     margin-top: 1rem;
-  }
-  
-  .confirmation-section {
+}
+
+.confirmation-section {
     margin-top: 1.5rem;
     text-align: center;
-  }
-  
-  .confirmation-section h6 {
+}
+
+.confirmation-section h6 {
     margin-bottom: 1rem;
     color: #424242;
-  }
-  
-  .button-success {
+}
+
+.button-success {
     border-radius: 5px;
     font-size: 0.9rem;
-  }
-  
-  /* Dialog Styles */
+}
+
+/* Dialog Styles */
 p-dialog {
     font-family: Arial, sans-serif;
-  }
-  
-  /* Form Section */
-  .form-group-categorieDI {
+}
+
+/* Form Section */
+.form-group-categorieDI {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
-  }
-  
-  .form-group-categorieDI label {
+}
+
+.form-group-categorieDI label {
     font-size: 1rem;
     font-weight: 600;
     color: #333;
-  }
-  
-  .form-control-categorieDI {
+}
+
+.form-control-categorieDI {
     padding: 0.5rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
-  }
-  
-  .button-container-categorieDI {
+}
+
+.button-container-categorieDI {
     display: flex;
     justify-content: flex-end;
-  }
-  
-  /* Table Styles */
-  .table-categorieDI {
+}
+
+/* Table Styles */
+.table-categorieDI {
     margin-top: 1.5rem;
-  }
-  
-  .table-header-categorieDI {
+}
+
+.table-header-categorieDI {
     background-color: #f4f4f4;
     font-weight: 600;
     text-align: left;
     padding: 0.75rem;
-  }
-  
-  .table-row-categorieDI {
+}
+
+.table-row-categorieDI {
     border-bottom: 1px solid #ddd;
-  }
-  
-  .table-cell-categorieDI {
+}
+
+.table-cell-categorieDI {
     padding: 0.75rem;
-  }
-  
-  .table-actions-categorieDI {
+}
+
+.table-actions-categorieDI {
     display: flex;
     gap: 0.5rem;
     justify-content: center;
     align-items: center;
-  }
-  
-  /* Button Styles */
-  .delete-btn-categorieDI {
+}
+
+/* Button Styles */
+.delete-btn-categorieDI {
     border-radius: 50%;
-  }
-  /* Dialog Styles */
+}
+/* Dialog Styles */
 p-dialog {
     font-family: Arial, sans-serif;
-  }
-  
-  /* Form Section */
-  .location-form-Emplacement {
+}
+
+/* Form Section */
+.location-form-Emplacement {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 1rem;
-  }
-  
-  .form-group-Emplacement {
+}
+
+.form-group-Emplacement {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-  
-  .form-group-Emplacement label {
+}
+
+.form-group-Emplacement label {
     font-size: 1rem;
     font-weight: 600;
     color: #333;
-  }
-  
-  .form-control-Emplacement {
+}
+
+.form-control-Emplacement {
     padding: 0.5rem;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
-  }
-  
-  /* Modal Footer */
-  .modal-footer-Emplacement {
+}
+
+/* Modal Footer */
+.modal-footer-Emplacement {
     display: flex;
     justify-content: flex-end;
-  }
-  
-  .add-button-Emplacement {
+}
+
+.add-button-Emplacement {
     font-size: 0.9rem;
     padding: 0.5rem 1rem;
-  }
-  
-  /* Table Styles */
-  .table-Emplacement {
+}
+
+/* Table Styles */
+.table-Emplacement {
     margin-top: 1.5rem;
-  }
-  
-  .table-header-Emplacement {
+}
+
+.table-header-Emplacement {
     background-color: #f4f4f4;
     font-weight: 600;
     text-align: left;
     padding: 0.75rem;
-  }
-  
-  .table-row-Emplacement {
+}
+
+.table-row-Emplacement {
     border-bottom: 1px solid #ddd;
-  }
-  
-  .table-cell-Emplacement {
+}
+
+.table-cell-Emplacement {
     padding: 0.75rem;
-  }
-  
-  .table-actions-Emplacement {
+}
+
+.table-actions-Emplacement {
     display: flex;
     gap: 0.5rem;
     justify-content: center;
     align-items: center;
-  }
-  
-  /* Delete Button */
-  .delete-button-Emplacement {
+}
+
+/* Delete Button */
+.delete-button-Emplacement {
     border-radius: 50%;
-  }
-  
-  ////////////////////////////////////////////////////////////////////////////////////////////
-  /// /* Dialog Styles */
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+/// /* Dialog Styles */
 .dialog-header-pricing {
-    font-family: 'Arial', sans-serif;
+    font-family: "Arial", sans-serif;
     background-color: #fff;
     padding: 1rem;
     border-radius: 8px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-  }
-  
-  /* Form Section */
-  .form-pricing {
+}
+
+/* Form Section */
+.form-pricing {
     display: flex;
     flex-direction: column;
     gap: 1.2rem;
     padding: 1rem;
-  }
-  
-  /* Modal Content */
-  .modal-content-pricing {
+}
+
+/* Modal Content */
+.modal-content-pricing {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-  }
-  
-  .current-tarif-text-pricing {
+}
+
+.current-tarif-text-pricing {
     font-size: 1.2rem;
     font-weight: bold;
     color: #4a4a4a;
     margin-bottom: 1.2rem;
-  }
-  
-  .new-tarif-container-pricing {
+}
+
+.new-tarif-container-pricing {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-  }
-  
-  .label-pricing {
+}
+
+.label-pricing {
     font-size: 1rem;
     font-weight: 600;
     color: #333;
-  }
-  
-  .input-tarif-pricing {
+}
+
+.input-tarif-pricing {
     font-size: 1rem;
     padding: 0.8rem;
     border: 1px solid #ccc;
@@ -477,203 +480,202 @@ p-dialog {
     outline: none;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     background-color: #f9f9f9;
-  }
-  
-  .input-tarif-pricing:focus {
+}
+
+.input-tarif-pricing:focus {
     border-color: #3f4449;
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }
-  
-  .input-tarif-pricing::placeholder {
+}
+
+.input-tarif-pricing::placeholder {
     color: #bbb;
     font-style: italic;
-  }
-  
-  /* Confirm Button */
-  .confirm-button-pricing {
+}
+
+/* Confirm Button */
+.confirm-button-pricing {
     margin-top: 1rem;
     font-size: 1rem;
     padding: 0.8rem 1.5rem;
-  
+
     color: white;
     border-radius: 4px;
     border: none;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.2s ease;
-  }
-  
-  .confirm-button-pricing:hover {
-  
+}
+
+.confirm-button-pricing:hover {
     transform: scale(1.05);
-  }
-  
-  .confirm-button-pricing:focus {
+}
+
+.confirm-button-pricing:focus {
     outline: none;
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-  }
- /* General Dialog Styles */
+}
+/* General Dialog Styles */
 .pricing-ad-dialog {
-  font-family: Arial, sans-serif;
-  color: #333;
+    font-family: Arial, sans-serif;
+    color: #333;
 }
 
 /* Container Styling */
 .pricing-ad-container {
-  margin: 1rem 0;
+    margin: 1rem 0;
 }
 
 /* Content Section Styling */
 .pricing-ad-content {
-  padding: 1rem;
-  background-color: #f9f9f9;
-  border-radius: 5px;
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border-radius: 5px;
 }
 
 /* Card Styling */
 .pricing-ad-card {
-  margin: 0.5rem 0;
-  padding: 1rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 5px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 0.5rem 0;
+    padding: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .pricing-ad-detail {
-  margin: 0.5rem 0;
-  font-size: 1rem;
+    margin: 0.5rem 0;
+    font-size: 1rem;
 }
 
 /* Headings Styling */
 .pricing-ad-heading {
-  font-size: 1.2rem;
-  margin: 1rem 0;
-  color: #33373a;
-  font-weight: bold;
+    font-size: 1.2rem;
+    margin: 1rem 0;
+    color: #33373a;
+    font-weight: bold;
 }
 
 .pricing-ad-total {
-  font-size: 1.5rem;
-  margin: 1.5rem 0;
-  text-align: center;
-  color: #d9534f;
-  font-weight: bold;
-  border: 2px solid #d9534f;
-  background-color: #ffe8e6;
-  padding: 1rem;
-  border-radius: 5px;
-  box-shadow: 0 4px 8px rgba(217, 83, 79, 0.2);
+    font-size: 1.5rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    color: #d9534f;
+    font-weight: bold;
+    border: 2px solid #d9534f;
+    background-color: #ffe8e6;
+    padding: 1rem;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(217, 83, 79, 0.2);
 }
 
 .pricing-ad-total .highlight-text {
-  color: #c9302c;
-  font-weight: bold;
-  text-transform: uppercase;
+    color: #c9302c;
+    font-weight: bold;
+    text-transform: uppercase;
 }
 
 /* Return Section Styling */
 .pricing-ad-return {
-  margin: 1rem 0;
+    margin: 1rem 0;
 }
 
 .pricing-ad-old-data {
-  padding: 1rem;
-  background-color: #eaf4fe;
-  border-radius: 5px;
+    padding: 1rem;
+    background-color: #eaf4fe;
+    border-radius: 5px;
 }
 
 .pricing-ad-new-data {
-  padding: 1rem;
-  margin-top: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 5px;
+    padding: 1rem;
+    margin-top: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 5px;
 }
 
 /* Spinner Styling */
 .pricing-ad-spinner {
-  font-size: 2rem;
-  color: #007bff;
+    font-size: 2rem;
+    color: #007bff;
 }
 
 /* Footer Section Styling */
 .pricing-ad-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
 }
 
 .pricing-ad-input {
-  width: 50%;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+    width: 50%;
+    border: 1px solid #ddd;
+    border-radius: 5px;
 }
 
 .pricing-ad-button {
-  background-color: #28a745;
-  color: #fff;
-  border: none;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 .pricing-ad-button:hover {
-  background-color: #218838;
+    background-color: #218838;
 }
 /* Footer Section Styling */
 .pricing-ad-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-top: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 1.5rem;
 }
 
 .pricing-ad-footer-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .pricing-ad-input {
-  width: 70%; /* Adjust width for better spacing */
-  padding: 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 70%; /* Adjust width for better spacing */
+    padding: 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .pricing-ad-button {
-  margin-left: 1rem;
-  padding: 0.8rem 1.5rem;
-  background-color: #28a745;
-  color: #fff;
-  border: none;
-  font-size: 1rem;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+    margin-left: 1rem;
+    padding: 0.8rem 1.5rem;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 .pricing-ad-button:hover {
-  background-color: #218838;
-  transform: scale(1.05);
+    background-color: #218838;
+    transform: scale(1.05);
 }
 
 .pricing-ad-button:active {
-  transform: scale(0.98);
+    transform: scale(0.98);
 }
 
 /* Input Number Placeholder Styling */
 .p-inputnumber input::placeholder {
-  color: #6c757d;
-  font-size: 1rem;
+    color: #6c757d;
+    font-size: 1rem;
 }

@@ -270,6 +270,7 @@ export class TicketListComponent implements OnInit {
     ignoreCountNeg1: any;
     logsDi: any;
     finishedData: any;
+    filesSelected: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -1505,6 +1506,8 @@ export class TicketListComponent implements OnInit {
         this.creationDiForm.reset();
     }
     openUploadFileFinished(dataselected: any) {
+        this.filesSelected = dataselected;
+        console.log('🥩[dataselected]:', dataselected);
         this.filsFinished = true;
         this._idPDFFinished = dataselected._id;
 

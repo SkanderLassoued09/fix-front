@@ -39,6 +39,7 @@ export class TicketService {
                         createdAt
                         updatedAt
                         image
+                        isErrorFromFixtronix
                         current_roles
                         company_id
                         client_id

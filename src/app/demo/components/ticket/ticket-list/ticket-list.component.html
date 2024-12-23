@@ -473,7 +473,9 @@
                 [ngClass]="{
                     'row-in-retour1': rowData.ignoreCount === 1,
                     'row-in-retour2': rowData.ignoreCount === 2,
-                    'row-in-retour3': rowData.ignoreCount === 3
+                    'row-in-retour3': rowData.ignoreCount === 3,
+                    'facture-checked':
+                        rowData.facture && rowData.status === 'FINISHED'
                 }"
             >
                 <td *ngFor="let col of columns">
@@ -618,6 +620,14 @@
     [resizable]="false"
 >
     <ng-container>
+        <div>
+            Panne de la part :
+            {{
+                selectedRowInNegociate1?.isErrorFromFixtronix
+                    ? "Fixtronix"
+                    : "Externe"
+            }}
+        </div>
         <div class="file-upload-container">
             <div>
                 <p-fileUpload
@@ -735,7 +745,7 @@
                 icon="pi pi-check-circle"
                 class="p-button-rounded p-button-raised p-button-success"
                 (click)="confirmerNegociation(0)"
-                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0 "
+                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
             ></button>
         </div>
     </ng-container>
@@ -751,6 +761,14 @@
     [resizable]="false"
 >
     <ng-container>
+        <div>
+            Panne de la part :
+            {{
+                selectedRowInNegociate2?.isErrorFromFixtronix
+                    ? "Fixtronix"
+                    : "Externe"
+            }}
+        </div>
         <div class="dialog-body">
             <div class="file-upload-container">
                 <div>
@@ -772,7 +790,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter BC" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter BC"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <p-button
                             (click)="enregistrerBC()"
@@ -1022,9 +1043,7 @@
             <div class="button-row">
                 <div class="button-container-BC">
                     <a
-                        [href]="
-                            baseUrl + finishedData?.original?.bon_de_commande
-                        "
+                        [href]="baseUrl + filesSelected?.bon_de_commande"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -1033,9 +1052,7 @@
                 </div>
                 <div class="button-container-BC">
                     <a
-                        [href]="
-                            baseUrl + finishedData?.original?.bon_de_livraison
-                        "
+                        [href]="baseUrl + filesSelected?.bon_de_livraison"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -1047,7 +1064,7 @@
                 </div>
                 <div class="button-container-BC">
                     <a
-                        [href]="baseUrl + finishedData?.original?.facture"
+                        [href]="baseUrl + filesSelected?.facture"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -1059,7 +1076,7 @@
                 </div>
                 <div class="button-container-BC">
                     <a
-                        [href]="baseUrl + finishedData?.original?.devis"
+                        [href]="baseUrl + filesSelected?.devis"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -1101,7 +1118,7 @@
                             rel="noopener noreferrer"
                         >
                             <p-button
-                                label="Consulter Bon de livraison"
+                                label="Consulter facture"
                                 [link]="true"
                             ></p-button>
                         </a>
