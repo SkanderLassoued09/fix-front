@@ -679,3 +679,19 @@ p-dialog {
     color: #6c757d;
     font-size: 1rem;
 }
+.error-status {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #333;
+    margin: 10px 0;
+  }
+  
+  .error-status .status-yes {
+    color: #d9534f; /* Red for "OUI" */
+    font-weight: bold;
+  }
+  
+  .error-status .status-no {
+    color: #5cb85c; /* Green for "NON" */
+    font-weight: bold;
+  }

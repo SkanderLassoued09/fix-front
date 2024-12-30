@@ -924,6 +924,14 @@
                     </div>
                 </p-card>
                 } } @empty { }
+                <div >
+                    <h6 class="error-status">
+                        Erreur Fixtronix: <span class="{{ isErrorFromFixtronix ? 'status-yes' : 'status-no' }}">
+                          {{ isErrorFromFixtronix ? 'OUI' : 'NON' }}
+                        </span>
+                      </h6>
+                </div>
+                
                 <h5 class="pricing-ad-heading">
                     Le temps de diagnostic est de {{ timeDiagnostique }}
                 </h5>

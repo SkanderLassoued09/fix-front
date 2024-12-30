@@ -990,6 +990,7 @@ export class TicketService {
                     logsDi {
                         _id
                         price
+                        isErrorFromFixtronix
                         idIgnore
                         isSentToCoordinator
                         isConfirmedComponentFromCoordinator

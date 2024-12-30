@@ -271,6 +271,7 @@ export class TicketListComponent implements OnInit {
     logsDi: any;
     finishedData: any;
     filesSelected: any;
+    isErrorFromFixtronix: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -609,7 +610,8 @@ export class TicketListComponent implements OnInit {
     showDialogForPricing(data) {
         this.seletedRow = data;
         const MyID = data._id;
-
+        this.isErrorFromFixtronix = data.isErrorFromFixtronix
+        console.log("ignoreCount =>",data.ignoreCount)
         // Reset tarif and time values to ensure they are not carrying over from previous calls
         this.tarif_Technicien = null;
         this.timeDiagnostique = null;
