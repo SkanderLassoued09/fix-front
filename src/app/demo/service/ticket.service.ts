@@ -892,21 +892,7 @@ export class TicketService {
             }
         `;
     }
-    //     getDiByID(_id: string) {
-    //         return gql`
-    //     query {
-    //       getDiById(_id: "${_id}") {
-    //         di{price
-    //    isSentToCoordinator
-    //    isConfirmedComponentFromCoordinator
-    //         array_composants {
-    //           nameComposant
-    //           quantity
-    //         }}
-    //       }
-    //     }
-    //   `;
-    //     }
+   
 
     sentComponentToCoordinatorToConfirm(_id: string) {
         return gql`
@@ -963,25 +949,7 @@ export class TicketService {
         `;
     }
 
-    /**
-     *
-     *  {getDiById(_id:"DI2"){logsDi{remarque_tech_diagnostic
-                    remarque_tech_repair
-                    can_be_repaired
-                    contain_pdr
-                    array_composants {
-                        nameComposant
-                        quantity
-                    }} di{remarque_tech_diagnostic
-                    remarque_tech_repair
-                    can_be_repaired
-                    contain_pdr
-                    array_composants {
-                        nameComposant
-                        quantity
-                    }}}}
-     *
-     */
+    
 
     getDiById(_id: string) {
         return gql`
@@ -990,7 +958,6 @@ export class TicketService {
                     logsDi {
                         _id
                         price
-                        isErrorFromFixtronix
                         idIgnore
                         isSentToCoordinator
                         isConfirmedComponentFromCoordinator
@@ -1004,11 +971,11 @@ export class TicketService {
                         }
                     }
                     di {
-                    _id
-                    ignoreCount
+                        _id
+                        ignoreCount
                         price
                         isSentToCoordinator
-   isConfirmedComponentFromCoordinator
+                        isConfirmedComponentFromCoordinator
                         remarque_tech_diagnostic
                         remarque_tech_repair
                         can_be_repaired
@@ -1017,6 +984,7 @@ export class TicketService {
                             nameComposant
                             quantity
                         }
+                        isErrorFromFixtronix
                     }
                 }
             }

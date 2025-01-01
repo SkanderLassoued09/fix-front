@@ -272,6 +272,7 @@ export class TicketListComponent implements OnInit {
     finishedData: any;
     filesSelected: any;
     isErrorFromFixtronix: any;
+    ignoreCountPricing: number;
 
     constructor(
         private ticketSerice: TicketService,
@@ -611,6 +612,7 @@ export class TicketListComponent implements OnInit {
         this.seletedRow = data;
         const MyID = data._id;
         this.isErrorFromFixtronix = data.isErrorFromFixtronix
+        this.ignoreCountPricing = data.ignoreCount
         console.log("ignoreCount =>",data.ignoreCount)
         // Reset tarif and time values to ensure they are not carrying over from previous calls
         this.tarif_Technicien = null;

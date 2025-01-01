@@ -620,14 +620,14 @@
     [resizable]="false"
 >
     <ng-container>
-        <div>
+     <!-- <div>
             Panne de la part :
             {{
                 selectedRowInNegociate1?.isErrorFromFixtronix
                     ? "Fixtronix"
                     : "Externe"
             }}
-        </div>
+        </div> -->
         <div class="file-upload-container">
             <div>
                 <p-fileUpload
@@ -761,14 +761,14 @@
     [resizable]="false"
 >
     <ng-container>
-        <div>
+        <!-- <div>
             Panne de la part :
             {{
                 selectedRowInNegociate2?.isErrorFromFixtronix
                     ? "Fixtronix"
                     : "Externe"
             }}
-        </div>
+        </div> -->
         <div class="dialog-body">
             <div class="file-upload-container">
                 <div>
@@ -884,15 +884,15 @@
                         currency="TND"
                     ></p-inputNumber>
                 </ng-container>
-                <button
-                    pButton
-                    pRipple
-                    label="Confirmer"
-                    icon="pi pi-check-circle"
-                    class="button-success"
-                    (click)="confirmerNegociation(1)"
-                ></button>
             </div>
+            <button
+            pButton
+            pRipple
+            label="Confirmer"
+            icon="pi pi-check-circle"
+            class="button-success"
+            (click)="confirmerNegociation(1)"
+        ></button>
         </div>
     </ng-container>
 </p-dialog>
@@ -924,7 +924,7 @@
                     </div>
                 </p-card>
                 } } @empty { }
-                <div >
+                <div *ngIf="ignoreCountPricing > 0" >
                     <h6 class="error-status">
                         Erreur Fixtronix: <span class="{{ isErrorFromFixtronix ? 'status-yes' : 'status-no' }}">
                           {{ isErrorFromFixtronix ? 'OUI' : 'NON' }}

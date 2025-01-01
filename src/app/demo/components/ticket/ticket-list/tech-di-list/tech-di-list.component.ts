@@ -1036,6 +1036,9 @@ export class TechDiListComponent implements OnInit {
      *!When user click on finish diag and status changed the button would be frozen!
      */
 
+
+
+
     lapTimeForPauseAndGetBack() {
         this.lap();
 
