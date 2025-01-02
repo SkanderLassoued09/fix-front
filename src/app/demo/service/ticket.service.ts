@@ -588,6 +588,7 @@ export class TicketService {
                     _id
                     can_be_repaired
                     contain_pdr
+                    isErrorFromFixtronix
                     stats_id
                     image
                     devis
@@ -892,7 +893,6 @@ export class TicketService {
             }
         `;
     }
-   
 
     sentComponentToCoordinatorToConfirm(_id: string) {
         return gql`
@@ -948,8 +948,6 @@ export class TicketService {
             }
         `;
     }
-
-    
 
     getDiById(_id: string) {
         return gql`

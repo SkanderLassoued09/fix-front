@@ -611,9 +611,9 @@ export class TicketListComponent implements OnInit {
     showDialogForPricing(data) {
         this.seletedRow = data;
         const MyID = data._id;
-        this.isErrorFromFixtronix = data.isErrorFromFixtronix
-        this.ignoreCountPricing = data.ignoreCount
-        console.log("ignoreCount =>",data.ignoreCount)
+        this.isErrorFromFixtronix = data.isErrorFromFixtronix;
+        this.ignoreCountPricing = data.ignoreCount;
+        console.log('ignoreCount =>', data.ignoreCount);
         // Reset tarif and time values to ensure they are not carrying over from previous calls
         this.tarif_Technicien = null;
         this.timeDiagnostique = null;
@@ -634,6 +634,20 @@ export class TicketListComponent implements OnInit {
         // Second query: get diagnostic time
         let statQuery;
         if (data?.ignoreCount && data?.ignoreCount > 0) {
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getLogsDiById(
+                        data.ignoreCount,
+                        data._id
+                    ),
+                })
+                .subscribe(({ data }) => {
+                    if (data) {
+                        console.log('🍎[data]:', data);
+                        this.isErrorFromFixtronix =
+                            data.getLigsById.isErrorFromFixtronix;
+                    }
+                });
             statQuery = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getStatByDI_ID(
@@ -643,6 +657,7 @@ export class TicketListComponent implements OnInit {
                 })
                 .toPromise()
                 .then(({ data }) => {
+                    console.log('🥪[data]:', data);
                     if (data) {
                         this.timeDiagnostique =
                             data.getInfoStatByIdDi.diag_time;
@@ -652,6 +667,17 @@ export class TicketListComponent implements OnInit {
                     }
                 });
         } else {
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getDiById(data._id),
+                })
+                .subscribe(({ data }) => {
+                    console.log('🥝[data]:', data);
+                    if (data) {
+                        this.isErrorFromFixtronix =
+                            data.getDiById.di.isErrorFromFixtronix;
+                    }
+                });
             statQuery = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getStatByDI_ID(MyID),

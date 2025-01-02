@@ -184,6 +184,9 @@ export class TechDiListComponent implements OnInit {
     historyOfDi: any;
     isLoading: boolean;
     error: string;
+    shouldDisableValue: boolean;
+    shouldDisableRetourValue: boolean;
+    updatedValuecomposantCombo: { nameComposant: string; quantity: number }[];
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -588,7 +591,7 @@ export class TechDiListComponent implements OnInit {
         this.getImage(di._idDi);
         this.getAllRemarque(di._idDi);
         console.log('DATA inside ', this.di);
-        this.cdr.detectChanges();
+        this.updateDisableValues();
     }
 
     getDataOriginalAndRetour(_id: string) {
@@ -1036,9 +1039,6 @@ export class TechDiListComponent implements OnInit {
      *!When user click on finish diag and status changed the button would be frozen!
      */
 
-
-
-
     lapTimeForPauseAndGetBack() {
         this.lap();
 
@@ -1194,6 +1194,15 @@ export class TechDiListComponent implements OnInit {
                 return 'warn';
         }
     }
+    updateDisableValues() {
+        const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
+
+        this.shouldDisableValue = isPdr && this.composantCombo.length === 0;
+        this.shouldDisableRetourValue =
+            this.ignoreCount > 0 && isPdr && this.composantCombo.length === 0;
+
+        this.cdr.detectChanges(); // Ensure change detection
+    }
     comboComposantandQuantity() {
         const selectedName = this.composantSelected.value.name;
         let composantSelected = {
@@ -1207,6 +1216,7 @@ export class TechDiListComponent implements OnInit {
         console.log('composantCombo', this.composantCombo);
         console.log('composantList', this.composantList);
         this.composantSelected = null;
+        this.updateDisableValues();
     }
 
     changeStatusMagasinEstimation(_id: string) {
@@ -1303,7 +1313,7 @@ export class TechDiListComponent implements OnInit {
             },
         });
     }
-/////////////////////////////// NEZIH
+    /////////////////////////////// NEZIH
     changeStatusPending3() {
         console.log(' this.selectedDi_id', this.selectedDi_id);
         this.confirmationService.confirm({
@@ -1312,18 +1322,17 @@ export class TechDiListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.changeStatusPending3(
-                        this.selectedDi_id
-                    ),
-                })
-                .subscribe(({ data }) => {
-                    console.log('send to pending 3', data);
-                });
+                    .mutate<any>({
+                        mutation: this.ticketSerice.changeStatusPending3(
+                            this.selectedDi_id
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        console.log('send to pending 3', data);
+                    });
                 this.diDialogDiag[this.selectedDi] = false;
-            }
-        })
-       
+            },
+        });
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
@@ -1668,5 +1677,6 @@ export class TechDiListComponent implements OnInit {
             el.nameComposant === composant.nameComposant;
         });
         this.composantCombo.splice(index, 1);
+        this.updateDisableValues();
     }
 }
