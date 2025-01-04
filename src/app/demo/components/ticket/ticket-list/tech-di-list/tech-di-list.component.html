@@ -387,6 +387,7 @@
                                     onLabel="Oui"
                                     offLabel="Non"
                                     formControlName="isReparable"
+                                    (click)="updateDisableValues()"
                                 ></p-toggleButton>
                             </div>
                             <div class="field" *ngIf="isReperable">
@@ -395,6 +396,7 @@
                                     onLabel="Oui"
                                     offLabel="Non"
                                     formControlName="isPdr"
+                                    (click)="updateDisableValues()"
                                 ></p-toggleButton>
                             </div>
                         </div>
@@ -643,6 +645,7 @@
                     ></button>
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
+                    *ngIf="ignoreCount == 0"
                         [disabled]="shouldDisableValue"
                         pButton
                         pRipple

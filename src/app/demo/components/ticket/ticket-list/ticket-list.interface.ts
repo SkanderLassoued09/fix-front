@@ -26,7 +26,7 @@ export interface DiQueryResult {
 
 export interface CreateDiInput {
     title: string;
-    designiation: string;
+    description: string;
     typeClient: string;
     status: string;
     client_id: string;

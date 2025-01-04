@@ -370,7 +370,7 @@ export class TicketService {
             createDi(
                 createDiInput: {
                     title: "${diInfo.title}"
-                    designiation: "${diInfo.designiation}"
+                    description: "${diInfo.description}"
                     typeClient: "${diInfo.typeClient}"
                     status: "${diInfo.status}"
                     client_id: "${diInfo.client_id}"

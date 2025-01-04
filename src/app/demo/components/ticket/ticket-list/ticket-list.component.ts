@@ -97,7 +97,7 @@ export class TicketListComponent implements OnInit {
             Validators.required,
             Validators.pattern(/^[a-zA-Z0-9\s]+$/),
         ]),
-        designiation: new FormControl('', [Validators.required]),
+        description: new FormControl('', [Validators.required]),
         typeClient: new FormControl(),
         status: new FormControl(),
         client_id: new FormControl(),
@@ -109,7 +109,7 @@ export class TicketListComponent implements OnInit {
     });
     updateDiForm = new FormGroup({
         title: new FormControl('', [Validators.required]),
-        designiation: new FormControl('', [Validators.required]),
+        description: new FormControl('', [Validators.required]),
         typeClient: new FormControl(),
         status: new FormControl(),
         client_id: new FormControl(),
@@ -1023,7 +1023,7 @@ export class TicketListComponent implements OnInit {
                 accept: () => {
                     const {
                         title,
-                        designiation,
+                        description,
                         client_id,
                         company_id,
                         nSerie,
@@ -1035,7 +1035,7 @@ export class TicketListComponent implements OnInit {
 
                     const diInfo = {
                         title,
-                        designiation,
+                        description,
                         client_id,
                         company_id,
                         nSerie,
@@ -1191,9 +1191,7 @@ export class TicketListComponent implements OnInit {
         this.discountedPriceNeg = (this.price * this.discountPercent) / 100;
         this.finalPrice = this.price - this.discountedPriceNeg;
 
-        if (this.discountedPriceNeg) {
-            this.changeStatusDiToInMagasin(this.slectedRow);
-        }
+      
     }
 
     nextNegociate2() {
@@ -1632,6 +1630,7 @@ export class TicketListComponent implements OnInit {
             // nezih
             this.ticketData = { ...data, ...pauseLogs, ...this.logsDi }; // Merge data and pauseLogs
             this.ticketDetailsInfo = true; // Open the dialog
+            console.log("data inside =>",this.ticketData)
         });
     }
 

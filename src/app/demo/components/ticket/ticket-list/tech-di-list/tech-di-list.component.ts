@@ -28,8 +28,8 @@ export class TechDiListComponent implements OnInit {
         _idDi: new FormControl(),
         diag_time: new FormControl(),
         remarqueTech: new FormControl(''),
-        isPdr: new FormControl(false),
-        isReparable: new FormControl(false),
+        isPdr: new FormControl(true),
+        isReparable: new FormControl(true),
         isErrorFromFixtronix: new FormControl(false),
         quantity: new FormControl(0),
         composantSelectedDropdown: new FormControl(),
@@ -477,6 +477,8 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
+        this.updateDisableValues()
+        
         if (di.status === 'DIAGNOSTIC_Pause') {
             const getLog = this.getCurrentPauseLog(di.pauseLogs);
 
@@ -591,7 +593,7 @@ export class TechDiListComponent implements OnInit {
         this.getImage(di._idDi);
         this.getAllRemarque(di._idDi);
         console.log('DATA inside ', this.di);
-        this.updateDisableValues();
+       
     }
 
     getDataOriginalAndRetour(_id: string) {
@@ -1195,9 +1197,12 @@ export class TechDiListComponent implements OnInit {
         }
     }
     updateDisableValues() {
-        const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-
-        this.shouldDisableValue = isPdr && this.composantCombo.length === 0;
+        console.log("inside function");
+        const isReperable = this.diagFormTech.get('isReparable')?.value ?? true
+        console.log("isReparable",isReperable);
+        const isPdr = this.diagFormTech.get('isPdr')?.value ?? true
+        console.log(isPdr,"isPdr value")
+        this.shouldDisableValue = isReperable && isPdr && this.composantCombo.length === 0;
         this.shouldDisableRetourValue =
             this.ignoreCount > 0 && isPdr && this.composantCombo.length === 0;
 
