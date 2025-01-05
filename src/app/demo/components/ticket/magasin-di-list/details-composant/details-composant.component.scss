@@ -172,3 +172,112 @@
 p-inplace {
     width: 100%;
 }
+
+
+
+
+/* Component Details Container */
+.component-details-container {
+    background-color: #f9f9f9; /* Light background for better readability */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Field Sections */
+.field {
+    margin-bottom: 1.5rem;
+}
+
+.component-id-field h3 {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.component-package-field,
+.component-purchase-price,
+.component-sale-price,
+.stock-quantity-section {
+    margin-bottom: 1.5rem;
+}
+
+/* Labels */
+.component-arrival-date label,
+.component-purchase-price label,
+.component-sale-price label,
+.stock-quantity-section label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+/* Calendar */
+.component-arrival-date p-calendar {
+    display: block;
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* Input Numbers */
+.component-purchase-price p-inputNumber,
+.component-sale-price p-inputNumber {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
+.stock-quantity-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.input-number-stock {
+    width: 120px;
+}
+
+/* Spinner Buttons */
+.p-button-danger {
+    background-color: #f44336 !important;
+    border-color: #f44336 !important;
+    color: white !important;
+}
+
+.p-button-success {
+    background-color: #4caf50 !important;
+    border-color: #4caf50 !important;
+    color: white !important;
+}
+
+.p-button-secondary {
+    background-color: #607d8b !important;
+    border-color: #607d8b !important;
+    color: white !important;
+}
+
+/* Typography */
+h3, label, strong {
+    color: #333;
+}
+
+span {
+    color: #777;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .component-details-container {
+        padding: 1rem;
+    }
+
+    .stock-quantity-container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .input-number-stock {
+        width: 100%;
+    }
+}

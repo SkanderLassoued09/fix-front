@@ -8,6 +8,7 @@ import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
 import { ConfirmationService } from 'primeng/api';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { compileNgModule } from '@angular/compiler';
+import * as moment from 'moment';
 
 // TODO check type of these fields
 export interface Composant {
@@ -105,11 +106,9 @@ export class DetailsComposantComponent implements OnInit {
                 query: this.ticketSerice.composantByName(selectedComposant),
             })
             .subscribe(({ data }) => {
-                console.log(
-                    data.findOneComposant.coming_date,
-                    'this is my data coming from composant querys'
-                );
                 this.composantValues = data.findOneComposant;
+
+                data.findOneComposant.coming_date = moment().toDate();
                 this.dateArrivage = formatDate(
                     data.findOneComposant.coming_date
                 );
@@ -131,6 +130,7 @@ export class DetailsComposantComponent implements OnInit {
                         status: this.composantValues.status,
                     });
                 }
+               
             });
     }
     select(data) {

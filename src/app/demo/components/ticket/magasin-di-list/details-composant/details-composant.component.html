@@ -18,7 +18,7 @@
                         size="small"
                         (click)="sentComponentToCoordinatorToConfirm()"
                     ></p-button>
-                    <p-button
+                    <!-- <p-button
                         *ngIf="ignoreCount > 0"
                         severity="help"
                         [disabled]="isSentToCoordinator"
@@ -26,7 +26,7 @@
                         [raised]="true"
                         size="small"
                         (click)="sentComponentToCoordinatorToConfirm()"
-                    ></p-button>
+                    ></p-button> -->
                 <p-button
                         label="Savaugarder {{ composantValues?.name }}"
                         [raised]="true"
@@ -51,14 +51,14 @@
         </header>
 
         <!-- Body Details -->
-        <section class="component-details p-4 improved-details" [formGroup]="formUpdateComposant">
+        <section class="component-details p-4 component-details-container" [formGroup]="formUpdateComposant">
             <!-- Details Fields -->
-            <div class="field improved-field">
+            <div class="field component-id-field">
                 <h3>ID Composant: {{ composantValues?._id }}</h3>
-                
             </div>
-
-            <div class="field improved-field">
+            
+            <!-- 
+            <div class="field component-category-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Category composant:</strong>
@@ -68,33 +68,9 @@
                         <input type="text" pInputText formControlName="category_composant_id" />
                     </ng-template>
                 </p-inplace>
-            </div>
-
-            <div class="field improved-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>Date d'arrivage:</strong>
-                        <span>{{ dateArrivage }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="coming_date" />
-                    </ng-template>
-                </p-inplace>
-            </div>
-
-            <div class="field improved-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>Lien:</strong>
-                        <span>{{ composantValues?.link }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="link" />
-                    </ng-template>
-                </p-inplace>
-            </div>
-
-            <div class="field improved-field">
+            </div> -->
+        
+            <div class="field component-package-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>Package:</strong>
@@ -105,47 +81,85 @@
                     </ng-template>
                 </p-inplace>
             </div>
-
-            <div class="field improved-field">
+        
+            <div class="col component-arrival-date">
+                <label for="coming_date">Date d'arrivage</label>
+                <p-calendar
+                    ngModel="coming_date"
+                    dateFormat="dd.mm.yy"
+                    formControlName="coming_date"
+                ></p-calendar>
+            </div>
+        
+            <!-- 
+            <div class="field component-link-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
-                        <strong>Prix d'achat:</strong>
-                        <span>{{ composantValues?.prix_achat }}</span>
+                        <strong>Lien:</strong>
+                        <span>{{ composantValues?.link }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="prix_achat" />
+                        <input type="text" pInputText formControlName="link" />
                     </ng-template>
                 </p-inplace>
+            </div> -->
+        
+            <div class="col component-purchase-price">
+                <label for="prix_achat">Prix d'achat</label>
+                <p-inputNumber
+                    [showButtons]="true"
+                    formControlName="prix_achat"
+                    buttonLayout="horizontal"
+                    spinnerMode="horizontal"
+                    decrementButtonClass="p-button-danger"
+                    incrementButtonClass="p-button-success"
+                    incrementButtonIcon="pi pi-plus"
+                    decrementButtonIcon="pi pi-minus"
+                    [step]="0.25"
+                    mode="currency"
+                    currency="TND"
+                ></p-inputNumber>
             </div>
-
-            
-
-            <div class="field improved-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>Prix de vente:</strong>
-                        <span>{{ composantValues?.prix_vente }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="prix_vente" />
-                    </ng-template>
-                </p-inplace>
+        
+            <div class="col component-sale-price">
+                <label for="prix_vente">Prix de vente:</label>
+                <p-inputNumber
+                    [showButtons]="true"
+                    formControlName="prix_vente"
+                    buttonLayout="horizontal"
+                    spinnerMode="horizontal"
+                    decrementButtonClass="p-button-danger"
+                    incrementButtonClass="p-button-success"
+                    incrementButtonIcon="pi pi-plus"
+                    decrementButtonIcon="pi pi-minus"
+                    [step]="0.25"
+                    mode="currency"
+                    currency="TND"
+                ></p-inputNumber>
             </div>
-
-            <div class="field improved-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>Quantité en stock:</strong>
-                        <span>{{ composantValues?.quantity_stocked }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="quantity_stocked" />
-                    </ng-template>
-                </p-inplace>
+        
+            <div class="col-md-4 stock-quantity-section">
+                <div class="d-flex align-items-center stock-quantity-container">
+                    <label for="quantity_stocked" class="mr-2 quantity-label">
+                        Quantité en stock
+                    </label>
+                    <p-inputNumber
+                        mode="decimal"
+                        [showButtons]="true"
+                        buttonLayout="vertical"
+                        spinnerMode="vertical"
+                        formControlName="quantity_stocked"
+                        decrementButtonClass="p-button-secondary"
+                        incrementButtonClass="p-button-secondary"
+                        incrementButtonIcon="pi pi-plus"
+                        decrementButtonIcon="pi pi-minus"
+                        class="input-number-stock"
+                    ></p-inputNumber>
+                </div>
             </div>
-
-
-<div class="field improved-field">
+        
+            <!-- 
+            <div class="field component-pdf-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
                         <strong>PDF:</strong>
@@ -155,9 +169,9 @@
                         <input type="text" pInputText formControlName="pdf" />
                     </ng-template>
                 </p-inplace>
-            </div>
-
+            </div> -->
         </section>
+        
     </div>
 
     <!-- Sidebar for Components List -->
