@@ -1204,7 +1204,7 @@ export class TechDiListComponent implements OnInit {
         console.log(isPdr,"isPdr value")
         this.shouldDisableValue = isReperable && isPdr && this.composantCombo.length === 0;
         this.shouldDisableRetourValue =
-            this.ignoreCount > 0 && isPdr && this.composantCombo.length === 0;
+            this.ignoreCount > 0 && isReperable && isPdr && this.composantCombo.length === 0;
 
         this.cdr.detectChanges(); // Ensure change detection
     }

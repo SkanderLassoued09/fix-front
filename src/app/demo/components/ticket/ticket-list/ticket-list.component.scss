@@ -695,3 +695,11 @@ p-dialog {
     color: #5cb85c; /* Green for "NON" */
     font-weight: bold;
   }
+
+
+  .repPDR {
+    display: flex;
+    justify-content: space-around; /* Distributes space evenly between items */
+    align-items: center; /* Aligns items vertically in the center */
+  }
+  

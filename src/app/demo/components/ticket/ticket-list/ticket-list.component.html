@@ -1228,7 +1228,11 @@
                 </div>
             </div>
         </div>
-        <h6>Réparable: {{ ticketData.can_be_repaired ? "OUI" : "NON" }}</h6>
+        <div class="repPDR">
+            <h6>Réparable: {{ ticketData.can_be_repaired ? "OUI" : "NON" }}</h6>
+            <h6>Contient PDR: {{ ticketData.contain_pdr ? "OUI" : "NON" }}</h6>
+        </div>
+       
         <!-- Description -->
         <div class="form-group">
             <label for="description">Description</label>
@@ -1245,14 +1249,14 @@
 
         <div class="form-group">
             <span id="can_be_repaired"> </span>
-            <label for="remarque_tech_diagnostic">Remarque Tech Administration  </label>
+            <label for="remarque_tech_diagnostic">Remarque Administration  </label>
             <textarea
-            [(ngModel)]="ticketData.remarque_tech_reperation"
-            id="remarque_tech_reperation"
+            [(ngModel)]="ticketData.remarque_manager"
+            id="Remarque Administration "
             rows="3"
             class="form-control"
-            aria-label="remarque_tech_reperation"
-            placeholder="remarque_tech_reperation"
+            aria-label="Remarque Administration "
+            placeholder="remarque Administration "
             disabled="true"
         ></textarea>
         </div>
@@ -1276,7 +1280,7 @@
             <span id="can_be_repaired"> </span>
             <label for="remarque_tech_diagnostic">Remarque Tech Reperation</label>
             <textarea
-            [(ngModel)]="ticketData.remarque_tech_reperation"
+            [(ngModel)]="ticketData.remarque_tech_repair"
             id="remarque_tech_reperation"
             rows="3"
             class="form-control"

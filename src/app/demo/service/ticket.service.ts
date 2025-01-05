@@ -46,6 +46,8 @@ export class TicketService {
                         techRep
                         techDiag
                         remarque_tech_diagnostic
+                        remarque_tech_repair
+                        remarque_manager
                         createdBy
                         ignoreCount
                         location_id
