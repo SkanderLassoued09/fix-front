@@ -178,28 +178,25 @@ export class DetailsComposantComponent implements OnInit {
             header: 'Confirmation Composants',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-               
-    
                 this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.sentComponentToCoordinatorToConfirm(
-                    this._id
-                ),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    console.log(
-                        '🍿[sentComponentToCoordinatorToConfirm]:',
-                        data
-                    );
-                    this.isSentToCoordinator =
-                        data.sendComponentToConMagasinForConfirmation.isSentToCoordinator;
-                }
-            });
-
-            }
-        })
-       
+                    .mutate<any>({
+                        mutation:
+                            this.ticketSerice.sentComponentToCoordinatorToConfirm(
+                                this._id
+                            ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            console.log(
+                                '🍿[sentComponentToCoordinatorToConfirm]:',
+                                data
+                            );
+                            this.isSentToCoordinator =
+                                data.sendComponentToConMagasinForConfirmation.isSentToCoordinator;
+                        }
+                    });
+            },
+        });
     }
 
     changeStatusDiToPending2(_id: string) {
@@ -228,7 +225,7 @@ export class DetailsComposantComponent implements OnInit {
                         '🥒[   this.composantValues]:',
                         this.composantValues
                     );
-                   // this.changeStatusDiToPending2(this.selectedDi_id);
+                    // this.changeStatusDiToPending2(this.selectedDi_id);
                     this.isActive = false;
                 }
             });

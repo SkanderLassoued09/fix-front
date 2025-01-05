@@ -409,8 +409,6 @@ export class TicketService {
         `;
     }
     addFacture(_id: string, pdf: string) {
-        console.log('🥘[pdf]:', pdf);
-        console.log('🍢[_id]:', _id);
         return gql`
             mutation {
                 addFacture(_id: "${_id}", pdf: "${pdf}") {
@@ -973,6 +971,7 @@ export class TicketService {
                     di {
                         _id
                         ignoreCount
+                        di_category_id
                         price
                         isSentToCoordinator
                         isConfirmedComponentFromCoordinator

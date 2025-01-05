@@ -477,123 +477,143 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
-        this.updateDisableValues()
-        
-        if (di.status === 'DIAGNOSTIC_Pause') {
-            const getLog = this.getCurrentPauseLog(di.pauseLogs);
-
-            if (getLog) {
-                this.updatePauseLog(di._id, getLog._id);
+        try {
+            // Handle pause status if needed
+            if (di.status === 'DIAGNOSTIC_Pause') {
+                const getLog = this.getCurrentPauseLog(di.pauseLogs);
+                if (getLog) {
+                    await this.updatePauseLog(di._id, getLog._id);
+                }
             }
-        }
-        this.apollo
-            .query<any>({
-                query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
-            })
-            .pipe(finalize(() => (this.isLoading = false)))
-            .subscribe({
-                next: ({ data }) => {
-                    if (data?.getRetourDataStats?.length > 0) {
-                        this.historyOfDi = data.getRetourDataStats;
-                        console.log('Fetched History:', this.historyOfDi);
-                    } else {
-                        this.error = 'No data found';
-                    }
-                },
-                error: (err) => {
-                    console.error('Error fetching data:', err);
-                    this.error = 'Failed to load data';
-                },
-            });
 
-        this.allCategoryDi();
-        // Reset form and modal data
-        this.resetModalForm();
-        let arrayComposantLogs;
-        // Fetch the details from the backend
-        this.apollo
-            .query<any>({
-                query: this.ticketSerice.getDiById(di._idDi),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    console.log('🥥[data]:', data);
-                    const detailsDi = data.getDiById.di;
-                    const detailsLogs = data.getDiById.logsDi;
+            // Create a promise array to hold all our async operations
+            const promises = [];
 
-                    if (detailsLogs) {
-                        // Create the array of composant logs and set ignoreCount
-                        arrayComposantLogs = detailsLogs.flatMap((el) => {
-                            return el.array_composants.map((composant) => ({
-                                ...composant,
-                                ignoreCount: el._id, // Assign ignoreCount from the logs
-                            }));
-                        });
+            // Add the first Apollo query to promises
+            const retourDataPromise = this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
+                })
+                .toPromise();
+            promises.push(retourDataPromise);
 
-                        this.composantCombo = [];
+            // Add allCategoryDi to promises if it returns a promise
+            promises.push(this.allCategoryDi());
 
-                        console.log('Hello logs', arrayComposantLogs);
-                        this.allComposantLogsAndOriginal = [
-                            ...detailsDi.array_composants,
-                            ...arrayComposantLogs,
-                        ];
-                    }
+            // Add the main diagnostic data query
+            const diagnosticDataPromise = this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getDiById(di._idDi),
+                })
+                .toPromise();
+            promises.push(diagnosticDataPromise);
 
-                    if (detailsDi) {
-                        // Patch the form with the new data
-                        this.diagFormTech.patchValue({
-                            _idDi: di._id,
-                            diag_time:
-                                di.diag_time || detailsDi.diag_time || '',
-                            remarqueTech:
-                                di.remarqueTech ||
-                                detailsDi.remarque_tech_diagnostic ||
-                                '',
-                            isPdr: di.isPdr || detailsDi.contain_pdr || true,
-                            isReparable:
-                                di.isReparable ||
-                                detailsDi.can_be_repaired ||
-                                true,
-                            quantity: di.quantity || 0,
-                            composantSelectedDropdown:
-                                di.composantSelectedDropdown ??
-                                detailsDi.array_composants,
-                        });
+            // Add other async operations
+            promises.push(this.changeStatus(di._idDi));
+            promises.push(this.getTimeSpent(di._id));
+            promises.push(this.getImage(di._idDi));
+            promises.push(this.getAllRemarque(di._idDi));
 
-                        // Set ignoreCount to 0 for all items in detailsDi.array_composants
-                        detailsDi.array_composants =
-                            detailsDi.array_composants.map((composant) => ({
-                                ...composant,
-                                ignoreCount: 0,
-                            }));
-                        // Combine the original components with the logged components
-                        // this.composantCombo = detailsDi.array_composants;
+            // Wait for all promises to resolve
+            const [retourData, categoryData, diagnosticData, ...otherResults] =
+                await Promise.all(promises);
 
-                        console.log(
-                            'Data array composants',
-                            this.composantCombo
-                        );
-                    }
+            // Process retour data
+            if (retourData?.data?.getRetourDataStats?.length > 0) {
+                this.historyOfDi = retourData.data.getRetourDataStats;
+            } else {
+                this.error = 'No data found';
+            }
+
+            // Process diagnostic data
+            if (diagnosticData?.data) {
+                const detailsDi = diagnosticData.data.getDiById.di;
+                const detailsLogs = diagnosticData.data.getDiById.logsDi;
+
+                // Process the data based on whether detailsLogs exists
+                if (detailsLogs) {
+                    this.processDiagnosticWithLogs(di, detailsDi, detailsLogs);
+                } else {
+                    this.processDiagnosticWithoutLogs(di, detailsDi);
                 }
 
-                // Open the modal after data is fetched
-                this.diDialogDiag[di._id] = true;
-            });
-        // Set selected DI and status
-        this.di = { ...di };
-        this.selectedDi = di._id;
-        this.imageValue = di.image;
-        this.selectedDi_id = di._idDi;
-        this.diStatus = di.status;
-        this.ignoreCount = di.ignoreCount;
+                // Set remaining properties
+                this.di = { ...di };
+                this.selectedDi = di._id;
+                this.imageValue = di.image;
+                this.selectedDi_id = di._idDi;
+                this.diStatus = di.status;
+                this.ignoreCount = di.ignoreCount;
 
-        // Perform other tasks
-        this.changeStatus(di._idDi);
-        this.getTimeSpent(di._id);
-        this.getImage(di._idDi);
-        this.getAllRemarque(di._idDi);
-        console.log('DATA inside ', this.di);
-       
+                // Open the modal after all data is processed
+                this.diDialogDiag[di._id] = true;
+
+                // Now that all data is fetched and processed, update disable values
+                this.updateDisableValues();
+            }
+        } catch (error) {
+            console.error('Error in diagModal:', error);
+            this.error = 'Failed to load data';
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    // Helper methods to process diagnostic data
+    private processDiagnosticWithLogs(di, detailsDi, detailsLogs) {
+        // Patch form with logs data
+        this.diagFormTech.patchValue({
+            _idDi: di._id,
+            diag_time: di.diag_time || detailsLogs.diag_time || '',
+            remarqueTech:
+                di.remarqueTech || detailsLogs.remarque_tech_diagnostic || '',
+            isPdr: di.isPdr || detailsLogs.contain_pdr || true,
+            di_category_id: 'DI_C1',
+            isReparable: di.isReparable || detailsLogs.can_be_repaired || true,
+            quantity: di.quantity || 0,
+            composantSelectedDropdown:
+                di.composantSelectedDropdown ?? detailsLogs.array_composants,
+        });
+
+        // Process array_composants
+        detailsLogs.array_composants = detailsDi.array_composants.map(
+            (composant) => ({
+                ...composant,
+                ignoreCount: 0,
+            })
+        );
+
+        const arrayComposantLogs = detailsLogs.flatMap((el) => {
+            return el.array_composants.map((composant) => ({
+                ...composant,
+                ignoreCount: el._id,
+            }));
+        });
+
+        this.composantCombo = detailsLogs.array_composants;
+        this.allComposantLogsAndOriginal = [...detailsLogs.array_composants];
+    }
+
+    private processDiagnosticWithoutLogs(di, detailsDi) {
+        // Patch form without logs data
+        this.diagFormTech.patchValue({
+            _idDi: di._id,
+            diag_time: di.diag_time || detailsDi.diag_time || '',
+            remarqueTech:
+                di.remarqueTech || detailsDi.remarque_tech_diagnostic || '',
+            isPdr: di.isPdr || detailsDi.contain_pdr || true,
+            isReparable: di.isReparable || detailsDi.can_be_repaired || true,
+            di_category_id: di.di_category_id || detailsDi.di_category_id || '',
+            quantity: di.quantity || 0,
+            composantSelectedDropdown:
+                di.composantSelectedDropdown ?? detailsDi.array_composants,
+        });
+
+        // Process array_composants
+        this.composantCombo = detailsDi.array_composants.map((composant) => ({
+            ...composant,
+            ignoreCount: 0,
+        }));
     }
 
     getDataOriginalAndRetour(_id: string) {
@@ -671,26 +691,6 @@ export class TechDiListComponent implements OnInit {
                     }
 
                     if (detailsDi) {
-                        // Patch the form with the new data
-                        this.diagFormTech.patchValue({
-                            _idDi: di._id,
-                            diag_time:
-                                di.diag_time || detailsDi.diag_time || '',
-                            remarqueTech:
-                                di.remarqueTech ||
-                                detailsDi.remarque_tech_diagnostic ||
-                                '',
-                            isPdr: di.isPdr || detailsDi.contain_pdr || true,
-                            isReparable:
-                                di.isReparable ||
-                                detailsDi.can_be_repaired ||
-                                true,
-                            quantity: di.quantity || 0,
-                            composantSelectedDropdown:
-                                di.composantSelectedDropdown ??
-                                detailsDi.array_composants,
-                        });
-
                         // Set ignoreCount to 0 for all items in detailsDi.array_composants
                         detailsDi.array_composants =
                             detailsDi.array_composants.map((composant) => ({
@@ -705,6 +705,20 @@ export class TechDiListComponent implements OnInit {
                             this.composantCombo
                         );
                     }
+
+                    // Patch the form with the new data
+                    this.diagFormTech.patchValue({
+                        _idDi: di._id,
+                        diag_time: di.diag_time || detailsDi.diag_time || '',
+                        remarqueTech: 'hello',
+                        isPdr: di.isPdr || detailsDi.contain_pdr || true,
+                        isReparable:
+                            di.isReparable || detailsDi.can_be_repaired || true,
+                        quantity: di.quantity || 0,
+                        composantSelectedDropdown:
+                            di.composantSelectedDropdown ??
+                            detailsDi.array_composants,
+                    });
                 }
 
                 // Open the modal after data is fetched
@@ -1197,14 +1211,30 @@ export class TechDiListComponent implements OnInit {
         }
     }
     updateDisableValues() {
-        console.log("inside function");
-        const isReperable = this.diagFormTech.get('isReparable')?.value ?? true
-        console.log("isReparable",isReperable);
-        const isPdr = this.diagFormTech.get('isPdr')?.value ?? true
-        console.log(isPdr,"isPdr value")
-        this.shouldDisableValue = isReperable && isPdr && this.composantCombo.length === 0;
+        console.log(
+            '🦐this.composantCombo updateDisableValues ',
+            this.composantCombo
+        );
+        const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
+
+        const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
+
+        this.shouldDisableValue =
+            isReperable && isPdr && this.composantCombo.length === 0;
         this.shouldDisableRetourValue =
-            this.ignoreCount > 0 && isReperable && isPdr && this.composantCombo.length === 0;
+            this.ignoreCount > 0 &&
+            isReperable &&
+            isPdr &&
+            this.composantCombo.length === 0;
+        console.log(
+            '🦐this.composantCombo.length ',
+            this.composantCombo.length
+        );
+        console.log('🥕[ this.shouldDisableValue]:', this.shouldDisableValue);
+        console.log(
+            '🌶[  this.shouldDisableRetourValue]:',
+            this.shouldDisableRetourValue
+        );
 
         this.cdr.detectChanges(); // Ensure change detection
     }

@@ -1190,8 +1190,6 @@ export class TicketListComponent implements OnInit {
     discountByPercent2() {
         this.discountedPriceNeg = (this.price * this.discountPercent) / 100;
         this.finalPrice = this.price - this.discountedPriceNeg;
-
-      
     }
 
     nextNegociate2() {
@@ -1630,7 +1628,7 @@ export class TicketListComponent implements OnInit {
             // nezih
             this.ticketData = { ...data, ...pauseLogs, ...this.logsDi }; // Merge data and pauseLogs
             this.ticketDetailsInfo = true; // Open the dialog
-            console.log("data inside =>",this.ticketData)
+            console.log('data inside =>', this.ticketData);
         });
     }
 

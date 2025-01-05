@@ -507,6 +507,7 @@
                         </ng-template>
                     </ng-template>
                 </td>
+
                 <td class="flex">
                     <button
                         pButton
@@ -620,7 +621,7 @@
     [resizable]="false"
 >
     <ng-container>
-     <!-- <div>
+        <!-- <div>
             Panne de la part :
             {{
                 selectedRowInNegociate1?.isErrorFromFixtronix
@@ -857,7 +858,6 @@
             </div>
 
             <!-- Discount Button Section -->
-            
 
             <!-- Confirmation Section -->
             <!-- <div class="confirmation-section">
@@ -878,7 +878,6 @@
             </div> -->
             <div class="action-buttons">
                 <p-button
-                   
                     pRipple
                     label="Appliquer Remise"
                     icon="pi pi-dollar"
@@ -888,14 +887,13 @@
                 />
 
                 <p-button
-                
-                pRipple
-                label="Confirmer"
-                icon="pi pi-check-circle"
-                class="button-success"
-                severity="success"
-                (click)="confirmerNegociation(1)"
-            />
+                    pRipple
+                    label="Confirmer"
+                    icon="pi pi-check-circle"
+                    class="button-success"
+                    severity="success"
+                    (click)="confirmerNegociation(1)"
+                />
             </div>
         </div>
     </ng-container>
@@ -928,14 +926,21 @@
                     </div>
                 </p-card>
                 } } @empty { }
-                <div *ngIf="ignoreCountPricing > 0" >
+                <div *ngIf="ignoreCountPricing > 0">
                     <h6 class="error-status">
-                        Erreur Fixtronix: <span class="{{ isErrorFromFixtronixRetour ? 'status-yes' : 'status-no' }}">
-                          {{ isErrorFromFixtronixRetour ? 'OUI' : 'NON' }}
+                        Erreur Fixtronix:
+                        <span
+                            class="{{
+                                isErrorFromFixtronix
+                                    ? 'status-yes'
+                                    : 'status-no'
+                            }}"
+                        >
+                            {{ isErrorFromFixtronix ? "OUI" : "NON" }}
                         </span>
-                      </h6>
+                    </h6>
                 </div>
-                
+
                 <h5 class="pricing-ad-heading">
                     Le temps de diagnostic est de {{ timeDiagnostique }}
                 </h5>
@@ -1232,7 +1237,7 @@
             <h6>Réparable: {{ ticketData.can_be_repaired ? "OUI" : "NON" }}</h6>
             <h6>Contient PDR: {{ ticketData.contain_pdr ? "OUI" : "NON" }}</h6>
         </div>
-       
+
         <!-- Description -->
         <div class="form-group">
             <label for="description">Description</label>
@@ -1249,47 +1254,52 @@
 
         <div class="form-group">
             <span id="can_be_repaired"> </span>
-            <label for="remarque_tech_diagnostic">Remarque Administration  </label>
+            <label for="remarque_tech_diagnostic"
+                >Remarque Administration
+            </label>
             <textarea
-            [(ngModel)]="ticketData.remarque_manager"
-            id="Remarque Administration "
-            rows="3"
-            class="form-control"
-            aria-label="Remarque Administration "
-            placeholder="remarque Administration "
-            disabled="true"
-        ></textarea>
+                [(ngModel)]="ticketData.remarque_manager"
+                id="Remarque Administration "
+                rows="3"
+                class="form-control"
+                aria-label="Remarque Administration "
+                placeholder="remarque Administration "
+                disabled="true"
+            ></textarea>
         </div>
 
         <!-- Can Be Repaired -->
         <div class="form-group">
             <span id="can_be_repaired"> </span>
-            <label for="remarque_tech_diagnostic">Remarque Tech Diagnostique</label>
+            <label for="remarque_tech_diagnostic"
+                >Remarque Tech Diagnostique</label
+            >
             <textarea
-            [(ngModel)]="ticketData.remarque_tech_diagnostic"
-            id="remarque_tech_diagnostic"
-            rows="3"
-            class="form-control"
-            aria-label="remarque_tech_diagnostic"
-            placeholder="remarque_tech_diagnostic"
-            disabled="true"
-        ></textarea>
+                [(ngModel)]="ticketData.remarque_tech_diagnostic"
+                id="remarque_tech_diagnostic"
+                rows="3"
+                class="form-control"
+                aria-label="remarque_tech_diagnostic"
+                placeholder="remarque_tech_diagnostic"
+                disabled="true"
+            ></textarea>
         </div>
 
         <div class="form-group">
             <span id="can_be_repaired"> </span>
-            <label for="remarque_tech_diagnostic">Remarque Tech Reperation</label>
+            <label for="remarque_tech_diagnostic"
+                >Remarque Tech Reperation</label
+            >
             <textarea
-            [(ngModel)]="ticketData.remarque_tech_repair"
-            id="remarque_tech_reperation"
-            rows="3"
-            class="form-control"
-            aria-label="remarque_tech_reperation"
-            placeholder="remarque_tech_reperation"
-            disabled="true"
-        ></textarea>
+                [(ngModel)]="ticketData.remarque_tech_repair"
+                id="remarque_tech_reperation"
+                rows="3"
+                class="form-control"
+                aria-label="remarque_tech_reperation"
+                placeholder="remarque_tech_reperation"
+                disabled="true"
+            ></textarea>
         </div>
-
 
         <!-- All 4 files here  -->
 
