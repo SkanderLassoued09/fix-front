@@ -731,6 +731,8 @@ export class TicketListComponent implements OnInit {
         // Reset uploaded file URLs
         this.selectedBc = null;
         this.selectedDevis = null;
+        this.instantSelectedBc = null;
+        this.instantSelectedDevis = null;
 
         // Reset discount and price-related values
         this.discountPercent = 0;
