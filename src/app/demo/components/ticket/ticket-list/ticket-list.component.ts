@@ -273,6 +273,8 @@ export class TicketListComponent implements OnInit {
     filesSelected: any;
     isErrorFromFixtronix: any;
     ignoreCountPricing: number;
+    instantSelectedBc: string;
+    instantSelectedDevis: string;
 
     constructor(
         private ticketSerice: TicketService,
@@ -774,10 +776,8 @@ export class TicketListComponent implements OnInit {
         this.ignoreCountNeg1 = data.ignoreCount;
         console.log('ignoreCountNeg1', this.ignoreCountNeg1);
         this._idDi = this.seletedRow;
-
         this.getDiByID(this._idDi);
         this.secondNegocition = data._id;
-
         this.negocite1Modal = true;
         this.getTotalComposant(data._id);
     }
@@ -862,6 +862,7 @@ export class TicketListComponent implements OnInit {
     }
     //New Query
     getDiByID(_idDi: string) {
+        console.log('🥐[getDiByID]: fired');
         this.apollo
             .watchQuery<DiQueryResult>({
                 query: this.ticketSerice.getDiById(_idDi),
@@ -877,8 +878,13 @@ export class TicketListComponent implements OnInit {
                             );
 
                         this.price = filtredLogsDi.price;
+                        this.selectedBc = filtredLogsDi.bon_de_commande;
+                        this.selectedDevis = filtredLogsDi.devis;
                     } else {
                         this.price = this.dataById.getDiById.di.price;
+                        this.selectedBc =
+                            this.dataById.getDiById.di.bon_de_commande;
+                        this.selectedDevis = this.dataById.getDiById.di.devis;
                     }
                 }
             });
@@ -1429,9 +1435,10 @@ export class TicketListComponent implements OnInit {
                 const blobUrl = URL.createObjectURL(blob);
 
                 if (type === 'BC') {
-                    this.selectedBc = blobUrl; // Assign Blob URL for BC
+                    this.instantSelectedBc = blobUrl;
+                    // Assign Blob URL for BC
                 } else if (type === 'Devis') {
-                    this.selectedDevis = blobUrl; // Assign Blob URL for Devis
+                    this.instantSelectedDevis = blobUrl; // Assign Blob URL for Devis
                 } else if (type == 'BL') {
                     this.selectedBL = blobUrl;
                 } else if (type == 'Facture') {

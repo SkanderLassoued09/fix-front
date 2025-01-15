@@ -963,6 +963,8 @@ export class TicketService {
                         remarque_tech_repair
                         can_be_repaired
                         contain_pdr
+                        devis
+                        bon_de_commande
                         array_composants {
                             nameComposant
                             quantity
@@ -978,6 +980,8 @@ export class TicketService {
                         remarque_tech_diagnostic
                         remarque_tech_repair
                         can_be_repaired
+                        devis
+                        bon_de_commande
                         contain_pdr
                         array_composants {
                             nameComposant

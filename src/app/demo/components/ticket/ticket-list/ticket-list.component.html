@@ -646,11 +646,22 @@
                 <div class="button-container-BC">
                     <a
                         *ngIf="selectedBc"
-                        [href]="selectedBc"
+                        [href]="baseUrl + selectedBc"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
                         <p-button label="Consulter BC" [link]="true"></p-button>
+                    </a>
+                    <a
+                        *ngIf="instantSelectedBc"
+                        [href]="instantSelectedBc"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter BC perview"
+                            [link]="true"
+                        ></p-button>
                     </a>
                     <p-button
                         (click)="enregistrerBC()"
@@ -674,12 +685,23 @@
                 <div class="button-container-BC">
                     <a
                         *ngIf="selectedDevis"
-                        [href]="selectedDevis"
+                        [href]="baseUrl + selectedDevis"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
                         <p-button
                             label="Consulter Devis"
+                            [link]="true"
+                        ></p-button>
+                    </a>
+                    <a
+                        *ngIf="instantSelectedDevis"
+                        [href]="instantSelectedDevis"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter Devis preview"
                             [link]="true"
                         ></p-button>
                     </a>
