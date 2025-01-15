@@ -723,6 +723,28 @@ export class TicketListComponent implements OnInit {
         this.getTotalComposant(data._id);
     }
 
+    hideNegModal(data) {
+        console.log('🍢[data]:', data);
+
+        // Reset uploaded file URLs
+        this.selectedBc = null;
+        this.selectedDevis = null;
+
+        // Reset discount and price-related values
+        this.discountPercent = 0;
+        this.finalPrice = null;
+        this.discountedPriceNeg = null;
+
+        // Reset any flags or states
+        this.slideEnd = 0;
+        this.ignoreCountNeg1 = 0;
+
+        // Reset other form-related values if needed
+        // Add any additional fields to reset here
+
+        console.log('All values have been reset.');
+    }
+
     formatSize(bytes) {
         const k = 1024;
         const dm = 3;
