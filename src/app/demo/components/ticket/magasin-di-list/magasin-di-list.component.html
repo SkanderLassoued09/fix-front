@@ -195,6 +195,7 @@
                                 optionValue="value"
                                 placeholder="Choisir état"
                                 class="mr-2-magasin dropdown-magasin"
+                                formControlName="status"
                             >
                                 <ng-template let-option pTemplate="item">
                                     <p-tag
@@ -266,6 +267,7 @@
                 </div>
                 <div class="field-magasin">
                     <button
+                        [disabled]="!formUpdateComposant.valid"
                         pButton
                         pRipple
                         label="Finir"

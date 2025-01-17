@@ -187,6 +187,8 @@ export class TechDiListComponent implements OnInit {
     shouldDisableValue: boolean;
     shouldDisableRetourValue: boolean;
     updatedValuecomposantCombo: { nameComposant: string; quantity: number }[];
+    diData: any[];
+    isToggleEnabled: any;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -533,12 +535,15 @@ export class TechDiListComponent implements OnInit {
                 // Process the data based on whether detailsLogs exists
                 if (detailsLogs) {
                     this.processDiagnosticWithLogs(di, detailsDi, detailsLogs);
+                    this.diData = detailsLogs;
                 } else {
                     this.processDiagnosticWithoutLogs(di, detailsDi);
+                    this.diData = detailsDi;
                 }
 
                 // Set remaining properties
                 this.di = { ...di };
+
                 this.selectedDi = di._id;
                 this.imageValue = di.image;
                 this.selectedDi_id = di._idDi;
@@ -550,6 +555,15 @@ export class TechDiListComponent implements OnInit {
 
                 // Now that all data is fetched and processed, update disable values
                 this.updateDisableValues();
+                const spreadingArray = this.diData[0];
+                console.log('fired', spreadingArray);
+                console.log('fired pdr', spreadingArray.contain_pdr);
+                console.log('fired err', spreadingArray.isErrorFromFixtronix);
+
+                this.isToggleEnabled =
+                    !spreadingArray.contain_pdr &&
+                    spreadingArray.isErrorFromFixtronix;
+                console.log('🍉[isEnabled]:', this.isToggleEnabled);
             }
         } catch (error) {
             console.error('Error in diagModal:', error);
@@ -1348,7 +1362,7 @@ export class TechDiListComponent implements OnInit {
             },
         });
     }
-    /////////////////////////////// NEZIH
+
     changeStatusPending3() {
         console.log(' this.selectedDi_id', this.selectedDi_id);
         this.confirmationService.confirm({
@@ -1358,7 +1372,7 @@ export class TechDiListComponent implements OnInit {
             accept: () => {
                 this.apollo
                     .mutate<any>({
-                        mutation: this.ticketSerice.changeStatusPending3(
+                        mutation: this.ticketSerice.changeFinishStatus(
                             this.selectedDi_id
                         ),
                     })
