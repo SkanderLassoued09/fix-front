@@ -643,7 +643,7 @@
                     ></button>
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
-                    *ngIf="ignoreCount == 0"
+                        *ngIf="ignoreCount == 0"
                         [disabled]="shouldDisableValue"
                         pButton
                         pRipple
@@ -653,18 +653,28 @@
                         (click)="techFinishDiag()"
                     ></button>
                     <button
+                        [disabled]="isToggleEnabled"
                         *ngIf="ignoreCount > 0"
+<<<<<<< HEAD
                         [disabled]="techRetourSendFinished!"
                         title="Reperable sans composants"
                         pButton
                         pRipple
                         label="Finir Reperation"
+=======
+                        title="Reperable sans composants"
+                        pButton
+                        pRipple
+                        label="Envoyer vers finir"
+>>>>>>> 267af095dd7b98621639646e5958b1a70f287b96
                         class="p-button-text"
                         (click)="changeStatusFinished()"
                     ></button>
                     <button
                         *ngIf="ignoreCount > 0"
-                        [disabled]="shouldDisableRetourValue"
+                        [disabled]="
+                            shouldDisableRetourValue && !isToggleEnabled
+                        "
                         pButton
                         pRipple
                         label="Fin diagnostique retour"

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import {
@@ -106,16 +106,16 @@ export class MagasinDiListComponent {
         private notificationService: NotificationService
     ) {
         this.formUpdateComposant = new FormGroup({
-            name: new FormControl(),
-            package: new FormControl(),
-            category_composant_id: new FormControl(),
-            prix_achat: new FormControl(),
-            prix_vente: new FormControl(),
-            coming_date: new FormControl(),
-            link: new FormControl(),
-            quantity_stocked: new FormControl(),
-            pdf: new FormControl(),
-            status: new FormControl(),
+            name: new FormControl(null, Validators.required),
+            package: new FormControl(null, Validators.required),
+            category_composant_id: new FormControl(null),
+            prix_achat: new FormControl(null, Validators.required),
+            prix_vente: new FormControl(null, Validators.required),
+            coming_date: new FormControl(null, Validators.required),
+            link: new FormControl(null),
+            quantity_stocked: new FormControl(null, Validators.required),
+            pdf: new FormControl(null),
+            status: new FormControl(null, Validators.required),
         });
         
     }
@@ -129,6 +129,10 @@ export class MagasinDiListComponent {
                 this.getDi(this.first, this.rows);
                 this.getStatusCount();
             }
+        });
+
+        this.formUpdateComposant.statusChanges.subscribe((susb) => {
+            console.log('🎂susb', susb);
         });
     }
 

@@ -975,6 +975,7 @@ export class TicketService {
                         remarque_tech_repair
                         can_be_repaired
                         contain_pdr
+                        isErrorFromFixtronix
                         devis
                         bon_de_commande
                         array_composants {

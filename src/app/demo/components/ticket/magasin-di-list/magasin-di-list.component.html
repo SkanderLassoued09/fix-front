@@ -215,6 +215,7 @@
                     <div class="col-md-6-magasin">
                         
                         <div class="d-flex-magasin align-items-center-magasin">
+<<<<<<< HEAD
                             <div class="col">
                                 <label for="prix_vente">Date d'arrivage</label>
                                 <p-calendar
@@ -225,6 +226,27 @@
                                 ></p-calendar>
                             </div>
                            
+=======
+                            <label for="name" class="mr-2-magasin">
+                                Affecter un statut pour le composant
+                            </label>
+                            <p-dropdown
+                                [options]="statusComposant"
+                                (onChange)="getSelectedStatus($event)"
+                                optionLabel="name"
+                                optionValue="value"
+                                placeholder="Choisir état"
+                                class="mr-2-magasin dropdown-magasin"
+                                formControlName="status"
+                            >
+                                <ng-template let-option pTemplate="item">
+                                    <p-tag
+                                        [value]="option.name"
+                                        [severity]="getSeverity(option.name)"
+                                    ></p-tag>
+                                </ng-template>
+                            </p-dropdown>
+>>>>>>> 267af095dd7b98621639646e5958b1a70f287b96
                         </div>
                     </div>
                     
@@ -289,6 +311,7 @@
                 </div>
                 <div class="field-magasin">
                     <button
+                        [disabled]="!formUpdateComposant.valid"
                         pButton
                         pRipple
                         label="Finir"
