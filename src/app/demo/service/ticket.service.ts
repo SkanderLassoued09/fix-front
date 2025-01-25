@@ -112,6 +112,18 @@ export class TicketService {
         `;
     }
 
+    changeStatusToFinished(_id:string){
+        return gql`
+        mutation{
+        changestatusToFinishReparation(_id:"${_id}")
+        {
+            _id
+        }
+        }
+        `
+    }
+
+
     // add pdf finle finished
     addPdfFile(_id: string, facture: string, bl: string) {
         return gql`

@@ -88,6 +88,7 @@
     >
         <form [formGroup]="formUpdateComposant">
             <div>
+                <h3 *ngIf="ignoreCount > 0">Retour {{ ignoreCount }}</h3>
                 <div class="col">
                     <label for="name">Choisir un composant</label>
                     <p-dropdown
@@ -111,7 +112,30 @@
                         <label for="package">Package</label>
                         <input formControlName="package" pInputText />
                     </div>
+                   
                 </div>
+                <div class="link-container">
+                    <label for="link" class="link-label">Lien composant</label>
+                    <div class="link-input-group">
+                      <input
+                        id="link"
+                        formControlName="link"
+                        pInputText
+                        class="link-input"
+                        placeholder="Enter a URL (e.g., https://example.com)"
+                      />
+                      <a
+                        [href]="formUpdateComposant.get('link').value"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="link-button"
+                        [class.disabled]="!formUpdateComposant.get('link').value"
+                      >
+                        Open Link
+                      </a>
+                    </div>
+                  </div>
+                
                 <div class="grid align-items-center">
                     <div class="col">
                         <label for="prix_achat">Prix d'achat</label>
@@ -129,13 +153,29 @@
                             currency="TND"
                         ></p-inputNumber>
                     </div>
-                    <div class="col">
-                        <label for="prix_vente">Date d'arrivage</label>
-                        <p-calendar
-                            dateFormat="dd.mm.yy"
-                            formControlName="coming_date"
-                        ></p-calendar>
+                   
+                    <div>
+                        <label for="name" class="mr-2-magasin">
+                            Statut pour le composant
+                        </label> 
+                        <p-dropdown
+                        [options]="statusComposant"
+                        (onChange)="getSelectedStatus($event)"
+                        optionLabel="name"
+                        optionValue="value"
+                        placeholder="Choisir état"
+                        class="mr-2-magasin dropdown-magasin"
+                    >
+                   
+                        <ng-template let-option pTemplate="item">
+                            <p-tag
+                                [value]="option.name"
+                                [severity]="getSeverity(option.name)"
+                            ></p-tag>
+                        </ng-template>
+                    </p-dropdown>
                     </div>
+                   
                     <div class="col">
                         <label for="prix_vente">Prix de vente</label>
                         <p-inputNumber
@@ -156,24 +196,13 @@
                 <div
                     class="grid-magasin align-items-center-magasin horizontal-layout-magasin"
                 >
-                    <div *ngIf="loadedDataComposant" class="col-magasin">
-                        <label for="link" class="label-magasin"
-                            >Lien pour le composant</label
-                        >
-                        <a
-                            [href]="baseUrl + this.loadedDataComposant?.link"
-                            target="_blank"
-                            class="link-magasin"
-                        >
-                            Link composant
-                        </a>
-                    </div>
+                  
                     <div *ngIf="loadedDataComposant" class="col-magasin">
                         <label for="pdf" class="label-magasin"
                             >Lien DataSheet</label
                         >
                         <a
-                            [href]="baseUrl + this.loadedDataComposant?.pdf"
+                            [href]="this.loadedDataComposant?.pdf"
                             target="_blank"
                             class="link-magasin"
                         >
@@ -184,27 +213,21 @@
 
                 <div class="row-magasin">
                     <div class="col-md-6-magasin">
+                        
                         <div class="d-flex-magasin align-items-center-magasin">
-                            <label for="name" class="mr-2-magasin">
-                                Affecter un statut pour le composant
-                            </label>
-                            <p-dropdown
-                                [options]="statusComposant"
-                                (onChange)="getSelectedStatus($event)"
-                                optionLabel="name"
-                                optionValue="value"
-                                placeholder="Choisir état"
-                                class="mr-2-magasin dropdown-magasin"
-                            >
-                                <ng-template let-option pTemplate="item">
-                                    <p-tag
-                                        [value]="option.name"
-                                        [severity]="getSeverity(option.name)"
-                                    ></p-tag>
-                                </ng-template>
-                            </p-dropdown>
+                            <div class="col">
+                                <label for="prix_vente">Date d'arrivage</label>
+                                <p-calendar
+                                    dateFormat="dd.mm.yy"
+                                    formControlName="coming_date"
+                                    [showButtonBar]="true"
+                                    appendTo="body"
+                                ></p-calendar>
+                            </div>
+                           
                         </div>
                     </div>
+                    
                     <div class="col-md-4-magasin">
                         <div class="d-flex-magasin align-items-center-magasin">
                             <label for="quantity_stocked" class="mr-2-magasin">

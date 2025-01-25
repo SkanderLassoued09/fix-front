@@ -703,3 +703,41 @@ p-dialog {
     align-items: center; /* Aligns items vertically in the center */
   }
   
+
+
+  /////////////////////////////////////////////////////////////////////////////////////////
+  
+  .dialog-body {
+    padding: 1.5rem;
+}
+
+.file-upload-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+}
+
+.file-upload-section {
+    flex: 1 1 45%;
+}
+
+.button-container-BC {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.price-details {
+    margin: 1.5rem 0;
+    text-align: center;
+}
+
+.discount-slider .slider-full-width {
+    width: 100%;
+}
+
+.action-buttons {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+}

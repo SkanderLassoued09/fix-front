@@ -117,6 +117,7 @@ export class MagasinDiListComponent {
             pdf: new FormControl(),
             status: new FormControl(),
         });
+        
     }
 
     ngOnInit() {
@@ -285,6 +286,7 @@ export class MagasinDiListComponent {
                             pdf: this.loadedDataComposant.pdf,
                             status: this.loadedDataComposant.status_composant,
                         });
+                        
                     }
                 });
         }
@@ -396,6 +398,8 @@ export class MagasinDiListComponent {
                     this.loadedDataComposant = data.findOneComposant;
 
                     if (data) {
+                        console.log(data.findOneComposant.link,"data");
+                        
                         // Initialize form fields with loaded data
                         this.formUpdateComposant.patchValue({
                             name: this.loadedDataComposant.name,

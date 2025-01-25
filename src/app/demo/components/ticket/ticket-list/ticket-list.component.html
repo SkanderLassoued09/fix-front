@@ -616,164 +616,147 @@
     header="Affectation du prix final"
     [(visible)]="negocite1Modal"
     [modal]="true"
-    [style]="{ width: '50vw', height: '50vw' }"
+    [style]="{ width: '50vw' }"
     [draggable]="false"
     [resizable]="false"
     (onHide)="hideNegModal($event)"
 >
     <ng-container>
-        <!-- <div>
-            Panne de la part :
-            {{
-                selectedRowInNegociate1?.isErrorFromFixtronix
-                    ? "Fixtronix"
-                    : "Externe"
-            }}
-        </div> -->
-        <div class="file-upload-container">
-            <div>
-                <p-fileUpload
-                    mode="basic"
-                    chooseLabel="Ajouter Bon de commande"
-                    chooseIcon="pi pi-upload"
-                    name="bonDeCommande"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
-                    accept="application/pdf"
-                    maxFileSize="10000000"
-                    (onUpload)="onUpload($event, 'BC')"
-                    [auto]="true"
-                />
-                <div class="button-container-BC">
-                    <a
-                        *ngIf="selectedBc"
-                        [href]="baseUrl + selectedBc"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button label="Consulter BC" [link]="true"></p-button>
-                    </a>
-                    <a
-                        *ngIf="instantSelectedBc"
-                        [href]="instantSelectedBc"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
+        <div class="dialog-body">
+            <!-- File Upload Section -->
+            <div class="file-upload-container">
+                <div>
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Bon de commande"
+                        chooseIcon="pi pi-upload"
+                        name="bonDeCommande"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept="application/pdf"
+                        maxFileSize="10000000"
+                        (onUpload)="onUpload($event, 'BC')"
+                        [auto]="true"
+                    ></p-fileUpload>
+                    <div class="button-container-BC">
+                        <a
+                            *ngIf="selectedBc"
+                            [href]="baseUrl + selectedBc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button label="Consulter BC" [link]="true"></p-button>
+                        </a>
+                        <a
+                            *ngIf="instantSelectedBc"
+                            [href]="instantSelectedBc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button label="Consulter BC preview" [link]="true"></p-button>
+                        </a>
                         <p-button
-                            label="Consulter BC perview"
+                            (click)="enregistrerBC()"
+                            label="Enregistrer BC"
                             [link]="true"
                         ></p-button>
-                    </a>
-                    <p-button
-                        (click)="enregistrerBC()"
-                        label="Enregistrer BC"
-                        [link]="true"
-                    ></p-button>
+                    </div>
+                </div>
+                <div class="file-upload-section">
+                    <p-fileUpload
+                        mode="basic"
+                        chooseLabel="Ajouter Devis"
+                        chooseIcon="pi pi-upload"
+                        name="devis"
+                        url="https://www.primefaces.org/cdn/api/upload.php"
+                        accept="application/pdf"
+                        maxFileSize="10000000"
+                        (onUpload)="onUpload($event, 'Devis')"
+                        [auto]="true"
+                    ></p-fileUpload>
+                    <div class="button-container-BC">
+                        <a
+                            *ngIf="selectedDevis"
+                            [href]="baseUrl + selectedDevis"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button label="Consulter Devis" [link]="true"></p-button>
+                        </a>
+                        <a
+                            *ngIf="instantSelectedDevis"
+                            [href]="instantSelectedDevis"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button label="Consulter Devis preview" [link]="true"></p-button>
+                        </a>
+                        <p-button
+                            (click)="enregistrerDevis()"
+                            label="Enregistrer Devis"
+                            [link]="true"
+                        ></p-button>
+                    </div>
                 </div>
             </div>
-            <div class="file-upload-section">
-                <p-fileUpload
-                    mode="basic"
-                    chooseLabel="Ajouter Devis"
-                    chooseIcon="pi pi-upload"
-                    name="devis"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
-                    accept="application/pdf"
-                    maxFileSize="10000000"
-                    (onUpload)="onUpload($event, 'Devis')"
-                    [auto]="true"
-                />
-                <div class="button-container-BC">
-                    <a
-                        *ngIf="selectedDevis"
-                        [href]="baseUrl + selectedDevis"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button
-                            label="Consulter Devis"
-                            [link]="true"
-                        ></p-button>
-                    </a>
-                    <a
-                        *ngIf="instantSelectedDevis"
-                        [href]="instantSelectedDevis"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button
-                            label="Consulter Devis preview"
-                            [link]="true"
-                        ></p-button>
-                    </a>
-                    <p-button
-                        (click)="enregistrerDevis()"
-                        label="Enregistrer Devis"
-                        [link]="true"
-                    ></p-button>
-                </div>
+
+            <!-- Price Details Section -->
+            <div class="price-details">
+                <h5>Prix Initial: {{ price }}</h5>
+                <h4>Prix Final: {{ finalPrice ?? '-' }}</h4>
+                <p-inputNumber
+                    [(ngModel)]="discountPercent"
+                    inputId="percent"
+                    prefix="%"
+                    [max]="20"
+                ></p-inputNumber>
             </div>
-        </div>
 
-        <hr class="dashed" />
-        <div class="element-container">
-            <h3>Prix Intial: {{ price }} TND</h3>
-            <h2>Prix final: {{ finalPrice ?? "-" }} TND</h2>
-            <p-inputNumber
-                [(ngModel)]="discountPercent"
-                inputId="percent"
-                prefix="%"
-                [max]="20"
-                [ariaValueMax]="20"
-            >
-            </p-inputNumber>
-        </div>
-        <div class="element-container">
-            <p-slider
-                max="20"
-                [(ngModel)]="discountPercent"
-                class="w-full"
-                (onSlideEnd)="onSlideEnd($event)"
-            ></p-slider>
-        </div>
-        <div class="Slider-buttons">
-            <button
-                pButton
-                pRipple
-                label="discount"
-                icon="pi pi-dollar"
-                class="p-button-rounded p-button-raised p-button-success"
-                (click)="discountByPercent()"
-            ></button>
-        </div>
+            <!-- Discount Slider Section -->
+            <div class="discount-slider">
+                <p-slider
+                    [min]="0"
+                    [max]="20"
+                    [(ngModel)]="discountPercent"
+                    class="slider-full-width"
+                    (onSlideEnd)="onSlideEnd($event)"
+                ></p-slider>
+            </div>
 
-        <h5>Remise: {{ discountedPriceNeg }} TND</h5>
-        <small
-            >Remarque vous ne pouvez confirmer qu'aprés avoir affecter le BC et
-            le Devis</small
-        >
-        <div class="element-container-BTN">
-            <ng-container *ngIf="slideEnd === 20">
-                <button
-                    pButton
+            <!-- Action Buttons Section -->
+            <div class="action-buttons">
+                <p-button
                     pRipple
-                    label="Envoyer a l'Admin Manager"
-                    icon="pi pi-send"
-                    class="p-button-rounded p-button-raised p-button-success"
-                    (click)="nextNegociate2()"
-                ></button>
-            </ng-container>
-            <button
-                pButton
-                pRipple
-                label="confirmer"
-                icon="pi pi-check-circle"
-                class="p-button-rounded p-button-raised p-button-success"
-                (click)="confirmerNegociation(0)"
-                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
-            ></button>
+                    label="Appliquer Remise"
+                    icon="pi pi-dollar"
+                    class="button-success"
+                    severity="secondary"
+                    (click)="discountByPercent()"
+                ></p-button>
+                <ng-container *ngIf="slideEnd === 20">
+                    <button
+                        pButton
+                        pRipple
+                        label="Envoyer a l'Admin Manager"
+                        icon="pi pi-send"
+                        class="button-success"
+                        severity="warn"
+                        (click)="nextNegociate2()"
+                    ></button>
+                </ng-container>
+                <p-button
+                    pRipple
+                    label="Confirmer"
+                    icon="pi pi-check-circle"
+                    class="button-success"
+                    severity="success"
+                    [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
+                    (click)="confirmerNegociation(0)"
+                ></p-button>
+            </div>
         </div>
     </ng-container>
 </p-dialog>
+
 
 <!-- NEGOTIATION2 -->
 <p-dialog
@@ -810,14 +793,19 @@
                     <div class="button-container-BC">
                         <a
                             *ngIf="selectedBc"
-                            [href]="selectedBc"
+                            [href]="baseUrl + selectedBc"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button
-                                label="Consulter BC"
-                                [link]="true"
-                            ></p-button>
+                            <p-button label="Consulter BC" [link]="true"></p-button>
+                        </a>
+                        <a
+                            *ngIf="instantSelectedBc"
+                            [href]="instantSelectedBc"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button label="Consulter BC preview" [link]="true"></p-button>
                         </a>
                         <p-button
                             (click)="enregistrerBC()"
@@ -841,14 +829,19 @@
                     <div class="button-container-BC">
                         <a
                             *ngIf="selectedDevis"
-                            [href]="selectedDevis"
+                            [href]="baseUrl + selectedDevis"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button
-                                label="Consulter Devis"
-                                [link]="true"
-                            ></p-button>
+                            <p-button label="Consulter Devis" [link]="true"></p-button>
+                        </a>
+                        <a
+                            *ngIf="instantSelectedDevis"
+                            [href]="instantSelectedDevis"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <p-button label="Consulter Devis preview" [link]="true"></p-button>
                         </a>
                         <p-button
                             (click)="enregistrerDevis()"
@@ -932,8 +925,10 @@
     [resizable]="false"
 >
     <ng-container>
+        
         <!-- First Flow -->
         <div class="pricing-ad-container">
+            
             <div class="pricing-ad-content">
                 @for (item of array_composants; track $index) { @for (composant
                 of allComposants; track $index) {
@@ -961,7 +956,9 @@
                         >
                             {{ isErrorFromFixtronix ? "OUI" : "NON" }}
                         </span>
+                        Retour {{ ignoreCountN1 }}
                     </h6>
+                 
                 </div>
 
                 <h5 class="pricing-ad-heading">
@@ -1327,7 +1324,7 @@
         <!-- All 4 files here  -->
 
         <div class="form-group">
-            <div>
+            <div >
                 Bon de Livraison:
 
                 <a

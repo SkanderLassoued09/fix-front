@@ -167,3 +167,68 @@
 .link-magasin:hover {
     text-decoration: underline; /* Adds underline on hover for clarity */
 }
+
+
+/* Container for the entire component */
+.link-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  /* Label styling */
+  .link-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #333;
+  }
+  
+  /* Input and button group */
+  .link-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  /* Input field styling */
+  .link-input {
+    flex: 1;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+  }
+  
+  .link-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+  
+  /* Button styling */
+  .link-button {
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .link-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Disabled button styling */
+  .link-button.disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  

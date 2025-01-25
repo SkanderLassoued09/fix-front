@@ -116,6 +116,7 @@ export class CoordinatorDiListComponent {
     componentConfirmedFromCoordinator: any;
     magasinsentToCoordinator: boolean;
     gotComposantFromMagasinCondition: boolean;
+    ignoreCount: any;
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -335,6 +336,7 @@ export class CoordinatorDiListComponent {
         this.remarqueTech = di.remarqueTech;
         this.selectedDi = di._id;
         this.selectedDiLocation = di.location_id;
+        this.ignoreCount = di.ignoreCount;
         this.diDialog = true;
         this.getReperationCoordinatorCondition();
 

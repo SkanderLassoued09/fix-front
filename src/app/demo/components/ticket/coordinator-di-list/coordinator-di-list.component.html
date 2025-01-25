@@ -80,6 +80,7 @@
             [modal]="true"
             styleClass="p-fluid"
         >
+        <h3 *ngIf="ignoreCount > 0">Retour {{ ignoreCount }}</h3>
             <div class="field">
                 <label for="name"
                     >Envoyer Demande d'intervention pour le Dignostique</label

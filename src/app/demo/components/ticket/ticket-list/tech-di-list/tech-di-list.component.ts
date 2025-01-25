@@ -5,15 +5,13 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import {
     ConfigDiagAffectationMutationResult,
-    ConfigRepAffectationMutationResult,
-    DiListTechQueryResult,
+    ConfigRepAffectationMutationResult
 } from './tech-di-list.interface';
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
-import { filter, finalize, map } from 'rxjs';
+import { finalize } from 'rxjs';
 import * as moment from 'moment';
-import { dA } from '@fullcalendar/core/internal-common';
 import { environment } from 'src/environments/environment';
 
 @Component({
@@ -187,6 +185,8 @@ export class TechDiListComponent implements OnInit {
     shouldDisableValue: boolean;
     shouldDisableRetourValue: boolean;
     updatedValuecomposantCombo: { nameComposant: string; quantity: number }[];
+    techRetourSendFinished: boolean;
+    
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -671,6 +671,7 @@ export class TechDiListComponent implements OnInit {
                     console.log('🥥[data]:', data);
                     const detailsDi = data.getDiById.di;
                     const detailsLogs = data.getDiById.logsDi;
+                   
 
                     if (detailsLogs) {
                         // Create the array of composant logs and set ignoreCount
@@ -1218,23 +1219,19 @@ export class TechDiListComponent implements OnInit {
         const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
 
         const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-
-        this.shouldDisableValue =
-            isReperable && isPdr && this.composantCombo.length === 0;
+        const isErrorFromFixtronixTech = this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
+        this.techRetourSendFinished = !(isPdr === false && isErrorFromFixtronixTech === true)
+        console.log("VALUE PDR",isPdr)
+        console.log("VALUE isErrorFromFixtronixTech",isErrorFromFixtronixTech)
+        this.shouldDisableValue = 
+    isReperable && isPdr && this.composantCombo.length === 0 
         this.shouldDisableRetourValue =
-            this.ignoreCount > 0 &&
+           ( this.ignoreCount > 0 &&
             isReperable &&
             isPdr &&
-            this.composantCombo.length === 0;
-        console.log(
-            '🦐this.composantCombo.length ',
-            this.composantCombo.length
-        );
-        console.log('🥕[ this.shouldDisableValue]:', this.shouldDisableValue);
-        console.log(
-            '🌶[  this.shouldDisableRetourValue]:',
-            this.shouldDisableRetourValue
-        );
+            this.composantCombo.length === 0)|| 
+    (isPdr === false && isErrorFromFixtronixTech === true);
+      
 
         this.cdr.detectChanges(); // Ensure change detection
     }
@@ -1348,8 +1345,24 @@ export class TechDiListComponent implements OnInit {
             },
         });
     }
-    /////////////////////////////// NEZIH
-    changeStatusPending3() {
+
+    changeStatusFinished() {
+        this.confirmationService.confirm({
+            message: 'Voulez vous finir directement ce DI',
+            header: 'Confirmation Reperation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {  
+            this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.changeFinishStatus(this.selectedDi_id),
+                })
+                .subscribe(({ data }) => {console.log(data,"data");
+                    this.diDialogDiag[this.selectedDi] = false;
+                });}})
+      
+    }
+    
+   /* changeStatusPending3() {
         console.log(' this.selectedDi_id', this.selectedDi_id);
         this.confirmationService.confirm({
             message: 'Voulez vous Envoyer directement aux coordinator ?',
@@ -1368,7 +1381,7 @@ export class TechDiListComponent implements OnInit {
                 this.diDialogDiag[this.selectedDi] = false;
             },
         });
-    }
+    }*/
     //!Tech finishing Diagnostique here
     techFinishDiag() {
         console.log('🍯[techFinishDiag]:');
