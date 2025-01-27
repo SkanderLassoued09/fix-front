@@ -276,6 +276,8 @@ export class TicketListComponent implements OnInit {
     instantSelectedBc: string;
     instantSelectedDevis: string;
     ignoreCountN1: any;
+    bcUploaded: boolean;
+    devisUploaded: boolean;
 
     constructor(
         private ticketSerice: TicketService,
@@ -617,7 +619,7 @@ export class TicketListComponent implements OnInit {
         this.isErrorFromFixtronix = data.isErrorFromFixtronix;
         this.ignoreCountPricing = data.ignoreCount;
         console.log('ignoreCount =>', data.ignoreCount);
-        this.ignoreCountN1 = data.ignoreCount
+        this.ignoreCountN1 = data.ignoreCount;
         // Reset tarif and time values to ensure they are not carrying over from previous calls
         this.tarif_Technicien = null;
         this.timeDiagnostique = null;
@@ -784,6 +786,7 @@ export class TicketListComponent implements OnInit {
         this.secondNegocition = data._id;
         this.negocite1Modal = true;
         this.getTotalComposant(data._id);
+        this.isFormComplete();
     }
     showDialogForNegociate2(data) {
         this.selectedRowInNegociate2 = data;
@@ -1406,6 +1409,21 @@ export class TicketListComponent implements OnInit {
                 }
             });
     }
+
+    onPaste(event: ClipboardEvent) {
+        console.log('🍚');
+        // Get pasted data and remove line breaks
+        const clipboardData = event.clipboardData?.getData('text') || '';
+        const sanitizedData = clipboardData.replace(/(\r\n|\n|\r)/gm, ' '); // Replace with space or remove
+
+        // Prevent default paste and update value
+        event.preventDefault();
+        const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+        target.value = sanitizedData;
+
+        // If using Angular forms, update the control's value (e.g., for reactive forms)
+        // this.myFormControl.setValue(sanitizedData);
+    }
     getLocationList() {
         this.apollo
             .query<any>({
@@ -1440,8 +1458,10 @@ export class TicketListComponent implements OnInit {
 
                 if (type === 'BC') {
                     this.instantSelectedBc = blobUrl;
+                    this.bcUploaded = true;
                     // Assign Blob URL for BC
                 } else if (type === 'Devis') {
+                    this.devisUploaded = true;
                     this.instantSelectedDevis = blobUrl; // Assign Blob URL for Devis
                 } else if (type == 'BL') {
                     this.selectedBL = blobUrl;
@@ -1480,10 +1500,7 @@ export class TicketListComponent implements OnInit {
 
     // Update the isFormComplete method to check file upload statuses
     isFormComplete() {
-        return (
-            typeof this.selectedBc === 'string' &&
-            typeof this.selectedDevis === 'string'
-        );
+        return this.bcUploaded && this.devisUploaded;
     }
 
     uploadFile(base64: string, type: string) {

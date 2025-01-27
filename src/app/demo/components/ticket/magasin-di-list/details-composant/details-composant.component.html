@@ -5,7 +5,7 @@
     <!-- Component Info Section -->
     <div class="col-7 component-info">
         <!-- Header -->
-        <header >
+        <header>
             <div class="component-header mb-3 improved-header">
                 <h5>Information sur Composant</h5>
                 <div class="button-group improved-button-group">
@@ -27,49 +27,38 @@
                         size="small"
                         (click)="sentComponentToCoordinatorToConfirm()"
                     ></p-button> -->
-                <p-button
+                    <p-button
                         label="Savaugarder {{ composantValues?.name }}"
                         [raised]="true"
                         size="small"
                         (click)="updateComposant()"
                     ></p-button>
                     <p-button
-                    [disabled]="!componentsAreConfirmed && ignoreCount==0"
-                    label="Fin liste composants"
-                    [raised]="true"
-                    size="small"
-                    (click)="changeStatusPending3()"
-                    severity="success"
-                ></p-button>   
+                        [disabled]="!componentsAreConfirmed && ignoreCount == 0"
+                        label="Fin liste composants"
+                        [raised]="true"
+                        size="small"
+                        (click)="changeStatusPending3()"
+                        severity="success"
+                    ></p-button>
                 </div>
             </div>
-           
+
             <div class="flex justify-content-between align-items-center">
                 <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
-                
             </div>
         </header>
 
         <!-- Body Details -->
-        <section class="component-details p-4 component-details-container" [formGroup]="formUpdateComposant">
+        <section
+            class="component-details p-4 component-details-container"
+            [formGroup]="formUpdateComposant"
+        >
             <!-- Details Fields -->
             <div class="field component-id-field">
                 <h3>ID Composant: {{ composantValues?._id }}</h3>
             </div>
-            
-            <!-- 
-            <div class="field component-category-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>Category composant:</strong>
-                        <span>{{ composantValues?.category_composant_id }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="category_composant_id" />
-                    </ng-template>
-                </p-inplace>
-            </div> -->
-        
+
             <div class="field component-package-field">
                 <p-inplace closable="closable" [active]="isActive">
                     <ng-template pTemplate="display">
@@ -77,11 +66,15 @@
                         <span>{{ composantValues?.package }}</span>
                     </ng-template>
                     <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="package" />
+                        <input
+                            type="text"
+                            pInputText
+                            formControlName="package"
+                        />
                     </ng-template>
                 </p-inplace>
             </div>
-        
+
             <div class="col component-arrival-date">
                 <label for="coming_date">Date d'arrivage</label>
                 <p-calendar
@@ -90,7 +83,7 @@
                     formControlName="coming_date"
                 ></p-calendar>
             </div>
-        
+
             <!-- 
             <div class="field component-link-field">
                 <p-inplace closable="closable" [active]="isActive">
@@ -103,7 +96,7 @@
                     </ng-template>
                 </p-inplace>
             </div> -->
-        
+
             <div class="col component-purchase-price">
                 <label for="prix_achat">Prix d'achat</label>
                 <p-inputNumber
@@ -120,7 +113,7 @@
                     currency="TND"
                 ></p-inputNumber>
             </div>
-        
+
             <div class="col component-sale-price">
                 <label for="prix_vente">Prix de vente:</label>
                 <p-inputNumber
@@ -137,7 +130,7 @@
                     currency="TND"
                 ></p-inputNumber>
             </div>
-        
+
             <div class="col-md-4 stock-quantity-section">
                 <div class="d-flex align-items-center stock-quantity-container">
                     <label for="quantity_stocked" class="mr-2 quantity-label">
@@ -157,7 +150,7 @@
                     ></p-inputNumber>
                 </div>
             </div>
-        
+
             <!-- 
             <div class="field component-pdf-field">
                 <p-inplace closable="closable" [active]="isActive">
@@ -171,19 +164,24 @@
                 </p-inplace>
             </div> -->
         </section>
-        
     </div>
 
     <!-- Sidebar for Components List -->
     <aside class="col-5 component-list p-2 improved-list">
-        <p-orderList [value]="composants" [listStyle]="{ height: '25rem' }" header="Listes des composants">
+        <p-orderList
+            [value]="composants"
+            [listStyle]="{ height: '25rem' }"
+            header="Listes des composants"
+        >
             <ng-template let-product pTemplate="item">
                 <div
                     class="component-item flex flex-wrap p-2 align-items-center gap-3 improved-item"
                     (click)="select(product)"
                 >
                     <div class="flex-1 flex flex-column gap-2">
-                        <span class="font-bold">{{ product.nameComposant }}</span>
+                        <span class="font-bold">{{
+                            product.nameComposant
+                        }}</span>
                         <div class="flex align-items-center gap-2">
                             <i class="pi pi-tag text-sm"></i>
                             <span>{{ product.quantity }}</span>
@@ -194,6 +192,3 @@
         </p-orderList>
     </aside>
 </div>
-
-
-

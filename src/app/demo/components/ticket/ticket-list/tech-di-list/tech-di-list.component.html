@@ -235,8 +235,6 @@
                             </p-fieldset>
                         </div>
                     </div>
-
-                    
                 </div>
 
                 <div *ngIf="isLoading">
@@ -607,7 +605,7 @@
                                             (onUpload)="onUpload($event)"
                                             [auto]="true"
                                         ></p-fileUpload>
-                                    </div>                     
+                                    </div>
                                 </form>
                             </ng-template>
                             <ng-template pTemplate="footer">
@@ -655,18 +653,15 @@
                     <button
                         [disabled]="isToggleEnabled"
                         *ngIf="ignoreCount > 0"
-<<<<<<< HEAD
                         [disabled]="techRetourSendFinished!"
                         title="Reperable sans composants"
                         pButton
                         pRipple
                         label="Finir Reperation"
-=======
                         title="Reperable sans composants"
                         pButton
                         pRipple
                         label="Envoyer vers finir"
->>>>>>> 267af095dd7b98621639646e5958b1a70f287b96
                         class="p-button-text"
                         (click)="changeStatusFinished()"
                     ></button>
@@ -696,10 +691,11 @@
         [maximizable]="true"
         [closable]="false"
     >
-
         <ng-template pTemplate="content">
-            <h1>{{ diStatRepInfo?.getStatInfoForTechReparation.StatData._idDi }}</h1>
-          
+            <h1>
+                {{ diStatRepInfo?.getStatInfoForTechReparation.StatData._idDi }}
+            </h1>
+
             <p-image
                 *ngIf="imageValue"
                 [src]="baseUrl + imageValue"

@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -18,6 +19,7 @@ import { NotificationService } from 'src/app/demo/service/notification.service';
     styleUrl: './magasin-di-list.component.scss',
 })
 export class MagasinDiListComponent {
+    baseUrl = environment.apiUrl;
     statusComposant = [
         { name: 'En stock', value: 'En stock' },
         { name: 'Interne', value: 'Interne' },
@@ -96,7 +98,15 @@ export class MagasinDiListComponent {
     };
     nameComposananrSelected: any;
     ignoreCount: any;
-
+    categorieDiListDropDown: any;
+    composantCategory: any;
+    openCreationCategoryComposantModal: boolean = false;
+    addCategoryCompsant = new FormGroup({
+        categoryName: new FormControl(null, Validators.required),
+    });
+    instantSelectedcPDF: string;
+    payload: { file: string };
+    pdfAdded: any;
     constructor(
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
@@ -108,7 +118,7 @@ export class MagasinDiListComponent {
         this.formUpdateComposant = new FormGroup({
             name: new FormControl(null, Validators.required),
             package: new FormControl(null, Validators.required),
-            category_composant_id: new FormControl(null),
+            category_composant_id: new FormControl(null, Validators.required),
             prix_achat: new FormControl(null, Validators.required),
             prix_vente: new FormControl(null, Validators.required),
             coming_date: new FormControl(null, Validators.required),
@@ -117,7 +127,6 @@ export class MagasinDiListComponent {
             pdf: new FormControl(null),
             status: new FormControl(null, Validators.required),
         });
-        
     }
 
     ngOnInit() {
@@ -134,6 +143,23 @@ export class MagasinDiListComponent {
         this.formUpdateComposant.statusChanges.subscribe((susb) => {
             console.log('🎂susb', susb);
         });
+    }
+
+    allCategoryDi() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllDiCategory(),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.categorieDiListDropDown = data.findAllDiCategory.map(
+                        (categoryDi) => ({
+                            name: `${categoryDi.category}`,
+                            value: categoryDi._id, // ID as value
+                        })
+                    );
+                }
+            });
     }
 
     getStatusCount() {
@@ -259,6 +285,71 @@ export class MagasinDiListComponent {
     //     );
     // }
 
+    showDialogCategoryComposant() {
+        this.openCreationCategoryComposantModal = true;
+    }
+
+    addNewCategoryComposant() {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.addNewCategoryComposant(
+                    this.addCategoryCompsant.value.categoryName
+                ),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    // add tostr and confirmation message
+                    console.log('🍷[data]:', data);
+                    this.addCategoryCompsant.reset();
+                }
+            });
+    }
+
+    onUpload(event: any, type: string) {
+        for (let file of event.files) {
+            const reader = new FileReader();
+            reader.readAsArrayBuffer(file); // Read file as ArrayBuffer for Blob creation
+            const readerForBase64 = new FileReader();
+            readerForBase64.readAsDataURL(file); // Read file as Base64 for upload
+
+            // Blob URL creation
+            reader.onload = () => {
+                const arrayBuffer = reader.result as ArrayBuffer;
+
+                // Create a Blob and generate its URL
+                const blob = new Blob([arrayBuffer], {
+                    type: 'application/pdf',
+                });
+                const blobUrl = URL.createObjectURL(blob);
+
+                if (type === 'cPDF') {
+                    this.instantSelectedcPDF = blobUrl;
+
+                    // Assign Blob URL for BC
+                }
+
+                // Show a success message
+                this.messageservice.add({
+                    severity: 'info',
+                    summary: 'Fichier enregistré',
+                    detail: 'Fichier a été ajouté avec succès',
+                });
+            };
+
+            // Base64 creation
+            readerForBase64.onload = () => {
+                const base64 = readerForBase64.result as string;
+
+                // Call uploadFile with Base64 string
+                this.uploadFile(base64, type);
+            };
+
+            readerForBase64.onerror = (error) => {
+                console.error('Base64 conversion error:', error);
+            };
+        }
+    }
+
     selectedDropDownComposant(selectedItem) {
         this.isToUpdate = true;
         this.selectedItem = selectedItem;
@@ -271,6 +362,10 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data, loading }) => {
                     this.loadedDataComposant = data.findOneComposant;
+                    console.log(
+                        '🍷[ this.loadedDataComposant]:',
+                        this.loadedDataComposant
+                    );
 
                     if (data) {
                         // Initialize form fields with loaded data
@@ -290,7 +385,6 @@ export class MagasinDiListComponent {
                             pdf: this.loadedDataComposant.pdf,
                             status: this.loadedDataComposant.status_composant,
                         });
-                        
                     }
                 });
         }
@@ -300,6 +394,7 @@ export class MagasinDiListComponent {
         }
     }
     openDialogMagasin(item) {
+        this.findAllComposant_Category();
         this.selectedDi_id = item._id;
         this.ignoreCount = item.ignoreCount;
 
@@ -362,6 +457,25 @@ export class MagasinDiListComponent {
             });
     }
 
+    findAllComposant_Category() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.findAllComposant_Category(),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.composantCategory = data.findAllComposant_Category.map(
+                        (el) => {
+                            return {
+                                name: el._id,
+                                value: el.category_composant,
+                            };
+                        }
+                    );
+                }
+            });
+    }
+
     onPageChange(event: PageEvent) {
         this.first = event.first;
         this.page = event.page;
@@ -400,10 +514,16 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data, loading }) => {
                     this.loadedDataComposant = data.findOneComposant;
+                    console.log(
+                        '🍪[this.loadedDataComposant]:',
+                        this.loadedDataComposant
+                    );
 
                     if (data) {
-                        console.log(data.findOneComposant.link,"data");
-                        
+                        console.log(
+                            'this.loadedDataComposant.pdf',
+                            this.loadedDataComposant.pdf
+                        );
                         // Initialize form fields with loaded data
                         this.formUpdateComposant.patchValue({
                             name: this.loadedDataComposant.name,
@@ -444,9 +564,10 @@ export class MagasinDiListComponent {
             accept: () => {
                 this.apollo
                     .mutate<any>({
-                        mutation: this.ticketSerice.updateComposant(
-                            this.composantMagasin.value
-                        ),
+                        mutation: this.ticketSerice.updateComposant({
+                            ...this.composantMagasin.value,
+                            pdf: this.payload.file,
+                        }),
                         useMutationLoading: true,
                     })
                     .subscribe(
@@ -491,21 +612,41 @@ export class MagasinDiListComponent {
     }
 
     updateComposant() {
+        console.log('🥔 this.payload.file', this.payload.file);
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
+                // Mark all controls as dirty to include all fields in the form value
+                Object.keys(this.formUpdateComposant.controls).forEach(
+                    (key) => {
+                        this.formUpdateComposant.get(key)?.markAsDirty();
+                    }
+                );
+
+                // Use the updated form value for mutation
+                const updatedComposantData = {
+                    ...this.formUpdateComposant.value,
+                    pdf: this.payload.file, // Include any additional data
+                };
+
                 this.apollo
-                    .mutate<UpdateComposantMutationResponse>({
-                        mutation: this.ticketSerice.updateComposant(
-                            this.formUpdateComposant.value
-                        ),
+                    .mutate<any>({
+                        mutation:
+                            this.ticketSerice.updateComposant(
+                                updatedComposantData
+                            ),
                         useMutationLoading: true,
                     })
                     .subscribe(
                         ({ data }) => {
                             if (data) {
+                                this.pdfAdded = data.addComposantInfo.pdf;
+                                console.log(
+                                    '🍝[ this.pdfAdded]:',
+                                    this.pdfAdded
+                                );
                             }
                         },
                         (error) => {
@@ -515,6 +656,7 @@ export class MagasinDiListComponent {
                     );
             },
         });
+
         this.getDi(this.first, this.rows);
     }
 
@@ -532,24 +674,27 @@ export class MagasinDiListComponent {
         });
     }
 
-    onUpload(event: any) {
-        for (let file of event.files) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                const base64 = reader.result as string;
-                this.uploadFile(base64);
+    // onUpload(event: any) {
+    //     for (let file of event.files) {
+    //         const reader = new FileReader();
+    //         reader.readAsDataURL(file);
+    //         reader.onload = () => {
+    //             const base64 = reader.result as string;
+    //             this.uploadFile(base64);
+    //         };
+    //     }
+    // }
+
+    uploadFile(base64: string, type: string) {
+        if (type === 'cPDF') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
             };
+
+            console.log('🍓[payload]:', payload);
+            this.payload = payload;
         }
-    }
-
-    uploadFile(base64: string) {
-        const payload = {
-            image: base64,
-            // add other necessary data here
-        };
-
-        this.payloadImage = payload;
     }
 
     addComposant() {

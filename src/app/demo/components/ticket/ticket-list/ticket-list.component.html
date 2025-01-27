@@ -214,6 +214,8 @@
                     rows="3"
                     class="form-control"
                     aria-label="Description"
+                    (paste)="onPaste($event)"
+                    (keydown.enter)="$event.preventDefault()"
                 ></textarea>
             </div>
 
@@ -644,7 +646,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter BC" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter BC"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <a
                             *ngIf="instantSelectedBc"
@@ -652,7 +657,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter BC preview" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter BC preview"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <p-button
                             (click)="enregistrerBC()"
@@ -680,7 +688,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter Devis" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter Devis"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <a
                             *ngIf="instantSelectedDevis"
@@ -688,7 +699,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter Devis preview" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter Devis preview"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <p-button
                             (click)="enregistrerDevis()"
@@ -702,7 +716,7 @@
             <!-- Price Details Section -->
             <div class="price-details">
                 <h5>Prix Initial: {{ price }}</h5>
-                <h4>Prix Final: {{ finalPrice ?? '-' }}</h4>
+                <h4>Prix Final: {{ finalPrice ?? "-" }}</h4>
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
                     inputId="percent"
@@ -757,7 +771,6 @@
     </ng-container>
 </p-dialog>
 
-
 <!-- NEGOTIATION2 -->
 <p-dialog
     header="Affectation Prix Finale"
@@ -768,14 +781,6 @@
     [resizable]="false"
 >
     <ng-container>
-        <!-- <div>
-            Panne de la part :
-            {{
-                selectedRowInNegociate2?.isErrorFromFixtronix
-                    ? "Fixtronix"
-                    : "Externe"
-            }}
-        </div> -->
         <div class="dialog-body">
             <div class="file-upload-container">
                 <div>
@@ -797,7 +802,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter BC" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter BC"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <a
                             *ngIf="instantSelectedBc"
@@ -805,7 +813,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter BC preview" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter BC preview"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <p-button
                             (click)="enregistrerBC()"
@@ -833,7 +844,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter Devis" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter Devis"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <a
                             *ngIf="instantSelectedDevis"
@@ -841,7 +855,10 @@
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <p-button label="Consulter Devis preview" [link]="true"></p-button>
+                            <p-button
+                                label="Consulter Devis preview"
+                                [link]="true"
+                            ></p-button>
                         </a>
                         <p-button
                             (click)="enregistrerDevis()"
@@ -925,10 +942,8 @@
     [resizable]="false"
 >
     <ng-container>
-        
         <!-- First Flow -->
         <div class="pricing-ad-container">
-            
             <div class="pricing-ad-content">
                 @for (item of array_composants; track $index) { @for (composant
                 of allComposants; track $index) {
@@ -958,7 +973,6 @@
                         </span>
                         Retour {{ ignoreCountN1 }}
                     </h6>
-                 
                 </div>
 
                 <h5 class="pricing-ad-heading">
@@ -1324,7 +1338,7 @@
         <!-- All 4 files here  -->
 
         <div class="form-group">
-            <div >
+            <div>
                 Bon de Livraison:
 
                 <a

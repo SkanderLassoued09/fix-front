@@ -5,7 +5,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import {
     ConfigDiagAffectationMutationResult,
-    ConfigRepAffectationMutationResult
+    ConfigRepAffectationMutationResult,
 } from './tech-di-list.interface';
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
@@ -185,13 +185,10 @@ export class TechDiListComponent implements OnInit {
     shouldDisableValue: boolean;
     shouldDisableRetourValue: boolean;
     updatedValuecomposantCombo: { nameComposant: string; quantity: number }[];
-<<<<<<< HEAD
     techRetourSendFinished: boolean;
-    
-=======
+
     diData: any[];
     isToggleEnabled: any;
->>>>>>> 267af095dd7b98621639646e5958b1a70f287b96
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -688,7 +685,6 @@ export class TechDiListComponent implements OnInit {
                     console.log('🥥[data]:', data);
                     const detailsDi = data.getDiById.di;
                     const detailsLogs = data.getDiById.logsDi;
-                   
 
                     if (detailsLogs) {
                         // Create the array of composant logs and set ignoreCount
@@ -1236,19 +1232,21 @@ export class TechDiListComponent implements OnInit {
         const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
 
         const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-        const isErrorFromFixtronixTech = this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
-        this.techRetourSendFinished = !(isPdr === false && isErrorFromFixtronixTech === true)
-        console.log("VALUE PDR",isPdr)
-        console.log("VALUE isErrorFromFixtronixTech",isErrorFromFixtronixTech)
-        this.shouldDisableValue = 
-    isReperable && isPdr && this.composantCombo.length === 0 
+        const isErrorFromFixtronixTech =
+            this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
+        this.techRetourSendFinished = !(
+            isPdr === false && isErrorFromFixtronixTech === true
+        );
+        console.log('VALUE PDR', isPdr);
+        console.log('VALUE isErrorFromFixtronixTech', isErrorFromFixtronixTech);
+        this.shouldDisableValue =
+            isReperable && isPdr && this.composantCombo.length === 0;
         this.shouldDisableRetourValue =
-           ( this.ignoreCount > 0 &&
-            isReperable &&
-            isPdr &&
-            this.composantCombo.length === 0)|| 
-    (isPdr === false && isErrorFromFixtronixTech === true);
-      
+            (this.ignoreCount > 0 &&
+                isReperable &&
+                isPdr &&
+                this.composantCombo.length === 0) ||
+            (isPdr === false && isErrorFromFixtronixTech === true);
 
         this.cdr.detectChanges(); // Ensure change detection
     }
@@ -1363,27 +1361,7 @@ export class TechDiListComponent implements OnInit {
         });
     }
 
-<<<<<<< HEAD
-    changeStatusFinished() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous finir directement ce DI',
-            header: 'Confirmation Reperation',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {  
-            this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.changeFinishStatus(this.selectedDi_id),
-                })
-                .subscribe(({ data }) => {console.log(data,"data");
-                    this.diDialogDiag[this.selectedDi] = false;
-                });}})
-      
-    }
-    
-   /* changeStatusPending3() {
-=======
     changeStatusPending3() {
->>>>>>> 267af095dd7b98621639646e5958b1a70f287b96
         console.log(' this.selectedDi_id', this.selectedDi_id);
         this.confirmationService.confirm({
             message: 'Voulez vous Envoyer directement aux coordinator ?',
@@ -1402,7 +1380,7 @@ export class TechDiListComponent implements OnInit {
                 this.diDialogDiag[this.selectedDi] = false;
             },
         });
-    }*/
+    }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
         console.log('🍯[techFinishDiag]:');

@@ -112,7 +112,7 @@ export class TicketService {
         `;
     }
 
-    changeStatusToFinished(_id:string){
+    changeStatusToFinished(_id: string) {
         return gql`
         mutation{
         changestatusToFinishReparation(_id:"${_id}")
@@ -120,9 +120,8 @@ export class TicketService {
             _id
         }
         }
-        `
+        `;
     }
-
 
     // add pdf finle finished
     addPdfFile(_id: string, facture: string, bl: string) {
@@ -712,7 +711,24 @@ export class TicketService {
     `;
     }
 
+    addNewCategoryComposant(nameCategoryComponent: string) {
+        return gql`
+            mutation {
+                createComposant_Category(
+                    createComposant_CategoryInput: {
+                        category_composant: "${nameCategoryComponent}"
+                    }
+                ) {
+                    _id
+                    category_composant
+                }
+            }
+        
+            `;
+    }
+
     updateComposant(composantInfo) {
+        console.log('🍬[composantInfo]:', composantInfo);
         return gql`
             mutation {
                 addComposantInfo(
@@ -726,6 +742,7 @@ export class TicketService {
                         quantity_stocked: ${composantInfo.quantity_stocked}
                         pdf: "${composantInfo.pdf}"
                         status_composant: "${composantInfo.status_composant}"
+                        category_composant_id: "${composantInfo.category_composant_id}"
                     }
                 )
                  {
@@ -741,6 +758,17 @@ export class TicketService {
     status_composant
     
   }
+            }
+        `;
+    }
+
+    findAllComposant_Category() {
+        return gql`
+            {
+                findAllComposant_Category {
+                    _id
+                    category_composant
+                }
             }
         `;
     }

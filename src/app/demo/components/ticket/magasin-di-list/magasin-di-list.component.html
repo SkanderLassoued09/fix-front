@@ -11,6 +11,12 @@
         severity="success"
         label="Creation d'un nouveau composant"
     ></p-button>
+    <p-button
+        (click)="showDialogCategoryComposant()"
+        icon="pi pi-android"
+        severity="success"
+        label="Creation nouvelle catégorie composant"
+    ></p-button>
 </div>
 <div class="card">
     <p-table
@@ -112,30 +118,31 @@
                         <label for="package">Package</label>
                         <input formControlName="package" pInputText />
                     </div>
-                   
                 </div>
                 <div class="link-container">
                     <label for="link" class="link-label">Lien composant</label>
                     <div class="link-input-group">
-                      <input
-                        id="link"
-                        formControlName="link"
-                        pInputText
-                        class="link-input"
-                        placeholder="Enter a URL (e.g., https://example.com)"
-                      />
-                      <a
-                        [href]="formUpdateComposant.get('link').value"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="link-button"
-                        [class.disabled]="!formUpdateComposant.get('link').value"
-                      >
-                        Open Link
-                      </a>
+                        <input
+                            id="link"
+                            formControlName="link"
+                            pInputText
+                            class="link-input"
+                            placeholder="Enter a URL (e.g., https://example.com)"
+                        />
+                        <a
+                            [href]="formUpdateComposant.get('link').value"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="link-button"
+                            [class.disabled]="
+                                !formUpdateComposant.get('link').value
+                            "
+                        >
+                            Open Link
+                        </a>
                     </div>
-                  </div>
-                
+                </div>
+
                 <div class="grid align-items-center">
                     <div class="col">
                         <label for="prix_achat">Prix d'achat</label>
@@ -153,29 +160,28 @@
                             currency="TND"
                         ></p-inputNumber>
                     </div>
-                   
+
                     <div>
                         <label for="name" class="mr-2-magasin">
                             Statut pour le composant
-                        </label> 
+                        </label>
                         <p-dropdown
-                        [options]="statusComposant"
-                        (onChange)="getSelectedStatus($event)"
-                        optionLabel="name"
-                        optionValue="value"
-                        placeholder="Choisir état"
-                        class="mr-2-magasin dropdown-magasin"
-                    >
-                   
-                        <ng-template let-option pTemplate="item">
-                            <p-tag
-                                [value]="option.name"
-                                [severity]="getSeverity(option.name)"
-                            ></p-tag>
-                        </ng-template>
-                    </p-dropdown>
+                            [options]="statusComposant"
+                            (onChange)="getSelectedStatus($event)"
+                            optionLabel="name"
+                            optionValue="value"
+                            placeholder="Choisir état"
+                            class="mr-2-magasin dropdown-magasin"
+                        >
+                            <ng-template let-option pTemplate="item">
+                                <p-tag
+                                    [value]="option.name"
+                                    [severity]="getSeverity(option.name)"
+                                ></p-tag>
+                            </ng-template>
+                        </p-dropdown>
                     </div>
-                   
+
                     <div class="col">
                         <label for="prix_vente">Prix de vente</label>
                         <p-inputNumber
@@ -196,26 +202,55 @@
                 <div
                     class="grid-magasin align-items-center-magasin horizontal-layout-magasin"
                 >
-                  
                     <div *ngIf="loadedDataComposant" class="col-magasin">
                         <label for="pdf" class="label-magasin"
                             >Lien DataSheet</label
                         >
                         <a
-                            [href]="this.loadedDataComposant?.pdf"
+                            [href]="
+                                pdfAdded
+                                    ? baseUrl + pdfAdded
+                                    : baseUrl + loadedDataComposant.pdf
+                            "
                             target="_blank"
                             class="link-magasin"
                         >
                             Link pdf
                         </a>
                     </div>
+                    <div class="col">
+                        <div>
+                            <p-fileUpload
+                                mode="basic"
+                                chooseLabel="Ajouter Bon de commande"
+                                chooseIcon="pi pi-upload"
+                                name="bonDeCommande"
+                                url="https://www.primefaces.org/cdn/api/upload.php"
+                                accept="application/pdf"
+                                maxFileSize="10000000"
+                                (onUpload)="onUpload($event, 'cPDF')"
+                                [auto]="true"
+                            ></p-fileUpload>
+                            <div class="button-container-BC">
+                                <a
+                                    [href]="instantSelectedcPDF"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <p-button
+                                        *ngIf="instantSelectedcPDF"
+                                        label="Consulter PDF"
+                                        [link]="true"
+                                    ></p-button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row-magasin">
                     <div class="col-md-6-magasin">
-                        
                         <div class="d-flex-magasin align-items-center-magasin">
-<<<<<<< HEAD
                             <div class="col">
                                 <label for="prix_vente">Date d'arrivage</label>
                                 <p-calendar
@@ -225,8 +260,7 @@
                                     appendTo="body"
                                 ></p-calendar>
                             </div>
-                           
-=======
+
                             <label for="name" class="mr-2-magasin">
                                 Affecter un statut pour le composant
                             </label>
@@ -246,10 +280,24 @@
                                     ></p-tag>
                                 </ng-template>
                             </p-dropdown>
->>>>>>> 267af095dd7b98621639646e5958b1a70f287b96
+                            <p-dropdown
+                                [options]="composantCategory"
+                                optionLabel="name"
+                                optionValue="name"
+                                placeholder="Choisir catégorie composant"
+                                class="mr-2-magasin dropdown-magasin"
+                                formControlName="category_composant_id"
+                            >
+                                <ng-template let-option pTemplate="item">
+                                    <p-tag
+                                        [value]="option.name"
+                                        [severity]="getSeverity(option.name)"
+                                    ></p-tag>
+                                </ng-template>
+                            </p-dropdown>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-4-magasin">
                         <div class="d-flex-magasin align-items-center-magasin">
                             <label for="quantity_stocked" class="mr-2-magasin">
@@ -325,9 +373,44 @@
     </p-dialog>
 
     <p-dialog
-        [(visible)]="openCreationComposantModal"
+        [(visible)]="openCreationCategoryComposantModal"
         [style]="{ width: '50%', height: '90vh' }"
         header="Creation d'un nouveau composant"
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <form [formGroup]="addCategoryCompsant">
+            <div>
+                <div>
+                    <label for="">Catégorie</label>
+                    <input
+                        pInputText
+                        type="text"
+                        formControlName="categoryName"
+                    />
+                </div>
+                <button
+                    class="mt-1"
+                    pButton
+                    (click)="addNewCategoryComposant()"
+                >
+                    Ajouter
+                </button>
+                <button
+                    class="mt-1"
+                    pButton
+                    (click)="addCategoryCompsant.reset()"
+                >
+                    effacer
+                </button>
+            </div>
+        </form></p-dialog
+    >
+
+    <p-dialog
+        [(visible)]="openCreationComposantModal"
+        [style]="{ width: '50%', height: '90vh' }"
+        header="Creation nouveau catégorie composant"
         [modal]="true"
         styleClass="p-fluid"
     >
@@ -384,7 +467,7 @@
                     url="https://www.primefaces.org/cdn/api/upload.php"
                     accept="image/*,application/pdf"
                     maxFileSize="1000000"
-                    (onUpload)="onUpload($event)"
+                    (onUpload)="onUpload($event, '')"
                     [auto]="true"
                 ></p-fileUpload>
             </div>
@@ -449,11 +532,6 @@
                 <div class="col">
                     <label for="link">Lien pour le composant</label>
                     <input formControlName="link" pInputText />
-                </div>
-
-                <div class="col">
-                    <label for="pdf">Lien DataSheet</label>
-                    <input formControlName="pdf" pInputText />
                 </div>
             </div>
 

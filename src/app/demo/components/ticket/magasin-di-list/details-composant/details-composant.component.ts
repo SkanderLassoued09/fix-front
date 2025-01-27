@@ -108,11 +108,6 @@ export class DetailsComposantComponent implements OnInit {
             .subscribe(({ data }) => {
                 this.composantValues = data.findOneComposant;
 
-                data.findOneComposant.coming_date = moment().toDate();
-                this.dateArrivage = formatDate(
-                    data.findOneComposant.coming_date
-                );
-                console.log(this.dateArrivage, 'this.dateArrivage');
                 if (data) {
                     // Initialize form fields with loaded data
                     // TODO Change response from the server to object of data not boolean
@@ -123,14 +118,13 @@ export class DetailsComposantComponent implements OnInit {
                             this.composantValues.category_composant_id,
                         prix_achat: this.composantValues.prix_achat,
                         prix_vente: this.composantValues.prix_vente,
-                        coming_date: this.composantValues.coming_date, //!NEZIH
+                        coming_date: new Date(this.composantValues.coming_date),
                         link: this.composantValues.link,
                         quantity_stocked: this.composantValues.quantity_stocked,
                         pdf: this.composantValues.pdf,
                         status: this.composantValues.status,
                     });
                 }
-               
             });
     }
     select(data) {
@@ -216,6 +210,7 @@ export class DetailsComposantComponent implements OnInit {
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
+                    console.log('🥐[data]:', data);
                     // Update composantValues with the latest form values
                     Object.assign(
                         this.composantValues,
