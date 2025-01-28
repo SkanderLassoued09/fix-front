@@ -556,9 +556,7 @@ export class TechDiListComponent implements OnInit {
                 // Now that all data is fetched and processed, update disable values
                 this.updateDisableValues();
                 const spreadingArray = this.diData[0];
-                console.log('fired', spreadingArray);
-                console.log('fired pdr', spreadingArray.contain_pdr);
-                console.log('fired err', spreadingArray.isErrorFromFixtronix);
+                console.log('spreadingArray', spreadingArray);
 
                 this.isToggleEnabled =
                     !spreadingArray.contain_pdr &&
