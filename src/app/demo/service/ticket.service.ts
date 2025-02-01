@@ -1016,6 +1016,7 @@ export class TicketService {
                         ignoreCount
                         di_category_id
                         price
+                        final_price
                         isSentToCoordinator
                         isConfirmedComponentFromCoordinator
                         remarque_tech_diagnostic

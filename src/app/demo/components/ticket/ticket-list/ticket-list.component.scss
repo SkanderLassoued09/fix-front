@@ -741,3 +741,52 @@ p-dialog {
     display: flex;
     justify-content: space-between;
 }
+
+/* Dialog title */
+.dialog-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+/* Button row */
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem; /* Spacing between buttons */
+    margin-bottom: 2rem; /* Spacing below the button row */
+}
+
+/* Button container */
+.button-container {
+    flex: 1 1 auto; /* Allow buttons to grow and shrink */
+}
+
+/* Log item */
+.log-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Spacing between links */
+    margin-bottom: 1rem; /* Spacing between log items */
+}
+
+/* File link */
+.file-link {
+    font-size: 0.875rem;
+    color: #007bff; /* Blue color for links */
+    text-decoration: none; /* Remove underline */
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.file-link:hover {
+    color: #0056b3; /* Darker blue on hover */
+    text-decoration: underline; /* Add underline on hover */
+}
+.price-container {
+    display: flex; /* Use Flexbox to align items horizontally */
+   
+justify-content: space-around;
+   
+   
+}

@@ -124,7 +124,7 @@ export class MagasinDiListComponent {
             coming_date: new FormControl(null, Validators.required),
             link: new FormControl(null),
             quantity_stocked: new FormControl(null, Validators.required),
-            pdf: new FormControl(null),
+            pdf: new FormControl(null, Validators.required),
             status: new FormControl(null, Validators.required),
         });
     }

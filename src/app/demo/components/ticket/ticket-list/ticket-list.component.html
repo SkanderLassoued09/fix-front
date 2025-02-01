@@ -934,7 +934,7 @@
 
 <p-dialog
     class="pricing-ad-dialog"
-    header="Affectation du prix Intial"
+    header="Affectation du prix Intial "
     [(visible)]="pricingModal"
     [modal]="true"
     [style]="{ width: '50vw' }"
@@ -944,22 +944,25 @@
     <ng-container>
         <!-- First Flow -->
         <div class="pricing-ad-container">
+            
             <div class="pricing-ad-content">
-                @for (item of array_composants; track $index) { @for (composant
-                of allComposants; track $index) {
-                <p-card class="pricing-ad-card">
-                    <div class="pricing-ad-detail">
-                        Composant: {{ item.nameComposant }}
-                    </div>
-                    <div class="pricing-ad-detail">
-                        Quantity: {{ item.quantity }}
-                    </div>
-                    <div class="pricing-ad-detail">
-                        Price: {{ composant.prix_vente }}
-                    </div>
-                </p-card>
-                } } @empty { }
                 <div *ngIf="ignoreCountPricing > 0">
+                    <div>
+                        <h4> Avant Retour </h4> 
+                    </div>
+                  
+                    <div  class="price-container">
+                        <strong class="price-item">Prix initial: {{initialPriceAffichage}}</strong>
+                        <strong class="price-item">Prix finale: {{priceRemiseAffichage}}</strong>
+                        <strong class="price-item">Remise {{remiseAffichage}}%</strong>
+                    </div>
+
+                </div>
+                <div *ngIf="ignoreCountPricing > 0">
+                    <div class="retourCenter">
+                        <h4>Retour {{ ignoreCountN1 }}</h4>  
+                    </div>
+                 
                     <h6 class="error-status">
                         Erreur Fixtronix:
                         <span
@@ -971,7 +974,7 @@
                         >
                             {{ isErrorFromFixtronix ? "OUI" : "NON" }}
                         </span>
-                        Retour {{ ignoreCountN1 }}
+                      
                     </h6>
                 </div>
 
@@ -1088,58 +1091,71 @@
     [resizable]="false"
     appendTo="body"
 >
+<div>
+    <!-- Consulter les fichiers section -->
     <div>
-        <div>
-            <h3 class="dialog-title">Consulter Bon de commande & Devis</h3>
-            <div class="button-row">
-                <div class="button-container-BC">
-                    <a
-                        [href]="baseUrl + filesSelected?.bon_de_commande"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button label="Consulter BC" [link]="true"></p-button>
-                    </a>
-                </div>
-                <div class="button-container-BC">
-                    <a
-                        [href]="baseUrl + filesSelected?.bon_de_livraison"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button
-                            label="Consulter Bon de livraison"
-                            [link]="true"
-                        ></p-button>
-                    </a>
-                </div>
-                <div class="button-container-BC">
-                    <a
-                        [href]="baseUrl + filesSelected?.facture"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button
-                            label="Consulter facture"
-                            [link]="true"
-                        ></p-button>
-                    </a>
-                </div>
-                <div class="button-container-BC">
-                    <a
-                        [href]="baseUrl + filesSelected?.devis"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button
-                            label="Consulter Devis"
-                            [link]="true"
-                        ></p-button>
-                    </a>
-                </div>
+        <h3 class="dialog-title">Fichier avant retour</h3>
+        <div class="button-row">
+            <div class="button-container">
+                <a
+                    [href]="baseUrl + filesSelected?.bon_de_commande"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <p-button label="Consulter BC" [link]="true"></p-button>
+                </a>
+            </div>
+            <div class="button-container">
+                <a
+                    [href]="baseUrl + filesSelected?.bon_de_livraison"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <p-button label="Consulter BL" [link]="true"></p-button>
+                </a>
+            </div>
+            <div class="button-container">
+                <a
+                    [href]="baseUrl + filesSelected?.facture"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <p-button label="Consulter facture" [link]="true"></p-button>
+                </a>
+            </div>
+            <div class="button-container">
+                <a
+                    [href]="baseUrl + filesSelected?.devis"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <p-button label="Consulter Devis" [link]="true"></p-button>
+                </a>
             </div>
         </div>
     </div>
+
+    <!-- Retour section -->
+    <div *ngFor="let files of finishedData?.logs; let i = index">
+        <h3 class="dialog-title">Retour N°{{ i + 1 }}</h3>
+        <div class="button-row">
+            <a [href]="baseUrl + files.bon_de_commande" target="_blank" class="file-link">
+                <p-button label="Consulter BC" [link]="true"></p-button>
+            </a>
+            <a [href]="baseUrl + files.bon_de_livraison" target="_blank" class="file-link">
+                <p-button label="Consulter BL" [link]="true"></p-button>
+            </a>
+          
+            
+            <a [href]="baseUrl + files.facture" target="_blank" class="file-link">
+                <p-button label="Consulter Facture" [link]="true"></p-button>
+            </a>
+            <a [href]="baseUrl + files.devis" target="_blank" class="file-link">
+                <p-button label="Consulter Devis" [link]="true"></p-button>
+            </a>
+        </div>
+    </div>
+</div>
     <ng-container>
         <div class="dialog-content">
             <h3 class="dialog-title">Affecter Bon de livraison et Facture</h3>
@@ -1179,6 +1195,7 @@
                             [link]="true"
                         ></p-button>
                     </div>
+                    
                 </div>
 
                 <div class="file-upload-wrapper">
@@ -1218,16 +1235,7 @@
             </div>
         </div>
 
-        <div>
-            <h3>logs</h3>
-
-            <div *ngFor="let files of finishedData?.logs">
-                <a href=""> bl: {{ files.bon_de_livraison }}</a>
-                <a href=""> bc: {{ files.bon_de_commande }}</a>
-                <a href=""> devis: {{ files.devis }}</a>
-                <a href=""> facture: {{ files.facture }}</a>
-            </div>
-        </div>
+      
     </ng-container>
 </p-dialog>
 

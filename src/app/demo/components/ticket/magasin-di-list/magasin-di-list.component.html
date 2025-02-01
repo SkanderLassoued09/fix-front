@@ -119,6 +119,23 @@
                         <input formControlName="package" pInputText />
                     </div>
                 </div>
+                <div>
+                    <p-dropdown
+                                [options]="composantCategory"
+                                optionLabel="name"
+                                optionValue="name"
+                                placeholder="Choisir catégorie composant"
+                                class="mr-2-magasin dropdown-magasin"
+                                formControlName="category_composant_id"
+                            >
+                                <ng-template let-option pTemplate="item">
+                                    <p-tag
+                                        [value]="option.name"
+                                        [severity]="getSeverity(option.name)"
+                                    ></p-tag>
+                                </ng-template>
+                            </p-dropdown>
+                </div>
                 <div class="link-container">
                     <label for="link" class="link-label">Lien composant</label>
                     <div class="link-input-group">
@@ -215,14 +232,14 @@
                             target="_blank"
                             class="link-magasin"
                         >
-                            Link pdf
+                            Lien Datasheet
                         </a>
                     </div>
                     <div class="col">
                         <div>
                             <p-fileUpload
                                 mode="basic"
-                                chooseLabel="Ajouter Bon de commande"
+                                chooseLabel="Ajouter Datasheet"
                                 chooseIcon="pi pi-upload"
                                 name="bonDeCommande"
                                 url="https://www.primefaces.org/cdn/api/upload.php"
@@ -280,21 +297,7 @@
                                     ></p-tag>
                                 </ng-template>
                             </p-dropdown>
-                            <p-dropdown
-                                [options]="composantCategory"
-                                optionLabel="name"
-                                optionValue="name"
-                                placeholder="Choisir catégorie composant"
-                                class="mr-2-magasin dropdown-magasin"
-                                formControlName="category_composant_id"
-                            >
-                                <ng-template let-option pTemplate="item">
-                                    <p-tag
-                                        [value]="option.name"
-                                        [severity]="getSeverity(option.name)"
-                                    ></p-tag>
-                                </ng-template>
-                            </p-dropdown>
+                            
                         </div>
                     </div>
 
@@ -349,6 +352,7 @@
                 </div>
                 <div class="field-magasin">
                     <button
+                        [disabled]="!formUpdateComposant.valid"
                         pButton
                         pRipple
                         label="Enregistrer"
@@ -359,7 +363,7 @@
                 </div>
                 <div class="field-magasin">
                     <button
-                        [disabled]="!formUpdateComposant.valid"
+                        
                         pButton
                         pRipple
                         label="Finir"

@@ -280,3 +280,57 @@ p-calendar {
     color: #007bff;
     margin-bottom: 0.5rem;
 }
+
+
+
+/* Container for all history items */
+.history-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Spacing between items */
+    padding: 1rem;
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+}
+
+/* Individual history item */
+.history-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem; /* Spacing between sections */
+    padding: 1rem;
+    background-color: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Flow counter */
+.flow-counter {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+/* Detail section */
+.detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Spacing between labels and values */
+}
+
+/* Detail label */
+.detail-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #555;
+}
+
+/* Detail value */
+.detail-value {
+    font-size: 0.875rem;
+    color: #333;
+    margin-left: 0.5rem; /* Spacing between label and value */
+}
