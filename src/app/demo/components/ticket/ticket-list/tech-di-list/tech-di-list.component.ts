@@ -531,7 +531,7 @@ export class TechDiListComponent implements OnInit {
             if (diagnosticData?.data) {
                 const detailsDi = diagnosticData.data.getDiById.di;
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
-
+console.log("diagnosticDataPromise",detailsDi)
                 // Process the data based on whether detailsLogs exists
                 if (detailsLogs) {
                     this.processDiagnosticWithLogs(di, detailsDi, detailsLogs);
@@ -543,9 +543,9 @@ export class TechDiListComponent implements OnInit {
 
                 // Set remaining properties
                 this.di = { ...di };
-
+                console.log("this.di",this.di)
                 this.selectedDi = di._id;
-                this.imageValue = di.image;
+                this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
                 this.diStatus = di.status;
                 this.ignoreCount = di.ignoreCount;
@@ -554,6 +554,8 @@ export class TechDiListComponent implements OnInit {
                 this.diDialogDiag[di._id] = true;
 
                 // Now that all data is fetched and processed, update disable values
+                
+                console.log("DI ALL INFO HERE ",this.selectedDi)
                 this.updateDisableValues();
                 const spreadingArray = this.diData[0];
                 console.log('spreadingArray', spreadingArray);

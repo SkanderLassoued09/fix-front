@@ -108,6 +108,7 @@ export class MagasinDiListComponent {
     payload: { file: string };
     pdfAdded: any;
     validerComposantValidtor: boolean=true;
+    validatorFinirListeComposant: boolean = true;
     constructor(
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
@@ -356,6 +357,7 @@ export class MagasinDiListComponent {
     selectedDropDownComposant(selectedItem) {
         this.isToUpdate = true;
         this.selectedItem = selectedItem;
+       
         if (selectedItem.value) {
             this.apollo
                 .query<ComposantByNameQueryResponse>({
@@ -398,6 +400,7 @@ export class MagasinDiListComponent {
     }
     openDialogMagasin(item) {
         this.findAllComposant_Category();
+        
         this.selectedDi_id = item._id;
         this.ignoreCount = item.ignoreCount;
 
@@ -436,8 +439,10 @@ export class MagasinDiListComponent {
                     };
                 });
         }
-
+        console.log(this.arrayComposant.length,"ARR COMPOSANTS")
+        this.arrayComposant.length == 0 ? this.validatorFinirListeComposant = false : this.validatorFinirListeComposant = true
         this.magasinDiDialog = true;
+        console.log("this.arrayComposant in",this.arrayComposant.length)
     }
     //last add
     MagasinEstimation_Condition() {} //! open only when status === MagasinEstimation
@@ -604,6 +609,7 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data }) => {
                     if (data) {
+                       
                         // Remove the selected item from the arrayComposant
                         const index = this.arrayComposant.findIndex(
                             (composant) =>
@@ -618,16 +624,19 @@ export class MagasinDiListComponent {
                         // Optionally, reset the dropdown selection
                         this.nameComposananrSelected = null;
                         this.selectedItem = null;
+                        console.log("this.arrayComposant",this.arrayComposant.length)
+                        this.arrayComposant.length == 0 ? this.validatorFinirListeComposant = false : this.validatorFinirListeComposant = true
+
                     }
                 });
-
             }})
+            
         
     }
 
     updateComposant() {
         console.log('🥔 this.payload.file', this.payload.file);
-        this.validerComposantValidtor = false
+        
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
             header: 'Confirmation Diagnostique',
@@ -669,6 +678,7 @@ export class MagasinDiListComponent {
                             // Add error handling logic here if needed
                         }
                     );
+                    this.validerComposantValidtor = false
             },
         });
 

@@ -1025,6 +1025,7 @@ export class TicketService {
                         devis
                         bon_de_commande
                         contain_pdr
+                        image
                         array_composants {
                             nameComposant
                             quantity

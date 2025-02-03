@@ -91,6 +91,7 @@
         header="Affectation pour les composants"
         [modal]="true"
         styleClass="p-fluid"
+        [draggable]="false"
     >
         <form [formGroup]="formUpdateComposant">
             <div>
@@ -346,7 +347,7 @@
                 </div>
                 <div class="field-magasin">
                     <button
-                        
+                        [disabled]="validatorFinirListeComposant"
                         pButton
                         pRipple
                         label="Finir"
