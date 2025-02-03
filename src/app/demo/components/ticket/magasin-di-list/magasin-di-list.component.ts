@@ -107,6 +107,7 @@ export class MagasinDiListComponent {
     instantSelectedcPDF: string;
     payload: { file: string };
     pdfAdded: any;
+    validerComposantValidtor: boolean=true;
     constructor(
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
@@ -122,9 +123,9 @@ export class MagasinDiListComponent {
             prix_achat: new FormControl(null, Validators.required),
             prix_vente: new FormControl(null, Validators.required),
             coming_date: new FormControl(null, Validators.required),
-            link: new FormControl(null),
+            link: new FormControl(null,Validators.required),
             quantity_stocked: new FormControl(null, Validators.required),
-            pdf: new FormControl(null, Validators.required),
+            pdf: new FormControl(null),
             status: new FormControl(null, Validators.required),
         });
     }
@@ -142,6 +143,8 @@ export class MagasinDiListComponent {
 
         this.formUpdateComposant.statusChanges.subscribe((susb) => {
             console.log('🎂susb', susb);
+            console.log(this.formUpdateComposant,"form composants");
+            
         });
     }
 
@@ -503,6 +506,7 @@ export class MagasinDiListComponent {
     getLogsDiById(_id: number) {}
 
     selectedDropDown(selectedItem) {
+        this.validerComposantValidtor = true
         this.nameComposananrSelected = selectedItem.value;
         if (selectedItem.value) {
             this.selectedItem = selectedItem;
@@ -583,36 +587,47 @@ export class MagasinDiListComponent {
             },
         });
     }
+    
     setComposantAsUpdate() {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.setComposantAsUpdated(
-                    this.selectedDi_id,
-                    this.nameComposananrSelected
-                ),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    // Remove the selected item from the arrayComposant
-                    const index = this.arrayComposant.findIndex(
-                        (composant) =>
-                            composant.nameComposant ===
-                            this.nameComposananrSelected
-                    );
+        this.confirmationService.confirm({
+            message: 'Attention : Une fois validé, vous ne pourrez plus modifier ce composant !',
+            header: 'Validation composant',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
 
-                    if (index !== -1) {
-                        this.arrayComposant.splice(index, 1);
+                this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.setComposantAsUpdated(
+                        this.selectedDi_id,
+                        this.nameComposananrSelected
+                    ),
+                })
+                .subscribe(({ data }) => {
+                    if (data) {
+                        // Remove the selected item from the arrayComposant
+                        const index = this.arrayComposant.findIndex(
+                            (composant) =>
+                                composant.nameComposant ===
+                                this.nameComposananrSelected
+                        );
+    
+                        if (index !== -1) {
+                            this.arrayComposant.splice(index, 1);
+                        }
+    
+                        // Optionally, reset the dropdown selection
+                        this.nameComposananrSelected = null;
+                        this.selectedItem = null;
                     }
+                });
 
-                    // Optionally, reset the dropdown selection
-                    this.nameComposananrSelected = null;
-                    this.selectedItem = null;
-                }
-            });
+            }})
+        
     }
 
     updateComposant() {
         console.log('🥔 this.payload.file', this.payload.file);
+        this.validerComposantValidtor = false
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
             header: 'Confirmation Diagnostique',

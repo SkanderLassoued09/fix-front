@@ -120,6 +120,7 @@
                     </div>
                 </div>
                 <div>
+                    <label>Affecter Catégoire Composant</label>
                     <p-dropdown
                                 [options]="composantCategory"
                                 optionLabel="name"
@@ -183,6 +184,7 @@
                             Statut pour le composant
                         </label>
                         <p-dropdown
+                            formControlName="status"
                             [options]="statusComposant"
                             (onChange)="getSelectedStatus($event)"
                             optionLabel="name"
@@ -278,26 +280,6 @@
                                 ></p-calendar>
                             </div>
 
-                            <label for="name" class="mr-2-magasin">
-                                Affecter un statut pour le composant
-                            </label>
-                            <p-dropdown
-                                [options]="statusComposant"
-                                (onChange)="getSelectedStatus($event)"
-                                optionLabel="name"
-                                optionValue="value"
-                                placeholder="Choisir état"
-                                class="mr-2-magasin dropdown-magasin"
-                                formControlName="status"
-                            >
-                                <ng-template let-option pTemplate="item">
-                                    <p-tag
-                                        [value]="option.name"
-                                        [severity]="getSeverity(option.name)"
-                                    ></p-tag>
-                                </ng-template>
-                            </p-dropdown>
-                            
                         </div>
                     </div>
 
@@ -328,6 +310,7 @@
                         composant et le retirer de la liste.
                     </p>
                     <button
+                        [disabled]="validerComposantValidtor"
                         pButton
                         pRipple
                         label="Valider ce composant"
@@ -355,7 +338,7 @@
                         [disabled]="!formUpdateComposant.valid"
                         pButton
                         pRipple
-                        label="Enregistrer"
+                        label="Enregistrer composant"
                         icon="pi pi-check-circle"
                         class="button-save-magasin"
                         (click)="updateComposant()"
