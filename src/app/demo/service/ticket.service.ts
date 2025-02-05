@@ -686,7 +686,6 @@ export class TicketService {
                 findOneComposant(name: "${selectedComposant}") {
                     _id
                     name
-                 
                     prix_achat
                     prix_vente
                     coming_date

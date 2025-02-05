@@ -182,8 +182,8 @@ export class TechDiListComponent implements OnInit {
     historyOfDi: any;
     isLoading: boolean;
     error: string;
-    shouldDisableValue: boolean;
-    shouldDisableRetourValue: boolean;
+    disabledDiagnostiqueValue: boolean;
+    disabledDiagnostiqueRetourValue: boolean;
     updatedValuecomposantCombo: { nameComposant: string; quantity: number }[];
     techRetourSendFinished: boolean;
 
@@ -479,6 +479,8 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
+        console.log("DIAG OPENED");
+        
         try {
             // Handle pause status if needed
             if (di.status === 'DIAGNOSTIC_Pause') {
@@ -552,18 +554,8 @@ console.log("diagnosticDataPromise",detailsDi)
 
                 // Open the modal after all data is processed
                 this.diDialogDiag[di._id] = true;
-
-                // Now that all data is fetched and processed, update disable values
-                
-                console.log("DI ALL INFO HERE ",this.selectedDi)
+                // call the disable function
                 this.updateDisableValues();
-                const spreadingArray = this.diData[0];
-                console.log('spreadingArray', spreadingArray);
-
-                this.isToggleEnabled =
-                    !spreadingArray.contain_pdr &&
-                    spreadingArray.isErrorFromFixtronix;
-                console.log('🍉[isEnabled]:', this.isToggleEnabled);
             }
         } catch (error) {
             console.error('Error in diagModal:', error);
@@ -571,6 +563,7 @@ console.log("diagnosticDataPromise",detailsDi)
         } finally {
             this.isLoading = false;
         }
+        
     }
 
     // Helper methods to process diagnostic data
@@ -1224,29 +1217,23 @@ console.log("diagnosticDataPromise",detailsDi)
                 return 'warn';
         }
     }
-    updateDisableValues() {
-        console.log(
-            '🦐this.composantCombo updateDisableValues ',
-            this.composantCombo
-        );
-        const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
 
+    updateDisableValues() {
+     //! Getting values for conditions
+        const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
         const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-        const isErrorFromFixtronixTech =
-            this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
-        this.techRetourSendFinished = !(
-            isPdr === false && isErrorFromFixtronixTech === true
-        );
-        console.log('VALUE PDR', isPdr);
-        console.log('VALUE isErrorFromFixtronixTech', isErrorFromFixtronixTech);
-        this.shouldDisableValue =
-            isReperable && isPdr && this.composantCombo.length === 0;
-        this.shouldDisableRetourValue =
-            (this.ignoreCount > 0 &&
-                isReperable &&
-                isPdr &&
-                this.composantCombo.length === 0) ||
-            (isPdr === false && isErrorFromFixtronixTech === true);
+        const isErrorFromFixtronixTech = this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
+        const isArrComposantEmpty = this.composantCombo.length === 0 ? true : false;
+       
+    //! diagnostique finish condition     
+        this.disabledDiagnostiqueValue =
+            isReperable && isPdr && isArrComposantEmpty;
+    //! diagnostique retour condition
+    // didn't put ignoreCount > 0  bcs button are only shown with that condition
+    //send finish directly condition
+            this.techRetourSendFinished = !(isPdr === false && isErrorFromFixtronixTech === true)
+    //send diag retou condition    
+        this.disabledDiagnostiqueRetourValue =  this.disabledDiagnostiqueValue || !this.techRetourSendFinished
 
         this.cdr.detectChanges(); // Ensure change detection
     }

@@ -416,19 +416,23 @@ export class MagasinDiListComponent {
                     const logsDi = data?.getLigsById; // Assuming this is the response structure
 
                     if (logsDi?.array_composants) {
+                        console.log("inside logs array composant")
+                        console.log("logsDi",logsDi.array_composants)
                         this.arrayComposant = logsDi.array_composants
                             .filter((el: any) => el.isUpdated === false)
-                            .map((el: any) => {
+                            .map((el: any) => {console.log("el",el)
                                 return {
                                     infoComposant:
                                         el.nameComposant + ': ' + el.quantity,
                                     nameComposant: el.nameComposant,
                                     quantity: el.quantity,
+                                    
                                 };
                             });
                     }
                 });
         } else {
+            console.log("inside DI array composant")
             this.arrayComposant = item.array_composants
                 .filter((el) => el.isUpdated === false)
                 .map((el) => {
@@ -513,6 +517,7 @@ export class MagasinDiListComponent {
     selectedDropDown(selectedItem) {
         this.validerComposantValidtor = true
         this.nameComposananrSelected = selectedItem.value;
+        console.log("this.nameComposananrSelected",this.nameComposananrSelected)
         if (selectedItem.value) {
             this.selectedItem = selectedItem;
             this.apollo
@@ -599,7 +604,9 @@ export class MagasinDiListComponent {
             header: 'Validation composant',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-
+console.log("inside function valider")
+console.log(" this.nameComposananrSelected", this.nameComposananrSelected)
+console.log(" this.selectedDi_id", this.selectedDi_id)
                 this.apollo
                 .mutate<any>({
                     mutation: this.ticketSerice.setComposantAsUpdated(

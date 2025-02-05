@@ -634,6 +634,7 @@
             <ng-template pTemplate="footer">
                 <div class="foot">
                     <button
+                    *ngIf="ignoreCount == 0"
                         pButton
                         pRipple
                         label="Mettre DI en Pause"
@@ -641,10 +642,19 @@
                         class="p-button-text"
                         (click)="lapTimeForPauseAndGetBack()"
                     ></button>
+                    <button
+                    *ngIf="ignoreCount > 0"
+                    pButton
+                    pRipple
+                    label="Retour DI en Pause"
+                    icon="pi pi-pause-circle"
+                    class="p-button-text"
+                    (click)="lapTimeForPauseAndGetBack()"
+                ></button>
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
                         *ngIf="ignoreCount == 0"
-                        [disabled]="shouldDisableValue"
+                        [disabled]="disabledDiagnostiqueValue"
                         pButton
                         pRipple
                         label="Fin diagnostique"
@@ -653,13 +663,8 @@
                         (click)="techFinishDiag()"
                     ></button>
                     <button
-                        [disabled]="isToggleEnabled"
                         *ngIf="ignoreCount > 0"
-                        [disabled]="techRetourSendFinished!"
-                        title="Reperable sans composants"
-                        pButton
-                        pRipple
-                        label="Finir Reperation"
+                        [disabled]="techRetourSendFinished"
                         title="Reperable sans composants"
                         pButton
                         pRipple
@@ -669,9 +674,7 @@
                     ></button>
                     <button
                         *ngIf="ignoreCount > 0"
-                        [disabled]="
-                            shouldDisableRetourValue || !isToggleEnabled
-                        "
+                        [disabled]="disabledDiagnostiqueRetourValue"
                         pButton
                         pRipple
                         label="Fin diagnostique retour"
