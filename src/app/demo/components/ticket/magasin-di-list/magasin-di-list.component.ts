@@ -105,9 +105,9 @@ export class MagasinDiListComponent {
         categoryName: new FormControl(null, Validators.required),
     });
     instantSelectedcPDF: string;
-    payload: { file: string };
+    payload: { file: string } = { file: '' };
     pdfAdded: any;
-    validerComposantValidtor: boolean=true;
+    validerComposantValidtor: boolean = true;
     validatorFinirListeComposant: boolean = true;
     constructor(
         private ticketSerice: TicketService,
@@ -124,7 +124,7 @@ export class MagasinDiListComponent {
             prix_achat: new FormControl(null, Validators.required),
             prix_vente: new FormControl(null, Validators.required),
             coming_date: new FormControl(null, Validators.required),
-            link: new FormControl(null,Validators.required),
+            link: new FormControl(null, Validators.required),
             quantity_stocked: new FormControl(null, Validators.required),
             pdf: new FormControl(null),
             status: new FormControl(null, Validators.required),
@@ -144,8 +144,7 @@ export class MagasinDiListComponent {
 
         this.formUpdateComposant.statusChanges.subscribe((susb) => {
             console.log('🎂susb', susb);
-            console.log(this.formUpdateComposant,"form composants");
-            
+            console.log(this.formUpdateComposant, 'form composants');
         });
     }
 
@@ -357,7 +356,7 @@ export class MagasinDiListComponent {
     selectedDropDownComposant(selectedItem) {
         this.isToUpdate = true;
         this.selectedItem = selectedItem;
-       
+
         if (selectedItem.value) {
             this.apollo
                 .query<ComposantByNameQueryResponse>({
@@ -400,7 +399,7 @@ export class MagasinDiListComponent {
     }
     openDialogMagasin(item) {
         this.findAllComposant_Category();
-        
+
         this.selectedDi_id = item._id;
         this.ignoreCount = item.ignoreCount;
 
@@ -416,23 +415,23 @@ export class MagasinDiListComponent {
                     const logsDi = data?.getLigsById; // Assuming this is the response structure
 
                     if (logsDi?.array_composants) {
-                        console.log("inside logs array composant")
-                        console.log("logsDi",logsDi.array_composants)
+                        console.log('inside logs array composant');
+                        console.log('logsDi', logsDi.array_composants);
                         this.arrayComposant = logsDi.array_composants
                             .filter((el: any) => el.isUpdated === false)
-                            .map((el: any) => {console.log("el",el)
+                            .map((el: any) => {
+                                console.log('el', el);
                                 return {
                                     infoComposant:
                                         el.nameComposant + ': ' + el.quantity,
                                     nameComposant: el.nameComposant,
                                     quantity: el.quantity,
-                                    
                                 };
                             });
                     }
                 });
         } else {
-            console.log("inside DI array composant")
+            console.log('inside DI array composant');
             this.arrayComposant = item.array_composants
                 .filter((el) => el.isUpdated === false)
                 .map((el) => {
@@ -443,10 +442,12 @@ export class MagasinDiListComponent {
                     };
                 });
         }
-        console.log(this.arrayComposant.length,"ARR COMPOSANTS")
-        this.arrayComposant.length == 0 ? this.validatorFinirListeComposant = false : this.validatorFinirListeComposant = true
+        console.log(this.arrayComposant.length, 'ARR COMPOSANTS');
+        this.arrayComposant.length == 0
+            ? (this.validatorFinirListeComposant = false)
+            : (this.validatorFinirListeComposant = true);
         this.magasinDiDialog = true;
-        console.log("this.arrayComposant in",this.arrayComposant.length)
+        console.log('this.arrayComposant in', this.arrayComposant.length);
     }
     //last add
     MagasinEstimation_Condition() {} //! open only when status === MagasinEstimation
@@ -515,9 +516,12 @@ export class MagasinDiListComponent {
     getLogsDiById(_id: number) {}
 
     selectedDropDown(selectedItem) {
-        this.validerComposantValidtor = true
+        this.validerComposantValidtor = true;
         this.nameComposananrSelected = selectedItem.value;
-        console.log("this.nameComposananrSelected",this.nameComposananrSelected)
+        console.log(
+            'this.nameComposananrSelected',
+            this.nameComposananrSelected
+        );
         if (selectedItem.value) {
             this.selectedItem = selectedItem;
             this.apollo
@@ -553,7 +557,9 @@ export class MagasinDiListComponent {
                             quantity_stocked:
                                 this.loadedDataComposant.quantity_stocked,
                             pdf: this.loadedDataComposant.pdf,
-                            status: this.selectedstatusComposant,
+                            status:
+                                this.selectedstatusComposant ||
+                                this.loadedDataComposant.status_composant,
                         });
                     }
                 });
@@ -597,53 +603,59 @@ export class MagasinDiListComponent {
             },
         });
     }
-    
+
     setComposantAsUpdate() {
         this.confirmationService.confirm({
-            message: 'Attention : Une fois validé, vous ne pourrez plus modifier ce composant !',
+            message:
+                'Attention : Une fois validé, vous ne pourrez plus modifier ce composant !',
             header: 'Validation composant',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-console.log("inside function valider")
-console.log(" this.nameComposananrSelected", this.nameComposananrSelected)
-console.log(" this.selectedDi_id", this.selectedDi_id)
+                console.log('inside function valider');
+                console.log(
+                    ' this.nameComposananrSelected',
+                    this.nameComposananrSelected
+                );
+                console.log(' this.selectedDi_id', this.selectedDi_id);
                 this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.setComposantAsUpdated(
-                        this.selectedDi_id,
-                        this.nameComposananrSelected
-                    ),
-                })
-                .subscribe(({ data }) => {
-                    if (data) {
-                       
-                        // Remove the selected item from the arrayComposant
-                        const index = this.arrayComposant.findIndex(
-                            (composant) =>
-                                composant.nameComposant ===
-                                this.nameComposananrSelected
-                        );
-    
-                        if (index !== -1) {
-                            this.arrayComposant.splice(index, 1);
-                        }
-    
-                        // Optionally, reset the dropdown selection
-                        this.nameComposananrSelected = null;
-                        this.selectedItem = null;
-                        console.log("this.arrayComposant",this.arrayComposant.length)
-                        this.arrayComposant.length == 0 ? this.validatorFinirListeComposant = false : this.validatorFinirListeComposant = true
+                    .mutate<any>({
+                        mutation: this.ticketSerice.setComposantAsUpdated(
+                            this.selectedDi_id,
+                            this.nameComposananrSelected
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            // Remove the selected item from the arrayComposant
+                            const index = this.arrayComposant.findIndex(
+                                (composant) =>
+                                    composant.nameComposant ===
+                                    this.nameComposananrSelected
+                            );
 
-                    }
-                });
-            }})
-            
-        
+                            if (index !== -1) {
+                                this.arrayComposant.splice(index, 1);
+                            }
+
+                            // Optionally, reset the dropdown selection
+                            this.nameComposananrSelected = null;
+                            this.selectedItem = null;
+                            console.log(
+                                'this.arrayComposant',
+                                this.arrayComposant.length
+                            );
+                            this.arrayComposant.length == 0
+                                ? (this.validatorFinirListeComposant = false)
+                                : (this.validatorFinirListeComposant = true);
+                        }
+                    });
+            },
+        });
     }
 
     updateComposant() {
-        console.log('🥔 this.payload.file', this.payload.file);
-        
+        // console.log('🥔 this.payload.file', this.payload.file);
+
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
             header: 'Confirmation Diagnostique',
@@ -662,6 +674,7 @@ console.log(" this.selectedDi_id", this.selectedDi_id)
                     pdf: this.payload.file, // Include any additional data
                 };
 
+                console.log('🍡[updatedComposantData]:', updatedComposantData);
                 this.apollo
                     .mutate<any>({
                         mutation:
@@ -685,7 +698,7 @@ console.log(" this.selectedDi_id", this.selectedDi_id)
                             // Add error handling logic here if needed
                         }
                     );
-                    this.validerComposantValidtor = false
+                this.validerComposantValidtor = false;
             },
         });
 
@@ -706,17 +719,6 @@ console.log(" this.selectedDi_id", this.selectedDi_id)
         });
     }
 
-    // onUpload(event: any) {
-    //     for (let file of event.files) {
-    //         const reader = new FileReader();
-    //         reader.readAsDataURL(file);
-    //         reader.onload = () => {
-    //             const base64 = reader.result as string;
-    //             this.uploadFile(base64);
-    //         };
-    //     }
-    // }
-
     uploadFile(base64: string, type: string) {
         if (type === 'cPDF') {
             const payload = {
@@ -724,8 +726,8 @@ console.log(" this.selectedDi_id", this.selectedDi_id)
                 // add other necessary data here
             };
 
-            console.log('🍓[payload]:', payload);
             this.payload = payload;
+            console.log('🍓[payload]:', this.payload);
         }
     }
 

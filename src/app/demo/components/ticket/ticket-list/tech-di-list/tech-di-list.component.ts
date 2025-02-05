@@ -479,8 +479,8 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
-        console.log("DIAG OPENED");
-        
+        console.log('DIAG OPENED');
+
         try {
             // Handle pause status if needed
             if (di.status === 'DIAGNOSTIC_Pause') {
@@ -532,8 +532,10 @@ export class TechDiListComponent implements OnInit {
             // Process diagnostic data
             if (diagnosticData?.data) {
                 const detailsDi = diagnosticData.data.getDiById.di;
+                console.log('🍸[detailsDi]:', detailsDi);
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
-console.log("diagnosticDataPromise",detailsDi)
+                console.log('🍬[detailsLogs]:', detailsLogs);
+
                 // Process the data based on whether detailsLogs exists
                 if (detailsLogs) {
                     this.processDiagnosticWithLogs(di, detailsDi, detailsLogs);
@@ -545,7 +547,7 @@ console.log("diagnosticDataPromise",detailsDi)
 
                 // Set remaining properties
                 this.di = { ...di };
-                console.log("this.di",this.di)
+                console.log('this.di', this.di);
                 this.selectedDi = di._id;
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
@@ -563,11 +565,11 @@ console.log("diagnosticDataPromise",detailsDi)
         } finally {
             this.isLoading = false;
         }
-        
     }
 
     // Helper methods to process diagnostic data
     private processDiagnosticWithLogs(di, detailsDi, detailsLogs) {
+        console.log('🍞[processDiagnosticWithLogs]:');
         // Patch form with logs data
         this.diagFormTech.patchValue({
             _idDi: di._id,
@@ -583,12 +585,8 @@ console.log("diagnosticDataPromise",detailsDi)
         });
 
         // Process array_composants
-        detailsLogs.array_composants = detailsDi.array_composants.map(
-            (composant) => ({
-                ...composant,
-                ignoreCount: 0,
-            })
-        );
+        // ! todo skander
+        detailsLogs.array_composants = [];
 
         const arrayComposantLogs = detailsLogs.flatMap((el) => {
             return el.array_composants.map((composant) => ({
@@ -598,10 +596,12 @@ console.log("diagnosticDataPromise",detailsDi)
         });
 
         this.composantCombo = detailsLogs.array_composants;
+        console.log('111111111111111[composantCombo]:', this.composantCombo);
         this.allComposantLogsAndOriginal = [...detailsLogs.array_composants];
     }
 
     private processDiagnosticWithoutLogs(di, detailsDi) {
+        console.log('🥠[processDiagnosticWithoutLogs');
         // Patch form without logs data
         this.diagFormTech.patchValue({
             _idDi: di._id,
@@ -621,6 +621,7 @@ console.log("diagnosticDataPromise",detailsDi)
             ...composant,
             ignoreCount: 0,
         }));
+        console.log('🥧[ this.composantCombo ]:', this.composantCombo);
     }
 
     getDataOriginalAndRetour(_id: string) {
@@ -1219,21 +1220,26 @@ console.log("diagnosticDataPromise",detailsDi)
     }
 
     updateDisableValues() {
-     //! Getting values for conditions
+        //! Getting values for conditions
         const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
         const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-        const isErrorFromFixtronixTech = this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
-        const isArrComposantEmpty = this.composantCombo.length === 0 ? true : false;
-       
-    //! diagnostique finish condition     
+        const isErrorFromFixtronixTech =
+            this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
+        const isArrComposantEmpty =
+            this.composantCombo.length === 0 ? true : false;
+
+        //! diagnostique finish condition
         this.disabledDiagnostiqueValue =
             isReperable && isPdr && isArrComposantEmpty;
-    //! diagnostique retour condition
-    // didn't put ignoreCount > 0  bcs button are only shown with that condition
-    //send finish directly condition
-            this.techRetourSendFinished = !(isPdr === false && isErrorFromFixtronixTech === true)
-    //send diag retou condition    
-        this.disabledDiagnostiqueRetourValue =  this.disabledDiagnostiqueValue || !this.techRetourSendFinished
+        //! diagnostique retour condition
+        // didn't put ignoreCount > 0  bcs button are only shown with that condition
+        //send finish directly condition
+        this.techRetourSendFinished = !(
+            isPdr === false && isErrorFromFixtronixTech === true
+        );
+        //send diag retou condition
+        this.disabledDiagnostiqueRetourValue =
+            this.disabledDiagnostiqueValue || !this.techRetourSendFinished;
 
         this.cdr.detectChanges(); // Ensure change detection
     }

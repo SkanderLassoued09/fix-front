@@ -295,8 +295,7 @@
                         [rows]="10"
                         [responsiveLayout]="'scroll'"
                     >
-                    
-                    <!--3asba2-->
+                        <!--3asba2-->
                         <ng-template pTemplate="header">
                             <tr>
                                 <th>Retour N°</th>
@@ -634,7 +633,7 @@
             <ng-template pTemplate="footer">
                 <div class="foot">
                     <button
-                    *ngIf="ignoreCount == 0"
+                        *ngIf="ignoreCount == 0"
                         pButton
                         pRipple
                         label="Mettre DI en Pause"
@@ -643,14 +642,14 @@
                         (click)="lapTimeForPauseAndGetBack()"
                     ></button>
                     <button
-                    *ngIf="ignoreCount > 0"
-                    pButton
-                    pRipple
-                    label="Retour DI en Pause"
-                    icon="pi pi-pause-circle"
-                    class="p-button-text"
-                    (click)="lapTimeForPauseAndGetBack()"
-                ></button>
+                        *ngIf="ignoreCount > 0"
+                        pButton
+                        pRipple
+                        label="Retour DI en Pause"
+                        icon="pi pi-pause-circle"
+                        class="p-button-text"
+                        (click)="lapTimeForPauseAndGetBack()"
+                    ></button>
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
                         *ngIf="ignoreCount == 0"
@@ -780,25 +779,47 @@
                         </div>
                     </div>
                     <div *ngIf="ignoreCount > 0">
-                        <div *ngIf="historyOfDi && historyOfDi.length > 0" class="history-container">
-                            <div *ngFor="let item of historyOfDi; let i = index" class="history-item">
+                        <div
+                            *ngIf="historyOfDi && historyOfDi.length > 0"
+                            class="history-container"
+                        >
+                            <div
+                                *ngFor="let item of historyOfDi; let i = index"
+                                class="history-item"
+                            >
                                 <!-- Flow counter -->
                                 <div class="flow-counter">FLOW: {{ i }}</div>
-                    
+
                                 <!-- Diagnostic details -->
                                 <div class="detail-section">
-                                    <span class="detail-label">Technicien chargé Diagnostique:</span>
-                                    <span class="detail-value">{{ item?.id_tech_diag }}</span>
-                                    <span class="detail-label">Temps Diagnostique:</span>
-                                    <span class="detail-value">{{ item?.diag_time }}</span>
+                                    <span class="detail-label"
+                                        >Technicien chargé Diagnostique:</span
+                                    >
+                                    <span class="detail-value">{{
+                                        item?.id_tech_diag
+                                    }}</span>
+                                    <span class="detail-label"
+                                        >Temps Diagnostique:</span
+                                    >
+                                    <span class="detail-value">{{
+                                        item?.diag_time
+                                    }}</span>
                                 </div>
-                    
+
                                 <!-- Repair details -->
                                 <div class="detail-section">
-                                    <span class="detail-label">Technicien chargé Réparation:</span>
-                                    <span class="detail-value">{{ item?.id_tech_rep }}</span>
-                                    <span class="detail-label">Temps Réparation:</span>
-                                    <span class="detail-value">{{ item?.rep_time }}</span>
+                                    <span class="detail-label"
+                                        >Technicien chargé Réparation:</span
+                                    >
+                                    <span class="detail-value">{{
+                                        item?.id_tech_rep
+                                    }}</span>
+                                    <span class="detail-label"
+                                        >Temps Réparation:</span
+                                    >
+                                    <span class="detail-value">{{
+                                        item?.rep_time
+                                    }}</span>
                                 </div>
                             </div>
                         </div>
@@ -809,7 +830,7 @@
                                 ignoreCount
                             }})
                         </h3>
-                        <!--3ASBA1-->
+
                         <p-table
                             [value]="allComposantLogsAndOriginal"
                             [paginator]="true"

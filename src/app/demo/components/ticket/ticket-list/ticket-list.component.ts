@@ -60,29 +60,7 @@ export class TicketListComponent implements OnInit {
     // Add these boolean flags to your component class
     isBCUploaded: boolean = false;
     isDevisUploaded: boolean = false;
-    ticketData: any = {
-        _id: '',
-        title: '',
-        description: '',
-        can_be_repaired: false,
-        bon_de_commande: '',
-        bon_de_livraison: '',
-        contain_pdr: false,
-        facture: '',
-        devis: '',
-        status: '',
-        createdAt: '',
-        updatedAt: '',
-        image: '',
-        current_roles: '',
-        client_id: '',
-        remarque_tech_diagnostic: '',
-        createdBy: '',
-        ignoreCount: 0,
-        location_id: '',
-        di_category_id: '',
-        array_composants: [],
-    };
+    ticketData: any;
 
     // Used for the mini Dashboard
     counterInMagasin = 0;
@@ -644,21 +622,25 @@ export class TicketListComponent implements OnInit {
         // Second query: get diagnostic time
         let statQuery;
         if (data?.ignoreCount && data?.ignoreCount > 0) {
-
             this.apollo
-            .query<any>({
-                query: this.ticketSerice.getDiById(data._id),
-            })
-            .subscribe(({ data }) => {
-                console.log('🥝[data]:', data);
-                if (data) {
-                  console.log(data.getDiById.di.price,"data originale")
-                  this.initialPriceAffichage = data.getDiById.di.price;
-                  this.priceRemiseAffichage = data.getDiById.di.final_price;
-                  this.remiseAffichage = Math.floor((1-(this.priceRemiseAffichage/this.initialPriceAffichage))*100)
-                }
-            });
-
+                .query<any>({
+                    query: this.ticketSerice.getDiById(data._id),
+                })
+                .subscribe(({ data }) => {
+                    console.log('🥝[data]:', data);
+                    if (data) {
+                        console.log(data.getDiById.di.price, 'data originale');
+                        this.initialPriceAffichage = data.getDiById.di.price;
+                        this.priceRemiseAffichage =
+                            data.getDiById.di.final_price;
+                        this.remiseAffichage = Math.floor(
+                            (1 -
+                                this.priceRemiseAffichage /
+                                    this.initialPriceAffichage) *
+                                100
+                        );
+                    }
+                });
 
             this.apollo
                 .query<any>({
@@ -691,10 +673,8 @@ export class TicketListComponent implements OnInit {
                             data.getInfoStatByIdDi.diag_time
                         );
                     }
-                 
                 });
-        } 
-        else {
+        } else {
             this.apollo
                 .query<any>({
                     query: this.ticketSerice.getDiById(data._id),
@@ -1223,7 +1203,7 @@ export class TicketListComponent implements OnInit {
         });
     }
     // TODO cannot return null for non nullable field below
-    nego1nego2_InMagasin(_id, price, final_price) {
+    nego1nego2_InMagasin(_id: string, price, final_price) {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.nego1nego2_InMagasin(
@@ -1232,7 +1212,9 @@ export class TicketListComponent implements OnInit {
                     final_price
                 ),
             })
-            .subscribe(({ data }) => {console.log("data",data)});
+            .subscribe(({ data }) => {
+                console.log('data', data);
+            });
     }
 
     //! Nan c bon
@@ -1622,7 +1604,6 @@ export class TicketListComponent implements OnInit {
                             '🥠[ this.finishedData]:',
                             this.finishedData
                         );
-                      
                     }
                 })
             )
@@ -1699,7 +1680,14 @@ export class TicketListComponent implements OnInit {
         this.getLogsDi(data._id);
         this.getLogsData(data._id).subscribe((pauseLogs) => {
             // nezih
-            this.ticketData = { ...data, ...pauseLogs, ...this.logsDi }; // Merge data and pauseLogs
+            // this.ticketData = { ...data, ...pauseLogs, ...this.logsDi }; // Merge data and pauseLogs
+            this.ticketData = {
+                data: { ...data },
+                pauseLogs: { ...pauseLogs },
+                logsDi: { ...this.logsDi },
+            };
+            console.log('🍰[this.logsDi]:', this.logsDi);
+
             this.ticketDetailsInfo = true; // Open the dialog
             console.log('data inside =>', this.ticketData);
         });

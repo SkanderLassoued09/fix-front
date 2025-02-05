@@ -652,7 +652,7 @@ export class TicketService {
                     _id
                     name
                     package
-                
+                category_composant_id
                     prix_achat
                     prix_vente
                     coming_date

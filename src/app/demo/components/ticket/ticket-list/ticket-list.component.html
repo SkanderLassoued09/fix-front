@@ -944,25 +944,29 @@
     <ng-container>
         <!-- First Flow -->
         <div class="pricing-ad-container">
-            
             <div class="pricing-ad-content">
                 <div *ngIf="ignoreCountPricing > 0">
                     <div>
-                        <h4> Avant Retour </h4> 
-                    </div>
-                  
-                    <div  class="price-container">
-                        <strong class="price-item">Prix initial: {{initialPriceAffichage}}</strong>
-                        <strong class="price-item">Prix finale: {{priceRemiseAffichage}}</strong>
-                        <strong class="price-item">Remise {{remiseAffichage}}%</strong>
+                        <h4>Avant Retour</h4>
                     </div>
 
+                    <div class="price-container">
+                        <strong class="price-item"
+                            >Prix initial: {{ initialPriceAffichage }}</strong
+                        >
+                        <strong class="price-item"
+                            >Prix finale: {{ priceRemiseAffichage }}</strong
+                        >
+                        <strong class="price-item"
+                            >Remise {{ remiseAffichage }}%</strong
+                        >
+                    </div>
                 </div>
                 <div *ngIf="ignoreCountPricing > 0">
                     <div class="retourCenter">
-                        <h4>Retour {{ ignoreCountN1 }}</h4>  
+                        <h4>Retour {{ ignoreCountN1 }}</h4>
                     </div>
-                 
+
                     <h6 class="error-status">
                         Erreur Fixtronix:
                         <span
@@ -974,7 +978,6 @@
                         >
                             {{ isErrorFromFixtronix ? "OUI" : "NON" }}
                         </span>
-                      
                     </h6>
                 </div>
 
@@ -1091,71 +1094,95 @@
     [resizable]="false"
     appendTo="body"
 >
-<div>
-    <!-- Consulter les fichiers section -->
     <div>
-        <h3 class="dialog-title">Fichier avant retour</h3>
-        <div class="button-row">
-            <div class="button-container">
+        <!-- Consulter les fichiers section -->
+        <div>
+            <h3 class="dialog-title">Fichier avant retour</h3>
+            <div class="button-row">
+                <div class="button-container">
+                    <a
+                        [href]="baseUrl + filesSelected?.bon_de_commande"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button label="Consulter BC" [link]="true"></p-button>
+                    </a>
+                </div>
+                <div class="button-container">
+                    <a
+                        [href]="baseUrl + filesSelected?.bon_de_livraison"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button label="Consulter BL" [link]="true"></p-button>
+                    </a>
+                </div>
+                <div class="button-container">
+                    <a
+                        [href]="baseUrl + filesSelected?.facture"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter facture"
+                            [link]="true"
+                        ></p-button>
+                    </a>
+                </div>
+                <div class="button-container">
+                    <a
+                        [href]="baseUrl + filesSelected?.devis"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <p-button
+                            label="Consulter Devis"
+                            [link]="true"
+                        ></p-button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Retour section -->
+        <div *ngFor="let files of finishedData?.logs; let i = index">
+            <h3 class="dialog-title">Retour N°{{ i + 1 }}</h3>
+            <div class="button-row">
                 <a
-                    [href]="baseUrl + filesSelected?.bon_de_commande"
+                    [href]="baseUrl + files.bon_de_commande"
                     target="_blank"
-                    rel="noopener noreferrer"
+                    class="file-link"
                 >
                     <p-button label="Consulter BC" [link]="true"></p-button>
                 </a>
-            </div>
-            <div class="button-container">
                 <a
-                    [href]="baseUrl + filesSelected?.bon_de_livraison"
+                    [href]="baseUrl + files.bon_de_livraison"
                     target="_blank"
-                    rel="noopener noreferrer"
+                    class="file-link"
                 >
                     <p-button label="Consulter BL" [link]="true"></p-button>
                 </a>
-            </div>
-            <div class="button-container">
+
                 <a
-                    [href]="baseUrl + filesSelected?.facture"
+                    [href]="baseUrl + files.facture"
                     target="_blank"
-                    rel="noopener noreferrer"
+                    class="file-link"
                 >
-                    <p-button label="Consulter facture" [link]="true"></p-button>
+                    <p-button
+                        label="Consulter Facture"
+                        [link]="true"
+                    ></p-button>
                 </a>
-            </div>
-            <div class="button-container">
                 <a
-                    [href]="baseUrl + filesSelected?.devis"
+                    [href]="baseUrl + files.devis"
                     target="_blank"
-                    rel="noopener noreferrer"
+                    class="file-link"
                 >
                     <p-button label="Consulter Devis" [link]="true"></p-button>
                 </a>
             </div>
         </div>
     </div>
-
-    <!-- Retour section -->
-    <div *ngFor="let files of finishedData?.logs; let i = index">
-        <h3 class="dialog-title">Retour N°{{ i + 1 }}</h3>
-        <div class="button-row">
-            <a [href]="baseUrl + files.bon_de_commande" target="_blank" class="file-link">
-                <p-button label="Consulter BC" [link]="true"></p-button>
-            </a>
-            <a [href]="baseUrl + files.bon_de_livraison" target="_blank" class="file-link">
-                <p-button label="Consulter BL" [link]="true"></p-button>
-            </a>
-          
-            
-            <a [href]="baseUrl + files.facture" target="_blank" class="file-link">
-                <p-button label="Consulter Facture" [link]="true"></p-button>
-            </a>
-            <a [href]="baseUrl + files.devis" target="_blank" class="file-link">
-                <p-button label="Consulter Devis" [link]="true"></p-button>
-            </a>
-        </div>
-    </div>
-</div>
     <ng-container>
         <div class="dialog-content">
             <h3 class="dialog-title">Affecter Bon de livraison et Facture</h3>
@@ -1195,7 +1222,6 @@
                             [link]="true"
                         ></p-button>
                     </div>
-                    
                 </div>
 
                 <div class="file-upload-wrapper">
@@ -1234,8 +1260,6 @@
                 </div>
             </div>
         </div>
-
-      
     </ng-container>
 </p-dialog>
 
@@ -1252,39 +1276,48 @@
     <div>
         <!-- Title -->
         <div>
-            <h3>Titre: {{ ticketData.title }}</h3>
+            <h3>Titre: {{ ticketData?.data?.title }}</h3>
             <!-- Di classique information  -->
             <div class="form-group1">
                 <strong class="form-group">Information principaux</strong>
                 <div class="form-item">
                     <i class="pi pi-user"></i> <strong>Client ID:</strong>
-                    {{ ticketData.client_id }} {{ ticketData.company_id }}
+                    {{ ticketData?.data?.client_id }}
+                    {{ ticketData?.data?.company_id }}
                 </div>
                 <div class="form-item">
                     <i class="pi pi-user-edit"></i>
-                    <strong>Di Créer Par:</strong> {{ ticketData.createdBy }}
+                    <strong>Di Créer Par:</strong>
+                    {{ ticketData?.data?.createdBy }}
                 </div>
                 <div class="form-item">
                     <i class="pi pi-map-marker"></i>
-                    <strong>Emplacement:</strong> {{ ticketData.location_id }}
+                    <strong>Emplacement:</strong>
+                    {{ ticketData?.data?.location_id }}
                 </div>
                 <div class="form-item">
                     <i class="pi pi-calendar"></i>
                     <strong>Date de creation:</strong>
-                    {{ ticketData?.createdAt }}
+                    {{ ticketData?.data?.createdAt }}
                 </div>
             </div>
         </div>
         <div class="repPDR">
-            <h6>Réparable: {{ ticketData.can_be_repaired ? "OUI" : "NON" }}</h6>
-            <h6>Contient PDR: {{ ticketData.contain_pdr ? "OUI" : "NON" }}</h6>
+            <h6>
+                Réparable:
+                {{ ticketData?.data?.can_be_repaired ? "OUI" : "NON" }}
+            </h6>
+            <h6>
+                Contient PDR:
+                {{ ticketData?.data?.contain_pdr ? "OUI" : "NON" }}
+            </h6>
         </div>
 
         <!-- Description -->
         <div class="form-group">
             <label for="description">Description</label>
             <textarea
-                [(ngModel)]="ticketData.description"
+                [(ngModel)]="ticketData?.data.description!"
                 id="description"
                 rows="3"
                 class="form-control"
@@ -1300,7 +1333,7 @@
                 >Remarque Administration
             </label>
             <textarea
-                [(ngModel)]="ticketData.remarque_manager"
+                [(ngModel)]="ticketData?.data.remarque_manager"
                 id="Remarque Administration "
                 rows="3"
                 class="form-control"
@@ -1317,7 +1350,7 @@
                 >Remarque Tech Diagnostique</label
             >
             <textarea
-                [(ngModel)]="ticketData.remarque_tech_diagnostic"
+                [(ngModel)]="ticketData?.data.remarque_tech_diagnostic"
                 id="remarque_tech_diagnostic"
                 rows="3"
                 class="form-control"
@@ -1333,7 +1366,7 @@
                 >Remarque Tech Reperation</label
             >
             <textarea
-                [(ngModel)]="ticketData.remarque_tech_repair"
+                [(ngModel)]="ticketData?.data.remarque_tech_repair"
                 id="remarque_tech_reperation"
                 rows="3"
                 class="form-control"
@@ -1350,7 +1383,7 @@
                 Bon de Livraison:
 
                 <a
-                    [href]="baseUrl + ticketData.bon_de_livraison"
+                    [href]="baseUrl + ticketData?.data?.bon_de_livraison"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -1363,7 +1396,7 @@
                 Bon de commande:
 
                 <a
-                    [href]="baseUrl + ticketData.bon_de_commande"
+                    [href]="baseUrl + ticketData?.data?.bon_de_commande"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -1375,7 +1408,7 @@
                 Devis:
 
                 <a
-                    [href]="baseUrl + ticketData.devis"
+                    [href]="baseUrl + ticketData?.data?.devis"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -1388,7 +1421,7 @@
                 Facture :
 
                 <a
-                    [href]="baseUrl + ticketData.facture"
+                    [href]="baseUrl + ticketData?.data?.facture"
                     target="_blank"
                     rel="noopener noreferrer"
                     class="btn btn-link"
@@ -1402,7 +1435,7 @@
             Liste des composants:
             <!-- continue here spread all composant -->
             <p-table
-                [value]="ticketData.array_composants"
+                [value]="ticketData?.data?.array_composants"
                 [tableStyle]="{ 'min-width': '20rem' }"
             >
                 <ng-template pTemplate="header">
@@ -1422,9 +1455,9 @@
 
         <hr />
         <h6>Logs</h6>
-        <div>tech diag : {{ ticketData.techDiag }}</div>
-        <div>tech rep : {{ ticketData.techRep }}</div>
-        <div *ngFor="let item of ticketData.pauseLogs">
+        <div>tech diag : {{ ticketData?.pauseLogs?.techDiag }}</div>
+        <div>tech rep : {{ ticketData?.pauseLogs?.techRep }}</div>
+        <div *ngFor="let item of ticketData?.pauseLogs?.pauseLogs">
             <div>
                 Type:
                 {{ item.pauseType === "rep" ? "Réparation" : "Diagnotique" }}
