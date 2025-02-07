@@ -629,6 +629,7 @@
             <div class="file-upload-container">
                 <div>
                     <p-fileUpload
+                    [disabled]="bcBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Bon de commande"
                         chooseIcon="pi pi-upload"
@@ -671,6 +672,7 @@
                 </div>
                 <div class="file-upload-section">
                     <p-fileUpload
+                    [disabled]="devisBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Devis"
                         chooseIcon="pi pi-upload"
@@ -890,25 +892,7 @@
                 ></p-slider>
             </div>
 
-            <!-- Discount Button Section -->
-
-            <!-- Confirmation Section -->
-            <!-- <div class="confirmation-section">
-                <h6>Montant de la remise: {{ discountedPriceNeg }}</h6>
-                <ng-container *ngIf="slideAdminEnd === 25">
-                    <h6>Vous pouvez affecter un nouveau prix ici:</h6>
-                    <p-inputNumber
-                        [(ngModel)]="price"
-                        inputId="price"
-                        [min]="0"
-                        [max]="50000"
-                        [step]="1"
-                        placeholder="Affecter le prix"
-                        mode="currency"
-                        currency="TND"
-                    ></p-inputNumber>
-                </ng-container>
-            </div> -->
+           
             <div class="action-buttons">
                 <p-button
                     pRipple
@@ -1189,6 +1173,7 @@
             <div class="file-upload-row">
                 <div class="file-upload-wrapper">
                     <p-fileUpload
+                    [disabled]="blBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Bon de livraison"
                         chooseIcon="pi pi-upload"
@@ -1226,6 +1211,7 @@
 
                 <div class="file-upload-wrapper">
                     <p-fileUpload
+                    [disabled]="factureBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Facture"
                         chooseIcon="pi pi-upload"

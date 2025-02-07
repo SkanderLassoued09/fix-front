@@ -53,6 +53,7 @@ function noSpecialCharactersValidator(): ValidatorFn {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
+    
     baseUrl = environment.apiUrl;
 
     ticketSelected: any;
@@ -260,6 +261,10 @@ export class TicketListComponent implements OnInit {
     priceRemiseAffichage: any;
     remiseAffichage: any;
     retourNumberAffichage: any;
+    devisBtnDisabled: boolean=false;
+    bcBtnDisabled: boolean=false;
+    factureBtnDisabled:boolean = false;
+    blBtnDisabled:boolean = false;
 
     constructor(
         private ticketSerice: TicketService,
@@ -468,6 +473,7 @@ export class TicketListComponent implements OnInit {
                 );
 
                 // Null and undefined checks added here
+                //condition for STATUS
                 if (
                     !this.selectedRowInNegociate1?.contain_pdr ||
                     (this.selectedRowInNegociate2 &&
@@ -491,7 +497,9 @@ export class TicketListComponent implements OnInit {
                 }
 
                 this.getDi(this.first, this.rows);
-
+               
+                
+                console.log
                 if (step === 0) {
                     this.saveDevisPDF(this._idDi, this.payload.file);
                     this.saveBCPDF(this._idDi, this.payload.file);
@@ -517,8 +525,10 @@ export class TicketListComponent implements OnInit {
             message: 'Voulez vous Enregistrer Bon de commande',
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
+            accept: async () => {
                 this.saveBCPDF(this._idDi, this.payload.file);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                this.devisBtnDisabled = false
             },
         });
     }
@@ -527,8 +537,10 @@ export class TicketListComponent implements OnInit {
             message: 'Voulez vous Enregistrer Devis',
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
+            accept: async () => {
                 this.saveDevisPDF(this._idDi, this.payload.file);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                this.bcBtnDisabled = false
             },
         });
     }
@@ -537,8 +549,10 @@ export class TicketListComponent implements OnInit {
             message: 'Voulez vous Enregistrer Bon de livraison',
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
+            accept: async () => {
                 this.saveBLPDF(this._idPDFFinished, this.payload.file);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                this.factureBtnDisabled = false;
             },
         });
     }
@@ -547,8 +561,10 @@ export class TicketListComponent implements OnInit {
             message: 'Voulez vous Enregistrer Bon de livraison',
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
+            accept: async () => {
                 this.saveFacturePDF(this._idPDFFinished, this.payload.file);
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                this.blBtnDisabled = false;
             },
         });
     }
@@ -777,6 +793,9 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForNegociate1(data) {
+        console.log("modal is opened");
+        this.devisBtnDisabled = false
+        this.bcBtnDisabled = false
         this.selectedRowInNegociate1 = data;
         this._idDi = data._id;
 
@@ -889,11 +908,20 @@ export class TicketListComponent implements OnInit {
                         this.price = filtredLogsDi.price;
                         this.selectedBc = filtredLogsDi.bon_de_commande;
                         this.selectedDevis = filtredLogsDi.devis;
+                        console.log("INSIDE LOGS");
+                        
+                        console.log("this.selectedBc",this.selectedBc)
+                        console.log("this.selectedDevis",this.selectedDevis)
                     } else {
+                        console.log("OUTSIDE LOGS");
                         this.price = this.dataById.getDiById.di.price;
                         this.selectedBc =
                             this.dataById.getDiById.di.bon_de_commande;
                         this.selectedDevis = this.dataById.getDiById.di.devis;
+                        this.selectedDevis? this.devisUploaded = true:this.devisUploaded = false
+                        this.selectedBc? this.bcUploaded = true:this.bcUploaded = false
+                        console.log("this.selectedBc",this.selectedBc)
+                        console.log("this.selectedDevis",this.selectedDevis)
                     }
                 }
             });
@@ -1443,7 +1471,7 @@ export class TicketListComponent implements OnInit {
 
     onUpload(event: any, type: string) {
         this.uploadFileLoading = true;
-
+        
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsArrayBuffer(file); // Read file as ArrayBuffer for Blob creation
@@ -1463,14 +1491,18 @@ export class TicketListComponent implements OnInit {
                 if (type === 'BC') {
                     this.instantSelectedBc = blobUrl;
                     this.bcUploaded = true;
+                    this.devisBtnDisabled = true;
                     // Assign Blob URL for BC
                 } else if (type === 'Devis') {
                     this.devisUploaded = true;
-                    this.instantSelectedDevis = blobUrl; // Assign Blob URL for Devis
+                    this.instantSelectedDevis = blobUrl;
+                    this.bcBtnDisabled = true;
                 } else if (type == 'BL') {
                     this.selectedBL = blobUrl;
+                    this.factureBtnDisabled = true;
                 } else if (type == 'Facture') {
                     this.selectedFacture = blobUrl;
+                    this.blBtnDisabled = true;
                 }
 
                 this.uploadFileLoading = false;
@@ -1501,6 +1533,16 @@ export class TicketListComponent implements OnInit {
             };
         }
     }
+
+
+
+    
+
+
+
+
+
+
 
     // Update the isFormComplete method to check file upload statuses
     isFormComplete() {
@@ -1588,6 +1630,9 @@ export class TicketListComponent implements OnInit {
     openUploadFileFinished(dataselected: any) {
         this.filesSelected = dataselected;
         console.log('🥩[dataselected]:', dataselected);
+        this.factureBtnDisabled = false;
+        this.blBtnDisabled = false;
+        
         this.filsFinished = true;
         this._idPDFFinished = dataselected._id;
 
