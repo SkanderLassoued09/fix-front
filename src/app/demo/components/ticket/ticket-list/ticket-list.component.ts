@@ -265,6 +265,10 @@ export class TicketListComponent implements OnInit {
     bcBtnDisabled: boolean=false;
     factureBtnDisabled:boolean = false;
     blBtnDisabled:boolean = false;
+    enregistrerBlBtncondition: boolean = true;
+    enregistrerFactureBtncondition: boolean = true;
+    enregistrerBcBtncondition: boolean = true;
+    enregistrerDevisBtncondition: boolean = true;
 
     constructor(
         private ticketSerice: TicketService,
@@ -527,8 +531,9 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveBCPDF(this._idDi, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 this.devisBtnDisabled = false
+                this.enregistrerBcBtncondition = true;
             },
         });
     }
@@ -539,8 +544,9 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveDevisPDF(this._idDi, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 this.bcBtnDisabled = false
+                this.enregistrerDevisBtncondition = true;
             },
         });
     }
@@ -551,8 +557,9 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveBLPDF(this._idPDFFinished, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 this.factureBtnDisabled = false;
+                this.enregistrerBlBtncondition = true
             },
         });
     }
@@ -563,8 +570,9 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveFacturePDF(this._idPDFFinished, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise(resolve => setTimeout(resolve, 1500));
                 this.blBtnDisabled = false;
+                this.enregistrerFactureBtncondition = true
             },
         });
     }
@@ -796,6 +804,8 @@ export class TicketListComponent implements OnInit {
         console.log("modal is opened");
         this.devisBtnDisabled = false
         this.bcBtnDisabled = false
+        this.enregistrerBcBtncondition = true;
+        this.enregistrerDevisBtncondition = true;
         this.selectedRowInNegociate1 = data;
         this._idDi = data._id;
 
@@ -1492,17 +1502,21 @@ export class TicketListComponent implements OnInit {
                     this.instantSelectedBc = blobUrl;
                     this.bcUploaded = true;
                     this.devisBtnDisabled = true;
-                    // Assign Blob URL for BC
+                    this.enregistrerBcBtncondition = false;
+                    
                 } else if (type === 'Devis') {
                     this.devisUploaded = true;
                     this.instantSelectedDevis = blobUrl;
                     this.bcBtnDisabled = true;
+                    this.enregistrerDevisBtncondition = false;
                 } else if (type == 'BL') {
                     this.selectedBL = blobUrl;
                     this.factureBtnDisabled = true;
+                    this.enregistrerBlBtncondition = false
                 } else if (type == 'Facture') {
                     this.selectedFacture = blobUrl;
                     this.blBtnDisabled = true;
+                    this.enregistrerFactureBtncondition = false
                 }
 
                 this.uploadFileLoading = false;
@@ -1632,7 +1646,10 @@ export class TicketListComponent implements OnInit {
         console.log('🥩[dataselected]:', dataselected);
         this.factureBtnDisabled = false;
         this.blBtnDisabled = false;
-        
+
+        this.enregistrerBlBtncondition = true;
+        this.enregistrerFactureBtncondition = true;
+
         this.filsFinished = true;
         this._idPDFFinished = dataselected._id;
 

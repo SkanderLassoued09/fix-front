@@ -570,35 +570,37 @@
                         class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForNegociate2(rowData)"
                     ></button>
+<div class="dispaly:flex,space in between ">
+    <p-button
+    [label]="'Retour' + rowData.ignoreCount.toString()"
+    severity="danger"
+    (click)="ignore(rowData)"
+    [disabled]="
+        rowData.ignoreCount === 3 ||
+        rowData.status !== 'FINISHED'
+    "
+></p-button>
 
-                    <p-button
-                        [label]="'Retour' + rowData.ignoreCount.toString()"
-                        severity="danger"
-                        (click)="ignore(rowData)"
-                        [disabled]="
-                            rowData.ignoreCount === 3 ||
-                            rowData.status !== 'FINISHED'
-                        "
-                    ></p-button>
+<p-button
+    *ngIf="
+        rowData.status === 'RETOUR1' ||
+        rowData.status === 'RETOUR2' ||
+        rowData.status === 'RETOUR3'
+    "
+    label="Relancer"
+    severity="info"
+    (click)="changeToPending1(rowData)"
+></p-button>
 
-                    <p-button
-                        *ngIf="
-                            rowData.status === 'RETOUR1' ||
-                            rowData.status === 'RETOUR2' ||
-                            rowData.status === 'RETOUR3'
-                        "
-                        label="Relancer"
-                        severity="info"
-                        (click)="changeToPending1(rowData)"
-                    ></p-button>
-
-                    <p-button
-                        *ngIf="rowData.status === 'CREATED'"
-                        label="Pending1"
-                        severity="info"
-                        (click)="changeToPending1(rowData)"
-                        class="pending1-Btn"
-                    ></p-button>
+<p-button
+    *ngIf="rowData.status === 'CREATED'"
+    label="Pending1"
+    severity="info"
+    (click)="changeToPending1(rowData)"
+    class="pending1-Btn"
+></p-button>
+</div>
+                   
                 </td>
             </tr>
         </ng-template>
@@ -648,7 +650,7 @@
                             rel="noopener noreferrer"
                         >
                             <p-button
-                                label="Consulter BC"
+                                label="BC Enregistré"
                                 [link]="true"
                             ></p-button>
                         </a>
@@ -659,11 +661,12 @@
                             rel="noopener noreferrer"
                         >
                             <p-button
-                                label="Consulter BC preview"
+                                label="BC Selectionné"
                                 [link]="true"
                             ></p-button>
                         </a>
                         <p-button
+                            [disabled]="enregistrerBcBtncondition"
                             (click)="enregistrerBC()"
                             label="Enregistrer BC"
                             [link]="true"
@@ -672,7 +675,7 @@
                 </div>
                 <div class="file-upload-section">
                     <p-fileUpload
-                    [disabled]="devisBtnDisabled"
+                        [disabled]="devisBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Devis"
                         chooseIcon="pi pi-upload"
@@ -691,7 +694,7 @@
                             rel="noopener noreferrer"
                         >
                             <p-button
-                                label="Consulter Devis"
+                                label="Devis Enregistré"
                                 [link]="true"
                             ></p-button>
                         </a>
@@ -702,11 +705,12 @@
                             rel="noopener noreferrer"
                         >
                             <p-button
-                                label="Consulter Devis preview"
+                                label="Devis Selectionné"
                                 [link]="true"
                             ></p-button>
                         </a>
                         <p-button
+                            [disabled]="enregistrerDevisBtncondition"
                             (click)="enregistrerDevis()"
                             label="Enregistrer Devis"
                             [link]="true"
@@ -1173,7 +1177,7 @@
             <div class="file-upload-row">
                 <div class="file-upload-wrapper">
                     <p-fileUpload
-                    [disabled]="blBtnDisabled"
+                       [disabled]="blBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Bon de livraison"
                         chooseIcon="pi pi-upload"
@@ -1197,11 +1201,12 @@
                             rel="noopener noreferrer"
                         >
                             <p-button
-                                label="Consulter facture"
+                                label="Consulter BL"
                                 [link]="true"
                             ></p-button>
                         </a>
                         <p-button
+                            [disabled]="enregistrerBlBtncondition"
                             (click)="enregistrerBL()"
                             label="Enregistrer BL"
                             [link]="true"
@@ -1233,11 +1238,12 @@
                             rel="noopener noreferrer"
                         >
                             <p-button
-                                label="Consulter Bon de livraison"
+                                label="Consulter Facture"
                                 [link]="true"
                             ></p-button>
                         </a>
                         <p-button
+                        [disabled]="enregistrerFactureBtncondition"
                             (click)="enregistrerFacture()"
                             label="Enregistrer facture"
                             [link]="true"

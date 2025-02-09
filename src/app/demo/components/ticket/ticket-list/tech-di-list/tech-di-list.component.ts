@@ -189,6 +189,7 @@ export class TechDiListComponent implements OnInit {
 
     diData: any[];
     isToggleEnabled: any;
+    composantCategory: any;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -388,7 +389,7 @@ export class TechDiListComponent implements OnInit {
                 mutation: this.ticketSerice.createComposantByTech(
                     name,
                     packageComposant,
-
+                    category_composant_id,
                     link,
                     imagePayload
                 ),
@@ -400,6 +401,8 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     this.getComposant();
                     this.composantTechnicien.reset();
+                    console.log(data,"data new composant");
+                    
                     this.creatComposantDialog = false;
                 }
             });
@@ -1032,8 +1035,27 @@ export class TechDiListComponent implements OnInit {
     //!!!!!!!!! open modal for composant creation
     openNew() {
         this.creatComposantDialog = true;
+        this.findAllComposant_Category()
     }
 
+    findAllComposant_Category() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.findAllComposant_Category(),
+            })
+            .subscribe(({ data }) => {
+                if (data) {
+                    this.composantCategory = data.findAllComposant_Category.map(
+                        (el) => {
+                            return {
+                                name: el._id,
+                                value: el.category_composant,
+                            };
+                        }
+                    );
+                }
+            });
+    }
     createComposant() {
         this.apollo
             .mutate<any>({
@@ -1221,8 +1243,14 @@ export class TechDiListComponent implements OnInit {
 
     updateDisableValues() {
         //! Getting values for conditions
+        console.log("inside condition update Values")
+       
+        
         const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
-        const isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
+        let isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
+        console.log(isReperable,isPdr,"before values");
+        isReperable == false? isPdr = false : isPdr = isPdr;
+        console.log(isReperable,isPdr,"after values");
         const isErrorFromFixtronixTech =
             this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
         const isArrComposantEmpty =
@@ -1259,6 +1287,27 @@ export class TechDiListComponent implements OnInit {
         this.updateDisableValues();
     }
 
+
+
+    changeStatusToFinish(_id: string) {
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.changeStatusToFinished(_id),
+            })
+            .subscribe(({ data, loading }) => {
+                if (data && !loading) {
+                    if (!this.isFinishedDiag) {
+                        this.isFinishedDiag = {};
+                    }
+
+                    this.isFinishedDiag[_id] = true;
+                }
+            });
+    }
+
+
+
+
     changeStatusMagasinEstimation(_id: string) {
         this.apollo
             .mutate<any>({
@@ -1274,6 +1323,75 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
+
+
+
+    retourEnvoyerVersFinir() {
+        console.log('🥥[saveLogsDi]:');
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation Fin DI',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                const dataDiag = {
+                    _idDi: this.selectedDi_id,
+                    pdr: this.diagFormTech.value.isPdr,
+                    reparable: this.diagFormTech.value.isReparable,
+                    remarqueTech: this.diagFormTech.value.remarqueTech,
+                    isErrorFromFixtronix:
+                        this.diagFormTech.value.isErrorFromFixtronix ?? false,
+                    di_category_id: this.diagFormTech.value.di_category_id,
+                    composant: this.composantCombo,
+                };
+                console.log('envoyer vers finir dataDiag', dataDiag);
+                this.lap();
+
+                    this.apollo
+                        .mutate<any>({
+                            mutation: this.ticketSerice.finishLogsDi(dataDiag),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data, loading }) => {
+                            console.log('🍊[data]:', data);
+                            if (data) {
+                                this.disable = data.tech_startDiagnostic;
+                                this.cdr.detectChanges();
+                                this.changeStatusToFinish(
+                                    dataDiag._idDi
+                                );
+                            }
+                        });
+                
+
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.saveTimeDiag(
+                            this.selectedDi,
+                            this.lapTime
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading, errors }) => {
+                        if (data) {
+                            this.diDialogDiag[this.selectedDi] = false;
+                        }
+                    });
+                setTimeout(() => {
+                    this.getAllTechDi(this.first, this.rows);
+                }, 1000);
+
+                this.startStopwatch();
+               
+                this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
+            },
+        });
+    }
+
+
+
+
+
+
 
     saveLogsDi() {
         console.log('🥥[saveLogsDi]:');
@@ -1422,7 +1540,6 @@ export class TechDiListComponent implements OnInit {
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
-
                                 this.changeStatusToPending2(dataDiag._idDi);
                             }
                         });

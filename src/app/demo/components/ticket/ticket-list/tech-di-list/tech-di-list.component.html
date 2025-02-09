@@ -545,14 +545,21 @@
                             <ng-template pTemplate="content">
                                 <form [formGroup]="composantTechnicien">
                                     <div class="field">
-                                        <div class="field">
-                                            <label>Category</label>
-                                            <input
-                                                type="text"
-                                                pInputText
-                                                formControlName="category_composant_id"
-                                            />
-                                        </div>
+                                        <p-dropdown
+                                        [options]="composantCategory"
+                                        optionLabel="name"
+                                        optionValue="name"
+                                        placeholder="Choisir catégorie composant"
+                                        class="mr-2-magasin dropdown-magasin"
+                                        formControlName="category_composant_id"
+                                    >
+                                        <ng-template let-option pTemplate="item">
+                                            <p-tag
+                                                [value]="option.name"
+                                                [severity]="getSeverity(option.name)"
+                                            ></p-tag>
+                                        </ng-template>
+                                    </p-dropdown>
 
                                         <label for="name">Nom composant</label>
                                         <input
@@ -669,7 +676,7 @@
                         pRipple
                         label="Envoyer vers finir"
                         class="p-button-text"
-                        (click)="changeStatusFinished()"
+                        (click)="retourEnvoyerVersFinir()"
                     ></button>
                     <button
                         *ngIf="ignoreCount > 0"

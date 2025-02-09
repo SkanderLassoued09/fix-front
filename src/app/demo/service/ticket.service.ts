@@ -483,7 +483,7 @@ export class TicketService {
     createComposantByTech(
         composantName: string,
         packageComposant: string,
-
+        category_composant_id:string,
         link: string,
         pdf: string
     ) {
@@ -493,12 +493,17 @@ export class TicketService {
                     createComposantInput: {
                         name: "${composantName}"
                         package: "${packageComposant}"
-                
+                        category_composant_id:"${category_composant_id}"
                         link: "${link}"
                         pdf: "${pdf ?? null}"
                     }
                 ) {
                     _id
+                    name
+                    package
+                    category_composant_id
+                    link
+                    pdf
                 }
             }
         `;
