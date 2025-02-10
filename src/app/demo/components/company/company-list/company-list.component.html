@@ -13,17 +13,15 @@
     [draggable]="false"
     [resizable]="false"
 >
-    <form [formGroup]="companyForm">
-        <!-- Added mt-4 (margin-top: 1rem) -->
-
+    <form [formGroup]="companyForm" class="grid grid-cols-3 gap-4 mt-4">
         <div class="p-float-label mb-4">
             <input
                 formControlName="companyName"
                 pInputText
-                id="name1"
+                id="companyName"
                 class="pInputText w-full"
             />
-            <label for="name1">Nom de la société</label>
+            <label for="companyName">Nom de la société</label>
         </div>
 
         <div class="p-float-label mb-4">
@@ -44,7 +42,7 @@
                 optionLabel="name"
                 [showClear]="true"
                 placeholder="Choisir une region"
-                styleClass="w-full"
+                styleClass=" w-full"
             ></p-dropdown>
         </div>
 
@@ -60,22 +58,22 @@
 
         <div class="p-float-label mb-4">
             <input
+                formControlName="raisonSociale"
                 pInputText
                 id="raisonSociale"
                 class="pInputText w-full"
-                formControlName="raisonSociale"
             />
-            <label for="raisonSociale">Raison social</label>
+            <label for="raisonSociale">Raison sociale</label>
         </div>
 
         <div class="p-float-label mb-4">
             <input
+                formControlName="exoneration"
                 pInputText
                 id="exoneration"
                 class="pInputText w-full"
-                formControlName="Exoneration"
             />
-            <label for="exoneration">Exoneration</label>
+            <label for="exoneration">Exonération</label>
         </div>
 
         <div class="p-float-label mb-4">
@@ -92,14 +90,14 @@
             <input
                 formControlName="phone"
                 pInputText
-                id="fax"
+                id="phone"
                 class="pInputText w-full"
             />
-            <label for="fax">Phone</label>
+            <label for="phone">Téléphone</label>
         </div>
 
-        <div class="p-float-label mb-4">
-            <p-inputGroup class="p-float-label mb-4">
+        <!-- <div class="p-float-label mb-4">
+            <p-inputGroup>
                 <p-inputGroupAddon>www</p-inputGroupAddon>
                 <input
                     formControlName="website"
@@ -108,186 +106,58 @@
                     placeholder="Website"
                 />
             </p-inputGroup>
+        </div> -->
+
+        <div class="p-float-label mb-4">
+            <input
+                formControlName="website"
+                pInputText
+                id="website"
+                class="pInputText w-full"
+            />
+            <label for="website">Website</label>
         </div>
 
         <div class="p-float-label mb-4">
             <input
                 formControlName="activitePrincipale"
                 pInputText
-                id="fax"
+                id="activitePrincipale"
                 class="pInputText w-full"
             />
-            <label for="activitePrincipale">Activité principal</label>
+            <label for="activitePrincipale">Activité principale</label>
         </div>
 
         <div class="p-float-label mb-4">
             <input
                 formControlName="activiteSecondaire"
                 pInputText
-                id="fax"
+                id="activiteSecondaire"
                 class="pInputText w-full"
             />
             <label for="activiteSecondaire">Activité secondaire</label>
         </div>
-
-        <div class="flex justify-content-between">
-            <p-button
-                size="small"
-                severity="success"
-                label="Service achat"
-                badgeClass="p-badge-success"
-                (onClick)="hideShowFormAchat()"
-            ></p-button>
-            <p-button
-                size="small"
-                severity="success"
-                label="Service technique"
-                badgeClass="p-badge-success"
-                (onClick)="hideShowFormTechnique()"
-            ></p-button>
-            <p-button
-                (onClick)="hideShowFormFinancier()"
-                size="small"
-                severity="success"
-                label="Service financier"
-                badgeClass="p-badge-success"
-            ></p-button>
-        </div>
-        <!-- service financier -->
-        <div
-            formGroupName="financier"
-            *ngIf="toHideFinancier"
-            class="financier-form"
-        >
-            <h4>Service financier</h4>
-            <div class="form-field">
-                <!-- Full name field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        pInputText
-                        id="fullName"
-                        class="pInputText w-full"
-                        formControlName="fullName"
-                    />
-                    <label for="fullName">Nom et Prénom</label>
-                </div>
-            </div>
-            <div class="form-field">
-                <!-- Email field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        formControlName="email"
-                        pInputText
-                        id="email"
-                        class="pInputText w-full"
-                    />
-                    <label for="email">E-mail</label>
-                </div>
-            </div>
-            <div class="form-field">
-                <!-- Phone field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        formControlName="phone"
-                        pInputText
-                        id="phone"
-                        class="pInputText w-full"
-                    />
-                    <label for="phone">Télephone</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- service achat -->
-        <div
-            formGroupName="achat"
-            *ngIf="toHideAchat"
-            class="flex justify-center flex-wrap gap-4 max-w-2xl mt-4"
-        >
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <!-- full name field -->
-                <h4>Service achat</h4>
-                <div class="p-float-label mb-4">
-                    <input
-                        pInputText
-                        id="fullName"
-                        class="pInputText w-full"
-                        formControlName="fullName"
-                    />
-                    <label for="fullName">Nom é Prénom</label>
-                </div>
-            </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <!-- Email field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        formControlName="email"
-                        pInputText
-                        id="email"
-                        class="pInputText w-full"
-                    />
-                    <label for="email">E-mail</label>
-                </div>
-            </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <!-- phone field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        formControlName="phone"
-                        pInputText
-                        id="phone"
-                        class="pInputText w-full"
-                    />
-                    <label for="phone">Télephone</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- service technique -->
-        <div
-            formGroupName="technique"
-            *ngIf="toHideTechnique"
-            class="flex justify-center flex-wrap gap-4 max-w-2xl mt-4"
-        >
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <h4>Service technique</h4>
-                <!-- full name field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        pInputText
-                        id="fullName"
-                        class="pInputText w-full"
-                        formControlName="fullName"
-                    />
-                    <label for="fullName">Nom é Prénom</label>
-                </div>
-            </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <!-- Email field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        formControlName="email"
-                        pInputText
-                        id="email"
-                        class="pInputText w-full"
-                    />
-                    <label for="email">E-mail</label>
-                </div>
-            </div>
-            <div class="flex-grow" style="width: calc(33.33% - 1rem)">
-                <!-- phone field -->
-                <div class="p-float-label mb-4">
-                    <input
-                        formControlName="phone"
-                        pInputText
-                        id="phone"
-                        class="pInputText w-full"
-                    />
-                    <label for="phone">Télephone</label>
-                </div>
-            </div>
-        </div>
     </form>
+    <div class="">
+        <p-button
+            size="small"
+            severity="success"
+            label="Service achat"
+            (onClick)="hideShowFormAchat()"
+        ></p-button>
+        <p-button
+            size="small"
+            severity="success"
+            label="Service technique"
+            (onClick)="hideShowFormTechnique()"
+        ></p-button>
+        <p-button
+            size="small"
+            severity="success"
+            label="Service financier"
+            (onClick)="hideShowFormFinancier()"
+        ></p-button>
+    </div>
 
     <!-- -------- -->
     <ng-template pTemplate="footer">

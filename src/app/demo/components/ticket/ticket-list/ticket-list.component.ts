@@ -53,7 +53,6 @@ function noSpecialCharactersValidator(): ValidatorFn {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
-    
     baseUrl = environment.apiUrl;
 
     ticketSelected: any;
@@ -261,10 +260,10 @@ export class TicketListComponent implements OnInit {
     priceRemiseAffichage: any;
     remiseAffichage: any;
     retourNumberAffichage: any;
-    devisBtnDisabled: boolean=false;
-    bcBtnDisabled: boolean=false;
-    factureBtnDisabled:boolean = false;
-    blBtnDisabled:boolean = false;
+    devisBtnDisabled: boolean = false;
+    bcBtnDisabled: boolean = false;
+    factureBtnDisabled: boolean = false;
+    blBtnDisabled: boolean = false;
     enregistrerBlBtncondition: boolean = true;
     enregistrerFactureBtncondition: boolean = true;
     enregistrerBcBtncondition: boolean = true;
@@ -502,9 +501,8 @@ export class TicketListComponent implements OnInit {
                 }
 
                 this.getDi(this.first, this.rows);
-               
-                
-                console.log
+
+                console.log;
                 if (step === 0) {
                     this.saveDevisPDF(this._idDi, this.payload.file);
                     this.saveBCPDF(this._idDi, this.payload.file);
@@ -532,8 +530,8 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveBCPDF(this._idDi, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                this.devisBtnDisabled = false
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+                this.devisBtnDisabled = false;
                 this.enregistrerBcBtncondition = true;
             },
         });
@@ -545,8 +543,8 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveDevisPDF(this._idDi, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1500));
-                this.bcBtnDisabled = false
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+                this.bcBtnDisabled = false;
                 this.enregistrerDevisBtncondition = true;
             },
         });
@@ -558,9 +556,9 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveBLPDF(this._idPDFFinished, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 1500));
                 this.factureBtnDisabled = false;
-                this.enregistrerBlBtncondition = true
+                this.enregistrerBlBtncondition = true;
             },
         });
     }
@@ -571,9 +569,9 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveFacturePDF(this._idPDFFinished, this.payload.file);
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 1500));
                 this.blBtnDisabled = false;
-                this.enregistrerFactureBtncondition = true
+                this.enregistrerFactureBtncondition = true;
             },
         });
     }
@@ -802,12 +800,13 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForNegociate1(data) {
-        console.log("modal is opened");
-        this.devisBtnDisabled = false
-        this.bcBtnDisabled = false
+        console.log('🥫[data]:', data);
+
+        this.devisBtnDisabled = false;
+        this.bcBtnDisabled = false;
         this.enregistrerBcBtncondition = true;
         this.enregistrerDevisBtncondition = true;
-        this.selectedRowInNegociate1 = data;
+        // this.selectedRowInNegociate1 = data;
         this._idDi = data._id;
 
         this.seletedRow = data._id;
@@ -903,13 +902,28 @@ export class TicketListComponent implements OnInit {
     getDiByID(_idDi: string) {
         console.log('🥐[getDiByID]: fired');
         this.apollo
-            .watchQuery<DiQueryResult>({
+            .watchQuery<any>({
                 query: this.ticketSerice.getDiById(_idDi),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.dataById = data;
                     console.log('data NEGOCIATION111', data);
+
+                    // set here value
+                    this.selectedRowInNegociate1 =
+                        data.getDiById.logsDi &&
+                        data.getDiById.logsDi.length > 0
+                            ? data.getDiById.logsDi.reduce((prev, current) =>
+                                  prev.idIgnore > current.idIgnore
+                                      ? prev
+                                      : current
+                              )
+                            : data.getDiById.di;
+                    console.log(
+                        '🍇🍇🍇🍇[this.selectedRowInNegociate1]:',
+                        this.selectedRowInNegociate1
+                    );
                     if (this.dataById.getDiById.logsDi) {
                         const filtredLogsDi =
                             this.dataById.getDiById.logsDi.find(
@@ -919,20 +933,24 @@ export class TicketListComponent implements OnInit {
                         this.price = filtredLogsDi.price;
                         this.selectedBc = filtredLogsDi.bon_de_commande;
                         this.selectedDevis = filtredLogsDi.devis;
-                        console.log("INSIDE LOGS");
-                        
-                        console.log("this.selectedBc",this.selectedBc)
-                        console.log("this.selectedDevis",this.selectedDevis)
+                        console.log('INSIDE LOGS');
+
+                        console.log('this.selectedBc', this.selectedBc);
+                        console.log('this.selectedDevis', this.selectedDevis);
                     } else {
-                        console.log("OUTSIDE LOGS");
+                        console.log('OUTSIDE LOGS');
                         this.price = this.dataById.getDiById.di.price;
                         this.selectedBc =
                             this.dataById.getDiById.di.bon_de_commande;
                         this.selectedDevis = this.dataById.getDiById.di.devis;
-                        this.selectedDevis? this.devisUploaded = true:this.devisUploaded = false
-                        this.selectedBc? this.bcUploaded = true:this.bcUploaded = false
-                        console.log("this.selectedBc",this.selectedBc)
-                        console.log("this.selectedDevis",this.selectedDevis)
+                        this.selectedDevis
+                            ? (this.devisUploaded = true)
+                            : (this.devisUploaded = false);
+                        this.selectedBc
+                            ? (this.bcUploaded = true)
+                            : (this.bcUploaded = false);
+                        console.log('this.selectedBc', this.selectedBc);
+                        console.log('this.selectedDevis', this.selectedDevis);
                     }
                 }
             });
@@ -1482,7 +1500,7 @@ export class TicketListComponent implements OnInit {
 
     onUpload(event: any, type: string) {
         this.uploadFileLoading = true;
-        
+
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsArrayBuffer(file); // Read file as ArrayBuffer for Blob creation
@@ -1504,7 +1522,6 @@ export class TicketListComponent implements OnInit {
                     this.bcUploaded = true;
                     this.devisBtnDisabled = true;
                     this.enregistrerBcBtncondition = false;
-                    
                 } else if (type === 'Devis') {
                     this.devisUploaded = true;
                     this.instantSelectedDevis = blobUrl;
@@ -1513,11 +1530,11 @@ export class TicketListComponent implements OnInit {
                 } else if (type == 'BL') {
                     this.selectedBL = blobUrl;
                     this.factureBtnDisabled = true;
-                    this.enregistrerBlBtncondition = false
+                    this.enregistrerBlBtncondition = false;
                 } else if (type == 'Facture') {
                     this.selectedFacture = blobUrl;
                     this.blBtnDisabled = true;
-                    this.enregistrerFactureBtncondition = false
+                    this.enregistrerFactureBtncondition = false;
                 }
 
                 this.uploadFileLoading = false;
@@ -1548,16 +1565,6 @@ export class TicketListComponent implements OnInit {
             };
         }
     }
-
-
-
-    
-
-
-
-
-
-
 
     // Update the isFormComplete method to check file upload statuses
     isFormComplete() {
