@@ -530,7 +530,7 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveBCPDF(this._idDi, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 2000));
                 this.devisBtnDisabled = false;
                 this.enregistrerBcBtncondition = true;
             },
@@ -543,7 +543,7 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveDevisPDF(this._idDi, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 2000));
                 this.bcBtnDisabled = false;
                 this.enregistrerDevisBtncondition = true;
             },
@@ -556,7 +556,7 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveBLPDF(this._idPDFFinished, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 2000));
                 this.factureBtnDisabled = false;
                 this.enregistrerBlBtncondition = true;
             },
@@ -569,7 +569,7 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
                 this.saveFacturePDF(this._idPDFFinished, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+                await new Promise((resolve) => setTimeout(resolve, 2000));
                 this.blBtnDisabled = false;
                 this.enregistrerFactureBtncondition = true;
             },
@@ -820,6 +820,11 @@ export class TicketListComponent implements OnInit {
         this.isFormComplete();
     }
     showDialogForNegociate2(data) {
+        this.devisBtnDisabled = false;
+        this.bcBtnDisabled = false;
+        this.enregistrerBcBtncondition = true;
+        this.enregistrerDevisBtncondition = true;
+
         this.selectedRowInNegociate2 = data;
         this.slectedRow = data._id;
         this._idDi = data._id;
@@ -1413,45 +1418,60 @@ export class TicketListComponent implements OnInit {
     }
 
     addCategoryDi() {
-        typeof (this.categoryForm.value.categoryName, 'TYPE');
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.addCatgoryDi(
-                    this.categoryForm.value.categoryName
-                ),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    let obj: { value: string; category_name: string } = {
-                        value: '',
-                        category_name: '',
-                    };
-                    obj.category_name = data?.createDiCategory?.category;
-                    obj.value = data?.createDiCategory?._id;
-                    this.categorieDiListDropDown.push(obj);
-                    this.categoryForm.reset();
-                }
-            });
+        this.confirmationService.confirm({
+            message: 'Voulez-vous créer cette categorie ?',
+            header: 'Confirmation Creation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+
+                typeof (this.categoryForm.value.categoryName, 'TYPE');
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.addCatgoryDi(
+                            this.categoryForm.value.categoryName
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            let obj: { value: string; category_name: string } = {
+                                value: '',
+                                category_name: '',
+                            };
+                            obj.category_name = data?.createDiCategory?.category;
+                            obj.value = data?.createDiCategory?._id;
+                            this.categorieDiListDropDown.push(obj);
+                            this.categoryForm.reset();
+                        }
+                    });
+            }})
+        
     }
     addLocation() {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.addLocation(
-                    this.locationForm.value.locationName
-                ),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    let obj: { location_name: string; value: string } = {
-                        location_name: '',
-                        value: '',
-                    };
-                    obj.value = data?.createLocation?._id;
-                    obj.location_name = data?.createLocation?.location_name;
-                    this.locationDropDown.push(obj);
-                    this.locationForm.reset();
-                }
-            });
+        this.confirmationService.confirm({
+            message: 'Voulez-vous créer cette emplacement ?',
+            header: 'Confirmation Creation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.addLocation(
+                        this.locationForm.value.locationName
+                    ),
+                })
+                .subscribe(({ data }) => {
+                    if (data) {
+                        let obj: { location_name: string; value: string } = {
+                            location_name: '',
+                            value: '',
+                        };
+                        obj.value = data?.createLocation?._id;
+                        obj.location_name = data?.createLocation?.location_name;
+                        this.locationDropDown.push(obj);
+                        this.locationForm.reset();
+                    }
+                })
+            }})
+        
     }
 
     allCategoryDi() {
@@ -1612,23 +1632,36 @@ export class TicketListComponent implements OnInit {
     }
 
     deletLocation(selected) {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.deleteLocation(selected.value),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    const index = this.locationDropDown.findIndex((el) => {
-                        return el.value === selected.value;
-                    });
+        this.confirmationService.confirm({
+            message: 'Voulez-vous supprimer cette emplacement ?',
+            header: 'Supprimer',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
 
-                    this.locationDropDown.splice(index, 1);
-                }
-            });
+                this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.deleteLocation(selected.value),
+                })
+                .subscribe(({ data }) => {
+                    if (data) {
+                        const index = this.locationDropDown.findIndex((el) => {
+                            return el.value === selected.value;
+                        });
+    
+                        this.locationDropDown.splice(index, 1);
+                    }
+                });
+            }})
+       
     }
 
     deleteCategory(selected) {
-        this.apollo
+        this.confirmationService.confirm({
+            message: 'Voulez-vous supprimer cette categorie ?',
+            header: 'Supprimer ?',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.removeCategory(selected.value),
             })
@@ -1641,9 +1674,12 @@ export class TicketListComponent implements OnInit {
                     );
                     this.categorieDiListDropDown.splice(index, 1);
                 }
-            });
+            })
+            }})
+        ;
     }
-    editCategory(selected) {}
+
+    //editCategory(selected) {}
 
     annulerDi() {
         this.openAddDiModal = false;

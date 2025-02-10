@@ -185,7 +185,7 @@ export class TechDiListComponent implements OnInit {
     disabledDiagnostiqueValue: boolean;
     disabledDiagnostiqueRetourValue: boolean;
     updatedValuecomposantCombo: { nameComposant: string; quantity: number }[];
-    techRetourSendFinished: boolean;
+    techRetourSendFinished: boolean = true;
 
     diData: any[];
     isToggleEnabled: any;

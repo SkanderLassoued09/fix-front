@@ -112,6 +112,7 @@ export class MagasinDiListComponent {
     colCategoryComposants = [
         { field: 'category_composant', header: 'Category Composant' } 
     ];
+ 
 
 
 
@@ -295,6 +296,7 @@ export class MagasinDiListComponent {
     // }
 
     showDialogCategoryComposant() {
+     
         this.openCreationCategoryComposantModal = true;
         this.apollo
             .query<any>({
@@ -339,22 +341,34 @@ export class MagasinDiListComponent {
         });
         ;
     }
-    //removeComposant_Category
 
     addNewCategoryComposant() {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.addNewCategoryComposant(
-                    this.addCategoryCompsant.value.categoryName
-                ),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    // add tostr and confirmation message
-                    console.log('🍷[data]:', data);
-                    this.addCategoryCompsant.reset();
-                }
-            });
+        this.confirmationService.confirm({
+            message: 'Voulez-vous créer cette categorie ?',
+            header: 'Confirmation Creation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                .mutate<any>({
+                    mutation: this.ticketSerice.addNewCategoryComposant(
+                        this.addCategoryCompsant.value.categoryName
+                    ),
+                })
+                .subscribe(({ data }) => {
+                    if (data) {
+                        this.addCategoryCompsant.reset();
+                        this.apollo
+                    .query<any>({
+                        query: this.ticketSerice.findAllComposant_Category(),
+                    })
+                    .subscribe(({ data }) => {
+                        this.composantCatgorieList = data.findAllComposant_Category
+                    })
+                    }
+                })
+
+            }})
+        
     }
 
     onUpload(event: any, type: string) {

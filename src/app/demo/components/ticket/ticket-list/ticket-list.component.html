@@ -9,7 +9,7 @@
     header="Gérer les catégories des demandes d'interventions"
     [(visible)]="openCategoryModal"
     [modal]="true"
-    [style]="{ width: '30vw', height: '25vw' }"
+    [style]="{ width: '50vw', height: '40vw' }"
     [draggable]="false"
     [resizable]="true"
 >
@@ -26,6 +26,7 @@
         </div>
         <div class="button-container-categorieDI">
             <p-button
+                [disabled]="!categoryForm.get('categoryName').value"
                 (click)="addCategoryDi()"
                 icon="pi pi-plus"
                 label="Ajouter catégorie"
@@ -75,7 +76,7 @@
     header="Gérer les emplacements"
     [(visible)]="openLocationsModal"
     [modal]="true"
-    [style]="{ width: '30vw' }"
+    [style]="{ width: '50vw', height: '40vw' }"
     [draggable]="false"
     [resizable]="false"
 >
@@ -94,6 +95,7 @@
         <!-- Modal Footer -->
         <div class="modal-footer-Emplacement">
             <p-button
+                [disabled]="!locationForm.get('locationName').value"
                 (click)="addLocation()"
                 icon="pi pi-plus"
                 label="Ajouter"
@@ -631,7 +633,7 @@
             <div class="file-upload-container">
                 <div>
                     <p-fileUpload
-                    [disabled]="bcBtnDisabled"
+                        [disabled]="bcBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Bon de commande"
                         chooseIcon="pi pi-upload"
@@ -791,6 +793,7 @@
             <div class="file-upload-container">
                 <div>
                     <p-fileUpload
+                    [disabled]="bcBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Bon de commande"
                         chooseIcon="pi pi-upload"
@@ -825,6 +828,7 @@
                             ></p-button>
                         </a>
                         <p-button
+                            [disabled]="enregistrerBcBtncondition"
                             (click)="enregistrerBC()"
                             label="Enregistrer BC"
                             [link]="true"
@@ -833,6 +837,7 @@
                 </div>
                 <div class="file-upload-section">
                     <p-fileUpload
+                    [disabled]="devisBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Devis"
                         chooseIcon="pi pi-upload"
@@ -867,6 +872,7 @@
                             ></p-button>
                         </a>
                         <p-button
+                        [disabled]="enregistrerDevisBtncondition"
                             (click)="enregistrerDevis()"
                             label="Enregistrer Devis"
                             [link]="true"
