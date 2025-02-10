@@ -5,7 +5,6 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 import {
     ComposantByNameQueryResponse,
     GetAllMagasinQueryResponse,
-    UpdateComposantMutationResponse,
 } from './magasin-di-list.interfaces';
 import { Router } from '@angular/router';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -109,6 +108,13 @@ export class MagasinDiListComponent {
     pdfAdded: any;
     validerComposantValidtor: boolean = true;
     validatorFinirListeComposant: boolean = true;
+    composantCatgorieList: any;
+    colCategoryComposants = [
+        { field: 'category_composant', header: 'Category Composant' } 
+    ];
+
+
+
     constructor(
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
@@ -290,7 +296,50 @@ export class MagasinDiListComponent {
 
     showDialogCategoryComposant() {
         this.openCreationCategoryComposantModal = true;
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.findAllComposant_Category(),
+            })
+            .subscribe(({ data, loading }) => {
+                console.log(data,"data all category");
+                this.composantCatgorieList = data.findAllComposant_Category
+                console.log(this.composantCatgorieList,"composantCatgorieList");
+            })
+    
     }
+    deleteCategorycomposant(rowData){
+        console.log(rowData._id,"rowdata here");
+        
+        this.confirmationService.confirm({
+            message: 'Voulez-vous Supprimer cette categorie ?',
+            header: 'Confirmation Suppression',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+        .mutate<any>({
+            mutation: this.ticketSerice.removeComposant_Category(rowData._id),
+        })
+        .subscribe(({ data }) => {
+            if (data) {
+                // add tostr and confirmation message
+                console.log('🍷[data]:', data);
+                this.apollo
+                .query<any>({
+                    query: this.ticketSerice.findAllComposant_Category(),
+                })
+                .subscribe(({ data }) => {
+                    console.log(data,"data all category");
+                    this.composantCatgorieList = data.findAllComposant_Category
+                    console.log(this.composantCatgorieList,"composantCatgorieList");
+                })
+               
+            }
+        })
+               }
+        });
+        ;
+    }
+    //removeComposant_Category
 
     addNewCategoryComposant() {
         this.apollo

@@ -232,3 +232,74 @@
     pointer-events: none;
   }
   
+
+
+  /* General Dialog Styles */
+.p-dialog {
+    border-radius: 1rem;
+    box-shadow: 0 0.8rem 1.6rem rgba(0, 0, 0, 0.1);
+}
+
+/* Form Layout */
+.form-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 2rem;
+    background-color: #f4f4f4;
+    border-radius: 0.8rem;
+}
+
+/* Form Fields */
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.input-text {
+    padding: 0.8rem;
+    border: 0.1rem solid #ccc;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: #333;
+    background-color: #fff;
+}
+
+.input-text:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0.4rem rgba(0, 123, 255, 0.25);
+}
+
+/* Submit Button */
+.button-submit {
+    align-self: flex-start;
+    padding: 0.8rem 1.6rem;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.button-submit:active {
+    background-color: #0056b3;
+}
+
+/* Table Styles */
+.data-table {
+    margin-top: 2rem;
+    border-radius: 0.8rem;
+    overflow: hidden;
+    border: 0.1rem
+}

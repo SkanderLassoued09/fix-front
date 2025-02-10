@@ -361,39 +361,71 @@
     </p-dialog>
 
     <p-dialog
-        [(visible)]="openCreationCategoryComposantModal"
-        [style]="{ width: '50%', height: '90vh' }"
-        header="Creation d'un nouveau composant"
-        [modal]="true"
-        styleClass="p-fluid"
+    [(visible)]="openCreationCategoryComposantModal"
+    [style]="{ width: '50%', height: '90vh' }"
+    header="Création d'un nouveau composant"
+    [modal]="true"
+    styleClass="p-fluid"
+    draggable="false"
+>
+    <form [formGroup]="addCategoryCompsant" class="form-layout">
+        <div class="form-field">
+            <label for="categoryName" class="form-label">Catégorie</label>
+            <input
+                id="categoryName"
+                pInputText
+                type="text"
+                formControlName="categoryName"
+                class="input-text"
+            />
+        </div>
+        <button
+            class="button-submit"
+            pButton
+            type="button"
+            (click)="addNewCategoryComposant()"
+        >
+            Ajouter
+        </button>
+    </form>
+
+    <p-table
+        [columns]="colCategoryComposants"
+        [value]="composantCatgorieList"
+        styleClass="p-datatable-sm"
+        [tableStyle]="{ 'min-width': '20rem' }"
+        class="data-table"
     >
-        <form [formGroup]="addCategoryCompsant">
-            <div>
-                <div>
-                    <label for="">Catégorie</label>
-                    <input
-                        pInputText
-                        type="text"
-                        formControlName="categoryName"
-                    />
-                </div>
-                <button
-                    class="mt-1"
-                    pButton
-                    (click)="addNewCategoryComposant()"
+        <ng-template pTemplate="header" let-columns>
+            <tr>
+                <th
+                    *ngFor="let col of columns"
+                    class="table-header"
                 >
-                    Ajouter
-                </button>
-                <button
-                    class="mt-1"
-                    pButton
-                    (click)="addCategoryCompsant.reset()"
-                >
-                    effacer
-                </button>
-            </div>
-        </form></p-dialog
-    >
+                    {{ col.header }}
+                </th>
+                <th class="table-header">Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-rowData let-columns="columns">
+            <tr class="table-row">
+                <td *ngFor="let col of columns" class="table-cell">
+                    {{ rowData[col.field] }}
+                </td>
+                <td class="table-cell">
+                    <p-button
+                        icon="pi pi-trash"
+                        severity="danger"
+                        (click)="deleteCategorycomposant(rowData)"
+                        class="button-delete"
+                    ></p-button>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</p-dialog>
+
+
 
     <p-dialog
         [(visible)]="openCreationComposantModal"

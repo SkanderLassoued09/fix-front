@@ -1164,6 +1164,13 @@ export class TicketService {
             }
         `;
     }
+    removeComposant_Category(_id:string){
+        return gql`
+            mutation {
+                removeComposant_Category(_id: "${_id}")
+            }
+        `;
+    }
     addLocation(
         location_name: string
 

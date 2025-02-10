@@ -478,6 +478,7 @@ export class TicketListComponent implements OnInit {
 
                 // Null and undefined checks added here
                 //condition for STATUS
+                //@skander
                 if (
                     !this.selectedRowInNegociate1?.contain_pdr ||
                     (this.selectedRowInNegociate2 &&
