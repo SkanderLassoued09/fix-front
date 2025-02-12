@@ -40,7 +40,6 @@ export class TicketService {
                         updatedAt
                         image
                         isErrorFromFixtronix
-                        current_roles
                         company_id
                         client_id
                         techRep
@@ -52,6 +51,7 @@ export class TicketService {
                         ignoreCount
                         location_id
                         di_category_id
+                        logs{idIgnore facture}
                         array_composants {
                             nameComposant
                             quantity
@@ -483,7 +483,7 @@ export class TicketService {
     createComposantByTech(
         composantName: string,
         packageComposant: string,
-        category_composant_id:string,
+        category_composant_id: string,
         link: string,
         pdf: string
     ) {
@@ -1001,6 +1001,7 @@ export class TicketService {
                         _id
                         price
                         idIgnore
+                        final_price
                         isSentToCoordinator
                         isConfirmedComponentFromCoordinator
                         remarque_tech_diagnostic
@@ -1020,6 +1021,7 @@ export class TicketService {
                         ignoreCount
                         di_category_id
                         price
+                        final_price
                         final_price
                         isSentToCoordinator
                         isConfirmedComponentFromCoordinator
@@ -1164,7 +1166,7 @@ export class TicketService {
             }
         `;
     }
-    removeComposant_Category(_id:string){
+    removeComposant_Category(_id: string) {
         return gql`
             mutation {
                 removeComposant_Category(_id: "${_id}")

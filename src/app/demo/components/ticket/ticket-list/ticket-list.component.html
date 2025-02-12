@@ -478,6 +478,11 @@
                     'row-in-retour1': rowData.ignoreCount === 1,
                     'row-in-retour2': rowData.ignoreCount === 2,
                     'row-in-retour3': rowData.ignoreCount === 3,
+                    'facture-checked-logs':
+                        rowData.logs &&
+                        rowData.logs.length > 0 &&
+                        getLatestLogFacture(rowData.logs) &&
+                        rowData.status === 'FINISHED',
                     'facture-checked':
                         rowData.facture && rowData.status === 'FINISHED'
                 }"
@@ -572,37 +577,36 @@
                         class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForNegociate2(rowData)"
                     ></button>
-<div class="dispaly:flex,space in between ">
-    <p-button
-    [label]="'Retour' + rowData.ignoreCount.toString()"
-    severity="danger"
-    (click)="ignore(rowData)"
-    [disabled]="
-        rowData.ignoreCount === 3 ||
-        rowData.status !== 'FINISHED'
-    "
-></p-button>
+                    <div class="dispaly:flex,space in between">
+                        <p-button
+                            [label]="'Retour' + rowData.ignoreCount.toString()"
+                            severity="danger"
+                            (click)="ignore(rowData)"
+                            [disabled]="
+                                rowData.ignoreCount === 3 ||
+                                rowData.status !== 'FINISHED'
+                            "
+                        ></p-button>
 
-<p-button
-    *ngIf="
-        rowData.status === 'RETOUR1' ||
-        rowData.status === 'RETOUR2' ||
-        rowData.status === 'RETOUR3'
-    "
-    label="Relancer"
-    severity="info"
-    (click)="changeToPending1(rowData)"
-></p-button>
+                        <p-button
+                            *ngIf="
+                                rowData.status === 'RETOUR1' ||
+                                rowData.status === 'RETOUR2' ||
+                                rowData.status === 'RETOUR3'
+                            "
+                            label="Relancer"
+                            severity="info"
+                            (click)="changeToPending1(rowData)"
+                        ></p-button>
 
-<p-button
-    *ngIf="rowData.status === 'CREATED'"
-    label="Pending1"
-    severity="info"
-    (click)="changeToPending1(rowData)"
-    class="pending1-Btn"
-></p-button>
-</div>
-                   
+                        <p-button
+                            *ngIf="rowData.status === 'CREATED'"
+                            label="Pending1"
+                            severity="info"
+                            (click)="changeToPending1(rowData)"
+                            class="pending1-Btn"
+                        ></p-button>
+                    </div>
                 </td>
             </tr>
         </ng-template>
@@ -902,7 +906,6 @@
                 ></p-slider>
             </div>
 
-           
             <div class="action-buttons">
                 <p-button
                     pRipple
@@ -951,14 +954,28 @@
                         <strong class="price-item"
                             >Prix finale: {{ priceRemiseAffichage }}</strong
                         >
-                        <strong class="price-item"
+                        <!-- <strong class="price-item"
                             >Remise {{ remiseAffichage }}%</strong
-                        >
+                        > -->
                     </div>
                 </div>
                 <div *ngIf="ignoreCountPricing > 0">
                     <div class="retourCenter">
                         <h4>Retour {{ ignoreCountN1 }}</h4>
+                        <div
+                            class="price-container"
+                            *ngFor="let item of pricesLogs"
+                        >
+                            <strong class="price-item"
+                                >Prix initial: {{ item.priceLogs }}</strong
+                            >
+                            <strong class="price-item"
+                                >Prix finale: {{ item.final_priceLog }}</strong
+                            >
+                            <!-- <strong class="price-item"
+                            >Remise {{ remiseAffichage }}%</strong
+                        > -->
+                        </div>
                     </div>
 
                     <h6 class="error-status">
@@ -1183,7 +1200,7 @@
             <div class="file-upload-row">
                 <div class="file-upload-wrapper">
                     <p-fileUpload
-                       [disabled]="blBtnDisabled"
+                        [disabled]="blBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Bon de livraison"
                         chooseIcon="pi pi-upload"
@@ -1222,7 +1239,7 @@
 
                 <div class="file-upload-wrapper">
                     <p-fileUpload
-                    [disabled]="factureBtnDisabled"
+                        [disabled]="factureBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Facture"
                         chooseIcon="pi pi-upload"
@@ -1249,7 +1266,7 @@
                             ></p-button>
                         </a>
                         <p-button
-                        [disabled]="enregistrerFactureBtncondition"
+                            [disabled]="enregistrerFactureBtncondition"
                             (click)="enregistrerFacture()"
                             label="Enregistrer facture"
                             [link]="true"

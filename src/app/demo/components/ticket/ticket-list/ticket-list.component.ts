@@ -108,6 +108,7 @@ export class TicketListComponent implements OnInit {
     locationForm = new FormGroup({
         locationName: new FormControl(),
     });
+    pricesLogs: any[];
     statuses = [
         { label: 'Created', value: 'CREATED' },
         { label: 'Pending1', value: 'PENDING1' },
@@ -632,7 +633,7 @@ export class TicketListComponent implements OnInit {
         this.isErrorFromFixtronix = data.isErrorFromFixtronix;
         this.ignoreCountPricing = data.ignoreCount;
         console.log('ignoreCount =>', data.ignoreCount);
-        this.ignoreCountN1 = data.ignoreCount;
+        this.ignoreCountN1 = data.ignoreCount - 1;
         // Reset tarif and time values to ensure they are not carrying over from previous calls
         this.tarif_Technicien = null;
         this.timeDiagnostique = null;
@@ -658,18 +659,33 @@ export class TicketListComponent implements OnInit {
                     query: this.ticketSerice.getDiById(data._id),
                 })
                 .subscribe(({ data }) => {
-                    console.log('🥝[data]:', data);
+                    console.log('🥝[skander]:', data);
                     if (data) {
                         console.log(data.getDiById.di.price, 'data originale');
                         this.initialPriceAffichage = data.getDiById.di.price;
                         this.priceRemiseAffichage =
                             data.getDiById.di.final_price;
-                        this.remiseAffichage = Math.floor(
-                            (1 -
-                                this.priceRemiseAffichage /
-                                    this.initialPriceAffichage) *
-                                100
-                        );
+                        // this.remiseAffichage = Math.floor(
+                        //     (1 -
+                        //         this.priceRemiseAffichage /
+                        //             this.initialPriceAffichage) *
+                        //         100
+                        // );
+
+                        this.pricesLogs = data.getDiById.logsDi
+                            .map((el) => {
+                                console.log('🍚[el]:', el);
+                                if (el.price && el.final_price) {
+                                    return {
+                                        priceLogs: el.price,
+                                        final_priceLog: el.final_price,
+                                    };
+                                }
+                                return null; // or undefined if you prefer
+                            })
+                            .filter((log) => log !== null); // Remove any null (or undefined) entries
+
+                        console.log('pricesLogs', this.pricesLogs);
                     }
                 });
 
@@ -874,6 +890,7 @@ export class TicketListComponent implements OnInit {
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
                     this.diList = data.getAllDi.di;
+                    console.log('🥐[ this.diList]:', this.diList);
                     this.diListCount = data.getAllDi.totalDiCount;
                     this.diList.filter((di) => {
                         switch (di.status) {
@@ -910,6 +927,15 @@ export class TicketListComponent implements OnInit {
                     });
                 }
             });
+    }
+    // todo as pipe
+    getLatestLogFacture(logs: any[]): any {
+        if (!logs || logs.length === 0) {
+            return null;
+        }
+        return logs.reduce((prev, curr) =>
+            prev.idIgnore > curr.idIgnore ? prev : curr
+        ).facture;
     }
     //New Query
     getDiByID(_idDi: string) {

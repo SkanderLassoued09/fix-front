@@ -10,6 +10,9 @@
 :host ::ng-deep .facture-checked {
     background-color: #a3e6a3 !important;
 }
+:host ::ng-deep .facture-checked-logs {
+    background-color: #46eab9 !important;
+}
 .element-container,
 .element-container-BTN,
 .location-form,
@@ -684,34 +687,29 @@ p-dialog {
     font-size: 16px;
     color: #333;
     margin: 10px 0;
-  }
-  
-  .error-status .status-yes {
+}
+
+.error-status .status-yes {
     color: #d9534f; /* Red for "OUI" */
     font-weight: bold;
-  }
-  
-  .error-status .status-no {
+}
+
+.error-status .status-no {
     color: #5cb85c; /* Green for "NON" */
     font-weight: bold;
-  }
+}
 
-
-  .repPDR {
+.repPDR {
     display: flex;
     justify-content: space-around; /* Distributes space evenly between items */
     align-items: center; /* Aligns items vertically in the center */
-  }
-  
-
-
-  /////////////////////////////////////////////////////////////////////////////////////////
-  
-  .dialog-body {
-    padding: 1.5rem;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////
 
+.dialog-body {
+    padding: 1.5rem;
+}
 
 .file-upload-section {
     flex: 1 1 45%;
@@ -781,8 +779,6 @@ p-dialog {
 }
 .price-container {
     display: flex; /* Use Flexbox to align items horizontally */
-   
-justify-content: space-around;
-   
-   
+
+    justify-content: space-around;
 }
