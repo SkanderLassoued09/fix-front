@@ -268,6 +268,9 @@ export class TicketListComponent implements OnInit {
     enregistrerFactureBtncondition: boolean = true;
     enregistrerBcBtncondition: boolean = true;
     enregistrerDevisBtncondition: boolean = true;
+    ignoreCountForBtns: number = 0;
+    modalRetour1Info: boolean=false;
+    retourInfoFromLogs: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -305,8 +308,13 @@ export class TicketListComponent implements OnInit {
     }
     updateDi(rowDataTicket: any) {
         this.selectedTicket = rowDataTicket ?? {}; // Populate selected ticket details
-
         this.updateticketView = true; // Open the update modal
+    }
+    infoRetour1(){
+        this.modalRetour1Info = true
+        console.log(this.retourInfoFromLogs[0],"this.retourInfoFromLogs R1");
+         
+
     }
     cancelUpdateDi() {
         this.openUpdateModal = false;
@@ -503,10 +511,10 @@ export class TicketListComponent implements OnInit {
                 this.getDi(this.first, this.rows);
 
                 console.log;
-                if (step === 0) {
+               /* if (step === 0) {
                     this.saveDevisPDF(this._idDi, this.payload.file);
                     this.saveBCPDF(this._idDi, this.payload.file);
-                }
+                }*/
                 this.payload.file = '';
                 this.negocite1Modal = false;
                 this.negocite2Modal = false;
@@ -1792,8 +1800,11 @@ export class TicketListComponent implements OnInit {
                 pauseLogs: { ...pauseLogs },
                 logsDi: { ...this.logsDi },
             };
-            console.log('🍰[this.logsDi]:', this.logsDi);
-
+            this.retourInfoFromLogs = this.logsDi
+           
+            this.ignoreCountForBtns = data.ignoreCount
+            console.log(data.ignoreCount,"ignoreCountignoreCount");
+            
             this.ticketDetailsInfo = true; // Open the dialog
             console.log('data inside =>', this.ticketData);
         });

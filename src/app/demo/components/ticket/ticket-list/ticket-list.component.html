@@ -1452,6 +1452,11 @@
         </div>
 
         <hr />
+        <div style="display: flex; justify-content: space-between;">
+            <p-button (click)="infoRetour1()" severity="warn"  *ngIf="ignoreCountForBtns>0" label="Info Retour 1" />
+            <p-button   severity="help" *ngIf="ignoreCountForBtns>1" label="Info Retour 2" />
+            <p-button  severity="danger" *ngIf="ignoreCountForBtns>2" label="Info Retour 3" />
+        </div>
         <h6>Logs</h6>
         <div>tech diag : {{ ticketData?.pauseLogs?.techDiag }}</div>
         <div>tech rep : {{ ticketData?.pauseLogs?.techRep }}</div>
@@ -1466,6 +1471,74 @@
     </div>
 </p-dialog>
 
+
+
+<!--RETOUR 1 -->
+<p-dialog header="Information Retour 1" [(visible)]="modalRetour1Info" [style]="{ width: '25rem' }">
+    
+  <div class="flex flex-col">
+    <label for="username" class="font-semibold w-24">Réperable</label>
+    <label for="username" class="font-semibold w-24">Contient PDR</label>
+    <label for="username" class="font-semibold w-24">Remarque Admnistration </label>
+    <label for="username" class="font-semibold w-24">Remarque Tech Diagnostique</label>
+    <label for="username" class="font-semibold w-24">Remarque Tech Reperation </label>
+    <div class="form-group">
+        <div>
+            Bon de Livraison:
+
+            <a
+                [href]="baseUrl + ticketData?.data?.bon_de_livraison"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-link"
+            >
+                Ouvrir
+            </a>
+        </div>
+
+        <div>
+            Bon de commande:
+
+            <a
+                [href]="baseUrl + ticketData?.data?.bon_de_commande"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-link"
+            >
+                Ouvrir
+            </a>
+        </div>
+        <div>
+            Devis:
+
+            <a
+                [href]="baseUrl + ticketData?.data?.devis"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-link"
+            >
+                Ouvrir
+            </a>
+        </div>
+        <!-- Facture -->
+        <div>
+            Facture :
+
+            <a
+                [href]="baseUrl + ticketData?.data?.facture"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn btn-link"
+            >
+                Ouvrir
+            </a>
+        </div>
+    </div>
+
+  </div>
+        
+   
+</p-dialog>
 <!-- update ticket  -->
 
 <p-dialog
