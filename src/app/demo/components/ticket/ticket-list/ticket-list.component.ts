@@ -271,7 +271,9 @@ export class TicketListComponent implements OnInit {
     enregistrerDevisBtncondition: boolean = true;
     ignoreCountForBtns: number = 0;
     modalRetour1Info: boolean=false;
-    retourInfoFromLogs: any;
+    retour1InfoFromLogs: any;
+    retour2InfoFromLogs: any;
+    retour3InfoFromLogs: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -311,11 +313,12 @@ export class TicketListComponent implements OnInit {
         this.selectedTicket = rowDataTicket ?? {}; // Populate selected ticket details
         this.updateticketView = true; // Open the update modal
     }
-    infoRetour1(){
+    infoRetour1OPEN(){
         this.modalRetour1Info = true
-        console.log(this.retourInfoFromLogs[0],"this.retourInfoFromLogs R1");
-         
-
+        console.log("this.retour1InfoFromLogs",this.retour1InfoFromLogs);
+    }
+    infoRetour1CLOSE(){
+        this.modalRetour1Info = false
     }
     cancelUpdateDi() {
         this.openUpdateModal = false;
@@ -1826,8 +1829,21 @@ export class TicketListComponent implements OnInit {
                 pauseLogs: { ...pauseLogs },
                 logsDi: { ...this.logsDi },
             };
-            this.retourInfoFromLogs = this.logsDi
-           
+            console.log(data,"dtatatatata");
+          if (data.ignoreCount == 1) {
+            this.retour1InfoFromLogs = this.ticketData.logsDi[0]
+          } 
+          else if (data.ignoreCount == 2){
+            this.retour1InfoFromLogs = this.logsDi[0]
+            this.retour2InfoFromLogs = this.logsDi[1]
+          }
+          else if (data.ignoreCount == 3){
+            this.retour1InfoFromLogs = this.logsDi[0]
+            this.retour2InfoFromLogs = this.logsDi[1]
+            this.retour3InfoFromLogs = this.logsDi[2]
+          }
+            
+            
             this.ignoreCountForBtns = data.ignoreCount
             console.log(data.ignoreCount,"ignoreCountignoreCount");
             

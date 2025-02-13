@@ -782,3 +782,10 @@ p-dialog {
 
     justify-content: space-around;
 }
+.center-content-files{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}
