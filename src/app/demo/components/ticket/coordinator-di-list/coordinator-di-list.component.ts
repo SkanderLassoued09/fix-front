@@ -17,8 +17,7 @@ import { NotificationService } from 'src/app/demo/service/notification.service';
 
 @Component({
     selector: 'app-coordinator-di-list',
-    // standalone: true,
-    // imports: [],
+
     templateUrl: './coordinator-di-list.component.html',
     styleUrl: './coordinator-di-list.component.scss',
 })
@@ -49,7 +48,6 @@ export class CoordinatorDiListComponent {
 
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_id', header: 'ID' },
         { field: 'title', header: 'Title' },
         { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },
@@ -318,12 +316,25 @@ export class CoordinatorDiListComponent {
         console.log('🍷[di]:', di);
         this.di = { ...di };
         this.gotComposantFromMagasinCondition = di.gotComposantFromMagasin;
-        this.magasinsentToCoordinator = di.isSentToCoordinator;
-        this.componentConfirmedFromCoordinator =
-            di.isConfirmedComponentFromCoordinator;
+        if (di.logs && di.logs.length > 0) {
+            const highestIgnoreLog = di.logs.reduce((prev, current) =>
+                prev.idIgnore > current.idIgnore ? prev : current
+            );
+            this.magasinsentToCoordinator =
+                highestIgnoreLog.isSentToCoordinator;
+            this.componentConfirmedFromCoordinator =
+                highestIgnoreLog.isConfirmedComponentFromCoordinator;
+            console.log('highestIgnoreLog', highestIgnoreLog);
+        } else {
+            this.magasinsentToCoordinator = di.isSentToCoordinator;
+            this.componentConfirmedFromCoordinator =
+                di.isConfirmedComponentFromCoordinator;
+        }
+
         console.log(
             'magasinsentToCoordinator componentConfirmedFromCoordinator ',
-            this.componentConfirmedFromCoordinator
+            this.componentConfirmedFromCoordinator,
+            this.magasinsentToCoordinator
         );
         this.openBtnConfirm = di.isSentToCoordinator;
         this.remarque_manager = di.remarque_manager;

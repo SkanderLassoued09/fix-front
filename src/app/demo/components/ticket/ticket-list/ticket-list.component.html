@@ -577,7 +577,7 @@
                         class="p-button-rounded p-button-raised p-button-danger mr-2"
                         (click)="showDialogForNegociate2(rowData)"
                     ></button>
-                    <div class="dispaly:flex,space in between">
+                    <div class="flex">
                         <p-button
                             [label]="'Retour' + rowData.ignoreCount.toString()"
                             severity="danger"
@@ -797,7 +797,7 @@
             <div class="file-upload-container">
                 <div>
                     <p-fileUpload
-                    [disabled]="bcBtnDisabled"
+                        [disabled]="bcBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Bon de commande"
                         chooseIcon="pi pi-upload"
@@ -841,7 +841,7 @@
                 </div>
                 <div class="file-upload-section">
                     <p-fileUpload
-                    [disabled]="devisBtnDisabled"
+                        [disabled]="devisBtnDisabled"
                         mode="basic"
                         chooseLabel="Ajouter Devis"
                         chooseIcon="pi pi-upload"
@@ -876,7 +876,7 @@
                             ></p-button>
                         </a>
                         <p-button
-                        [disabled]="enregistrerDevisBtncondition"
+                            [disabled]="enregistrerDevisBtncondition"
                             (click)="enregistrerDevis()"
                             label="Enregistrer Devis"
                             [link]="true"
@@ -1393,7 +1393,7 @@
 
         <!-- All 4 files here  -->
 
-        <div class=" center-content-files">
+        <div class="center-content-files">
             <div class="d-flex justify-content-between mb-3">
                 <a
                     [href]="baseUrl + ticketData?.data?.bon_de_livraison"
@@ -1412,7 +1412,7 @@
                     Bon de commande
                 </a>
             </div>
-        
+
             <div class="d-flex flex-column space-between p-3">
                 <a
                     [href]="baseUrl + ticketData?.data?.devis"
@@ -1432,8 +1432,6 @@
                 </a>
             </div>
         </div>
-        
-        
 
         <div class="form-group">
             Liste des composants:
@@ -1458,10 +1456,23 @@
         </div>
 
         <hr />
-        <div style="display: flex; justify-content: space-between;">
-            <p-button (click)="infoRetour1OPEN()" severity="warn"  *ngIf="ignoreCountForBtns>0" label="Info Retour 1" />
-            <p-button   severity="help" *ngIf="ignoreCountForBtns>1" label="Info Retour 2" />
-            <p-button  severity="danger" *ngIf="ignoreCountForBtns>2" label="Info Retour 3" />
+        <div style="display: flex; justify-content: space-between">
+            <p-button
+                (click)="infoRetour1OPEN()"
+                severity="warn"
+                *ngIf="ignoreCountForBtns > 0"
+                label="Info Retour 1"
+            />
+            <p-button
+                severity="help"
+                *ngIf="ignoreCountForBtns > 1"
+                label="Info Retour 2"
+            />
+            <p-button
+                severity="danger"
+                *ngIf="ignoreCountForBtns > 2"
+                label="Info Retour 3"
+            />
         </div>
         <h6>Logs</h6>
         <div>tech diag : {{ ticketData?.pauseLogs?.techDiag }}</div>
@@ -1475,56 +1486,62 @@
             <div>End pause {{ item.pauseEnd }}</div>
         </div>
     </div>
-    <div header="Information Retour 1" *ngIf="modalRetour1Info" class="p-4 border rounded-lg shadow-lg bg-gray-100">
+    <div
+        header="Information Retour 1"
+        *ngIf="modalRetour1Info"
+        class="p-4 border rounded-lg shadow-lg bg-gray-100"
+    >
         <div>
             <strong>Information Retour 1</strong>
-            <label> {{retour1InfoFromLogs?._id}} </label>
+            <label> {{ retour1InfoFromLogs?._id }} </label>
         </div>
         <div class="flex space-between">
             <div>
-              <strong class="font-semibold">Réperable:</strong>
-              {{ retour1InfoFromLogs.can_be_repaired ? 'OUI' : 'NON' }}
+                <strong class="font-semibold">Réperable:</strong>
+                {{ retour1InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
             </div>
             <div>
-              <strong class="font-semibold">Contient PDR:</strong>
-              {{ retour1InfoFromLogs.contain_pdr ? 'OUI' : 'NON' }}
+                <strong class="font-semibold">Contient PDR:</strong>
+                {{ retour1InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
             </div>
-          </div>
-          <p-table
-          *ngIf="retour1InfoFromLogs.contain_pdr == true"
-                [value]="retour1InfoFromLogs.array_composants"
-                [tableStyle]="{ 'min-width': '20rem' }"
-            >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Name</th>
-                        <th>Quantity</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-component>
-                    <tr>
-                        <td>{{ component.nameComposant }}</td>
-                        <td>{{ component.quantity }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-          <div class="space-y-2">
-            <div>
-              <strong class="font-semibold">Remarque Administration:</strong>
-              {{ retour1InfoFromLogs.remarque_manager || 'N/A' }}
-            </div>
-            <div>
-              <strong class="font-semibold">Remarque Tech Diagnostique:</strong>
-              {{ retour1InfoFromLogs.remarque_tech_diagnostic || 'N/A' }}
-            </div>
-            <div>
-              <strong class="font-semibold">Remarque Tech Reparation:</strong>
-              {{ retour1InfoFromLogs.remarque_tech_repair || 'N/A' }}
-            </div>
-          </div>
-      
+        </div>
+        <p-table
+            *ngIf="retour1InfoFromLogs.contain_pdr == true"
+            [value]="retour1InfoFromLogs.array_composants"
+            [tableStyle]="{ 'min-width': '20rem' }"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Name</th>
+                    <th>Quantity</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-component>
+                <tr>
+                    <td>{{ component.nameComposant }}</td>
+                    <td>{{ component.quantity }}</td>
+                </tr>
+            </ng-template>
+        </p-table>
         <div class="space-y-2">
-            <div class=" center-content-files">
+            <div>
+                <strong class="font-semibold">Remarque Administration:</strong>
+                {{ retour1InfoFromLogs.remarque_manager || "N/A" }}
+            </div>
+            <div>
+                <strong class="font-semibold"
+                    >Remarque Tech Diagnostique:</strong
+                >
+                {{ retour1InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+            </div>
+            <div>
+                <strong class="font-semibold">Remarque Tech Reparation:</strong>
+                {{ retour1InfoFromLogs.remarque_tech_repair || "N/A" }}
+            </div>
+        </div>
+
+        <div class="space-y-2">
+            <div class="center-content-files">
                 <div class="d-flex justify-content-between mb-3">
                     <a
                         [href]="baseUrl + retour1InfoFromLogs?.bon_de_livraison"
@@ -1535,7 +1552,7 @@
                         Bon de Livraison Retour1
                     </a>
                     <a
-                        [href]="baseUrl +  retour1InfoFromLogs?.bon_de_commande"
+                        [href]="baseUrl + retour1InfoFromLogs?.bon_de_commande"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="p-button p-button-text font-bold"
@@ -1543,10 +1560,10 @@
                         Bon de commande Retour1
                     </a>
                 </div>
-            
+
                 <div class="d-flex flex-column gap-3">
                     <a
-                        [href]="baseUrl +  retour1InfoFromLogs?.devis"
+                        [href]="baseUrl + retour1InfoFromLogs?.devis"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="p-button p-button-text font-bold"
@@ -1554,7 +1571,7 @@
                         DEVIS Retour1
                     </a>
                     <a
-                        [href]="baseUrl +  retour1InfoFromLogs?.facture"
+                        [href]="baseUrl + retour1InfoFromLogs?.facture"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="p-button p-button-text font-bold"
@@ -1564,11 +1581,13 @@
                 </div>
             </div>
         </div>
-        <p-button severity="danger"  label="Fermer" (click)="infoRetour1CLOSE()" ></p-button>
-      </div>
+        <p-button
+            severity="danger"
+            label="Fermer"
+            (click)="infoRetour1CLOSE()"
+        ></p-button>
+    </div>
 </p-dialog>
-
-
 
 <!--RETOUR 1 -->
 

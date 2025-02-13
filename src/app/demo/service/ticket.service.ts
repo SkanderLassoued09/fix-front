@@ -101,6 +101,7 @@ export class TicketService {
                         remarque_coordinator
                         ignoreCount
                         createdBy
+                        logs{idIgnore isSentToCoordinator isConfirmedComponentFromCoordinator}
                         location_id
                         di_category_id
                         isSentToCoordinator

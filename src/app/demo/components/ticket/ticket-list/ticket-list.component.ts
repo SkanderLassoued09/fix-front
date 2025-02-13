@@ -164,7 +164,6 @@ export class TicketListComponent implements OnInit {
     ingredient;
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_id', header: 'DI id' },
         { field: 'title', header: 'Titre' },
         { field: 'image', header: 'Image' },
         { field: 'location_id', header: 'Location' },
@@ -270,7 +269,7 @@ export class TicketListComponent implements OnInit {
     enregistrerBcBtncondition: boolean = true;
     enregistrerDevisBtncondition: boolean = true;
     ignoreCountForBtns: number = 0;
-    modalRetour1Info: boolean=false;
+    modalRetour1Info: boolean = false;
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
     retour3InfoFromLogs: any;
@@ -313,12 +312,12 @@ export class TicketListComponent implements OnInit {
         this.selectedTicket = rowDataTicket ?? {}; // Populate selected ticket details
         this.updateticketView = true; // Open the update modal
     }
-    infoRetour1OPEN(){
-        this.modalRetour1Info = true
-        console.log("this.retour1InfoFromLogs",this.retour1InfoFromLogs);
+    infoRetour1OPEN() {
+        this.modalRetour1Info = true;
+        console.log('this.retour1InfoFromLogs', this.retour1InfoFromLogs);
     }
-    infoRetour1CLOSE(){
-        this.modalRetour1Info = false
+    infoRetour1CLOSE() {
+        this.modalRetour1Info = false;
     }
     cancelUpdateDi() {
         this.openUpdateModal = false;
@@ -515,7 +514,7 @@ export class TicketListComponent implements OnInit {
                 this.getDi(this.first, this.rows);
 
                 console.log;
-               /* if (step === 0) {
+                /* if (step === 0) {
                     this.saveDevisPDF(this._idDi, this.payload.file);
                     this.saveBCPDF(this._idDi, this.payload.file);
                 }*/
@@ -1460,7 +1459,6 @@ export class TicketListComponent implements OnInit {
             header: 'Confirmation Creation',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-
                 typeof (this.categoryForm.value.categoryName, 'TYPE');
                 this.apollo
                     .mutate<any>({
@@ -1470,18 +1468,20 @@ export class TicketListComponent implements OnInit {
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            let obj: { value: string; category_name: string } = {
-                                value: '',
-                                category_name: '',
-                            };
-                            obj.category_name = data?.createDiCategory?.category;
+                            let obj: { value: string; category_name: string } =
+                                {
+                                    value: '',
+                                    category_name: '',
+                                };
+                            obj.category_name =
+                                data?.createDiCategory?.category;
                             obj.value = data?.createDiCategory?._id;
                             this.categorieDiListDropDown.push(obj);
                             this.categoryForm.reset();
                         }
                     });
-            }})
-        
+            },
+        });
     }
     addLocation() {
         this.confirmationService.confirm({
@@ -1490,25 +1490,27 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.addLocation(
-                        this.locationForm.value.locationName
-                    ),
-                })
-                .subscribe(({ data }) => {
-                    if (data) {
-                        let obj: { location_name: string; value: string } = {
-                            location_name: '',
-                            value: '',
-                        };
-                        obj.value = data?.createLocation?._id;
-                        obj.location_name = data?.createLocation?.location_name;
-                        this.locationDropDown.push(obj);
-                        this.locationForm.reset();
-                    }
-                })
-            }})
-        
+                    .mutate<any>({
+                        mutation: this.ticketSerice.addLocation(
+                            this.locationForm.value.locationName
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            let obj: { location_name: string; value: string } =
+                                {
+                                    location_name: '',
+                                    value: '',
+                                };
+                            obj.value = data?.createLocation?._id;
+                            obj.location_name =
+                                data?.createLocation?.location_name;
+                            this.locationDropDown.push(obj);
+                            this.locationForm.reset();
+                        }
+                    });
+            },
+        });
     }
 
     allCategoryDi() {
@@ -1674,22 +1676,25 @@ export class TicketListComponent implements OnInit {
             header: 'Supprimer',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-
                 this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.deleteLocation(selected.value),
-                })
-                .subscribe(({ data }) => {
-                    if (data) {
-                        const index = this.locationDropDown.findIndex((el) => {
-                            return el.value === selected.value;
-                        });
-    
-                        this.locationDropDown.splice(index, 1);
-                    }
-                });
-            }})
-       
+                    .mutate<any>({
+                        mutation: this.ticketSerice.deleteLocation(
+                            selected.value
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            const index = this.locationDropDown.findIndex(
+                                (el) => {
+                                    return el.value === selected.value;
+                                }
+                            );
+
+                            this.locationDropDown.splice(index, 1);
+                        }
+                    });
+            },
+        });
     }
 
     deleteCategory(selected) {
@@ -1699,21 +1704,22 @@ export class TicketListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.removeCategory(selected.value),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    const index = this.categorieDiListDropDown.findIndex(
-                        (el) => {
-                            return el.value === selected.value;
+                    .mutate<any>({
+                        mutation: this.ticketSerice.removeCategory(
+                            selected.value
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            const index =
+                                this.categorieDiListDropDown.findIndex((el) => {
+                                    return el.value === selected.value;
+                                });
+                            this.categorieDiListDropDown.splice(index, 1);
                         }
-                    );
-                    this.categorieDiListDropDown.splice(index, 1);
-                }
-            })
-            }})
-        ;
+                    });
+            },
+        });
     }
 
     //editCategory(selected) {}
@@ -1829,24 +1835,21 @@ export class TicketListComponent implements OnInit {
                 pauseLogs: { ...pauseLogs },
                 logsDi: { ...this.logsDi },
             };
-            console.log(data,"dtatatatata");
-          if (data.ignoreCount == 1) {
-            this.retour1InfoFromLogs = this.ticketData.logsDi[0]
-          } 
-          else if (data.ignoreCount == 2){
-            this.retour1InfoFromLogs = this.logsDi[0]
-            this.retour2InfoFromLogs = this.logsDi[1]
-          }
-          else if (data.ignoreCount == 3){
-            this.retour1InfoFromLogs = this.logsDi[0]
-            this.retour2InfoFromLogs = this.logsDi[1]
-            this.retour3InfoFromLogs = this.logsDi[2]
-          }
-            
-            
-            this.ignoreCountForBtns = data.ignoreCount
-            console.log(data.ignoreCount,"ignoreCountignoreCount");
-            
+            console.log(data, 'dtatatatata');
+            if (data.ignoreCount == 1) {
+                this.retour1InfoFromLogs = this.ticketData.logsDi[0];
+            } else if (data.ignoreCount == 2) {
+                this.retour1InfoFromLogs = this.logsDi[0];
+                this.retour2InfoFromLogs = this.logsDi[1];
+            } else if (data.ignoreCount == 3) {
+                this.retour1InfoFromLogs = this.logsDi[0];
+                this.retour2InfoFromLogs = this.logsDi[1];
+                this.retour3InfoFromLogs = this.logsDi[2];
+            }
+
+            this.ignoreCountForBtns = data.ignoreCount;
+            console.log(data.ignoreCount, 'ignoreCountignoreCount');
+
             this.ticketDetailsInfo = true; // Open the dialog
             console.log('data inside =>', this.ticketData);
         });

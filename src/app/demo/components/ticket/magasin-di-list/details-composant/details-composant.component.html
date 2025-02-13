@@ -10,9 +10,10 @@
                 <h5>Information sur Composant</h5>
                 <div class="button-group improved-button-group">
                     <p-button
-                        *ngIf="ignoreCount === 0"
                         severity="help"
-                        [disabled]="isSentToCoordinator"
+                        [disabled]="
+                            !(isSentToCoordinator === componentsAreConfirmed)
+                        "
                         label="Confirmer les composants"
                         [raised]="true"
                         size="small"

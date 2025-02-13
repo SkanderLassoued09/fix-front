@@ -29,7 +29,6 @@ export class MagasinDiListComponent {
     //! Done but you did not use it in here
     magasinDiDialog: boolean = false;
     cols = [
-        { field: '_id', header: 'ID' },
         { field: 'title', header: 'Title' },
         { field: 'status', header: 'Status' },
     ];
@@ -110,11 +109,8 @@ export class MagasinDiListComponent {
     validatorFinirListeComposant: boolean = true;
     composantCatgorieList: any;
     colCategoryComposants = [
-        { field: 'category_composant', header: 'Category Composant' } 
+        { field: 'category_composant', header: 'Category Composant' },
     ];
- 
-
-
 
     constructor(
         private ticketSerice: TicketService,
@@ -296,50 +292,55 @@ export class MagasinDiListComponent {
     // }
 
     showDialogCategoryComposant() {
-     
         this.openCreationCategoryComposantModal = true;
         this.apollo
             .query<any>({
                 query: this.ticketSerice.findAllComposant_Category(),
             })
             .subscribe(({ data, loading }) => {
-                console.log(data,"data all category");
-                this.composantCatgorieList = data.findAllComposant_Category
-                console.log(this.composantCatgorieList,"composantCatgorieList");
-            })
-    
+                console.log(data, 'data all category');
+                this.composantCatgorieList = data.findAllComposant_Category;
+                console.log(
+                    this.composantCatgorieList,
+                    'composantCatgorieList'
+                );
+            });
     }
-    deleteCategorycomposant(rowData){
-        console.log(rowData._id,"rowdata here");
-        
+    deleteCategorycomposant(rowData) {
+        console.log(rowData._id, 'rowdata here');
+
         this.confirmationService.confirm({
             message: 'Voulez-vous Supprimer cette categorie ?',
             header: 'Confirmation Suppression',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.apollo
-        .mutate<any>({
-            mutation: this.ticketSerice.removeComposant_Category(rowData._id),
-        })
-        .subscribe(({ data }) => {
-            if (data) {
-                // add tostr and confirmation message
-                console.log('🍷[data]:', data);
-                this.apollo
-                .query<any>({
-                    query: this.ticketSerice.findAllComposant_Category(),
-                })
-                .subscribe(({ data }) => {
-                    console.log(data,"data all category");
-                    this.composantCatgorieList = data.findAllComposant_Category
-                    console.log(this.composantCatgorieList,"composantCatgorieList");
-                })
-               
-            }
-        })
-               }
+                    .mutate<any>({
+                        mutation: this.ticketSerice.removeComposant_Category(
+                            rowData._id
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            // add tostr and confirmation message
+                            console.log('🍷[data]:', data);
+                            this.apollo
+                                .query<any>({
+                                    query: this.ticketSerice.findAllComposant_Category(),
+                                })
+                                .subscribe(({ data }) => {
+                                    console.log(data, 'data all category');
+                                    this.composantCatgorieList =
+                                        data.findAllComposant_Category;
+                                    console.log(
+                                        this.composantCatgorieList,
+                                        'composantCatgorieList'
+                                    );
+                                });
+                        }
+                    });
+            },
         });
-        ;
     }
 
     addNewCategoryComposant() {
@@ -349,26 +350,26 @@ export class MagasinDiListComponent {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.addNewCategoryComposant(
-                        this.addCategoryCompsant.value.categoryName
-                    ),
-                })
-                .subscribe(({ data }) => {
-                    if (data) {
-                        this.addCategoryCompsant.reset();
-                        this.apollo
-                    .query<any>({
-                        query: this.ticketSerice.findAllComposant_Category(),
+                    .mutate<any>({
+                        mutation: this.ticketSerice.addNewCategoryComposant(
+                            this.addCategoryCompsant.value.categoryName
+                        ),
                     })
                     .subscribe(({ data }) => {
-                        this.composantCatgorieList = data.findAllComposant_Category
-                    })
-                    }
-                })
-
-            }})
-        
+                        if (data) {
+                            this.addCategoryCompsant.reset();
+                            this.apollo
+                                .query<any>({
+                                    query: this.ticketSerice.findAllComposant_Category(),
+                                })
+                                .subscribe(({ data }) => {
+                                    this.composantCatgorieList =
+                                        data.findAllComposant_Category;
+                                });
+                        }
+                    });
+            },
+        });
     }
 
     onUpload(event: any, type: string) {

@@ -152,6 +152,13 @@ export class DetailsComposantComponent implements OnInit {
                             this.componentsAreConfirmed =
                                 filtredLogsDi.isConfirmedComponentFromCoordinator;
                             this.composants = filtredLogsDi.array_composants;
+
+                            console.log(
+                                'this.isSentToCoordinator',
+                                this.isSentToCoordinator,
+                                'this.componentsAreConfirmed',
+                                this.componentsAreConfirmed
+                            );
                         }
                     } else {
                         console.log('🍕[data]:', data);

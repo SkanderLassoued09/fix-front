@@ -64,9 +64,8 @@ export class TechDiListComponent implements OnInit {
 
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_idDi', header: 'ID' },
-        { field: 'status', header: 'Status' },
         { field: 'location_id', header: 'Emplacement' },
+        { field: 'status', header: 'Status' },
     ];
     payloadImage: { image: string };
     countries;
@@ -401,8 +400,8 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     this.getComposant();
                     this.composantTechnicien.reset();
-                    console.log(data,"data new composant");
-                    
+                    console.log(data, 'data new composant');
+
                     this.creatComposantDialog = false;
                 }
             });
@@ -1035,7 +1034,7 @@ export class TechDiListComponent implements OnInit {
     //!!!!!!!!! open modal for composant creation
     openNew() {
         this.creatComposantDialog = true;
-        this.findAllComposant_Category()
+        this.findAllComposant_Category();
     }
 
     findAllComposant_Category() {
@@ -1243,14 +1242,13 @@ export class TechDiListComponent implements OnInit {
 
     updateDisableValues() {
         //! Getting values for conditions
-        console.log("inside condition update Values")
-       
-        
+        console.log('inside condition update Values');
+
         const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
         let isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-        console.log(isReperable,isPdr,"before values");
-        isReperable == false? isPdr = false : isPdr = isPdr;
-        console.log(isReperable,isPdr,"after values");
+        console.log(isReperable, isPdr, 'before values');
+        isReperable == false ? (isPdr = false) : (isPdr = isPdr);
+        console.log(isReperable, isPdr, 'after values');
         const isErrorFromFixtronixTech =
             this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
         const isArrComposantEmpty =
@@ -1287,8 +1285,6 @@ export class TechDiListComponent implements OnInit {
         this.updateDisableValues();
     }
 
-
-
     changeStatusToFinish(_id: string) {
         this.apollo
             .mutate<any>({
@@ -1305,9 +1301,6 @@ export class TechDiListComponent implements OnInit {
             });
     }
 
-
-
-
     changeStatusMagasinEstimation(_id: string) {
         this.apollo
             .mutate<any>({
@@ -1323,8 +1316,6 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
-
-
 
     retourEnvoyerVersFinir() {
         console.log('🥥[saveLogsDi]:');
@@ -1346,22 +1337,19 @@ export class TechDiListComponent implements OnInit {
                 console.log('envoyer vers finir dataDiag', dataDiag);
                 this.lap();
 
-                    this.apollo
-                        .mutate<any>({
-                            mutation: this.ticketSerice.finishLogsDi(dataDiag),
-                            useMutationLoading: true,
-                        })
-                        .subscribe(({ data, loading }) => {
-                            console.log('🍊[data]:', data);
-                            if (data) {
-                                this.disable = data.tech_startDiagnostic;
-                                this.cdr.detectChanges();
-                                this.changeStatusToFinish(
-                                    dataDiag._idDi
-                                );
-                            }
-                        });
-                
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.finishLogsDi(dataDiag),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading }) => {
+                        console.log('🍊[data]:', data);
+                        if (data) {
+                            this.disable = data.tech_startDiagnostic;
+                            this.cdr.detectChanges();
+                            this.changeStatusToFinish(dataDiag._idDi);
+                        }
+                    });
 
                 this.apollo
                     .mutate<any>({
@@ -1381,17 +1369,11 @@ export class TechDiListComponent implements OnInit {
                 }, 1000);
 
                 this.startStopwatch();
-               
+
                 this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
             },
         });
     }
-
-
-
-
-
-
 
     saveLogsDi() {
         console.log('🥥[saveLogsDi]:');
