@@ -270,6 +270,8 @@ export class TicketListComponent implements OnInit {
     enregistrerDevisBtncondition: boolean = true;
     ignoreCountForBtns: number = 0;
     modalRetour1Info: boolean = false;
+    modalRetour2Info: boolean = false;
+    modalRetour3Info: boolean = false;
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
     retour3InfoFromLogs: any;
@@ -312,13 +314,15 @@ export class TicketListComponent implements OnInit {
         this.selectedTicket = rowDataTicket ?? {}; // Populate selected ticket details
         this.updateticketView = true; // Open the update modal
     }
-    infoRetour1OPEN() {
-        this.modalRetour1Info = true;
-        console.log('this.retour1InfoFromLogs', this.retour1InfoFromLogs);
-    }
-    infoRetour1CLOSE() {
-        this.modalRetour1Info = false;
-    }
+    infoRetour1OPEN() {this.modalRetour1Info = true}
+    infoRetour1CLOSE() {this.modalRetour1Info = false}
+
+    infoRetour2OPEN() {this.modalRetour2Info = true}
+    infoRetour2CLOSE() {this.modalRetour2Info = false}
+
+    infoRetour3OPEN() {this.modalRetour3Info = true}
+    infoRetour3CLOSE() {this.modalRetour3Info = false}
+
     cancelUpdateDi() {
         this.openUpdateModal = false;
     }
@@ -676,11 +680,12 @@ export class TicketListComponent implements OnInit {
 
                         this.pricesLogs = data.getDiById.logsDi
                             .map((el) => {
-                                console.log('🍚[el]:', el);
-                                if (el.price && el.final_price) {
+                                console.log('🍚[logs each one]:', el);
+                                if (el.price && el.idIgnore) {
                                     return {
                                         priceLogs: el.price,
                                         final_priceLog: el.final_price,
+                                        ignoreDispaly:el.idIgnore
                                     };
                                 }
                                 return null; // or undefined if you prefer
@@ -1851,7 +1856,7 @@ export class TicketListComponent implements OnInit {
             console.log(data.ignoreCount, 'ignoreCountignoreCount');
 
             this.ticketDetailsInfo = true; // Open the dialog
-            console.log('data inside =>', this.ticketData);
+            console.log('data inside =>', this.ticketData.data);
         });
     }
 

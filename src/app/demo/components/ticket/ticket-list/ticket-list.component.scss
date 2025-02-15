@@ -11,7 +11,7 @@
     background-color: #a3e6a3 !important;
 }
 :host ::ng-deep .facture-checked-logs {
-    background-color: #46eab9 !important;
+    background-color: #2bf5c6 !important;
 }
 .element-container,
 .element-container-BTN,
@@ -788,4 +788,34 @@ p-dialog {
     justify-content: center;
     align-items: center;
 
+}
+.pdr-rep {
+    display: flex;
+    justify-content: space-between;
+    padding: 2rem 1rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .pdr-rep .price-info, .pdr-rep .repair-info {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .pdr-rep h6 {
+    margin: 0.5rem 0;
+    color: #374151;
+  }
+  
+  .pdr-rep span {
+    font-weight: bold;
+    color: #111827;
+  }
+.comments-retour{
+    padding-top:2rem;
+    
+}
+.btnretourInfo{
+    display: flex; 
+    justify-content: space-between;
+    padding-bottom: 2rem;
 }

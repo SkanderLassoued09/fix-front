@@ -480,9 +480,8 @@ export class TechDiListComponent implements OnInit {
      *
      * if ignore count exist loaad data from logs table
      */
-    async diagModal(di) {
-        console.log('DIAG OPENED');
-
+    async diagModal(di) { 
+        this.composantSelected = null;
         try {
             // Handle pause status if needed
             if (di.status === 'DIAGNOSTIC_Pause') {

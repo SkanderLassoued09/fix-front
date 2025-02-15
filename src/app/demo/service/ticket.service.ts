@@ -27,6 +27,8 @@ export class TicketService {
                 getAllDi(paginationConfig: { first: ${first}, rows: ${rows} }) {
                     di {
                         _id
+                        final_price
+                        price
                         title
                         description
                         can_be_repaired
@@ -185,6 +187,10 @@ export class TicketService {
                     status
                     createdAt
                     updatedAt
+                    remarque_tech_diagnostic
+                    remarque_tech_repair
+                    price
+                    final_price
                     array_composants {
                         nameComposant
                         quantity
@@ -1022,7 +1028,6 @@ export class TicketService {
                         ignoreCount
                         di_category_id
                         price
-                        final_price
                         final_price
                         isSentToCoordinator
                         isConfirmedComponentFromCoordinator

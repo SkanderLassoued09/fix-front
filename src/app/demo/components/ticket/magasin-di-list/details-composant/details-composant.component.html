@@ -12,7 +12,7 @@
                     <p-button
                         severity="help"
                         [disabled]="
-                            !(isSentToCoordinator === componentsAreConfirmed)
+                            componentsAreConfirmed
                         "
                         label="Confirmer les composants"
                         [raised]="true"
@@ -35,7 +35,7 @@
                         (click)="updateComposant()"
                     ></p-button>
                     <p-button
-                        [disabled]="!componentsAreConfirmed && ignoreCount == 0"
+                        [disabled]="!componentsAreConfirmed "
                         label="Fin liste composants"
                         [raised]="true"
                         size="small"

@@ -32,7 +32,7 @@ interface GetAllCompanyQueryResponse {
             activitePrincipale: string;
             activiteSecondaire: string;
             raisonSociale: string;
-            Exoneration: string;
+            exoneration: string;
             fax: string;
             webSiteLink: string;
             serviceAchat: {
@@ -73,7 +73,7 @@ export class CompanyListComponent {
         raisonSociale: new FormControl('', [Validators.required]),
         activitePrincipale: new FormControl(''),
         activiteSecondaire: new FormControl(''),
-        Exoneration: new FormControl(''),
+        exoneration: new FormControl(''),
         achat: new FormGroup({
             fullName: new FormControl('', [Validators.required]),
             email: new FormControl('', [Validators.required]),
@@ -108,7 +108,7 @@ export class CompanyListComponent {
         // { field: 'activitePrincipale', header: 'Activité principale' },
         // { field: 'activiteSecondaire', header: 'Activité secondaire' },
         { field: 'raisonSociale', header: 'Raison sociale' },
-        { field: 'Exoneration', header: 'Exoneration' },
+        { field: 'exoneration', header: 'Exoneration' },
         { field: 'fax', header: 'Fax' },
         { field: 'webSiteLink', header: 'Lien du web' },
     ];
@@ -160,27 +160,37 @@ export class CompanyListComponent {
     }
 
     addCompany() {
-        this.apollo
-            .mutate<AddCompanyMutationResponse>({
-                mutation: this.companyService.addCompany(
-                    this.companyForm.value
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, errors, loading }) => {
-                this.loading = loading;
-                if (data) {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'La société ajouté avec succés',
-                    });
-                    this.companies(this.first, this.rows);
-                    this.creationCompanyModalCondition = false;
-                }
-                if (errors) {
-                }
-            });
+
+        this.confirmationService.confirm({
+            message: 'Voulez vous confirmer les changements',
+            header: "Confirmation creation de sociéte",
+            icon: 'pi pi-question-circle',
+            accept: () => {
+
+                this.apollo
+                .mutate<AddCompanyMutationResponse>({
+                    mutation: this.companyService.addCompany(
+                        this.companyForm.value
+                    ),
+                    useMutationLoading: true,
+                })
+                .subscribe(({ data, errors, loading }) => {
+                    this.loading = loading;
+                    if (data) {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'La société ajouté avec succés',
+                        });
+                        this.companies(this.first, this.rows);
+                        this.creationCompanyModalCondition = false;
+                    }
+                    if (errors) {
+                    }
+                });
+            }})
+
+        
     }
 
     onPageChange(event: PageEvent) {

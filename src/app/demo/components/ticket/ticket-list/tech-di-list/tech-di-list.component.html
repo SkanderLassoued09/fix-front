@@ -194,7 +194,7 @@
             [closable]="false"
         >
             <ng-template pTemplate="content">
-                <h1>{{ di._idDi }}</h1>
+               
                 <h3 *ngIf="ignoreCount > 0">Retour {{ di.ignoreCount }}</h3>
 
                 <p-image
@@ -703,9 +703,7 @@
         [closable]="false"
     >
         <ng-template pTemplate="content">
-            <h1>
-                {{ diStatRepInfo?.getStatInfoForTechReparation.StatData._idDi }}
-            </h1>
+        
 
             <p-image
                 *ngIf="imageValue"
