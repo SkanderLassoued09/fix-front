@@ -194,7 +194,6 @@
             [closable]="false"
         >
             <ng-template pTemplate="content">
-               
                 <h3 *ngIf="ignoreCount > 0">Retour {{ di.ignoreCount }}</h3>
 
                 <p-image
@@ -547,20 +546,25 @@
                                 <form [formGroup]="composantTechnicien">
                                     <div class="field">
                                         <p-dropdown
-                                        [options]="composantCategory"
-                                        optionLabel="name"
-                                        optionValue="name"
-                                        placeholder="Choisir catégorie composant"
-                                        class="mr-2-magasin dropdown-magasin"
-                                        formControlName="category_composant_id"
-                                    >
-                                        <ng-template let-option pTemplate="item">
-                                            <p-tag
-                                                [value]="option.name"
-                                                [severity]="getSeverity(option.name)"
-                                            ></p-tag>
-                                        </ng-template>
-                                    </p-dropdown>
+                                            [options]="composantCategory"
+                                            optionLabel="name"
+                                            optionValue="name"
+                                            placeholder="Choisir catégorie composant"
+                                            class="mr-2-magasin dropdown-magasin"
+                                            formControlName="category_composant_id"
+                                        >
+                                            <ng-template
+                                                let-option
+                                                pTemplate="item"
+                                            >
+                                                <p-tag
+                                                    [value]="option.name"
+                                                    [severity]="
+                                                        getSeverity(option.name)
+                                                    "
+                                                ></p-tag>
+                                            </ng-template>
+                                        </p-dropdown>
 
                                         <label for="name">Nom composant</label>
                                         <input
@@ -618,7 +622,10 @@
                                 </form>
                             </ng-template>
                             <ng-template pTemplate="footer">
-                                <label>Nom & Package sont des champs obligatoire</label>
+                                <label
+                                    >Nom & Package sont des champs
+                                    obligatoire</label
+                                >
                                 <p-button
                                     pRipple
                                     label="Cancel"
@@ -627,9 +634,12 @@
                                     (click)="closeComposantModal()"
                                 ></p-button>
                                 <p-button
-                                [disabled]=" 
-                               !composantTechnicien.get('packageComposant').value ||
-                               !composantTechnicien.get('name').value "
+                                    [disabled]="
+                                        !composantTechnicien.get(
+                                            'packageComposant'
+                                        ).value ||
+                                        !composantTechnicien.get('name').value
+                                    "
                                     pRipple
                                     label="Save"
                                     icon="pi pi-check"
@@ -645,7 +655,7 @@
             <ng-template pTemplate="footer">
                 <div class="foot">
                     <button
-                        *ngIf="ignoreCount == 0"
+                        *ngIf="ignoreCount === 0"
                         pButton
                         pRipple
                         label="Mettre DI en Pause"
@@ -664,8 +674,11 @@
                     ></button>
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
-                        *ngIf="ignoreCount == 0"
-                        [disabled]="disabledDiagnostiqueValue || !diagFormTech.get('remarqueTech').value"
+                        *ngIf="ignoreCount === 0"
+                        [disabled]="
+                            disabledDiagnostiqueValue ||
+                            !diagFormTech.get('remarqueTech').value
+                        "
                         pButton
                         pRipple
                         label="Fin diagnostique"
@@ -685,7 +698,10 @@
                     ></button>
                     <button
                         *ngIf="ignoreCount > 0"
-                        [disabled]="disabledDiagnostiqueRetourValue || !diagFormTech.get('remarqueTech').value"
+                        [disabled]="
+                            disabledDiagnostiqueRetourValue ||
+                            !diagFormTech.get('remarqueTech').value
+                        "
                         pButton
                         pRipple
                         label="Fin diagnostique retour"
@@ -708,8 +724,6 @@
         [closable]="false"
     >
         <ng-template pTemplate="content">
-        
-
             <p-image
                 *ngIf="imageValue"
                 [src]="baseUrl + imageValue"

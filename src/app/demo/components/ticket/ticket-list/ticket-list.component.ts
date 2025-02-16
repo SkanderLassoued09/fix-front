@@ -26,7 +26,7 @@ import {
 import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
-import { map, tap } from 'rxjs';
+import { map, range, tap } from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 interface Column {
@@ -61,7 +61,7 @@ export class TicketListComponent implements OnInit {
     isBCUploaded: boolean = false;
     isDevisUploaded: boolean = false;
     ticketData: any;
-
+    rangeDate: any[] = [];
     // Used for the mini Dashboard
     counterInMagasin = 0;
     counterInDiagnostique = 0;
@@ -314,14 +314,26 @@ export class TicketListComponent implements OnInit {
         this.selectedTicket = rowDataTicket ?? {}; // Populate selected ticket details
         this.updateticketView = true; // Open the update modal
     }
-    infoRetour1OPEN() {this.modalRetour1Info = true}
-    infoRetour1CLOSE() {this.modalRetour1Info = false}
+    infoRetour1OPEN() {
+        this.modalRetour1Info = true;
+    }
+    infoRetour1CLOSE() {
+        this.modalRetour1Info = false;
+    }
 
-    infoRetour2OPEN() {this.modalRetour2Info = true}
-    infoRetour2CLOSE() {this.modalRetour2Info = false}
+    infoRetour2OPEN() {
+        this.modalRetour2Info = true;
+    }
+    infoRetour2CLOSE() {
+        this.modalRetour2Info = false;
+    }
 
-    infoRetour3OPEN() {this.modalRetour3Info = true}
-    infoRetour3CLOSE() {this.modalRetour3Info = false}
+    infoRetour3OPEN() {
+        this.modalRetour3Info = true;
+    }
+    infoRetour3CLOSE() {
+        this.modalRetour3Info = false;
+    }
 
     cancelUpdateDi() {
         this.openUpdateModal = false;
@@ -544,12 +556,42 @@ export class TicketListComponent implements OnInit {
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
-                this.saveBCPDF(this._idDi, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-                this.devisBtnDisabled = false;
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.addBC(
+                            this._idDi,
+                            this.payload.file
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading }) => {
+                        console.log('🌽[data]:', data);
+                        console.log('🍒[loading]:', loading);
+                        this.devisBtnDisabled = loading;
+                    });
+
                 this.enregistrerBcBtncondition = true;
             },
         });
+    }
+
+    selectFilterRangeDate(data: Date) {
+        if (!this.rangeDate.length) {
+            this.rangeDate[0] = data; // First selection (start date)
+        } else if (this.rangeDate.length === 1) {
+            this.rangeDate[1] = data; // Second selection (end date)
+        } else {
+            this.rangeDate = [data]; // Reset if a new selection starts
+        }
+
+        console.log('🍞[rangeDate]:', this.rangeDate);
+
+        let start = this.rangeDate.length > 0 ? this.rangeDate[0] : null;
+        let end = this.rangeDate.length > 1 ? this.rangeDate[1] : null;
+
+        let rangeFilter = { start, end };
+        console.log('🍅[rangeFilter]:', rangeFilter);
+        this.getDi(this.first, this.rows, start, end);
     }
     enregistrerDevis() {
         this.confirmationService.confirm({
@@ -557,9 +599,17 @@ export class TicketListComponent implements OnInit {
             header: 'Confirmation Fichier',
             icon: 'pi pi-exclamation-triangle',
             accept: async () => {
-                this.saveDevisPDF(this._idDi, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-                this.bcBtnDisabled = false;
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.addDevis(
+                            this._idDi,
+                            this.payload.file
+                        ),
+                    })
+                    .subscribe(({ data, loading }) => {
+                        this.bcBtnDisabled = loading;
+                    });
+
                 this.enregistrerDevisBtncondition = true;
             },
         });
@@ -685,7 +735,7 @@ export class TicketListComponent implements OnInit {
                                     return {
                                         priceLogs: el.price,
                                         final_priceLog: el.final_price,
-                                        ignoreDispaly:el.idIgnore
+                                        ignoreDispaly: el.idIgnore,
                                     };
                                 }
                                 return null; // or undefined if you prefer
@@ -889,10 +939,10 @@ export class TicketListComponent implements OnInit {
         this.getDi(this.first, this.rows);
     }
 
-    getDi(first, rows) {
+    getDi(first, rows, start?, end?) {
         this.apollo
             .watchQuery<DiQueryResult>({
-                query: this.ticketSerice.getAllDi(first, rows),
+                query: this.ticketSerice.getAllDi(first, rows, start, end),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
                 if (data) {
@@ -1307,34 +1357,33 @@ export class TicketListComponent implements OnInit {
     }
     // TODO cannot return null for non nullable field below
     nego1nego2_InMagasin(_id: string, price, final_price?) {
-        console.log(_id,price,final_price,"id here ----------");
-       
-        if (final_price==undefined){
+        console.log(_id, price, final_price, 'id here ----------');
+
+        if (final_price == undefined) {
             this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.nego1nego2_InMagasin_noFinalPrice(
-                    _id,
-                    price,
-                ),
-            })
-            .subscribe(({ data }) => {
-                console.log('data', data);
-            });
-        }
-        else{
+                .mutate<any>({
+                    mutation:
+                        this.ticketSerice.nego1nego2_InMagasin_noFinalPrice(
+                            _id,
+                            price
+                        ),
+                })
+                .subscribe(({ data }) => {
+                    console.log('data', data);
+                });
+        } else {
             this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.nego1nego2_InMagasin(
-                    _id,
-                    price,
-                    final_price
-                ),
-            })
-            .subscribe(({ data }) => {
-                console.log('data', data);
-            });
+                .mutate<any>({
+                    mutation: this.ticketSerice.nego1nego2_InMagasin(
+                        _id,
+                        price,
+                        final_price
+                    ),
+                })
+                .subscribe(({ data }) => {
+                    console.log('data', data);
+                });
         }
-       
     }
 
     //! Nan c bon

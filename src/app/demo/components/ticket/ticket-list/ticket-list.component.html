@@ -398,41 +398,68 @@
         [tableStyle]="{ 'min-width': '20rem' }"
     >
         <ng-template pTemplate="caption">
-            <div class="flex">
-                <button
-                    type="button"
-                    pButton
-                    pRipple
-                    icon="pi pi-file-excel"
-                    (click)="exportExcel()"
-                    class="p-button-success mr-2"
-                    pTooltip="XLS"
-                    tooltipPosition="bottom"
-                ></button>
-                <button
-                    type="button"
-                    pButton
-                    pRipple
-                    icon="pi pi-file-pdf"
-                    (click)="exportPdf()"
-                    class="p-button-warning mr-2"
-                    pTooltip="PDF"
-                    tooltipPosition="bottom"
-                ></button>
+            <div class="flex justify-content-between">
+                <div>
+                    <button
+                        type="button"
+                        pButton
+                        pRipple
+                        icon="pi pi-file-excel"
+                        (click)="exportExcel()"
+                        class="p-button-success mr-2"
+                        pTooltip="XLS"
+                        tooltipPosition="bottom"
+                    ></button>
+                    <button
+                        type="button"
+                        pButton
+                        pRipple
+                        icon="pi pi-file-pdf"
+                        (click)="exportPdf()"
+                        class="p-button-warning mr-2"
+                        pTooltip="PDF"
+                        tooltipPosition="bottom"
+                    ></button>
+                </div>
+                <div>
+                    <p-calendar
+                        [showIcon]="true"
+                        [showOnFocus]="false"
+                        selectionMode="range"
+                        inputId="buttondisplay"
+                        (onSelect)="selectFilterRangeDate($event)"
+                        placeholder="Select date range"
+                    ></p-calendar>
+                </div>
             </div>
         </ng-template>
         <ng-template pTemplate="header" let-columns>
             <tr>
                 <th *ngFor="let col of columns" style="min-width: 10rem">
                     {{ col.header }}
-                    <ng-container>
+                    <!-- <ng-container>
                         <p-columnFilter
                             *ngIf="col.field !== 'status'"
                             [type]="col.filterType || 'text'"
                             [field]="col.field"
                         ></p-columnFilter>
-                    </ng-container>
-                    <ng-container *ngIf="col.field === 'status'">
+                    </ng-container> -->
+                    <!-- <p-columnFilter field="date" type="date">
+                        <ng-template
+                            pTemplate="filter"
+                            let-value
+                            let-filter="filterCallback"
+                        >
+                            <p-calendar
+                                [ngModel]="value"
+                                (onSelect)="filter($event, 'equals')"
+                                dateFormat="yy-mm-dd"
+                                placeholder="Select Date"
+                                [showIcon]="true"
+                            ></p-calendar>
+                        </ng-template>
+                    </p-columnFilter> -->
+                    <!-- <ng-container *ngIf="col.field === 'status'">
                         <p-columnFilter
                             field="status"
                             matchMode="equals"
@@ -461,7 +488,7 @@
                                 </p-dropdown>
                             </ng-template>
                         </p-columnFilter>
-                    </ng-container>
+                    </ng-container> -->
                 </th>
                 <th style="min-width: 10rem">Actions</th>
                 <th
@@ -484,7 +511,9 @@
                         getLatestLogFacture(rowData.logs) &&
                         rowData.status === 'FINISHED',
                     'facture-checked':
-                        rowData.facture && rowData.status === 'FINISHED' && rowData.ignoreCount == 0
+                        rowData.facture &&
+                        rowData.status === 'FINISHED' &&
+                        rowData.ignoreCount == 0
                 }"
             >
                 <td *ngFor="let col of columns">
@@ -959,20 +988,17 @@
                         > -->
                     </div>
                 </div>
-                <div  *ngIf="ignoreCountPricing > 0">
+                <div *ngIf="ignoreCountPricing > 0">
                     <div *ngFor="let item of pricesLogs" class="retourCenter">
                         <h4>Retour {{ item.ignoreDispaly }}</h4>
-                        <div
-                            class="price-container"
-                            
-                        >
+                        <div class="price-container">
                             <strong class="price-item"
                                 >Prix initial: {{ item.priceLogs }}</strong
                             >
                             <strong class="price-item"
-                                >Prix finale: {{ item.final_priceLog ?? 'N/A' }}</strong
+                                >Prix finale:
+                                {{ item.final_priceLog ?? "N/A" }}</strong
                             >
-                          
                         </div>
                     </div>
 
@@ -1317,15 +1343,30 @@
         </div>
         <div class="pdr-rep">
             <div class="price-info">
-              <h6>Prix: <span>{{ ticketData?.data?.price ?? "N/A" }}</span></h6>
-              <h6>Prix Finale: <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span></h6>
+                <h6>
+                    Prix: <span>{{ ticketData?.data?.price ?? "N/A" }}</span>
+                </h6>
+                <h6>
+                    Prix Finale:
+                    <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span>
+                </h6>
             </div>
-          
+
             <div class="repair-info">
-              <h6>Réparable: <span>{{ ticketData?.data?.can_be_repaired ? "OUI" : "NON" }}</span></h6>
-              <h6>Contient PDR: <span>{{ ticketData?.data?.contain_pdr ? "OUI" : "NON" }}</span></h6>
+                <h6>
+                    Réparable:
+                    <span>{{
+                        ticketData?.data?.can_be_repaired ? "OUI" : "NON"
+                    }}</span>
+                </h6>
+                <h6>
+                    Contient PDR:
+                    <span>{{
+                        ticketData?.data?.contain_pdr ? "OUI" : "NON"
+                    }}</span>
+                </h6>
             </div>
-          </div>
+        </div>
 
         <!-- Description -->
         <div class="form-group">
@@ -1463,13 +1504,13 @@
                 label="Info Retour 1"
             />
             <p-button
-            (click)="infoRetour2OPEN()"
+                (click)="infoRetour2OPEN()"
                 severity="help"
                 *ngIf="ignoreCountForBtns > 1"
                 label="Info Retour 2"
             />
             <p-button
-            (click)="infoRetour3OPEN()"
+                (click)="infoRetour3OPEN()"
                 severity="danger"
                 *ngIf="ignoreCountForBtns > 2"
                 label="Info Retour 3"
@@ -1488,347 +1529,331 @@
             <div>Start pause : {{ item.pauseStart }}</div>
             <div>End pause {{ item.pauseEnd }}</div>
         </div>
-        -->   
-       
-
+        -->
     </div>
-    <div  >
+    <div>
         <div
-        header="Information Retour 1"
-        *ngIf="modalRetour1Info"
-        class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
-    >
-        <div>
-            <strong>Information Retour 1</strong>
-           
-        </div>
-        <div class="pdr-Rep">
-            prix: {{retour1InfoFromLogs.price?? "N/A"}}
-            final price: {{retour1InfoFromLogs.final_price?? "N/A"}}
-        </div>
-        <div class="pdr-Rep">
-            <div>
-                <strong class="font-semibold">Réperable:</strong>
-                {{ retour1InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
-            </div>
-            <div>
-                <strong class="font-semibold">Contient PDR:</strong>
-                {{ retour1InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
-            </div>
-        </div>
-        <p-table
-            *ngIf="retour1InfoFromLogs.contain_pdr == true"
-            [value]="retour1InfoFromLogs.array_composants"
-            [tableStyle]="{ 'min-width': '20rem' }"
-           
+            header="Information Retour 1"
+            *ngIf="modalRetour1Info"
+            class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
         >
-            <ng-template pTemplate="header">
-                <tr>
-                    <th>Name</th>
-                    <th>Quantity</th>
-                </tr>
-            </ng-template>
-            <ng-template  pTemplate="body" let-component>
-                <tr>
-                    <td>{{ component.nameComposant }}</td>
-                    <td>{{ component.quantity }}</td>
-                </tr>
-            </ng-template>
-        </p-table>
-        <div class="comments-retour">
-           
             <div>
-                <strong class="font-semibold"
-                    >Remarque Tech Diagnostique:</strong
-                >
-                {{ retour1InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+                <strong>Information Retour 1</strong>
             </div>
-            <div>
-                <strong class="font-semibold">Remarque Tech Reparation:</strong>
-                {{ retour1InfoFromLogs.remarque_tech_repair || "N/A" }}
+            <div class="pdr-Rep">
+                prix: {{ retour1InfoFromLogs.price ?? "N/A" }} final price:
+                {{ retour1InfoFromLogs.final_price ?? "N/A" }}
             </div>
-        </div>
-
-        <div class="space-y-2">
-            <div class="center-content-files">
-                <div class="d-flex justify-content-between mb-3">
-                    <a
-                        [href]="baseUrl + retour1InfoFromLogs?.bon_de_livraison"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="p-button p-button-text font-bold"
-                    >
-                        Bon de Livraison Retour1
-                    </a>
-                    <a
-                        [href]="baseUrl + retour1InfoFromLogs?.bon_de_commande"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="p-button p-button-text font-bold"
-                    >
-                        Bon de commande Retour1
-                    </a>
+            <div class="pdr-Rep">
+                <div>
+                    <strong class="font-semibold">Réperable:</strong>
+                    {{ retour1InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
                 </div>
-
-                <div class="d-flex flex-column gap-3">
-                    <a
-                        [href]="baseUrl + retour1InfoFromLogs?.devis"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="p-button p-button-text font-bold"
-                    >
-                        DEVIS Retour1
-                    </a>
-                    <a
-                        [href]="baseUrl + retour1InfoFromLogs?.facture"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="p-button p-button-text font-bold"
-                    >
-                        Facture Retour1
-                    </a>
+                <div>
+                    <strong class="font-semibold">Contient PDR:</strong>
+                    {{ retour1InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
                 </div>
             </div>
-        </div>
-        <p-button
-            severity="danger"
-            label="Fermer"
-            (click)="infoRetour1CLOSE()"
-        ></p-button>
-    </div>
-
-
-    <div
-    header="Information Retour 2"
-    *ngIf="modalRetour2Info"
-    class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
->
-    <div>
-        <strong>Information Retour 2</strong>
-       
-    </div>
-    <div class="pdr-Rep">
-        prix: {{retour2InfoFromLogs.price}}
-        final price: {{retour2InfoFromLogs.final_price?? "N/A"}}
-    </div>
-    <div class="pdr-Rep">
-        <div>
-            <strong class="font-semibold">Réperable:</strong>
-            {{ retour2InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
-        </div>
-        <div>
-            <strong class="font-semibold">Contient PDR:</strong>
-            {{ retour2InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
-        </div>
-    </div>
-    <p-table
-        *ngIf="retour2InfoFromLogs.contain_pdr == true"
-        [value]="retour2InfoFromLogs.array_composants"
-        [tableStyle]="{ 'min-width': '20rem' }"
-       
-    >
-        <ng-template pTemplate="header">
-            <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-            </tr>
-        </ng-template>
-        <ng-template  pTemplate="body" let-component>
-            <tr>
-                <td>{{ component.nameComposant }}</td>
-                <td>{{ component.quantity }}</td>
-            </tr>
-        </ng-template>
-    </p-table>
-    <div class="comments-retour">
-       
-        <div>
-            <strong class="font-semibold"
-                >Remarque Tech Diagnostique:</strong
+            <p-table
+                *ngIf="retour1InfoFromLogs.contain_pdr == true"
+                [value]="retour1InfoFromLogs.array_composants"
+                [tableStyle]="{ 'min-width': '20rem' }"
             >
-            {{ retour2InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
-        </div>
-        <div>
-            <strong class="font-semibold">Remarque Tech Reparation:</strong>
-            {{ retour2InfoFromLogs.remarque_tech_repair || "N/A" }}
-        </div>
-    </div>
-
-    <div class="space-y-2">
-        <div class="center-content-files">
-            <div class="d-flex justify-content-between mb-3">
-                <a
-                    [href]="baseUrl + retour2InfoFromLogs?.bon_de_livraison"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de Livraison Retour2
-                </a>
-                <a
-                    [href]="baseUrl + retour2InfoFromLogs?.bon_de_commande"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de commande Retour2
-                </a>
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-component>
+                    <tr>
+                        <td>{{ component.nameComposant }}</td>
+                        <td>{{ component.quantity }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <div class="comments-retour">
+                <div>
+                    <strong class="font-semibold"
+                        >Remarque Tech Diagnostique:</strong
+                    >
+                    {{ retour1InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+                </div>
+                <div>
+                    <strong class="font-semibold"
+                        >Remarque Tech Reparation:</strong
+                    >
+                    {{ retour1InfoFromLogs.remarque_tech_repair || "N/A" }}
+                </div>
             </div>
 
-            <div class="d-flex flex-column gap-3">
-                <a
-                    [href]="baseUrl + retour2InfoFromLogs?.devis"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    DEVIS Retour2
-                </a>
-                <a
-                    [href]="baseUrl + retour2InfoFromLogs?.facture"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Facture Retour2
-                </a>
+            <div class="space-y-2">
+                <div class="center-content-files">
+                    <div class="d-flex justify-content-between mb-3">
+                        <a
+                            [href]="
+                                baseUrl + retour1InfoFromLogs?.bon_de_livraison
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Bon de Livraison Retour1
+                        </a>
+                        <a
+                            [href]="
+                                baseUrl + retour1InfoFromLogs?.bon_de_commande
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Bon de commande Retour1
+                        </a>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3">
+                        <a
+                            [href]="baseUrl + retour1InfoFromLogs?.devis"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            DEVIS Retour1
+                        </a>
+                        <a
+                            [href]="baseUrl + retour1InfoFromLogs?.facture"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Facture Retour1
+                        </a>
+                    </div>
+                </div>
             </div>
+            <p-button
+                severity="danger"
+                label="Fermer"
+                (click)="infoRetour1CLOSE()"
+            ></p-button>
         </div>
-    </div>
-    <p-button
-        severity="danger"
-        label="Fermer"
-        (click)="infoRetour2CLOSE()"
-    ></p-button>
-</div>
 
-
-<div
-    header="Information Retour 3"
-    *ngIf="modalRetour3Info"
-    class="p-4 border rounded-lg shadow-lg bg-gray-100"
->
-    <div>
-        <strong>Information Retour 3</strong>
-       
-    </div>
-    <div class="pdr-Rep">
-        prix: {{retour3InfoFromLogs.price}}
-        final price: {{retour3InfoFromLogs.final_price?? "N/A"}}
-    </div>
-    <div class="pdr-Rep">
-        <div>
-            <strong class="font-semibold">Réperable:</strong>
-            {{ retour3InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
-        </div>
-        <div>
-            <strong class="font-semibold">Contient PDR:</strong>
-            {{ retour3InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
-        </div>
-    </div>
-    <p-table
-        *ngIf="retour3InfoFromLogs.contain_pdr == true"
-        [value]="retour3InfoFromLogs.array_composants"
-        [tableStyle]="{ 'min-width': '20rem' }"
-       
-    >
-        <ng-template pTemplate="header">
-            <tr>
-                <th>Name</th>
-                <th>Quantity</th>
-            </tr>
-        </ng-template>
-        <ng-template  pTemplate="body" let-component>
-            <tr>
-                <td>{{ component.nameComposant }}</td>
-                <td>{{ component.quantity }}</td>
-            </tr>
-        </ng-template>
-    </p-table>
-    <div class="comments-retour">
-       
-        <div>
-            <strong class="font-semibold"
-                >Remarque Tech Diagnostique:</strong
+        <div
+            header="Information Retour 2"
+            *ngIf="modalRetour2Info"
+            class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
+        >
+            <div>
+                <strong>Information Retour 2</strong>
+            </div>
+            <div class="pdr-Rep">
+                prix: {{ retour2InfoFromLogs.price }} final price:
+                {{ retour2InfoFromLogs.final_price ?? "N/A" }}
+            </div>
+            <div class="pdr-Rep">
+                <div>
+                    <strong class="font-semibold">Réperable:</strong>
+                    {{ retour2InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
+                </div>
+                <div>
+                    <strong class="font-semibold">Contient PDR:</strong>
+                    {{ retour2InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
+                </div>
+            </div>
+            <p-table
+                *ngIf="retour2InfoFromLogs.contain_pdr == true"
+                [value]="retour2InfoFromLogs.array_composants"
+                [tableStyle]="{ 'min-width': '20rem' }"
             >
-            {{ retour3InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
-        </div>
-        <div>
-            <strong class="font-semibold">Remarque Tech Reparation:</strong>
-            {{ retour3InfoFromLogs.remarque_tech_repair || "N/A" }}
-        </div>
-    </div>
-
-    <div class="space-y-2">
-        <div class="center-content-files">
-            <div class="d-flex justify-content-between mb-3">
-                <a
-                    [href]="baseUrl + retour3InfoFromLogs?.bon_de_livraison"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de Livraison Retour3
-                </a>
-                <a
-                    [href]="baseUrl + retour3InfoFromLogs?.bon_de_commande"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de commande Retour3
-                </a>
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-component>
+                    <tr>
+                        <td>{{ component.nameComposant }}</td>
+                        <td>{{ component.quantity }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <div class="comments-retour">
+                <div>
+                    <strong class="font-semibold"
+                        >Remarque Tech Diagnostique:</strong
+                    >
+                    {{ retour2InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+                </div>
+                <div>
+                    <strong class="font-semibold"
+                        >Remarque Tech Reparation:</strong
+                    >
+                    {{ retour2InfoFromLogs.remarque_tech_repair || "N/A" }}
+                </div>
             </div>
 
-            <div class="d-flex flex-column gap-3">
-                <a
-                    [href]="baseUrl + retour3InfoFromLogs?.devis"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    DEVIS Retour3
-                </a>
-                <a
-                    [href]="baseUrl + retour3InfoFromLogs?.facture"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Facture Retour3
-                </a>
+            <div class="space-y-2">
+                <div class="center-content-files">
+                    <div class="d-flex justify-content-between mb-3">
+                        <a
+                            [href]="
+                                baseUrl + retour2InfoFromLogs?.bon_de_livraison
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Bon de Livraison Retour2
+                        </a>
+                        <a
+                            [href]="
+                                baseUrl + retour2InfoFromLogs?.bon_de_commande
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Bon de commande Retour2
+                        </a>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3">
+                        <a
+                            [href]="baseUrl + retour2InfoFromLogs?.devis"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            DEVIS Retour2
+                        </a>
+                        <a
+                            [href]="baseUrl + retour2InfoFromLogs?.facture"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Facture Retour2
+                        </a>
+                    </div>
+                </div>
             </div>
+            <p-button
+                severity="danger"
+                label="Fermer"
+                (click)="infoRetour2CLOSE()"
+            ></p-button>
+        </div>
+
+        <div
+            header="Information Retour 3"
+            *ngIf="modalRetour3Info"
+            class="p-4 border rounded-lg shadow-lg bg-gray-100"
+        >
+            <div>
+                <strong>Information Retour 3</strong>
+            </div>
+            <div class="pdr-Rep">
+                prix: {{ retour3InfoFromLogs.price }} final price:
+                {{ retour3InfoFromLogs.final_price ?? "N/A" }}
+            </div>
+            <div class="pdr-Rep">
+                <div>
+                    <strong class="font-semibold">Réperable:</strong>
+                    {{ retour3InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
+                </div>
+                <div>
+                    <strong class="font-semibold">Contient PDR:</strong>
+                    {{ retour3InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
+                </div>
+            </div>
+            <p-table
+                *ngIf="retour3InfoFromLogs.contain_pdr == true"
+                [value]="retour3InfoFromLogs.array_composants"
+                [tableStyle]="{ 'min-width': '20rem' }"
+            >
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Name</th>
+                        <th>Quantity</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-component>
+                    <tr>
+                        <td>{{ component.nameComposant }}</td>
+                        <td>{{ component.quantity }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <div class="comments-retour">
+                <div>
+                    <strong class="font-semibold"
+                        >Remarque Tech Diagnostique:</strong
+                    >
+                    {{ retour3InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+                </div>
+                <div>
+                    <strong class="font-semibold"
+                        >Remarque Tech Reparation:</strong
+                    >
+                    {{ retour3InfoFromLogs.remarque_tech_repair || "N/A" }}
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <div class="center-content-files">
+                    <div class="d-flex justify-content-between mb-3">
+                        <a
+                            [href]="
+                                baseUrl + retour3InfoFromLogs?.bon_de_livraison
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Bon de Livraison Retour3
+                        </a>
+                        <a
+                            [href]="
+                                baseUrl + retour3InfoFromLogs?.bon_de_commande
+                            "
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Bon de commande Retour3
+                        </a>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3">
+                        <a
+                            [href]="baseUrl + retour3InfoFromLogs?.devis"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            DEVIS Retour3
+                        </a>
+                        <a
+                            [href]="baseUrl + retour3InfoFromLogs?.facture"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="p-button p-button-text font-bold"
+                        >
+                            Facture Retour3
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <p-button
+                severity="danger"
+                label="Fermer"
+                (click)="infoRetour3CLOSE()"
+            ></p-button>
         </div>
     </div>
-    <p-button
-        severity="danger"
-        label="Fermer"
-        (click)="infoRetour3CLOSE()"
-    ></p-button>
-</div>
-
-    </div>
-    
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </p-dialog>
-
-
 
 <p-dialog
     [(visible)]="updateticketView"
@@ -1866,8 +1891,6 @@
                 required
             ></textarea>
         </div>
-
-      
 
         <!-- Created By -->
         <div class="field">

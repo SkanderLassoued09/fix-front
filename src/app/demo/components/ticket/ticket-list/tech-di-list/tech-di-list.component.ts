@@ -400,7 +400,6 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     this.getComposant();
                     this.composantTechnicien.reset();
-                    console.log(data, 'data new composant');
 
                     this.creatComposantDialog = false;
                 }
@@ -480,7 +479,7 @@ export class TechDiListComponent implements OnInit {
      *
      * if ignore count exist loaad data from logs table
      */
-    async diagModal(di) { 
+    async diagModal(di) {
         this.composantSelected = null;
         try {
             // Handle pause status if needed
@@ -523,7 +522,9 @@ export class TechDiListComponent implements OnInit {
             const [retourData, categoryData, diagnosticData, ...otherResults] =
                 await Promise.all(promises);
 
+            console.log('🌰[diagnosticData]:', diagnosticData);
             // Process retour data
+
             if (retourData?.data?.getRetourDataStats?.length > 0) {
                 this.historyOfDi = retourData.data.getRetourDataStats;
             } else {
@@ -533,9 +534,8 @@ export class TechDiListComponent implements OnInit {
             // Process diagnostic data
             if (diagnosticData?.data) {
                 const detailsDi = diagnosticData.data.getDiById.di;
-                console.log('🍸[detailsDi]:', detailsDi);
+
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
-                console.log('🍬[detailsLogs]:', detailsLogs);
 
                 // Process the data based on whether detailsLogs exists
                 if (detailsLogs) {
@@ -548,7 +548,7 @@ export class TechDiListComponent implements OnInit {
 
                 // Set remaining properties
                 this.di = { ...di };
-                console.log('this.di', this.di);
+
                 this.selectedDi = di._id;
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
@@ -567,42 +567,50 @@ export class TechDiListComponent implements OnInit {
             this.isLoading = false;
         }
     }
+    // Function to find the entry with the highest idIgnore
+    getHighestIdIgnore(logs: any[]): any {
+        return logs.reduce(
+            (max, log) => (log.idIgnore > max.idIgnore ? log : max),
+            logs[0]
+        );
+    }
 
     // Helper methods to process diagnostic data
     private processDiagnosticWithLogs(di, detailsDi, detailsLogs) {
-        console.log('🍞[processDiagnosticWithLogs]:');
+        const dataLogs = this.getHighestIdIgnore(detailsLogs);
+        console.log('🍞[dataLogs]:', dataLogs);
         // Patch form with logs data
         this.diagFormTech.patchValue({
             _idDi: di._id,
-            diag_time: di.diag_time || detailsLogs.diag_time || '',
+            diag_time: di.diag_time || dataLogs.diag_time || '',
             remarqueTech:
-                di.remarqueTech || detailsLogs.remarque_tech_diagnostic || '',
-            isPdr: di.isPdr || detailsLogs.contain_pdr || true,
-            di_category_id: 'DI_C1',
-            isReparable: di.isReparable || detailsLogs.can_be_repaired || true,
+                di.remarqueTech || dataLogs.remarque_tech_diagnostic || '',
+            isPdr: di.isPdr || dataLogs.contain_pdr || true,
+            di_category_id:
+                di.di_category_id || dataLogs.di_category_id || true,
+            isReparable: di.isReparable || dataLogs.can_be_repaired || true,
             quantity: di.quantity || 0,
             composantSelectedDropdown:
-                di.composantSelectedDropdown ?? detailsLogs.array_composants,
+                di.composantSelectedDropdown ?? dataLogs.array_composants,
         });
 
         // Process array_composants
         // ! todo skander
-        detailsLogs.array_composants = [];
+        // dataLogs.array_composants = [];
 
-        const arrayComposantLogs = detailsLogs.flatMap((el) => {
-            return el.array_composants.map((composant) => ({
-                ...composant,
-                ignoreCount: el._id,
-            }));
-        });
+        // const arrayComposantLogs = dataLogs.flatMap((el) => {
+        //     return el.array_composants.map((composant) => ({
+        //         ...composant,
+        //         ignoreCount: el._id,
+        //     }));
+        // });
 
-        this.composantCombo = detailsLogs.array_composants;
-        console.log('111111111111111[composantCombo]:', this.composantCombo);
-        this.allComposantLogsAndOriginal = [...detailsLogs.array_composants];
+        this.composantCombo = dataLogs.array_composants;
+
+        this.allComposantLogsAndOriginal = [...dataLogs.array_composants];
     }
 
     private processDiagnosticWithoutLogs(di, detailsDi) {
-        console.log('🥠[processDiagnosticWithoutLogs');
         // Patch form without logs data
         this.diagFormTech.patchValue({
             _idDi: di._id,
@@ -622,7 +630,6 @@ export class TechDiListComponent implements OnInit {
             ...composant,
             ignoreCount: 0,
         }));
-        console.log('🥧[ this.composantCombo ]:', this.composantCombo);
     }
 
     getDataOriginalAndRetour(_id: string) {
@@ -633,7 +640,7 @@ export class TechDiListComponent implements OnInit {
             .subscribe(({ data }) => {
                 if (data) {
                     this.historyOfDi = data?.getRetourDataStats;
-                    console.log('🥞[this.historyOfDi ]:', this.historyOfDi);
+
                     this.cdr.detectChanges();
                 }
             });
@@ -677,7 +684,7 @@ export class TechDiListComponent implements OnInit {
             .subscribe(({ data }) => {
                 if (data) {
                     let arrayComposantLogs;
-                    console.log('🥥[data]:', data);
+
                     const detailsDi = data.getDiById.di;
                     const detailsLogs = data.getDiById.logsDi;
 
@@ -692,7 +699,6 @@ export class TechDiListComponent implements OnInit {
 
                         this.composantCombo = [];
 
-                        console.log('Hello logs', arrayComposantLogs);
                         this.allComposantLogsAndOriginal = [
                             ...detailsDi.array_composants,
                             ...arrayComposantLogs,
@@ -708,11 +714,6 @@ export class TechDiListComponent implements OnInit {
                             }));
                         // Combine the original components with the logged components
                         // this.composantCombo = detailsDi.array_composants;
-
-                        console.log(
-                            'Data array composants',
-                            this.composantCombo
-                        );
                     }
 
                     // Patch the form with the new data
@@ -744,7 +745,6 @@ export class TechDiListComponent implements OnInit {
                 next: ({ data }) => {
                     if (data?.getRetourDataStats?.length > 0) {
                         this.historyOfDi = data.getRetourDataStats;
-                        console.log('Fetched History:', this.historyOfDi);
                     } else {
                         this.error = 'No data found';
                     }
@@ -781,7 +781,6 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                    console.log('🥑[dataaaaaaaaaaaaaaaaa]:', data);
                     this.diStatRepInfo = data;
                 }
             });
@@ -844,9 +843,7 @@ export class TechDiListComponent implements OnInit {
             });
     }
 
-    show() {
-        console.log('form', this.diagFormTech.value);
-    }
+    show() {}
 
     hideDialogDiag() {
         this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID        this.diStatus = di.status;
@@ -1131,7 +1128,6 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    console.log('🥜[data]:', data);
                     // if data exist affect it to html
                 }
             });
@@ -1152,7 +1148,7 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     this.dataBarChartIsReady = true;
                     this.techDataInfo = data.getDiStatusCounts;
-                    console.log('Data stats inisde modal', data);
+
                     // Initialize the dashboard variables
                     this.diagEnPause_miniDashboard = 0;
                     this.diagNotOpened_miniDashboard = 0;
@@ -1201,7 +1197,6 @@ export class TechDiListComponent implements OnInit {
             });
     }
     selectedDropDown(selectedItem) {
-        console.log('🥚[selectedItem]:', selectedItem);
         this.composantSelected = selectedItem;
     }
     getSeverity(status: string) {
@@ -1241,13 +1236,12 @@ export class TechDiListComponent implements OnInit {
 
     updateDisableValues() {
         //! Getting values for conditions
-        console.log('inside condition update Values');
 
         const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
         let isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-        console.log(isReperable, isPdr, 'before values');
+
         isReperable == false ? (isPdr = false) : (isPdr = isPdr);
-        console.log(isReperable, isPdr, 'after values');
+
         const isErrorFromFixtronixTech =
             this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
         const isArrComposantEmpty =
@@ -1278,8 +1272,7 @@ export class TechDiListComponent implements OnInit {
         this.composantList = this.composantList.filter(
             (composant) => composant.name !== selectedName
         );
-        console.log('composantCombo', this.composantCombo);
-        console.log('composantList', this.composantList);
+
         this.composantSelected = null;
         this.updateDisableValues();
     }
@@ -1317,7 +1310,6 @@ export class TechDiListComponent implements OnInit {
     }
 
     retourEnvoyerVersFinir() {
-        console.log('🥥[saveLogsDi]:');
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Fin DI',
@@ -1333,7 +1325,7 @@ export class TechDiListComponent implements OnInit {
                     di_category_id: this.diagFormTech.value.di_category_id,
                     composant: this.composantCombo,
                 };
-                console.log('envoyer vers finir dataDiag', dataDiag);
+
                 this.lap();
 
                 this.apollo
@@ -1342,7 +1334,6 @@ export class TechDiListComponent implements OnInit {
                         useMutationLoading: true,
                     })
                     .subscribe(({ data, loading }) => {
-                        console.log('🍊[data]:', data);
                         if (data) {
                             this.disable = data.tech_startDiagnostic;
                             this.cdr.detectChanges();
@@ -1375,7 +1366,6 @@ export class TechDiListComponent implements OnInit {
     }
 
     saveLogsDi() {
-        console.log('🥥[saveLogsDi]:');
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Diagnostique',
@@ -1392,8 +1382,6 @@ export class TechDiListComponent implements OnInit {
                     composant: this.composantCombo,
                 };
 
-                console.log('dataDiag', dataDiag);
-
                 this.lap();
 
                 if (dataDiag.pdr) {
@@ -1403,7 +1391,6 @@ export class TechDiListComponent implements OnInit {
                             useMutationLoading: true,
                         })
                         .subscribe(({ data, loading }) => {
-                            console.log('🍊[data]:', data);
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
@@ -1419,7 +1406,6 @@ export class TechDiListComponent implements OnInit {
                             useMutationLoading: true,
                         })
                         .subscribe(({ data, loading }) => {
-                            console.log('🥜[data]:', data);
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
@@ -1454,7 +1440,6 @@ export class TechDiListComponent implements OnInit {
     }
 
     changeStatusPending3() {
-        console.log(' this.selectedDi_id', this.selectedDi_id);
         this.confirmationService.confirm({
             message: 'Voulez vous Envoyer directement aux coordinator ?',
             header: 'Confirmation Diagnostique sans composants',
@@ -1466,16 +1451,13 @@ export class TechDiListComponent implements OnInit {
                             this.selectedDi_id
                         ),
                     })
-                    .subscribe(({ data }) => {
-                        console.log('send to pending 3', data);
-                    });
+                    .subscribe(({ data }) => {});
                 this.diDialogDiag[this.selectedDi] = false;
             },
         });
     }
     //!Tech finishing Diagnostique here
     techFinishDiag() {
-        console.log('🍯[techFinishDiag]:');
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Diagnostique',
@@ -1491,8 +1473,6 @@ export class TechDiListComponent implements OnInit {
                         this.diagFormTech.value.isErrorFromFixtronix ?? false,
                     composant: this.composantCombo,
                 };
-
-                console.log('dataDiag', dataDiag);
 
                 this.lap();
 

@@ -89,7 +89,7 @@ import { PaginatorModule } from 'primeng/paginator';
         ImageModule,
         ChartModule,
         PaginatorModule,
-        ToggleButtonModule 
+        ToggleButtonModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

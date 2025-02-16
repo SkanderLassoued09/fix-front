@@ -21,48 +21,57 @@ export class TicketService {
         `;
     }
 
-    getAllDi(first, rows) {
-        return gql`
-            {
-                getAllDi(paginationConfig: { first: ${first}, rows: ${rows} }) {
-                    di {
-                        _id
-                        final_price
-                        price
-                        title
-                        description
-                        can_be_repaired
-                        bon_de_commande
-                        bon_de_livraison
-                        contain_pdr
-                        facture
-                        devis
-                        status
-                        createdAt
-                        updatedAt
-                        image
-                        isErrorFromFixtronix
-                        company_id
-                        client_id
-                        techRep
-                        techDiag
-                        remarque_tech_diagnostic
-                        remarque_tech_repair
-                        remarque_manager
-                        createdBy
-                        ignoreCount
-                        location_id
-                        di_category_id
-                        logs{idIgnore facture}
-                        array_composants {
-                            nameComposant
-                            quantity
-                        }
-                    }
-                    totalDiCount
-                }
+    getAllDi(first, rows, startDate?: any, endDate?: any) {
+        console.log('🍨[endDate]:', endDate);
+        console.log('🍌[startDate]:', startDate);
+        return gql`{
+    getAllDi(
+        paginationConfig: { first: ${first}, rows: ${rows} }, 
+        filterConfig: { startDate: "${
+            startDate ? startDate : null
+        }", endDate: "${endDate ? endDate : null}" }
+    ) {
+        di {
+            _id
+            final_price
+            price
+            title
+            description
+            can_be_repaired
+            bon_de_commande
+            bon_de_livraison
+            contain_pdr
+            facture
+            devis
+            status
+            createdAt
+            updatedAt
+            image
+            isErrorFromFixtronix
+            company_id
+            client_id
+            techRep
+            techDiag
+            remarque_tech_diagnostic
+            remarque_tech_repair
+            remarque_manager
+            createdBy
+            ignoreCount
+            location_id
+            di_category_id
+            logs {
+                idIgnore
+                facture
             }
-        `;
+            array_composants {
+                nameComposant
+                quantity
+            }
+        }
+        totalDiCount
+    }
+}
+`;
     }
 
     deleteDi(_id: string) {
@@ -676,7 +685,7 @@ export class TicketService {
             }
         `;
     }
-    nego1nego2_InMagasin_noFinalPrice(_id: string, price: number){
+    nego1nego2_InMagasin_noFinalPrice(_id: string, price: number) {
         return gql`
             mutation {
                 managerAdminManager_InMagasin(
@@ -1027,6 +1036,7 @@ export class TicketService {
                         remarque_tech_diagnostic
                         remarque_tech_repair
                         can_be_repaired
+                        di_category_id
                         contain_pdr
                         isErrorFromFixtronix
                         devis
@@ -1043,6 +1053,7 @@ export class TicketService {
                         price
                         final_price
                         isSentToCoordinator
+                        di_category_id
                         isConfirmedComponentFromCoordinator
                         remarque_tech_diagnostic
                         remarque_tech_repair
