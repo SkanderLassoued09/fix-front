@@ -1306,8 +1306,23 @@ export class TicketListComponent implements OnInit {
         });
     }
     // TODO cannot return null for non nullable field below
-    nego1nego2_InMagasin(_id: string, price, final_price) {
-        this.apollo
+    nego1nego2_InMagasin(_id: string, price, final_price?) {
+        console.log(_id,price,final_price,"id here ----------");
+       
+        if (final_price==undefined){
+            this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.nego1nego2_InMagasin_noFinalPrice(
+                    _id,
+                    price,
+                ),
+            })
+            .subscribe(({ data }) => {
+                console.log('data', data);
+            });
+        }
+        else{
+            this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.nego1nego2_InMagasin(
                     _id,
@@ -1318,6 +1333,8 @@ export class TicketListComponent implements OnInit {
             .subscribe(({ data }) => {
                 console.log('data', data);
             });
+        }
+       
     }
 
     //! Nan c bon

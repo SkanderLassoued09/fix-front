@@ -541,6 +541,7 @@
                             [modal]="true"
                             styleClass="p-fluid"
                             [draggable]="false"
+                            header="Création d'un nouveau composant"
                         >
                             <ng-template pTemplate="content">
                                 <form [formGroup]="composantTechnicien">
@@ -617,6 +618,7 @@
                                 </form>
                             </ng-template>
                             <ng-template pTemplate="footer">
+                                <label>Nom & Package sont des champs obligatoire</label>
                                 <p-button
                                     pRipple
                                     label="Cancel"
@@ -625,6 +627,9 @@
                                     (click)="closeComposantModal()"
                                 ></p-button>
                                 <p-button
+                                [disabled]=" 
+                               !composantTechnicien.get('packageComposant').value ||
+                               !composantTechnicien.get('name').value "
                                     pRipple
                                     label="Save"
                                     icon="pi pi-check"
@@ -660,7 +665,7 @@
                     <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
                     <button
                         *ngIf="ignoreCount == 0"
-                        [disabled]="disabledDiagnostiqueValue"
+                        [disabled]="disabledDiagnostiqueValue || !diagFormTech.get('remarqueTech').value"
                         pButton
                         pRipple
                         label="Fin diagnostique"
@@ -680,7 +685,7 @@
                     ></button>
                     <button
                         *ngIf="ignoreCount > 0"
-                        [disabled]="disabledDiagnostiqueRetourValue"
+                        [disabled]="disabledDiagnostiqueRetourValue || !diagFormTech.get('remarqueTech').value"
                         pButton
                         pRipple
                         label="Fin diagnostique retour"

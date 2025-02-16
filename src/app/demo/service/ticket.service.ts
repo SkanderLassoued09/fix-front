@@ -676,7 +676,20 @@ export class TicketService {
             }
         `;
     }
-
+    nego1nego2_InMagasin_noFinalPrice(_id: string, price: number){
+        return gql`
+            mutation {
+                managerAdminManager_InMagasin(
+                    _id: "${_id}"
+                    price: ${price}
+                    final_price: ${price}
+                ) {
+                    price
+                    final_price
+                }
+            }
+        `;
+    }
     nego1nego2_InMagasin(_id: string, price: number, final_price: number) {
         return gql`
             mutation {

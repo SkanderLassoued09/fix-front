@@ -85,6 +85,13 @@
             severity="danger"
         ></p-button>
         <p-button
+        [disabled]="
+        !clientForm.get('first_name').value ||
+        !clientForm.get('last_name').value||
+        !clientForm.get('region').value||
+        !clientForm.get('phone').value ||
+        !clientForm.get('address').value
+        "
             label="Ajouter"
             severity="success"
             [loading]="loading"
