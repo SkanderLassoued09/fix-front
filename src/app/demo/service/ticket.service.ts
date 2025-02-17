@@ -199,6 +199,7 @@ export class TicketService {
                     remarque_tech_diagnostic
                     remarque_tech_repair
                     price
+                    isErrorFromFixtronix
                     final_price
                     array_composants {
                         nameComposant

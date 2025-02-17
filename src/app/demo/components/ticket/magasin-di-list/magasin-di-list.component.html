@@ -8,7 +8,6 @@
     <p-button
         (click)="showDialogcomposantCreation()"
         icon="pi pi-briefcase"
-    
         severity="success"
         label="Creation d'un nouveau composant"
     ></p-button>
@@ -124,20 +123,20 @@
                 <div>
                     <label>Affecter Catégoire Composant</label>
                     <p-dropdown
-                                [options]="composantCategory"
-                                optionLabel="name"
-                                optionValue="name"
-                                placeholder="Choisir catégorie composant"
-                                class="mr-2-magasin dropdown-magasin"
-                                formControlName="category_composant_id"
-                            >
-                                <ng-template let-option pTemplate="item">
-                                    <p-tag
-                                        [value]="option.name"
-                                        [severity]="getSeverity(option.name)"
-                                    ></p-tag>
-                                </ng-template>
-                            </p-dropdown>
+                        [options]="composantCategory"
+                        optionLabel="name"
+                        optionValue="name"
+                        placeholder="Choisir catégorie composant"
+                        class="mr-2-magasin dropdown-magasin"
+                        formControlName="category_composant_id"
+                    >
+                        <ng-template let-option pTemplate="item">
+                            <p-tag
+                                [value]="option.name"
+                                [severity]="getSeverity(option.name)"
+                            ></p-tag>
+                        </ng-template>
+                    </p-dropdown>
                 </div>
                 <div class="link-container">
                     <label for="link" class="link-label">Lien composant</label>
@@ -281,7 +280,6 @@
                                     appendTo="body"
                                 ></p-calendar>
                             </div>
-
                         </div>
                     </div>
 
@@ -362,72 +360,69 @@
     </p-dialog>
 
     <p-dialog
-    [(visible)]="openCreationCategoryComposantModal"
-    [style]="{ width: '50%', height: '90vh' }"
-    header="Création Catégorie Composants"
-    [modal]="true"
-    styleClass="p-fluid"
-    [draggable]="false"
->
-    <form [formGroup]="addCategoryCompsant" class="form-layout">
-        <div class="form-field">
-            <label for="categoryName" class="form-label">Nom Catégorie</label>
-            <input
-                id="categoryName"
-                pInputText
-                type="text"
-                formControlName="categoryName"
-                class="input-text"
-            />
-        </div>
-        <button
-            [disabled]="!addCategoryCompsant.get('categoryName').value"
-            class="button-submit"
-            pButton
-            type="button"
-            (click)="addNewCategoryComposant()"
-        >
-            Créer catégoire
-        </button>
-    </form>
-
-    <p-table
-        [columns]="colCategoryComposants"
-        [value]="composantCatgorieList"
-        styleClass="p-datatable-sm"
-        [tableStyle]="{ 'min-width': '20rem' }"
-        class="data-table"
+        [(visible)]="openCreationCategoryComposantModal"
+        [style]="{ width: '50%', height: '90vh' }"
+        header="Création Catégorie Composants"
+        [modal]="true"
+        styleClass="p-fluid"
+        [draggable]="false"
     >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th
-                    *ngFor="let col of columns"
-                    class="table-header"
+        <form [formGroup]="addCategoryCompsant" class="form-layout">
+            <div class="form-field">
+                <label for="categoryName" class="form-label"
+                    >Nom Catégorie</label
                 >
-                    {{ col.header }}
-                </th>
-                <th class="table-header">Actions</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr class="table-row">
-                <td *ngFor="let col of columns" class="table-cell">
-                    {{ rowData[col.field] }}
-                </td>
-                <td class="table-cell">
-                    <p-button
-                        icon="pi pi-trash"
-                        severity="danger"
-                        (click)="deleteCategorycomposant(rowData)"
-                        class="button-delete"
-                    ></p-button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-</p-dialog>
+                <input
+                    id="categoryName"
+                    pInputText
+                    type="text"
+                    formControlName="categoryName"
+                    class="input-text"
+                />
+            </div>
+            <button
+                [disabled]="!addCategoryCompsant.get('categoryName').value"
+                class="button-submit"
+                pButton
+                type="button"
+                (click)="addNewCategoryComposant()"
+            >
+                Créer catégoire
+            </button>
+        </form>
 
-
+        <p-table
+            [columns]="colCategoryComposants"
+            [value]="composantCatgorieList"
+            styleClass="p-datatable-sm"
+            [tableStyle]="{ 'min-width': '20rem' }"
+            class="data-table"
+        >
+            <ng-template pTemplate="header" let-columns>
+                <tr>
+                    <th *ngFor="let col of columns" class="table-header">
+                        {{ col.header }}
+                    </th>
+                    <th class="table-header">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr class="table-row">
+                    <td *ngFor="let col of columns" class="table-cell">
+                        {{ rowData[col.field] }}
+                    </td>
+                    <td class="table-cell">
+                        <p-button
+                            icon="pi pi-trash"
+                            severity="danger"
+                            (click)="deleteCategorycomposant(rowData)"
+                            class="button-delete"
+                        ></p-button>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </p-dialog>
 
     <p-dialog
         [(visible)]="openCreationComposantModal"
@@ -547,13 +542,6 @@
                         mode="currency"
                         currency="TND"
                     ></p-inputNumber>
-                </div>
-            </div>
-
-            <div class="grid align-items-center">
-                <div class="col">
-                    <label for="link">Lien pour le composant</label>
-                    <input formControlName="link" pInputText />
                 </div>
             </div>
 

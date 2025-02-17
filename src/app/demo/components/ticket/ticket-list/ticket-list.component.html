@@ -1473,7 +1473,7 @@
             </div>
         </div>
 
-        <div class="form-group">
+        <div *ngIf="ticketData?.data?.PDR" class="form-group">
             Liste des composants:
             <!-- continue here spread all composant -->
             <p-table
@@ -1541,8 +1541,14 @@
                 <strong>Information Retour 1</strong>
             </div>
             <div class="pdr-Rep">
-                prix: {{ retour1InfoFromLogs.price ?? "N/A" }} final price:
-                {{ retour1InfoFromLogs.final_price ?? "N/A" }}
+                <div>
+                    Error Fixtronix
+                    {{ retour1InfoFromLogs.isErrorFromFixtronix }}
+                </div>
+                <div>
+                    prix: {{ retour1InfoFromLogs.price ?? "N/A" }} final price:
+                    {{ retour1InfoFromLogs.final_price ?? "N/A" }}
+                </div>
             </div>
             <div class="pdr-Rep">
                 <div>
