@@ -1199,7 +1199,7 @@ export class TicketService {
     removeComposant_Category(_id: string) {
         return gql`
             mutation {
-                removeComposant_Category(_id: "${_id}")
+                removeComposant_Category(_id: "${_id}"){isDeleted}
             }
         `;
     }
@@ -1275,7 +1275,11 @@ export class TicketService {
     removeCategory(_id: string) {
         return gql`
             mutation {
-                removeDiCategory(_id: "${_id}")
+                removeDiCategory(_id: "${_id}") {
+                    _id
+                    category
+                    isDeleted
+                }
             }
         `;
     }

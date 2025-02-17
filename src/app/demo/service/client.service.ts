@@ -47,7 +47,8 @@ export class ClientService {
     removeClient(_id: string) {
         return gql`
         mutation {
-            removeClient(_id:"${_id}")
+            removeClient(_id:"${_id}"){
+            isDeleted}
         }
     `;
     }

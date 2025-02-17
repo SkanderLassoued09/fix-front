@@ -75,7 +75,7 @@ export class CompanyService {
     removeCompany(_id: string) {
         return gql`
         mutation {
-            removeCompany(_id:"${_id}")
+            removeCompany(_id:"${_id}"){isDeleted}
         }
     `;
     }
