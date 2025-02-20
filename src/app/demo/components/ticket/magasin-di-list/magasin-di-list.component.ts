@@ -111,7 +111,7 @@ export class MagasinDiListComponent {
     colCategoryComposants = [
         { field: 'category_composant', header: 'Category Composant' },
     ];
-
+    
     constructor(
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
@@ -322,20 +322,13 @@ export class MagasinDiListComponent {
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            // add tostr and confirmation message
-                            console.log('🍷[data]:', data);
                             this.apollo
                                 .query<any>({
                                     query: this.ticketSerice.findAllComposant_Category(),
                                 })
                                 .subscribe(({ data }) => {
-                                    console.log(data, 'data all category');
                                     this.composantCatgorieList =
                                         data.findAllComposant_Category;
-                                    console.log(
-                                        this.composantCatgorieList,
-                                        'composantCatgorieList'
-                                    );
                                 });
                         }
                     });
@@ -818,6 +811,7 @@ export class MagasinDiListComponent {
                             summary: 'Success',
                             detail: 'Le composant a été créer',
                         });
+                        this.getAllComposant();
                         this.composantMagasin.reset();
                     }
                 });

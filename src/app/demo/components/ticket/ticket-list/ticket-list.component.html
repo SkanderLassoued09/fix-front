@@ -1359,7 +1359,7 @@
                         ticketData?.data?.can_be_repaired ? "OUI" : "NON"
                     }}</span>
                 </h6>
-                <h6>
+                <h6 *ngIf="ticketData?.data?.can_be_repaired == true">
                     Contient PDR:
                     <span>{{
                         ticketData?.data?.contain_pdr ? "OUI" : "NON"
@@ -1436,6 +1436,7 @@
         <div class="center-content-files">
             <div class="d-flex justify-content-between mb-3">
                 <a
+                *ngIf="ticketData?.data?.bon_de_livraison"
                     [href]="baseUrl + ticketData?.data?.bon_de_livraison"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1444,6 +1445,7 @@
                     Bon de Livraison
                 </a>
                 <a
+                *ngIf="ticketData?.data?.bon_de_commande"
                     [href]="baseUrl + ticketData?.data?.bon_de_commande"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1455,6 +1457,7 @@
 
             <div class="d-flex flex-column space-between p-3">
                 <a
+                *ngIf="ticketData?.data?.devis"
                     [href]="baseUrl + ticketData?.data?.devis"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1463,6 +1466,7 @@
                     DEVIS
                 </a>
                 <a
+                *ngIf="ticketData?.data?.facture"
                     [href]="baseUrl + ticketData?.data?.facture"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -1531,37 +1535,44 @@
         </div>
         -->
     </div>
+
+
+
+<!--RETOUR1-->
     <div>
         <div
             header="Information Retour 1"
             *ngIf="modalRetour1Info"
             class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
         >
-            <div>
-                <strong>Information Retour 1</strong>
+            <div style="display: flex; justify-content: center;padding-bottom: 2rem;">
+                <h5>Information Retour 1</h5>
             </div>
+            
+
             <div class="pdr-Rep">
+                <div>
+                    Prix Initial: <strong>{{ retour1InfoFromLogs.price ?? "N/A" }} </strong>
+                </div>
+                <div>
+                    Prix Finale:
+                    <strong> {{ retour1InfoFromLogs.final_price ?? "N/A" }}</strong>
+                </div>
                 <div>
                     Error Fixtronix
-                    {{ retour1InfoFromLogs.isErrorFromFixtronix }}
-                </div>
-                <div>
-                    prix: {{ retour1InfoFromLogs.price ?? "N/A" }} final price:
-                    {{ retour1InfoFromLogs.final_price ?? "N/A" }}
+                  <strong>{{ retour1InfoFromLogs.isErrorFromFixtronix ? "OUI":"NON" }}</strong>  
                 </div>
             </div>
             <div class="pdr-Rep">
                 <div>
-                    <strong class="font-semibold">Réperable:</strong>
-                    {{ retour1InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
+                    <div>Réperable:<strong> {{ retour1InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}</strong></div> 
                 </div>
-                <div>
-                    <strong class="font-semibold">Contient PDR:</strong>
-                    {{ retour1InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
+                <div *ngIf="retour1InfoFromLogs.can_be_repaired == true">
+                    <div  class="font-semibold">Contient PDR:<strong> {{ retour1InfoFromLogs.contain_pdr ? "OUI" : "NON" }}</strong></div>
                 </div>
             </div>
             <p-table
-                *ngIf="retour1InfoFromLogs.contain_pdr == true"
+                *ngIf="retour1InfoFromLogs.contain_pdr == true && retour1InfoFromLogs.can_be_repaired == true"
                 [value]="retour1InfoFromLogs.array_composants"
                 [tableStyle]="{ 'min-width': '20rem' }"
             >
@@ -1579,13 +1590,13 @@
                 </ng-template>
             </p-table>
             <div class="comments-retour">
-                <div>
-                    <strong class="font-semibold"
+                <div style="padding-bottom: 2rem;">
+                    <strong class="font-semibol" 
                         >Remarque Tech Diagnostique:</strong
                     >
                     {{ retour1InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
                 </div>
-                <div>
+                <div style="padding-bottom: 2rem;">
                     <strong class="font-semibold"
                         >Remarque Tech Reparation:</strong
                     >
@@ -1597,6 +1608,7 @@
                 <div class="center-content-files">
                     <div class="d-flex justify-content-between mb-3">
                         <a
+                        *ngIf="retour1InfoFromLogs?.bon_de_livraison"
                             [href]="
                                 baseUrl + retour1InfoFromLogs?.bon_de_livraison
                             "
@@ -1607,6 +1619,7 @@
                             Bon de Livraison Retour1
                         </a>
                         <a
+                        *ngIf="retour1InfoFromLogs?.bon_de_commande"
                             [href]="
                                 baseUrl + retour1InfoFromLogs?.bon_de_commande
                             "
@@ -1620,6 +1633,7 @@
 
                     <div class="d-flex flex-column gap-3">
                         <a
+                        *ngIf="retour1InfoFromLogs?.devis"
                             [href]="baseUrl + retour1InfoFromLogs?.devis"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -1628,6 +1642,7 @@
                             DEVIS Retour1
                         </a>
                         <a
+                        *ngIf="retour1InfoFromLogs?.facture"
                             [href]="baseUrl + retour1InfoFromLogs?.facture"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -1638,37 +1653,41 @@
                     </div>
                 </div>
             </div>
-            <p-button
-                severity="danger"
-                label="Fermer"
-                (click)="infoRetour1CLOSE()"
-            ></p-button>
         </div>
-
+<!---RETOUR2-->
         <div
             header="Information Retour 2"
             *ngIf="modalRetour2Info"
             class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
         >
-            <div>
-                <strong>Information Retour 2</strong>
+            <div style="display: flex; justify-content: center;padding-bottom: 2rem;">
+                <h5>Information Retour 2</h5>
             </div>
-            <div class="pdr-Rep">
-                prix: {{ retour2InfoFromLogs.price }} final price:
-                {{ retour2InfoFromLogs.final_price ?? "N/A" }}
-            </div>
+            
+
             <div class="pdr-Rep">
                 <div>
-                    <strong class="font-semibold">Réperable:</strong>
-                    {{ retour2InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
+                    Prix Initial: <strong>{{ retour2InfoFromLogs.price ?? "N/A" }} </strong>
                 </div>
                 <div>
-                    <strong class="font-semibold">Contient PDR:</strong>
-                    {{ retour2InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
+                    Prix Finale:
+                    <strong> {{ retour2InfoFromLogs.final_price ?? "N/A" }}</strong>
+                </div>
+                <div>
+                    Error Fixtronix
+                  <strong>{{ retour2InfoFromLogs.isErrorFromFixtronix ? "OUI":"NON" }}</strong>  
+                </div>
+            </div>
+            <div class="pdr-Rep">
+                <div>
+                    <div>Réperable:<strong> {{ retour2InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}</strong></div> 
+                </div>
+                <div *ngIf="retour2InfoFromLogs.can_be_repaired == true">
+                    <div  class="font-semibold">Contient PDR: <strong> {{ retour2InfoFromLogs.contain_pdr ? "OUI" : "NON" }}</strong></div>    
                 </div>
             </div>
             <p-table
-                *ngIf="retour2InfoFromLogs.contain_pdr == true"
+                *ngIf="retour2InfoFromLogs.contain_pdr == true && retour2InfoFromLogs.can_be_repaired == true"
                 [value]="retour2InfoFromLogs.array_composants"
                 [tableStyle]="{ 'min-width': '20rem' }"
             >
@@ -1686,13 +1705,13 @@
                 </ng-template>
             </p-table>
             <div class="comments-retour">
-                <div>
-                    <strong class="font-semibold"
+                <div style="padding-bottom: 2rem;">
+                    <strong class="font-semibol" 
                         >Remarque Tech Diagnostique:</strong
                     >
                     {{ retour2InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
                 </div>
-                <div>
+                <div style="padding-bottom: 2rem;">
                     <strong class="font-semibold"
                         >Remarque Tech Reparation:</strong
                     >
@@ -1704,6 +1723,7 @@
                 <div class="center-content-files">
                     <div class="d-flex justify-content-between mb-3">
                         <a
+                        *ngIf="retour2InfoFromLogs?.bon_de_livraison"
                             [href]="
                                 baseUrl + retour2InfoFromLogs?.bon_de_livraison
                             "
@@ -1714,6 +1734,7 @@
                             Bon de Livraison Retour2
                         </a>
                         <a
+                        *ngIf="retour2InfoFromLogs?.bon_de_commande"
                             [href]="
                                 baseUrl + retour2InfoFromLogs?.bon_de_commande
                             "
@@ -1727,6 +1748,7 @@
 
                     <div class="d-flex flex-column gap-3">
                         <a
+                        *ngIf="retour2InfoFromLogs?.devis"
                             [href]="baseUrl + retour2InfoFromLogs?.devis"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -1735,6 +1757,7 @@
                             DEVIS Retour2
                         </a>
                         <a
+                        *ngIf="retour2InfoFromLogs?.facture"
                             [href]="baseUrl + retour2InfoFromLogs?.facture"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -1745,37 +1768,41 @@
                     </div>
                 </div>
             </div>
-            <p-button
-                severity="danger"
-                label="Fermer"
-                (click)="infoRetour2CLOSE()"
-            ></p-button>
         </div>
-
+<!--RETOUR3-->
         <div
             header="Information Retour 3"
             *ngIf="modalRetour3Info"
-            class="p-4 border rounded-lg shadow-lg bg-gray-100"
+            class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
         >
-            <div>
-                <strong>Information Retour 3</strong>
+            <div style="display: flex; justify-content: center;padding-bottom: 2rem;">
+                <h5>Information Retour 3</h5>
             </div>
-            <div class="pdr-Rep">
-                prix: {{ retour3InfoFromLogs.price }} final price:
-                {{ retour3InfoFromLogs.final_price ?? "N/A" }}
-            </div>
+            
+
             <div class="pdr-Rep">
                 <div>
-                    <strong class="font-semibold">Réperable:</strong>
-                    {{ retour3InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}
+                    Prix Initial: <strong>{{ retour3InfoFromLogs.price ?? "N/A" }} </strong>
                 </div>
                 <div>
-                    <strong class="font-semibold">Contient PDR:</strong>
-                    {{ retour3InfoFromLogs.contain_pdr ? "OUI" : "NON" }}
+                    Prix Finale:
+                    <strong> {{ retour3InfoFromLogs.final_price ?? "N/A" }}</strong>
+                </div>
+                <div>
+                    Error Fixtronix
+                  <strong>{{ retour3InfoFromLogs.isErrorFromFixtronix ? "OUI":"NON" }}</strong>  
+                </div>
+            </div>
+            <div class="pdr-Rep">
+                <div>
+                    <div>Réperable:<strong> {{ retour3InfoFromLogs.can_be_repaired ? "OUI" : "NON" }}</strong></div> 
+                </div>
+                <div *ngIf="retour3InfoFromLogs.can_be_repaired == true">
+                    <div  class="font-semibold">Contient PDR:<strong> {{ retour3InfoFromLogs.contain_pdr ? "OUI" : "NON" }}</strong></div>       
                 </div>
             </div>
             <p-table
-                *ngIf="retour3InfoFromLogs.contain_pdr == true"
+                *ngIf="retour3InfoFromLogs.contain_pdr == true && retour3InfoFromLogs.can_be_repaired == true"
                 [value]="retour3InfoFromLogs.array_composants"
                 [tableStyle]="{ 'min-width': '20rem' }"
             >
@@ -1793,13 +1820,13 @@
                 </ng-template>
             </p-table>
             <div class="comments-retour">
-                <div>
-                    <strong class="font-semibold"
+                <div style="padding-bottom: 2rem;">
+                    <strong class="font-semibol" 
                         >Remarque Tech Diagnostique:</strong
                     >
                     {{ retour3InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
                 </div>
-                <div>
+                <div style="padding-bottom: 2rem;">
                     <strong class="font-semibold"
                         >Remarque Tech Reparation:</strong
                     >
@@ -1811,6 +1838,7 @@
                 <div class="center-content-files">
                     <div class="d-flex justify-content-between mb-3">
                         <a
+                        *ngIf="retour3InfoFromLogs?.bon_de_livraison"
                             [href]="
                                 baseUrl + retour3InfoFromLogs?.bon_de_livraison
                             "
@@ -1821,6 +1849,7 @@
                             Bon de Livraison Retour3
                         </a>
                         <a
+                        *ngIf="retour3InfoFromLogs?.bon_de_commande"
                             [href]="
                                 baseUrl + retour3InfoFromLogs?.bon_de_commande
                             "
@@ -1834,6 +1863,7 @@
 
                     <div class="d-flex flex-column gap-3">
                         <a
+                        *ngIf="retour3InfoFromLogs?.devis"
                             [href]="baseUrl + retour3InfoFromLogs?.devis"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -1842,6 +1872,7 @@
                             DEVIS Retour3
                         </a>
                         <a
+                        *ngIf="retour3InfoFromLogs?.facture"
                             [href]="baseUrl + retour3InfoFromLogs?.facture"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -1852,11 +1883,6 @@
                     </div>
                 </div>
             </div>
-            <p-button
-                severity="danger"
-                label="Fermer"
-                (click)="infoRetour3CLOSE()"
-            ></p-button>
         </div>
     </div>
 </p-dialog>

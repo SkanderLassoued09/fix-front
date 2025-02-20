@@ -789,27 +789,13 @@ p-dialog {
     align-items: center;
 
 }
-.pdr-rep {
+.pdr-Rep {
     display: flex;
-    justify-content: space-between;
-    padding: 2rem 1rem;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    justify-content: space-around;
+    padding-bottom: 1rem;
   }
   
-  .pdr-rep .price-info, .pdr-rep .repair-info {
-    flex: 1;
-    text-align: center;
-  }
-  
-  .pdr-rep h6 {
-    margin: 0.5rem 0;
-    color: #374151;
-  }
-  
-  .pdr-rep span {
-    font-weight: bold;
-    color: #111827;
-  }
+ 
 .comments-retour{
     padding-top:2rem;
     

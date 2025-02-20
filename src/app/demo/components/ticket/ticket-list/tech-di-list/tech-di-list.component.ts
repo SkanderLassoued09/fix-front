@@ -1254,7 +1254,7 @@ export class TechDiListComponent implements OnInit {
         // didn't put ignoreCount > 0  bcs button are only shown with that condition
         //send finish directly condition
         this.techRetourSendFinished = !(
-            isPdr === false && isErrorFromFixtronixTech === true
+            isPdr === false && isErrorFromFixtronixTech === true || isReperable === false
         );
         //send diag retou condition
         this.disabledDiagnostiqueRetourValue =

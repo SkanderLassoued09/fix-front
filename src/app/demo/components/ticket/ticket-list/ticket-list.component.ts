@@ -292,8 +292,8 @@ export class TicketListComponent implements OnInit {
         this.getDi(this.first, this.rows);
         this.getCompanyList();
         this.getClientList();
-        this.allCategoryDi();
-        this.getLocationList();
+        this.allCategoryDi(); 
+        this.getLocationList();  
         this.notificationService.startWorker();
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
@@ -316,25 +316,18 @@ export class TicketListComponent implements OnInit {
         this.updateticketView = true; // Open the update modal
     }
     infoRetour1OPEN() {
-        this.modalRetour1Info = true;
+        this.modalRetour1Info = !this.modalRetour1Info;
     }
-    infoRetour1CLOSE() {
-        this.modalRetour1Info = false;
-    }
+    
 
     infoRetour2OPEN() {
-        this.modalRetour2Info = true;
+        this.modalRetour2Info = !this.modalRetour2Info;
     }
-    infoRetour2CLOSE() {
-        this.modalRetour2Info = false;
-    }
-
+   
     infoRetour3OPEN() {
-        this.modalRetour3Info = true;
+        this.modalRetour3Info =  !this.modalRetour3Info;
     }
-    infoRetour3CLOSE() {
-        this.modalRetour3Info = false;
-    }
+  
 
     cancelUpdateDi() {
         this.openUpdateModal = false;
@@ -344,6 +337,7 @@ export class TicketListComponent implements OnInit {
     }
     showDialogLocations() {
         this.openLocationsModal = true;
+        this.getLocationList();
     }
 
     saveUpdateTicket() {
@@ -1539,6 +1533,7 @@ export class TicketListComponent implements OnInit {
                         ),
                     })
                     .subscribe(({ data }) => {
+                        console.log(data,'add category');
                         if (data) {
                             let obj: { value: string; category_name: string } =
                                 {
@@ -1622,6 +1617,8 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getAllLocation(),
             })
             .subscribe(({ data }) => {
+                console.log(data,'data LOCATIONS ');
+                
                 this.locationDropDown = data.findAllLocation.map((el) => ({
                     location_name: el.location_name,
                     value: el._id, // ID as value
@@ -1742,27 +1739,27 @@ export class TicketListComponent implements OnInit {
         }
     }
 
-    deletLocation(selected) {
+    deletLocation(rowData) {
+        console.log(rowData,'eee');
         this.confirmationService.confirm({
             message: 'Voulez-vous supprimer cette emplacement ?',
             header: 'Supprimer',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
+                console.log("DELETING now");
+                console.log(rowData,"data we gonna USE");
+                
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.deleteLocation(
-                            selected.value
+                            rowData.value
                         ),
                     })
+                    
                     .subscribe(({ data }) => {
                         if (data) {
-                            const index = this.locationDropDown.findIndex(
-                                (el) => {
-                                    return el.value === selected.value;
-                                }
-                            );
-
-                            this.locationDropDown.splice(index, 1);
+                        const index = this.locationDropDown.findIndex(el => el.value === rowData.value)
+                        this.locationDropDown.splice(index,1)
                         }
                     });
             },
@@ -1898,50 +1895,47 @@ export class TicketListComponent implements OnInit {
     }
 
     openTicketDetails(data: any) {
-        this.getLogsDi(data._id);
-        this.getLogsData(data._id).subscribe((pauseLogs) => {
-            // nezih
-            // this.ticketData = { ...data, ...pauseLogs, ...this.logsDi }; // Merge data and pauseLogs
+        Promise.all([
+            this.getLogsDi(data._id),
+            this.getLogsData(data._id).toPromise()
+        ]).then(([logsDi, pauseLogs]) => {
             this.ticketData = {
                 data: { ...data },
                 pauseLogs: { ...pauseLogs },
-                logsDi: { ...this.logsDi },
+                logsDi: { ...logsDi },
             };
             console.log(data, 'dtatatatata');
-            if (data.ignoreCount == 1) {
-                this.retour1InfoFromLogs = this.ticketData.logsDi[0];
-            } else if (data.ignoreCount == 2) {
-                this.retour1InfoFromLogs = this.logsDi[0];
-                this.retour2InfoFromLogs = this.logsDi[1];
-            } else if (data.ignoreCount == 3) {
-                this.retour1InfoFromLogs = this.logsDi[0];
-                this.retour2InfoFromLogs = this.logsDi[1];
-                this.retour3InfoFromLogs = this.logsDi[2];
+    
+            if (data.ignoreCount >= 1) {
+                this.retour1InfoFromLogs = logsDi[0];
             }
-
+            if (data.ignoreCount >= 2) {
+                this.retour2InfoFromLogs = logsDi[1];
+            }
+            if (data.ignoreCount >= 3) {
+                this.retour3InfoFromLogs = logsDi[2];
+            }
+    
             this.ignoreCountForBtns = data.ignoreCount;
             console.log(data.ignoreCount, 'ignoreCountignoreCount');
-
+    
             this.ticketDetailsInfo = true; // Open the dialog
             console.log('data inside =>', this.ticketData.data);
+        }).catch(error => {
+            console.error("Error fetching logs:", error);
         });
     }
 
     getLogsDi(_id: string) {
-        this.apollo
+        return this.apollo
             .query<any>({ query: this.ticketSerice.getLogsDi(_id) })
-            .subscribe(({ data }) => {
-                if (data) {
-                    this.logsDi = data.getAllLogsByDi;
-                }
-            });
+            .toPromise()
+            .then(({ data }) => data?.getAllLogsByDi || []);
     }
 
     getLogsData(_id: string) {
         return this.apollo
-            .query<any>({
-                query: this.ticketSerice.getLogsPause(_id),
-            })
-            .pipe(map(({ data }) => data?.getStatByIdlogs));
+            .query<any>({ query: this.ticketSerice.getLogsPause(_id) })
+            .pipe(map(({ data }) => data?.getStatByIdlogs || []));
     }
 }
