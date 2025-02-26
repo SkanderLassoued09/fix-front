@@ -5,10 +5,10 @@ import { InMemoryCache, ApolloLink, split } from '@apollo/client/core';
 import { setContext } from '@apollo/client/link/context';
 
 import { Observable, getMainDefinition } from '@apollo/client/utilities';
-// import { URL } from "./URLs";
 import { NgModule } from '@angular/core';
+import { environment } from 'src/environments/environment';
 
-const uri = 'http://localhost:3000/graphql';
+const uri = `${environment.apiUrl}/graphql`;
 
 export function createApollo(httpLink: HttpLink) {
     const basic = setContext((operation, context) => ({
@@ -43,7 +43,7 @@ export function createApollo(httpLink: HttpLink) {
             const { clientAwareness } = context;
 
             const ws = new WebSocket(
-                `ws://localhost:3000/graphql`,
+                `ws://${environment.apiUrl}/graphql`,
                 'graphql-ws'
             );
 
