@@ -111,8 +111,9 @@
 
             <ng-container *ngIf="selectedItem">
                 <div class="grid align-items-center">
+                    
                     <div class="col">
-                        <label for="name">Nom du composant</label>
+                        <label for="name">Nom du composant 222</label>
                         <input formControlName="name" pInputText />
                     </div>
                     <div class="col">
@@ -443,6 +444,12 @@
                     placeholder="Choisir composant"
                 ></p-dropdown>
             </div>
+
+            <div  class="id-field">
+                <label for="_id">Identifiant</label>
+               <strong><span >{{ composantMagasin.get('_id')?.value }}</span></strong> 
+            </div>
+
             <div class="field">
                 <label for="name">Nom du composant</label>
                 <input
@@ -625,8 +632,18 @@
                     <button
                         pButton
                         pRipple
+                        label="Supprimer"
+                        icon="pi pi-minus-circle"
+                        (click)="deletComposant()"
+                        class="p-button-text"
+                    ></button>
+                </div>
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
                         [label]="isToUpdate ? 'Update' : 'Add'"
-                        icon="pi pi-check-circle"
+                        icon="pi pi-trash"
                         class="p-button-text"
                         (click)="addComposant()"
                     ></button>

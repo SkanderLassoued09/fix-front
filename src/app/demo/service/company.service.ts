@@ -20,6 +20,8 @@ export class CompanyService {
                         Exoneration: "${companyInfo.Exoneration}"
                         fax: "${companyInfo.fax}"
                         webSiteLink: "${companyInfo.website}"
+                        mf: "${companyInfo.mf}"
+                        rne: "${companyInfo.rne}"
                         activitePrincipale: "${companyInfo.activitePrincipale}"
                         activiteSecondaire: "${companyInfo.activiteSecondaire}"
                         serviceAchat: { name: "${companyInfo.achat.fullName}", email: "${companyInfo.achat.email}", phone: "${companyInfo.achat.phone}" }

@@ -311,6 +311,14 @@ export class TicketService {
                 }
             }`;
     }
+   
+    findLocationById(locationId: string) {
+        return gql`
+            {
+              findOneLocation(_id:"${locationId}"){_id location_name}
+            }
+        `;
+    }
 
     getDataForTech(startDate?: string, endDate?: string) {
         return gql`
@@ -337,6 +345,7 @@ export class TicketService {
                     remarque_coordinator
                     remarque_admin_manager
                     remarque_tech_diagnostic
+                    description
                     di_category_id
                 }
             }
@@ -1063,6 +1072,9 @@ export class TicketService {
                         bon_de_commande
                         contain_pdr
                         image
+                        nSerie
+                        location_id
+                        description
                         array_composants {
                             nameComposant
                             quantity

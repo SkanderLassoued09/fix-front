@@ -52,6 +52,7 @@ export class MagasinDiListComponent {
     //MagasinCondition: boolean = true;
 
     composantMagasin = new FormGroup({
+        _id:new FormControl(),
         name: new FormControl(),
         packageComposant: new FormControl(),
         category_composant_id: new FormControl(),
@@ -121,6 +122,7 @@ export class MagasinDiListComponent {
         private notificationService: NotificationService
     ) {
         this.formUpdateComposant = new FormGroup({
+            _id: new FormControl(null),
             name: new FormControl(null, Validators.required),
             package: new FormControl(null, Validators.required),
             category_composant_id: new FormControl(null, Validators.required),
@@ -306,6 +308,23 @@ export class MagasinDiListComponent {
                 );
             });
     }
+
+
+    deletComposant(){
+        console.log("delete not working");
+    
+        this.confirmationService.confirm({
+            message: 'Voulez-vous Supprimer ce composant ?',
+            header: 'Confirmation Suppression',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                
+            },
+        })
+    }
+
+
+
     deleteCategorycomposant(rowData) {
         console.log(rowData._id, 'rowdata here');
 
@@ -431,6 +450,7 @@ export class MagasinDiListComponent {
                     if (data) {
                         // Initialize form fields with loaded data
                         this.composantMagasin.patchValue({
+                            _id:this.loadedDataComposant._id,
                             name: this.loadedDataComposant.name,
                             packageComposant: this.loadedDataComposant.package,
                             category_composant_id:
@@ -601,6 +621,7 @@ export class MagasinDiListComponent {
                         );
                         // Initialize form fields with loaded data
                         this.formUpdateComposant.patchValue({
+                            _id: this.loadedDataComposant._id,
                             name: this.loadedDataComposant.name,
                             package: this.loadedDataComposant.package,
                             category_composant_id:
@@ -806,6 +827,7 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data }) => {
                     if (data) {
+                        console.log("data inside function",data)
                         this.messageservice.add({
                             severity: 'success',
                             summary: 'Success',
