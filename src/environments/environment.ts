@@ -4,7 +4,7 @@
 
 export const environment = {
     production: false,
-    apiUrl: 'http://192.168.1.29:3000', // Replace "/api" with your actual API endpoint
+    apiUrl: 'http://localhost:3000', // Replace "/api" with your actual API endpoint
     host: 'http://192.168.1.29:4200', // Front-end host
 };
 

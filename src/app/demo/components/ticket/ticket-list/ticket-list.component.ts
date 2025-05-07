@@ -164,7 +164,7 @@ export class TicketListComponent implements OnInit {
     ingredient;
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_id', header: 'ID' },
+        { field: '_idnum', header: 'ID' },
         { field: 'title', header: 'Titre' },
         { field: 'image', header: 'Image' },
         { field: 'location_id', header: 'Location' },
@@ -292,8 +292,8 @@ export class TicketListComponent implements OnInit {
         this.getDi(this.first, this.rows);
         this.getCompanyList();
         this.getClientList();
-        this.allCategoryDi(); 
-        this.getLocationList();  
+        this.allCategoryDi();
+        this.getLocationList();
         this.notificationService.startWorker();
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
@@ -318,16 +318,14 @@ export class TicketListComponent implements OnInit {
     infoRetour1OPEN() {
         this.modalRetour1Info = !this.modalRetour1Info;
     }
-    
 
     infoRetour2OPEN() {
         this.modalRetour2Info = !this.modalRetour2Info;
     }
-   
+
     infoRetour3OPEN() {
-        this.modalRetour3Info =  !this.modalRetour3Info;
+        this.modalRetour3Info = !this.modalRetour3Info;
     }
-  
 
     cancelUpdateDi() {
         this.openUpdateModal = false;
@@ -940,6 +938,7 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getAllDi(first, rows, start, end),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log('🥔[data]:', data);
                 if (data) {
                     this.diList = data.getAllDi.di;
                     console.log('🥐[ this.diList]:', this.diList);
@@ -1533,7 +1532,7 @@ export class TicketListComponent implements OnInit {
                         ),
                     })
                     .subscribe(({ data }) => {
-                        console.log(data,'add category');
+                        console.log(data, 'add category');
                         if (data) {
                             let obj: { value: string; category_name: string } =
                                 {
@@ -1617,8 +1616,8 @@ export class TicketListComponent implements OnInit {
                 query: this.ticketSerice.getAllLocation(),
             })
             .subscribe(({ data }) => {
-                console.log(data,'data LOCATIONS ');
-                
+                console.log(data, 'data LOCATIONS ');
+
                 this.locationDropDown = data.findAllLocation.map((el) => ({
                     location_name: el.location_name,
                     value: el._id, // ID as value
@@ -1740,26 +1739,28 @@ export class TicketListComponent implements OnInit {
     }
 
     deletLocation(rowData) {
-        console.log(rowData,'eee');
+        console.log(rowData, 'eee');
         this.confirmationService.confirm({
             message: 'Voulez-vous supprimer cette emplacement ?',
             header: 'Supprimer',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                console.log("DELETING now");
-                console.log(rowData,"data we gonna USE");
-                
+                console.log('DELETING now');
+                console.log(rowData, 'data we gonna USE');
+
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.deleteLocation(
                             rowData.value
                         ),
                     })
-                    
+
                     .subscribe(({ data }) => {
                         if (data) {
-                        const index = this.locationDropDown.findIndex(el => el.value === rowData.value)
-                        this.locationDropDown.splice(index,1)
+                            const index = this.locationDropDown.findIndex(
+                                (el) => el.value === rowData.value
+                            );
+                            this.locationDropDown.splice(index, 1);
                         }
                     });
             },
@@ -1897,33 +1898,35 @@ export class TicketListComponent implements OnInit {
     openTicketDetails(data: any) {
         Promise.all([
             this.getLogsDi(data._id),
-            this.getLogsData(data._id).toPromise()
-        ]).then(([logsDi, pauseLogs]) => {
-            this.ticketData = {
-                data: { ...data },
-                pauseLogs: { ...pauseLogs },
-                logsDi: { ...logsDi },
-            };
-            console.log(data, 'dtatatatata');
-    
-            if (data.ignoreCount >= 1) {
-                this.retour1InfoFromLogs = logsDi[0];
-            }
-            if (data.ignoreCount >= 2) {
-                this.retour2InfoFromLogs = logsDi[1];
-            }
-            if (data.ignoreCount >= 3) {
-                this.retour3InfoFromLogs = logsDi[2];
-            }
-    
-            this.ignoreCountForBtns = data.ignoreCount;
-            console.log(data.ignoreCount, 'ignoreCountignoreCount');
-    
-            this.ticketDetailsInfo = true; // Open the dialog
-            console.log('data inside =>', this.ticketData.data);
-        }).catch(error => {
-            console.error("Error fetching logs:", error);
-        });
+            this.getLogsData(data._id).toPromise(),
+        ])
+            .then(([logsDi, pauseLogs]) => {
+                this.ticketData = {
+                    data: { ...data },
+                    pauseLogs: { ...pauseLogs },
+                    logsDi: { ...logsDi },
+                };
+                console.log(data, 'dtatatatata');
+
+                if (data.ignoreCount >= 1) {
+                    this.retour1InfoFromLogs = logsDi[0];
+                }
+                if (data.ignoreCount >= 2) {
+                    this.retour2InfoFromLogs = logsDi[1];
+                }
+                if (data.ignoreCount >= 3) {
+                    this.retour3InfoFromLogs = logsDi[2];
+                }
+
+                this.ignoreCountForBtns = data.ignoreCount;
+                console.log(data.ignoreCount, 'ignoreCountignoreCount');
+
+                this.ticketDetailsInfo = true; // Open the dialog
+                console.log('data inside =>', this.ticketData.data);
+            })
+            .catch((error) => {
+                console.error('Error fetching logs:', error);
+            });
     }
 
     getLogsDi(_id: string) {
