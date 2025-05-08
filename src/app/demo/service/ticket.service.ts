@@ -33,6 +33,7 @@ export class TicketService {
     ) {
         di {
             _id
+            _idnum
             final_price
             price
             title
@@ -1203,7 +1204,7 @@ export class TicketService {
     }
 
     deleteLocation(_id: string) {
-        console.log(_id,'çf');
+        console.log(_id, 'çf');
         return gql`
             mutation {
                 removeLocation(_id: "${_id}")
