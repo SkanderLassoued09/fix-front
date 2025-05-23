@@ -1059,6 +1059,7 @@ export class TicketService {
                     }
                     di {
                         _id
+                        _idnum
                         ignoreCount
                         di_category_id
                         price

@@ -1230,7 +1230,7 @@ export class TicketListComponent implements OnInit {
                         location,
                         image: this.payload.file,
                     };
-
+                    console.log('data used is ',diInfo)
                     let _idQuery;
 
                     this.apollo
@@ -1247,7 +1247,7 @@ export class TicketListComponent implements OnInit {
                                     summary: 'Success',
                                     detail: 'La demande service ajouté',
                                 });
-                                _idQuery = data.createDi._id;
+                                //_idQuery = data.createDi._id;
 
                                 this.creationDiForm.reset();
                                 this.payload.file = '';

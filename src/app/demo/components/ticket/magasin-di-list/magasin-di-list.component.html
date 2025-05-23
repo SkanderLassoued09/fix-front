@@ -121,7 +121,7 @@
                         <input formControlName="package" pInputText />
                     </div>
                 </div>
-                <div>
+                <div> 
                     <label>Affecter Catégoire Composant</label>
                     <p-dropdown
                         [options]="composantCategory"
@@ -260,7 +260,7 @@
                                 >
                                     <p-button
                                         *ngIf="instantSelectedcPDF"
-                                        label="Consulter PDF"
+                                        label="Consulter Datasheet"
                                         [link]="true"
                                     ></p-button>
                                 </a>
@@ -460,7 +460,24 @@
                     required
                 />
             </div>
-
+            
+            <label>Catégoire Composant</label>
+            <p-dropdown
+                [options]="composantCategory"
+                optionLabel="name"
+                optionValue="name"
+                placeholder="Choisir catégorie composant"
+                class="mr-2-magasin dropdown-magasin"
+                formControlName="category_composant_id"
+            >
+                <ng-template let-option pTemplate="item">
+                    <p-tag
+                        [value]="option.name"
+                        [severity]="getSeverity(option.name)"
+                    ></p-tag>
+                </ng-template>
+            </p-dropdown>
+        
             <div class="field">
                 <label for="packageComposant">Package composant</label>
                 <input
@@ -553,28 +570,7 @@
             </div>
 
             <div class="row">
-                <!-- <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <label for="status" class="mr-2"
-                            >Choisir categorie</label
-                        >
-                        <p-dropdown
-                            [options]="statusComposant"
-                            formControlName="category_composant_id"
-                            optionLabel="name"
-                            optionValue="value"
-                            placeholder="Choisir état"
-                            class="mr-2"
-                        >
-                            <ng-template let-option pTemplate="item">
-                                <p-tag
-                                    [value]="option.name"
-                                    [severity]="getSeverity(option.name)"
-                                ></p-tag>
-                            </ng-template>
-                        </p-dropdown>
-                    </div>
-                </div> -->
+               
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <label for="status" class="mr-2"

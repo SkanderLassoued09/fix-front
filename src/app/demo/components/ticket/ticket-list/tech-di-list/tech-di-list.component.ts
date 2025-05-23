@@ -191,6 +191,7 @@ export class TechDiListComponent implements OnInit {
     isToggleEnabled: any;
     composantCategory: any;
     emplacement: any;
+    _idnum: any;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -537,6 +538,8 @@ export class TechDiListComponent implements OnInit {
 
 
             console.log('🌰[diagnosticData]:', diagnosticData);
+           
+            this._idnum = diagnosticData.data.getDiById.di._idnum
             console.log('[emplacement]:', diagnosticData.data.getDiById.di.location_id);
             // Process retour data
 
@@ -563,8 +566,9 @@ export class TechDiListComponent implements OnInit {
 
                 // Set remaining properties
                 this.di = { ...di };
-
+               
                 this.selectedDi = di._id;
+                
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
                 this.diStatus = di.status;

@@ -1365,6 +1365,26 @@
                         ticketData?.data?.contain_pdr ? "OUI" : "NON"
                     }}</span>
                 </h6>
+                <p-table
+                *ngIf="ticketData?.data?.can_be_repaired == true"
+                            [value]="ticketData?.data?.array_composants"
+                            [paginator]="true"
+                            [rows]="10"
+                            [responsiveLayout]="'scroll'"
+                        >
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Nom du Composant</th>
+                                    <th>Quantité</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-composant>
+                                <tr>
+                                    <td>{{ composant.nameComposant }}</td>
+                                    <td>{{ composant.quantity }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
             </div>
         </div>
 
@@ -1591,6 +1611,28 @@
                             }}</strong
                         >
                     </div>
+                    <div   *ngIf="retour1InfoFromLogs.contain_pdr == true" >
+                        <p-table
+                            [value]="retour1InfoFromLogs.array_composants"
+                            [paginator]="true"
+                            [rows]="10"
+                            [responsiveLayout]="'scroll'"
+                        >
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Nom du Composant</th>
+                                    <th>Quantité</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-composant>
+                                <tr>
+                                    <td>{{ composant.nameComposant }}</td>
+                                    <td>{{ composant.quantity }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+                    
                 </div>
             </div>
             <p-table
@@ -1734,6 +1776,28 @@
                             }}</strong
                         >
                     </div>
+                    <div   *ngIf="retour2InfoFromLogs.contain_pdr == true" >
+                    <p-table
+                            [value]="retour2InfoFromLogs.array_composants"
+                            [paginator]="true"
+                            [rows]="10"
+                            [responsiveLayout]="'scroll'"
+                        >
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Nom du Composant</th>
+                                    <th>Quantité</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-composant>
+                                <tr>
+                                    <td>{{ composant.nameComposant }}</td>
+                                    <td>{{ composant.quantity }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+                    
                 </div>
             </div>
             <p-table
@@ -1876,6 +1940,28 @@
                             }}</strong
                         >
                     </div>
+                    <div   *ngIf="retour3InfoFromLogs.contain_pdr == true" >
+                    <p-table
+                            [value]="retour3InfoFromLogs.array_composants"
+                            [paginator]="true"
+                            [rows]="10"
+                            [responsiveLayout]="'scroll'"
+                        >
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Nom du Composant</th>
+                                    <th>Quantité</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-composant>
+                                <tr>
+                                    <td>{{ composant.nameComposant }}</td>
+                                    <td>{{ composant.quantity }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+                    
                 </div>
             </div>
             <p-table
