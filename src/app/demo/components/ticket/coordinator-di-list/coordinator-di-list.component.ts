@@ -323,19 +323,14 @@ export class CoordinatorDiListComponent {
             this.magasinsentToCoordinator =
                 highestIgnoreLog.isSentToCoordinator;
             this.componentConfirmedFromCoordinator =
-                highestIgnoreLog.isConfirmedComponentFromCoordinator;
+                highestIgnoreLog.handleSendingNotificationBetweenCoordinatorAndMagasin;
             console.log('highestIgnoreLog', highestIgnoreLog);
         } else {
             this.magasinsentToCoordinator = di.isSentToCoordinator;
             this.componentConfirmedFromCoordinator =
-                di.isConfirmedComponentFromCoordinator;
+                di.handleSendingNotificationBetweenCoordinatorAndMagasin;
         }
 
-        console.log(
-            'magasinsentToCoordinator componentConfirmedFromCoordinator ',
-            this.componentConfirmedFromCoordinator,
-            this.magasinsentToCoordinator
-        );
         this.openBtnConfirm = di.isSentToCoordinator;
         this.remarque_manager = di.remarque_manager;
         this.remarque_admin_manager = di.remarque_admin_manager;
@@ -553,7 +548,7 @@ export class CoordinatorDiListComponent {
                         if (data) {
                             console.log('🌯[data]:', data);
                             this.componentConfirmedFromCoordinator =
-                                data.componentConfirmedFromCoordinator.isConfirmedComponentFromCoordinator;
+                                data.componentConfirmedFromCoordinator.handleSendingNotificationBetweenCoordinatorAndMagasin;
                             this.getDi(this.first, this.rows);
                             this.diDialog = false;
                             this.reperationCondition = true;

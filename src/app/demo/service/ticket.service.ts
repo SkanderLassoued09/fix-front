@@ -113,6 +113,7 @@ export class TicketService {
                         remarque_coordinator
                         ignoreCount
                         createdBy
+                        handleSendingNotificationBetweenCoordinatorAndMagasin
                         logs{idIgnore isSentToCoordinator isConfirmedComponentFromCoordinator}
                         location_id
                         di_category_id
@@ -981,6 +982,7 @@ export class TicketService {
                     }
                     isSentToCoordinator
                     isConfirmedComponentFromCoordinator
+                    handleSendingNotificationBetweenCoordinatorAndMagasin
                 }
             }
         `;
@@ -998,6 +1000,7 @@ export class TicketService {
                     }
                     isSentToCoordinator
                     isConfirmedComponentFromCoordinator
+                    handleSendingNotificationBetweenCoordinatorAndMagasin
                 }
             }
         `;
@@ -1042,6 +1045,7 @@ export class TicketService {
                         contain_pdr
                         isErrorFromFixtronix
                         devis
+                        handleSendingNotificationBetweenCoordinatorAndMagasin
                         bon_de_commande
                         array_composants {
                             nameComposant
@@ -1053,6 +1057,7 @@ export class TicketService {
                         ignoreCount
                         di_category_id
                         price
+                        handleSendingNotificationBetweenCoordinatorAndMagasin
                         final_price
                         isSentToCoordinator
                         di_category_id

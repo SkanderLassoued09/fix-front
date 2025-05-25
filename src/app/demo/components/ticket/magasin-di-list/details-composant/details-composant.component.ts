@@ -49,7 +49,7 @@ export class DetailsComposantComponent implements OnInit {
     composantValues: Composant;
     isActive: boolean;
     private _id: string;
-    isSentToCoordinator: boolean = false;
+    isSentToCoordinator: string;
     componentInfo: any;
     componentsAreConfirmed: boolean;
     dateArrivage: string;
@@ -148,22 +148,15 @@ export class DetailsComposantComponent implements OnInit {
                         );
                         if (filtredLogsDi) {
                             this.isSentToCoordinator =
-                                filtredLogsDi.isSentToCoordinator;
+                                filtredLogsDi.handleSendingNotificationBetweenCoordinatorAndMagasin;
                             this.componentsAreConfirmed =
                                 filtredLogsDi.isConfirmedComponentFromCoordinator;
                             this.composants = filtredLogsDi.array_composants;
-
-                            console.log(
-                                'this.isSentToCoordinator',
-                                this.isSentToCoordinator,
-                                'this.componentsAreConfirmed',
-                                this.componentsAreConfirmed
-                            );
                         }
                     } else {
                         console.log('🍕[data]:', data);
                         this.isSentToCoordinator =
-                            data.getDiById.di.isSentToCoordinator;
+                            data.getDiById.di.handleSendingNotificationBetweenCoordinatorAndMagasin;
                         this.componentsAreConfirmed =
                             data.getDiById.di.isConfirmedComponentFromCoordinator;
                         this.composants = data.getDiById.di.array_composants;
@@ -193,7 +186,7 @@ export class DetailsComposantComponent implements OnInit {
                                 data
                             );
                             this.isSentToCoordinator =
-                                data.sendComponentToConMagasinForConfirmation.isSentToCoordinator;
+                                data.sendComponentToConMagasinForConfirmation.handleSendingNotificationBetweenCoordinatorAndMagasin;
                         }
                     });
             },

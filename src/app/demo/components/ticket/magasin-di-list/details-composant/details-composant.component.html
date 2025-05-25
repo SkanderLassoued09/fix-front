@@ -11,9 +11,7 @@
                 <div class="button-group improved-button-group">
                     <p-button
                         severity="help"
-                        [disabled]="
-                            componentsAreConfirmed
-                        "
+                        [disabled]="isSentToCoordinator !== 'IN_COORDINATOR'"
                         label="Confirmer les composants"
                         [raised]="true"
                         size="small"
@@ -35,7 +33,7 @@
                         (click)="updateComposant()"
                     ></p-button>
                     <p-button
-                        [disabled]="!componentsAreConfirmed "
+                        [disabled]="!componentsAreConfirmed"
                         label="Fin liste composants"
                         [raised]="true"
                         size="small"
