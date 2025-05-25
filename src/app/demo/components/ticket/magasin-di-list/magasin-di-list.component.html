@@ -111,8 +111,9 @@
 
             <ng-container *ngIf="selectedItem">
                 <div class="grid align-items-center">
+                    
                     <div class="col">
-                        <label for="name">Nom du composant</label>
+                        <label for="name">Nom du composant 222</label>
                         <input formControlName="name" pInputText />
                     </div>
                     <div class="col">
@@ -120,7 +121,7 @@
                         <input formControlName="package" pInputText />
                     </div>
                 </div>
-                <div>
+                <div> 
                     <label>Affecter Catégoire Composant</label>
                     <p-dropdown
                         [options]="composantCategory"
@@ -259,7 +260,7 @@
                                 >
                                     <p-button
                                         *ngIf="instantSelectedcPDF"
-                                        label="Consulter PDF"
+                                        label="Consulter Datasheet"
                                         [link]="true"
                                     ></p-button>
                                 </a>
@@ -443,6 +444,12 @@
                     placeholder="Choisir composant"
                 ></p-dropdown>
             </div>
+
+            <div  class="id-field">
+                <label for="_id">Identifiant</label>
+               <strong><span >{{ composantMagasin.get('_id')?.value }}</span></strong> 
+            </div>
+
             <div class="field">
                 <label for="name">Nom du composant</label>
                 <input
@@ -453,7 +460,24 @@
                     required
                 />
             </div>
-
+            
+            <label>Catégoire Composant</label>
+            <p-dropdown
+                [options]="composantCategory"
+                optionLabel="name"
+                optionValue="name"
+                placeholder="Choisir catégorie composant"
+                class="mr-2-magasin dropdown-magasin"
+                formControlName="category_composant_id"
+            >
+                <ng-template let-option pTemplate="item">
+                    <p-tag
+                        [value]="option.name"
+                        [severity]="getSeverity(option.name)"
+                    ></p-tag>
+                </ng-template>
+            </p-dropdown>
+        
             <div class="field">
                 <label for="packageComposant">Package composant</label>
                 <input
@@ -546,28 +570,7 @@
             </div>
 
             <div class="row">
-                <!-- <div class="col-md-6">
-                    <div class="d-flex align-items-center">
-                        <label for="status" class="mr-2"
-                            >Choisir categorie</label
-                        >
-                        <p-dropdown
-                            [options]="statusComposant"
-                            formControlName="category_composant_id"
-                            optionLabel="name"
-                            optionValue="value"
-                            placeholder="Choisir état"
-                            class="mr-2"
-                        >
-                            <ng-template let-option pTemplate="item">
-                                <p-tag
-                                    [value]="option.name"
-                                    [severity]="getSeverity(option.name)"
-                                ></p-tag>
-                            </ng-template>
-                        </p-dropdown>
-                    </div>
-                </div> -->
+               
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <label for="status" class="mr-2"
@@ -625,8 +628,18 @@
                     <button
                         pButton
                         pRipple
+                        label="Supprimer"
+                        icon="pi pi-minus-circle"
+                        (click)="deletComposant()"
+                        class="p-button-text"
+                    ></button>
+                </div>
+                <div class="field">
+                    <button
+                        pButton
+                        pRipple
                         [label]="isToUpdate ? 'Update' : 'Add'"
-                        icon="pi pi-check-circle"
+                        icon="pi pi-trash"
                         class="p-button-text"
                         (click)="addComposant()"
                     ></button>

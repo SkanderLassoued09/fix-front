@@ -119,6 +119,7 @@ export class TechDiListComponent implements OnInit {
     hasPdr: boolean;
     isReperable: boolean;
     remarque_manager: string;
+    description:string;
     remarque_admin_manager: string;
     remarque_admin_tech: string;
     remarque_tech_diagnostic: string;
@@ -189,6 +190,8 @@ export class TechDiListComponent implements OnInit {
     diData: any[];
     isToggleEnabled: any;
     composantCategory: any;
+    emplacement: any;
+    _idnum: any;
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -522,7 +525,22 @@ export class TechDiListComponent implements OnInit {
             const [retourData, categoryData, diagnosticData, ...otherResults] =
                 await Promise.all(promises);
 
+
+
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.findLocationById(diagnosticData.data.getDiById.di.location_id),
+                }).subscribe(({ data }) => {
+                    if (data) {
+                        this.emplacement = data.findOneLocation.location_name
+                    }
+                });
+
+
             console.log('🌰[diagnosticData]:', diagnosticData);
+           
+            this._idnum = diagnosticData.data.getDiById.di._idnum
+            console.log('[emplacement]:', diagnosticData.data.getDiById.di.location_id);
             // Process retour data
 
             if (retourData?.data?.getRetourDataStats?.length > 0) {
@@ -548,8 +566,9 @@ export class TechDiListComponent implements OnInit {
 
                 // Set remaining properties
                 this.di = { ...di };
-
+               
                 this.selectedDi = di._id;
+                
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
                 this.diStatus = di.status;
@@ -824,6 +843,7 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {
                 if (data) {
+                    this.description = data.getAllRemarque.description;
                     this.remarque_manager =
                         data.getAllRemarque.remarque_manager;
                     this.remarque_admin_manager =

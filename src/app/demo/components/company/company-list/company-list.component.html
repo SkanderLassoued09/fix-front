@@ -16,23 +16,14 @@
     <form [formGroup]="companyForm" class="grid grid-cols-3 gap-4 mt-4">
         <div class="p-float-label mb-4">
             <input
-                formControlName="companyName"
+                formControlName="raisonSociale"
                 pInputText
-                id="companyName"
+                id="raisonSociale"
                 class="pInputText w-full"
             />
-            <label for="companyName">Nom de la société</label>
+            <label for="raisonSociale">Raison sociale</label>
         </div>
-
-        <div class="p-float-label mb-4">
-            <input
-                formControlName="email"
-                pInputText
-                id="email"
-                class="pInputText w-full"
-            />
-            <label for="email">E-mail</label>
-        </div>
+        
 
         <div class="p-float-label mb-4">
             <label for="region">Region</label>
@@ -56,15 +47,7 @@
             <label for="address">Adresse</label>
         </div>
 
-        <div class="p-float-label mb-4">
-            <input
-                formControlName="raisonSociale"
-                pInputText
-                id="raisonSociale"
-                class="pInputText w-full"
-            />
-            <label for="raisonSociale">Raison sociale</label>
-        </div>
+        
 
         <div class="p-float-label mb-4">
             <input
@@ -137,6 +120,34 @@
             />
             <label for="activiteSecondaire">Activité secondaire</label>
         </div>
+
+
+
+        <div class="p-float-label mb-4">
+            <input
+                formControlName="rne"
+                pInputText
+                id="rne"
+                class="pInputText w-full"
+            />
+            <label for="Rne">RNE</label>
+        </div>
+
+
+
+        <div class="p-float-label mb-4">
+            <input
+                formControlName="mf"
+                pInputText
+                id="mf"
+                class="pInputText w-full"
+            />
+            <label for="mf">Matricule Fiscale</label>
+        </div>
+
+
+
+
     </form>
 
     <div class="btn-service">
@@ -284,14 +295,7 @@
         ></p-button>
         <p-button
         [disabled]="
-        !companyForm.get('companyName').value ||
-        !companyForm.get('email').value ||
-        !companyForm.get('region').value ||
-        !companyForm.get('address').value ||
-        !companyForm.get('raisonSociale').value ||
-        !companyForm.get('exoneration').value ||
-        !companyForm.get('phone').value ||
-        !companyForm.get('activitePrincipale').value 
+        !companyForm.get('companyName').value
         "
             label="Ajouter"
             severity="success"

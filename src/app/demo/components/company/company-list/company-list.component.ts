@@ -74,6 +74,8 @@ export class CompanyListComponent {
         activitePrincipale: new FormControl(''),
         activiteSecondaire: new FormControl(''),
         exoneration: new FormControl(''),
+        rne: new FormControl(''),
+        mf: new FormControl(''),
         achat: new FormGroup({
             fullName: new FormControl('', [Validators.required]),
             email: new FormControl('', [Validators.required]),
@@ -124,6 +126,7 @@ export class CompanyListComponent {
         serviceFinancier: { name: '', email: '', phone: '' },
         serviceTechnique: { name: '', email: '', phone: '' },
     };
+
 
     constructor(
         private productService: ProductService,
