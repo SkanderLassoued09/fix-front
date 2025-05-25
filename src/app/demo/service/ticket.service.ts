@@ -313,7 +313,7 @@ export class TicketService {
                 }
             }`;
     }
-   
+
     findLocationById(locationId: string) {
         return gql`
             {
@@ -539,8 +539,8 @@ export class TicketService {
 
     removeComposant(_id: string) {
         return gql`
-        mutation {
-            removeComposant(_id: "${_id}")
+           mutation {
+            removeComposant(_id: "${_id}"){_id isDeleted}
         }
     `;
     }
@@ -1219,6 +1219,7 @@ export class TicketService {
         `;
     }
     removeComposant_Category(_id: string) {
+        console.log('🍢[_id]:', _id);
         return gql`
             mutation {
                 removeComposant_Category(_id: "${_id}"){isDeleted}

@@ -52,7 +52,7 @@ export class MagasinDiListComponent {
     //MagasinCondition: boolean = true;
 
     composantMagasin = new FormGroup({
-        _id:new FormControl(),
+        _id: new FormControl(),
         name: new FormControl(),
         packageComposant: new FormControl(),
         category_composant_id: new FormControl(),
@@ -112,7 +112,7 @@ export class MagasinDiListComponent {
     colCategoryComposants = [
         { field: 'category_composant', header: 'Category Composant' },
     ];
-    
+
     constructor(
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
@@ -309,21 +309,36 @@ export class MagasinDiListComponent {
             });
     }
 
+    deletComposant() {
+        console.log('delete not working', this.loadedDataComposant._id);
 
-    deletComposant(){
-        console.log("delete not working");
-    
         this.confirmationService.confirm({
-            message: 'Voulez-vous Supprimer ce composant ?',
+            message: 'Voulez-vous Supprimer cette categorie ?',
             header: 'Confirmation Suppression',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.removeComposant(
+                            this.loadedDataComposant._id
+                        ),
+                    })
+                    .subscribe(({ data }) => {
+                        console.log('🥨[data]:', data);
+                        if (data) {
+                            this.apollo
+                                .query<any>({
+                                    query: this.ticketSerice.getAllComposant(),
+                                })
+                                .subscribe(({ data }) => {
+                                    this.composantCatgorieList =
+                                        data.findAllComposant_Category;
+                                });
+                        }
+                    });
             },
-        })
+        });
     }
-
-
 
     deleteCategorycomposant(rowData) {
         console.log(rowData._id, 'rowdata here');
@@ -450,7 +465,7 @@ export class MagasinDiListComponent {
                     if (data) {
                         // Initialize form fields with loaded data
                         this.composantMagasin.patchValue({
-                            _id:this.loadedDataComposant._id,
+                            _id: this.loadedDataComposant._id,
                             name: this.loadedDataComposant.name,
                             packageComposant: this.loadedDataComposant.package,
                             category_composant_id:
@@ -827,7 +842,7 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data }) => {
                     if (data) {
-                        console.log("data inside function",data)
+                        console.log('data inside function', data);
                         this.messageservice.add({
                             severity: 'success',
                             summary: 'Success',
