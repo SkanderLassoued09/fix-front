@@ -552,7 +552,6 @@ export class TicketService {
                     _id
                     name
                     package
-
                     prix_achat
                     prix_vente
                     coming_date
