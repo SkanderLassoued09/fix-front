@@ -119,7 +119,7 @@ export class CoordinatorDiListComponent {
     magasinsentToCoordinator: boolean;
     gotComposantFromMagasinCondition: boolean;
     ignoreCount: any;
-    ticketData:any;
+    ticketData: { data: any; pauseLogs: any; logsDi: any; };
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
     retour3InfoFromLogs: any;
