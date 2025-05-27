@@ -14,6 +14,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { ImageModule } from 'primeng/image';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
+import { map } from 'rxjs';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -79,6 +80,9 @@ export class CoordinatorDiListComponent {
     isConfirmed: any;
     first: number = 0;
     rows: number = 10;
+    modalRetour1Info: boolean = false;
+    modalRetour2Info: boolean = false;
+    modalRetour3Info: boolean = false;
     page: any;
     basicOptions: {
         plugins: { legend: { labels: { color: string } } };
@@ -115,6 +119,13 @@ export class CoordinatorDiListComponent {
     magasinsentToCoordinator: boolean;
     gotComposantFromMagasinCondition: boolean;
     ignoreCount: any;
+    ticketData:any;
+    retour1InfoFromLogs: any;
+    retour2InfoFromLogs: any;
+    retour3InfoFromLogs: any;
+    ignoreCountForBtns: number = 0;
+    ticketDetailsInfo: boolean;
+
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -407,6 +418,59 @@ export class CoordinatorDiListComponent {
         this.diDialog = false;
     }
 
+ getLogsDi(_id: string) {
+        return this.apollo
+            .query<any>({ query: this.ticketSerice.getLogsDi(_id) })
+            .toPromise()
+            .then(({ data }) => data?.getAllLogsByDi || []);
+    }
+     
+
+
+getLogsData(_id: string) {
+        return this.apollo
+            .query<any>({ query: this.ticketSerice.getLogsPause(_id) })
+            .pipe(map(({ data }) => data?.getStatByIdlogs || []));
+    }
+
+
+    openTicketDetails(data: any) {
+        Promise.all([
+            this.getLogsDi(data._id),
+            this.getLogsData(data._id).toPromise(),
+        ])
+            .then(([logsDi, pauseLogs]) => {
+                this.ticketData = {
+                    data: { ...data },
+                    pauseLogs: { ...pauseLogs },
+                    logsDi: { ...logsDi },
+                };
+                console.log(data, 'dtatatatata');
+
+                if (data.ignoreCount >= 1) {
+                    this.retour1InfoFromLogs = logsDi[0];
+                }
+                if (data.ignoreCount >= 2) {
+                    this.retour2InfoFromLogs = logsDi[1];
+                }
+                if (data.ignoreCount >= 3) {
+                    this.retour3InfoFromLogs = logsDi[2];
+                }
+
+                this.ignoreCountForBtns = data.ignoreCount;
+                console.log(data.ignoreCount, 'ignoreCountignoreCount');
+
+                this.ticketDetailsInfo = true; // Open the dialog
+                console.log('data inside =>', this.ticketData.data);
+            })
+            .catch((error) => {
+                console.error('Error fetching logs:', error);
+            });
+    }
+
+
+
+    
     changeStatusRepaire(_id) {
         this.apollo
             .mutate<any>({

@@ -1941,4 +1941,8 @@ export class TicketListComponent implements OnInit {
             .query<any>({ query: this.ticketSerice.getLogsPause(_id) })
             .pipe(map(({ data }) => data?.getStatByIdlogs || []));
     }
+
+
+
+    
 }
