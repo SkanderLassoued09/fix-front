@@ -336,11 +336,18 @@ export class CoordinatorDiListComponent {
                 highestIgnoreLog.isSentToCoordinator;
             this.componentConfirmedFromCoordinator =
                 highestIgnoreLog.handleSendingNotificationBetweenCoordinatorAndMagasin;
-            console.log('highestIgnoreLog', highestIgnoreLog);
+            console.log(
+                ' this.componentConfirmedFromCoordinator 0',
+                highestIgnoreLog
+            );
         } else {
             this.magasinsentToCoordinator = di.isSentToCoordinator;
             this.componentConfirmedFromCoordinator =
                 di.handleSendingNotificationBetweenCoordinatorAndMagasin;
+            console.log(
+                '🍝 this.componentConfirmedFromCoordinator',
+                this.componentConfirmedFromCoordinator
+            );
         }
 
         this.openBtnConfirm = di.isSentToCoordinator;

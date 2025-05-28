@@ -114,7 +114,7 @@ export class TicketService {
                         ignoreCount
                         createdBy
                         handleSendingNotificationBetweenCoordinatorAndMagasin
-                        logs{idIgnore isSentToCoordinator isConfirmedComponentFromCoordinator}
+                        logs{idIgnore isSentToCoordinator isConfirmedComponentFromCoordinator handleSendingNotificationBetweenCoordinatorAndMagasin}
                         location_id
                         di_category_id
                         isSentToCoordinator
