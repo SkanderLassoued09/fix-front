@@ -119,12 +119,13 @@ export class CoordinatorDiListComponent {
     magasinsentToCoordinator: boolean;
     gotComposantFromMagasinCondition: boolean;
     ignoreCount: any;
-    ticketData: { data: any; pauseLogs: any; logsDi: any; };
+    ticketData: { data: any; pauseLogs: any; logsDi: any };
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
     retour3InfoFromLogs: any;
     ignoreCountForBtns: number = 0;
     ticketDetailsInfo: boolean;
+    techInfo: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -418,21 +419,18 @@ export class CoordinatorDiListComponent {
         this.diDialog = false;
     }
 
- getLogsDi(_id: string) {
+    getLogsDi(_id: string) {
         return this.apollo
             .query<any>({ query: this.ticketSerice.getLogsDi(_id) })
             .toPromise()
             .then(({ data }) => data?.getAllLogsByDi || []);
     }
-     
 
-
-getLogsData(_id: string) {
+    getLogsData(_id: string) {
         return this.apollo
             .query<any>({ query: this.ticketSerice.getLogsPause(_id) })
             .pipe(map(({ data }) => data?.getStatByIdlogs || []));
     }
-
 
     openTicketDetails(data: any) {
         Promise.all([
@@ -446,6 +444,8 @@ getLogsData(_id: string) {
                     logsDi: { ...logsDi },
                 };
                 console.log(data, 'dtatatatata');
+                console.log(pauseLogs, 'pauseLogs');
+                console.log(logsDi, 'logsDi');
 
                 if (data.ignoreCount >= 1) {
                     this.retour1InfoFromLogs = logsDi[0];
@@ -462,15 +462,14 @@ getLogsData(_id: string) {
 
                 this.ticketDetailsInfo = true; // Open the dialog
                 console.log('data inside =>', this.ticketData.data);
+                this.techInfo = { ...pauseLogs };
+                console.log('data inside =>', this.techInfo);
             })
             .catch((error) => {
                 console.error('Error fetching logs:', error);
             });
     }
 
-
-
-    
     changeStatusRepaire(_id) {
         this.apollo
             .mutate<any>({

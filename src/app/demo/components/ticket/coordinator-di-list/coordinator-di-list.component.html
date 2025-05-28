@@ -1,6 +1,5 @@
 <p-toast></p-toast>
 
-
 <p-dialog
     header="Information demande d'intervention"
     [(visible)]="ticketDetailsInfo"
@@ -47,6 +46,14 @@
                     Prix Finale:
                     <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span>
                 </h6>
+                <h6>
+                    Diagnostiqué par:
+                    <span>{{ techInfo?.id_tech_diag }}</span>
+                </h6>
+                <h6>
+                    repatré par:
+                    <span>{{ techInfo?.id_tech_rep }}</span>
+                </h6>
             </div>
 
             <div class="repair-info">
@@ -63,25 +70,25 @@
                     }}</span>
                 </h6>
                 <p-table
-                *ngIf="ticketData?.data?.can_be_repaired == true"
-                            [value]="ticketData?.data?.array_composants"
-                            [paginator]="true"
-                            [rows]="10"
-                            [responsiveLayout]="'scroll'"
-                        >
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th>Nom du Composant</th>
-                                    <th>Quantité</th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-composant>
-                                <tr>
-                                    <td>{{ composant.nameComposant }}</td>
-                                    <td>{{ composant.quantity }}</td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
+                    *ngIf="ticketData?.data?.can_be_repaired == true"
+                    [value]="ticketData?.data?.array_composants"
+                    [paginator]="true"
+                    [rows]="10"
+                    [responsiveLayout]="'scroll'"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Nom du Composant</th>
+                            <th>Quantité</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-composant>
+                        <tr>
+                            <td>{{ composant.nameComposant }}</td>
+                            <td>{{ composant.quantity }}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
             </div>
         </div>
 
@@ -308,7 +315,7 @@
                             }}</strong
                         >
                     </div>
-                    <div   *ngIf="retour1InfoFromLogs.contain_pdr == true" >
+                    <div *ngIf="retour1InfoFromLogs.contain_pdr == true">
                         <p-table
                             [value]="retour1InfoFromLogs.array_composants"
                             [paginator]="true"
@@ -329,7 +336,6 @@
                             </ng-template>
                         </p-table>
                     </div>
-                    
                 </div>
             </div>
             <p-table
@@ -473,8 +479,8 @@
                             }}</strong
                         >
                     </div>
-                    <div   *ngIf="retour2InfoFromLogs.contain_pdr == true" >
-                    <p-table
+                    <div *ngIf="retour2InfoFromLogs.contain_pdr == true">
+                        <p-table
                             [value]="retour2InfoFromLogs.array_composants"
                             [paginator]="true"
                             [rows]="10"
@@ -494,7 +500,6 @@
                             </ng-template>
                         </p-table>
                     </div>
-                    
                 </div>
             </div>
             <p-table
@@ -637,8 +642,8 @@
                             }}</strong
                         >
                     </div>
-                    <div   *ngIf="retour3InfoFromLogs.contain_pdr == true" >
-                    <p-table
+                    <div *ngIf="retour3InfoFromLogs.contain_pdr == true">
+                        <p-table
                             [value]="retour3InfoFromLogs.array_composants"
                             [paginator]="true"
                             [rows]="10"
@@ -658,7 +663,6 @@
                             </ng-template>
                         </p-table>
                     </div>
-                    
                 </div>
             </div>
             <p-table
@@ -750,7 +754,6 @@
     </div>
 </p-dialog>
 
-
 <div class="card h-10">
     <p-chart type="bar" [data]="basicData" [options]="basicOptions" />
 </div>
@@ -815,14 +818,14 @@
                             (click)="openModalConfig(rowData)"
                         ></button>
 
-                         <button
-                        pButton
-                        pRipple
-                        severity="help"
-                        icon="pi pi-book"
-                        class="p-button-rounded p-button-raised p-button-success mr-2"
-                        (click)="openTicketDetails(rowData)"
-                    ></button>
+                        <button
+                            pButton
+                            pRipple
+                            severity="help"
+                            icon="pi pi-book"
+                            class="p-button-rounded p-button-raised p-button-success mr-2"
+                            (click)="openTicketDetails(rowData)"
+                        ></button>
                     </td>
                 </tr>
             </ng-template>
