@@ -1358,6 +1358,18 @@
                     <span>{{
                         ticketData?.data?.can_be_repaired ? "OUI" : "NON"
                     }}</span>
+                </h6>  
+                  <h6>
+                    Diagnostiqué par:
+                    <span>{{
+                        ticketData?.data?.techDiag 
+                    }}</span>
+                </h6>
+                <h6>
+                    repatré par:
+                    <span>{{
+                        ticketData?.data?.techRep 
+                    }}</span>
                 </h6>
                 <h6 *ngIf="ticketData?.data?.can_be_repaired == true">
                     Contient PDR:
