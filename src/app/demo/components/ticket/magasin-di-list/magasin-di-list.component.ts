@@ -28,6 +28,7 @@ export class MagasinDiListComponent {
     // TODO change it to file of constant and instead of array of string , change it to object key value
     //! Done but you did not use it in here
     magasinDiDialog: boolean = false;
+    selectedComposant;
     cols = [
         { field: 'title', header: 'Title' },
         { field: 'status', header: 'Status' },
@@ -251,6 +252,7 @@ export class MagasinDiListComponent {
     }
     showDialogcomposantCreation() {
         this.openCreationComposantModal = true;
+        this.findAllComposant_Category();
     }
     getSeverity(status: string) {
         switch (status) {
@@ -400,6 +402,7 @@ export class MagasinDiListComponent {
     }
 
     onUpload(event: any, type: string) {
+        console.log('fired pdf composant');
         for (let file of event.files) {
             const reader = new FileReader();
             reader.readAsArrayBuffer(file); // Read file as ArrayBuffer for Blob creation
@@ -418,6 +421,20 @@ export class MagasinDiListComponent {
 
                 if (type === 'cPDF') {
                     this.instantSelectedcPDF = blobUrl;
+                    console.log(
+                        '🥕[this.instantSelectedcPDF]:',
+                        this.instantSelectedcPDF
+                    );
+
+                    // Assign Blob URL for BC
+                }
+                if (type === 'addComposant') {
+                    this.instantSelectedcPDF = blobUrl;
+                    console.log('🍈[blobUrl]:', blobUrl);
+                    console.log(
+                        '🥕[this.instantSelectedcPDF]:',
+                        this.instantSelectedcPDF
+                    );
 
                     // Assign Blob URL for BC
                 }
@@ -534,8 +551,8 @@ export class MagasinDiListComponent {
                     };
                 });
         }
-        console.log(this.arrayComposant.length, 'ARR COMPOSANTS');
-        this.arrayComposant.length == 0
+        console.log(this.arrayComposant?.length, 'ARR COMPOSANTS');
+        this.arrayComposant?.length == 0
             ? (this.validatorFinirListeComposant = false)
             : (this.validatorFinirListeComposant = true);
         this.magasinDiDialog = true;
@@ -670,6 +687,7 @@ export class MagasinDiListComponent {
     }
 
     updateComposantIncreation() {
+        console.log('updateComposantIncreation');
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
             header: 'Confirmation Diagnostique',
@@ -747,7 +765,7 @@ export class MagasinDiListComponent {
     }
 
     updateComposant() {
-        // console.log('🥔 this.payload.file', this.payload.file);
+        console.log('🥔updateComposant 2');
 
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
@@ -822,17 +840,31 @@ export class MagasinDiListComponent {
             this.payload = payload;
             console.log('🍓[payload]:', this.payload);
         }
-    }
+        if (type === 'addComposant') {
+            const payload = {
+                file: base64,
+                // add other necessary data here
+            };
 
+            this.payload = payload;
+            console.log('🍓[payload]:', this.payload);
+        }
+    }
+    onClear() {
+        this.isToUpdate = false;
+    }
+    clearDropDown() {
+        this.isToUpdate = false;
+    }
     addComposant() {
         if (!this.isToUpdate) {
             const composantDataForm = this.composantMagasin.value;
 
             const composantDataTosend = {
                 ...composantDataForm,
-                pdf: this.payloadImage?.image || null,
+                pdf: this.payload?.file || null,
             };
-
+            console.log('composantDataTosend', composantDataTosend);
             this.apollo
                 .mutate<any>({
                     mutation:
@@ -858,7 +890,8 @@ export class MagasinDiListComponent {
             const formattedComposantInfo = {
                 name: this.composantMagasin.value.name,
                 package: this.composantMagasin.value.packageComposant,
-
+                category_composant_id:
+                    this.composantMagasin.value.category_composant_id,
                 prix_achat: this.composantMagasin.value.prix_achat,
                 prix_vente: this.composantMagasin.value.prix_vente,
                 coming_date: new Date(
@@ -866,9 +899,14 @@ export class MagasinDiListComponent {
                 ).toISOString(),
                 link: this.composantMagasin.value.link,
                 quantity_stocked: this.composantMagasin.value.quantity_stocked,
-                pdf: this.composantMagasin.value.pdf,
+                pdf: this.payload?.file || null,
                 status_composant: this.composantMagasin.value.status,
             };
+
+            console.log(
+                'formattedComposantInfo update',
+                formattedComposantInfo
+            );
 
             this.apollo
                 .mutate<any>({

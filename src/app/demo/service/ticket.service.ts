@@ -778,6 +778,7 @@ export class TicketService {
 
     updateComposant(composantInfo) {
         console.log('🍬[composantInfo]:', composantInfo);
+        console.log('🍬[composantInfo statusstatus]:', composantInfo.status);
         return gql`
             mutation {
                 addComposantInfo(
@@ -790,8 +791,13 @@ export class TicketService {
                         link: "${composantInfo.link}"
                         quantity_stocked: ${composantInfo.quantity_stocked}
                         pdf: "${composantInfo.pdf}"
-                        status_composant: "${composantInfo.status_composant}"
-                        category_composant_id: "${composantInfo.category_composant_id}"
+                        status_composant: "${
+                            composantInfo.status ||
+                            composantInfo.status_composant
+                        }"
+                        category_composant_id: "${
+                            composantInfo.category_composant_id
+                        }"
                     }
                 )
                  {
@@ -1312,6 +1318,7 @@ export class TicketService {
     }
 
     addComposantMagasin(composantData: any) {
+        console.log('🍖[composantData]:', composantData);
         return gql`
        mutation {
   createComposant(
@@ -1325,6 +1332,7 @@ export class TicketService {
       quantity_stocked: ${composantData.quantity_stocked}
       pdf: "${composantData.pdf}"
       status_composant: "${composantData.status}"
+      category_composant_id: "${composantData.category_composant_id}"
     }
   ) {
     _id

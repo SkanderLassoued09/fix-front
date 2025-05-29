@@ -105,13 +105,13 @@
                         optionLabel="infoComposant"
                         optionValue="nameComposant"
                         placeholder="Choisir composant"
+                        (onClear)="onClear()"
                     ></p-dropdown>
                 </div>
             </div>
 
             <ng-container *ngIf="selectedItem">
                 <div class="grid align-items-center">
-                    
                     <div class="col">
                         <label for="name">Nom du composant 222</label>
                         <input formControlName="name" pInputText />
@@ -121,7 +121,7 @@
                         <input formControlName="package" pInputText />
                     </div>
                 </div>
-                <div> 
+                <div>
                     <label>Affecter Catégoire Composant</label>
                     <p-dropdown
                         [options]="composantCategory"
@@ -428,7 +428,7 @@
     <p-dialog
         [(visible)]="openCreationComposantModal"
         [style]="{ width: '50%', height: '90vh' }"
-        header="Creation nouveau catégorie composant"
+        header="Creation nouveau composant"
         [modal]="true"
         styleClass="p-fluid"
     >
@@ -442,12 +442,17 @@
                     optionValue="name"
                     [showClear]="true"
                     placeholder="Choisir composant"
+                    (onClear)="clearDropDown()"
                 ></p-dropdown>
             </div>
 
-            <div  class="id-field">
+            <div class="id-field">
                 <label for="_id">Identifiant</label>
-               <strong><span >{{ composantMagasin.get('_id')?.value }}</span></strong> 
+                <strong
+                    ><span>{{
+                        composantMagasin.get("_id")?.value
+                    }}</span></strong
+                >
             </div>
 
             <div class="field">
@@ -460,7 +465,7 @@
                     required
                 />
             </div>
-            
+
             <label>Catégoire Composant</label>
             <p-dropdown
                 [options]="composantCategory"
@@ -477,7 +482,7 @@
                     ></p-tag>
                 </ng-template>
             </p-dropdown>
-        
+
             <div class="field">
                 <label for="packageComposant">Package composant</label>
                 <input
@@ -508,7 +513,7 @@
                     url="https://www.primefaces.org/cdn/api/upload.php"
                     accept="image/*,application/pdf"
                     maxFileSize="1000000"
-                    (onUpload)="onUpload($event, '')"
+                    (onUpload)="onUpload($event, 'addComposant')"
                     [auto]="true"
                 ></p-fileUpload>
             </div>
@@ -570,7 +575,6 @@
             </div>
 
             <div class="row">
-               
                 <div class="col-md-6">
                     <div class="d-flex align-items-center">
                         <label for="status" class="mr-2"
