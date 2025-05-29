@@ -102,6 +102,11 @@ export class TicketService {
                         createdAt
                         updatedAt
                         comment
+                             array_composants {
+                            nameComposant
+                            quantity
+                            isUpdated 
+                        }
                         company_id
                         client_id
                         remarque_manager

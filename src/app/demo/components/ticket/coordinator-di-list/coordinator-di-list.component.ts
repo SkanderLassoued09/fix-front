@@ -174,7 +174,7 @@ export class CoordinatorDiListComponent {
                 query: this.ticketSerice.getAllDiForCoordinator(first, rows),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🌶[data]:', data);
+                console.log('🌶[*************data]:', data);
 
                 if (data) {
                     this.diList = data.get_coordinatorDI.di;
@@ -468,9 +468,10 @@ export class CoordinatorDiListComponent {
                 console.log(data.ignoreCount, 'ignoreCountignoreCount');
 
                 this.ticketDetailsInfo = true; // Open the dialog
-                console.log('data inside =>', this.ticketData.data);
                 this.techInfo = { ...pauseLogs };
-                console.log('data inside =>', this.techInfo);
+                console.log('data inside sknder =>', this.ticketData.data);
+                console.log('data inside sknder =>', data);
+                console.log('data inside sknder=>', this.techInfo);
             })
             .catch((error) => {
                 console.error('Error fetching logs:', error);
