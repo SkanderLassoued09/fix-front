@@ -47,17 +47,17 @@
                     <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span>
                 </h6>
                 <h6>
-                    Diagnostiqué par:
+                    Technicien chargé Diagnostique:
                     <span>{{ techInfo?.id_tech_diag }}</span>
                 </h6>
                 <h6>
-                    repatré par:
+                    Technicien chargé Réparation:
                     <span>{{ techInfo?.id_tech_rep }}</span>
                 </h6>
             </div>
 
             <div class="repair-info">
-                <h6>
+                <h6 >
                     Réparable:
                     <span>{{
                         ticketData?.data?.can_be_repaired ? "OUI" : "NON"
@@ -157,49 +157,7 @@
 
         <!-- All 4 files here  -->
 
-        <div class="center-content-files">
-            <div class="d-flex justify-content-between mb-3">
-                <a
-                    *ngIf="ticketData?.data?.bon_de_livraison"
-                    [href]="baseUrl + ticketData?.data?.bon_de_livraison"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de Livraison
-                </a>
-                <a
-                    *ngIf="ticketData?.data?.bon_de_commande"
-                    [href]="baseUrl + ticketData?.data?.bon_de_commande"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de commande
-                </a>
-            </div>
-
-            <div class="d-flex flex-column space-between p-3">
-                <a
-                    *ngIf="ticketData?.data?.devis"
-                    [href]="baseUrl + ticketData?.data?.devis"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    DEVIS
-                </a>
-                <a
-                    *ngIf="ticketData?.data?.facture"
-                    [href]="baseUrl + ticketData?.data?.facture"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Facture
-                </a>
-            </div>
-        </div>
+        
 
         <div *ngIf="ticketData?.data?.PDR" class="form-group">
             Liste des composants:
@@ -280,18 +238,18 @@
             <div class="pdr-Rep">
                 <div>
                     Prix Initial:
-                    <strong>{{ retour1InfoFromLogs.price ?? "N/A" }} </strong>
+                    <strong>{{ retour1InfoFromLogs?.price ?? "N/A" }} </strong>
                 </div>
                 <div>
                     Prix Finale:
                     <strong>
-                        {{ retour1InfoFromLogs.final_price ?? "N/A" }}</strong
+                        {{ retour1InfoFromLogs?.final_price ?? "N/A" }}</strong
                     >
                 </div>
                 <div>
                     Error Fixtronix
                     <strong>{{
-                        retour1InfoFromLogs.isErrorFromFixtronix ? "OUI" : "NON"
+                        retour1InfoFromLogs?.isErrorFromFixtronix ? "OUI" : "NON"
                     }}</strong>
                 </div>
             </div>
@@ -300,50 +258,31 @@
                     <div>
                         Réperable:<strong>
                             {{
-                                retour1InfoFromLogs.can_be_repaired
+                                retour1InfoFromLogs?.can_be_repaired
                                     ? "OUI"
                                     : "NON"
                             }}</strong
                         >
                     </div>
                 </div>
-                <div *ngIf="retour1InfoFromLogs.can_be_repaired == true">
+                <div *ngIf="retour1InfoFromLogs?.can_be_repaired == true">
                     <div class="font-semibold">
                         Contient PDR:<strong>
                             {{
-                                retour1InfoFromLogs.contain_pdr ? "OUI" : "NON"
+                                retour1InfoFromLogs?.contain_pdr ? "OUI" : "NON"
                             }}</strong
                         >
                     </div>
-                    <div *ngIf="retour1InfoFromLogs.contain_pdr == true">
-                        <p-table
-                            [value]="retour1InfoFromLogs.array_composants"
-                            [paginator]="true"
-                            [rows]="10"
-                            [responsiveLayout]="'scroll'"
-                        >
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th>Nom du Composant</th>
-                                    <th>Quantité</th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-composant>
-                                <tr>
-                                    <td>{{ composant.nameComposant }}</td>
-                                    <td>{{ composant.quantity }}</td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
-                    </div>
+                    
+                    
                 </div>
             </div>
             <p-table
                 *ngIf="
-                    retour1InfoFromLogs.contain_pdr == true &&
-                    retour1InfoFromLogs.can_be_repaired == true
+                    retour1InfoFromLogs?.contain_pdr == true &&
+                    retour1InfoFromLogs?.can_be_repaired == true
                 "
-                [value]="retour1InfoFromLogs.array_composants"
+                [value]="retour1InfoFromLogs?.array_composants"
                 [tableStyle]="{ 'min-width': '20rem' }"
             >
                 <ng-template pTemplate="header">
@@ -364,13 +303,13 @@
                     <strong class="font-semibol"
                         >Remarque Tech Diagnostique:</strong
                     >
-                    {{ retour1InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+                    {{ retour1InfoFromLogs?.remarque_tech_diagnostic || "N/A" }}
                 </div>
                 <div style="padding-bottom: 2rem">
                     <strong class="font-semibold"
                         >Remarque Tech Reparation:</strong
                     >
-                    {{ retour1InfoFromLogs.remarque_tech_repair || "N/A" }}
+                    {{ retour1InfoFromLogs?.remarque_tech_repair || "N/A" }}
                 </div>
             </div>
 
@@ -443,18 +382,18 @@
             <div class="pdr-Rep">
                 <div>
                     Prix Initial:
-                    <strong>{{ retour2InfoFromLogs.price ?? "N/A" }} </strong>
+                    <strong>{{ retour2InfoFromLogs?.price ?? "N/A" }} </strong>
                 </div>
                 <div>
                     Prix Finale:
                     <strong>
-                        {{ retour2InfoFromLogs.final_price ?? "N/A" }}</strong
+                        {{ retour2InfoFromLogs?.final_price ?? "N/A" }}</strong
                     >
                 </div>
                 <div>
                     Error Fixtronix
                     <strong>{{
-                        retour2InfoFromLogs.isErrorFromFixtronix ? "OUI" : "NON"
+                        retour2InfoFromLogs?.isErrorFromFixtronix ? "OUI" : "NON"
                     }}</strong>
                 </div>
             </div>
@@ -463,51 +402,32 @@
                     <div>
                         Réperable:<strong>
                             {{
-                                retour2InfoFromLogs.can_be_repaired
+                                retour2InfoFromLogs?.can_be_repaired
                                     ? "OUI"
                                     : "NON"
                             }}</strong
                         >
                     </div>
                 </div>
-                <div *ngIf="retour2InfoFromLogs.can_be_repaired == true">
+                <div *ngIf="retour2InfoFromLogs?.can_be_repaired == true">
                     <div class="font-semibold">
                         Contient PDR:
                         <strong>
                             {{
-                                retour2InfoFromLogs.contain_pdr ? "OUI" : "NON"
+                                retour2InfoFromLogs?.contain_pdr ? "OUI" : "NON"
                             }}</strong
                         >
                     </div>
-                    <div *ngIf="retour2InfoFromLogs.contain_pdr == true">
-                        <p-table
-                            [value]="retour2InfoFromLogs.array_composants"
-                            [paginator]="true"
-                            [rows]="10"
-                            [responsiveLayout]="'scroll'"
-                        >
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th>Nom du Composant</th>
-                                    <th>Quantité</th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-composant>
-                                <tr>
-                                    <td>{{ composant.nameComposant }}</td>
-                                    <td>{{ composant.quantity }}</td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
-                    </div>
+                    
+                    
                 </div>
             </div>
             <p-table
                 *ngIf="
-                    retour2InfoFromLogs.contain_pdr == true &&
-                    retour2InfoFromLogs.can_be_repaired == true
+                    retour2InfoFromLogs?.contain_pdr == true &&
+                    retour2InfoFromLogs?.can_be_repaired == true
                 "
-                [value]="retour2InfoFromLogs.array_composants"
+                [value]="retour2InfoFromLogs?.array_composants"
                 [tableStyle]="{ 'min-width': '20rem' }"
             >
                 <ng-template pTemplate="header">
@@ -528,13 +448,13 @@
                     <strong class="font-semibol"
                         >Remarque Tech Diagnostique:</strong
                     >
-                    {{ retour2InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+                    {{ retour2InfoFromLogs?.remarque_tech_diagnostic || "N/A" }}
                 </div>
                 <div style="padding-bottom: 2rem">
                     <strong class="font-semibold"
                         >Remarque Tech Reparation:</strong
                     >
-                    {{ retour2InfoFromLogs.remarque_tech_repair || "N/A" }}
+                    {{ retour2InfoFromLogs?.remarque_tech_repair || "N/A" }}
                 </div>
             </div>
 
@@ -607,18 +527,18 @@
             <div class="pdr-Rep">
                 <div>
                     Prix Initial:
-                    <strong>{{ retour3InfoFromLogs.price ?? "N/A" }} </strong>
+                    <strong>{{ retour3InfoFromLogs?.price ?? "N/A" }} </strong>
                 </div>
                 <div>
                     Prix Finale:
                     <strong>
-                        {{ retour3InfoFromLogs.final_price ?? "N/A" }}</strong
+                        {{ retour3InfoFromLogs?.final_price ?? "N/A" }}</strong
                     >
                 </div>
                 <div>
                     Error Fixtronix
                     <strong>{{
-                        retour3InfoFromLogs.isErrorFromFixtronix ? "OUI" : "NON"
+                        retour3InfoFromLogs?.isErrorFromFixtronix ? "OUI" : "NON"
                     }}</strong>
                 </div>
             </div>
@@ -627,50 +547,21 @@
                     <div>
                         Réperable:<strong>
                             {{
-                                retour3InfoFromLogs.can_be_repaired
+                                retour3InfoFromLogs?.can_be_repaired
                                     ? "OUI"
                                     : "NON"
                             }}</strong
                         >
                     </div>
                 </div>
-                <div *ngIf="retour3InfoFromLogs.can_be_repaired == true">
-                    <div class="font-semibold">
-                        Contient PDR:<strong>
-                            {{
-                                retour3InfoFromLogs.contain_pdr ? "OUI" : "NON"
-                            }}</strong
-                        >
-                    </div>
-                    <div *ngIf="retour3InfoFromLogs.contain_pdr == true">
-                        <p-table
-                            [value]="retour3InfoFromLogs.array_composants"
-                            [paginator]="true"
-                            [rows]="10"
-                            [responsiveLayout]="'scroll'"
-                        >
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th>Nom du Composant</th>
-                                    <th>Quantité</th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-composant>
-                                <tr>
-                                    <td>{{ composant.nameComposant }}</td>
-                                    <td>{{ composant.quantity }}</td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
-                    </div>
-                </div>
+                
             </div>
             <p-table
                 *ngIf="
-                    retour3InfoFromLogs.contain_pdr == true &&
-                    retour3InfoFromLogs.can_be_repaired == true
+                    retour3InfoFromLogs?.contain_pdr == true &&
+                    retour3InfoFromLogs?.can_be_repaired == true
                 "
-                [value]="retour3InfoFromLogs.array_composants"
+                [value]="retour3InfoFromLogs?.array_composants"
                 [tableStyle]="{ 'min-width': '20rem' }"
             >
                 <ng-template pTemplate="header">
@@ -691,13 +582,13 @@
                     <strong class="font-semibol"
                         >Remarque Tech Diagnostique:</strong
                     >
-                    {{ retour3InfoFromLogs.remarque_tech_diagnostic || "N/A" }}
+                    {{ retour3InfoFromLogs?.remarque_tech_diagnostic || "N/A" }}
                 </div>
                 <div style="padding-bottom: 2rem">
                     <strong class="font-semibold"
                         >Remarque Tech Reparation:</strong
                     >
-                    {{ retour3InfoFromLogs.remarque_tech_repair || "N/A" }}
+                    {{ retour3InfoFromLogs?.remarque_tech_repair || "N/A" }}
                 </div>
             </div>
 

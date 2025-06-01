@@ -91,6 +91,8 @@ export class TicketService {
                 get_coordinatorDI(paginationConfig: { first: ${first}, rows: ${rows} }) {
                     di {
                         _id
+                        price
+                        final_price
                         title
                         description
                         ignoreCount
@@ -205,6 +207,7 @@ export class TicketService {
                     updatedAt
                     remarque_tech_diagnostic
                     remarque_tech_repair
+                    remarque_manager
                     price
                     isErrorFromFixtronix
                     final_price

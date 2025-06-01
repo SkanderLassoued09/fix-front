@@ -162,6 +162,21 @@ export class CoordinatorDiListComponent {
         this.visible = true;
     }
 
+
+
+
+infoRetour1OPEN() {
+        this.modalRetour1Info = !this.modalRetour1Info;
+    }
+    infoRetour2OPEN() {
+        this.modalRetour2Info = !this.modalRetour2Info;
+    }
+    infoRetour3OPEN() {
+        this.modalRetour3Info = !this.modalRetour3Info;
+    }
+
+
+
     onPageChange(event: PageEvent) {
         this.first = event.first;
         this.page = event.page;
@@ -470,8 +485,9 @@ export class CoordinatorDiListComponent {
                 this.ticketDetailsInfo = true; // Open the dialog
                 this.techInfo = { ...pauseLogs };
                 console.log('data inside sknder =>', this.ticketData.data);
-                console.log('data inside sknder =>', data);
-                console.log('data inside sknder=>', this.techInfo);
+                console.log(data,"all the data needed here");
+                
+                
             })
             .catch((error) => {
                 console.error('Error fetching logs:', error);

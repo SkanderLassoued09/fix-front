@@ -5,7 +5,7 @@ import { Apollo } from 'apollo-angular';
 import { ProductService } from 'src/app/demo/service/product.service';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { compileNgModule } from '@angular/compiler';
 import * as moment from 'moment';
@@ -60,6 +60,7 @@ export class DetailsComposantComponent implements OnInit {
         private route: ActivatedRoute,
         private apollo: Apollo,
         private readonly notificationService: NotificationService,
+        private readonly messageservice: MessageService,
         private readonly router: Router,
         private confirmationService: ConfirmationService
     ) {
@@ -210,6 +211,11 @@ export class DetailsComposantComponent implements OnInit {
             })
             .subscribe(({ data, loading }) => {
                 if (data) {
+                     this.messageservice.add({
+                                    severity: 'info',
+                                    summary: 'Enregistrer',
+                                    detail: 'Les changements on été enregistrer',
+                                });
                     console.log('🥐[data]:', data);
                     // Update composantValues with the latest form values
                     Object.assign(

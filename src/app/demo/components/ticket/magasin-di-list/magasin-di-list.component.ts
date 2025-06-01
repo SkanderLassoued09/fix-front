@@ -315,7 +315,7 @@ export class MagasinDiListComponent {
         console.log('delete not working', this.loadedDataComposant._id);
 
         this.confirmationService.confirm({
-            message: 'Voulez-vous Supprimer cette categorie ?',
+            message: 'Voulez-vous Supprimer ce composant ?',
             header: 'Confirmation Suppression',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
@@ -335,10 +335,13 @@ export class MagasinDiListComponent {
                                 .subscribe(({ data }) => {
                                     this.composantCatgorieList =
                                         data.findAllComposant_Category;
+                                        this.composantList = data.findAllComposant;
                                 });
                         }
                     });
-            },
+       
+          
+        },
         });
     }
 
@@ -857,7 +860,12 @@ export class MagasinDiListComponent {
         this.isToUpdate = false;
     }
     addComposant() {
-        if (!this.isToUpdate) {
+this.confirmationService.confirm({
+            message: 'Voulez-vous Ajouter ce composant ?',
+            header: 'Confirmation Ajout',
+            
+            accept: () => {
+                 if (!this.isToUpdate) {
             const composantDataForm = this.composantMagasin.value;
 
             const composantDataTosend = {
@@ -924,5 +932,8 @@ export class MagasinDiListComponent {
         }
 
         this.openCreationComposantModal = false;
+            }})
+         
+       
     }
 }

@@ -207,7 +207,8 @@ export class TechDiListComponent implements OnInit {
 
     ngOnInit() {
         this.composantSelected = null;
-
+        console.log(this.composantSelected,"this.composantSelected");
+        
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
@@ -379,7 +380,12 @@ export class TechDiListComponent implements OnInit {
         this.creatComposantDialog = false;
     }
     saveNewComposant() {
-        //NEW FILE HERE "pdf"
+        this.confirmationService.confirm({
+            message: 'Voulez-vous Ajouter ce composant ?',
+            header: 'Confirmation Ajout',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                 //NEW FILE HERE "pdf"
         const { name, packageComposant, category_composant_id, link, pdf } =
             this.composantTechnicien.value;
         const imagePayload = this.payloadImage?.image
@@ -407,6 +413,8 @@ export class TechDiListComponent implements OnInit {
                     this.creatComposantDialog = false;
                 }
             });
+            }})
+       
     }
     selctedDropDownComposantTech() {}
     //! end here
@@ -483,7 +491,9 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
-        this.composantSelected = null;
+         this.composantSelected = null;
+        console.log(this.composantSelected,"this.composantSelected");
+       
         try {
             // Handle pause status if needed
             if (di.status === 'DIAGNOSTIC_Pause') {
