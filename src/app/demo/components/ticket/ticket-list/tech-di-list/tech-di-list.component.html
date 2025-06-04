@@ -302,12 +302,10 @@
 
                 <div *ngIf="ignoreCount > 0">
                     <h3>
-                        Liste des composants original et retour N°: ({{
-                            ignoreCount
-                        }})
+                        Liste des composants original et retour 
                     </h3>
                     <p-table
-                        [value]="allComposantLogsAndOriginal"
+                        [value]="allComposants"
                         [paginator]="true"
                         [rows]="10"
                         [responsiveLayout]="'scroll'"
@@ -315,14 +313,12 @@
                       
                         <ng-template pTemplate="header">
                             <tr>
-                                <th>Retour N°</th>
                                 <th>Nom du Composant</th>
                                 <th>Quantité</th>
                             </tr>
                         </ng-template>
                         <ng-template pTemplate="body" let-composant>
                             <tr>
-                                <td>{{ composant.ignoreCount }}</td>
                                 <td>{{ composant.nameComposant }}</td>
                                 <td>{{ composant.quantity }}</td>
                             </tr>
@@ -374,8 +370,9 @@
                             >
                             <textarea
                                 formControlName="remarqueTech"
-                                rows="3"
+                                rows="2"
                                 cols="30"
+                                (keydown.enter)="$event.preventDefault()"
                                 pInputTextarea
                             ></textarea>
                         </div>
@@ -869,9 +866,7 @@
                     </div>
                     <div *ngIf="ignoreCount > 0">
                         <h3>
-                            Liste des composants original et retour: ({{
-                                ignoreCount
-                            }})
+                            Liste des composants changer
                         </h3>
 
                         <p-table
@@ -882,14 +877,12 @@
                         >
                             <ng-template pTemplate="header">
                                 <tr>
-                                    <th>Retour</th>
                                     <th>Nom du Composant</th>
                                     <th>Quantité</th>
                                 </tr>
                             </ng-template>
                             <ng-template pTemplate="body" let-composant>
                                 <tr>
-                                    <td>{{ composant.ignoreCount }}</td>
                                     <td>{{ composant.nameComposant }}</td>
                                     <td>{{ composant.quantity }}</td>
                                 </tr>
@@ -897,13 +890,14 @@
                         </p-table>
                     </div>
                     <label for="name">
-                        Ajouter des remarques concernant le Di si nécessaire
+                        Ajouter une remarque si nécessaire
                     </label>
                     <textarea
                         formControlName="remarqueRepair"
-                        rows="5"
+                        rows="2"
                         cols="30"
                         pInputTextarea
+                        (keydown.enter)="$event.preventDefault()"
                     ></textarea>
                 </div>
 

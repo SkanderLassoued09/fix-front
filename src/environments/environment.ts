@@ -4,10 +4,11 @@
 
 export const environment = {
     production: false,
-    apiUrl: 'http://localhost:3000', // Replace "/api" with your actual API endpoint
+    apiUrl: 'http://localhost:3000/', // Replace "/api" with your actual API endpoint
     host: 'http://localhost:4200', // Front-end host
 };
-
+//! note to skander to access files i've added "/" to apiUrl so I've deleted the "/" in graphql.modules.ts and you can use the comment below to find them
+//?  //changed apiUrl
 /*
  * For easier debugging in development mode, you can import the following file
  * to ignore zone related error stack frames such as `zone.run`, `zoneDelegate.invokeTask`.

@@ -8,7 +8,7 @@ import { Observable, getMainDefinition } from '@apollo/client/utilities';
 import { NgModule } from '@angular/core';
 import { environment } from 'src/environments/environment';
 
-const uri = `${environment.apiUrl}/graphql`;
+const uri = `${environment.apiUrl}graphql`; //changed apiUrl
 
 export function createApollo(httpLink: HttpLink) {
     const basic = setContext((operation, context) => ({
@@ -43,7 +43,7 @@ export function createApollo(httpLink: HttpLink) {
             const { clientAwareness } = context;
 
             const ws = new WebSocket(
-                `ws://${environment.apiUrl}/graphql`,
+                `ws://${environment.apiUrl}graphql`, //changed apiUrl
                 'graphql-ws'
             );
 

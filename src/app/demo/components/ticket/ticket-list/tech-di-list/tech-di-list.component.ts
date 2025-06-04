@@ -192,6 +192,7 @@ export class TechDiListComponent implements OnInit {
     composantCategory: any;
     emplacement: any;
     _idnum: any;
+    allComposants: any[] = [];
     // backupComposantList: any[] = [];
     constructor(
         private ticketSerice: TicketService,
@@ -492,7 +493,7 @@ export class TechDiListComponent implements OnInit {
      */
     async diagModal(di) {
          this.composantSelected = null;
-        console.log(this.composantSelected,"this.composantSelected");
+       
        
         try {
             // Handle pause status if needed
@@ -510,8 +511,10 @@ export class TechDiListComponent implements OnInit {
             const retourDataPromise = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
+                    
                 })
                 .toPromise();
+                
             promises.push(retourDataPromise);
 
             // Add allCategoryDi to promises if it returns a promise
@@ -543,14 +546,25 @@ export class TechDiListComponent implements OnInit {
                 }).subscribe(({ data }) => {
                     if (data) {
                         this.emplacement = data.findOneLocation.location_name
+                        
                     }
                 });
 
 
             console.log('🌰[diagnosticData]:', diagnosticData);
-           
+            console.log(diagnosticData.data.getDiById.di.array_composants,"ARRAY OF COMPOSANT INITIAL");
+            console.log(diagnosticData.data.getDiById.logsDi,"LOGS DATAA");
+
+//! all of the composant here original and retour 
+             this.allComposants = [
+                 ...diagnosticData.data.getDiById.di.array_composants,
+                 ...diagnosticData.data.getDiById.logsDi.flatMap(log => log.array_composants)
+                    ];
+            console.log(this.allComposants,"allComposants HERE!");
+            
+
             this._idnum = diagnosticData.data.getDiById.di._idnum
-            console.log('[emplacement]:', diagnosticData.data.getDiById.di.location_id);
+           
             // Process retour data
 
             if (retourData?.data?.getRetourDataStats?.length > 0) {
@@ -732,6 +746,8 @@ export class TechDiListComponent implements OnInit {
                             ...detailsDi.array_composants,
                             ...arrayComposantLogs,
                         ];
+                        console.log("*************================>>>>>>>>>>",this.allComposantLogsAndOriginal);
+                        
                     }
 
                     if (detailsDi) {
@@ -1631,6 +1647,8 @@ export class TechDiListComponent implements OnInit {
 
     getReamrque() {
         this.remarqueReparationnn = this.remarque.value.remarqueRepair;
+        console.log("RQQQQ",this.remarqueReparationnn);
+        
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1(isFinishRep: boolean) {
