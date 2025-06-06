@@ -16,7 +16,7 @@
     <form [formGroup]="companyForm" class="grid grid-cols-3 gap-4 mt-4">
         <div class="p-float-label mb-4">
             <input
-                formControlName="raisonSociale"
+                formControlName="companyName"
                 pInputText
                 id="raisonSociale"
                 class="pInputText w-full"
@@ -294,9 +294,6 @@
             severity="danger"
         ></p-button>
         <p-button
-        [disabled]="
-        !companyForm.get('companyName').value
-        "
             label="Ajouter"
             severity="success"
             [loading]="loading"

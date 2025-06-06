@@ -149,7 +149,7 @@
     [style]="{ width: '35vw' }"
     [draggable]="false"
     [resizable]="false"
-    class="dialog-header-pricing"
+   
 >
     <form [formGroup]="tarif_Techs" class="form-pricing">
         <!-- Modal Content -->
@@ -308,11 +308,12 @@
             <label for="remarqueManager">Remarque Administration</label>
             <textarea
                 id="remarqueManager"
-                rows="5"
-                cols="30"
+                rows="2"
+                cols="20"
                 pInputTextarea
                 formControlName="remarqueManager"
                 class="form-control"
+                (keydown.enter)="$event.preventDefault()"
             ></textarea>
         </div>
 
@@ -365,6 +366,7 @@
         </div>
     </form>
 </p-dialog>
+
 <div class="card Header-btns flex justify-content-between">
     <p-button
         (click)="showDialogDiCreation()"
@@ -624,6 +626,7 @@
                                 rowData.status === 'RETOUR3'
                             "
                             label="Relancer"
+                            style="margin-left: 0.5rem"
                             severity="info"
                             (click)="changeToPending1(rowData)"
                         ></p-button>
@@ -1137,6 +1140,7 @@
             <div class="button-row">
                 <div class="button-container">
                     <a
+                        *ngIf="filesSelected?.bon_de_commande"
                         [href]="baseUrl + filesSelected?.bon_de_commande"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1146,6 +1150,7 @@
                 </div>
                 <div class="button-container">
                     <a
+                    *ngIf="filesSelected?.bon_de_livraison"
                         [href]="baseUrl + filesSelected?.bon_de_livraison"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1155,6 +1160,7 @@
                 </div>
                 <div class="button-container">
                     <a
+                    *ngIf="filesSelected?.facture"
                         [href]="baseUrl + filesSelected?.facture"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1167,6 +1173,7 @@
                 </div>
                 <div class="button-container">
                     <a
+                    *ngIf="filesSelected?.devis"
                         [href]="baseUrl + filesSelected?.devis"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1185,6 +1192,7 @@
             <h3 class="dialog-title">Retour N°{{ i + 1 }}</h3>
             <div class="button-row">
                 <a
+                *ngIf="files?.bon_de_commande"
                     [href]="baseUrl + files.bon_de_commande"
                     target="_blank"
                     class="file-link"
@@ -1192,6 +1200,7 @@
                     <p-button label="Consulter BC" [link]="true"></p-button>
                 </a>
                 <a
+                *ngIf="files?.bon_de_livraison"
                     [href]="baseUrl + files.bon_de_livraison"
                     target="_blank"
                     class="file-link"
@@ -1200,6 +1209,7 @@
                 </a>
 
                 <a
+                *ngIf="files?.facture"
                     [href]="baseUrl + files.facture"
                     target="_blank"
                     class="file-link"
@@ -1210,6 +1220,7 @@
                     ></p-button>
                 </a>
                 <a
+                *ngIf="files?.devis"
                     [href]="baseUrl + files.devis"
                     target="_blank"
                     class="file-link"
@@ -1319,7 +1330,7 @@
             <h3>Titre: {{ ticketData?.data?.title }}</h3>
             <!-- Di classique information  -->
             <div class="form-group1">
-                <strong class="form-group">Information principaux</strong>
+                <strong class="form-group">Information Principale</strong>
                 <div class="form-item">
                     <i class="pi pi-user"></i> <strong>Client ID:</strong>
                     {{ ticketData?.data?.client_id }}
@@ -1342,10 +1353,10 @@
                 </div>
             </div>
         </div>
-        <div class="pdr-rep">
-            <div class="price-info">
+        <div >
+            <div class="pdr-Rep">
                 <h6>
-                    Prix: <span>{{ ticketData?.data?.price ?? "N/A" }}</span>
+                    Prix Initial: <span>{{ ticketData?.data?.price ?? "N/A" }}</span>
                 </h6>
                 <h6>
                     Prix Finale:
@@ -1356,9 +1367,11 @@
             <div class="repair-info">
                 <h6>
                     Réparable:
-                    <span>{{
-                        ticketData?.data?.can_be_repaired ? "OUI" : "NON"
-                    }}</span>
+                    <span> {{
+    ticketData?.data?.can_be_repaired === true ? "OUI"
+    : ticketData?.data?.can_be_repaired === false ? "NON"
+    : "N/A" 
+  }}</span>
                 </h6>  
                   <h6>
                     Diagnostiqué par:
@@ -1410,7 +1423,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="Description"
-                placeholder="Description"
+                placeholder="Pas de Description"
                 disabled="true"
             ></textarea>
         </div>
@@ -1426,7 +1439,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="Remarque Administration "
-                placeholder="remarque Administration "
+                placeholder="Pas de remarque"
                 disabled="true"
             ></textarea>
         </div>
@@ -1443,7 +1456,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="remarque_tech_diagnostic"
-                placeholder="remarque_tech_diagnostic"
+                placeholder="Pas de remarque"
                 disabled="true"
             ></textarea>
         </div>
@@ -1459,7 +1472,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="remarque_tech_reperation"
-                placeholder="remarque_tech_reperation"
+                placeholder="Pas de remarque"
                 disabled="true"
             ></textarea>
         </div>
@@ -1999,7 +2012,7 @@
 <p-dialog
     [(visible)]="updateticketView"
     [style]="{ width: '450px' }"
-    header="Détails du Ticket"
+    header="Modifier Di"
     [modal]="true"
     styleClass="p-fluid"
     [draggable]="false"
@@ -2032,8 +2045,17 @@
                 required
             ></textarea>
         </div>
-
-        <!-- Created By -->
+     <div class="field">
+            <label for="description">Remarque Admnistration</label>
+            <textarea
+                id="remarque_manager"
+                rows="3"
+                [(ngModel)]="selectedTicket.remarque_manager"
+                pInputTextarea
+                required
+            ></textarea>
+        </div>
+        <!-- 
         <div class="field">
             <label for="createdBy">Créé Par</label>
             <input
@@ -2045,7 +2067,7 @@
             />
         </div>
 
-        <!-- Location ID -->
+       
         <div class="field">
             <label for="locationId">ID de Localisation</label>
             <input
@@ -2054,7 +2076,8 @@
                 pInputText
                 id="locationId"
             />
-        </div>
+        </div>  
+    -->
 
         <!-- Modal Footer with Action Buttons -->
         <div class="modal-footer">

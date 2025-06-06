@@ -70,7 +70,7 @@ export class CompanyListComponent {
         region: new FormControl('', [Validators.required]),
         fax: new FormControl(''),
         website: new FormControl(''),
-        raisonSociale: new FormControl('', [Validators.required]),
+       // raisonSociale: new FormControl('', [Validators.required]),
         activitePrincipale: new FormControl(''),
         activiteSecondaire: new FormControl(''),
         exoneration: new FormControl(''),
@@ -107,12 +107,9 @@ export class CompanyListComponent {
         { field: 'region', header: 'Région' },
         { field: 'address', header: 'Adresse' },
         { field: 'email', header: 'E-mail' },
-        // { field: 'activitePrincipale', header: 'Activité principale' },
-        // { field: 'activiteSecondaire', header: 'Activité secondaire' },
         { field: 'raisonSociale', header: 'Raison sociale' },
         { field: 'exoneration', header: 'Exoneration' },
         { field: 'fax', header: 'Fax' },
-        { field: 'webSiteLink', header: 'Lien du web' },
     ];
     companySelected: any;
     CompanyModalCondition: boolean = false;
@@ -225,6 +222,8 @@ export class CompanyListComponent {
     }
 
     saveUpdateCompany() {
+        console.log( "==>",this.companySelected);
+        
         this.apollo
             .mutate<any>({
                 mutation: this.companyService.updatecompany(
@@ -241,7 +240,7 @@ export class CompanyListComponent {
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Success',
-                            detail: 'Le company a changé avec succés',
+                            detail: 'La sociéte a été modifier avec succés',
                         });
                         this.CompanyModalCondition = false;
                     }

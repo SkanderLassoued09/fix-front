@@ -208,8 +208,6 @@ export class TechDiListComponent implements OnInit {
 
     ngOnInit() {
         this.composantSelected = null;
-        console.log(this.composantSelected,"this.composantSelected");
-        
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
@@ -224,6 +222,8 @@ export class TechDiListComponent implements OnInit {
             }
         });
         this.getAllTechDi(this.first, this.rows);
+        console.log(this.getAllTechDi(this.first, this.rows),"ALL tech di info");
+        
     }
 
     barChart() {
@@ -558,7 +558,7 @@ export class TechDiListComponent implements OnInit {
 //! all of the composant here original and retour 
              this.allComposants = [
                  ...diagnosticData.data.getDiById.di.array_composants,
-                 ...diagnosticData.data.getDiById.logsDi.flatMap(log => log.array_composants)
+                 ...diagnosticData.data.getDiById.logsDi?.flatMap(log => log.array_composants)?? []
                     ];
             console.log(this.allComposants,"allComposants HERE!");
             
@@ -574,9 +574,10 @@ export class TechDiListComponent implements OnInit {
             }
 
             // Process diagnostic data
+           
+            
             if (diagnosticData?.data) {
                 const detailsDi = diagnosticData.data.getDiById.di;
-
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
 
                 // Process the data based on whether detailsLogs exists
@@ -587,12 +588,10 @@ export class TechDiListComponent implements OnInit {
                     this.processDiagnosticWithoutLogs(di, detailsDi);
                     this.diData = detailsDi;
                 }
-
                 // Set remaining properties
-                this.di = { ...di };
-               
-                this.selectedDi = di._id;
                 
+                this.di = { ...di };
+                this.selectedDi = di._id;
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
                 this.diStatus = di.status;
@@ -602,6 +601,8 @@ export class TechDiListComponent implements OnInit {
                 this.diDialogDiag[di._id] = true;
                 // call the disable function
                 this.updateDisableValues();
+                
+                
             }
         } catch (error) {
             console.error('Error in diagModal:', error);

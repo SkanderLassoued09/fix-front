@@ -14,7 +14,7 @@
             <h3>Titre: {{ ticketData?.data?.title }}</h3>
             <!-- Di classique information  -->
             <div class="form-group1">
-                <strong class="form-group">Information principaux</strong>
+                <strong class="form-group">Information Demande d'intervention</strong>
                 <div class="form-item">
                     <i class="pi pi-user"></i> <strong>Client ID:</strong>
                     {{ ticketData?.data?.client_id }}
@@ -60,8 +60,10 @@
                 <h6 >
                     Réparable:
                     <span>{{
-                        ticketData?.data?.can_be_repaired ? "OUI" : "NON"
-                    }}</span>
+    ticketData?.data?.can_be_repaired === true ? "OUI"
+    : ticketData?.data?.can_be_repaired === false ? "NON"
+    : "N/A" 
+  }}</span>
                 </h6>
                 <h6 *ngIf="ticketData?.data?.can_be_repaired == true">
                     Contient PDR:
@@ -101,7 +103,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="Description"
-                placeholder="Description"
+                placeholder="Pas de Description"
                 disabled="true"
             ></textarea>
         </div>
@@ -117,7 +119,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="Remarque Administration "
-                placeholder="remarque Administration "
+                placeholder="Pas de remarque"
                 disabled="true"
             ></textarea>
         </div>
@@ -134,7 +136,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="remarque_tech_diagnostic"
-                placeholder="remarque_tech_diagnostic"
+                placeholder="Pas de remarque"
                 disabled="true"
             ></textarea>
         </div>
@@ -150,7 +152,7 @@
                 rows="3"
                 class="form-control"
                 aria-label="remarque_tech_reperation"
-                placeholder="remarque_tech_reperation"
+                placeholder="Pas de remarque"
                 disabled="true"
             ></textarea>
         </div>

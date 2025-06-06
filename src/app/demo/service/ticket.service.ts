@@ -253,7 +253,7 @@ export class TicketService {
         return gql`
             mutation {
                 updateDi(
-                    UpdateDi: { _id: "${data._id}", title: "${data.title}", description: "${data.description}" }
+                    UpdateDi: { _id: "${data._id}", title: "${data.title}", description: "${data.description}",remarque_manager: "${data.remarque_manager}" }
                 ) {
                     _id
                 }

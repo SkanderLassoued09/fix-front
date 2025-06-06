@@ -339,10 +339,16 @@ export class TicketListComponent implements OnInit {
     }
 
     saveUpdateTicket() {
-        const { _id, title, description } = this.selectedTicket;
-        const extractedData = { _id, title, description };
+        const { _id, title, description,remarque_manager } = this.selectedTicket;
+        const extractedData = { _id, title, description,remarque_manager };
 
         // Call your mutation service to update the ticket
+        this.confirmationService.confirm({
+                message: 'Voulez vous confirmer les changements',
+                header: "Confirmation Update DI",
+                icon: 'pi pi-question-circle',
+                accept: () => {
+
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.updateTicket(extractedData),
@@ -359,12 +365,14 @@ export class TicketListComponent implements OnInit {
                         this.messageservice.add({
                             severity: 'success',
                             summary: 'Success',
-                            detail: 'The ticket has been successfully updated',
+                            detail: 'Di a été Modifier',
                         });
-                        this.openUpdateModal = false; // Close the modal after successful update
+                        this.updateticketView = false; // Close the modal after successful update
                     }
                 }
-            });
+            })
+                }})
+        
     }
 
     findIndexById(_id: string): number {

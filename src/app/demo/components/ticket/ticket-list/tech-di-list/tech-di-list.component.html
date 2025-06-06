@@ -901,6 +901,15 @@
                     ></textarea>
                 </div>
 
+                <div class="field" *ngIf="description">
+                    <p-fieldset
+                        legend="Description"
+                        [toggleable]="true"
+                    >
+                        <p class="m-0">{{ description }}</p>
+                    </p-fieldset>
+                </div>
+
                 <div class="field" *ngIf="remarque_manager">
                     <p-fieldset
                         legend="Remarque admnistration"
