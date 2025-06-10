@@ -17,7 +17,7 @@
                 <strong class="form-group">Information Demande d'intervention</strong>
                 <div class="form-item">
                     <i class="pi pi-user"></i> <strong>Client ID:</strong>
-                    {{ ticketData?.data?.client_id }}
+                    {{ ticketData?.data?.client_id  }}
                     {{ ticketData?.data?.company_id }}
                 </div>
                 <div class="form-item">
@@ -37,61 +37,54 @@
                 </div>
             </div>
         </div>
-        <div class="pdr-rep">
-            <div class="price-info">
-                <h6>
-                    Prix: <span>{{ ticketData?.data?.price ?? "N/A" }}</span>
-                </h6>
-                <h6>
-                    Prix Finale:
-                    <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span>
-                </h6>
-                <h6>
-                    Technicien chargé Diagnostique:
-                    <span>{{ techInfo?.id_tech_diag }}</span>
-                </h6>
-                <h6>
-                    Technicien chargé Réparation:
-                    <span>{{ techInfo?.id_tech_rep }}</span>
-                </h6>
-            </div>
+        <div >
+           <div class="pdr-container">
+  <div class="pdr-card">
+    <h6>Prix Initial: <span>{{ ticketData?.data?.price ?? "N/A" }}</span></h6>
+    <h6>Prix Finale: <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span></h6>
+  </div>
 
-            <div class="repair-info">
-                <h6 >
-                    Réparable:
-                    <span>{{
-    ticketData?.data?.can_be_repaired === true ? "OUI"
-    : ticketData?.data?.can_be_repaired === false ? "NON"
-    : "N/A" 
-  }}</span>
-                </h6>
-                <h6 *ngIf="ticketData?.data?.can_be_repaired == true">
-                    Contient PDR:
-                    <span>{{
-                        ticketData?.data?.contain_pdr ? "OUI" : "NON"
-                    }}</span>
-                </h6>
+  <div class="pdr-card">
+    <h6>
+      Réparable:
+      <span>
+        {{ ticketData?.data?.can_be_repaired === true ? "OUI" : ticketData?.data?.can_be_repaired === false ? "NON" : "N/A" }}
+      </span>
+    </h6>
+    <h6 *ngIf="ticketData?.data?.can_be_repaired === true">
+      Contient PDR:
+      <span>{{ ticketData?.data?.contain_pdr ? "OUI" : "NON" }}</span>
+    </h6>
+  </div>
+
+  <div class="pdr-card">
+    <h6>Tech Diagnostique: <span>{{ ticketData?.data?.techDiag ?? "N/A" }}</span></h6>
+    <h6>Tech Réparation: <span>{{ ticketData?.data?.techRep ?? "N/A" }}</span></h6>
+  </div>
+</div>
+                 
+               
                 <p-table
-                    *ngIf="ticketData?.data?.can_be_repaired == true"
-                    [value]="ticketData?.data?.array_composants"
-                    [paginator]="true"
-                    [rows]="10"
-                    [responsiveLayout]="'scroll'"
-                >
-                    <ng-template pTemplate="header">
-                        <tr>
-                            <th>Nom du Composant</th>
-                            <th>Quantité</th>
-                        </tr>
-                    </ng-template>
-                    <ng-template pTemplate="body" let-composant>
-                        <tr>
-                            <td>{{ composant.nameComposant }}</td>
-                            <td>{{ composant.quantity }}</td>
-                        </tr>
-                    </ng-template>
-                </p-table>
-            </div>
+                *ngIf="ticketData?.data?.contain_pdr == true"
+                            [value]="ticketData?.data?.array_composants"
+                            [paginator]="true"
+                            [rows]="10"
+                            [responsiveLayout]="'scroll'"
+                        >
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Nom du Composant</th>
+                                    <th>Quantité</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-composant>
+                                <tr>
+                                    <td>{{ composant.nameComposant }}</td>
+                                    <td>{{ composant.quantity }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+            
         </div>
 
         <!-- Description -->

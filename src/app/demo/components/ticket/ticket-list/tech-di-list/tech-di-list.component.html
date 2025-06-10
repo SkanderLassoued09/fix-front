@@ -752,46 +752,29 @@
             <div class="flex flex-column">
                 <div [formGroup]="remarque" class="field">
                     <div *ngIf="ignoreCount == 0">
-                        <div>
-                            Technicien chargé Diagnostique pour ce DI:
-                            {{
-                                diStatRepInfo?.getStatInfoForTechReparation
+                       <div class="detail-section">
+                                    <span class="detail-label"
+                                        >Technicien chargé Diagnostique:</span
+                                    >
+                                    <span class="detail-value">{{
+                                        diStatRepInfo?.getStatInfoForTechReparation
                                     .StatData.id_tech_diag
-                            }}
-                        </div>
-                        <div>
-                            Temps de Diagnostique pour ce DI:
-                            {{
-                                diStatRepInfo?.getStatInfoForTechReparation
+                                    }}</span>
+                                    <span class="detail-label"
+                                        >Temps Diagnostique:</span
+                                    >
+                                    <span class="detail-value">{{
+                                        diStatRepInfo?.getStatInfoForTechReparation
                                     .StatData.diag_time
-                            }}
-                        </div>
-                        <div>
-                            Location:
-                            {{
-                                diStatRepInfo?.getStatInfoForTechReparation
-                                    .StatData.location_id
-                            }}
-                        </div>
+                                    }}</span>
+                   </div>
+                       
                         <div
                             *ngIf="
                                 diStatRepInfo?.getStatInfoForTechReparation
                                     .diData?.array_composants.length > 0
                             "
                         >
-                            <!-- liste Composant:
-                            <th
-                                *ngFor="
-                                    let onecomposant of diStatRepInfo
-                                        ?.getStatInfoForTechReparation.diData
-                                        ?.array_composants
-                                "
-                                style="min-width: 10rem"
-                            >
-                                {{ onecomposant }}
-                                {{ onecomposant.nameComposant }} =
-                                {{ onecomposant.quantity }}
-                            </th> -->
                             <p-table
                                 [value]="
                                     diStatRepInfo?.getStatInfoForTechReparation

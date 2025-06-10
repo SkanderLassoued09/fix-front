@@ -1354,45 +1354,34 @@
             </div>
         </div>
         <div >
-            <div class="pdr-Rep">
-                <h6>
-                    Prix Initial: <span>{{ ticketData?.data?.price ?? "N/A" }}</span>
-                </h6>
-                <h6>
-                    Prix Finale:
-                    <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span>
-                </h6>
-            </div>
+           <div class="pdr-container">
+  <div class="pdr-card">
+    <h6>Prix Initial: <span>{{ ticketData?.data?.price ?? "N/A" }}</span></h6>
+    <h6>Prix Finale: <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span></h6>
+  </div>
 
-            <div class="repair-info">
-                <h6>
-                    Réparable:
-                    <span> {{
-    ticketData?.data?.can_be_repaired === true ? "OUI"
-    : ticketData?.data?.can_be_repaired === false ? "NON"
-    : "N/A" 
-  }}</span>
-                </h6>  
-                  <h6>
-                    Diagnostiqué par:
-                    <span>{{
-                        ticketData?.data?.techDiag 
-                    }}</span>
-                </h6>
-                <h6>
-                    réparé par:
-                    <span>{{
-                        ticketData?.data?.techRep 
-                    }}</span>
-                </h6>
-                <h6 *ngIf="ticketData?.data?.can_be_repaired == true">
-                    Contient PDR:
-                    <span>{{
-                        ticketData?.data?.contain_pdr ? "OUI" : "NON"
-                    }}</span>
-                </h6>
+  <div class="pdr-card">
+    <h6>
+      Réparable:
+      <span>
+        {{ ticketData?.data?.can_be_repaired === true ? "OUI" : ticketData?.data?.can_be_repaired === false ? "NON" : "N/A" }}
+      </span>
+    </h6>
+    <h6 *ngIf="ticketData?.data?.can_be_repaired === true">
+      Contient PDR:
+      <span>{{ ticketData?.data?.contain_pdr ? "OUI" : "NON" }}</span>
+    </h6>
+  </div>
+
+  <div class="pdr-card">
+    <h6>Tech Diagnostique: <span>{{ ticketData?.data?.techDiag ?? "N/A" }}</span></h6>
+    <h6>Tech Réparation: <span>{{ ticketData?.data?.techRep ?? "N/A" }}</span></h6>
+  </div>
+</div>
+                 
+               
                 <p-table
-                *ngIf="ticketData?.data?.can_be_repaired == true"
+                *ngIf="ticketData?.data?.contain_pdr == true"
                             [value]="ticketData?.data?.array_composants"
                             [paginator]="true"
                             [rows]="10"
@@ -1411,7 +1400,7 @@
                                 </tr>
                             </ng-template>
                         </p-table>
-            </div>
+            
         </div>
 
         <!-- Description -->

@@ -466,9 +466,6 @@ infoRetour1OPEN() {
                     logsDi: { ...logsDi },
                 };
                 console.log(data, 'dtatatatata');
-                console.log(pauseLogs, 'pauseLogs');
-                console.log(logsDi, 'logsDi');
-
                 if (data.ignoreCount >= 1) {
                     this.retour1InfoFromLogs = logsDi[0];
                 }
