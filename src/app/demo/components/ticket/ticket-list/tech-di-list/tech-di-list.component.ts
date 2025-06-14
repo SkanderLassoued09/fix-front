@@ -732,6 +732,8 @@ export class TechDiListComponent implements OnInit {
                     const detailsDi = data.getDiById.di;
                     const detailsLogs = data.getDiById.logsDi;
 
+                    console.log("detailsDi",detailsDi);
+                    console.log("detailsLogs",detailsLogs);
                     if (detailsLogs) {
                         // Create the array of composant logs and set ignoreCount
                         arrayComposantLogs = detailsLogs.flatMap((el) => {
