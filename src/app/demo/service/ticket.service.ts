@@ -101,6 +101,8 @@ export class TicketService {
                         bon_de_livraison
                         contain_pdr
                         status
+                        techRep
+                        techDiag
                         createdAt
                         updatedAt
                         comment
