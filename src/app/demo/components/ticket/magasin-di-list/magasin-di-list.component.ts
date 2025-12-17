@@ -335,13 +335,11 @@ export class MagasinDiListComponent {
                                 .subscribe(({ data }) => {
                                     this.composantCatgorieList =
                                         data.findAllComposant_Category;
-                                        this.composantList = data.findAllComposant;
+                                    this.composantList = data.findAllComposant;
                                 });
                         }
                     });
-       
-          
-        },
+            },
         });
     }
 
@@ -592,7 +590,7 @@ export class MagasinDiListComponent {
                     this.composantCategory = data.findAllComposant_Category.map(
                         (el) => {
                             return {
-                                name: el._id,
+                                name: el.category_composant,
                                 value: el.category_composant,
                             };
                         }
@@ -860,80 +858,80 @@ export class MagasinDiListComponent {
         this.isToUpdate = false;
     }
     addComposant() {
-this.confirmationService.confirm({
+        this.confirmationService.confirm({
             message: 'Voulez-vous Ajouter ce composant ?',
             header: 'Confirmation Ajout',
-            
+
             accept: () => {
-                 if (!this.isToUpdate) {
-            const composantDataForm = this.composantMagasin.value;
+                if (!this.isToUpdate) {
+                    const composantDataForm = this.composantMagasin.value;
 
-            const composantDataTosend = {
-                ...composantDataForm,
-                pdf: this.payload?.file || null,
-            };
-            console.log('composantDataTosend', composantDataTosend);
-            this.apollo
-                .mutate<any>({
-                    mutation:
-                        this.ticketSerice.addComposantMagasin(
-                            composantDataTosend
-                        ),
-                })
-                .subscribe(({ data }) => {
-                    if (data) {
-                        console.log('data inside function', data);
-                        this.messageservice.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'Le composant a été créer',
+                    const composantDataTosend = {
+                        ...composantDataForm,
+                        pdf: this.payload?.file || null,
+                    };
+                    console.log('composantDataTosend', composantDataTosend);
+                    this.apollo
+                        .mutate<any>({
+                            mutation:
+                                this.ticketSerice.addComposantMagasin(
+                                    composantDataTosend
+                                ),
+                        })
+                        .subscribe(({ data }) => {
+                            if (data) {
+                                console.log('data inside function', data);
+                                this.messageservice.add({
+                                    severity: 'success',
+                                    summary: 'Success',
+                                    detail: 'Le composant a été créer',
+                                });
+                                this.getAllComposant();
+                                this.composantMagasin.reset();
+                            }
                         });
-                        this.getAllComposant();
-                        this.composantMagasin.reset();
-                    }
-                });
-        }
+                }
 
-        if (this.isToUpdate) {
-            const formattedComposantInfo = {
-                name: this.composantMagasin.value.name,
-                package: this.composantMagasin.value.packageComposant,
-                category_composant_id:
-                    this.composantMagasin.value.category_composant_id,
-                prix_achat: this.composantMagasin.value.prix_achat,
-                prix_vente: this.composantMagasin.value.prix_vente,
-                coming_date: new Date(
-                    this.composantMagasin.value.coming_date
-                ).toISOString(),
-                link: this.composantMagasin.value.link,
-                quantity_stocked: this.composantMagasin.value.quantity_stocked,
-                pdf: this.payload?.file || null,
-                status_composant: this.composantMagasin.value.status,
-            };
+                if (this.isToUpdate) {
+                    const formattedComposantInfo = {
+                        name: this.composantMagasin.value.name,
+                        package: this.composantMagasin.value.packageComposant,
+                        category_composant_id:
+                            this.composantMagasin.value.category_composant_id,
+                        prix_achat: this.composantMagasin.value.prix_achat,
+                        prix_vente: this.composantMagasin.value.prix_vente,
+                        coming_date: new Date(
+                            this.composantMagasin.value.coming_date
+                        ).toISOString(),
+                        link: this.composantMagasin.value.link,
+                        quantity_stocked:
+                            this.composantMagasin.value.quantity_stocked,
+                        pdf: this.payload?.file || null,
+                        status_composant: this.composantMagasin.value.status,
+                    };
 
-            console.log(
-                'formattedComposantInfo update',
-                formattedComposantInfo
-            );
-
-            this.apollo
-                .mutate<any>({
-                    mutation: this.ticketSerice.updateComposant(
+                    console.log(
+                        'formattedComposantInfo update',
                         formattedComposantInfo
-                    ),
-                    useMutationLoading: true,
-                })
-                .subscribe(({ data }) => {
-                    if (data) {
-                        this.composantMagasin.reset();
-                        // Handle success
-                    }
-                });
-        }
+                    );
 
-        this.openCreationComposantModal = false;
-            }})
-         
-       
+                    this.apollo
+                        .mutate<any>({
+                            mutation: this.ticketSerice.updateComposant(
+                                formattedComposantInfo
+                            ),
+                            useMutationLoading: true,
+                        })
+                        .subscribe(({ data }) => {
+                            if (data) {
+                                this.composantMagasin.reset();
+                                // Handle success
+                            }
+                        });
+                }
+
+                this.openCreationComposantModal = false;
+            },
+        });
     }
 }
