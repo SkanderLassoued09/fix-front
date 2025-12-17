@@ -64,6 +64,7 @@ export class TechDiListComponent implements OnInit {
 
     uploadedFiles: any[] = [];
     cols = [
+        { field: '_idDi', header: '_id' },
         { field: 'location_id', header: 'Emplacement' },
         { field: 'status', header: 'Status' },
     ];
@@ -119,7 +120,7 @@ export class TechDiListComponent implements OnInit {
     hasPdr: boolean;
     isReperable: boolean;
     remarque_manager: string;
-    description:string;
+    description: string;
     remarque_admin_manager: string;
     remarque_admin_tech: string;
     remarque_tech_diagnostic: string;
@@ -222,8 +223,10 @@ export class TechDiListComponent implements OnInit {
             }
         });
         this.getAllTechDi(this.first, this.rows);
-        console.log(this.getAllTechDi(this.first, this.rows),"ALL tech di info");
-        
+        console.log(
+            this.getAllTechDi(this.first, this.rows),
+            'ALL tech di info'
+        );
     }
 
     barChart() {
@@ -386,36 +389,41 @@ export class TechDiListComponent implements OnInit {
             header: 'Confirmation Ajout',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                 //NEW FILE HERE "pdf"
-        const { name, packageComposant, category_composant_id, link, pdf } =
-            this.composantTechnicien.value;
-        const imagePayload = this.payloadImage?.image
-            ? this.payloadImage.image
-            : null;
-
-        this.apollo
-            .mutate<CreateComposantMutationResult>({
-                mutation: this.ticketSerice.createComposantByTech(
+                //NEW FILE HERE "pdf"
+                const {
                     name,
                     packageComposant,
                     category_composant_id,
                     link,
-                    imagePayload
-                ),
-                useMutationLoading: true,
-            })
-            .subscribe(({ data, loading, errors }) => {
-                this.loadingCreatingComposant = loading;
+                    pdf,
+                } = this.composantTechnicien.value;
+                const imagePayload = this.payloadImage?.image
+                    ? this.payloadImage.image
+                    : null;
 
-                if (data) {
-                    this.getComposant();
-                    this.composantTechnicien.reset();
+                this.apollo
+                    .mutate<CreateComposantMutationResult>({
+                        mutation: this.ticketSerice.createComposantByTech(
+                            name,
+                            packageComposant,
+                            category_composant_id,
+                            link,
+                            imagePayload
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, loading, errors }) => {
+                        this.loadingCreatingComposant = loading;
 
-                    this.creatComposantDialog = false;
-                }
-            });
-            }})
-       
+                        if (data) {
+                            this.getComposant();
+                            this.composantTechnicien.reset();
+
+                            this.creatComposantDialog = false;
+                        }
+                    });
+            },
+        });
     }
     selctedDropDownComposantTech() {}
     //! end here
@@ -492,9 +500,8 @@ export class TechDiListComponent implements OnInit {
      * if ignore count exist loaad data from logs table
      */
     async diagModal(di) {
-         this.composantSelected = null;
-       
-       
+        this.composantSelected = null;
+
         try {
             // Handle pause status if needed
             if (di.status === 'DIAGNOSTIC_Pause') {
@@ -511,10 +518,9 @@ export class TechDiListComponent implements OnInit {
             const retourDataPromise = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
-                    
                 })
                 .toPromise();
-                
+
             promises.push(retourDataPromise);
 
             // Add allCategoryDi to promises if it returns a promise
@@ -538,33 +544,36 @@ export class TechDiListComponent implements OnInit {
             const [retourData, categoryData, diagnosticData, ...otherResults] =
                 await Promise.all(promises);
 
-
-
             this.apollo
                 .query<any>({
-                    query: this.ticketSerice.findLocationById(diagnosticData.data.getDiById.di.location_id),
-                }).subscribe(({ data }) => {
+                    query: this.ticketSerice.findLocationById(
+                        diagnosticData.data.getDiById.di.location_id
+                    ),
+                })
+                .subscribe(({ data }) => {
                     if (data) {
-                        this.emplacement = data.findOneLocation.location_name
-                        
+                        this.emplacement = data.findOneLocation.location_name;
                     }
                 });
 
-
             console.log('🌰[diagnosticData]:', diagnosticData);
-            console.log(diagnosticData.data.getDiById.di.array_composants,"ARRAY OF COMPOSANT INITIAL");
-            console.log(diagnosticData.data.getDiById.logsDi,"LOGS DATAA");
+            console.log(
+                diagnosticData.data.getDiById.di.array_composants,
+                'ARRAY OF COMPOSANT INITIAL'
+            );
+            console.log(diagnosticData.data.getDiById.logsDi, 'LOGS DATAA');
 
-//! all of the composant here original and retour 
-             this.allComposants = [
-                 ...diagnosticData.data.getDiById.di.array_composants,
-                 ...diagnosticData.data.getDiById.logsDi?.flatMap(log => log.array_composants)?? []
-                    ];
-            console.log(this.allComposants,"allComposants HERE!");
-            
+            //! all of the composant here original and retour
+            this.allComposants = [
+                ...diagnosticData.data.getDiById.di.array_composants,
+                ...(diagnosticData.data.getDiById.logsDi?.flatMap(
+                    (log) => log.array_composants
+                ) ?? []),
+            ];
+            console.log(this.allComposants, 'allComposants HERE!');
 
-            this._idnum = diagnosticData.data.getDiById.di._idnum
-           
+            this._idnum = diagnosticData.data.getDiById.di._idnum;
+
             // Process retour data
 
             if (retourData?.data?.getRetourDataStats?.length > 0) {
@@ -574,8 +583,7 @@ export class TechDiListComponent implements OnInit {
             }
 
             // Process diagnostic data
-           
-            
+
             if (diagnosticData?.data) {
                 const detailsDi = diagnosticData.data.getDiById.di;
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
@@ -589,7 +597,7 @@ export class TechDiListComponent implements OnInit {
                     this.diData = detailsDi;
                 }
                 // Set remaining properties
-                
+
                 this.di = { ...di };
                 this.selectedDi = di._id;
                 this.imageValue = detailsDi.image;
@@ -601,8 +609,6 @@ export class TechDiListComponent implements OnInit {
                 this.diDialogDiag[di._id] = true;
                 // call the disable function
                 this.updateDisableValues();
-                
-                
             }
         } catch (error) {
             console.error('Error in diagModal:', error);
@@ -732,8 +738,8 @@ export class TechDiListComponent implements OnInit {
                     const detailsDi = data.getDiById.di;
                     const detailsLogs = data.getDiById.logsDi;
 
-                    console.log("detailsDi",detailsDi);
-                    console.log("detailsLogs",detailsLogs);
+                    console.log('detailsDi', detailsDi);
+                    console.log('detailsLogs', detailsLogs);
                     if (detailsLogs) {
                         // Create the array of composant logs and set ignoreCount
                         arrayComposantLogs = detailsLogs.flatMap((el) => {
@@ -749,8 +755,10 @@ export class TechDiListComponent implements OnInit {
                             ...detailsDi.array_composants,
                             ...arrayComposantLogs,
                         ];
-                        console.log("*************================>>>>>>>>>>",this.allComposantLogsAndOriginal);
-                        
+                        console.log(
+                            '*************================>>>>>>>>>>',
+                            this.allComposantLogsAndOriginal
+                        );
                     }
 
                     if (detailsDi) {
@@ -1303,7 +1311,8 @@ export class TechDiListComponent implements OnInit {
         // didn't put ignoreCount > 0  bcs button are only shown with that condition
         //send finish directly condition
         this.techRetourSendFinished = !(
-            isPdr === false && isErrorFromFixtronixTech === true || isReperable === false
+            (isPdr === false && isErrorFromFixtronixTech === true) ||
+            isReperable === false
         );
         //send diag retou condition
         this.disabledDiagnostiqueRetourValue =
@@ -1650,8 +1659,7 @@ export class TechDiListComponent implements OnInit {
 
     getReamrque() {
         this.remarqueReparationnn = this.remarque.value.remarqueRepair;
-        console.log("RQQQQ",this.remarqueReparationnn);
-        
+        console.log('RQQQQ', this.remarqueReparationnn);
     }
     // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
     lapTimeForPauseAndGetBack1(isFinishRep: boolean) {

@@ -1,0 +1,17 @@
+version: "3.5"
+services:
+    keys-nezih-frontend:
+        image: node-fixtronix
+        container_name: "node-fixtronix"
+        command: ["tail", "-f", "/dev/null"]
+        working_dir: /app
+        ports:
+            - "4200:4200"
+        volumes:
+            - ".:/app"
+            - /app/node_modules
+
+networks:
+    default:
+        external: true
+        name: hostglobal

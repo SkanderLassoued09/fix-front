@@ -164,7 +164,8 @@ export class TicketListComponent implements OnInit {
     ingredient;
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_idnum', header: 'ID' },
+        { field: '_id', header: 'ID' },
+        { field: '_idnum', header: 'NUM' },
         { field: 'title', header: 'Titre' },
         { field: 'image', header: 'Image' },
         { field: 'location_id', header: 'Location' },
@@ -339,40 +340,40 @@ export class TicketListComponent implements OnInit {
     }
 
     saveUpdateTicket() {
-        const { _id, title, description,remarque_manager } = this.selectedTicket;
-        const extractedData = { _id, title, description,remarque_manager };
+        const { _id, title, description, remarque_manager } =
+            this.selectedTicket;
+        const extractedData = { _id, title, description, remarque_manager };
 
         // Call your mutation service to update the ticket
         this.confirmationService.confirm({
-                message: 'Voulez vous confirmer les changements',
-                header: "Confirmation Update DI",
-                icon: 'pi pi-question-circle',
-                accept: () => {
+            message: 'Voulez vous confirmer les changements',
+            header: 'Confirmation Update DI',
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.updateTicket(extractedData),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data) {
+                            // If the ticket ID exists, update the list with the modified ticket details
+                            if (this.selectedTicket._id) {
+                                this.diList[
+                                    this.findIndexById(this.selectedTicket._id)
+                                ] = this.selectedTicket;
 
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.updateTicket(extractedData),
-            })
-            .subscribe(({ data }) => {
-                if (data) {
-                    // If the ticket ID exists, update the list with the modified ticket details
-                    if (this.selectedTicket._id) {
-                        this.diList[
-                            this.findIndexById(this.selectedTicket._id)
-                        ] = this.selectedTicket;
-
-                        // Show success message
-                        this.messageservice.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'Di a été Modifier',
-                        });
-                        this.updateticketView = false; // Close the modal after successful update
-                    }
-                }
-            })
-                }})
-        
+                                // Show success message
+                                this.messageservice.add({
+                                    severity: 'success',
+                                    summary: 'Success',
+                                    detail: 'Di a été Modifier',
+                                });
+                                this.updateticketView = false; // Close the modal after successful update
+                            }
+                        }
+                    });
+            },
+        });
     }
 
     findIndexById(_id: string): number {
@@ -1238,7 +1239,7 @@ export class TicketListComponent implements OnInit {
                         location,
                         image: this.payload.file,
                     };
-                    console.log('data used is ',diInfo)
+                    console.log('data used is ', diInfo);
                     let _idQuery;
 
                     this.apollo
@@ -1949,8 +1950,4 @@ export class TicketListComponent implements OnInit {
             .query<any>({ query: this.ticketSerice.getLogsPause(_id) })
             .pipe(map(({ data }) => data?.getStatByIdlogs || []));
     }
-
-
-
-    
 }
