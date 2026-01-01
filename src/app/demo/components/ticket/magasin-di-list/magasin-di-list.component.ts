@@ -11,6 +11,8 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { environment } from 'src/environments/environment';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -18,6 +20,8 @@ import { environment } from 'src/environments/environment';
     styleUrl: './magasin-di-list.component.scss',
 })
 export class MagasinDiListComponent {
+    private composantSearch$ = new Subject<string>();
+
     baseUrl = environment.apiUrl;
     statusComposant = [
         { name: 'En stock', value: 'En stock' },
@@ -152,6 +156,27 @@ export class MagasinDiListComponent {
             console.log('🎂susb', susb);
             console.log(this.formUpdateComposant, 'form composants');
         });
+        this.composantSearch$
+            .pipe(
+                debounceTime(400), // wait user stops typing
+                distinctUntilChanged(),
+                switchMap((searchTerm) =>
+                    this.apollo.query<any>({
+                        query: this.ticketSerice.searchComposants(searchTerm),
+                    })
+                )
+            )
+            .subscribe(({ data }) => {
+                this.composantList = data.searchComposants; // 👈 list for dropdown
+            });
+    }
+
+    onComposantFilter(event: any) {
+        const searchValue = event.filter?.trim();
+
+        if (searchValue && searchValue.length >= 2) {
+            this.composantSearch$.next(searchValue);
+        }
     }
 
     allCategoryDi() {

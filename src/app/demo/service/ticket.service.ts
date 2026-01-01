@@ -574,6 +574,18 @@ export class TicketService {
         `;
     }
 
+    searchComposants(name) {
+        return gql`
+            {
+                searchComposants(name: "${name}") {
+                    _id
+                    name
+                 
+                }
+            }
+        `;
+    }
+
     saveTimeDiag(_id: string, diagTime: string) {
         return gql`
             mutation {

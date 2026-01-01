@@ -99,13 +99,16 @@
                 <div class="col">
                     <label for="name">Choisir un composant</label>
                     <p-dropdown
+                        [options]="composantList"
+                        optionLabel="name"
+                        optionValue="name"
+                        [filter]="true"
+                        filterBy="name"
                         [showClear]="true"
-                        [options]="arrayComposant"
-                        (onChange)="selectedDropDown($event)"
-                        optionLabel="infoComposant"
-                        optionValue="nameComposant"
                         placeholder="Choisir composant"
-                        (onClear)="onClear()"
+                        (onFilter)="onComposantFilter($event)"
+                        (onChange)="selectedDropDownComposant($event)"
+                        (onClear)="clearDropDown()"
                     ></p-dropdown>
                 </div>
             </div>
@@ -437,11 +440,14 @@
                 <label for="name">Choisir un composant</label>
                 <p-dropdown
                     [options]="composantList"
-                    (onChange)="selectedDropDownComposant($event)"
                     optionLabel="name"
                     optionValue="name"
+                    [filter]="true"
+                    filterBy="name"
                     [showClear]="true"
                     placeholder="Choisir composant"
+                    (onFilter)="onComposantFilter($event)"
+                    (onChange)="selectedDropDownComposant($event)"
                     (onClear)="clearDropDown()"
                 ></p-dropdown>
             </div>
