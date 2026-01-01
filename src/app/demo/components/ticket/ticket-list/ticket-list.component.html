@@ -149,7 +149,6 @@
     [style]="{ width: '35vw' }"
     [draggable]="false"
     [resizable]="false"
-   
 >
     <form [formGroup]="tarif_Techs" class="form-pricing">
         <!-- Modal Content -->
@@ -277,15 +276,30 @@
             <div class="col" *ngIf="radioBtn === 'COMPANY'">
                 <label for="company" class="dropdown-label">Société</label>
                 <p-dropdown
-                    id="company"
-                    class="dropdown"
                     [options]="companiesListDropDown"
                     formControlName="company_id"
                     optionLabel="company_name"
                     optionValue="value"
+                    [filter]="true"
+                    filterBy="company_name"
                     [showClear]="true"
                     placeholder="Choisir société"
+                    (onFilter)="onCompanyFilter($event)"
+                    (onChange)="selectedDropDownCompany($event)"
+                    (onClear)="clearCompanyDropDown()"
                 ></p-dropdown>
+                <!-- <p-dropdown
+                    [options]="composantList"
+                    optionLabel="name"
+                    optionValue="name"
+                    [filter]="true"
+                    filterBy="name"
+                    [showClear]="true"
+                    placeholder="Choisir composant"
+                    (onFilter)="onComposantFilter($event)"
+                    (onChange)="selectedDropDownComposant($event)"
+                    (onClear)="clearDropDown()"
+                ></p-dropdown> -->
             </div>
 
             <div class="col" *ngIf="radioBtn === 'CLIENT'">
@@ -1150,7 +1164,7 @@
                 </div>
                 <div class="button-container">
                     <a
-                    *ngIf="filesSelected?.bon_de_livraison"
+                        *ngIf="filesSelected?.bon_de_livraison"
                         [href]="baseUrl + filesSelected?.bon_de_livraison"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1160,7 +1174,7 @@
                 </div>
                 <div class="button-container">
                     <a
-                    *ngIf="filesSelected?.facture"
+                        *ngIf="filesSelected?.facture"
                         [href]="baseUrl + filesSelected?.facture"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1173,7 +1187,7 @@
                 </div>
                 <div class="button-container">
                     <a
-                    *ngIf="filesSelected?.devis"
+                        *ngIf="filesSelected?.devis"
                         [href]="baseUrl + filesSelected?.devis"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -1192,7 +1206,7 @@
             <h3 class="dialog-title">Retour N°{{ i + 1 }}</h3>
             <div class="button-row">
                 <a
-                *ngIf="files?.bon_de_commande"
+                    *ngIf="files?.bon_de_commande"
                     [href]="baseUrl + files.bon_de_commande"
                     target="_blank"
                     class="file-link"
@@ -1200,7 +1214,7 @@
                     <p-button label="Consulter BC" [link]="true"></p-button>
                 </a>
                 <a
-                *ngIf="files?.bon_de_livraison"
+                    *ngIf="files?.bon_de_livraison"
                     [href]="baseUrl + files.bon_de_livraison"
                     target="_blank"
                     class="file-link"
@@ -1209,7 +1223,7 @@
                 </a>
 
                 <a
-                *ngIf="files?.facture"
+                    *ngIf="files?.facture"
                     [href]="baseUrl + files.facture"
                     target="_blank"
                     class="file-link"
@@ -1220,7 +1234,7 @@
                     ></p-button>
                 </a>
                 <a
-                *ngIf="files?.devis"
+                    *ngIf="files?.devis"
                     [href]="baseUrl + files.devis"
                     target="_blank"
                     class="file-link"
@@ -1353,54 +1367,75 @@
                 </div>
             </div>
         </div>
-        <div >
-           <div class="pdr-container">
-  <div class="pdr-card">
-    <h6>Prix Initial: <span>{{ ticketData?.data?.price ?? "N/A" }}</span></h6>
-    <h6>Prix Finale: <span>{{ ticketData?.data?.final_price ?? "N/A" }}</span></h6>
-  </div>
+        <div>
+            <div class="pdr-container">
+                <div class="pdr-card">
+                    <h6>
+                        Prix Initial:
+                        <span>{{ ticketData?.data?.price ?? "N/A" }}</span>
+                    </h6>
+                    <h6>
+                        Prix Finale:
+                        <span>{{
+                            ticketData?.data?.final_price ?? "N/A"
+                        }}</span>
+                    </h6>
+                </div>
 
-  <div class="pdr-card">
-    <h6>
-      Réparable:
-      <span>
-        {{ ticketData?.data?.can_be_repaired === true ? "OUI" : ticketData?.data?.can_be_repaired === false ? "NON" : "N/A" }}
-      </span>
-    </h6>
-    <h6 *ngIf="ticketData?.data?.can_be_repaired === true">
-      Contient PDR:
-      <span>{{ ticketData?.data?.contain_pdr ? "OUI" : "NON" }}</span>
-    </h6>
-  </div>
+                <div class="pdr-card">
+                    <h6>
+                        Réparable:
+                        <span>
+                            {{
+                                ticketData?.data?.can_be_repaired === true
+                                    ? "OUI"
+                                    : ticketData?.data?.can_be_repaired ===
+                                      false
+                                    ? "NON"
+                                    : "N/A"
+                            }}
+                        </span>
+                    </h6>
+                    <h6 *ngIf="ticketData?.data?.can_be_repaired === true">
+                        Contient PDR:
+                        <span>{{
+                            ticketData?.data?.contain_pdr ? "OUI" : "NON"
+                        }}</span>
+                    </h6>
+                </div>
 
-  <div class="pdr-card">
-    <h6>Tech Diagnostique: <span>{{ ticketData?.data?.techDiag ?? "N/A" }}</span></h6>
-    <h6>Tech Réparation: <span>{{ ticketData?.data?.techRep ?? "N/A" }}</span></h6>
-  </div>
-</div>
-                 
-               
-                <p-table
+                <div class="pdr-card">
+                    <h6>
+                        Tech Diagnostique:
+                        <span>{{ ticketData?.data?.techDiag ?? "N/A" }}</span>
+                    </h6>
+                    <h6>
+                        Tech Réparation:
+                        <span>{{ ticketData?.data?.techRep ?? "N/A" }}</span>
+                    </h6>
+                </div>
+            </div>
+
+            <p-table
                 *ngIf="ticketData?.data?.contain_pdr == true"
-                            [value]="ticketData?.data?.array_composants"
-                            [paginator]="true"
-                            [rows]="10"
-                            [responsiveLayout]="'scroll'"
-                        >
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th>Nom du Composant</th>
-                                    <th>Quantité</th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-composant>
-                                <tr>
-                                    <td>{{ composant.nameComposant }}</td>
-                                    <td>{{ composant.quantity }}</td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
-            
+                [value]="ticketData?.data?.array_composants"
+                [paginator]="true"
+                [rows]="10"
+                [responsiveLayout]="'scroll'"
+            >
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Nom du Composant</th>
+                        <th>Quantité</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-composant>
+                    <tr>
+                        <td>{{ composant.nameComposant }}</td>
+                        <td>{{ composant.quantity }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
         </div>
 
         <!-- Description -->
@@ -1602,7 +1637,9 @@
                 <div>
                     Error Fixtronix
                     <strong>{{
-                        retour1InfoFromLogs?.isErrorFromFixtronix ? "OUI" : "NON"
+                        retour1InfoFromLogs?.isErrorFromFixtronix
+                            ? "OUI"
+                            : "NON"
                     }}</strong>
                 </div>
             </div>
@@ -1626,8 +1663,6 @@
                             }}</strong
                         >
                     </div>
-                    
-                    
                 </div>
             </div>
             <p-table
@@ -1746,7 +1781,9 @@
                 <div>
                     Error Fixtronix
                     <strong>{{
-                        retour2InfoFromLogs?.isErrorFromFixtronix ? "OUI" : "NON"
+                        retour2InfoFromLogs?.isErrorFromFixtronix
+                            ? "OUI"
+                            : "NON"
                     }}</strong>
                 </div>
             </div>
@@ -1771,8 +1808,6 @@
                             }}</strong
                         >
                     </div>
-                    
-                    
                 </div>
             </div>
             <p-table
@@ -1891,7 +1926,9 @@
                 <div>
                     Error Fixtronix
                     <strong>{{
-                        retour3InfoFromLogs?.isErrorFromFixtronix ? "OUI" : "NON"
+                        retour3InfoFromLogs?.isErrorFromFixtronix
+                            ? "OUI"
+                            : "NON"
                     }}</strong>
                 </div>
             </div>
@@ -1907,7 +1944,6 @@
                         >
                     </div>
                 </div>
-                
             </div>
             <p-table
                 *ngIf="
@@ -2034,7 +2070,7 @@
                 required
             ></textarea>
         </div>
-     <div class="field">
+        <div class="field">
             <label for="description">Remarque Admnistration</label>
             <textarea
                 id="remarque_manager"
@@ -2085,3 +2121,16 @@
         </div>
     </ng-template>
 </p-dialog>
+
+<!-- <p-dropdown
+                    [options]="composantList"
+                    optionLabel="name"
+                    optionValue="name"
+                    [filter]="true"
+                    filterBy="name"
+                    [showClear]="true"
+                    placeholder="Choisir composant"
+                    (onFilter)="onComposantFilter($event)"
+                    (onChange)="selectedDropDownComposant($event)"
+                    (onClear)="clearDropDown()"
+                ></p-dropdown> -->

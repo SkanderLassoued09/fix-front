@@ -585,6 +585,16 @@ export class TicketService {
             }
         `;
     }
+    searchCompanies(name: string) {
+        return gql`
+    {
+      searchCompanies(name: "${name}") {
+        _id
+        company_name
+      }
+    }
+  `;
+    }
 
     saveTimeDiag(_id: string, diagTime: string) {
         return gql`

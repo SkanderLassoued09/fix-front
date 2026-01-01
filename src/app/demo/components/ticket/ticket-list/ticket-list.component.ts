@@ -26,7 +26,15 @@ import {
 import * as FileSaver from 'file-saver';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
-import { map, range, tap } from 'rxjs';
+import {
+    debounceTime,
+    distinctUntilChanged,
+    map,
+    range,
+    Subject,
+    switchMap,
+    tap,
+} from 'rxjs';
 import { environment } from 'src/environments/environment';
 
 interface Column {
@@ -53,6 +61,8 @@ function noSpecialCharactersValidator(): ValidatorFn {
     styleUrl: './ticket-list.component.scss',
 })
 export class TicketListComponent implements OnInit {
+    private companySearch$ = new Subject<string>();
+
     baseUrl = environment.apiUrl;
 
     ticketSelected: any;
@@ -302,6 +312,19 @@ export class TicketListComponent implements OnInit {
                 this.getStatusCount();
             }
         });
+        this.companySearch$
+            .pipe(
+                debounceTime(400), // wait user stops typing
+                distinctUntilChanged(),
+                switchMap((searchTerm) =>
+                    this.apollo.query<any>({
+                        query: this.ticketSerice.searchCompanies(searchTerm),
+                    })
+                )
+            )
+            .subscribe(({ data }) => {
+                this.companiesListDropDown = data.searchCompanies; // 👈 dropdown list
+            });
     }
     blockSpecialCharacters(event: KeyboardEvent): void {
         const invalidCharacters = ['"', "'"];
@@ -490,6 +513,13 @@ export class TicketListComponent implements OnInit {
                     };
                 }
             });
+    }
+    onCompanyFilter(event: any) {
+        const searchValue = event.filter?.trim();
+
+        if (searchValue && searchValue.length >= 2) {
+            this.companySearch$.next(searchValue);
+        }
     }
 
     confirmerNegociation(step: any) {
