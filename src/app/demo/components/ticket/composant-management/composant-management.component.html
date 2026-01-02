@@ -29,15 +29,84 @@
                         label="Edit"
                         class="button-success"
                         severity="success"
+                        (click)="updateComposant(composant)"
                     />
                     <p-button
                         pRipple
                         label="delete"
                         class="button-success"
                         severity="danger"
+                        (click)="deleteComposant(composant._id)"
                     />
                 </td>
             </tr>
         </ng-template>
     </p-table>
+    <p-dialog
+        [(visible)]="openModalEdit"
+        header="Update Composant"
+        [modal]="true"
+        styleClass="p-fluid"
+    >
+        <form [formGroup]="updateComposantForm">
+            <div class="field">
+                <label>Package</label>
+                <input pInputText formControlName="package" />
+            </div>
+
+            <div class="field">
+                <label>Prix Achat</label>
+                <p-inputNumber formControlName="prix_achat"></p-inputNumber>
+            </div>
+
+            <div class="field">
+                <label>Prix Vente</label>
+                <p-inputNumber formControlName="prix_vente"></p-inputNumber>
+            </div>
+
+            <div class="field">
+                <label>Coming Date</label>
+                <p-calendar
+                    formControlName="coming_date"
+                    dateFormat="yy-mm-dd"
+                    showIcon="true"
+                ></p-calendar>
+            </div>
+
+            <div class="field">
+                <label>Quantity Stocked</label>
+                <p-inputNumber
+                    formControlName="quantity_stocked"
+                ></p-inputNumber>
+            </div>
+
+            <div class="field">
+                <label>Status</label>
+                <p-dropdown
+                    formControlName="status_composant"
+                    [options]="statusComposant"
+                    optionLabel="name"
+                    optionValue="value"
+                ></p-dropdown>
+            </div>
+        </form>
+
+        <ng-template pTemplate="footer">
+            <p-button
+                label="Cancel"
+                icon="pi pi-times"
+                [text]="true"
+                (onClick)="openModalEdit = false"
+            />
+            <p-button
+                label="Update"
+                icon="pi pi-check"
+                severity="success"
+                [disabled]="updateComposantForm.invalid"
+                (onClick)="saveComposant()"
+            />
+        </ng-template>
+    </p-dialog>
 </div>
+<p-confirmDialog />
+<p-toast></p-toast>

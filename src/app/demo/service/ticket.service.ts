@@ -860,6 +860,37 @@ export class TicketService {
         
             `;
     }
+    updateComposantTable(composantInfo: any) {
+        return gql`
+    mutation {
+      updateComposant(
+        updateComposant: {
+            _id: "${composantInfo._id}"
+          package: "${composantInfo.package}"
+          prix_achat: ${composantInfo.prix_achat}
+          prix_vente: ${composantInfo.prix_vente}
+          coming_date: "${composantInfo.coming_date}"
+          link: "${composantInfo.link}"
+          quantity_stocked: ${composantInfo.quantity_stocked}
+          pdf: "${composantInfo.pdf}"
+          status_composant: "${composantInfo.status_composant}"
+          category_composant_id: "${composantInfo.category_composant_id}"
+        }
+      ) {
+        _id
+        package
+        prix_achat
+        prix_vente
+        coming_date
+        link
+        quantity_stocked
+        pdf
+        status_composant
+        category_composant_id
+      }
+    }
+  `;
+    }
 
     updateComposant(composantInfo) {
         console.log('🍬[composantInfo]:', composantInfo);
