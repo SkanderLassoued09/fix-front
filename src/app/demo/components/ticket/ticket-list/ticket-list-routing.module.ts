@@ -4,11 +4,13 @@ import { TicketListComponent } from './ticket-list.component';
 import { MagasinDiListComponent } from '../magasin-di-list/magasin-di-list.component';
 import { TechDiListComponent } from './tech-di-list/tech-di-list.component';
 import { DetailsComposantComponent } from '../magasin-di-list/details-composant/details-composant.component';
+import { ComposantManagementComponent } from '../composant-management/composant-management.component';
 
 const routes: Routes = [
     { path: 'ticket-list', component: TicketListComponent },
     { path: 'magasin-di-list', component: MagasinDiListComponent },
     { path: 'tech-di-list', component: TechDiListComponent },
+    { path: 'composant-management', component: ComposantManagementComponent },
     { path: 'details/:id', component: DetailsComposantComponent },
 ];
 

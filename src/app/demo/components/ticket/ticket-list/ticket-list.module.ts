@@ -41,6 +41,7 @@ import { ImageModule } from 'primeng/image';
 import { PdfViewerModule } from 'ng2-pdf-viewer';
 import { ChartModule } from 'primeng/chart';
 import { PaginatorModule } from 'primeng/paginator';
+import { ComposantManagementComponent } from '../composant-management/composant-management.component';
 
 @NgModule({
     declarations: [
@@ -49,6 +50,7 @@ import { PaginatorModule } from 'primeng/paginator';
         MagasinDiListComponent,
         TechDiListComponent,
         DetailsComposantComponent,
+        ComposantManagementComponent,
     ],
     imports: [
         CommonModule,

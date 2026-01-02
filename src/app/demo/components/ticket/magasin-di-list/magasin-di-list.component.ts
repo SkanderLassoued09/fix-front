@@ -959,4 +959,8 @@ export class MagasinDiListComponent {
             },
         });
     }
+
+    directToComposantManagement() {
+        this.router.navigate(['tickets/ticket/composant-management']);
+    }
 }

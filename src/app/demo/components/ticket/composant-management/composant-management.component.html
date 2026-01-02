@@ -1,0 +1,43 @@
+<div class="card">
+    <p-table [value]="listComposants" [tableStyle]="{ 'min-width': '50rem' }">
+        <ng-template pTemplate="header">
+            <tr>
+                <th>_id</th>
+                <th>Package</th>
+                <th>Prix Achat</th>
+                <th>Prix Vente</th>
+                <th>Coming Date</th>
+                <th>Quantity Stocked</th>
+                <th>Status Composant</th>
+                <th>Action</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-composant>
+            <tr>
+                <td>{{ formatValue(composant._id) }}</td>
+                <td>{{ formatValue(composant.package) }}</td>
+                <td>{{ formatValue(composant.prix_achat) }}</td>
+                <td>{{ formatValue(composant.prix_vente) }}</td>
+                <td>
+                    {{ getFormattedDate(composant.coming_date) }}
+                </td>
+                <td>{{ formatValue(composant.quantity_stocked) }}</td>
+                <td>{{ formatValue(composant.status_composant) }}</td>
+                <td class="flex gap-1">
+                    <p-button
+                        pRipple
+                        label="Edit"
+                        class="button-success"
+                        severity="success"
+                    />
+                    <p-button
+                        pRipple
+                        label="delete"
+                        class="button-success"
+                        severity="danger"
+                    />
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
