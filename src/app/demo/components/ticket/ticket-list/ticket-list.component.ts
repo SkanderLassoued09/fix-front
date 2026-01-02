@@ -62,6 +62,7 @@ function noSpecialCharactersValidator(): ValidatorFn {
 })
 export class TicketListComponent implements OnInit {
     private companySearch$ = new Subject<string>();
+    private columnSearch$ = new Subject<{ field: string; value: string }>();
 
     baseUrl = environment.apiUrl;
 
@@ -174,17 +175,16 @@ export class TicketListComponent implements OnInit {
     ingredient;
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_id', header: 'ID' },
-        { field: '_idnum', header: 'NUM' },
-        { field: 'title', header: 'Titre' },
-        { field: 'image', header: 'Image' },
-        { field: 'location_id', header: 'Location' },
-        { field: 'status', header: 'Status' },
-        { field: 'company_id', header: 'Company' },
-        { field: 'client_id', header: 'Client' },
-        { field: 'createdBy', header: 'Créer par' },
-        { field: 'techDiag', header: 'Diagnostique' },
-        { field: 'techRep', header: 'Reparation' },
+        { field: '_id', header: 'ID', searchKey: '_id' },
+        { field: '_idnum', header: 'NUM', searchKey: '_idnum' },
+        { field: 'title', header: 'Titre', searchKey: 'title' },
+        { field: 'location_id', header: 'Location', searchKey: 'location' },
+        { field: 'status', header: 'Status', searchKey: 'status' },
+        { field: 'company_id', header: 'Company', searchKey: 'company' },
+        { field: 'client_id', header: 'Client', searchKey: 'client' },
+        { field: 'createdBy', header: 'Créer par', searchKey: 'createdBy' },
+        { field: 'techDiag', header: 'Diagnostique', searchKey: 'techDiag' },
+        { field: 'techRep', header: 'Reparation', searchKey: 'techRep' },
     ];
 
     colCategory = [{ field: 'category_name', name: 'Name' }];
@@ -287,6 +287,7 @@ export class TicketListComponent implements OnInit {
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
     retour3InfoFromLogs: any;
+    totalDiCount: any;
 
     constructor(
         private ticketSerice: TicketService,
@@ -324,6 +325,28 @@ export class TicketListComponent implements OnInit {
             )
             .subscribe(({ data }) => {
                 this.companiesListDropDown = data.searchCompanies; // 👈 dropdown list
+            });
+        this.columnSearch$
+            .pipe(
+                debounceTime(400),
+                distinctUntilChanged(
+                    (a, b) => a.field === b.field && a.value === b.value
+                ),
+                switchMap(({ field, value }) =>
+                    this.apollo.query<any>({
+                        query: this.ticketSerice.searchDi(
+                            field,
+                            value,
+                            this.first,
+                            this.rows
+                        ),
+                        fetchPolicy: 'no-cache',
+                    })
+                )
+            )
+            .subscribe(({ data }) => {
+                this.diList = data.searchDi.di;
+                this.totalDiCount = data.searchDi.totalDiCount;
             });
     }
     blockSpecialCharacters(event: KeyboardEvent): void {
@@ -408,6 +431,15 @@ export class TicketListComponent implements OnInit {
             }
         }
         return index;
+    }
+    onColumnSearch(field: string, value: string) {
+        console.log('value', value);
+        console.log('field', field);
+        const v = value?.trim().toString();
+        const f = field?.trim().toString();
+        if (v && v.length > 0 && f && f.length > 0) {
+            this.columnSearch$.next({ field, value: v });
+        }
     }
 
     showDialogPriceTech() {

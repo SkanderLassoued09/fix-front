@@ -20,10 +20,68 @@ export class TicketService {
             }
         `;
     }
+    searchDi(
+        field: string,
+        value: string,
+        first: number,
+        rows: number,
+        startDate?: string,
+        endDate?: string
+    ) {
+        return gql`
+  {
+    searchDi(
+      paginationConfig: { first: ${first}, rows: ${rows} }
+      search: { field: "${field}", value: "${value}" }
+      filterConfig: { startDate: "${startDate ? startDate : null}", endDate: "${
+            endDate ? endDate : null
+        }" }
+    ) {
+     di {
+            _id
+            _idnum
+            final_price
+            price
+            title
+            description
+            can_be_repaired
+            bon_de_commande
+            bon_de_livraison
+            contain_pdr
+            facture
+            devis
+            status
+            createdAt
+            updatedAt
+            image
+            isErrorFromFixtronix
+            company_id
+            client_id
+            techRep
+            techDiag
+            remarque_tech_diagnostic
+            remarque_tech_repair
+            remarque_manager
+            createdBy
+            ignoreCount
+            location_id
+            di_category_id
+            logs {
+                idIgnore
+                facture
+            }
+            array_composants {
+                nameComposant
+                quantity
+            }
+        }
+        totalDiCount
+    }
+  }
+  `;
+    }
 
     getAllDi(first, rows, startDate?: any, endDate?: any) {
-        console.log('🍨[endDate]:', endDate);
-        console.log('🍌[startDate]:', startDate);
         return gql`{
     getAllDi(
         paginationConfig: { first: ${first}, rows: ${rows} }, 
