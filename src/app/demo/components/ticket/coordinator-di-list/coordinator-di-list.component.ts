@@ -11,7 +11,6 @@ import {
 } from './coordinator-di-list.interfaces';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { ImageModule } from 'primeng/image';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { map } from 'rxjs';
@@ -49,6 +48,7 @@ export class CoordinatorDiListComponent {
 
     uploadedFiles: any[] = [];
     cols = [
+        { field: '_idnum', header: 'ID' },
         { field: 'title', header: 'Title' },
         { field: 'status', header: 'Status' },
         { field: 'client_id', header: 'Client' },

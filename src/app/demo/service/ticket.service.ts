@@ -149,6 +149,7 @@ export class TicketService {
                 get_coordinatorDI(paginationConfig: { first: ${first}, rows: ${rows} }) {
                     di {
                         _id
+                        _idnum
                         price
                         final_price
                         title

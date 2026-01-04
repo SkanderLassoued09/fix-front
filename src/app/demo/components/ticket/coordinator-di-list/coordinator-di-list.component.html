@@ -757,21 +757,8 @@
                 ></p-button>
             </div>
 
-            <div class="field">
-                <label for="name"
-                    >Envoyer Demande d'intervention pour la réperation</label
-                >
 
-                <p-dropdown
-                    [options]="techList"
-                    optionLabel="firstName"
-                    [showClear]="true"
-                    placeholder="Reparation"
-                    [disabled]="rep_condition"
-                    (onChange)="selectedTechRep($event)"
-                ></p-dropdown>
-            </div>
-            <div class="field">
+<div class="field">
                 <label for="name"
                     >Confirmer le reçoit des composants du magasin</label
                 >
@@ -791,6 +778,22 @@
                     </div>
                 </ng-container>
             </div>
+
+            <div class="field">
+                <label for="name"
+                    >Envoyer Demande d'intervention pour la réperation</label
+                >
+
+                <p-dropdown
+                    [options]="techList"
+                    optionLabel="firstName"
+                    [showClear]="true"
+                    placeholder="Reparation"
+                    [disabled]="rep_condition"
+                    (onChange)="selectedTechRep($event)"
+                ></p-dropdown>
+            </div>
+            
             <div class="field" *ngIf="remarque_manager">
                 <!-- to continue other rq -->
                 <p-fieldset legend="Remarque admnistration" [toggleable]="true">
