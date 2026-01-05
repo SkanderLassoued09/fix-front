@@ -65,7 +65,7 @@ export class TechDiListComponent implements OnInit {
     uploadedFiles: any[] = [];
     cols = [
         { field: '_idnum', header: 'ID' },
-        { field: '_idDi', header: 'ID REF' },
+        // { field: '_idDi', header: 'ID REF' },
         { field: 'location_id', header: 'Emplacement' },
         { field: 'status', header: 'Status' },
     ];
