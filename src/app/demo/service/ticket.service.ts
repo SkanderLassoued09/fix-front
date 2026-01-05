@@ -370,6 +370,18 @@ export class TicketService {
                         diag_time
                         rep_time
                         status
+                        _idnum
+                              client {
+    _id
+    first_name
+    last_name
+    phone
+  }
+  company {
+    _id
+    name
+    fax
+  } 
                         location_id
                          pauseLogs {
                         _id

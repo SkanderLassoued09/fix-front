@@ -64,7 +64,8 @@ export class TechDiListComponent implements OnInit {
 
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_idnum', header: 'ID' },
+        { field: '_idnum', header: 'NUM' },
+        { field: '_idDi', header: 'ID' },
         { field: 'location_id', header: 'Emplacement' },
         { field: 'status', header: 'Status' },
     ];
@@ -445,6 +446,7 @@ export class TechDiListComponent implements OnInit {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
+                console.log(data);
                 if (data) {
                     this.techList = data.getDiForTech.stat;
 
