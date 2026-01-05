@@ -60,7 +60,7 @@ export class ComposantManagementComponent {
                     .subscribe(({ data }) => {
                         console.log('🥨[data]:', data);
                         if (data) {
-                            this.getAllComposants;
+                            this.getAllComposants();
                         }
                     });
             },
