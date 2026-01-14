@@ -143,6 +143,43 @@ export class TicketService {
         `;
     }
 
+    searchCoordinatorDI(
+        field: string,
+        value: string,
+        first: number,
+        rows: number
+    ) {
+        return gql`
+    {
+      searchCoordinatorDI(
+        paginationConfig: { first: ${first}, rows: ${rows} }
+        search: { field: "${field}", value: "${value}" }
+      ) {
+        di {
+          _id
+          _idnum
+          title
+          status
+          price
+          final_price
+          createdAt
+          techDiag
+          techRep
+          company_id
+          client_id
+          location_id
+          logs {
+            idIgnore
+            isSentToCoordinator
+            isConfirmedComponentFromCoordinator
+          }
+        }
+        totalDiCount
+      }
+    }
+  `;
+    }
+
     getAllDiForCoordinator(first, rows) {
         return gql`
             {

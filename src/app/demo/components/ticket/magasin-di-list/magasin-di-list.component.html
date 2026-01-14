@@ -105,20 +105,16 @@
                 <div class="col">
                     <label for="name">Choisir un composant</label>
                     <p-dropdown
-                        [options]="composantList"
-                        optionLabel="name"
-                        optionValue="name"
-                        [filter]="true"
-                        filterBy="name"
                         [showClear]="true"
+                        [options]="arrayComposant"
+                        (onChange)="selectedDropDown($event)"
+                        optionLabel="infoComposant"
+                        optionValue="nameComposant"
                         placeholder="Choisir composant"
-                        (onFilter)="onComposantFilter($event)"
-                        (onChange)="selectedDropDownComposant($event)"
-                        (onClear)="clearDropDown()"
+                        (onClear)="onClear()"
                     ></p-dropdown>
                 </div>
             </div>
-
             <ng-container *ngIf="selectedItem">
                 <div class="grid align-items-center">
                     <div class="col">

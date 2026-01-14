@@ -156,19 +156,19 @@ export class MagasinDiListComponent {
             console.log('🎂susb', susb);
             console.log(this.formUpdateComposant, 'form composants');
         });
-        this.composantSearch$
-            .pipe(
-                debounceTime(400), // wait user stops typing
-                distinctUntilChanged(),
-                switchMap((searchTerm) =>
-                    this.apollo.query<any>({
-                        query: this.ticketSerice.searchComposants(searchTerm),
-                    })
-                )
-            )
-            .subscribe(({ data }) => {
-                this.composantList = data.searchComposants; // 👈 list for dropdown
-            });
+        // this.composantSearch$
+        //     .pipe(
+        //         debounceTime(400), // wait user stops typing
+        //         distinctUntilChanged(),
+        //         switchMap((searchTerm) =>
+        //             this.apollo.query<any>({
+        //                 query: this.ticketSerice.searchComposants(searchTerm),
+        //             })
+        //         )
+        //     )
+        //     .subscribe(({ data }) => {
+        //         this.composantList = data.searchComposants; // 👈 list for dropdown
+        //     });
     }
 
     onComposantFilter(event: any) {
