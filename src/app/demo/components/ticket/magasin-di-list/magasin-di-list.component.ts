@@ -21,6 +21,7 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 })
 export class MagasinDiListComponent {
     private composantSearch$ = new Subject<string>();
+    private columnSearch$ = new Subject<{ field: string; value: string }>();
 
     baseUrl = environment.apiUrl;
     statusComposant = [
@@ -34,9 +35,10 @@ export class MagasinDiListComponent {
     magasinDiDialog: boolean = false;
     selectedComposant;
     cols = [
-        { field: 'title', header: 'Title' },
-        { field: 'status', header: 'Status' },
+        { field: 'title', header: 'Title', searchKey: 'title' },
+        { field: 'status', header: 'Status', searchKey: 'status' },
     ];
+
     diList: any;
     diListCount: any;
     formMagasin = new FormGroup({
@@ -169,6 +171,37 @@ export class MagasinDiListComponent {
         //     .subscribe(({ data }) => {
         //         this.composantList = data.searchComposants; // 👈 list for dropdown
         //     });
+        this.columnSearch$
+            .pipe(
+                debounceTime(400),
+                distinctUntilChanged(
+                    (a, b) => a.field === b.field && a.value === b.value
+                ),
+                switchMap(({ field, value }) =>
+                    this.apollo.query<any>({
+                        query: this.ticketSerice.getAllMagasinSearch(
+                            this.first,
+                            this.rows,
+                            field,
+                            value
+                        ),
+                        fetchPolicy: 'no-cache',
+                    })
+                )
+            )
+            .subscribe(({ data }) => {
+                this.diList = data.searchDiForMagasin.di;
+                this.diListCount = data.searchDiForMagasin.totalDiCount;
+            });
+    }
+    onColumnSearch(field: string, value: string) {
+        console.log('value', value);
+        console.log('field', field);
+        const v = value?.trim().toString();
+        const f = field?.trim().toString();
+        if (v && v.length > 0 && f && f.length > 0) {
+            this.columnSearch$.next({ field, value: v });
+        }
     }
 
     onComposantFilter(event: any) {

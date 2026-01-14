@@ -3,9 +3,7 @@ import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import {
-    ConfigDiagAffectationMutationResponse,
     ConfigRepAffectationMutationResponse,
-    GetAllDiForCoordinatorQueryResponse,
     GetAllTechQueryResponse,
     TechStartDiagnosticMutationResponse,
 } from './coordinator-di-list.interfaces';
@@ -13,15 +11,22 @@ import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
-import { map } from 'rxjs';
+import {
+    debounceTime,
+    distinctUntilChanged,
+    map,
+    Subject,
+    switchMap,
+} from 'rxjs';
 
 @Component({
     selector: 'app-coordinator-di-list',
-
     templateUrl: './coordinator-di-list.component.html',
     styleUrl: './coordinator-di-list.component.scss',
 })
 export class CoordinatorDiListComponent {
+    private columnSearch$ = new Subject<{ field: string; value: string }>();
+
     visible: boolean = false;
     products!: Product[];
 
@@ -48,13 +53,13 @@ export class CoordinatorDiListComponent {
 
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_idnum', header: 'ID' },
-        { field: 'title', header: 'Title' },
-        { field: 'status', header: 'Status' },
-        { field: 'client_id', header: 'Client' },
-        { field: 'company_id', header: 'Company' },
-        { field: 'createdBy', header: 'Cree par' },
-        { field: 'location_id', header: 'Location' },
+        { field: '_idnum', header: 'ID', searchKey: '_idnum' },
+        { field: 'title', header: 'Title', searchKey: 'title' },
+        { field: 'status', header: 'Status', searchKey: 'status' },
+        { field: 'client_id', header: 'Client', searchKey: 'client' },
+        { field: 'company_id', header: 'Company', searchKey: 'company' },
+        { field: 'createdBy', header: 'Cree par', searchKey: 'createdBy' },
+        { field: 'location_id', header: 'Location', searchKey: 'location' },
     ];
 
     countries;
@@ -156,16 +161,45 @@ export class CoordinatorDiListComponent {
                 this.getStatusCount();
             }
         });
+
+        this.columnSearch$
+            .pipe(
+                debounceTime(400),
+                distinctUntilChanged(
+                    (a, b) => a.field === b.field && a.value === b.value
+                ),
+                switchMap(({ field, value }) =>
+                    this.apollo.query<any>({
+                        query: this.ticketSerice.searchCoordinatorDI(
+                            field,
+                            value,
+                            this.first,
+                            this.rows
+                        ),
+                        fetchPolicy: 'no-cache',
+                    })
+                )
+            )
+            .subscribe(({ data }) => {
+                this.diList = data.searchCoordinatorDI.di;
+                this.diListCount = data.searchCoordinatorDI.totalDiCount;
+            });
     }
     diagnosticOpen() {}
     showDialog() {
         this.visible = true;
     }
+    onColumnSearch(field: string, value: string) {
+        console.log('value', value);
+        console.log('field', field);
+        const v = value?.trim().toString();
+        const f = field?.trim().toString();
+        if (v && v.length > 0 && f && f.length > 0) {
+            this.columnSearch$.next({ field, value: v });
+        }
+    }
 
-
-
-
-infoRetour1OPEN() {
+    infoRetour1OPEN() {
         this.modalRetour1Info = !this.modalRetour1Info;
     }
     infoRetour2OPEN() {
@@ -174,8 +208,6 @@ infoRetour1OPEN() {
     infoRetour3OPEN() {
         this.modalRetour3Info = !this.modalRetour3Info;
     }
-
-
 
     onPageChange(event: PageEvent) {
         this.first = event.first;
@@ -482,9 +514,7 @@ infoRetour1OPEN() {
                 this.ticketDetailsInfo = true; // Open the dialog
                 this.techInfo = { ...pauseLogs };
                 console.log('data inside sknder =>', this.ticketData.data);
-                console.log(data,"all the data needed here");
-                
-                
+                console.log(data, 'all the data needed here');
             })
             .catch((error) => {
                 console.error('Error fetching logs:', error);

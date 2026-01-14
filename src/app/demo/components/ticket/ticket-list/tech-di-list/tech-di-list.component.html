@@ -119,6 +119,18 @@
                 <th style="min-width: 2rem">Diagnostique</th>
                 <th style="min-width: 2rem">Reparation</th>
             </tr>
+            <tr>
+                <th *ngFor="let col of columns">
+                    <input
+                        pInputText
+                        type="text"
+                        placeholder="Chercher"
+                        (input)="
+                            onColumnSearch(col.searchKey, $event.target.value)
+                        "
+                    />
+                </th>
+            </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
             <tr

@@ -254,6 +254,42 @@ export class TicketService {
         `;
     }
 
+    getAllMagasinSearch(first, rows, field, value) {
+        return gql`
+    {
+      searchDiForMagasin(
+        paginationConfig: { first: ${first}, rows: ${rows} }
+        search: { field: "${field}", value: "${value}" }
+      ) {
+        di {
+          _id
+          title
+          description
+          can_be_repaired
+          bon_de_commande
+          bon_de_livraison
+          contain_pdr
+          status
+          createdAt
+          updatedAt
+          current_roles
+          client_id
+          createdBy
+          location_id
+          di_category_id
+          ignoreCount
+          array_composants {
+            nameComposant
+            quantity
+            isUpdated
+          }
+        }
+        totalDiCount
+      }
+    }
+  `;
+    }
+
     // query getAllMagasin change with variable
     getAllMagasin(first, rows) {
         return gql`
