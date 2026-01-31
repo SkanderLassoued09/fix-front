@@ -23,7 +23,6 @@
             />
             <label for="raisonSociale">Raison sociale</label>
         </div>
-        
 
         <div class="p-float-label mb-4">
             <label for="region">Region</label>
@@ -46,8 +45,6 @@
             />
             <label for="address">Adresse</label>
         </div>
-
-        
 
         <div class="p-float-label mb-4">
             <input
@@ -121,8 +118,6 @@
             <label for="activiteSecondaire">Activité secondaire</label>
         </div>
 
-
-
         <div class="p-float-label mb-4">
             <input
                 formControlName="rne"
@@ -133,8 +128,6 @@
             <label for="Rne">RNE</label>
         </div>
 
-
-
         <div class="p-float-label mb-4">
             <input
                 formControlName="mf"
@@ -144,10 +137,6 @@
             />
             <label for="mf">Matricule Fiscale</label>
         </div>
-
-
-
-
     </form>
 
     <div class="btn-service">
@@ -171,16 +160,10 @@
         ></p-button>
     </div>
 
-
-
-
     <div [formGroup]="companyForm.get('achat')" *ngIf="toHideAchat">
-        <h6>
-            Information Responsable Achat
-        </h6>
+        <h6>Information Responsable Achat</h6>
         <label for="achatName">Nom</label>
         <div class="p-float-label mb-4">
-            
             <input
                 formControlName="fullName"
                 pInputText
@@ -196,95 +179,79 @@
                 id="achatPhone"
                 class="pInputText w-full"
             />
-           
         </div>
         <label for="achatEmail">Email</label>
-        <div class="p-float-label mb-4">   
+        <div class="p-float-label mb-4">
             <input
                 formControlName="email"
                 pInputText
                 id="achatEmail"
                 class="pInputText w-full"
-            /> 
+            />
         </div>
     </div>
-    
 
-
-
-<div  [formGroup]="companyForm.get('technique')" *ngIf="toHideTechnique" >
-    <h6>
-        Information Responsable Technique
-    </h6>
-    <label for="technique">Nom</label>
-    <di>
-        <input
-        formControlName="fullName"
-        pInputText
-        id="activiteSecondaire"
-        class="pInputText w-full"
-    />
-    
-    </di>
-    <label for="phone">Tél </label>
-    <di>
-        <input
-        formControlName="phone"
-        pInputText
-        id="phone"
-        class="pInputText w-full"
-    />
-    
-    </di>
-    <label for="email">email</label>
-    <di>
-    <input
-        formControlName="email"
-        pInputText
-        id="email"
-        class="pInputText w-full"
-    />
-    </di>  
-    </div>
-
-    <div [formGroup]="companyForm.get('financier')" *ngIf="toHideFinancier" >
-        <h6>
-            Information Responsable Financier
-        </h6>
-        <label for="fullName">Nom</label>
+    <div [formGroup]="companyForm.get('technique')" *ngIf="toHideTechnique">
+        <h6>Information Responsable Technique</h6>
+        <label for="technique">Nom</label>
         <di>
-           
             <input
-            formControlName="fullName"
-            pInputText
-            id="fullName"
-            class="pInputText w-full"
-        />
-        
+                formControlName="fullName"
+                pInputText
+                id="activiteSecondaire"
+                class="pInputText w-full"
+            />
         </di>
         <label for="phone">Tél </label>
         <di>
-         
             <input
-            formControlName="phone"
-            pInputText
-            id="phone"
-            class="pInputText w-full"
-        />
-        
+                formControlName="phone"
+                pInputText
+                id="phone"
+                class="pInputText w-full"
+            />
         </di>
         <label for="email">email</label>
         <di>
-           
             <input
-            formControlName="email"
-            pInputText
-            id="email"
-            class="pInputText w-full"
-        />
-        </di>  
-        </div>
+                formControlName="email"
+                pInputText
+                id="email"
+                class="pInputText w-full"
+            />
+        </di>
+    </div>
 
+    <div [formGroup]="companyForm.get('financier')" *ngIf="toHideFinancier">
+        <h6>Information Responsable Financier</h6>
+        <label for="fullName">Nom</label>
+        <di>
+            <input
+                formControlName="fullName"
+                pInputText
+                id="fullName"
+                class="pInputText w-full"
+            />
+        </di>
+        <label for="phone">Tél </label>
+        <di>
+            <input
+                formControlName="phone"
+                pInputText
+                id="phone"
+                class="pInputText w-full"
+            />
+        </di>
+        <label for="email">email</label>
+        <di>
+            <input
+                formControlName="email"
+                pInputText
+                id="email"
+                class="pInputText w-full"
+            />
+        </di>
+    </div>
 
     <!-- -------- -->
     <ng-template pTemplate="footer">
@@ -315,7 +282,18 @@
                 <th *ngFor="let col of columns">
                     {{ col.header }}
                 </th>
-                <th></th>
+            </tr>
+            <tr>
+                <th *ngFor="let col of columns">
+                    <input
+                        pInputText
+                        type="text"
+                        placeholder="Chercher"
+                        (input)="
+                            onColumnSearch(col.searchKey, $event.target.value)
+                        "
+                    />
+                </th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
@@ -383,7 +361,7 @@
                     Name is required.
                 </small>
             </div>
-           
+
             <div class="field">
                 <label for="address">Address</label>
                 <input
@@ -518,7 +496,6 @@
                     [text]="true"
                 ></p-button>
                 <p-button
-                
                     (click)="saveUpdateCompany()"
                     icon="pi pi-plus"
                     label="Modifier"
@@ -537,8 +514,10 @@
         draggable="false"
     >
         <ng-template pTemplate="content">
-            <div >
-                <h4 style="background-color: rgb(93, 244, 115);" >Service Achat</h4>
+            <div>
+                <h4 style="background-color: rgb(93, 244, 115)">
+                    Service Achat
+                </h4>
                 <div class="field">
                     <label for="serviceAchatName">Service Achat Name</label>
                     <input
@@ -588,119 +567,138 @@
                     </small>
                 </div>
             </div>
-            
-<div>
-    <h4 style="background-color: rgb(118, 151, 251);" >Service Financier</h4>
-    <div class="field">
-        <label for="serviceFinancierName">Service Financier Name</label>
-        <input
-            type="text"
-            pInputText
-            id="serviceFinancierName"
-            [(ngModel)]="companySelected.serviceFinancier.name"
-            required
-        />
-        <small
-            class="p-error"
-            *ngIf="submitted && !companySelected.serviceFinancier.name"
-        >
-            Service Financier Name is required.
-        </small>
-    </div>
-    <div class="field">
-        <label for="serviceFinancierEmail"
-            >Service Financier Email</label
-        >
-        <input
-            type="email"
-            pInputText
-            id="serviceFinancierEmail"
-            [(ngModel)]="companySelected.serviceFinancier.email"
-            required
-        />
-        <small
-            class="p-error"
-            *ngIf="submitted && !companySelected.serviceFinancier.email"
-        >
-            Service Financier Email is required.
-        </small>
-    </div>
-    <div class="field">
-        <label for="serviceFinancierPhone"
-            >Service Financier Phone</label
-        >
-        <input
-            type="text"
-            pInputText
-            id="serviceFinancierPhone"
-            [(ngModel)]="companySelected.serviceFinancier.phone"
-            required
-        />
-        <small
-            class="p-error"
-            *ngIf="submitted && !companySelected.serviceFinancier.phone"
-        >
-            Service Financier Phone is required.
-        </small>
-    </div>
 
-</div>
-            
-       <div>
-        <h4 style="background-color: rgb(168,85,247);" >Service Technique</h4>
-        <div class="field">
-            <label for="serviceTechniqueName">Service Technique Name</label>
-            <input
-                type="text"
-                pInputText
-                id="serviceTechniqueName"
-                [(ngModel)]="companySelected.serviceTechnique.name"
-                required
-            />
-            <small
-                class="p-error"
-                *ngIf="submitted && !companySelected.serviceTechnique.name"
-            >
-                Service Technique Name is required.
-            </small>
-        </div>
-        <div class="field">
-            <label for="serviceTechniqueEmail"
-                >Service Technique Email</label
-            >
-            <input
-                type="email"
-                pInputText
-                id="serviceTechniqueEmail"
-                [(ngModel)]="companySelected.serviceTechnique.email"
-                required
-            />
-            <small
-                class="p-error"
-                *ngIf="submitted && !companySelected.serviceTechnique.email"
-            >
-                Service Technique Email is required.
-            </small>
-        </div>
-        <div class="field">
-            <label for="serviceTechniquePhone"
-                >Service Technique Phone</label
-            >
-            <input
-                type="text"
-                pInputText
-                id="serviceTechniquePhone"
-                [(ngModel)]="companySelected.serviceTechnique.phone"
-                required
-            />
-            <small
-                class="p-error"
-                *ngIf="submitted && !companySelected.serviceTechnique.phone"
-            >
-                Service Technique Phone is required.
-            </small>
-        </div>
-       </div>     
+            <div>
+                <h4 style="background-color: rgb(118, 151, 251)">
+                    Service Financier
+                </h4>
+                <div class="field">
+                    <label for="serviceFinancierName"
+                        >Service Financier Name</label
+                    >
+                    <input
+                        type="text"
+                        pInputText
+                        id="serviceFinancierName"
+                        [(ngModel)]="companySelected.serviceFinancier.name"
+                        required
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="
+                            submitted && !companySelected.serviceFinancier.name
+                        "
+                    >
+                        Service Financier Name is required.
+                    </small>
+                </div>
+                <div class="field">
+                    <label for="serviceFinancierEmail"
+                        >Service Financier Email</label
+                    >
+                    <input
+                        type="email"
+                        pInputText
+                        id="serviceFinancierEmail"
+                        [(ngModel)]="companySelected.serviceFinancier.email"
+                        required
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="
+                            submitted && !companySelected.serviceFinancier.email
+                        "
+                    >
+                        Service Financier Email is required.
+                    </small>
+                </div>
+                <div class="field">
+                    <label for="serviceFinancierPhone"
+                        >Service Financier Phone</label
+                    >
+                    <input
+                        type="text"
+                        pInputText
+                        id="serviceFinancierPhone"
+                        [(ngModel)]="companySelected.serviceFinancier.phone"
+                        required
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="
+                            submitted && !companySelected.serviceFinancier.phone
+                        "
+                    >
+                        Service Financier Phone is required.
+                    </small>
+                </div>
+            </div>
+
+            <div>
+                <h4 style="background-color: rgb(168, 85, 247)">
+                    Service Technique
+                </h4>
+                <div class="field">
+                    <label for="serviceTechniqueName"
+                        >Service Technique Name</label
+                    >
+                    <input
+                        type="text"
+                        pInputText
+                        id="serviceTechniqueName"
+                        [(ngModel)]="companySelected.serviceTechnique.name"
+                        required
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="
+                            submitted && !companySelected.serviceTechnique.name
+                        "
+                    >
+                        Service Technique Name is required.
+                    </small>
+                </div>
+                <div class="field">
+                    <label for="serviceTechniqueEmail"
+                        >Service Technique Email</label
+                    >
+                    <input
+                        type="email"
+                        pInputText
+                        id="serviceTechniqueEmail"
+                        [(ngModel)]="companySelected.serviceTechnique.email"
+                        required
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="
+                            submitted && !companySelected.serviceTechnique.email
+                        "
+                    >
+                        Service Technique Email is required.
+                    </small>
+                </div>
+                <div class="field">
+                    <label for="serviceTechniquePhone"
+                        >Service Technique Phone</label
+                    >
+                    <input
+                        type="text"
+                        pInputText
+                        id="serviceTechniquePhone"
+                        [(ngModel)]="companySelected.serviceTechnique.phone"
+                        required
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="
+                            submitted && !companySelected.serviceTechnique.phone
+                        "
+                    >
+                        Service Technique Phone is required.
+                    </small>
+                </div>
+            </div>
 
             <div class="modal-footer">
                 <p-button

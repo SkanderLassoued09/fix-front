@@ -11,6 +11,7 @@ import {
     PageEvent,
     ProfileAddMutationResponse,
 } from './profile-list.interfaces';
+import { debounceTime, Subject } from 'rxjs';
 
 @Component({
     selector: 'app-profile-list',
@@ -18,6 +19,11 @@ import {
     styleUrl: './profile-list.component.scss',
 })
 export class ProfileListComponent {
+    // Search state tracking
+    private currentSearchField: string = '';
+    private currentSearchValue: string = '';
+    private searchSubject$ = new Subject<void>();
+
     staffForm = new FormGroup({
         username: new FormControl(),
         email: new FormControl(),
@@ -27,20 +33,22 @@ export class ProfileListComponent {
         lastName: new FormControl(),
         phone: new FormControl(),
     });
+
     visible: boolean = false;
     products!: Product[];
     loading: boolean = false;
     roles;
     cols = [
-        { field: 'username', header: 'Username' },
-        { field: 'firstName', header: 'Prénom' },
-        { field: 'lastName', header: 'Nom' },
-        { field: 'phone', header: 'Téléphone' },
-        { field: 'role', header: 'Role' },
-        { field: 'email', header: 'E-mail' },
-        { field: 'createdAt', header: 'Créer le' },
-        { field: 'updatedAt', header: 'Modifier le' },
+        { field: 'username', header: 'Username', searchKey: 'username' },
+        { field: 'firstName', header: 'Prénom', searchKey: 'firstName' },
+        { field: 'lastName', header: 'Nom', searchKey: 'lastName' },
+        { field: 'phone', header: 'Téléphone', searchKey: 'phone' },
+        { field: 'role', header: 'Role', searchKey: 'role' },
+        { field: 'email', header: 'E-mail', searchKey: 'email' },
+        { field: 'createdAt', header: 'Créer le', searchKey: 'createdAt' },
+        { field: 'updatedAt', header: 'Modifier le', searchKey: 'updatedAt' },
     ];
+
     first: number = 0;
     page: number;
     rows: number = 10;
@@ -49,6 +57,8 @@ export class ProfileListComponent {
     totalProfileCount: any;
     profileData: any;
     profileDialog: boolean;
+    submitted: boolean = false;
+
     showDialog() {
         this.visible = true;
     }
@@ -58,13 +68,79 @@ export class ProfileListComponent {
         private apollo: Apollo,
         private profileService: ProfileService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
     ) {
         this.roles = ROLES;
     }
 
     ngOnInit() {
-        this.profiles(this.first, this.rows);
+        // Setup search with debounce
+        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
+            this.loadData();
+        });
+
+        // Initial load
+        this.loadData();
+    }
+
+    /**
+     * Centralized data loading method
+     * Handles both search and regular data fetching with pagination
+     */
+    loadData() {
+        const hasActiveSearch =
+            this.currentSearchField &&
+            this.currentSearchValue &&
+            this.currentSearchValue.trim().length > 0;
+
+        if (hasActiveSearch) {
+            // Perform search
+            this.apollo
+                .query<any>({
+                    query: this.profileService.searchProfile(
+                        this.currentSearchField,
+                        this.currentSearchValue,
+                        this.first,
+                        this.rows,
+                    ),
+                    fetchPolicy: 'no-cache',
+                })
+                .subscribe(({ data }) => {
+                    if (data && data.searchProfile) {
+                        this.profileList = data.searchProfile.profileRecord;
+                        this.totalProfileCount =
+                            data.searchProfile.totalProfileCount;
+                    }
+                });
+        } else {
+            // Regular data fetch
+            this.profiles(this.first, this.rows);
+        }
+    }
+
+    /**
+     * Handle column search
+     */
+    onColumnSearch(field: string, value: string) {
+        const v = value?.trim();
+        const f = field?.trim();
+
+        if (v && v.length > 0 && f && f.length > 0) {
+            // Set search state
+            this.currentSearchField = f;
+            this.currentSearchValue = v;
+            this.first = 0; // Reset to first page on new search
+
+            // Trigger search
+            this.searchSubject$.next();
+        } else {
+            // Clear search state
+            this.currentSearchField = '';
+            this.currentSearchValue = '';
+
+            // Load regular data
+            this.loadData();
+        }
     }
 
     addSTAFF() {
@@ -81,8 +157,16 @@ export class ProfileListComponent {
                         summary: 'Success',
                         detail: 'Le profil ajouté avec succés',
                     });
+                    this.loadData(); // Reload data after adding
+                    this.staffForm.reset();
+                    this.visible = false;
                 }
                 if (errors) {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: "Erreur lors de l'ajout du profil",
+                    });
                 }
             });
     }
@@ -91,8 +175,9 @@ export class ProfileListComponent {
         this.first = event.first;
         this.page = event.page;
         this.rows = event.rows;
-        this.profiles(this.first, this.rows);
+        this.loadData(); // Use loadData instead of profiles
     }
+
     profiles(first, rows) {
         this.apollo
             .watchQuery<AllProfileQueryResponse>({
@@ -117,49 +202,15 @@ export class ProfileListComponent {
             case 'TECH':
                 return 'danger';
             case 'COORDIANTOR':
-                return 'danger';
+                return 'info';
             case 'MAGASIN':
-                return 'danger';
+                return 'help';
             case 'MANAGER':
-                return 'danger';
+                return 'contrast';
             default:
                 return 'warn';
         }
     }
-
-    //  (rowData) {
-    //     this.confirmationService.confirm({
-    //         message: 'Voulez vous supprimer cette société',
-    //         header: 'Confirmation',
-    //         icon: 'pi pi-exclamation-triangle',
-    //         accept: () => {
-    //
-
-    //             this.apollo
-    //                 .mutate<any>({
-    //                     mutation: this.companyService.removeCompany(
-    //                         rowData._id
-    //                     ),
-    //                 })
-    //                 .subscribe(({ data }) => {
-    //
-    //                 });
-    //
-
-    //             this.messageService.add({
-    //                 severity: 'warn',
-    //                 summary: 'Supprimer',
-    //                 detail: `La société ${rowData._id} a été supprimé`,
-    //                 life: 3000,
-    //             });
-    //         },
-    //     });
-    //     this.companies(this.first, this.rows);
-    // }
-
-    /**
-     * Edit profile
-     */
 
     editProfile(profile: any) {
         this.profileData = { ...profile };
@@ -167,6 +218,17 @@ export class ProfileListComponent {
     }
 
     saveUpdateProfile() {
+        this.submitted = true;
+
+        if (
+            !this.profileData.firstName ||
+            !this.profileData.lastName ||
+            !this.profileData.phone ||
+            !this.profileData.email
+        ) {
+            return;
+        }
+
         this.apollo
             .mutate<any>({
                 mutation: this.profileService.updateProfile(this.profileData),
@@ -184,15 +246,17 @@ export class ProfileListComponent {
                             detail: 'Le profil a changé avec succé',
                         });
                         this.profileDialog = false;
+                        this.submitted = false;
+                        this.loadData(); // Reload data after update
                     }
                 }
             });
     }
-    //!!!!!!!!NEZIH
+
     cancel() {
-        // this.profileDialog = false;
-        //this.visible = true;
-        this.staffForm.reset();
+        this.profileDialog = false;
+        this.submitted = false;
+        this.profileData = null;
     }
 
     findIndexById(_id: string): number {
@@ -209,8 +273,8 @@ export class ProfileListComponent {
 
     deleteProfile(_id: string) {
         this.confirmationService.confirm({
-            message: 'Are you sure you want to delete the selected profile?',
-            header: 'Confirm',
+            message: 'Êtes-vous sûr de vouloir supprimer ce profil?',
+            header: 'Confirmation',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.deleteProfileConfirmed(_id);
@@ -229,10 +293,11 @@ export class ProfileListComponent {
                     this.profileList.splice(index, 1);
                     this.messageService.add({
                         severity: 'success',
-                        summary: 'Successful',
-                        detail: 'Profile Deleted',
+                        summary: 'Succès',
+                        detail: 'Profil supprimé',
                         life: 3000,
                     });
+                    this.loadData(); // Reload data after delete
                 }
             });
     }

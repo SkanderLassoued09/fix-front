@@ -30,7 +30,6 @@ import {
     debounceTime,
     distinctUntilChanged,
     map,
-    range,
     Subject,
     switchMap,
     tap,
@@ -62,13 +61,15 @@ function noSpecialCharactersValidator(): ValidatorFn {
 })
 export class TicketListComponent implements OnInit {
     private companySearch$ = new Subject<string>();
-    private columnSearch$ = new Subject<{ field: string; value: string }>();
+    // Search state tracking
+    private currentSearchField: string = '';
+    private currentSearchValue: string = '';
+    private searchSubject$ = new Subject<void>();
 
     baseUrl = environment.apiUrl;
 
     ticketSelected: any;
     openUpdateModal: boolean = false;
-    // Add these boolean flags to your component class
     isBCUploaded: boolean = false;
     isDevisUploaded: boolean = false;
     ticketData: any;
@@ -111,11 +112,9 @@ export class TicketListComponent implements OnInit {
     tarif_Techs = new FormGroup({
         tarifFromAdmin: new FormControl(),
     });
-    //ADD category CRUD
     categoryForm = new FormGroup({
         categoryName: new FormControl(),
     });
-    //ADD location CRUD
     locationForm = new FormGroup({
         locationName: new FormControl(),
     });
@@ -140,7 +139,6 @@ export class TicketListComponent implements OnInit {
         { label: 'Retour3', value: 'RETOUR3' },
     ];
 
-    // You can use the statuses array in your code wherever needed
     files = [];
 
     totalSize: number = 0;
@@ -158,10 +156,9 @@ export class TicketListComponent implements OnInit {
 
     radioBtn;
     selectedStatusDefault;
-    // these button to distignuye betwwen di to coordinator or not cooredinator
     stateOptions: any[] = [
-        { label: 'Sauvgarder', value: 'CREATED' }, // value : status
-        { label: 'Sauvgarder et envoyer', value: 'PENDING1' }, // value : status
+        { label: 'Sauvgarder', value: 'CREATED' },
+        { label: 'Sauvgarder et envoyer', value: 'PENDING1' },
     ];
     statusDefault = [
         { name: 'sans affecter au coordinateur', code: 'CREATED' },
@@ -229,7 +226,6 @@ export class TicketListComponent implements OnInit {
     composantQuantity: number;
     tarif_Tech: number;
     allCategoryDiArray: any;
-    // payloadBonCommande: { pdf: string };
     locationDropDown: any[];
     categorieDiListDropDown: any[];
     timepart: { hours: any; minutes: any; seconds: any };
@@ -295,72 +291,195 @@ export class TicketListComponent implements OnInit {
         private readonly messageservice: MessageService,
         private readonly notificationService: NotificationService,
         private config: PrimeNGConfig,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
     ) {}
 
     ngOnInit() {
         this.getStatusCount();
-        this.getDi(this.first, this.rows);
+        this.loadData();
         this.getCompanyList();
         this.getClientList();
         this.allCategoryDi();
         this.getLocationList();
         this.notificationService.startWorker();
+
+        // Setup search with debounce
+        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
+            this.loadData();
+        });
+
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
-                this.getDi(this.first, this.rows);
+                this.loadData();
                 this.getStatusCount();
             }
         });
         this.companySearch$
             .pipe(
-                debounceTime(400), // wait user stops typing
+                debounceTime(400),
                 distinctUntilChanged(),
                 switchMap((searchTerm) =>
                     this.apollo.query<any>({
                         query: this.ticketSerice.searchCompanies(searchTerm),
-                    })
-                )
-            )
-            .subscribe(({ data }) => {
-                this.companiesListDropDown = data.searchCompanies; // 👈 dropdown list
-            });
-        this.columnSearch$
-            .pipe(
-                debounceTime(400),
-                distinctUntilChanged(
-                    (a, b) => a.field === b.field && a.value === b.value
+                    }),
                 ),
-                switchMap(({ field, value }) =>
-                    this.apollo.query<any>({
-                        query: this.ticketSerice.searchDi(
-                            field,
-                            value,
-                            this.first,
-                            this.rows
-                        ),
-                        fetchPolicy: 'no-cache',
-                    })
-                )
             )
             .subscribe(({ data }) => {
-                this.diList = data.searchDi.di;
-                this.totalDiCount = data.searchDi.totalDiCount;
+                this.companiesListDropDown = data.searchCompanies;
             });
     }
+
+    /**
+     * Centralized data loading method
+     * Handles both search and regular data fetching with pagination
+     */
+    loadData() {
+        const hasActiveSearch =
+            this.currentSearchField &&
+            this.currentSearchValue &&
+            this.currentSearchValue.trim().length > 0;
+
+        if (hasActiveSearch) {
+            // Perform search
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.searchDi(
+                        this.currentSearchField,
+                        this.currentSearchValue,
+                        this.first,
+                        this.rows,
+                    ),
+                    fetchPolicy: 'no-cache',
+                })
+                .subscribe(({ data }) => {
+                    if (data && data.searchDi) {
+                        this.diList = data.searchDi.di;
+                        this.totalDiCount = data.searchDi.totalDiCount;
+                        this.updateCounters();
+                    }
+                });
+        } else {
+            // Regular data fetch
+            this.apollo
+                .watchQuery<DiQueryResult>({
+                    query: this.ticketSerice.getAllDi(
+                        this.first,
+                        this.rows,
+                        this.rangeDate[0],
+                        this.rangeDate[1],
+                    ),
+                })
+                .valueChanges.subscribe(({ data, loading, errors }) => {
+                    console.log('🥔[data]:', data);
+                    if (data) {
+                        this.diList = data.getAllDi.di;
+                        console.log('🥐[ this.diList]:', this.diList);
+                        this.diListCount = data.getAllDi.totalDiCount;
+                        this.updateCounters();
+                    }
+                });
+        }
+    }
+
+    /**
+     * Update counters for mini dashboard
+     */
+    updateCounters() {
+        // Reset counters
+        this.counterInMagasin = 0;
+        this.counterInDiagnostique = 0;
+        this.counterInReperation = 0;
+        this.counterPending = 0;
+        this.counterRetour = 0;
+
+        this.diList.forEach((di) => {
+            switch (di.status) {
+                case 'INMAGASIN':
+                case 'MagasinEstimation':
+                    this.counterInMagasin++;
+                    break;
+                case 'DIAGNOSTIC':
+                case 'INDIAGNOSTIC':
+                case 'DIAGNOSTIC_Pause':
+                    this.counterInDiagnostique++;
+                    break;
+                case 'REPARATION':
+                case 'INREPARATION':
+                case 'REPARATION_Pause':
+                    this.counterInReperation++;
+                    break;
+                case 'PENDING1':
+                case 'PENDING2':
+                case 'PENDING3':
+                    this.counterPending++;
+                    break;
+                case 'RETOUR1':
+                case 'RETOUR2':
+                case 'RETOUR3':
+                    this.counterRetour++;
+                    break;
+                default:
+                    break;
+            }
+        });
+    }
+
+    /**
+     * Handle column search
+     */
+    onColumnSearch(field: string, value: string) {
+        console.log('value', value);
+        console.log('field', field);
+
+        const v = value?.trim();
+        const f = field?.trim();
+
+        if (v && v.length > 0 && f && f.length > 0) {
+            // Set search state
+            this.currentSearchField = f;
+            this.currentSearchValue = v;
+            this.first = 0; // Reset to first page on new search
+
+            // Trigger search
+            this.searchSubject$.next();
+        } else {
+            // Clear search state
+            this.currentSearchField = '';
+            this.currentSearchValue = '';
+
+            // Load regular data
+            this.loadData();
+        }
+    }
+
+    /**
+     * Handle page change
+     */
+    onPageChange(event: PageEvent) {
+        this.first = event.first;
+        this.page = event.page;
+        this.rows = event.rows;
+
+        // Load data (will automatically use search if active)
+        this.loadData();
+    }
+
     blockSpecialCharacters(event: KeyboardEvent): void {
         const invalidCharacters = ['"', "'"];
         if (invalidCharacters.includes(event.key)) {
-            event.preventDefault(); // Prevent the character from being typed
+            event.preventDefault();
         }
     }
+
     showDialogDiCreation() {
         this.openAddDiModal = true;
     }
+
     updateDi(rowDataTicket: any) {
-        this.selectedTicket = rowDataTicket ?? {}; // Populate selected ticket details
-        this.updateticketView = true; // Open the update modal
+        this.selectedTicket = rowDataTicket ?? {};
+        this.updateticketView = true;
     }
+
     infoRetour1OPEN() {
         this.modalRetour1Info = !this.modalRetour1Info;
     }
@@ -376,9 +495,11 @@ export class TicketListComponent implements OnInit {
     cancelUpdateDi() {
         this.openUpdateModal = false;
     }
+
     showDialogCategoryDI() {
         this.openCategoryModal = true;
     }
+
     showDialogLocations() {
         this.openLocationsModal = true;
         this.getLocationList();
@@ -389,7 +510,6 @@ export class TicketListComponent implements OnInit {
             this.selectedTicket;
         const extractedData = { _id, title, description, remarque_manager };
 
-        // Call your mutation service to update the ticket
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Update DI',
@@ -401,19 +521,17 @@ export class TicketListComponent implements OnInit {
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            // If the ticket ID exists, update the list with the modified ticket details
                             if (this.selectedTicket._id) {
                                 this.diList[
                                     this.findIndexById(this.selectedTicket._id)
                                 ] = this.selectedTicket;
 
-                                // Show success message
                                 this.messageservice.add({
                                     severity: 'success',
                                     summary: 'Success',
                                     detail: 'Di a été Modifier',
                                 });
-                                this.updateticketView = false; // Close the modal after successful update
+                                this.updateticketView = false;
                             }
                         }
                     });
@@ -431,15 +549,6 @@ export class TicketListComponent implements OnInit {
         }
         return index;
     }
-    onColumnSearch(field: string, value: string) {
-        console.log('value', value);
-        console.log('field', field);
-        const v = value?.trim().toString();
-        const f = field?.trim().toString();
-        if (v && v.length > 0 && f && f.length > 0) {
-            this.columnSearch$.next({ field, value: v });
-        }
-    }
 
     showDialogPriceTech() {
         this.openPriceTechModal = true;
@@ -451,7 +560,7 @@ export class TicketListComponent implements OnInit {
                 this.tarif_Tech = data.getTarif.tarif;
             });
     }
-    //! MUTATION WORKING ON
+
     confirmerTarifs() {
         this.tarif_Techs.value;
 
@@ -476,7 +585,7 @@ export class TicketListComponent implements OnInit {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
         const textColorSecondary = documentStyle.getPropertyValue(
-            '--text-color-secondary'
+            '--text-color-secondary',
         );
         const surfaceBorder =
             documentStyle.getPropertyValue('--surface-border');
@@ -522,9 +631,9 @@ export class TicketListComponent implements OnInit {
                                 beginAtZero: true,
                                 ticks: {
                                     color: textColorSecondary,
-                                    stepSize: 1, // Ensures the interval is 1
+                                    stepSize: 1,
                                     callback: (value: number) =>
-                                        value.toFixed(0), // Show whole numbers only
+                                        value.toFixed(0),
                                 },
                                 grid: {
                                     color: surfaceBorder,
@@ -545,6 +654,7 @@ export class TicketListComponent implements OnInit {
                 }
             });
     }
+
     onCompanyFilter(event: any) {
         const searchValue = event.filter?.trim();
 
@@ -562,12 +672,9 @@ export class TicketListComponent implements OnInit {
                 this.nego1nego2_InMagasin(
                     this._idDi,
                     this.price,
-                    this.finalPrice
+                    this.finalPrice,
                 );
 
-                // Null and undefined checks added here
-                //condition for STATUS
-                //@skander
                 if (
                     !this.selectedRowInNegociate1?.contain_pdr ||
                     (this.selectedRowInNegociate2 &&
@@ -590,18 +697,12 @@ export class TicketListComponent implements OnInit {
                     this.changeStatusDiToInMagasin(this._idDi);
                 }
 
-                this.getDi(this.first, this.rows);
+                this.loadData();
 
-                console.log;
-                /* if (step === 0) {
-                    this.saveDevisPDF(this._idDi, this.payload.file);
-                    this.saveBCPDF(this._idDi, this.payload.file);
-                }*/
                 this.payload.file = '';
                 this.negocite1Modal = false;
                 this.negocite2Modal = false;
 
-                // Reset fields
                 this.isBCUploaded = false;
                 this.isDevisUploaded = false;
                 this.selectedBc = null;
@@ -623,7 +724,7 @@ export class TicketListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.addBC(
                             this._idDi,
-                            this.payload.file
+                            this.payload.file,
                         ),
                         useMutationLoading: true,
                     })
@@ -640,11 +741,11 @@ export class TicketListComponent implements OnInit {
 
     selectFilterRangeDate(data: Date) {
         if (!this.rangeDate.length) {
-            this.rangeDate[0] = data; // First selection (start date)
+            this.rangeDate[0] = data;
         } else if (this.rangeDate.length === 1) {
-            this.rangeDate[1] = data; // Second selection (end date)
+            this.rangeDate[1] = data;
         } else {
-            this.rangeDate = [data]; // Reset if a new selection starts
+            this.rangeDate = [data];
         }
 
         console.log('🍞[rangeDate]:', this.rangeDate);
@@ -654,8 +755,9 @@ export class TicketListComponent implements OnInit {
 
         let rangeFilter = { start, end };
         console.log('🍅[rangeFilter]:', rangeFilter);
-        this.getDi(this.first, this.rows, start, end);
+        this.loadData();
     }
+
     enregistrerDevis() {
         this.confirmationService.confirm({
             message: 'Voulez vous Enregistrer Devis',
@@ -666,7 +768,7 @@ export class TicketListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.addDevis(
                             this._idDi,
-                            this.payload.file
+                            this.payload.file,
                         ),
                     })
                     .subscribe(({ data, loading }) => {
@@ -677,6 +779,7 @@ export class TicketListComponent implements OnInit {
             },
         });
     }
+
     enregistrerBL() {
         this.confirmationService.confirm({
             message: 'Voulez vous Enregistrer Bon de livraison',
@@ -690,6 +793,7 @@ export class TicketListComponent implements OnInit {
             },
         });
     }
+
     enregistrerFacture() {
         this.confirmationService.confirm({
             message: 'Voulez vous Enregistrer Bon de livraison',
@@ -711,6 +815,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     saveBLPDF(_id: string, pdf: string) {
         this.apollo
             .mutate<any>({
@@ -720,6 +825,7 @@ export class TicketListComponent implements OnInit {
                 console.log('data BL', data);
             });
     }
+
     saveFacturePDF(_id: string, pdf: string) {
         this.apollo
             .mutate<any>({
@@ -729,6 +835,7 @@ export class TicketListComponent implements OnInit {
                 console.log('🥟[data]:', data);
             });
     }
+
     saveBCPDF(_id: string, pdf: string) {
         this.apollo
             .mutate<any>({
@@ -753,12 +860,11 @@ export class TicketListComponent implements OnInit {
         this.ignoreCountPricing = data.ignoreCount;
         console.log('ignoreCount =>', data.ignoreCount);
         this.ignoreCountN1 = data.ignoreCount - 1;
-        // Reset tarif and time values to ensure they are not carrying over from previous calls
+
         this.tarif_Technicien = null;
         this.timeDiagnostique = null;
         this.facturationDiagnostique = null;
 
-        // First query: get technician tarif
         const tarifQuery = this.apollo
             .query<any>({
                 query: this.ticketSerice.getTechTarif(),
@@ -770,7 +876,6 @@ export class TicketListComponent implements OnInit {
                 }
             });
 
-        // Second query: get diagnostic time
         let statQuery;
         if (data?.ignoreCount && data?.ignoreCount > 0) {
             this.apollo
@@ -784,12 +889,6 @@ export class TicketListComponent implements OnInit {
                         this.initialPriceAffichage = data.getDiById.di.price;
                         this.priceRemiseAffichage =
                             data.getDiById.di.final_price;
-                        // this.remiseAffichage = Math.floor(
-                        //     (1 -
-                        //         this.priceRemiseAffichage /
-                        //             this.initialPriceAffichage) *
-                        //         100
-                        // );
 
                         this.pricesLogs = data.getDiById.logsDi
                             .map((el) => {
@@ -801,9 +900,9 @@ export class TicketListComponent implements OnInit {
                                         ignoreDispaly: el.idIgnore,
                                     };
                                 }
-                                return null; // or undefined if you prefer
+                                return null;
                             })
-                            .filter((log) => log !== null); // Remove any null (or undefined) entries
+                            .filter((log) => log !== null);
 
                         console.log('pricesLogs', this.pricesLogs);
                     }
@@ -813,7 +912,7 @@ export class TicketListComponent implements OnInit {
                 .query<any>({
                     query: this.ticketSerice.getLogsDiById(
                         data.ignoreCount,
-                        data._id
+                        data._id,
                     ),
                 })
                 .subscribe(({ data }) => {
@@ -827,7 +926,7 @@ export class TicketListComponent implements OnInit {
                 .query<any>({
                     query: this.ticketSerice.getStatByDI_ID(
                         MyID,
-                        data?.ignoreCount
+                        data?.ignoreCount,
                     ),
                 })
                 .toPromise()
@@ -837,7 +936,7 @@ export class TicketListComponent implements OnInit {
                         this.timeDiagnostique =
                             data.getInfoStatByIdDi.diag_time;
                         this.timepart = this.timeStringIntoHours(
-                            data.getInfoStatByIdDi.diag_time
+                            data.getInfoStatByIdDi.diag_time,
                         );
                     }
                 });
@@ -863,13 +962,12 @@ export class TicketListComponent implements OnInit {
                         this.timeDiagnostique =
                             data.getInfoStatByIdDi.diag_time;
                         this.timepart = this.timeStringIntoHours(
-                            data.getInfoStatByIdDi.diag_time
+                            data.getInfoStatByIdDi.diag_time,
                         );
                     }
                 });
         }
 
-        // Wait for both queries to complete before calculating facturationDiagnostique
         Promise.all([tarifQuery, statQuery]).then(() => {
             if (this.timepart && this.tarif_Technicien) {
                 this.facturationDiagnostique = parseFloat(
@@ -877,10 +975,10 @@ export class TicketListComponent implements OnInit {
                         this.timepart.hours * this.tarif_Technicien +
                         this.timepart.minutes *
                             parseFloat(
-                                (this.tarif_Technicien / 60).toFixed(2)
+                                (this.tarif_Technicien / 60).toFixed(2),
                             ) +
                         parseFloat((this.tarif_Technicien / 60).toFixed(2))
-                    ).toFixed(2)
+                    ).toFixed(2),
                 );
             }
         });
@@ -901,23 +999,17 @@ export class TicketListComponent implements OnInit {
     hideNegModal(data) {
         console.log('🍢[data]:', data);
 
-        // Reset uploaded file URLs
         this.selectedBc = null;
         this.selectedDevis = null;
         this.instantSelectedBc = null;
         this.instantSelectedDevis = null;
 
-        // Reset discount and price-related values
         this.discountPercent = 0;
         this.finalPrice = null;
         this.discountedPriceNeg = null;
 
-        // Reset any flags or states
         this.slideEnd = 0;
         this.ignoreCountNeg1 = 0;
-
-        // Reset other form-related values if needed
-        // Add any additional fields to reset here
 
         console.log('All values have been reset.');
     }
@@ -935,6 +1027,7 @@ export class TicketListComponent implements OnInit {
 
         return `${formattedSize} ${sizes[i]}`;
     }
+
     onSelectedFiles(event) {
         this.files = event.currentFiles;
         this.files.forEach((file) => {
@@ -950,7 +1043,7 @@ export class TicketListComponent implements OnInit {
         this.bcBtnDisabled = false;
         this.enregistrerBcBtncondition = true;
         this.enregistrerDevisBtncondition = true;
-        // this.selectedRowInNegociate1 = data;
+
         this._idDi = data._id;
 
         this.seletedRow = data._id;
@@ -963,6 +1056,7 @@ export class TicketListComponent implements OnInit {
         this.getTotalComposant(data._id);
         this.isFormComplete();
     }
+
     showDialogForNegociate2(data) {
         this.devisBtnDisabled = false;
         this.bcBtnDisabled = false;
@@ -980,12 +1074,11 @@ export class TicketListComponent implements OnInit {
 
     onSizeSelect() {}
 
-    //Get composant Info for admins
     async getcomposantByName(name_composant: string) {
         await this.apollo
             .watchQuery<DiQueryResult>({
                 query: this.ticketSerice.composantByName_forAdmin(
-                    name_composant
+                    name_composant,
                 ),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -995,70 +1088,15 @@ export class TicketListComponent implements OnInit {
             });
     }
 
-    onPageChange(event: PageEvent) {
-        this.first = event.first;
-        this.page = event.page;
-        this.rows = event.rows;
-        this.getDi(this.first, this.rows);
-    }
-
-    getDi(first, rows, start?, end?) {
-        this.apollo
-            .watchQuery<DiQueryResult>({
-                query: this.ticketSerice.getAllDi(first, rows, start, end),
-            })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🥔[data]:', data);
-                if (data) {
-                    this.diList = data.getAllDi.di;
-                    console.log('🥐[ this.diList]:', this.diList);
-                    this.diListCount = data.getAllDi.totalDiCount;
-                    this.diList.filter((di) => {
-                        switch (di.status) {
-                            case 'INMAGASIN':
-                            case 'MagasinEstimation':
-                                this.counterInMagasin =
-                                    this.counterInMagasin + 1;
-                                break;
-                            case 'DIAGNOSTIC':
-                            case 'INDIAGNOSTIC':
-                            case 'DIAGNOSTIC_Pause':
-                                this.counterInDiagnostique =
-                                    this.counterInDiagnostique + 1;
-                                break;
-                            case 'REPARATION':
-                            case 'INREPARATION':
-                            case 'REPARATION_Pause':
-                                this.counterInReperation =
-                                    this.counterInReperation + 1;
-                                break;
-                            case 'PENDING1':
-                            case 'PENDING2':
-                            case 'PENDING3':
-                                this.counterPending = this.counterPending + 1;
-                                break;
-                            case 'RETOUR1':
-                            case 'RETOUR2':
-                            case 'RETOUR3':
-                                this.counterRetour = this.counterRetour + 1;
-                                break;
-                            default:
-                                break;
-                        }
-                    });
-                }
-            });
-    }
-    // todo as pipe
     getLatestLogFacture(logs: any[]): any {
         if (!logs || logs.length === 0) {
             return null;
         }
         return logs.reduce((prev, curr) =>
-            prev.idIgnore > curr.idIgnore ? prev : curr
+            prev.idIgnore > curr.idIgnore ? prev : curr,
         ).facture;
     }
-    //New Query
+
     getDiByID(_idDi: string) {
         console.log('🥐[getDiByID]: fired');
         this.apollo
@@ -1070,24 +1108,23 @@ export class TicketListComponent implements OnInit {
                     this.dataById = data;
                     console.log('data NEGOCIATION111', data);
 
-                    // set here value
                     this.selectedRowInNegociate1 =
                         data.getDiById.logsDi &&
                         data.getDiById.logsDi.length > 0
                             ? data.getDiById.logsDi.reduce((prev, current) =>
                                   prev.idIgnore > current.idIgnore
                                       ? prev
-                                      : current
+                                      : current,
                               )
                             : data.getDiById.di;
                     console.log(
                         '🍇🍇🍇🍇[this.selectedRowInNegociate1]:',
-                        this.selectedRowInNegociate1
+                        this.selectedRowInNegociate1,
                     );
                     if (this.dataById.getDiById.logsDi) {
                         const filtredLogsDi =
                             this.dataById.getDiById.logsDi.find(
-                                (el) => el.idIgnore === this.ignoreCountNeg1
+                                (el) => el.idIgnore === this.ignoreCountNeg1,
                             );
 
                         this.price = filtredLogsDi.price;
@@ -1115,6 +1152,7 @@ export class TicketListComponent implements OnInit {
                 }
             });
     }
+
     changeStatusPricing(_id: string) {
         this.apollo
             .mutate<any>({
@@ -1122,6 +1160,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     getTotalComposant(_id: string) {
         this.apollo
             .watchQuery<any>({
@@ -1142,12 +1181,12 @@ export class TicketListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.pricing(
                             this.current_id,
-                            this.price
+                            this.price,
                         ),
                     })
                     .subscribe(({ data, loading }) => {
                         if (data) {
-                            this.getDi(this.first, this.rows);
+                            this.loadData();
                             this.pricingModal = false;
                             this.changeStatusNegiciate1(this.current_id);
                         }
@@ -1176,7 +1215,7 @@ export class TicketListComponent implements OnInit {
                             summary: 'Deleted',
                             detail: 'La demande service supprimer',
                         });
-                        this.getDi(this.first, this.rows);
+                        this.loadData();
                     });
             },
         });
@@ -1189,6 +1228,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     changeStatusNegociate2(_id: string) {
         this.apollo
             .mutate<any>({
@@ -1196,6 +1236,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     changeStatusPending3(_id: string) {
         this.apollo
             .mutate<any>({
@@ -1203,6 +1244,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     changeStatusFinished(_id: string) {
         this.apollo
             .mutate<any>({
@@ -1210,6 +1252,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     load() {
         this.loading = true;
 
@@ -1252,11 +1295,13 @@ export class TicketListComponent implements OnInit {
                 return 'warn';
         }
     }
+
     getSt(selected) {
         if (selected && selected.value) {
             this.radioBtn = selected.value;
         }
     }
+
     onSelectStatusDefaultDI(selectedStatus) {
         this.statusDI = STATUS_DI.CREATED;
         if (selectedStatus.checked) {
@@ -1265,9 +1310,7 @@ export class TicketListComponent implements OnInit {
             this.statusDI = STATUS_DI.CREATED;
         }
     }
-    //TODO Make the creation only possible when the user have chosen the client
-    //Todo Add mutation to the delete DI
-    //FIXME
+
     createDi() {
         {
             this.confirmationService.confirm({
@@ -1317,12 +1360,11 @@ export class TicketListComponent implements OnInit {
                                     summary: 'Success',
                                     detail: 'La demande service ajouté',
                                 });
-                                //_idQuery = data.createDi._id;
 
                                 this.creationDiForm.reset();
                                 this.payload.file = '';
                                 this.openAddDiModal = false;
-                                this.getDi(this.first, this.rows);
+                                this.loadData();
                                 this.getStatusCount();
                             }
                         });
@@ -1341,7 +1383,7 @@ export class TicketListComponent implements OnInit {
                     this.companiesListDropDown =
                         data.getAllComapnyforDropDown.map((Company) => ({
                             company_name: `${Company.name}`,
-                            value: Company._id, // ID as value
+                            value: Company._id,
                         }));
                 }
             });
@@ -1356,9 +1398,9 @@ export class TicketListComponent implements OnInit {
                 if (data) {
                     this.clientListDropDown = data.getAllClient.map(
                         (client) => ({
-                            label: `${client.first_name} ${client.last_name}`, // Concatenated name
-                            value: client._id, // ID as value
-                        })
+                            label: `${client.first_name} ${client.last_name}`,
+                            value: client._id,
+                        }),
                     );
                 }
             });
@@ -1367,6 +1409,7 @@ export class TicketListComponent implements OnInit {
     onSlideEnd(percent) {
         this.slideEnd = percent.value;
     }
+
     onSlideAdminEnd(percent) {
         this.slideAdminEnd = percent.value;
     }
@@ -1386,6 +1429,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     changeStatusRetour2(_id) {
         this.apollo
             .mutate<any>({
@@ -1393,6 +1437,7 @@ export class TicketListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     changeStatusRetour3(_id) {
         this.apollo
             .mutate<any>({
@@ -1411,15 +1456,13 @@ export class TicketListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.changeToPending1(data._id),
                     })
-                    .subscribe(({ data }) => {
-                        //! NEED TO SELECT THE ID OF THE SELECTED DI
-                    });
+                    .subscribe(({ data }) => {});
 
-                this.getDi(this.first, this.rows);
+                this.loadData();
             },
         });
     }
-    // TODO cannot return null for non nullable field below
+
     nego1nego2_InMagasin(_id: string, price, final_price?) {
         console.log(_id, price, final_price, 'id here ----------');
 
@@ -1429,7 +1472,7 @@ export class TicketListComponent implements OnInit {
                     mutation:
                         this.ticketSerice.nego1nego2_InMagasin_noFinalPrice(
                             _id,
-                            price
+                            price,
                         ),
                 })
                 .subscribe(({ data }) => {
@@ -1441,7 +1484,7 @@ export class TicketListComponent implements OnInit {
                     mutation: this.ticketSerice.nego1nego2_InMagasin(
                         _id,
                         price,
-                        final_price
+                        final_price,
                     ),
                 })
                 .subscribe(({ data }) => {
@@ -1450,13 +1493,9 @@ export class TicketListComponent implements OnInit {
         }
     }
 
-    //! Nan c bon
-    // the discount function the price and the discounts are affected
-    //in the confirmation btn the mutation is fired
-
     discountByPercent() {
         this.discountedPriceNeg = (this.price * this.discountPercent) / 100;
-        this.finalPrice = this.price - this.discountedPriceNeg; //! Nezih
+        this.finalPrice = this.price - this.discountedPriceNeg;
     }
 
     discountByPercent2() {
@@ -1473,15 +1512,13 @@ export class TicketListComponent implements OnInit {
                 if (this.secondNegocition) {
                     this.changeStatusNegociate2(this.secondNegocition);
                     this.negocite1Modal = false;
-                    this.getDi(this.first, this.rows);
+                    this.loadData();
                 }
             },
         });
     }
 
-    //---- Files
     exportPdf() {
-        // Extract headers from exportColumns
         const headers = this.cols.map((col) => col.header);
 
         const diList = this.diList.map((di) => [
@@ -1491,10 +1528,9 @@ export class TicketListComponent implements OnInit {
             di.createdBy,
         ]);
 
-        // Transform data for compatibility with jsPDF-autotable
         const formattedData =
             this.diList.length === 0
-                ? headers.map(() => '') // Create empty body for headers if no data
+                ? headers.map(() => '')
                 : this.diList.map((item) => {
                       return this.cols.reduce((acc, column) => {
                           acc[column.header] = item[column.field];
@@ -1502,11 +1538,8 @@ export class TicketListComponent implements OnInit {
                       }, {});
                   });
 
-        // Asynchronous import with potential Promise.all
         Promise.all([import('jspdf'), import('jspdf-autotable')])
             .then(([jsPDF, { default: autoTable }]) => {
-                // Destructure imports
-
                 const doc = new jsPDF.default('p', 'px', 'a4');
                 autoTable(doc, {
                     head: [headers],
@@ -1514,9 +1547,7 @@ export class TicketListComponent implements OnInit {
                 });
                 doc.save('Users.pdf');
             })
-            .catch((err) => {
-                // Handle import errors
-            });
+            .catch((err) => {});
     }
 
     exportExcel() {
@@ -1543,12 +1574,10 @@ export class TicketListComponent implements OnInit {
         });
         FileSaver.saveAs(
             data,
-            fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION
+            fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION,
         );
     }
 
-    // count ignore ticket and save it
-    //!POP HERE
     ignore(_idticket) {
         this.confirmationService.confirm({
             message: 'Voulez-vous continuer ?',
@@ -1564,7 +1593,6 @@ export class TicketListComponent implements OnInit {
                             const updatedIgnoreCount =
                                 data.countIgnore.ignoreCount;
 
-                            // Conditional checks for status updates
                             if (updatedIgnoreCount === 1) {
                                 this.changeStatusRetour1(_idticket._id);
                             } else if (updatedIgnoreCount === 2) {
@@ -1573,9 +1601,8 @@ export class TicketListComponent implements OnInit {
                                 this.changeStatusRetour3(_idticket._id);
                             }
 
-                            // Update the ignore count in the diList
                             const ticketIndex = this.diList.findIndex(
-                                (item) => item._id === _idticket._id
+                                (item) => item._id === _idticket._id,
                             );
                             if (ticketIndex !== -1) {
                                 this.diList[ticketIndex].ignoreCount =
@@ -1598,7 +1625,7 @@ export class TicketListComponent implements OnInit {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.addCatgoryDi(
-                            this.categoryForm.value.categoryName
+                            this.categoryForm.value.categoryName,
                         ),
                     })
                     .subscribe(({ data }) => {
@@ -1619,6 +1646,7 @@ export class TicketListComponent implements OnInit {
             },
         });
     }
+
     addLocation() {
         this.confirmationService.confirm({
             message: 'Voulez-vous créer cette emplacement ?',
@@ -1628,7 +1656,7 @@ export class TicketListComponent implements OnInit {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.addLocation(
-                            this.locationForm.value.locationName
+                            this.locationForm.value.locationName,
                         ),
                     })
                     .subscribe(({ data }) => {
@@ -1659,8 +1687,8 @@ export class TicketListComponent implements OnInit {
                     this.categorieDiListDropDown = data.findAllDiCategory.map(
                         (categoryDi) => ({
                             category_name: `${categoryDi.category}`,
-                            value: categoryDi._id, // ID as value
-                        })
+                            value: categoryDi._id,
+                        }),
                     );
                 }
             });
@@ -1668,18 +1696,14 @@ export class TicketListComponent implements OnInit {
 
     onPaste(event: ClipboardEvent) {
         console.log('🍚');
-        // Get pasted data and remove line breaks
         const clipboardData = event.clipboardData?.getData('text') || '';
-        const sanitizedData = clipboardData.replace(/(\r\n|\n|\r)/gm, ' '); // Replace with space or remove
+        const sanitizedData = clipboardData.replace(/(\r\n|\n|\r)/gm, ' ');
 
-        // Prevent default paste and update value
         event.preventDefault();
         const target = event.target as HTMLInputElement | HTMLTextAreaElement;
         target.value = sanitizedData;
-
-        // If using Angular forms, update the control's value (e.g., for reactive forms)
-        // this.myFormControl.setValue(sanitizedData);
     }
+
     getLocationList() {
         this.apollo
             .query<any>({
@@ -1690,7 +1714,7 @@ export class TicketListComponent implements OnInit {
 
                 this.locationDropDown = data.findAllLocation.map((el) => ({
                     location_name: el.location_name,
-                    value: el._id, // ID as value
+                    value: el._id,
                 }));
             });
     }
@@ -1700,15 +1724,13 @@ export class TicketListComponent implements OnInit {
 
         for (let file of event.files) {
             const reader = new FileReader();
-            reader.readAsArrayBuffer(file); // Read file as ArrayBuffer for Blob creation
+            reader.readAsArrayBuffer(file);
             const readerForBase64 = new FileReader();
-            readerForBase64.readAsDataURL(file); // Read file as Base64 for upload
+            readerForBase64.readAsDataURL(file);
 
-            // Blob URL creation
             reader.onload = () => {
                 const arrayBuffer = reader.result as ArrayBuffer;
 
-                // Create a Blob and generate its URL
                 const blob = new Blob([arrayBuffer], {
                     type: 'application/pdf',
                 });
@@ -1736,7 +1758,6 @@ export class TicketListComponent implements OnInit {
 
                 this.uploadFileLoading = false;
 
-                // Show a success message
                 this.messageservice.add({
                     severity: 'info',
                     summary: 'Fichier enregistré',
@@ -1749,11 +1770,9 @@ export class TicketListComponent implements OnInit {
                 this.uploadFileLoading = false;
             };
 
-            // Base64 creation
             readerForBase64.onload = () => {
                 const base64 = readerForBase64.result as string;
 
-                // Call uploadFile with Base64 string
                 this.uploadFile(base64, type);
             };
 
@@ -1763,7 +1782,6 @@ export class TicketListComponent implements OnInit {
         }
     }
 
-    // Update the isFormComplete method to check file upload statuses
     isFormComplete() {
         return this.bcUploaded && this.devisUploaded;
     }
@@ -1772,7 +1790,6 @@ export class TicketListComponent implements OnInit {
         if (type === 'image') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
 
             this.payload = payload;
@@ -1780,7 +1797,6 @@ export class TicketListComponent implements OnInit {
         if (type === 'BC') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
 
             this.payload = payload;
@@ -1788,21 +1804,18 @@ export class TicketListComponent implements OnInit {
         if (type === 'Devis') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
             this.payload = payload;
         }
         if (type === 'BL') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
             this.payload = payload;
         }
         if (type === 'Facture') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
             this.payload = payload;
         }
@@ -1821,14 +1834,14 @@ export class TicketListComponent implements OnInit {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.deleteLocation(
-                            rowData.value
+                            rowData.value,
                         ),
                     })
 
                     .subscribe(({ data }) => {
                         if (data) {
                             const index = this.locationDropDown.findIndex(
-                                (el) => el.value === rowData.value
+                                (el) => el.value === rowData.value,
                             );
                             this.locationDropDown.splice(index, 1);
                         }
@@ -1846,7 +1859,7 @@ export class TicketListComponent implements OnInit {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.removeCategory(
-                            selected.value
+                            selected.value,
                         ),
                     })
                     .subscribe(({ data }) => {
@@ -1862,12 +1875,11 @@ export class TicketListComponent implements OnInit {
         });
     }
 
-    //editCategory(selected) {}
-
     annulerDi() {
         this.openAddDiModal = false;
         this.creationDiForm.reset();
     }
+
     openUploadFileFinished(dataselected: any) {
         this.filesSelected = dataselected;
         console.log('🥩[dataselected]:', dataselected);
@@ -1891,10 +1903,10 @@ export class TicketListComponent implements OnInit {
                         this.finishedData = { original: dataselected, logs };
                         console.log(
                             '🥠[ this.finishedData]:',
-                            this.finishedData
+                            this.finishedData,
                         );
                     }
-                })
+                }),
             )
             .subscribe({
                 error: (err) => console.error('Error fetching logs:', err),
@@ -1917,6 +1929,7 @@ export class TicketListComponent implements OnInit {
             detail: 'Fichier a été ajouter avec succès',
         });
     }
+
     onUploadBl(event, type) {
         for (let file of event.files) {
             const reader = new FileReader();
@@ -1938,7 +1951,6 @@ export class TicketListComponent implements OnInit {
         if (type === 'facture') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
 
             this.facturePDF = payload;
@@ -1946,7 +1958,6 @@ export class TicketListComponent implements OnInit {
         if (type === 'bl') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
 
             this.blPDF = payload;
@@ -1959,7 +1970,7 @@ export class TicketListComponent implements OnInit {
                 mutation: this.ticketSerice.addPdfFile(
                     this._idPDFFinished,
                     this.facturePDF.file,
-                    this.blPDF.file
+                    this.blPDF.file,
                 ),
             })
             .subscribe(({ data }) => {});
@@ -1991,7 +2002,7 @@ export class TicketListComponent implements OnInit {
                 this.ignoreCountForBtns = data.ignoreCount;
                 console.log(data.ignoreCount, 'ignoreCountignoreCount');
 
-                this.ticketDetailsInfo = true; // Open the dialog
+                this.ticketDetailsInfo = true;
                 console.log('data inside =>', this.ticketData.data);
             })
             .catch((error) => {

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DoCheck, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -10,7 +10,7 @@ import {
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
-import { finalize } from 'rxjs';
+import { debounceTime, finalize, Subject } from 'rxjs';
 import * as moment from 'moment';
 import { environment } from 'src/environments/environment';
 
@@ -20,6 +20,11 @@ import { environment } from 'src/environments/environment';
     styleUrl: './tech-di-list.component.scss',
 })
 export class TechDiListComponent implements OnInit {
+    // Search state tracking
+    private currentSearchField: string = '';
+    private currentSearchValue: string = '';
+    private searchSubject$ = new Subject<void>();
+
     baseUrl = environment.apiUrl;
     selectedComposants: any[] = [];
     diagFormTech = new FormGroup({
@@ -64,10 +69,13 @@ export class TechDiListComponent implements OnInit {
 
     uploadedFiles: any[] = [];
     cols = [
-        { field: '_idnum', header: 'ID' },
-        // { field: '_idDi', header: 'ID REF' },
-        { field: 'location_id', header: 'Emplacement' },
-        { field: 'status', header: 'Status' },
+        { field: '_idnum', header: 'ID', searchKey: '_idnum' },
+        { field: 'location_id', header: 'Emplacement', searchKey: 'location' },
+        { field: 'status', header: 'Status', searchKey: 'status' },
+        { field: 'client', header: 'Client', searchKey: 'client' },
+        { field: 'company', header: 'Company', searchKey: 'company' },
+        { field: 'techDiag', header: 'Tech Diag', searchKey: 'techDiag' },
+        { field: 'techRep', header: 'Tech Rep', searchKey: 'techRep' },
     ];
     payloadImage: { image: string };
     countries;
@@ -85,7 +93,6 @@ export class TechDiListComponent implements OnInit {
     milliseconds: string;
     lapTime: string;
     laps: any[];
-    // diDialogDiag: boolean;
     diDialogDiag: { [key: string]: boolean } = {};
     diDialogRep: boolean;
     composant: any;
@@ -113,7 +120,6 @@ export class TechDiListComponent implements OnInit {
     creatComposantDialog: any;
     product: {};
     diStatus: any;
-    // FOR THE CONDITION OF THE BTN
     diagnostiquefinishedFLAG: boolean = true;
     reperationfinishedFLAG: boolean = true;
     DiByStat: any;
@@ -135,24 +141,19 @@ export class TechDiListComponent implements OnInit {
     newStatRealTime: any;
     techDataInfo: any;
 
-    //! MINI Dashboard variables here
-    // Diag variables
+    // MINI Dashboard variables
     diagEnPause_miniDashboard: number = 0;
     diagNotOpened_miniDashboard: number = 0;
-    // Rep variables
     repEnPause_miniDashboard: number = 0;
     repNotOpened_miniDashboard: number = 0;
-    // Retour variables
     retour1_miniDashboard: number = 0;
     retour2_miniDashboard: number = 0;
     retour3_miniDashboard: number = 0;
-    //Admnistration
     finished_miniDashboard: number = 0;
     admnistration_miniDashboard: number = 0;
     detailsDi: any;
     categorieDiListDropDown: any;
     remarqueReparationnn: any;
-    //to delet just exemple
     dataBarChart: any;
     options: any;
     dataBarChartIsReady: boolean = false;
@@ -195,15 +196,14 @@ export class TechDiListComponent implements OnInit {
     emplacement: any;
     _idnum: any;
     allComposants: any[] = [];
-    // backupComposantList: any[] = [];
+
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
         private notificationService: NotificationService,
-
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
     ) {
         this.idTech = localStorage.getItem('_id');
     }
@@ -216,25 +216,89 @@ export class TechDiListComponent implements OnInit {
         this.getDataForTech();
         this.barChart();
 
+        // Setup search with debounce
+        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
+            this.loadData();
+        });
+
+        // Notification subscription
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
                 setTimeout(() => {
-                    this.getAllTechDi(this.first, this.rows);
+                    this.loadData();
                 }, 1000);
             }
         });
-        this.getAllTechDi(this.first, this.rows);
-        console.log(
-            this.getAllTechDi(this.first, this.rows),
-            'ALL tech di info'
-        );
+
+        // Initial load
+        this.loadData();
+    }
+
+    /**
+     * Centralized data loading method
+     * Handles both search and regular data fetching with pagination
+     */
+    loadData() {
+        const hasActiveSearch =
+            this.currentSearchField &&
+            this.currentSearchValue &&
+            this.currentSearchValue.trim().length > 0;
+
+        if (hasActiveSearch) {
+            // Perform search
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.searchTechDI(
+                        this.currentSearchField,
+                        this.currentSearchValue,
+                        this.first,
+                        this.rows,
+                    ),
+                    fetchPolicy: 'no-cache',
+                })
+                .subscribe(({ data }) => {
+                    if (data && data.searchTechDI) {
+                        this.techList = data.searchTechDI.stat;
+                        this.techListCount =
+                            data.searchTechDI.totalTechDataCount;
+                    }
+                });
+        } else {
+            // Regular data fetch
+            this.getAllTechDi(this.first, this.rows);
+        }
+    }
+
+    /**
+     * Handle column search
+     */
+    onColumnSearch(field: string, value: string) {
+        const v = value?.trim();
+        const f = field?.trim();
+
+        if (v && v.length > 0 && f && f.length > 0) {
+            // Set search state
+            this.currentSearchField = f;
+            this.currentSearchValue = v;
+            this.first = 0; // Reset to first page on new search
+
+            // Trigger search
+            this.searchSubject$.next();
+        } else {
+            // Clear search state
+            this.currentSearchField = '';
+            this.currentSearchValue = '';
+
+            // Load regular data
+            this.loadData();
+        }
     }
 
     barChart() {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
         const textColorSecondary = documentStyle.getPropertyValue(
-            '--text-color-secondary'
+            '--text-color-secondary',
         );
         const surfaceBorder =
             documentStyle.getPropertyValue('--surface-border');
@@ -278,23 +342,7 @@ export class TechDiListComponent implements OnInit {
             skipNull: true,
         };
         this.dataBarChart = {
-            // Use input data if provided
             labels: ['Diagnostic', 'Reperation', 'Retour', 'Admnistration'],
-            //data for MiniDash
-            /**
- 
-    
-    
-    
-    
-    // Retour variables
-    retour1_miniDashboard
-    retour2_miniDashboard
-    retour3_miniDashboard
-    //Admnistration
-    admnistration_miniDashboard
-             */
-
             datasets: [
                 {
                     type: 'bar',
@@ -303,7 +351,6 @@ export class TechDiListComponent implements OnInit {
                         documentStyle.getPropertyValue('--blue-500'),
                     data: [this.diagEnPause_miniDashboard],
                 },
-
                 {
                     type: 'bar',
                     label: 'Diagnostic-nonOuvert',
@@ -328,7 +375,6 @@ export class TechDiListComponent implements OnInit {
             ],
         };
 
-        //PIE CHART
         this.dataPieChart = {
             datasets: [
                 {
@@ -384,13 +430,13 @@ export class TechDiListComponent implements OnInit {
     closeComposantModal() {
         this.creatComposantDialog = false;
     }
+
     saveNewComposant() {
         this.confirmationService.confirm({
             message: 'Voulez-vous Ajouter ce composant ?',
             header: 'Confirmation Ajout',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                //NEW FILE HERE "pdf"
                 const {
                     name,
                     packageComposant,
@@ -409,7 +455,7 @@ export class TechDiListComponent implements OnInit {
                             packageComposant,
                             category_composant_id,
                             link,
-                            imagePayload
+                            imagePayload,
                         ),
                         useMutationLoading: true,
                     })
@@ -419,26 +465,26 @@ export class TechDiListComponent implements OnInit {
                         if (data) {
                             this.getComposant();
                             this.composantTechnicien.reset();
-
                             this.creatComposantDialog = false;
                         }
                     });
             },
         });
     }
+
     selctedDropDownComposantTech() {}
-    //! end here
 
     showDialog() {
         this.visible = true;
     }
-    //Todo when you query the data add the status of the DI so we can use it for the Btn's condition
+
     onPageChange(event: PageEvent) {
         this.first = event.first;
         this.page = event.page;
         this.rows = event.rows;
-        this.getAllTechDi(this.first, this.rows);
+        this.loadData(); // Use loadData instead of getAllTechDi
     }
+
     getAllTechDi(first, rows) {
         this.apollo
             .watchQuery<any>({
@@ -446,20 +492,19 @@ export class TechDiListComponent implements OnInit {
                 useInitialLoading: true,
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log(data);
                 if (data) {
                     this.techList = data.getDiForTech.stat;
-
                     this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
     }
+
     handleNotification(message: any) {
-        // Assuming message contains the item to be added to techList
         if (message && message.event === 'sendDitoDiagnostique') {
-            this.techList.push(message); // Add the received message to the tech list
+            this.techList.push(message);
         }
     }
+
     load() {
         this.loading = true;
         setTimeout(() => {
@@ -479,33 +524,25 @@ export class TechDiListComponent implements OnInit {
             });
     }
 
-    // Helper method to reset the modal form before loading new data
     resetModalForm() {
-        this.diagFormTech.reset(); // Reset the form to clear any previous data
-        this.di = null; // Reset the selected DI
+        this.diagFormTech.reset();
+        this.di = null;
     }
 
     resetModalFormRep() {
-        this.remarque.reset(); // Reset the form to clear any previous data
-        this.di = null; // Reset the selected DI
+        this.remarque.reset();
+        this.di = null;
     }
 
     getCurrentPauseLog(pauseLogs) {
-        const findNull = pauseLogs.find((log) => log.pauseEnd === null); // Find log where pauseEnd is null (indicating the pause is still active)
-
+        const findNull = pauseLogs.find((log) => log.pauseEnd === null);
         return findNull;
     }
 
-    // TODO
-    /**
-     *
-     * if ignore count exist loaad data from logs table
-     */
     async diagModal(di) {
         this.composantSelected = null;
 
         try {
-            // Handle pause status if needed
             if (di.status === 'DIAGNOSTIC_Pause') {
                 const getLog = this.getCurrentPauseLog(di.pauseLogs);
                 if (getLog) {
@@ -513,10 +550,8 @@ export class TechDiListComponent implements OnInit {
                 }
             }
 
-            // Create a promise array to hold all our async operations
             const promises = [];
 
-            // Add the first Apollo query to promises
             const retourDataPromise = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
@@ -524,11 +559,8 @@ export class TechDiListComponent implements OnInit {
                 .toPromise();
 
             promises.push(retourDataPromise);
-
-            // Add allCategoryDi to promises if it returns a promise
             promises.push(this.allCategoryDi());
 
-            // Add the main diagnostic data query
             const diagnosticDataPromise = this.apollo
                 .query<any>({
                     query: this.ticketSerice.getDiById(di._idDi),
@@ -536,20 +568,18 @@ export class TechDiListComponent implements OnInit {
                 .toPromise();
             promises.push(diagnosticDataPromise);
 
-            // Add other async operations
             promises.push(this.changeStatus(di._idDi));
             promises.push(this.getTimeSpent(di._id));
             promises.push(this.getImage(di._idDi));
             promises.push(this.getAllRemarque(di._idDi));
 
-            // Wait for all promises to resolve
             const [retourData, categoryData, diagnosticData, ...otherResults] =
                 await Promise.all(promises);
 
             this.apollo
                 .query<any>({
                     query: this.ticketSerice.findLocationById(
-                        diagnosticData.data.getDiById.di.location_id
+                        diagnosticData.data.getDiById.di.location_id,
                     ),
                 })
                 .subscribe(({ data }) => {
@@ -558,25 +588,14 @@ export class TechDiListComponent implements OnInit {
                     }
                 });
 
-            console.log('🌰[diagnosticData]:', diagnosticData);
-            console.log(
-                diagnosticData.data.getDiById.di.array_composants,
-                'ARRAY OF COMPOSANT INITIAL'
-            );
-            console.log(diagnosticData.data.getDiById.logsDi, 'LOGS DATAA');
-
-            //! all of the composant here original and retour
             this.allComposants = [
                 ...diagnosticData.data.getDiById.di.array_composants,
                 ...(diagnosticData.data.getDiById.logsDi?.flatMap(
-                    (log) => log.array_composants
+                    (log) => log.array_composants,
                 ) ?? []),
             ];
-            console.log(this.allComposants, 'allComposants HERE!');
 
             this._idnum = diagnosticData.data.getDiById.di._idnum;
-
-            // Process retour data
 
             if (retourData?.data?.getRetourDataStats?.length > 0) {
                 this.historyOfDi = retourData.data.getRetourDataStats;
@@ -584,13 +603,10 @@ export class TechDiListComponent implements OnInit {
                 this.error = 'No data found';
             }
 
-            // Process diagnostic data
-
             if (diagnosticData?.data) {
                 const detailsDi = diagnosticData.data.getDiById.di;
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
 
-                // Process the data based on whether detailsLogs exists
                 if (detailsLogs) {
                     this.processDiagnosticWithLogs(di, detailsDi, detailsLogs);
                     this.diData = detailsLogs;
@@ -598,7 +614,6 @@ export class TechDiListComponent implements OnInit {
                     this.processDiagnosticWithoutLogs(di, detailsDi);
                     this.diData = detailsDi;
                 }
-                // Set remaining properties
 
                 this.di = { ...di };
                 this.selectedDi = di._id;
@@ -607,9 +622,7 @@ export class TechDiListComponent implements OnInit {
                 this.diStatus = di.status;
                 this.ignoreCount = di.ignoreCount;
 
-                // Open the modal after all data is processed
                 this.diDialogDiag[di._id] = true;
-                // call the disable function
                 this.updateDisableValues();
             }
         } catch (error) {
@@ -619,19 +632,17 @@ export class TechDiListComponent implements OnInit {
             this.isLoading = false;
         }
     }
-    // Function to find the entry with the highest idIgnore
+
     getHighestIdIgnore(logs: any[]): any {
         return logs.reduce(
             (max, log) => (log.idIgnore > max.idIgnore ? log : max),
-            logs[0]
+            logs[0],
         );
     }
 
-    // Helper methods to process diagnostic data
     private processDiagnosticWithLogs(di, detailsDi, detailsLogs) {
         const dataLogs = this.getHighestIdIgnore(detailsLogs);
-        console.log('🍞[dataLogs]:', dataLogs);
-        // Patch form with logs data
+
         this.diagFormTech.patchValue({
             _idDi: di._id,
             diag_time: di.diag_time || dataLogs.diag_time || '',
@@ -646,24 +657,11 @@ export class TechDiListComponent implements OnInit {
                 di.composantSelectedDropdown ?? dataLogs.array_composants,
         });
 
-        // Process array_composants
-        // ! todo skander
-        // dataLogs.array_composants = [];
-
-        // const arrayComposantLogs = dataLogs.flatMap((el) => {
-        //     return el.array_composants.map((composant) => ({
-        //         ...composant,
-        //         ignoreCount: el._id,
-        //     }));
-        // });
-
         this.composantCombo = dataLogs.array_composants;
-
         this.allComposantLogsAndOriginal = [...dataLogs.array_composants];
     }
 
     private processDiagnosticWithoutLogs(di, detailsDi) {
-        // Patch form without logs data
         this.diagFormTech.patchValue({
             _idDi: di._id,
             diag_time: di.diag_time || detailsDi.diag_time || '',
@@ -677,7 +675,6 @@ export class TechDiListComponent implements OnInit {
                 di.composantSelectedDropdown ?? detailsDi.array_composants,
         });
 
-        // Process array_composants
         this.composantCombo = detailsDi.array_composants.map((composant) => ({
             ...composant,
             ignoreCount: 0,
@@ -692,7 +689,6 @@ export class TechDiListComponent implements OnInit {
             .subscribe(({ data }) => {
                 if (data) {
                     this.historyOfDi = data?.getRetourDataStats;
-
                     this.cdr.detectChanges();
                 }
             });
@@ -709,7 +705,7 @@ export class TechDiListComponent implements OnInit {
         this.getDataStatsByIdDi(di._idDi);
         this.selectedRep = di._idDi;
         this.statId = di._id;
-        // -----------
+
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getDiById(di._idDi),
@@ -718,7 +714,6 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     const detailsDi = data.getDiById.di;
 
-                    // Patch the form with the new data
                     this.remarque.patchValue({
                         remarqueRepair:
                             di.remarque_tech_repair ||
@@ -727,7 +722,6 @@ export class TechDiListComponent implements OnInit {
                     });
                 }
             });
-        // -----------
 
         this.apollo
             .query<any>({
@@ -740,14 +734,11 @@ export class TechDiListComponent implements OnInit {
                     const detailsDi = data.getDiById.di;
                     const detailsLogs = data.getDiById.logsDi;
 
-                    console.log('detailsDi', detailsDi);
-                    console.log('detailsLogs', detailsLogs);
                     if (detailsLogs) {
-                        // Create the array of composant logs and set ignoreCount
                         arrayComposantLogs = detailsLogs.flatMap((el) => {
                             return el.array_composants.map((composant) => ({
                                 ...composant,
-                                ignoreCount: el._id, // Assign ignoreCount from the logs
+                                ignoreCount: el._id,
                             }));
                         });
 
@@ -757,24 +748,16 @@ export class TechDiListComponent implements OnInit {
                             ...detailsDi.array_composants,
                             ...arrayComposantLogs,
                         ];
-                        console.log(
-                            '*************================>>>>>>>>>>',
-                            this.allComposantLogsAndOriginal
-                        );
                     }
 
                     if (detailsDi) {
-                        // Set ignoreCount to 0 for all items in detailsDi.array_composants
                         detailsDi.array_composants =
                             detailsDi.array_composants.map((composant) => ({
                                 ...composant,
                                 ignoreCount: 0,
                             }));
-                        // Combine the original components with the logged components
-                        // this.composantCombo = detailsDi.array_composants;
                     }
 
-                    // Patch the form with the new data
                     this.diagFormTech.patchValue({
                         _idDi: di._id,
                         diag_time: di.diag_time || detailsDi.diag_time || '',
@@ -789,11 +772,9 @@ export class TechDiListComponent implements OnInit {
                     });
                 }
 
-                // Open the modal after data is fetched
                 this.diDialogDiag[di._id] = true;
             });
 
-        // -----------
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getDataOriginalAndRetour(di._idDi),
@@ -875,6 +856,7 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
+
     getAllRemarque(_id) {
         this.apollo
             .query<any>({
@@ -905,8 +887,9 @@ export class TechDiListComponent implements OnInit {
     show() {}
 
     hideDialogDiag() {
-        this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID        this.diStatus = di.status;
+        this.diDialogDiag[this.selectedDi] = false;
     }
+
     hideDialogRep() {
         this.diDialogRep = false;
     }
@@ -925,18 +908,19 @@ export class TechDiListComponent implements OnInit {
             .mutate<ConfigDiagAffectationMutationResult>({
                 mutation: this.ticketSerice.configDiagAffectation(
                     this.selectedDi,
-                    data.value._id
+                    data.value._id,
                 ),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {});
     }
+
     selectedTechRep(data) {
         this.apollo
             .mutate<ConfigRepAffectationMutationResult>({
                 mutation: this.ticketSerice.configRepAffectation(
                     this.selectedDi,
-                    data.value._id
+                    data.value._id,
                 ),
                 useMutationLoading: true,
             })
@@ -971,6 +955,7 @@ export class TechDiListComponent implements OnInit {
             this.isRunning = false;
         }
     }
+
     startStopwatch1() {
         if (!this.isRunning1) {
             this.isRunning1 = true;
@@ -985,29 +970,30 @@ export class TechDiListComponent implements OnInit {
         if (this.isRunning) {
             const elapsedTime = Date.now() - this.startTime;
             this.minutes = this.padZero(
-                Math.floor(elapsedTime / (1000 * 60 * 60))
+                Math.floor(elapsedTime / (1000 * 60 * 60)),
             );
             this.seconds = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60))
+                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60)),
             );
             this.milliseconds = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60)) / 1000)
+                Math.floor((elapsedTime % (1000 * 60)) / 1000),
             );
 
             requestAnimationFrame(() => this.updateTimer());
         }
     }
+
     updateTimer1() {
         if (this.isRunning1) {
             const elapsedTime = Date.now() - this.startTime1;
             this.minutes1 = this.padZero(
-                Math.floor(elapsedTime / (1000 * 60 * 60))
+                Math.floor(elapsedTime / (1000 * 60 * 60)),
             );
             this.seconds1 = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60))
+                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60)),
             );
             this.milliseconds1 = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60)) / 1000)
+                Math.floor((elapsedTime % (1000 * 60)) / 1000),
             );
 
             requestAnimationFrame(() => this.updateTimer1());
@@ -1036,6 +1022,7 @@ export class TechDiListComponent implements OnInit {
         this.startTime1 = 0;
         this.laps = [];
     }
+
     reset1() {
         this.minutes1 = '00';
         this.seconds1 = '00';
@@ -1062,6 +1049,7 @@ export class TechDiListComponent implements OnInit {
         this.seconds = this.padZero(seconds);
         this.milliseconds = this.padZero(milliseconds);
     }
+
     setInitialTime1(timeString: string) {
         const [minutes, seconds, milliseconds] = timeString
             .split(':')
@@ -1074,7 +1062,7 @@ export class TechDiListComponent implements OnInit {
         this.seconds1 = this.padZero(seconds);
         this.milliseconds1 = this.padZero(milliseconds);
     }
-    // ------------
+
     getComposant() {
         this.apollo
             .watchQuery<any>({
@@ -1086,7 +1074,7 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
-    //!!!!!!!!! open modal for composant creation
+
     openNew() {
         this.creatComposantDialog = true;
         this.findAllComposant_Category();
@@ -1105,11 +1093,12 @@ export class TechDiListComponent implements OnInit {
                                 name: el._id,
                                 value: el.category_composant,
                             };
-                        }
+                        },
                     );
                 }
             });
     }
+
     createComposant() {
         this.apollo
             .mutate<any>({
@@ -1132,12 +1121,6 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
-
-    /**
-     * This function will get the lap time and save it in stats entity
-     * will get the lap as pause time save it only he can back to this ticket again and make the counter start again on the last time saved and continue incrementing
-     *!When user click on finish diag and status changed the button would be frozen!
-     */
 
     lapTimeForPauseAndGetBack() {
         this.lap();
@@ -1168,7 +1151,7 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.saveTimeDiag(
                     this.selectedDi,
-                    this.lapTime
+                    this.lapTime,
                 ),
                 useMutationLoading: true,
             })
@@ -1181,26 +1164,23 @@ export class TechDiListComponent implements OnInit {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.diDiagnostiqueInPAUSE(
-                    this.selectedDi_id
+                    this.selectedDi_id,
                 ),
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading, errors }) => {
                 if (data) {
-                    // if data exist affect it to html
                 }
             });
 
         this.addPauseLogs(this.selectedDi, 'diag');
-
-        this.getAllTechDi(this.first, this.rows);
+        this.loadData(); // Use loadData instead of getAllTechDi
         this.startStopwatch();
     }
 
     getDataForTech() {
         this.apollo
             .watchQuery<any>({
-                // Pass data got from inputs date
                 query: this.ticketSerice.getDataForTech(),
             })
             .valueChanges.subscribe(({ data, loading }) => {
@@ -1208,7 +1188,6 @@ export class TechDiListComponent implements OnInit {
                     this.dataBarChartIsReady = true;
                     this.techDataInfo = data.getDiStatusCounts;
 
-                    // Initialize the dashboard variables
                     this.diagEnPause_miniDashboard = 0;
                     this.diagNotOpened_miniDashboard = 0;
                     this.repNotOpened_miniDashboard = 0;
@@ -1218,6 +1197,7 @@ export class TechDiListComponent implements OnInit {
                     this.retour3_miniDashboard = 0;
                     this.admnistration_miniDashboard = 0;
                     this.finished_miniDashboard = 0;
+
                     this.techDataInfo.forEach((item) => {
                         switch (item.status) {
                             case 'DIAGNOSTIC_Pause':
@@ -1250,14 +1230,15 @@ export class TechDiListComponent implements OnInit {
                         }
                     });
 
-                    // Call the barChart function after processing the data
                     this.barChart();
                 }
             });
     }
+
     selectedDropDown(selectedItem) {
         this.composantSelected = selectedItem;
     }
+
     getSeverity(status: string) {
         switch (status) {
             case 'CREATED':
@@ -1294,8 +1275,6 @@ export class TechDiListComponent implements OnInit {
     }
 
     updateDisableValues() {
-        //! Getting values for conditions
-
         const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
         let isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
 
@@ -1306,22 +1285,20 @@ export class TechDiListComponent implements OnInit {
         const isArrComposantEmpty =
             this.composantCombo.length === 0 ? true : false;
 
-        //! diagnostique finish condition
         this.disabledDiagnostiqueValue =
             isReperable && isPdr && isArrComposantEmpty;
-        //! diagnostique retour condition
-        // didn't put ignoreCount > 0  bcs button are only shown with that condition
-        //send finish directly condition
+
         this.techRetourSendFinished = !(
             (isPdr === false && isErrorFromFixtronixTech === true) ||
             isReperable === false
         );
-        //send diag retou condition
+
         this.disabledDiagnostiqueRetourValue =
             this.disabledDiagnostiqueValue || !this.techRetourSendFinished;
 
-        this.cdr.detectChanges(); // Ensure change detection
+        this.cdr.detectChanges();
     }
+
     comboComposantandQuantity() {
         const selectedName = this.composantSelected.value.name;
         let composantSelected = {
@@ -1330,7 +1307,7 @@ export class TechDiListComponent implements OnInit {
         };
         this.composantCombo.push(composantSelected);
         this.composantList = this.composantList.filter(
-            (composant) => composant.name !== selectedName
+            (composant) => composant.name !== selectedName,
         );
 
         this.composantSelected = null;
@@ -1405,7 +1382,7 @@ export class TechDiListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.saveTimeDiag(
                             this.selectedDi,
-                            this.lapTime
+                            this.lapTime,
                         ),
                         useMutationLoading: true,
                     })
@@ -1414,13 +1391,13 @@ export class TechDiListComponent implements OnInit {
                             this.diDialogDiag[this.selectedDi] = false;
                         }
                     });
+
                 setTimeout(() => {
-                    this.getAllTechDi(this.first, this.rows);
+                    this.loadData(); // Use loadData instead of getAllTechDi
                 }, 1000);
 
                 this.startStopwatch();
-
-                this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
+                this.diDialogDiag[this.selectedDi] = false;
             },
         });
     }
@@ -1455,7 +1432,7 @@ export class TechDiListComponent implements OnInit {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
                                 this.changeStatusMagasinEstimation(
-                                    dataDiag._idDi
+                                    dataDiag._idDi,
                                 );
                             }
                         });
@@ -1469,7 +1446,6 @@ export class TechDiListComponent implements OnInit {
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
-
                                 this.changeStatusToPending2(dataDiag._idDi);
                             }
                         });
@@ -1479,7 +1455,7 @@ export class TechDiListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.saveTimeDiag(
                             this.selectedDi,
-                            this.lapTime
+                            this.lapTime,
                         ),
                         useMutationLoading: true,
                     })
@@ -1488,13 +1464,14 @@ export class TechDiListComponent implements OnInit {
                             this.diDialogDiag[this.selectedDi] = false;
                         }
                     });
+
                 setTimeout(() => {
-                    this.getAllTechDi(this.first, this.rows);
+                    this.loadData(); // Use loadData instead of getAllTechDi
                 }, 1000);
 
                 this.startStopwatch();
                 this.getComposant();
-                this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
+                this.diDialogDiag[this.selectedDi] = false;
             },
         });
     }
@@ -1508,7 +1485,7 @@ export class TechDiListComponent implements OnInit {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.changeFinishStatus(
-                            this.selectedDi_id
+                            this.selectedDi_id,
                         ),
                     })
                     .subscribe(({ data }) => {});
@@ -1516,7 +1493,7 @@ export class TechDiListComponent implements OnInit {
             },
         });
     }
-    //!Tech finishing Diagnostique here
+
     techFinishDiag() {
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
@@ -1547,7 +1524,7 @@ export class TechDiListComponent implements OnInit {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
                                 this.changeStatusMagasinEstimation(
-                                    dataDiag._idDi
+                                    dataDiag._idDi,
                                 );
                             }
                         });
@@ -1570,7 +1547,7 @@ export class TechDiListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.saveTimeDiag(
                             this.selectedDi,
-                            this.lapTime
+                            this.lapTime,
                         ),
                         useMutationLoading: true,
                     })
@@ -1579,13 +1556,14 @@ export class TechDiListComponent implements OnInit {
                             this.diDialogDiag[this.selectedDi] = false;
                         }
                     });
+
                 setTimeout(() => {
-                    this.getAllTechDi(this.first, this.rows);
+                    this.loadData(); // Use loadData instead of getAllTechDi
                 }, 1000);
 
                 this.startStopwatch();
                 this.getComposant();
-                this.diDialogDiag[this.selectedDi] = false; // Open modal for this row by ID
+                this.diDialogDiag[this.selectedDi] = false;
             },
         });
     }
@@ -1597,16 +1575,17 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data }) => {});
     }
+
     confirmComposant() {
         this.apollo
             .mutate<any>({
                 mutation: this.ticketSerice.responseConfirmerRecoitComposant(
-                    this.selectedDi
+                    this.selectedDi,
                 ),
             })
             .subscribe(({ data }) => {});
     }
-    // this function to get the time spênt oif this ticket will be called in opening modal function
+
     getTimeSpent(_idStat: string) {
         this.apollo
             .watchQuery<any>({
@@ -1626,10 +1605,9 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
-    //! WORKING HERE
+
     getTimeSpentRep(_idStat: string) {
         this.apollo
-
             .query<any>({
                 query: this.ticketSerice.getLastPauseTime(_idStat),
             })
@@ -1655,17 +1633,14 @@ export class TechDiListComponent implements OnInit {
         const trimmedTimeString = timeString.trim();
         const regex = /^\d{2}:\d{2}:\d{2}$/;
         const is = regex.test(trimmedTimeString);
-
         return is;
     }
 
     getReamrque() {
         this.remarqueReparationnn = this.remarque.value.remarqueRepair;
-        console.log('RQQQQ', this.remarqueReparationnn);
     }
-    // i stoped here i need to get back when he stops and continue counting when tech click finish froze the butons
+
     lapTimeForPauseAndGetBack1(isFinishRep: boolean) {
-        // for rep
         this.lap1();
         this.resetModalFormRep();
 
@@ -1673,7 +1648,7 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.finishReparation(
                     this.DiByStat,
-                    this.remarqueReparationnn
+                    this.remarqueReparationnn,
                 ),
                 useMutationLoading: true,
             })
@@ -1681,12 +1656,13 @@ export class TechDiListComponent implements OnInit {
                 if (data && !loading && this.DiByStat) {
                 }
             });
+
         this.apollo
             .mutate<any>({
                 mutation:
                     this.ticketSerice.lapTimeForPauseAndGetBackForReaparation(
                         this.statId,
-                        this.lapTime1
+                        this.lapTime1,
                     ),
                 useMutationLoading: true,
             })
@@ -1700,8 +1676,8 @@ export class TechDiListComponent implements OnInit {
         if (!isFinishRep) {
             this.addPauseLogs(this.statId, 'rep');
         }
-        this.getAllTechDi(this.first, this.rows);
 
+        this.loadData(); // Use loadData instead of getAllTechDi
         this.startStopwatch1();
     }
 
@@ -1719,15 +1695,14 @@ export class TechDiListComponent implements OnInit {
     checkValueChanges() {
         this.diagFormTech.get('isPdr')?.valueChanges.subscribe((value) => {
             this.hasPdr = value;
-            // Additional logic based on value changes
         });
     }
+
     checkValueChangesReperable() {
         this.diagFormTech
             .get('isReparable')
             ?.valueChanges.subscribe((value) => {
                 this.isReperable = value;
-                // Additional logic based on value changes
             });
     }
 
@@ -1742,6 +1717,7 @@ export class TechDiListComponent implements OnInit {
                 }
             });
     }
+
     finishReparation() {
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
@@ -1759,7 +1735,7 @@ export class TechDiListComponent implements OnInit {
                     .mutate<any>({
                         mutation: this.ticketSerice.finishReparation(
                             this.DiByStat,
-                            this.remarqueReparationnn
+                            this.remarqueReparationnn,
                         ),
                         useMutationLoading: true,
                     })
@@ -1769,9 +1745,9 @@ export class TechDiListComponent implements OnInit {
                         }
                     });
 
-                this.getAllTechDi(this.first, this.rows);
+                this.loadData(); // Use loadData instead of getAllTechDi
                 setTimeout(() => {
-                    this.getAllTechDi(this.first, this.rows);
+                    this.loadData();
                 }, 1000);
                 this.startStopwatch1();
             },
@@ -1802,7 +1778,6 @@ export class TechDiListComponent implements OnInit {
     uploadFile(base64: string) {
         const payload = {
             image: base64,
-            // add other necessary data here
         };
 
         this.payloadImage = payload;
@@ -1818,16 +1793,12 @@ export class TechDiListComponent implements OnInit {
                     this.categorieDiListDropDown = data.findAllDiCategory.map(
                         (Category_DI) => ({
                             category: `${Category_DI.category}`,
-                            value: Category_DI._id, // ID as value
-                        })
+                            value: Category_DI._id,
+                        }),
                     );
                 }
             });
     }
-
-    /**
-     * composant table
-     */
 
     deleteSelectedProducts(): void {
         this.confirmationService.confirm({
@@ -1836,7 +1807,7 @@ export class TechDiListComponent implements OnInit {
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.composantCombo = this.composantCombo.filter(
-                    (val) => !this.selectedComposants.includes(val)
+                    (val) => !this.selectedComposants.includes(val),
                 );
 
                 this.selectedComposants = [];
@@ -1851,7 +1822,6 @@ export class TechDiListComponent implements OnInit {
     }
 
     onRowClick(composant: any): void {
-        // Additional logic for the clicked row can be added here
         const index = this.composantCombo.findIndex((el) => {
             el.nameComposant === composant.nameComposant;
         });

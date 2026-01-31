@@ -85,13 +85,13 @@
             severity="danger"
         ></p-button>
         <p-button
-        [disabled]="
-        !clientForm.get('first_name').value ||
-        !clientForm.get('last_name').value||
-        !clientForm.get('region').value||
-        !clientForm.get('phone').value ||
-        !clientForm.get('address').value
-        "
+            [disabled]="
+                !clientForm.get('first_name').value ||
+                !clientForm.get('last_name').value ||
+                !clientForm.get('region').value ||
+                !clientForm.get('phone').value ||
+                !clientForm.get('address').value
+            "
             label="Ajouter"
             severity="success"
             [loading]="loading"
@@ -111,6 +111,18 @@
             <tr>
                 <th *ngFor="let col of columns">{{ col.header }}</th>
                 <th>Actions</th>
+            </tr>
+            <tr>
+                <th *ngFor="let col of columns">
+                    <input
+                        pInputText
+                        type="text"
+                        placeholder="Chercher"
+                        (input)="
+                            onColumnSearch(col.searchKey, $event.target.value)
+                        "
+                    />
+                </th>
             </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">

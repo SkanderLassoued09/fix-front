@@ -70,7 +70,7 @@ export class CompanyListComponent {
         region: new FormControl('', [Validators.required]),
         fax: new FormControl(''),
         website: new FormControl(''),
-       // raisonSociale: new FormControl('', [Validators.required]),
+        // raisonSociale: new FormControl('', [Validators.required]),
         activitePrincipale: new FormControl(''),
         activiteSecondaire: new FormControl(''),
         exoneration: new FormControl(''),
@@ -103,14 +103,23 @@ export class CompanyListComponent {
     companiesList: any;
 
     cols = [
-        { field: 'name', header: 'Nom' },
-        { field: 'region', header: 'Région' },
-        { field: 'address', header: 'Adresse' },
-        { field: 'email', header: 'E-mail' },
-        { field: 'raisonSociale', header: 'Raison sociale' },
-        { field: 'exoneration', header: 'Exoneration' },
-        { field: 'fax', header: 'Fax' },
+        { field: 'name', header: 'Nom', searchKey: 'name' },
+        { field: 'region', header: 'Région', searchKey: 'region' },
+        { field: 'address', header: 'Adresse', searchKey: 'address' },
+        { field: 'email', header: 'E-mail', searchKey: 'email' },
+        {
+            field: 'raisonSociale',
+            header: 'Raison sociale',
+            searchKey: 'raisonSociale',
+        },
+        {
+            field: 'exoneration',
+            header: 'Exoneration',
+            searchKey: 'exoneration',
+        },
+        { field: 'fax', header: 'Fax', searchKey: 'fax' },
     ];
+
     companySelected: any;
     CompanyModalCondition: boolean = false;
     first: number = 0;
@@ -124,13 +133,12 @@ export class CompanyListComponent {
         serviceTechnique: { name: '', email: '', phone: '' },
     };
 
-
     constructor(
         private productService: ProductService,
         private apollo: Apollo,
         private companyService: CompanyService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
     ) {
         this.region = REGION;
     }
@@ -160,37 +168,34 @@ export class CompanyListComponent {
     }
 
     addCompany() {
-
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
-            header: "Confirmation creation de sociéte",
+            header: 'Confirmation creation de sociéte',
             icon: 'pi pi-question-circle',
             accept: () => {
-
                 this.apollo
-                .mutate<AddCompanyMutationResponse>({
-                    mutation: this.companyService.addCompany(
-                        this.companyForm.value
-                    ),
-                    useMutationLoading: true,
-                })
-                .subscribe(({ data, errors, loading }) => {
-                    this.loading = loading;
-                    if (data) {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'La société ajouté avec succés',
-                        });
-                        this.companies(this.first, this.rows);
-                        this.creationCompanyModalCondition = false;
-                    }
-                    if (errors) {
-                    }
-                });
-            }})
-
-        
+                    .mutate<AddCompanyMutationResponse>({
+                        mutation: this.companyService.addCompany(
+                            this.companyForm.value,
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe(({ data, errors, loading }) => {
+                        this.loading = loading;
+                        if (data) {
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'Success',
+                                detail: 'La société ajouté avec succés',
+                            });
+                            this.companies(this.first, this.rows);
+                            this.creationCompanyModalCondition = false;
+                        }
+                        if (errors) {
+                        }
+                    });
+            },
+        });
     }
 
     onPageChange(event: PageEvent) {
@@ -222,12 +227,12 @@ export class CompanyListComponent {
     }
 
     saveUpdateCompany() {
-        console.log( "==>",this.companySelected);
-        
+        console.log('==>', this.companySelected);
+
         this.apollo
             .mutate<any>({
                 mutation: this.companyService.updatecompany(
-                    this.companySelected
+                    this.companySelected,
                 ),
             })
             .subscribe(({ data }) => {
@@ -277,7 +282,7 @@ export class CompanyListComponent {
                 this.apollo
                     .mutate<any>({
                         mutation: this.companyService.removeCompany(
-                            rowData._id
+                            rowData._id,
                         ),
                     })
                     .subscribe(({ data }) => {

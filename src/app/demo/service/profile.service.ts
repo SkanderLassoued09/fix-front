@@ -46,6 +46,29 @@ export class ProfileService {
             }
         `;
     }
+    searchProfile(field: string, value: string, first: number, rows: number) {
+        return gql`
+    {
+      searchProfile(
+        paginationConfig: { first: ${first}, rows: ${rows} }
+        search: { field: "${field}", value: "${value}" }
+      ) {
+        profileRecord {
+          _id
+          username
+          firstName
+          lastName
+          phone
+          email
+          role
+          createdAt
+          updatedAt
+        }
+        totalProfileCount
+      }
+    }
+  `;
+    }
 
     getAllProfile(rows, first) {
         return gql`

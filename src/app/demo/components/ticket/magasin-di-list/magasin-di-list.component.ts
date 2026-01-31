@@ -12,7 +12,7 @@ import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { environment } from 'src/environments/environment';
 import { Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -20,8 +20,10 @@ import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
     styleUrl: './magasin-di-list.component.scss',
 })
 export class MagasinDiListComponent {
-    private composantSearch$ = new Subject<string>();
-    private columnSearch$ = new Subject<{ field: string; value: string }>();
+    // Search state tracking
+    private currentSearchField: string = '';
+    private currentSearchValue: string = '';
+    private searchSubject$ = new Subject<void>();
 
     baseUrl = environment.apiUrl;
     statusComposant = [
@@ -30,8 +32,6 @@ export class MagasinDiListComponent {
         { name: 'Externe', value: 'Externe' },
     ];
     formUpdateComposant: FormGroup;
-    // TODO change it to file of constant and instead of array of string , change it to object key value
-    //! Done but you did not use it in here
     magasinDiDialog: boolean = false;
     selectedComposant;
     cols = [
@@ -54,9 +54,6 @@ export class MagasinDiListComponent {
     first: number = 0;
     rows: number = 10;
     page: any;
-    // Please do not use camel case in varaibles
-    //MagasinEstimation_Condition: boolean = true;
-    //MagasinCondition: boolean = true;
 
     composantMagasin = new FormGroup({
         _id: new FormControl(),
@@ -80,7 +77,7 @@ export class MagasinDiListComponent {
                 beginAtZero: boolean;
                 ticks: {
                     color: string;
-                    stepSize: number; // Ensures the interval is 1
+                    stepSize: number;
                     callback: (value: number) => string;
                 };
                 grid: { color: string; drawBorder: boolean };
@@ -126,7 +123,7 @@ export class MagasinDiListComponent {
         private apollo: Apollo,
         private router: Router,
         private confirmationService: ConfirmationService,
-        private notificationService: NotificationService
+        private notificationService: NotificationService,
     ) {
         this.formUpdateComposant = new FormGroup({
             _id: new FormControl(null),
@@ -144,12 +141,19 @@ export class MagasinDiListComponent {
     }
 
     ngOnInit() {
-        this.getDi(this.first, this.rows);
+        // Initial load
+        this.loadData();
         this.getAllComposant();
         this.getStatusCount();
+
+        // Setup search with debounce
+        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
+            this.loadData();
+        });
+
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
-                this.getDi(this.first, this.rows);
+                this.loadData();
                 this.getStatusCount();
             }
         });
@@ -158,49 +162,79 @@ export class MagasinDiListComponent {
             console.log('🎂susb', susb);
             console.log(this.formUpdateComposant, 'form composants');
         });
-        // this.composantSearch$
-        //     .pipe(
-        //         debounceTime(400), // wait user stops typing
-        //         distinctUntilChanged(),
-        //         switchMap((searchTerm) =>
-        //             this.apollo.query<any>({
-        //                 query: this.ticketSerice.searchComposants(searchTerm),
-        //             })
-        //         )
-        //     )
-        //     .subscribe(({ data }) => {
-        //         this.composantList = data.searchComposants; // 👈 list for dropdown
-        //     });
-        this.columnSearch$
-            .pipe(
-                debounceTime(400),
-                distinctUntilChanged(
-                    (a, b) => a.field === b.field && a.value === b.value
-                ),
-                switchMap(({ field, value }) =>
-                    this.apollo.query<any>({
-                        query: this.ticketSerice.getAllMagasinSearch(
-                            this.first,
-                            this.rows,
-                            field,
-                            value
-                        ),
-                        fetchPolicy: 'no-cache',
-                    })
-                )
-            )
-            .subscribe(({ data }) => {
-                this.diList = data.searchDiForMagasin.di;
-                this.diListCount = data.searchDiForMagasin.totalDiCount;
-            });
     }
+
+    /**
+     * Centralized data loading method
+     * Handles both search and regular data fetching with pagination
+     */
+    loadData() {
+        const hasActiveSearch =
+            this.currentSearchField &&
+            this.currentSearchValue &&
+            this.currentSearchValue.trim().length > 0;
+
+        if (hasActiveSearch) {
+            // Perform search
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.getAllMagasinSearch(
+                        this.first,
+                        this.rows,
+                        this.currentSearchField,
+                        this.currentSearchValue,
+                    ),
+                    fetchPolicy: 'no-cache',
+                })
+                .subscribe(({ data }) => {
+                    if (data && data.searchDiForMagasin) {
+                        this.diList = data.searchDiForMagasin.di;
+                        this.diListCount = data.searchDiForMagasin.totalDiCount;
+                    }
+                });
+        } else {
+            // Regular data fetch
+            this.apollo
+                .watchQuery<GetAllMagasinQueryResponse>({
+                    query: this.ticketSerice.getAllMagasin(
+                        this.first,
+                        this.rows,
+                    ),
+                })
+                .valueChanges.subscribe(({ data, loading, errors }) => {
+                    if (data) {
+                        this.diList = data.getDiForMagasin.di;
+                        this.diListCount = data.getDiForMagasin.totalDiCount;
+                    }
+                });
+        }
+    }
+
+    /**
+     * Handle column search
+     */
     onColumnSearch(field: string, value: string) {
         console.log('value', value);
         console.log('field', field);
-        const v = value?.trim().toString();
-        const f = field?.trim().toString();
+
+        const v = value?.trim();
+        const f = field?.trim();
+
         if (v && v.length > 0 && f && f.length > 0) {
-            this.columnSearch$.next({ field, value: v });
+            // Set search state
+            this.currentSearchField = f;
+            this.currentSearchValue = v;
+            this.first = 0; // Reset to first page on new search
+
+            // Trigger search
+            this.searchSubject$.next();
+        } else {
+            // Clear search state
+            this.currentSearchField = '';
+            this.currentSearchValue = '';
+
+            // Load regular data
+            this.loadData();
         }
     }
 
@@ -208,7 +242,7 @@ export class MagasinDiListComponent {
         const searchValue = event.filter?.trim();
 
         if (searchValue && searchValue.length >= 2) {
-            this.composantSearch$.next(searchValue);
+            // Implement composant search if needed
         }
     }
 
@@ -222,8 +256,8 @@ export class MagasinDiListComponent {
                     this.categorieDiListDropDown = data.findAllDiCategory.map(
                         (categoryDi) => ({
                             name: `${categoryDi.category}`,
-                            value: categoryDi._id, // ID as value
-                        })
+                            value: categoryDi._id,
+                        }),
                     );
                 }
             });
@@ -233,7 +267,7 @@ export class MagasinDiListComponent {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
         const textColorSecondary = documentStyle.getPropertyValue(
-            '--text-color-secondary'
+            '--text-color-secondary',
         );
         const surfaceBorder =
             documentStyle.getPropertyValue('--surface-border');
@@ -279,9 +313,9 @@ export class MagasinDiListComponent {
                                 beginAtZero: true,
                                 ticks: {
                                     color: textColorSecondary,
-                                    stepSize: 1, // Ensures the interval is 1
+                                    stepSize: 1,
                                     callback: (value: number) =>
-                                        value.toFixed(0), // Show whole numbers only
+                                        value.toFixed(0),
                                 },
                                 grid: {
                                     color: surfaceBorder,
@@ -302,16 +336,19 @@ export class MagasinDiListComponent {
                 }
             });
     }
+
     annulerMagasinEstimation() {
         this.magasinDiDialog = false;
         this.openCreationComposantModal = false;
         this.formMagasin.reset();
         this.composantMagasin.reset();
     }
+
     showDialogcomposantCreation() {
         this.openCreationComposantModal = true;
         this.findAllComposant_Category();
     }
+
     getSeverity(status: string) {
         switch (status) {
             case 'CREATED':
@@ -346,12 +383,6 @@ export class MagasinDiListComponent {
                 return 'warn';
         }
     }
-    // Magasin_buttonCondition() {
-    //
-    //         'rowData coming from function',
-    //         this.diList.getDiForMagasin.di
-    //     );
-    // }
 
     showDialogCategoryComposant() {
         this.openCreationCategoryComposantModal = true;
@@ -364,7 +395,7 @@ export class MagasinDiListComponent {
                 this.composantCatgorieList = data.findAllComposant_Category;
                 console.log(
                     this.composantCatgorieList,
-                    'composantCatgorieList'
+                    'composantCatgorieList',
                 );
             });
     }
@@ -380,7 +411,7 @@ export class MagasinDiListComponent {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.removeComposant(
-                            this.loadedDataComposant._id
+                            this.loadedDataComposant._id,
                         ),
                     })
                     .subscribe(({ data }) => {
@@ -412,7 +443,7 @@ export class MagasinDiListComponent {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.removeComposant_Category(
-                            rowData._id
+                            rowData._id,
                         ),
                     })
                     .subscribe(({ data }) => {
@@ -440,7 +471,7 @@ export class MagasinDiListComponent {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.addNewCategoryComposant(
-                            this.addCategoryCompsant.value.categoryName
+                            this.addCategoryCompsant.value.categoryName,
                         ),
                     })
                     .subscribe(({ data }) => {
@@ -464,15 +495,13 @@ export class MagasinDiListComponent {
         console.log('fired pdf composant');
         for (let file of event.files) {
             const reader = new FileReader();
-            reader.readAsArrayBuffer(file); // Read file as ArrayBuffer for Blob creation
+            reader.readAsArrayBuffer(file);
             const readerForBase64 = new FileReader();
-            readerForBase64.readAsDataURL(file); // Read file as Base64 for upload
+            readerForBase64.readAsDataURL(file);
 
-            // Blob URL creation
             reader.onload = () => {
                 const arrayBuffer = reader.result as ArrayBuffer;
 
-                // Create a Blob and generate its URL
                 const blob = new Blob([arrayBuffer], {
                     type: 'application/pdf',
                 });
@@ -482,23 +511,18 @@ export class MagasinDiListComponent {
                     this.instantSelectedcPDF = blobUrl;
                     console.log(
                         '🥕[this.instantSelectedcPDF]:',
-                        this.instantSelectedcPDF
+                        this.instantSelectedcPDF,
                     );
-
-                    // Assign Blob URL for BC
                 }
                 if (type === 'addComposant') {
                     this.instantSelectedcPDF = blobUrl;
                     console.log('🍈[blobUrl]:', blobUrl);
                     console.log(
                         '🥕[this.instantSelectedcPDF]:',
-                        this.instantSelectedcPDF
+                        this.instantSelectedcPDF,
                     );
-
-                    // Assign Blob URL for BC
                 }
 
-                // Show a success message
                 this.messageservice.add({
                     severity: 'info',
                     summary: 'Fichier enregistré',
@@ -506,11 +530,8 @@ export class MagasinDiListComponent {
                 });
             };
 
-            // Base64 creation
             readerForBase64.onload = () => {
                 const base64 = readerForBase64.result as string;
-
-                // Call uploadFile with Base64 string
                 this.uploadFile(base64, type);
             };
 
@@ -528,18 +549,17 @@ export class MagasinDiListComponent {
             this.apollo
                 .query<ComposantByNameQueryResponse>({
                     query: this.ticketSerice.composantByName(
-                        selectedItem.value
+                        selectedItem.value,
                     ),
                 })
                 .subscribe(({ data, loading }) => {
                     this.loadedDataComposant = data.findOneComposant;
                     console.log(
                         '🍷[ this.loadedDataComposant]:',
-                        this.loadedDataComposant
+                        this.loadedDataComposant,
                     );
 
                     if (data) {
-                        // Initialize form fields with loaded data
                         this.composantMagasin.patchValue({
                             _id: this.loadedDataComposant._id,
                             name: this.loadedDataComposant.name,
@@ -549,7 +569,7 @@ export class MagasinDiListComponent {
                             prix_achat: this.loadedDataComposant.prix_achat,
                             prix_vente: this.loadedDataComposant.prix_vente,
                             coming_date: new Date(
-                                this.loadedDataComposant.coming_date
+                                this.loadedDataComposant.coming_date,
                             ),
                             link: this.loadedDataComposant.link,
                             quantity_stocked:
@@ -565,6 +585,7 @@ export class MagasinDiListComponent {
             this.composantMagasin.reset();
         }
     }
+
     openDialogMagasin(item) {
         this.findAllComposant_Category();
 
@@ -576,11 +597,11 @@ export class MagasinDiListComponent {
                 .query<any>({
                     query: this.ticketSerice.getLogsDiById(
                         item.ignoreCount,
-                        item._id
+                        item._id,
                     ),
                 })
                 .subscribe(({ data }) => {
-                    const logsDi = data?.getLigsById; // Assuming this is the response structure
+                    const logsDi = data?.getLigsById;
 
                     if (logsDi?.array_composants) {
                         console.log('inside logs array composant');
@@ -617,9 +638,9 @@ export class MagasinDiListComponent {
         this.magasinDiDialog = true;
         console.log('this.arrayComposant in', this.arrayComposant.length);
     }
-    //last add
-    MagasinEstimation_Condition() {} //! open only when status === MagasinEstimation
-    Magasin_Condition() {} //! open only when status === In Magasin
+
+    MagasinEstimation_Condition() {}
+    Magasin_Condition() {}
 
     takeMetoDetailsComponent(dataRowselected) {
         const _id = dataRowselected._id;
@@ -651,30 +672,22 @@ export class MagasinDiListComponent {
                                 name: el.category_composant,
                                 value: el.category_composant,
                             };
-                        }
+                        },
                     );
                 }
             });
     }
 
+    /**
+     * Handle page change
+     */
     onPageChange(event: PageEvent) {
         this.first = event.first;
         this.page = event.page;
         this.rows = event.rows;
-        this.getDi(this.first, this.rows);
-    }
-    getDi(first, rows) {
-        this.apollo
-            .watchQuery<GetAllMagasinQueryResponse>({
-                query: this.ticketSerice.getAllMagasin(first, rows),
-            })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
-                if (data) {
-                    this.diList = data.getDiForMagasin.di;
 
-                    this.diListCount = data.getDiForMagasin.totalDiCount;
-                }
-            });
+        // Load data (will automatically use search if active)
+        this.loadData();
     }
 
     getSelectedStatus(statusComposant: any) {
@@ -688,29 +701,28 @@ export class MagasinDiListComponent {
         this.nameComposananrSelected = selectedItem.value;
         console.log(
             'this.nameComposananrSelected',
-            this.nameComposananrSelected
+            this.nameComposananrSelected,
         );
         if (selectedItem.value) {
             this.selectedItem = selectedItem;
             this.apollo
                 .query<ComposantByNameQueryResponse>({
                     query: this.ticketSerice.composantByName(
-                        selectedItem.value
+                        selectedItem.value,
                     ),
                 })
                 .subscribe(({ data, loading }) => {
                     this.loadedDataComposant = data.findOneComposant;
                     console.log(
                         '🍪[this.loadedDataComposant]:',
-                        this.loadedDataComposant
+                        this.loadedDataComposant,
                     );
 
                     if (data) {
                         console.log(
                             'this.loadedDataComposant.pdf',
-                            this.loadedDataComposant.pdf
+                            this.loadedDataComposant.pdf,
                         );
-                        // Initialize form fields with loaded data
                         this.formUpdateComposant.patchValue({
                             _id: this.loadedDataComposant._id,
                             name: this.loadedDataComposant.name,
@@ -720,7 +732,7 @@ export class MagasinDiListComponent {
                             prix_achat: this.loadedDataComposant.prix_achat,
                             prix_vente: this.loadedDataComposant.prix_vente,
                             coming_date: new Date(
-                                this.loadedDataComposant.coming_date
+                                this.loadedDataComposant.coming_date,
                             ),
                             link: this.loadedDataComposant.link,
                             quantity_stocked:
@@ -767,8 +779,7 @@ export class MagasinDiListComponent {
                         },
                         (error) => {
                             console.error('Error updating composant: ', error);
-                            // Add error handling logic here if needed
-                        }
+                        },
                     );
             },
         });
@@ -784,35 +795,33 @@ export class MagasinDiListComponent {
                 console.log('inside function valider');
                 console.log(
                     ' this.nameComposananrSelected',
-                    this.nameComposananrSelected
+                    this.nameComposananrSelected,
                 );
                 console.log(' this.selectedDi_id', this.selectedDi_id);
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.setComposantAsUpdated(
                             this.selectedDi_id,
-                            this.nameComposananrSelected
+                            this.nameComposananrSelected,
                         ),
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            // Remove the selected item from the arrayComposant
                             const index = this.arrayComposant.findIndex(
                                 (composant) =>
                                     composant.nameComposant ===
-                                    this.nameComposananrSelected
+                                    this.nameComposananrSelected,
                             );
 
                             if (index !== -1) {
                                 this.arrayComposant.splice(index, 1);
                             }
 
-                            // Optionally, reset the dropdown selection
                             this.nameComposananrSelected = null;
                             this.selectedItem = null;
                             console.log(
                                 'this.arrayComposant',
-                                this.arrayComposant.length
+                                this.arrayComposant.length,
                             );
                             this.arrayComposant.length == 0
                                 ? (this.validatorFinirListeComposant = false)
@@ -831,17 +840,15 @@ export class MagasinDiListComponent {
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                // Mark all controls as dirty to include all fields in the form value
                 Object.keys(this.formUpdateComposant.controls).forEach(
                     (key) => {
                         this.formUpdateComposant.get(key)?.markAsDirty();
-                    }
+                    },
                 );
 
-                // Use the updated form value for mutation
                 const updatedComposantData = {
                     ...this.formUpdateComposant.value,
-                    pdf: this.payload.file, // Include any additional data
+                    pdf: this.payload.file,
                 };
 
                 console.log('🍡[updatedComposantData]:', updatedComposantData);
@@ -849,7 +856,7 @@ export class MagasinDiListComponent {
                     .mutate<any>({
                         mutation:
                             this.ticketSerice.updateComposant(
-                                updatedComposantData
+                                updatedComposantData,
                             ),
                         useMutationLoading: true,
                     })
@@ -859,20 +866,19 @@ export class MagasinDiListComponent {
                                 this.pdfAdded = data.addComposantInfo.pdf;
                                 console.log(
                                     '🍝[ this.pdfAdded]:',
-                                    this.pdfAdded
+                                    this.pdfAdded,
                                 );
                             }
                         },
                         (error) => {
                             console.error('Error updating composant: ', error);
-                            // Add error handling logic here if needed
-                        }
+                        },
                     );
                 this.validerComposantValidtor = false;
             },
         });
 
-        this.getDi(this.first, this.rows);
+        this.loadData();
     }
 
     finishMagasinEstimation() {
@@ -882,7 +888,7 @@ export class MagasinDiListComponent {
             icon: 'pi pi-question-circle',
             accept: () => {
                 this.changeStatusDiToPending2(this.selectedDi_id);
-                this.getDi(this.first, this.rows);
+                this.loadData();
                 this.magasinDiDialog = false;
                 this.formUpdateComposant.reset();
             },
@@ -893,7 +899,6 @@ export class MagasinDiListComponent {
         if (type === 'cPDF') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
 
             this.payload = payload;
@@ -902,19 +907,21 @@ export class MagasinDiListComponent {
         if (type === 'addComposant') {
             const payload = {
                 file: base64,
-                // add other necessary data here
             };
 
             this.payload = payload;
             console.log('🍓[payload]:', this.payload);
         }
     }
+
     onClear() {
         this.isToUpdate = false;
     }
+
     clearDropDown() {
         this.isToUpdate = false;
     }
+
     addComposant() {
         this.confirmationService.confirm({
             message: 'Voulez-vous Ajouter ce composant ?',
@@ -933,7 +940,7 @@ export class MagasinDiListComponent {
                         .mutate<any>({
                             mutation:
                                 this.ticketSerice.addComposantMagasin(
-                                    composantDataTosend
+                                    composantDataTosend,
                                 ),
                         })
                         .subscribe(({ data }) => {
@@ -959,7 +966,7 @@ export class MagasinDiListComponent {
                         prix_achat: this.composantMagasin.value.prix_achat,
                         prix_vente: this.composantMagasin.value.prix_vente,
                         coming_date: new Date(
-                            this.composantMagasin.value.coming_date
+                            this.composantMagasin.value.coming_date,
                         ).toISOString(),
                         link: this.composantMagasin.value.link,
                         quantity_stocked:
@@ -970,20 +977,19 @@ export class MagasinDiListComponent {
 
                     console.log(
                         'formattedComposantInfo update',
-                        formattedComposantInfo
+                        formattedComposantInfo,
                     );
 
                     this.apollo
                         .mutate<any>({
                             mutation: this.ticketSerice.updateComposant(
-                                formattedComposantInfo
+                                formattedComposantInfo,
                             ),
                             useMutationLoading: true,
                         })
                         .subscribe(({ data }) => {
                             if (data) {
                                 this.composantMagasin.reset();
-                                // Handle success
                             }
                         });
                 }

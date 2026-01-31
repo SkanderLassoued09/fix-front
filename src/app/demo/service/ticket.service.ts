@@ -26,7 +26,7 @@ export class TicketService {
         first: number,
         rows: number,
         startDate?: string,
-        endDate?: string
+        endDate?: string,
     ) {
         return gql`
   {
@@ -34,8 +34,8 @@ export class TicketService {
       paginationConfig: { first: ${first}, rows: ${rows} }
       search: { field: "${field}", value: "${value}" }
       filterConfig: { startDate: "${startDate ? startDate : null}", endDate: "${
-            endDate ? endDate : null
-        }" }
+          endDate ? endDate : null
+      }" }
     ) {
      di {
             _id
@@ -147,7 +147,7 @@ export class TicketService {
         field: string,
         value: string,
         first: number,
-        rows: number
+        rows: number,
     ) {
         return gql`
     {
@@ -398,7 +398,7 @@ export class TicketService {
     sendingDiForDiagnostic(
         _idDi: string,
         id_tech_diag: string,
-        location: string
+        location: string,
     ) {
         return gql`
             mutation {
@@ -424,6 +424,46 @@ export class TicketService {
                 affectForRep(_idDi: "${_idDi}", _idTech: "${id_tech_rep}")
             }
         `;
+    }
+
+    searchTechDI(field: string, value: string, first: number, rows: number) {
+        return gql`
+    {
+      searchTechDI(
+        paginationConfig: { first: ${first}, rows: ${rows} }
+        search: { field: "${field}", value: "${value}" }
+      ) {
+        stat {
+          _id
+          _idDi
+          _idnum
+          status
+          diag_time
+          rep_time
+          id_tech_diag
+          id_tech_rep
+          client {
+            _id
+            first_name
+            last_name
+            phone
+          }
+          company {
+            _id
+            name
+            fax
+          }
+          pauseLogs {
+            _id
+            pauseType
+            pauseStart
+            pauseEnd
+          }
+        }
+        totalTechDataCount
+      }
+    }
+  `;
     }
 
     diListTech(first, rows, startDate?: string, endDate?: string) {
@@ -667,7 +707,7 @@ export class TicketService {
         packageComposant: string,
         category_composant_id: string,
         link: string,
-        pdf: string
+        pdf: string,
     ) {
         return gql`
             mutation {
@@ -1439,7 +1479,7 @@ export class TicketService {
         `;
     }
     addLocation(
-        location_name: string
+        location_name: string,
 
         // max_capacity: number,
         // avaible: boolean
@@ -1565,7 +1605,7 @@ export class TicketService {
     confirmComposant(
         _id: string,
         confirmMessage: string,
-        _idNotification?: string
+        _idNotification?: string,
     ) {
         return gql`
             mutation {

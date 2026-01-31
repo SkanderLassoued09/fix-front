@@ -129,6 +129,18 @@
                 </th>
                 <th>Actions</th>
             </tr>
+            <tr>
+                <th *ngFor="let col of columns">
+                    <input
+                        pInputText
+                        type="text"
+                        placeholder="Chercher"
+                        (input)="
+                            onColumnSearch(col.searchKey, $event.target.value)
+                        "
+                    />
+                </th>
+            </tr>
         </ng-template>
         <ng-template pTemplate="body" let-rowData let-columns="columns">
             <tr>
@@ -141,7 +153,7 @@
                                 else otherField
                             "
                         >
-                            {{ rowData[col.field] | date : "dd/MM/yyyy" }}
+                            {{ rowData[col.field] | date: "dd/MM/yyyy" }}
                         </ng-container>
                         <ng-template #otherField>
                             {{ rowData[col.field] }}

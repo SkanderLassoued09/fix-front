@@ -59,13 +59,14 @@ export class ClientListComponent {
     loading: boolean = false;
     region;
     cols = [
-        { field: 'first_name', header: 'Prénom' },
-        { field: 'last_name', header: 'Nom' },
-        { field: 'email', header: 'E-mail' },
-        { field: 'region', header: 'Région' },
-        { field: 'phone', header: 'Téléphone' },
-        { field: 'address', header: 'Adresse' },
+        { field: 'first_name', header: 'Prénom', searchKey: 'first_name' },
+        { field: 'last_name', header: 'Nom', searchKey: 'last_name' },
+        { field: 'email', header: 'E-mail', searchKey: 'email' },
+        { field: 'region', header: 'Région', searchKey: 'region' },
+        { field: 'phone', header: 'Téléphone', searchKey: 'phone' },
+        { field: 'address', header: 'Adresse', searchKey: 'address' },
     ];
+
     first: number = 0;
     rows: number = 10;
     clientModalCondition: boolean = false;
@@ -78,7 +79,7 @@ export class ClientListComponent {
         private apollo: Apollo,
         private clientService: ClientService,
         private messageService: MessageService,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
     ) {
         this.region = REGION;
     }

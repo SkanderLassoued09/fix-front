@@ -11,13 +11,7 @@ import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
-import {
-    debounceTime,
-    distinctUntilChanged,
-    map,
-    Subject,
-    switchMap,
-} from 'rxjs';
+import { debounceTime, Subject } from 'rxjs';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -25,7 +19,10 @@ import {
     styleUrl: './coordinator-di-list.component.scss',
 })
 export class CoordinatorDiListComponent {
-    private columnSearch$ = new Subject<{ field: string; value: string }>();
+    // Search state tracking
+    private currentSearchField: string = '';
+    private currentSearchValue: string = '';
+    private searchSubject$ = new Subject<void>();
 
     visible: boolean = false;
     products!: Product[];
@@ -33,7 +30,7 @@ export class CoordinatorDiListComponent {
     //--
     diag_condition: boolean = true; // enable when status = pending1
     admin_condition: boolean = true; //enable when status = pending2
-    rep_condition: boolean = true; // enable when status = pending3
+    rep_condition: boolean = true; // enable when status = pending3
     rangeDates: Date[] | undefined;
 
     selectedTech: any; // Variable to store the selected tech data
@@ -96,7 +93,7 @@ export class CoordinatorDiListComponent {
                 beginAtZero: boolean;
                 ticks: {
                     color: string;
-                    stepSize: number; // Ensures the interval is 1
+                    stepSize: number;
                     callback: (value: number) => string;
                 };
                 grid: { color: string; drawBorder: boolean };
@@ -131,143 +128,197 @@ export class CoordinatorDiListComponent {
     ignoreCountForBtns: number = 0;
     ticketDetailsInfo: boolean;
     techInfo: any;
+    baseUrl: string; // Add this if you're using it in the template
 
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private messageservice: MessageService,
         private confirmationService: ConfirmationService,
-        private notificationService: NotificationService
-    ) {
-        // this.roles = ROLES;
-    }
+        private notificationService: NotificationService,
+    ) {}
 
     ngOnInit() {
-        this.getDi(this.first, this.rows);
-
+        // Initial load
+        this.loadData();
         this.getAllTech();
         this.getStatusCount();
         this.confirmationBTN = false;
+
+        // Setup search with debounce
+        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
+            this.loadData();
+        });
+
+        // Notification subscription
         this.notificationService.notification$.subscribe((message: any) => {
             console.log('🍻[message]:', message);
-
-            // if (message.array_composants.length > 0) {
-            //     this.openBtnConfirm = true;
-            //     this.componentInfo = message;
-            // }
             if (message) {
                 console.log('🍚[message]:', message);
-                this.getDi(this.first, this.rows);
+                this.loadData();
                 this.getStatusCount();
             }
         });
+    }
 
-        this.columnSearch$
-            .pipe(
-                debounceTime(400),
-                distinctUntilChanged(
-                    (a, b) => a.field === b.field && a.value === b.value
-                ),
-                switchMap(({ field, value }) =>
-                    this.apollo.query<any>({
-                        query: this.ticketSerice.searchCoordinatorDI(
-                            field,
-                            value,
-                            this.first,
-                            this.rows
-                        ),
-                        fetchPolicy: 'no-cache',
-                    })
-                )
-            )
-            .subscribe(({ data }) => {
-                this.diList = data.searchCoordinatorDI.di;
-                this.diListCount = data.searchCoordinatorDI.totalDiCount;
-            });
+    /**
+     * Centralized data loading method
+     * Handles both search and regular data fetching with pagination
+     */
+    loadData() {
+        const hasActiveSearch =
+            this.currentSearchField &&
+            this.currentSearchValue &&
+            this.currentSearchValue.trim().length > 0;
+
+        if (hasActiveSearch) {
+            // Perform search
+            this.apollo
+                .query<any>({
+                    query: this.ticketSerice.searchCoordinatorDI(
+                        this.currentSearchField,
+                        this.currentSearchValue,
+                        this.first,
+                        this.rows,
+                    ),
+                    fetchPolicy: 'no-cache',
+                })
+                .subscribe(({ data }) => {
+                    if (data && data.searchCoordinatorDI) {
+                        this.diList = data.searchCoordinatorDI.di;
+                        this.diListCount =
+                            data.searchCoordinatorDI.totalDiCount;
+                        this.updateCounters();
+                    }
+                });
+        } else {
+            // Regular data fetch
+            this.apollo
+                .watchQuery<any>({
+                    query: this.ticketSerice.getAllDiForCoordinator(
+                        this.first,
+                        this.rows,
+                    ),
+                })
+                .valueChanges.subscribe(({ data, loading, errors }) => {
+                    console.log('🌶[*************data]:', data);
+
+                    if (data && data.get_coordinatorDI) {
+                        this.diList = data.get_coordinatorDI.di;
+                        this.diListCount = data.get_coordinatorDI.totalDiCount;
+                        this.updateCounters();
+                    }
+                });
+        }
     }
-    diagnosticOpen() {}
-    showDialog() {
-        this.visible = true;
+
+    /**
+     * Update counters for mini dashboard
+     */
+    updateCounters() {
+        // Reset counters
+        this.counterInMagasin = 0;
+        this.counterInDiagnostique = 0;
+        this.counterInReperation = 0;
+        this.counterPending = 0;
+        this.counterRetour = 0;
+
+        // Count status occurrences
+        this.diList.forEach((di) => {
+            switch (di.status) {
+                case 'INMAGASIN':
+                case 'MagasinEstimation':
+                    this.counterInMagasin++;
+                    break;
+                case 'DIAGNOSTIC':
+                case 'INDIAGNOSTIC':
+                case 'DIAGNOSTIC_Pause':
+                    this.counterInDiagnostique++;
+                    break;
+                case 'REPARATION':
+                case 'INREPARATION':
+                case 'REPARATION_Pause':
+                    this.counterInReperation++;
+                    break;
+                case 'PENDING1':
+                case 'PENDING2':
+                case 'PENDING3':
+                    this.counterPending++;
+                    break;
+                case 'RETOUR1':
+                case 'RETOUR2':
+                case 'RETOUR3':
+                    this.counterRetour++;
+                    break;
+                default:
+                    break;
+            }
+        });
     }
+
+    /**
+     * Handle column search
+     */
     onColumnSearch(field: string, value: string) {
         console.log('value', value);
         console.log('field', field);
-        const v = value?.trim().toString();
-        const f = field?.trim().toString();
+
+        const v = value?.trim();
+        const f = field?.trim();
+
         if (v && v.length > 0 && f && f.length > 0) {
-            this.columnSearch$.next({ field, value: v });
+            // Set search state
+            this.currentSearchField = f;
+            this.currentSearchValue = v;
+            this.first = 0; // Reset to first page on new search
+
+            // Trigger search
+            this.searchSubject$.next();
+        } else {
+            // Clear search state
+            this.currentSearchField = '';
+            this.currentSearchValue = '';
+
+            // Load regular data
+            this.loadData();
         }
+    }
+
+    /**
+     * Handle page change
+     */
+    onPageChange(event: PageEvent) {
+        this.first = event.first;
+        this.page = event.page;
+        this.rows = event.rows;
+
+        // Load data (will automatically use search if active)
+        this.loadData();
+    }
+
+    diagnosticOpen() {}
+
+    showDialog() {
+        this.visible = true;
     }
 
     infoRetour1OPEN() {
         this.modalRetour1Info = !this.modalRetour1Info;
     }
+
     infoRetour2OPEN() {
         this.modalRetour2Info = !this.modalRetour2Info;
     }
+
     infoRetour3OPEN() {
         this.modalRetour3Info = !this.modalRetour3Info;
     }
 
-    onPageChange(event: PageEvent) {
-        this.first = event.first;
-        this.page = event.page;
-        this.rows = event.rows;
-        this.getDi(this.first, this.rows);
-    }
-    getDi(first, rows) {
-        this.apollo
-            .watchQuery<any>({
-                query: this.ticketSerice.getAllDiForCoordinator(first, rows),
-            })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
-                console.log('🌶[*************data]:', data);
-
-                if (data) {
-                    this.diList = data.get_coordinatorDI.di;
-                    this.diListCount = data.get_coordinatorDI.totalDiCount;
-                    // counter for Mini Dashboard
-                    this.diList.filter((di) => {
-                        switch (di.status) {
-                            case 'INMAGASIN':
-                            case 'MagasinEstimation':
-                                this.counterInMagasin =
-                                    this.counterInMagasin + 1;
-                                break;
-                            case 'DIAGNOSTIC':
-                            case 'INDIAGNOSTIC':
-                            case 'DIAGNOSTIC_Pause':
-                                this.counterInDiagnostique =
-                                    this.counterInDiagnostique + 1;
-                                break;
-                            case 'REPARATION':
-                            case 'INREPARATION':
-                            case 'REPARATION_Pause':
-                                this.counterInReperation =
-                                    this.counterInReperation + 1;
-                                break;
-                            case 'PENDING1':
-                            case 'PENDING2':
-                            case 'PENDING3':
-                                this.counterPending = this.counterPending + 1;
-                                break;
-                            case 'RETOUR1':
-                            case 'RETOUR2':
-                            case 'RETOUR3':
-                                this.counterRetour = this.counterRetour + 1;
-                                break;
-                            default:
-                                break;
-                        }
-                    });
-                }
-            });
-    }
     getStatusCount() {
         const documentStyle = getComputedStyle(document.documentElement);
         const textColor = documentStyle.getPropertyValue('--text-color');
         const textColorSecondary = documentStyle.getPropertyValue(
-            '--text-color-secondary'
+            '--text-color-secondary',
         );
         const surfaceBorder =
             documentStyle.getPropertyValue('--surface-border');
@@ -313,9 +364,9 @@ export class CoordinatorDiListComponent {
                                 beginAtZero: true,
                                 ticks: {
                                     color: textColorSecondary,
-                                    stepSize: 1, // Ensures the interval is 1
+                                    stepSize: 1,
                                     callback: (value: number) =>
-                                        value.toFixed(0), // Show whole numbers only
+                                        value.toFixed(0),
                                 },
                                 grid: {
                                     color: surfaceBorder,
@@ -341,7 +392,7 @@ export class CoordinatorDiListComponent {
         this.apollo
             .watchQuery<any>({
                 query: this.ticketSerice.getReperationCoordinatorCondition(
-                    this.selectedDi
+                    this.selectedDi,
                 ),
             })
             .valueChanges.subscribe(({ data, loading, errors }) => {
@@ -363,6 +414,7 @@ export class CoordinatorDiListComponent {
                 }
             });
     }
+
     load() {
         this.loading = true;
 
@@ -377,7 +429,7 @@ export class CoordinatorDiListComponent {
         this.gotComposantFromMagasinCondition = di.gotComposantFromMagasin;
         if (di.logs && di.logs.length > 0) {
             const highestIgnoreLog = di.logs.reduce((prev, current) =>
-                prev.idIgnore > current.idIgnore ? prev : current
+                prev.idIgnore > current.idIgnore ? prev : current,
             );
             this.magasinsentToCoordinator =
                 highestIgnoreLog.isSentToCoordinator;
@@ -385,7 +437,7 @@ export class CoordinatorDiListComponent {
                 highestIgnoreLog.handleSendingNotificationBetweenCoordinatorAndMagasin;
             console.log(
                 ' this.componentConfirmedFromCoordinator 0',
-                highestIgnoreLog
+                highestIgnoreLog,
             );
         } else {
             this.magasinsentToCoordinator = di.isSentToCoordinator;
@@ -393,7 +445,7 @@ export class CoordinatorDiListComponent {
                 di.handleSendingNotificationBetweenCoordinatorAndMagasin;
             console.log(
                 '🍝 this.componentConfirmedFromCoordinator',
-                this.componentConfirmedFromCoordinator
+                this.componentConfirmedFromCoordinator,
             );
         }
 
@@ -426,7 +478,6 @@ export class CoordinatorDiListComponent {
             : (this.rep_condition = true);
     }
 
-    // this will show only if status allows
     showDialogForPricing() {
         this.pricingDoalog = true;
     }
@@ -469,6 +520,7 @@ export class CoordinatorDiListComponent {
     saveProduct() {
         this.diDialog = false;
     }
+
     hideDialog() {
         this.diDialog = false;
     }
@@ -483,14 +535,12 @@ export class CoordinatorDiListComponent {
     getLogsData(_id: string) {
         return this.apollo
             .query<any>({ query: this.ticketSerice.getLogsPause(_id) })
-            .pipe(map(({ data }) => data?.getStatByIdlogs || []));
+            .toPromise()
+            .then(({ data }) => data?.getStatByIdlogs || []);
     }
 
     openTicketDetails(data: any) {
-        Promise.all([
-            this.getLogsDi(data._id),
-            this.getLogsData(data._id).toPromise(),
-        ])
+        Promise.all([this.getLogsDi(data._id), this.getLogsData(data._id)])
             .then(([logsDi, pauseLogs]) => {
                 this.ticketData = {
                     data: { ...data },
@@ -511,7 +561,7 @@ export class CoordinatorDiListComponent {
                 this.ignoreCountForBtns = data.ignoreCount;
                 console.log(data.ignoreCount, 'ignoreCountignoreCount');
 
-                this.ticketDetailsInfo = true; // Open the dialog
+                this.ticketDetailsInfo = true;
                 this.techInfo = { ...pauseLogs };
                 console.log('data inside sknder =>', this.ticketData.data);
                 console.log(data, 'all the data needed here');
@@ -529,21 +579,6 @@ export class CoordinatorDiListComponent {
             })
             .subscribe(({ data, loading }) => {});
     }
-    //!HERE
-
-    // createLogDi(selectedDi) {
-    //     console.log('create logs fired');
-    //     this.apollo
-    //         .mutate<any>({
-    //             mutation: this.ticketSerice.createLogDi(selectedDi),
-    //             useMutationLoading: true,
-    //         })
-    //         .subscribe(({ data }) => {
-    //             if (data) {
-    //                 console.log('🥜[data]:', data);
-    //             }
-    //         });
-    // }
 
     sendDiToDiag(selectedDi, dataId, selectedDiLocation) {
         this.apollo
@@ -551,7 +586,7 @@ export class CoordinatorDiListComponent {
                 mutation: this.ticketSerice.sendingDiForDiagnostic(
                     selectedDi,
                     dataId,
-                    selectedDiLocation
+                    selectedDiLocation,
                 ),
                 useMutationLoading: true,
             })
@@ -561,12 +596,12 @@ export class CoordinatorDiListComponent {
                         .mutate<TechStartDiagnosticMutationResponse>({
                             mutation:
                                 this.ticketSerice.changeStatusDiToDiagnostique(
-                                    this.selectedDi
+                                    this.selectedDi,
                                 ),
                             useMutationLoading: true,
                         })
                         .subscribe(({ data, loading }) => {
-                            this.getDi(this.first, this.rows);
+                            this.loadData();
                             console.log('🥪 emit');
                         });
                     this.diDialog = false;
@@ -581,6 +616,7 @@ export class CoordinatorDiListComponent {
                 }
             });
     }
+
     selectedTechDiag(data) {
         console.log('slected tech for diagnostic');
         this.confirmationService.confirm({
@@ -591,7 +627,7 @@ export class CoordinatorDiListComponent {
                 this.sendDiToDiag(
                     this.selectedDi,
                     data.value._id,
-                    this.selectedDiLocation
+                    this.selectedDiLocation,
                 );
             },
         });
@@ -608,14 +644,14 @@ export class CoordinatorDiListComponent {
                     .mutate<ConfigRepAffectationMutationResponse>({
                         mutation: this.ticketSerice.configRepAffectation(
                             this.selectedDi,
-                            data.value._id
+                            data.value._id,
                         ),
                         useMutationLoading: true,
                     })
                     .subscribe(({ data, loading, errors }) => {
                         if (data) {
                             this.changeStatusRepaire(this.selectedDi);
-                            this.getDi(this.first, this.rows);
+                            this.loadData();
                             this.diDialog = false;
                         }
                     });
@@ -632,12 +668,12 @@ export class CoordinatorDiListComponent {
                 this.apollo
                     .mutate<any>({
                         mutation: this.ticketSerice.changeStatusPricing(
-                            this.di._id
+                            this.di._id,
                         ),
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            this.getDi(this.first, this.rows);
+                            this.loadData();
                             this.diDialog = false;
                         }
                     });
@@ -655,7 +691,7 @@ export class CoordinatorDiListComponent {
                     .mutate<any>({
                         mutation:
                             this.ticketSerice.componentConfirmedFromCoordinator(
-                                this.di._id
+                                this.di._id,
                             ),
                     })
                     .subscribe(({ data }) => {
@@ -663,7 +699,7 @@ export class CoordinatorDiListComponent {
                             console.log('🌯[data]:', data);
                             this.componentConfirmedFromCoordinator =
                                 data.componentConfirmedFromCoordinator.handleSendingNotificationBetweenCoordinatorAndMagasin;
-                            this.getDi(this.first, this.rows);
+                            this.loadData();
                             this.diDialog = false;
                             this.reperationCondition = true;
                         }
@@ -678,7 +714,7 @@ export class CoordinatorDiListComponent {
             .mutate<any>({
                 mutation: this.ticketSerice.confirmComposant(
                     this.selectedDi,
-                    'CONFIRM'
+                    'CONFIRM',
                 ),
             })
             .subscribe(({ data }) => {
