@@ -26,6 +26,28 @@ export class ClientService {
     `;
     }
 
+    searchClient(field: string, value: string, first: number, rows: number) {
+        return gql`
+    {
+      searchClient(
+        paginationConfig: { first: ${first}, rows: ${rows} }
+        search: { field: "${field}", value: "${value}" }
+      ) {
+        clientRecords {
+          _id
+          first_name
+          last_name
+          region
+          address
+          email
+          phone
+        }
+        totalClientRecord
+      }
+    }
+  `;
+    }
+
     getAllClient(rows, first) {
         return gql`
             {

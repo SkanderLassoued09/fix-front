@@ -35,6 +35,47 @@ export class CompanyService {
         `;
     }
 
+    searchCompany(field: string, value: string, first: number, rows: number) {
+        return gql`
+    {
+      searchCompany(
+        paginationConfig: { first: ${first}, rows: ${rows} }
+        search: { field: "${field}", value: "${value}" }
+      ) {
+        companyRecords {
+          _id
+          name
+          region
+          address
+          email
+          activitePrincipale
+          activiteSecondaire
+          raisonSociale
+          Exoneration
+          fax
+          webSiteLink
+          serviceAchat {
+            name
+            email
+            phone
+          }
+          serviceFinancier {
+            name
+            email
+            phone
+          }
+          serviceTechnique {
+            name
+            email
+            phone
+          }
+        }
+        totalCompanyRecord
+      }
+    }
+  `;
+    }
+
     getAllCompany(first, row) {
         return gql`
             {
