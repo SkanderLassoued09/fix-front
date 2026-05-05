@@ -42,6 +42,8 @@ import { PdfViewerModule } from 'ng2-pdf-viewer';
 import { ChartModule } from 'primeng/chart';
 import { PaginatorModule } from 'primeng/paginator';
 import { ComposantManagementComponent } from '../composant-management/composant-management.component';
+import { BlockUIModule } from 'primeng/blockui';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @NgModule({
     declarations: [
@@ -86,12 +88,14 @@ import { ComposantManagementComponent } from '../composant-management/composant-
         SliderModule,
         CardModule,
         OrderListModule,
+        BlockUIModule,
         InplaceModule,
         CalendarModule,
         ImageModule,
         ChartModule,
         PaginatorModule,
         ToggleButtonModule,
+        ProgressSpinnerModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

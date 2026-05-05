@@ -1,873 +1,790 @@
-:host ::ng-deep .row-in-retour1 {
-    background-color: #ffc1c1 !important;
-}
-:host ::ng-deep .row-in-retour2 {
-    background-color: #ff7f7f !important;
-}
-:host ::ng-deep .row-in-retour3 {
-    background-color: #ff0000 !important;
+// ═══════════════════════════════════════════════════════
+//  SAV — COORDINATOR PAGE  ·  coordinator.component.scss
+//  Same light ERP design as di-list / tech-list
+// ═══════════════════════════════════════════════════════
+
+// ── TOKENS ────────────────────────────────────────────
+$bg-page: #f1f5f9;
+$bg-card: #ffffff;
+$bg-surface: #f8fafc;
+$bg-row-hover: #f1f5f9;
+$bg-input: #ffffff;
+$border: #e2e8f0;
+$text-primary: #1e293b;
+$text-secondary: #64748b;
+$text-muted: #94a3b8;
+$accent-blue: #2563eb;
+$white: #ffffff;
+$green: #16a34a;
+$red: #dc2626;
+
+// ── PAGE SHELL ────────────────────────────────────────
+.sav-page {
+    background: $bg-page;
+    min-height: 100vh;
+    padding: 1.5rem 1.75rem;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: $text-primary;
 }
 
-.supheader {
-    margin-top: 1rem;
-}
-
-.container {
+// ── PAGE HEADER ───────────────────────────────────────
+.sav-page-header {
     display: flex;
-    justify-content: center;
     align-items: center;
-    text-align: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap; /* Allows wrapping to keep the layout responsive */
-}
-
-.box-container {
-    margin: 0 2rem 3rem; /* Adds space between the boxes and a 3rem space below */
-    width: 200px;
-    color: blue;
-    border-radius: 8px;
-    text-align: center;
-}
-
-:host ::ng-deep .row-in-retour1 {
-    background-color: #ffc1c1 !important;
-}
-:host ::ng-deep .row-in-retour2 {
-    background-color: #ff7f7f !important;
-}
-:host ::ng-deep .row-in-retour3 {
-    background-color: #ff0000 !important;
-}
-:host ::ng-deep .facture-checked {
-    background-color: #a3e6a3 !important;
-}
-:host ::ng-deep .facture-checked-logs {
-    background-color: #2bf5c6 !important;
-}
-.element-container,
-.element-container-BTN,
-.location-form,
-.form-group,
-.modal-footer {
+    justify-content: space-between;
     margin-bottom: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
 }
-.card-Header-btns {
+
+.sav-page-title {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+
+    h2 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin: 0;
+        color: $text-primary;
+        letter-spacing: -0.01em;
+    }
+
+    .pi {
+        color: $accent-blue;
+        font-size: 1.1rem;
+    }
 }
-.form-control {
-    color: var(--text-color);
-    background-color: var(--surface-overlay);
-    padding: 0.5rem;
-    border: 1px solid var(--surface-border);
-    border-radius: 0.5rem;
-    appearance: none;
+
+// ── TABLE WRAPPER ─────────────────────────────────────
+.sav-table-wrapper {
+    background: $bg-card;
+    border-radius: 10px;
+    border: 1px solid $border;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+// ── TABLE HEAD ────────────────────────────────────────
+::ng-deep .sav-main-table {
+    .p-datatable-thead > tr.sav-thead-row > th.sav-th {
+        background: $bg-surface !important;
+        color: $text-secondary !important;
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        padding: 0.6rem 0.75rem !important;
+        border-bottom: 1px solid $border !important;
+        border-right: none !important;
+        white-space: nowrap;
+    }
+
+    .p-datatable-thead > tr.sav-filter-row > th.sav-th-filter {
+        background: $bg-card !important;
+        padding: 0.35rem 0.5rem !important;
+        border-bottom: 1px solid $border !important;
+    }
+}
+
+.sav-filter-input {
+    width: 100%;
+    background: $bg-input !important;
+    border: 1px solid $border !important;
+    border-radius: 4px !important;
+    color: $text-primary !important;
+    font-size: 0.75rem !important;
+    padding: 0.3rem 0.55rem !important;
     outline: none;
-    width: 100%;
-    transition: border-color 0.2s;
-}
+    transition: border-color 0.15s;
 
-.form-control:focus {
-    border-color: var(--primary);
-}
-
-.emplacement-css {
-    margin: 2px 0;
-}
-
-.modal-footer {
-    justify-content: space-between;
-    flex-direction: row;
-    gap: 1rem;
-}
-
-.file-upload-container {
-    display: flex;
-    justify-content: space-around;
-}
-
-.footerlocation,
-.footer-pricing,
-.confirmation-container {
-    display: flex;
-    justify-content: space-between;
-}
-
-.Slider-buttons,
-.Header-btns,
-.button-container,
-.pending1-Btn {
-    display: flex;
-    justify-content: center;
-    margin-top: 1rem;
-}
-
-@media (max-width: 768px) {
-    .element-container,
-    .location-form,
-    .modal-footer {
-        flex-direction: column;
-        align-items: stretch;
+    &:focus {
+        border-color: $accent-blue !important;
+    }
+    &::placeholder {
+        color: $text-muted !important;
+        font-size: 0.73rem;
     }
 }
-.update-modal-style {
-    border-color: #28a745;
-}
 
-.update-form-control {
-    margin-bottom: 15px;
-    border-radius: 5px;
-    border: 1px solid #ced4da;
-}
+// ── TABLE BODY ────────────────────────────────────────
+::ng-deep .sav-main-table .p-datatable-tbody > tr.sav-row {
+    background: $bg-card !important;
+    border-left: 3px solid transparent;
+    transition: background 0.12s;
 
-.update-modal-footer {
-    display: flex;
-    justify-content: space-between;
-}
-
-.required {
-    color: red;
-    margin-left: 5px;
-}
-.dialog-content {
-    padding: 1rem;
-}
-
-.dialog-title {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    text-align: center;
-}
-
-.file-upload-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.file-upload-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.upload-image {
-    width: 100px; /* Adjust size as needed */
-    height: 100px;
-    object-fit: contain;
-}
-
-.button-container {
-    display: flex;
-    justify-content: center;
-}
-
-.save-button {
-    background-color: #28a745;
-    color: white;
-}
-
-@media screen and (max-width: 768px) {
-    p-dialog {
-        width: 80vw !important;
+    & > td.sav-td {
+        position: relative;
+        background: transparent !important;
+        color: $text-primary !important;
+        font-size: 0.82rem !important;
+        padding: 0.55rem 0.75rem !important;
+        border-bottom: 1px solid $border !important;
+        border-right: none !important;
+        vertical-align: middle;
     }
 
-    .file-upload-row {
-        flex-direction: column;
+    &:hover > td.sav-td {
+        background: $bg-row-hover !important;
+    }
+
+    &.row-retour1 > td.sav-td:first-child::before,
+    &.row-retour2 > td.sav-td:first-child::before,
+    &.row-retour3 > td.sav-td:first-child::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 5px;
+        border-radius: 0 3px 3px 0;
+    }
+
+    &.row-retour1 {
+        border-left-color: #ca8a04 !important;
+
+        > td.sav-td:first-child::before {
+            background: #ca8a04;
+        }
+    }
+    &.row-retour2 {
+        border-left-color: #ea580c !important;
+
+        > td.sav-td:first-child::before {
+            background: #ea580c;
+        }
+    }
+    &.row-retour3 {
+        border-left-color: #dc2626 !important;
+
+        > td.sav-td:first-child::before {
+            background: #dc2626;
+        }
     }
 }
-.form-group1 {
-    margin: 1rem 0;
-    padding: 1rem;
-    border: 1px solid #000000;
-    border-radius: 4px;
-    background-color: #e6e6e6;
-}
 
-.form-item {
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-    display: flex;
-    gap: 0.5rem;
-}
-.button-container-BC {
-    display: flex;
-    gap: 10px;
-}
-.file-upload-section {
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centers content horizontally */
-    justify-content: center; /* Centers content vertically */
-    gap: 15px; /* Adds space between the file upload and buttons */
-    height: 100%; /* Ensure the section takes full height if required */
-}
-.grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    padding: 16px;
-}
-
-.col {
-    flex: 1;
-    min-width: 200px;
-}
-
-.flex {
-    display: flex;
-}
-
-.align-items-center {
+// ── STATUS PILLS ──────────────────────────────────────
+::ng-deep .p-tag.status-pill {
+    display: inline-flex;
     align-items: center;
-}
-
-.flex-row {
-    flex-direction: row;
-}
-
-.gap-2 {
-    gap: 8px;
-}
-
-.radio-group {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.radio-label {
-    font-size: 14px;
-    color: #333;
-}
-
-.ml-2 {
-    margin-left: 8px;
-}
-
-.dropdown-label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #444;
-}
-
-.dropdown {
-    width: 100%;
-    max-width: 300px;
-    font-size: 14px;
-}
-.button-row {
-    display: flex;
-    justify-content: space-around; /* Distributes space evenly around the buttons */
-    align-items: center; /* Aligns buttons vertically */
-    padding: 10px; /* Optional: Add padding around the row */
-}
-
-.button-container-BC {
-    display: flex;
-    align-items: center; /* Aligns button content vertically */
-}
-.dialog-body {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    padding: 1.5rem;
-}
-
-.price-details {
-    text-align: center;
-    font-size: 1rem;
-}
-
-.price-details h5 {
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
     font-weight: 500;
-    color: #757575;
+    line-height: 1;
+    border: none !important;
+
+    &::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
 }
 
-.price-details h4 {
-    font-weight: 700;
-    color: #212121;
+::ng-deep .status-DIAGNOSTIC {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+    &::before {
+        background: #3b82f6;
+    }
+}
+::ng-deep .status-INDIAGNOSTIC,
+::ng-deep .status-IN_DIAGNOSTIC {
+    background: #ede9fe !important;
+    color: #5b21b6 !important;
+    &::before {
+        background: #7c3aed;
+    }
+}
+::ng-deep .status-DIAGNOSTIC_Pause,
+::ng-deep .status-DIAGNOSTIC_PAUSE {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    &::before {
+        background: #f59e0b;
+    }
+}
+::ng-deep .status-NEGOTIATION1,
+::ng-deep .status-NEGOTIATION2 {
+    background: #ffedd5 !important;
+    color: #9a3412 !important;
+    &::before {
+        background: #ea580c;
+    }
+}
+::ng-deep .status-PENDING1,
+::ng-deep .status-PENDING2,
+::ng-deep .status-PENDING3 {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    &::before {
+        background: #94a3b8;
+    }
+}
+::ng-deep .status-REPARATION {
+    background: #dcfce7 !important;
+    color: #14532d !important;
+    &::before {
+        background: #16a34a;
+    }
+}
+::ng-deep .status-INREPARATION,
+::ng-deep .status-IN_REPARATION {
+    background: #bbf7d0 !important;
+    color: #14532d !important;
+    &::before {
+        background: #22c55e;
+    }
+}
+::ng-deep .status-REPARATION_Pause {
+    background: #fef9c3 !important;
+    color: #713f12 !important;
+    &::before {
+        background: #ca8a04;
+    }
+}
+::ng-deep .status-FINISHED {
+    background: #dcfce7 !important;
+    color: #14532d !important;
+    &::before {
+        background: #22c55e;
+    }
+}
+::ng-deep .status-PRICING {
+    background: #fef9c3 !important;
+    color: #713f12 !important;
+    &::before {
+        background: #ca8a04;
+    }
+}
+::ng-deep .status-RETOUR1,
+::ng-deep .status-RETOUR2,
+::ng-deep .status-RETOUR3 {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    &::before {
+        background: #dc2626;
+    }
+}
+::ng-deep .status-CREATED {
+    background: #eff6ff !important;
+    color: #1e40af !important;
+    &::before {
+        background: #2563eb;
+    }
+}
+::ng-deep .status-ANNULER {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    &::before {
+        background: #dc2626;
+    }
 }
 
-.discount-slider {
-    padding: 0 1rem;
-}
-
-.slider-full-width {
-    width: 100%;
-}
-
-.action-buttons {
+// ── ACTION BUTTONS ────────────────────────────────────
+.sav-actions-cell {
     display: flex;
-    justify-content: space-around;
-    margin-top: 1rem;
-}
-
-.confirmation-section {
-    margin-top: 1.5rem;
-    text-align: center;
-}
-
-.confirmation-section h6 {
-    margin-bottom: 1rem;
-    color: #424242;
-}
-
-.button-success {
-    border-radius: 5px;
-    font-size: 0.9rem;
-}
-
-/* Dialog Styles */
-p-dialog {
-    font-family: Arial, sans-serif;
-}
-
-/* Form Section */
-.form-group-categorieDI {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-}
-
-.form-group-categorieDI label {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.form-control-categorieDI {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-
-.button-container-categorieDI {
-    display: flex;
-    justify-content: flex-end;
-}
-
-/* Table Styles */
-.table-categorieDI {
-    margin-top: 1.5rem;
-}
-
-.table-header-categorieDI {
-    background-color: #f4f4f4;
-    font-weight: 600;
-    text-align: left;
-    padding: 0.75rem;
-}
-
-.table-row-categorieDI {
-    border-bottom: 1px solid #ddd;
-}
-
-.table-cell-categorieDI {
-    padding: 0.75rem;
-}
-
-.table-actions-categorieDI {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
     align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
 }
 
-/* Button Styles */
-.delete-btn-categorieDI {
-    border-radius: 50%;
-}
-/* Dialog Styles */
-p-dialog {
-    font-family: Arial, sans-serif;
-}
-
-/* Form Section */
-.location-form-Emplacement {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-}
-
-.form-group-Emplacement {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.form-group-Emplacement label {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.form-control-Emplacement {
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
-}
-
-/* Modal Footer */
-.modal-footer-Emplacement {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.add-button-Emplacement {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-}
-
-/* Table Styles */
-.table-Emplacement {
-    margin-top: 1.5rem;
-}
-
-.table-header-Emplacement {
-    background-color: #f4f4f4;
-    font-weight: 600;
-    text-align: left;
-    padding: 0.75rem;
-}
-
-.table-row-Emplacement {
-    border-bottom: 1px solid #ddd;
-}
-
-.table-cell-Emplacement {
-    padding: 0.75rem;
-}
-
-.table-actions-Emplacement {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    align-items: center;
-}
-
-/* Delete Button */
-.delete-button-Emplacement {
-    border-radius: 50%;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////
-/// /* Dialog Styles */
-.dialog-header-pricing {
-    font-family: "Arial", sans-serif;
-    background-color: #fff;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-}
-
-/* Form Section */
-.form-pricing {
-    display: flex;
-    flex-direction: column;
-    gap: 1.2rem;
-    padding: 1rem;
-}
-
-/* Modal Content */
-.modal-content-pricing {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.current-tarif-text-pricing {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #4a4a4a;
-    margin-bottom: 1.2rem;
-}
-
-.new-tarif-container-pricing {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.label-pricing {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-}
-
-.input-tarif-pricing {
-    font-size: 1rem;
-    padding: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    width: 100%;
-    outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    background-color: #f9f9f9;
-}
-
-.input-tarif-pricing:focus {
-    border-color: #3f4449;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-}
-
-.input-tarif-pricing::placeholder {
-    color: #bbb;
-    font-style: italic;
-}
-
-/* Confirm Button */
-.confirm-button-pricing {
-    margin-top: 1rem;
-    font-size: 1rem;
-    padding: 0.8rem 1.5rem;
-
-    color: white;
-    border-radius: 4px;
-    border: none;
+.sav-icon-btn {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+    background: $bg-surface !important;
+    border: 1px solid $border !important;
+    color: $text-secondary !important;
+    font-size: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition:
+        background 0.12s,
+        color 0.12s,
+        border-color 0.12s,
+        box-shadow 0.12s;
+
+    &:hover {
+        background: $white !important;
+        color: $text-primary !important;
+        border-color: #cbd5e1 !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    &:disabled {
+        opacity: 0.35 !important;
+        cursor: not-allowed !important;
+    }
+
+    &--info:hover {
+        border-color: #93c5fd !important;
+        color: $accent-blue !important;
+        background: #eff6ff !important;
+    }
 }
 
-.confirm-button-pricing:hover {
-    transform: scale(1.05);
-}
-
-.confirm-button-pricing:focus {
-    outline: none;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
-}
-/* General Dialog Styles */
-.pricing-ad-dialog {
-    font-family: Arial, sans-serif;
-    color: #333;
-}
-
-/* Container Styling */
-.pricing-ad-container {
-    margin: 1rem 0;
-}
-
-/* Content Section Styling */
-.pricing-ad-content {
-    padding: 1rem;
-    background-color: #f9f9f9;
-    border-radius: 5px;
-}
-
-/* Card Styling */
-.pricing-ad-card {
-    margin: 0.5rem 0;
-    padding: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 5px;
-    background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.pricing-ad-detail {
-    margin: 0.5rem 0;
-    font-size: 1rem;
-}
-
-/* Headings Styling */
-.pricing-ad-heading {
-    font-size: 1.2rem;
-    margin: 1rem 0;
-    color: #33373a;
-    font-weight: bold;
-}
-
-.pricing-ad-total {
-    font-size: 1.5rem;
-    margin: 1.5rem 0;
+// ── EMPTY STATE ───────────────────────────────────────
+.sav-empty {
     text-align: center;
-    color: #d9534f;
-    font-weight: bold;
-    border: 2px solid #d9534f;
-    background-color: #ffe8e6;
-    padding: 1rem;
-    border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(217, 83, 79, 0.2);
+    padding: 3rem 1rem !important;
+    color: $text-muted !important;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    .pi {
+        font-size: 2rem;
+        color: $text-muted;
+    }
 }
 
-.pricing-ad-total .highlight-text {
-    color: #c9302c;
-    font-weight: bold;
+// ── PAGINATOR ─────────────────────────────────────────
+.sav-paginator-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid $border;
+    background: $bg-surface;
+}
+
+.sav-count {
+    font-size: 0.75rem;
+    color: $text-secondary;
+}
+
+::ng-deep .sav-paginator {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+
+    .p-paginator-element {
+        background: $white !important;
+        border: 1px solid $border !important;
+        color: $text-secondary !important;
+        border-radius: 4px !important;
+        min-width: 28px !important;
+        height: 28px !important;
+        font-size: 0.78rem !important;
+        margin: 0 2px !important;
+
+        &:hover {
+            background: $bg-surface !important;
+            color: $text-primary !important;
+        }
+        &.p-highlight {
+            background: $accent-blue !important;
+            border-color: $accent-blue !important;
+            color: $white !important;
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  DIALOG / MODAL STYLES
+// ═══════════════════════════════════════════════════════
+
+::ng-deep .sav-dialog {
+    .p-dialog {
+        background: $bg-card !important;
+        border: 1px solid $border !important;
+        border-radius: 10px !important;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .p-dialog-header {
+        background: $bg-surface !important;
+        border-bottom: 1px solid $border !important;
+        padding: 0.85rem 1.25rem !important;
+        border-radius: 10px 10px 0 0 !important;
+
+        .p-dialog-title {
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            color: $text-primary !important;
+        }
+
+        .p-dialog-header-icon {
+            color: $text-secondary !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 5px !important;
+            &:hover {
+                background: $border !important;
+                color: $text-primary !important;
+            }
+        }
+    }
+
+    .p-dialog-content {
+        background: $bg-card !important;
+        padding: 1.25rem !important;
+        color: $text-primary !important;
+    }
+}
+
+// ── FORM ELEMENTS ─────────────────────────────────────
+.sav-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.sav-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.sav-label {
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: $text-secondary;
     text-transform: uppercase;
+    letter-spacing: 0.04em;
 }
 
-/* Return Section Styling */
-.pricing-ad-return {
-    margin: 1rem 0;
-}
-
-.pricing-ad-old-data {
-    padding: 1rem;
-    background-color: #eaf4fe;
-    border-radius: 5px;
-}
-
-.pricing-ad-new-data {
-    padding: 1rem;
-    margin-top: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-}
-
-/* Spinner Styling */
-.pricing-ad-spinner {
-    font-size: 2rem;
-    color: #007bff;
-}
-
-/* Footer Section Styling */
-.pricing-ad-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-}
-
-.pricing-ad-input {
-    width: 50%;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-}
-
-.pricing-ad-button {
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.pricing-ad-button:hover {
-    background-color: #218838;
-}
-/* Footer Section Styling */
-.pricing-ad-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 1.5rem;
-}
-
-.pricing-ad-footer-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.sav-textarea {
+    background: $bg-input !important;
+    border: 1px solid $border !important;
+    border-radius: 6px !important;
+    color: $text-primary !important;
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.75rem !important;
     width: 100%;
+    resize: vertical;
+    outline: none;
+    font-family: inherit;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+
+    &:focus {
+        border-color: $accent-blue !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    }
+    &::placeholder {
+        color: $text-muted !important;
+    }
+    &--readonly {
+        background: $bg-surface !important;
+        opacity: 0.8;
+        cursor: default;
+    }
 }
 
-.pricing-ad-input {
-    width: 70%; /* Adjust width for better spacing */
-    padding: 0.8rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    font-size: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+::ng-deep .sav-dropdown {
+    &.p-dropdown {
+        background: $bg-input !important;
+        border: 1px solid $border !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+
+        .p-dropdown-label {
+            color: $text-primary !important;
+            font-size: 0.85rem !important;
+            padding: 0.5rem 0.75rem !important;
+        }
+        .p-dropdown-trigger {
+            color: $text-secondary !important;
+        }
+        &:hover {
+            border-color: #cbd5e1 !important;
+        }
+        &.p-focus {
+            border-color: $accent-blue !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+        }
+    }
 }
 
-.pricing-ad-button {
-    margin-left: 1rem;
-    padding: 0.8rem 1.5rem;
-    background-color: #28a745;
-    color: #fff;
-    border: none;
-    font-size: 1rem;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+::ng-deep .p-dropdown-panel {
+    background: $white !important;
+    border: 1px solid $border !important;
+    border-radius: 6px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+
+    .p-dropdown-item {
+        color: $text-primary !important;
+        font-size: 0.85rem !important;
+        padding: 0.45rem 0.75rem !important;
+        &:hover {
+            background: $bg-surface !important;
+        }
+        &.p-highlight {
+            background: #eff6ff !important;
+            color: $accent-blue !important;
+        }
+    }
 }
 
-.pricing-ad-button:hover {
-    background-color: #218838;
-    transform: scale(1.05);
-}
-
-.pricing-ad-button:active {
-    transform: scale(0.98);
-}
-
-/* Input Number Placeholder Styling */
-.p-inputnumber input::placeholder {
-    color: #6c757d;
-    font-size: 1rem;
-}
-.error-status {
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    color: #333;
-    margin: 10px 0;
-}
-
-.error-status .status-yes {
-    color: #d9534f; /* Red for "OUI" */
-    font-weight: bold;
-}
-
-.error-status .status-no {
-    color: #5cb85c; /* Green for "NON" */
-    font-weight: bold;
-}
-
-.repPDR {
+.sav-fieldset {
+    border: 1px solid $border;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
     display: flex;
-    justify-content: space-around; /* Distributes space evenly between items */
-    align-items: center; /* Aligns items vertically in the center */
+    flex-direction: column;
+    gap: 0.7rem;
+    background: $bg-surface;
+
+    legend {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 0 0.4rem;
+    }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
+// ── MODAL TABLE ───────────────────────────────────────
+::ng-deep .sav-modal-table {
+    &.p-datatable .p-datatable-thead > tr > th {
+        background: $bg-surface !important;
+        color: $text-secondary !important;
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.5rem 0.7rem !important;
+        border-bottom: 1px solid $border !important;
+    }
 
-.dialog-body {
-    padding: 1.5rem;
+    &.p-datatable .p-datatable-tbody > tr > td {
+        background: $bg-card !important;
+        color: $text-primary !important;
+        font-size: 0.82rem !important;
+        padding: 0.5rem 0.7rem !important;
+        border-bottom: 1px solid $border !important;
+    }
+
+    &.p-datatable .p-datatable-tbody > tr:hover > td {
+        background: $bg-row-hover !important;
+    }
 }
 
-.file-upload-section {
-    flex: 1 1 45%;
-}
-
-.button-container-BC {
-    margin-top: 0.5rem;
+// ── TICKET DETAILS ────────────────────────────────────
+.sav-ticket-body {
     display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.sav-ticket-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0;
+}
+
+.sav-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
 }
 
-.price-details {
-    margin: 1.5rem 0;
-    text-align: center;
-}
-
-.discount-slider .slider-full-width {
-    width: 100%;
-}
-
-.action-buttons {
-    margin-top: 1.5rem;
+.sav-info-item {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    background: $bg-surface;
+    border-radius: 5px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid $border;
+
+    .pi {
+        color: $accent-blue;
+        font-size: 0.8rem;
+        flex-shrink: 0;
+    }
+    span {
+        color: $text-secondary;
+        flex: 1;
+        font-size: 0.72rem;
+    }
+    strong {
+        color: $text-primary;
+        font-size: 0.82rem;
+    }
 }
 
-/* Dialog title */
-.dialog-title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 1rem;
+.sav-price-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    background: $bg-surface;
+    border-radius: 6px;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid $border;
 }
 
-/* Button row */
-.button-row {
+.sav-price-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 80px;
+
+    span {
+        font-size: 0.68rem;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+    strong {
+        font-size: 1rem;
+        font-weight: 600;
+        color: $text-primary;
+    }
+
+    &.highlight strong {
+        color: $green;
+    }
+}
+
+.sav-tech-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sav-tech-item {
+    flex: 1;
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: $bg-surface;
+    border-radius: 5px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid $border;
+    font-size: 0.82rem;
+
+    .pi {
+        color: $accent-blue;
+        font-size: 0.8rem;
+    }
+    span {
+        color: $text-secondary;
+        font-size: 0.72rem;
+    }
+    strong {
+        color: $text-primary;
+    }
+}
+
+.sav-retour-btns {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0.4rem 0;
+}
+
+.sav-retour-info {
+    background: $bg-surface;
+    border: 1px solid $border;
+    border-radius: 6px;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.sav-retour-info-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $text-secondary;
+    margin: 0;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid $border;
+}
+
+.sav-retour-remarques {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.sav-retour-rq-text {
+    font-size: 0.83rem;
+    color: $text-primary;
+    background: $bg-surface;
+    border: 1px solid $border;
+    border-radius: 5px;
+    padding: 0.45rem 0.65rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.sav-files-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 1rem; /* Spacing between buttons */
-    margin-bottom: 2rem; /* Spacing below the button row */
+    gap: 0.4rem;
 }
 
-/* Button container */
-.button-container {
-    flex: 1 1 auto; /* Allow buttons to grow and shrink */
-}
-
-/* Log item */
-.log-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem; /* Spacing between links */
-    margin-bottom: 1rem; /* Spacing between log items */
-}
-
-/* File link */
-.file-link {
-    font-size: 0.875rem;
-    color: #007bff; /* Blue color for links */
-    text-decoration: none; /* Remove underline */
-    transition: color 0.3s ease; /* Smooth color transition */
-}
-
-.file-link:hover {
-    color: #0056b3; /* Darker blue on hover */
-    text-decoration: underline; /* Add underline on hover */
-}
-.price-container {
-    display: flex; /* Use Flexbox to align items horizontally */
-
-    justify-content: space-around;
-}
-.center-content-files{
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.sav-file-link {
+    display: inline-flex;
     align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    padding: 4px 10px;
+    border-radius: 5px;
+    background: $bg-surface;
+    border: 1px solid $border;
+    color: $accent-blue;
+    text-decoration: none;
+    transition:
+        background 0.12s,
+        border-color 0.12s;
 
+    &:hover {
+        background: #eff6ff;
+        border-color: #93c5fd;
+    }
+    .pi {
+        font-size: 0.8rem;
+    }
 }
-.pdr-Rep {
+
+.sav-thumb {
     display: flex;
-    justify-content: space-around;
-    padding-bottom: 1rem;
-  }
-  
- 
-.comments-retour{
-    padding-top:2rem;
-    
-}
-.btnretourInfo{
-    display: flex; 
-    justify-content: space-between;
-    padding-bottom: 2rem;
+    justify-content: center;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid $border;
 }
 
-
-
-.pdr-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  padding: 1rem;
-  font-family: Arial, sans-serif;
+// ── HELPERS ───────────────────────────────────────────
+.text-green {
+    color: $green !important;
+}
+.text-red {
+    color: $red !important;
+}
+.mt-2 {
+    margin-top: 0.5rem;
 }
 
-.pdr-card {
-  background: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+// ── GLOBAL PRIMENG OVERRIDES ──────────────────────────
+::ng-deep .p-inputtext:focus {
+    border-color: $accent-blue !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
 }
 
-.pdr-card h6 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-  display: flex;
-  justify-content: space-between;
+::ng-deep .p-toast .p-toast-message {
+    border-radius: 8px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
 }
 
-.pdr-card h6 span {
-  font-weight: 500;
-  color: #555;
+::ng-deep .p-confirm-dialog {
+    border-radius: 10px !important;
 }

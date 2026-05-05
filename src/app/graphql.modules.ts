@@ -11,13 +11,13 @@ import { environment } from 'src/environments/environment';
 const uri = `${environment.apiUrl}graphql`; //changed apiUrl
 
 export function createApollo(httpLink: HttpLink) {
-    const basic = setContext((operation, context) => ({
+    const basic = setContext(() => ({
         headers: {
             Accept: ['charset=utf-8', 'application/json'],
         },
     }));
 
-    const auth = setContext((operation, context) => {
+    const auth = setContext(() => {
         const token = localStorage.getItem('token');
 
         if (token === null) {
@@ -37,7 +37,7 @@ export function createApollo(httpLink: HttpLink) {
         httpLink.create({ uri }),
     ]);
 
-    const customWsLink = new ApolloLink((operation, forward) => {
+    const customWsLink = new ApolloLink((operation) => {
         return new Observable((observer) => {
             const context = operation.getContext();
             const { clientAwareness } = context;
@@ -47,7 +47,7 @@ export function createApollo(httpLink: HttpLink) {
                 'graphql-ws'
             );
 
-            ws.addEventListener('open', (event) => {
+            ws.addEventListener('open', () => {
                 // Send the GQL_START message
                 ws.send(
                     JSON.stringify({

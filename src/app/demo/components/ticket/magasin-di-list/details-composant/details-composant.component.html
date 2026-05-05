@@ -1,193 +1,249 @@
 <p-toast></p-toast>
 <p-confirmDialog />
 
-<div class="card flex flex-row gap-4 improved-card">
-    <!-- Component Info Section -->
-    <div class="col-7 component-info">
-        <!-- Header -->
-        <header>
-            <div class="component-header mb-3 improved-header">
-                <h5>Information sur Composant</h5>
-                <div class="button-group improved-button-group">
-                    <p-button
-                        severity="help"
-                        [disabled]="isSentToCoordinator !== 'IN_COORDINATOR'"
-                        label="Confirmer les composants"
-                        [raised]="true"
-                        size="small"
-                        (click)="sentComponentToCoordinatorToConfirm()"
-                    ></p-button>
-                    <!-- <p-button
-                        *ngIf="ignoreCount > 0"
-                        severity="help"
-                        [disabled]="isSentToCoordinator"
-                        label="Confirmation Coordinator"
-                        [raised]="true"
-                        size="small"
-                        (click)="sentComponentToCoordinatorToConfirm()"
-                    ></p-button> -->
-                    <p-button
-                        label="Savaugarder {{ composantValues?.name }}"
-                        [raised]="true"
-                        size="small"
-                        (click)="updateComposant()"
-                    ></p-button>
-                    <p-button
-                        [disabled]="!componentsAreConfirmed"
-                        label="Fin liste composants"
-                        [raised]="true"
-                        size="small"
-                        (click)="changeStatusPending3()"
-                        severity="success"
-                    ></p-button>
-                </div>
-            </div>
-
-            <div class="flex justify-content-between align-items-center">
-                <h6>Composant sélectionné: {{ composantValues?.name }}</h6>
-            </div>
-        </header>
-
-        <!-- Body Details -->
-        <section
-            class="component-details p-4 component-details-container"
-            [formGroup]="formUpdateComposant"
-        >
-            <!-- Details Fields -->
-            <div class="field component-id-field">
-                <h3>ID Composant: {{ composantValues?._id }}</h3>
-            </div>
-
-            <div class="field component-package-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>Package:</strong>
-                        <span>{{ composantValues?.package }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input
-                            type="text"
-                            pInputText
-                            formControlName="package"
-                        />
-                    </ng-template>
-                </p-inplace>
-            </div>
-
-            <div class="col component-arrival-date">
-                <label for="coming_date">Date d'arrivage</label>
-                <p-calendar
-                    ngModel="coming_date"
-                    dateFormat="dd.mm.yy"
-                    formControlName="coming_date"
-                ></p-calendar>
-            </div>
-
-            <!-- 
-            <div class="field component-link-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>Lien:</strong>
-                        <span>{{ composantValues?.link }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="link" />
-                    </ng-template>
-                </p-inplace>
-            </div> -->
-
-            <div class="col component-purchase-price">
-                <label for="prix_achat">Prix d'achat</label>
-                <p-inputNumber
-                    [showButtons]="true"
-                    formControlName="prix_achat"
-                    buttonLayout="horizontal"
-                    spinnerMode="horizontal"
-                    decrementButtonClass="p-button-danger"
-                    incrementButtonClass="p-button-success"
-                    incrementButtonIcon="pi pi-plus"
-                    decrementButtonIcon="pi pi-minus"
-                    [step]="0.25"
-                    mode="currency"
-                    currency="TND"
-                ></p-inputNumber>
-            </div>
-
-            <div class="col component-sale-price">
-                <label for="prix_vente">Prix de vente:</label>
-                <p-inputNumber
-                    [showButtons]="true"
-                    formControlName="prix_vente"
-                    buttonLayout="horizontal"
-                    spinnerMode="horizontal"
-                    decrementButtonClass="p-button-danger"
-                    incrementButtonClass="p-button-success"
-                    incrementButtonIcon="pi pi-plus"
-                    decrementButtonIcon="pi pi-minus"
-                    [step]="0.25"
-                    mode="currency"
-                    currency="TND"
-                ></p-inputNumber>
-            </div>
-
-            <div class="col-md-4 stock-quantity-section">
-                <div class="d-flex align-items-center stock-quantity-container">
-                    <label for="quantity_stocked" class="mr-2 quantity-label">
-                        Quantité en stock
-                    </label>
-                    <p-inputNumber
-                        mode="decimal"
-                        [showButtons]="true"
-                        buttonLayout="vertical"
-                        spinnerMode="vertical"
-                        formControlName="quantity_stocked"
-                        decrementButtonClass="p-button-secondary"
-                        incrementButtonClass="p-button-secondary"
-                        incrementButtonIcon="pi pi-plus"
-                        decrementButtonIcon="pi pi-minus"
-                        class="input-number-stock"
-                    ></p-inputNumber>
-                </div>
-            </div>
-
-            <!-- 
-            <div class="field component-pdf-field">
-                <p-inplace closable="closable" [active]="isActive">
-                    <ng-template pTemplate="display">
-                        <strong>PDF:</strong>
-                        <span>{{ composantValues?.pdf }}</span>
-                    </ng-template>
-                    <ng-template pTemplate="content">
-                        <input type="text" pInputText formControlName="pdf" />
-                    </ng-template>
-                </p-inplace>
-            </div> -->
-        </section>
+<div class="sav-page">
+    <!-- ═══════════════════════════════════════════════
+         PAGE HEADER
+    ════════════════════════════════════════════════ -->
+    <div class="sav-page-header">
+        <div class="sav-page-title">
+            <i class="pi pi-box"></i>
+            <h2>Gestion des composants</h2>
+        </div>
+        <div class="sav-page-actions">
+            <p-button
+                severity="help"
+                [disabled]="isSentToCoordinator !== 'IN_COORDINATOR'"
+                label="Confirmer les composants"
+                icon="pi pi-send"
+                size="small"
+                (click)="sentComponentToCoordinatorToConfirm()"
+            ></p-button>
+            <p-button
+                [label]="
+                    'Sauvegarder' +
+                    (composantValues?.name ? ' — ' + composantValues?.name : '')
+                "
+                icon="pi pi-save"
+                severity="secondary"
+                size="small"
+                (click)="updateComposant()"
+            ></p-button>
+            <p-button
+                [disabled]="!componentsAreConfirmed"
+                label="Fin liste composants"
+                icon="pi pi-check-circle"
+                severity="success"
+                size="small"
+                (click)="changeStatusPending3()"
+            ></p-button>
+        </div>
     </div>
 
-    <!-- Sidebar for Components List -->
-    <aside class="col-5 component-list p-2 improved-list">
-        <p-orderList
-            [value]="composants"
-            [listStyle]="{ height: '25rem' }"
-            header="Listes des composants"
-        >
-            <ng-template let-product pTemplate="item">
+    <!-- ═══════════════════════════════════════════════
+         MAIN SPLIT LAYOUT
+    ════════════════════════════════════════════════ -->
+    <div class="sav-composant-layout">
+        <!-- ── LEFT: COMPONENT LIST ─────────────────── -->
+        <aside class="sav-composant-sidebar">
+            <div class="sav-sidebar-header">
+                <i class="pi pi-list"></i>
+                <span>Liste des composants</span>
+                <span class="sav-sidebar-count">{{
+                    composants?.length || 0
+                }}</span>
+            </div>
+            <div class="sav-composant-list">
                 <div
-                    class="component-item flex flex-wrap p-2 align-items-center gap-3 improved-item"
+                    *ngFor="let product of composants; let i = index"
+                    class="sav-composant-item"
+                    [class.sav-composant-item--active]="
+                        composantValues?._id === product._id
+                    "
                     (click)="select(product)"
                 >
-                    <div class="flex-1 flex flex-column gap-2">
-                        <span class="font-bold">{{
+                    <div class="sav-composant-item__index">{{ i + 1 }}</div>
+                    <div class="sav-composant-item__info">
+                        <span class="sav-composant-item__name">{{
                             product.nameComposant
                         }}</span>
-                        <div class="flex align-items-center gap-2">
-                            <i class="pi pi-tag text-sm"></i>
-                            <span>{{ product.quantity }}</span>
+                        <span class="sav-composant-item__qty">
+                            <i class="pi pi-tag"></i> Qté :
+                            {{ product.quantity }}
+                        </span>
+                    </div>
+                    <i
+                        class="pi pi-chevron-right sav-composant-item__arrow"
+                    ></i>
+                </div>
+                <div *ngIf="!composants?.length" class="sav-composant-empty">
+                    <i class="pi pi-inbox"></i>
+                    <span>Aucun composant</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── RIGHT: COMPONENT DETAILS ─────────────── -->
+        <section class="sav-composant-detail">
+            <!-- Empty state when nothing selected -->
+            <div *ngIf="!composantValues" class="sav-detail-empty">
+                <i class="pi pi-mouse-pointer"></i>
+                <p>Sélectionnez un composant dans la liste</p>
+            </div>
+
+            <ng-container *ngIf="composantValues">
+                <!-- Detail header -->
+                <div class="sav-detail-titlebar">
+                    <div class="sav-detail-title-left">
+                        <div class="sav-detail-avatar">
+                            {{
+                                composantValues?.name?.charAt(0)?.toUpperCase()
+                            }}
+                        </div>
+                        <div>
+                            <h3 class="sav-detail-name">
+                                {{ composantValues?.name }}
+                            </h3>
+                            <span class="sav-detail-id"
+                                >ID : {{ composantValues?._id }}</span
+                            >
                         </div>
                     </div>
                 </div>
-            </ng-template>
-        </p-orderList>
-    </aside>
+
+                <!-- Form -->
+                <form [formGroup]="formUpdateComposant" class="sav-detail-form">
+                    <fieldset class="sav-fieldset">
+                        <legend>Informations générales</legend>
+
+                        <div class="sav-two-col">
+                            <div class="sav-form-row">
+                                <label class="sav-label">Package</label>
+                                <p-inplace
+                                    closable="closable"
+                                    [active]="isActive"
+                                >
+                                    <ng-template pTemplate="display">
+                                        <span class="sav-inplace-display">
+                                            {{
+                                                composantValues?.package || "—"
+                                            }}
+                                            <i
+                                                class="pi pi-pencil sav-inplace-icon"
+                                            ></i>
+                                        </span>
+                                    </ng-template>
+                                    <ng-template pTemplate="content">
+                                        <input
+                                            type="text"
+                                            pInputText
+                                            formControlName="package"
+                                            class="sav-input"
+                                        />
+                                    </ng-template>
+                                </p-inplace>
+                            </div>
+                            <div class="sav-form-row">
+                                <label class="sav-label">Date d'arrivage</label>
+                                <p-calendar
+                                    dateFormat="dd.mm.yy"
+                                    formControlName="coming_date"
+                                    [showButtonBar]="true"
+                                    appendTo="body"
+                                    styleClass="sav-calendar"
+                                    [style]="{ width: '100%' }"
+                                ></p-calendar>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="sav-fieldset">
+                        <legend>Tarification</legend>
+
+                        <div class="sav-two-col">
+                            <div class="sav-form-row">
+                                <label class="sav-label"
+                                    >Prix d'achat (TND)</label
+                                >
+                                <p-inputNumber
+                                    [showButtons]="true"
+                                    formControlName="prix_achat"
+                                    buttonLayout="horizontal"
+                                    spinnerMode="horizontal"
+                                    decrementButtonClass="p-button-outlined p-button-secondary"
+                                    incrementButtonClass="p-button-outlined p-button-secondary"
+                                    incrementButtonIcon="pi pi-plus"
+                                    decrementButtonIcon="pi pi-minus"
+                                    [step]="0.25"
+                                    mode="currency"
+                                    currency="TND"
+                                    styleClass="sav-number-input"
+                                ></p-inputNumber>
+                            </div>
+                            <div class="sav-form-row">
+                                <label class="sav-label"
+                                    >Prix de vente (TND)</label
+                                >
+                                <p-inputNumber
+                                    [showButtons]="true"
+                                    formControlName="prix_vente"
+                                    buttonLayout="horizontal"
+                                    spinnerMode="horizontal"
+                                    decrementButtonClass="p-button-outlined p-button-secondary"
+                                    incrementButtonClass="p-button-outlined p-button-secondary"
+                                    incrementButtonIcon="pi pi-plus"
+                                    decrementButtonIcon="pi pi-minus"
+                                    [step]="0.25"
+                                    mode="currency"
+                                    currency="TND"
+                                    styleClass="sav-number-input"
+                                ></p-inputNumber>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="sav-fieldset">
+                        <legend>Stock</legend>
+
+                        <div class="sav-stock-row">
+                            <div class="sav-form-row" style="flex: 1">
+                                <label class="sav-label"
+                                    >Quantité en stock</label
+                                >
+                                <p-inputNumber
+                                    mode="decimal"
+                                    [showButtons]="true"
+                                    buttonLayout="horizontal"
+                                    spinnerMode="horizontal"
+                                    decrementButtonClass="p-button-outlined p-button-secondary"
+                                    incrementButtonClass="p-button-outlined p-button-secondary"
+                                    incrementButtonIcon="pi pi-plus"
+                                    decrementButtonIcon="pi pi-minus"
+                                    formControlName="quantity_stocked"
+                                    styleClass="sav-number-input"
+                                ></p-inputNumber>
+                            </div>
+                            <div
+                                class="sav-stock-badge"
+                                *ngIf="
+                                    formUpdateComposant.get('quantity_stocked')
+                                        ?.value >= 0
+                                "
+                            >
+                                <i class="pi pi-database"></i>
+                                <span
+                                    >{{
+                                        formUpdateComposant.get(
+                                            "quantity_stocked"
+                                        )?.value ?? "—"
+                                    }}
+                                    unités</span
+                                >
+                            </div>
+                        </div>
+                    </fieldset>
+                </form>
+            </ng-container>
+        </section>
+    </div>
 </div>

@@ -59,7 +59,7 @@ export class TechDiListComponent implements OnInit {
         category_composant_id: '',
         pdf: '',
     };
-
+    isLoading: boolean = true;
     visible: boolean = false;
     loading: boolean = false;
     roles;
@@ -86,6 +86,7 @@ export class TechDiListComponent implements OnInit {
     di: any;
     techList: any[] = [];
     selectedDi: any;
+    private knownTechDiIds = new Set<string>();
     isRunning: any;
     startTime: number;
     minutes: string;
@@ -183,7 +184,6 @@ export class TechDiListComponent implements OnInit {
     di_category_id: string;
     allComposantLogsAndOriginal: any[];
     historyOfDi: any;
-    isLoading: boolean;
     error: string;
     disabledDiagnostiqueValue: boolean;
     disabledDiagnostiqueRetourValue: boolean;
@@ -223,7 +223,15 @@ export class TechDiListComponent implements OnInit {
 
         // Notification subscription
         this.notificationService.notification$.subscribe((message: any) => {
-            if (message) {
+            if (this.isTechAssignmentNotification(message)) {
+                console.log('message from tech component', message);
+                this.messageService.add({
+                    severity: 'info',
+                    summary: 'Nouveau ticket',
+                    detail: 'Un nouveau ticket vient d’être assigné',
+                    sticky: true,
+                });
+
                 setTimeout(() => {
                     this.loadData();
                 }, 1000);
@@ -234,11 +242,210 @@ export class TechDiListComponent implements OnInit {
         this.loadData();
     }
 
+    private isTechAssignmentNotification(message: any): boolean {
+        const currentTechId = this.idTech || localStorage.getItem('_id');
+        const currentUsername = localStorage.getItem('username');
+
+        if (!message || (!currentTechId && !currentUsername)) {
+            return false;
+        }
+
+        const recipients = this.collectTechRecipientsFromNotification(message);
+        const diIds = this.collectDiIdsFromNotification(message);
+        const isKnownDi = diIds.some((diId) => this.knownTechDiIds.has(diId));
+        const isTargetedToCurrentTech =
+            (!!currentTechId && recipients.includes(currentTechId)) ||
+            (!!currentUsername && recipients.includes(currentUsername));
+
+        if (isTargetedToCurrentTech && diIds.length > 0) {
+            diIds.forEach((diId) => this.knownTechDiIds.add(diId));
+            return !isKnownDi;
+        }
+
+        return isTargetedToCurrentTech && this.hasTechAssignmentMarker(message);
+    }
+
+    private collectTechRecipientsFromNotification(message: any): string[] {
+        const recipients = new Set<string>();
+        const stack = [message];
+        const recipientKeys = [
+            'id_tech_diag',
+            'id_tech_rep',
+            '_idtechDiag',
+            '_idtechRep',
+            '_idTech',
+            'techId',
+            'idTech',
+            'username',
+        ];
+        const nestedKeys = [
+            'message',
+            'content',
+            'state',
+            'states',
+            'stat',
+            'data',
+            'profile',
+        ];
+
+        while (stack.length) {
+            const current = stack.pop();
+
+            if (!current) {
+                continue;
+            }
+
+            if (typeof current === 'string') {
+                try {
+                    stack.push(JSON.parse(current));
+                } catch {
+                    recipients.add(current);
+                }
+                continue;
+            }
+
+            if (typeof current !== 'object') {
+                continue;
+            }
+
+            if (Array.isArray(current)) {
+                stack.push(...current);
+                continue;
+            }
+
+            recipientKeys.forEach((key) => {
+                const value = current[key];
+
+                if (typeof value === 'string') {
+                    recipients.add(value);
+                } else if (value && typeof value === 'object') {
+                    if (typeof value._id === 'string') {
+                        recipients.add(value._id);
+                    }
+                    stack.push(value);
+                }
+            });
+
+            nestedKeys.forEach((key) => {
+                if (current[key]) {
+                    stack.push(current[key]);
+                }
+            });
+        }
+
+        return Array.from(recipients);
+    }
+
+    private collectDiIdsFromNotification(message: any): string[] {
+        const diIds = new Set<string>();
+        const stack = [message];
+        const diIdKeys = ['_idDi', '_idDI', 'idDi', 'diId'];
+
+        while (stack.length) {
+            const current = stack.pop();
+
+            if (!current) {
+                continue;
+            }
+
+            if (typeof current === 'string') {
+                try {
+                    stack.push(JSON.parse(current));
+                } catch {
+                    // Non-JSON strings cannot carry a DI identifier.
+                }
+                continue;
+            }
+
+            if (typeof current !== 'object') {
+                continue;
+            }
+
+            if (Array.isArray(current)) {
+                stack.push(...current);
+                continue;
+            }
+
+            diIdKeys.forEach((key) => {
+                const value = current[key];
+
+                if (typeof value === 'string') {
+                    diIds.add(value);
+                } else if (value && typeof value === 'object') {
+                    if (typeof value._id === 'string') {
+                        diIds.add(value._id);
+                    }
+                    stack.push(value);
+                }
+            });
+
+            ['message', 'content', 'state', 'states', 'stat', 'data'].forEach(
+                (key) => {
+                    if (current[key]) {
+                        stack.push(current[key]);
+                    }
+                },
+            );
+        }
+
+        return Array.from(diIds);
+    }
+
+    private hasTechAssignmentMarker(message: any): boolean {
+        const stack = [message];
+
+        while (stack.length) {
+            const current = stack.pop();
+
+            if (!current) {
+                continue;
+            }
+
+            if (typeof current === 'string') {
+                try {
+                    stack.push(JSON.parse(current));
+                } catch {
+                    // Non-JSON strings cannot carry the assignment marker.
+                }
+                continue;
+            }
+
+            if (typeof current !== 'object') {
+                continue;
+            }
+
+            if (Array.isArray(current)) {
+                stack.push(...current);
+                continue;
+            }
+
+            if (
+                current.event === 'sendDitoDiagnostique' ||
+                current.messageNotification ||
+                current.notificationMessage
+            ) {
+                return true;
+            }
+
+            ['message', 'content', 'state', 'states', 'stat', 'data'].forEach(
+                (key) => {
+                    if (current[key]) {
+                        stack.push(current[key]);
+                    }
+                },
+            );
+        }
+
+        return false;
+    }
+
     /**
      * Centralized data loading method
      * Handles both search and regular data fetching with pagination
      */
     loadData() {
+        this.isLoading = true;
+
         const hasActiveSearch =
             this.currentSearchField &&
             this.currentSearchValue &&
@@ -256,9 +463,11 @@ export class TechDiListComponent implements OnInit {
                     ),
                     fetchPolicy: 'no-cache',
                 })
+                .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(({ data }) => {
                     if (data && data.searchTechDI) {
                         this.techList = data.searchTechDI.stat;
+                        this.rememberTechDiIds(this.techList);
                         this.techListCount =
                             data.searchTechDI.totalTechDataCount;
                     }
@@ -442,7 +651,6 @@ export class TechDiListComponent implements OnInit {
                     packageComposant,
                     category_composant_id,
                     link,
-                    pdf,
                 } = this.composantTechnicien.value;
                 const imagePayload = this.payloadImage?.image
                     ? this.payloadImage.image
@@ -459,7 +667,9 @@ export class TechDiListComponent implements OnInit {
                         ),
                         useMutationLoading: true,
                     })
-                    .subscribe(({ data, loading, errors }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
+
                         this.loadingCreatingComposant = loading;
 
                         if (data) {
@@ -487,16 +697,28 @@ export class TechDiListComponent implements OnInit {
 
     getAllTechDi(first, rows) {
         this.apollo
-            .watchQuery<any>({
+            .query<any>({
                 query: this.ticketSerice.diListTech(first, rows),
-                useInitialLoading: true,
+                fetchPolicy: 'no-cache',
             })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
+            .pipe(finalize(() => (this.isLoading = false)))
+            .subscribe(({ data }) => {
                 if (data) {
                     this.techList = data.getDiForTech.stat;
+                    this.rememberTechDiIds(this.techList);
                     this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
+    }
+
+    private rememberTechDiIds(diList: any[]) {
+        (diList || []).forEach((di) => {
+            const diId = di?._idDi || di?._idDI || di?.idDi || di?.diId;
+
+            if (diId) {
+                this.knownTechDiIds.add(diId);
+            }
+        });
     }
 
     handleNotification(message: any) {
@@ -517,7 +739,9 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getImageforDI(_id),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+
                 if (data) {
                     this.imageValue = data.getDiById.di.image;
                 }
@@ -573,7 +797,7 @@ export class TechDiListComponent implements OnInit {
             promises.push(this.getImage(di._idDi));
             promises.push(this.getAllRemarque(di._idDi));
 
-            const [retourData, categoryData, diagnosticData, ...otherResults] =
+            const [retourData, , diagnosticData] =
                 await Promise.all(promises);
 
             this.apollo
@@ -582,7 +806,8 @@ export class TechDiListComponent implements OnInit {
                         diagnosticData.data.getDiById.di.location_id,
                     ),
                 })
-                .subscribe(({ data }) => {
+                .subscribe(({ data, loading }) => {
+                    this.isLoading = loading;
                     if (data) {
                         this.emplacement = data.findOneLocation.location_name;
                     }
@@ -608,7 +833,7 @@ export class TechDiListComponent implements OnInit {
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
 
                 if (detailsLogs) {
-                    this.processDiagnosticWithLogs(di, detailsDi, detailsLogs);
+                    this.processDiagnosticWithLogs(di, detailsLogs);
                     this.diData = detailsLogs;
                 } else {
                     this.processDiagnosticWithoutLogs(di, detailsDi);
@@ -640,7 +865,7 @@ export class TechDiListComponent implements OnInit {
         );
     }
 
-    private processDiagnosticWithLogs(di, detailsDi, detailsLogs) {
+    private processDiagnosticWithLogs(di, detailsLogs) {
         const dataLogs = this.getHighestIdIgnore(detailsLogs);
 
         this.diagFormTech.patchValue({
@@ -686,7 +911,9 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getDataOriginalAndRetour(_id),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+
                 if (data) {
                     this.historyOfDi = data?.getRetourDataStats;
                     this.cdr.detectChanges();
@@ -710,7 +937,8 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getDiById(di._idDi),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     const detailsDi = data.getDiById.di;
 
@@ -727,7 +955,8 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getDiById(di._idDi),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     let arrayComposantLogs;
 
@@ -781,7 +1010,8 @@ export class TechDiListComponent implements OnInit {
             })
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
-                next: ({ data }) => {
+                next: ({ data, loading }) => {
+                    this.isLoading = loading;
                     if (data?.getRetourDataStats?.length > 0) {
                         this.historyOfDi = data.getRetourDataStats;
                     } else {
@@ -806,7 +1036,8 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getStatbyID(this.selectedDi),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.DiByStat = data.getStatbyID._idDi;
                 }
@@ -818,7 +1049,8 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getStatAndDiInfo(_idDi),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.diStatRepInfo = data;
                 }
@@ -835,7 +1067,8 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.addLogPause(logsPause),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                 }
             });
@@ -851,7 +1084,8 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.updateLogPause(update),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                 }
             });
@@ -862,7 +1096,9 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getAllRemarque(_id),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+
                 if (data) {
                     this.description = data.getAllRemarque.description;
                     this.remarque_manager =
@@ -912,7 +1148,9 @@ export class TechDiListComponent implements OnInit {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {});
+            .subscribe(({ loading }) => {
+                this.isLoading = loading;
+            });
     }
 
     selectedTechRep(data) {
@@ -924,7 +1162,9 @@ export class TechDiListComponent implements OnInit {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {});
+            .subscribe(({ loading }) => {
+                this.isLoading = loading;
+            });
     }
 
     changeStatus(_id) {
@@ -932,7 +1172,9 @@ export class TechDiListComponent implements OnInit {
             .mutate<Boolean>({
                 mutation: this.ticketSerice.changeStatusDiToInDiagnostique(_id),
             })
-            .subscribe(({ data, loading }) => {});
+            .subscribe(({ loading }) => {
+                this.isLoading = loading;
+            });
     }
 
     changeStatusInReparation(_id) {
@@ -941,6 +1183,7 @@ export class TechDiListComponent implements OnInit {
                 mutation: this.ticketSerice.changeStatusInRepair(_id),
             })
             .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                 }
             });
@@ -1068,7 +1311,8 @@ export class TechDiListComponent implements OnInit {
             .watchQuery<any>({
                 query: this.ticketSerice.getAllComposant(),
             })
-            .valueChanges.subscribe(({ data }) => {
+            .valueChanges.subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.composantList = data.findAllComposant;
                 }
@@ -1085,7 +1329,8 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.findAllComposant_Category(),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.composantCategory = data.findAllComposant_Category.map(
                         (el) => {
@@ -1107,6 +1352,7 @@ export class TechDiListComponent implements OnInit {
             })
             .subscribe(({ data, loading }) => {
                 this.addComposantLoading = loading;
+                this.isLoading = loading;
                 if (data) {
                     let com = {
                         _id: data.createComposant._id,
@@ -1143,6 +1389,7 @@ export class TechDiListComponent implements OnInit {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                 }
             });
@@ -1155,7 +1402,8 @@ export class TechDiListComponent implements OnInit {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.diDialogDiag[this.selectedDi] = false;
                 }
@@ -1168,7 +1416,8 @@ export class TechDiListComponent implements OnInit {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                 }
             });
@@ -1184,6 +1433,7 @@ export class TechDiListComponent implements OnInit {
                 query: this.ticketSerice.getDataForTech(),
             })
             .valueChanges.subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.dataBarChartIsReady = true;
                     this.techDataInfo = data.getDiStatusCounts;
@@ -1239,39 +1489,66 @@ export class TechDiListComponent implements OnInit {
         this.composantSelected = selectedItem;
     }
 
+    getStatusLabel(status: string): string {
+        const map = {
+            CREATED: 'CREATED',
+            PENDING1: 'PENDING1',
+            PENDING2: 'PENDING2',
+            PENDING3: 'PENDING3',
+            DIAGNOSTIC: 'DIAGNOSTIC',
+            INDIAGNOSTIC: 'INDIAGNOSTIC',
+            INMAGASIN: 'INMAGASIN',
+            PRICING: 'PRICING',
+            NEGOTIATION1: 'NEGOTIATION1',
+            NEGOTIATION2: 'NEGOTIATION2',
+            REPARATION: 'REPARATION',
+            INREPARATION: 'INREPARATION',
+            FINISHED: 'FINISHED',
+            ANNULER: 'ANNULER',
+            RETOUR1: 'RETOUR1',
+            RETOUR2: 'RETOUR2',
+            RETOUR3: 'RETOUR3',
+        };
+
+        return map[status] || status;
+    }
+
     getSeverity(status: string) {
-        switch (status) {
-            case 'CREATED':
-                return 'success';
-            case 'PENDING1':
-            case 'PENDING2':
-            case 'PENDING3':
-                return 'help';
-            case 'DIAGNOSTIC':
-            case 'INDIAGNOSTIC':
-                return 'info';
-            case 'INMAGASIN':
-            case 'MagasinEstimation':
-                return 'warning';
-            case 'PRICING':
-                return 'warning';
-            case 'NEGOTIATION1':
-            case 'NEGOTIATION2':
-                return 'warning';
-            case 'REPARATION':
-            case 'INREPARATION':
-                return 'info';
-            case 'FINISHED':
-                return 'success';
-            case 'ANNULER':
-                return 'contrast';
-            case 'RETOUR1':
-            case 'RETOUR2':
-            case 'RETOUR3':
-                return 'danger';
-            default:
-                return 'warn';
-        }
+        if (!status) return 'secondary';
+
+        const map: Record<string, string> = {
+            // ✅ SUCCESS (green)
+            CREATED: 'success',
+            FINISHED: 'success',
+
+            // 🔵 INFO (in progress)
+            DIAGNOSTIC: 'info',
+            INDIAGNOSTIC: 'info',
+            REPARATION: 'info',
+            INREPARATION: 'info',
+
+            // 🟡 WARNING (waiting / business steps)
+            INMAGASIN: 'warning',
+            MagasinEstimation: 'warning',
+            PRICING: 'warning',
+            NEGOTIATION1: 'warning',
+            NEGOTIATION2: 'warning',
+
+            // ⚫ NEUTRAL (pending)
+            PENDING1: 'secondary',
+            PENDING2: 'secondary',
+            PENDING3: 'secondary',
+
+            // 🔴 ERROR / CRITICAL
+            RETOUR1: 'danger',
+            RETOUR2: 'danger',
+            RETOUR3: 'danger',
+
+            // ⚫ SPECIAL
+            ANNULER: 'contrast',
+        };
+
+        return map[status] || 'secondary';
     }
 
     updateDisableValues() {
@@ -1320,6 +1597,8 @@ export class TechDiListComponent implements OnInit {
                 mutation: this.ticketSerice.changeStatusToFinished(_id),
             })
             .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+
                 if (data && !loading) {
                     if (!this.isFinishedDiag) {
                         this.isFinishedDiag = {};
@@ -1371,6 +1650,7 @@ export class TechDiListComponent implements OnInit {
                         useMutationLoading: true,
                     })
                     .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
                         if (data) {
                             this.disable = data.tech_startDiagnostic;
                             this.cdr.detectChanges();
@@ -1386,7 +1666,9 @@ export class TechDiListComponent implements OnInit {
                         ),
                         useMutationLoading: true,
                     })
-                    .subscribe(({ data, loading, errors }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
+
                         if (data) {
                             this.diDialogDiag[this.selectedDi] = false;
                         }
@@ -1428,6 +1710,8 @@ export class TechDiListComponent implements OnInit {
                             useMutationLoading: true,
                         })
                         .subscribe(({ data, loading }) => {
+                            this.isLoading = loading;
+
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
@@ -1443,6 +1727,7 @@ export class TechDiListComponent implements OnInit {
                             useMutationLoading: true,
                         })
                         .subscribe(({ data, loading }) => {
+                            this.isLoading = loading;
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
@@ -1459,7 +1744,7 @@ export class TechDiListComponent implements OnInit {
                         ),
                         useMutationLoading: true,
                     })
-                    .subscribe(({ data, loading, errors }) => {
+                    .subscribe(({ data }) => {
                         if (data) {
                             this.diDialogDiag[this.selectedDi] = false;
                         }
@@ -1488,7 +1773,7 @@ export class TechDiListComponent implements OnInit {
                             this.selectedDi_id,
                         ),
                     })
-                    .subscribe(({ data }) => {});
+                    .subscribe(() => {});
                 this.diDialogDiag[this.selectedDi] = false;
             },
         });
@@ -1520,6 +1805,7 @@ export class TechDiListComponent implements OnInit {
                             useMutationLoading: true,
                         })
                         .subscribe(({ data, loading }) => {
+                            this.isLoading = loading;
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
@@ -1535,6 +1821,7 @@ export class TechDiListComponent implements OnInit {
                             useMutationLoading: true,
                         })
                         .subscribe(({ data, loading }) => {
+                            this.isLoading = loading;
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
@@ -1551,7 +1838,9 @@ export class TechDiListComponent implements OnInit {
                         ),
                         useMutationLoading: true,
                     })
-                    .subscribe(({ data, loading, errors }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
+
                         if (data) {
                             this.diDialogDiag[this.selectedDi] = false;
                         }
@@ -1573,7 +1862,9 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.changeStatusDiToPending2(_id),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ loading }) => {
+                this.isLoading = loading;
+            });
     }
 
     confirmComposant() {
@@ -1583,7 +1874,9 @@ export class TechDiListComponent implements OnInit {
                     this.selectedDi,
                 ),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(({ loading }) => {
+                this.isLoading = loading;
+            });
     }
 
     getTimeSpent(_idStat: string) {
@@ -1591,7 +1884,8 @@ export class TechDiListComponent implements OnInit {
             .watchQuery<any>({
                 query: this.ticketSerice.getLastPauseTime(_idStat),
             })
-            .valueChanges.subscribe(({ data }) => {
+            .valueChanges.subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (
                     data &&
                     data.getLastPauseTime.diag_time &&
@@ -1611,7 +1905,8 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getLastPauseTime(_idStat),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (
                     data &&
                     data.getLastPauseTime.rep_time &&
@@ -1653,6 +1948,7 @@ export class TechDiListComponent implements OnInit {
                 useMutationLoading: true,
             })
             .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data && !loading && this.DiByStat) {
                 }
             });
@@ -1666,7 +1962,8 @@ export class TechDiListComponent implements OnInit {
                     ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.setDiInReparationPause(this.selectedRep);
                     this.diDialogRep = false;
@@ -1686,7 +1983,8 @@ export class TechDiListComponent implements OnInit {
             .mutate<any>({
                 mutation: this.ticketSerice.diReperationInPAUSE(_id),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                 }
             });
@@ -1740,6 +2038,7 @@ export class TechDiListComponent implements OnInit {
                         useMutationLoading: true,
                     })
                     .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
                         if (data && !loading && this.DiByStat) {
                             this.changeStatusToFinished(this.DiByStat);
                         }
@@ -1788,7 +2087,9 @@ export class TechDiListComponent implements OnInit {
             .query<any>({
                 query: this.ticketSerice.getAllDiCategory(),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+
                 if (data) {
                     this.categorieDiListDropDown = data.findAllDiCategory.map(
                         (Category_DI) => ({

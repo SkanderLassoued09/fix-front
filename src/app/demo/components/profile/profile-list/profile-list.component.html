@@ -1,274 +1,355 @@
-<div class="card">
-    <p-button
-        (click)="showDialog()"
-        icon="pi pi-plus"
-        label="Ajouter un STAFF"
-    ></p-button>
+<p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+<div class="sav-page">
+    <div class="sav-page-header">
+        <div class="sav-page-title">
+            <i class="pi pi-users"></i>
+            <h2>Gestion des profils</h2>
+        </div>
+        <div class="sav-page-actions">
+            <p-button
+                (click)="showDialog()"
+                icon="pi pi-plus"
+                label="Ajouter un staff"
+                styleClass="sav-btn-new"
+            ></p-button>
+        </div>
+    </div>
+
+    <div class="sav-table-wrapper">
+        <p-table
+            [columns]="cols"
+            [value]="profileList"
+            [tableStyle]="{ 'min-width': '100%' }"
+            styleClass="p-datatable-sm sav-main-table"
+        >
+            <ng-template pTemplate="header" let-columns>
+                <tr class="sav-thead-row">
+                    <th *ngFor="let col of columns" class="sav-th">
+                        {{ col.header }}
+                    </th>
+                    <th class="sav-th sav-th-actions">Actions</th>
+                </tr>
+                <tr class="sav-filter-row">
+                    <th *ngFor="let col of columns" class="sav-th-filter">
+                        <input
+                            pInputText
+                            type="text"
+                            class="sav-filter-input"
+                            placeholder="Chercher..."
+                            (input)="
+                                onColumnSearch(
+                                    col.searchKey,
+                                    $event.target.value
+                                )
+                            "
+                        />
+                    </th>
+                    <th class="sav-th-filter"></th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr class="sav-row">
+                    <td *ngFor="let col of columns" class="sav-td">
+                        <ng-container
+                            *ngIf="col.field !== 'role'; else roleColumn"
+                        >
+                            <ng-container
+                                *ngIf="
+                                    col.field === 'createdAt' ||
+                                        col.field === 'updatedAt';
+                                    else standardField
+                                "
+                            >
+                                {{ rowData[col.field] | date: "dd/MM/yyyy" }}
+                            </ng-container>
+                            <ng-template #standardField>
+                                {{ rowData[col.field] || "—" }}
+                            </ng-template>
+                        </ng-container>
+
+                        <ng-template #roleColumn>
+                            <p-tag
+                                [value]="rowData[col.field] || '—'"
+                                styleClass="status-pill role-{{
+                                    rowData[col.field]
+                                }}"
+                            ></p-tag>
+                        </ng-template>
+                    </td>
+                    <td class="sav-td sav-actions-cell">
+                        <button
+                            pButton
+                            pTooltip="Modifier"
+                            tooltipPosition="top"
+                            icon="pi pi-pencil"
+                            class="sav-icon-btn sav-icon-btn--success"
+                            (click)="editProfile(rowData)"
+                        ></button>
+                        <button
+                            pButton
+                            pTooltip="Supprimer"
+                            tooltipPosition="top"
+                            icon="pi pi-trash"
+                            class="sav-icon-btn sav-icon-btn--danger"
+                            (click)="deleteProfile(rowData._id)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td
+                        [attr.colspan]="(cols?.length || 0) + 1"
+                        class="sav-empty"
+                    >
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucun profil trouvé</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <div class="sav-paginator-wrapper">
+            <span class="sav-count">
+                {{ totalProfileCount ? first + 1 : 0 }}-{{
+                    first + (profileList?.length || 0)
+                }}
+                sur {{ totalProfileCount || 0 }} résultats
+            </span>
+            <p-paginator
+                (onPageChange)="onPageChange($event)"
+                [first]="first"
+                [rows]="rows"
+                [totalRecords]="totalProfileCount"
+                [rowsPerPageOptions]="[5, 10, 30]"
+                styleClass="sav-paginator"
+            ></p-paginator>
+        </div>
+    </div>
 </div>
+
 <p-dialog
     header="Ajouter un nouveau profil"
     [(visible)]="visible"
     [modal]="true"
-    [style]="{ width: '50vw', height: '450px' }"
+    [style]="{ width: '620px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog"
 >
-    <form [formGroup]="staffForm">
-        <div class="grid">
-            <div class="col">
-                <p-inputGroup>
-                    <p-inputGroupAddon>
-                        <i class="pi pi-user"></i>
-                    </p-inputGroupAddon>
+    <form [formGroup]="staffForm" class="sav-create-form">
+        <fieldset class="sav-fieldset">
+            <legend>Identifiants</legend>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="username">Username</label>
                     <input
                         pInputText
                         formControlName="username"
+                        id="username"
+                        type="text"
+                        class="sav-input"
                         placeholder="Username"
                     />
-                </p-inputGroup>
-            </div>
-            <div class="col">
-                <p-inputGroup class="mr-2">
-                    <p-inputGroupAddon>
-                        <i class="pi pi-at"></i>
-                    </p-inputGroupAddon>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="email">E-mail</label>
                     <input
                         pInputText
                         formControlName="email"
-                        placeholder="E-mail"
+                        id="email"
+                        type="email"
+                        class="sav-input"
+                        placeholder="email@domaine.com"
                     />
-                </p-inputGroup>
-            </div>
-        </div>
-        <div class="grid">
-            <div class="flex flex-column col">
-                <label for="firstName">Prénom</label>
-                <input
-                    formControlName="firstName"
-                    pInputText
-                    id="firstName"
-                    class="pInputText"
-                />
+                </div>
             </div>
 
-            <div class="flex flex-column col">
-                <label for="lastName">Nom</label>
-                <input
-                    formControlName="lastName"
-                    pInputText
-                    id="lastName"
-                    class="pInputText"
-                />
-            </div>
-        </div>
-
-        <div class="grid">
-            <div class="flex flex-column col">
-                <label for="lastName">Téléphone</label>
-                <p-inputMask
-                    id="phone"
-                    mask="99 999 999"
-                    formControlName="phone"
-                    styleClass="w-full"
-                ></p-inputMask>
-            </div>
-
-            <div class="flex flex-column col">
-                <label for="raisonSociale">Rôle</label>
-                <p-dropdown
-                    [options]="roles"
-                    optionLabel="name"
-                    optionValue="code"
-                    [showClear]="true"
-                    formControlName="role"
-                    styleClass="w-full"
-                ></p-dropdown>
-            </div>
-        </div>
-
-        <div class="grid">
-            <div class="col-12">
+            <div class="sav-form-row">
+                <label class="sav-label" for="password">Password</label>
                 <p-password
                     id="password"
                     placeholder="Password"
                     [toggleMask]="true"
                     formControlName="password"
-                    styleClass="w-full"
-                    inputStyleClass="w-full "
+                    styleClass="sav-password"
+                    inputStyleClass="sav-input"
                 ></p-password>
             </div>
-        </div>
+        </fieldset>
+
+        <fieldset class="sav-fieldset">
+            <legend>Informations générales</legend>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="firstName">Prénom</label>
+                    <input
+                        formControlName="firstName"
+                        pInputText
+                        id="firstName"
+                        class="sav-input"
+                    />
+                </div>
+
+                <div class="sav-form-row">
+                    <label class="sav-label" for="lastName">Nom</label>
+                    <input
+                        formControlName="lastName"
+                        pInputText
+                        id="lastName"
+                        class="sav-input"
+                    />
+                </div>
+            </div>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="phone">Téléphone</label>
+                    <p-inputMask
+                        id="phone"
+                        mask="99 999 999"
+                        formControlName="phone"
+                        styleClass="sav-input-mask"
+                    ></p-inputMask>
+                </div>
+
+                <div class="sav-form-row">
+                    <label class="sav-label" for="role">Rôle</label>
+                    <p-dropdown
+                        inputId="role"
+                        [options]="roles"
+                        optionLabel="name"
+                        optionValue="code"
+                        [showClear]="true"
+                        formControlName="role"
+                        styleClass="sav-dropdown"
+                        [style]="{ width: '100%' }"
+                    ></p-dropdown>
+                </div>
+            </div>
+        </fieldset>
     </form>
 
-    <div class="flex gap-4">
-        <p-button
-            label="Ajouter"
-            [loading]="loading"
-            (onClick)="addSTAFF()"
-        ></p-button>
+    <div class="sav-dialog-footer">
         <p-button
             label="Annuler"
-            severity="danger"
-            (onClick)="staffForm.reset()"
+            icon="pi pi-times"
+            severity="secondary"
+            [text]="true"
+            (onClick)="staffForm.reset(); visible = false"
+        ></p-button>
+        <p-button
+            label="Ajouter"
+            icon="pi pi-check"
+            severity="success"
+            [loading]="loading"
+            (onClick)="addSTAFF()"
         ></p-button>
     </div>
 </p-dialog>
 
-<div class="card">
-    <p-toast></p-toast>
-    <p-table
-        [columns]="cols"
-        [value]="profileList"
-        [tableStyle]="{ 'min-width': '50rem' }"
-        styleClass="p-datatable-sm"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th *ngFor="let col of columns">
-                    {{ col.header }}
-                </th>
-                <th>Actions</th>
-            </tr>
-            <tr>
-                <th *ngFor="let col of columns">
-                    <input
-                        pInputText
-                        type="text"
-                        placeholder="Chercher"
-                        (input)="
-                            onColumnSearch(col.searchKey, $event.target.value)
-                        "
-                    />
-                </th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
-                <td *ngFor="let col of columns">
-                    <ng-container *ngIf="col.field !== 'role'; else roleColumn">
-                        <ng-container
-                            *ngIf="
-                                col.field === 'createdAt' ||
-                                    col.field === 'updatedAt';
-                                else otherField
-                            "
-                        >
-                            {{ rowData[col.field] | date: "dd/MM/yyyy" }}
-                        </ng-container>
-                        <ng-template #otherField>
-                            {{ rowData[col.field] }}
-                        </ng-template>
-                    </ng-container>
-
-                    <ng-template #roleColumn>
-                        <p-tag
-                            [value]="rowData[col.field]"
-                            [severity]="getSeverity(rowData[col.field])"
-                        ></p-tag>
-                    </ng-template>
-                </td>
-                <td class="flex">
-                    <button
-                        pButton
-                        pRipple
-                        icon="pi pi-pencil"
-                        class="p-button-rounded p-button-success mr-2"
-                        (click)="editProfile(rowData)"
-                    ></button>
-                    <button
-                        pButton
-                        pRipple
-                        icon="pi pi-trash"
-                        class="p-button-rounded p-button-danger"
-                        (click)="deleteProfile(rowData._id)"
-                    ></button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-    <p-paginator
-        (onPageChange)="onPageChange($event)"
-        [first]="first"
-        [rows]="rows"
-        [totalRecords]="totalProfileCount"
-        [rowsPerPageOptions]="[5, 10, 30]"
-    ></p-paginator>
-</div>
 <p-dialog
     [(visible)]="profileDialog"
-    [style]="{ width: '450px' }"
-    header="Mise à jour"
+    [style]="{ width: '520px' }"
+    header="Mise à jour du profil"
     [modal]="true"
-    styleClass="p-fluid"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="sav-dialog"
 >
     <ng-template pTemplate="content">
-        <div class="field">
-            <label for="name">Prénom</label>
-            <input
-                type="text"
-                pInputText
-                [(ngModel)]="profileData.firstName"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !profileData.firstName">
-                Name is required.
-            </small>
-        </div>
-        <div class="field">
-            <label for="name">Nom</label>
-            <input
-                type="text"
-                pInputText
-                [(ngModel)]="profileData.lastName"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !profileData.lastName">
-                Name is required.
-            </small>
-        </div>
-        <div class="field">
-            <label for="name">Téléphone</label>
-            <input
-                type="text"
-                pInputText
-                [(ngModel)]="profileData.phone"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !profileData.phone">
-                phone is required.
-            </small>
-        </div>
-        <div class="field">
-            <label for="name">email</label>
-            <input
-                type="email"
-                pInputText
-                [(ngModel)]="profileData.email"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !profileData.email">
-                email is required.
-            </small>
+        <div class="sav-create-form" *ngIf="profileData">
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="editFirstName">Prénom</label>
+                    <input
+                        id="editFirstName"
+                        type="text"
+                        pInputText
+                        [(ngModel)]="profileData.firstName"
+                        class="sav-input"
+                        required
+                        autofocus
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="submitted && !profileData.firstName"
+                    >
+                        Prénom requis.
+                    </small>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="editLastName">Nom</label>
+                    <input
+                        id="editLastName"
+                        type="text"
+                        pInputText
+                        [(ngModel)]="profileData.lastName"
+                        class="sav-input"
+                        required
+                    />
+                    <small
+                        class="p-error"
+                        *ngIf="submitted && !profileData.lastName"
+                    >
+                        Nom requis.
+                    </small>
+                </div>
+            </div>
+
+            <div class="sav-form-row">
+                <label class="sav-label" for="editPhone">Téléphone</label>
+                <input
+                    id="editPhone"
+                    type="text"
+                    pInputText
+                    [(ngModel)]="profileData.phone"
+                    class="sav-input"
+                    required
+                />
+                <small class="p-error" *ngIf="submitted && !profileData.phone">
+                    Téléphone requis.
+                </small>
+            </div>
+
+            <div class="sav-form-row">
+                <label class="sav-label" for="editEmail">E-mail</label>
+                <input
+                    id="editEmail"
+                    type="email"
+                    pInputText
+                    [(ngModel)]="profileData.email"
+                    class="sav-input"
+                    required
+                />
+                <small class="p-error" *ngIf="submitted && !profileData.email">
+                    E-mail requis.
+                </small>
+            </div>
         </div>
     </ng-template>
 
     <ng-template pTemplate="footer">
-        <p-button
-            label="Cancel"
-            icon="pi pi-times"
-            [text]="true"
-            (onClick)="cancel()"
-        />
-        <p-button
-            label="Save"
-            icon="pi pi-check"
-            [text]="true"
-            (onClick)="saveUpdateProfile()"
-        />
+        <div class="sav-dialog-footer">
+            <p-button
+                label="Annuler"
+                icon="pi pi-times"
+                severity="secondary"
+                [text]="true"
+                (onClick)="cancel()"
+            ></p-button>
+            <p-button
+                label="Enregistrer"
+                icon="pi pi-check"
+                severity="success"
+                (onClick)="saveUpdateProfile()"
+            ></p-button>
+        </div>
     </ng-template>
 </p-dialog>
-<p-confirmDialog [style]="{ width: '450px' }" />

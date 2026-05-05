@@ -1,338 +1,376 @@
+<p-blockUI [blocked]="isLoading">
+    <!-- <i class="pi pi-spinner" style="font-size: 3rem"></i> -->
+    <p-progressSpinner ariaLabel="loading" />
+</p-blockUI>
+
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
-<div class="card h-10">
-    <p-chart type="bar" [data]="basicData" [options]="basicOptions" />
-</div>
-<p-confirmDialog />
-
+<!-- ═══════════════════════════════════════════════
+     MODAL — CATÉGORIES DI
+════════════════════════════════════════════════ -->
 <p-dialog
     header="Gérer les catégories des demandes d'interventions"
     [(visible)]="openCategoryModal"
     [modal]="true"
-    [style]="{ width: '50vw', height: '40vw' }"
+    [style]="{ width: '560px' }"
     [draggable]="false"
-    [resizable]="true"
+    [resizable]="false"
+    styleClass="sav-dialog sav-category-dialog"
 >
-    <form [formGroup]="categoryForm" class="form-group-categorieDI">
-        <!-- Category Input Section -->
-        <div class="form-group-categorieDI">
-            <label for="categoryName">Nom de la catégorie</label>
-            <input
-                formControlName="categoryName"
-                id="categoryName"
-                type="text"
-                class="form-control-categorieDI"
-            />
-        </div>
-        <div class="button-container-categorieDI">
-            <p-button
-                [disabled]="!categoryForm.get('categoryName').value"
-                (click)="addCategoryDi()"
-                icon="pi pi-plus"
-                label="Ajouter catégorie"
-                severity="success"
-            ></p-button>
-        </div>
+    <form [formGroup]="categoryForm" class="sav-category-form">
+        <fieldset class="sav-fieldset sav-category-fieldset">
+            <legend>Nouvelle catégorie</legend>
+            <div class="sav-category-add-row">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="categoryName">
+                        Nom de la catégorie
+                    </label>
+                    <input
+                        formControlName="categoryName"
+                        id="categoryName"
+                        type="text"
+                        class="sav-input"
+                        placeholder="Ex: Électronique"
+                    />
+                </div>
+                <p-button
+                    [disabled]="!categoryForm.get('categoryName').value"
+                    (click)="addCategoryDi()"
+                    icon="pi pi-plus"
+                    label="Ajouter"
+                    severity="success"
+                    size="small"
+                ></p-button>
+            </div>
+        </fieldset>
     </form>
 
-    <!-- Category Table Section -->
-    <p-table
-        [columns]="colCategory"
-        [value]="categorieDiListDropDown"
-        styleClass="p-datatable-sm"
-        [tableStyle]="{ 'min-width': '20rem' }"
-        class="table-categorieDI"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th
-                    *ngFor="let col of columns"
-                    class="table-header-categorieDI"
-                >
-                    {{ col.header }}
-                </th>
-                <th class="table-header-categorieDI">Actions</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr class="table-row-categorieDI">
-                <td *ngFor="let col of columns" class="table-cell-categorieDI">
-                    {{ rowData[col.field] }}
-                </td>
-                <td class="table-actions-categorieDI">
-                    <p-button
-                        icon="pi pi-trash"
-                        severity="danger"
-                        (click)="deleteCategory(rowData)"
-                        class="delete-btn-categorieDI"
-                    ></p-button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+    <div class="sav-category-table-wrapper">
+        <p-table
+            [columns]="colCategory"
+            [value]="categorieDiListDropDown"
+            [paginator]="true"
+            [rows]="5"
+            [rowsPerPageOptions]="[5, 10, 20]"
+            styleClass="p-datatable-sm sav-modal-table sav-category-table"
+            [tableStyle]="{ 'min-width': '100%' }"
+        >
+            <ng-template pTemplate="header" let-columns>
+                <tr>
+                    <th *ngFor="let col of columns">{{ col.header }}</th>
+                    <th class="sav-modal-actions-th">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr>
+                    <td *ngFor="let col of columns">
+                        {{ rowData[col.field] || "—" }}
+                    </td>
+                    <td class="sav-modal-actions-cell">
+                        <button
+                            pButton
+                            pTooltip="Supprimer"
+                            tooltipPosition="top"
+                            icon="pi pi-trash"
+                            class="sav-icon-btn sav-icon-btn--danger"
+                            (click)="deleteCategory(rowData)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td
+                        [attr.colspan]="(colCategory?.length || 0) + 1"
+                        class="sav-modal-empty"
+                    >
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucune catégorie trouvée</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
 </p-dialog>
 
+<!-- ═══════════════════════════════════════════════
+     MODAL — EMPLACEMENTS
+════════════════════════════════════════════════ -->
 <p-dialog
     header="Gérer les emplacements"
     [(visible)]="openLocationsModal"
     [modal]="true"
-    [style]="{ width: '50vw', height: '40vw' }"
+    [style]="{ width: '560px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog sav-category-dialog"
 >
-    <form [formGroup]="locationForm" class="location-form-Emplacement">
-        <!-- Location Input Section -->
-        <div class="form-group-Emplacement">
-            <label for="locationName">Nom de l'emplacement a ajouter</label>
-            <input
-                formControlName="locationName"
-                id="locationName"
-                type="text"
-                class="form-control-Emplacement"
-            />
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="modal-footer-Emplacement">
-            <p-button
-                [disabled]="!locationForm.get('locationName').value"
-                (click)="addLocation()"
-                icon="pi pi-plus"
-                label="Ajouter"
-                severity="success"
-                class="add-button-Emplacement"
-            ></p-button>
-        </div>
+    <form [formGroup]="locationForm" class="sav-category-form">
+        <fieldset class="sav-fieldset sav-category-fieldset">
+            <legend>Nouvel emplacement</legend>
+            <div class="sav-category-add-row">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="locationName">
+                        Nom de l'emplacement
+                    </label>
+                    <input
+                        formControlName="locationName"
+                        id="locationName"
+                        type="text"
+                        class="sav-input"
+                        placeholder="Ex: Atelier A"
+                    />
+                </div>
+                <p-button
+                    [disabled]="!locationForm.get('locationName').value"
+                    (click)="addLocation()"
+                    icon="pi pi-plus"
+                    label="Ajouter"
+                    severity="success"
+                    size="small"
+                ></p-button>
+            </div>
+        </fieldset>
     </form>
 
-    <!-- Table Section -->
-    <p-table
-        [columns]="colEmplacement"
-        [value]="locationDropDown"
-        styleClass="p-datatable-sm"
-        [tableStyle]="{ 'min-width': '20rem' }"
-        class="table-Emplacement"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th
-                    *ngFor="let col of columns"
-                    class="table-header-Emplacement"
-                >
-                    {{ col.header }}
-                </th>
-                <th class="table-header-Emplacement">Actions</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr class="table-row-Emplacement">
-                <td *ngFor="let col of columns" class="table-cell-Emplacement">
-                    {{ rowData[col.field] }}
-                </td>
-                <td class="table-actions-Emplacement">
-                    <p-button
-                        icon="pi pi-trash"
-                        severity="danger"
-                        (click)="deletLocation(rowData)"
-                        class="delete-button-Emplacement"
-                    ></p-button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+    <div class="sav-category-table-wrapper">
+        <p-table
+            [columns]="colEmplacement"
+            [value]="locationDropDown"
+            [paginator]="true"
+            [rows]="5"
+            [rowsPerPageOptions]="[5, 10, 20]"
+            styleClass="p-datatable-sm sav-modal-table sav-category-table"
+            [tableStyle]="{ 'min-width': '100%' }"
+        >
+            <ng-template pTemplate="header" let-columns>
+                <tr>
+                    <th *ngFor="let col of columns">{{ col.header }}</th>
+                    <th class="sav-modal-actions-th">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr>
+                    <td *ngFor="let col of columns">
+                        {{ rowData[col.field] || "—" }}
+                    </td>
+                    <td class="sav-modal-actions-cell">
+                        <button
+                            pButton
+                            pTooltip="Supprimer"
+                            tooltipPosition="top"
+                            icon="pi pi-trash"
+                            class="sav-icon-btn sav-icon-btn--danger"
+                            (click)="deletLocation(rowData)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td
+                        [attr.colspan]="(colEmplacement?.length || 0) + 1"
+                        class="sav-modal-empty"
+                    >
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucun emplacement trouvé</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
 </p-dialog>
 
+<!-- ═══════════════════════════════════════════════
+     MODAL — TARIF TECHNICIENS
+════════════════════════════════════════════════ -->
 <p-dialog
     header="Affecter Tarif Techniciens"
     [(visible)]="openPriceTechModal"
     [modal]="true"
-    [style]="{ width: '35vw' }"
+    [style]="{ width: '400px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog"
 >
-    <form [formGroup]="tarif_Techs" class="form-pricing">
-        <!-- Modal Content -->
-        <div class="modal-content-pricing">
-            <h3 class="current-tarif-text-pricing">
-                Tarif actuel : {{ tarif_Tech }} dt/heure
-            </h3>
-
-            <div class="new-tarif-container-pricing">
-                <label for="tarifFromAdmin" class="label-pricing"
-                    >Affecter nouveau Tarif</label
-                >
-                <input
-                    formControlName="tarifFromAdmin"
-                    id="tarifFromAdmin"
-                    type="number"
-                    class="input-tarif-pricing"
-                    placeholder="Entrez le tarif"
-                />
-            </div>
-
+    <form [formGroup]="tarif_Techs">
+        <div class="sav-tarif-current">
+            <i class="pi pi-tag"></i>
+            <span
+                >Tarif actuel : <strong>{{ tarif_Tech }} dt/heure</strong></span
+            >
+        </div>
+        <div class="sav-form-row">
+            <label class="sav-label" for="tarifFromAdmin"
+                >Nouveau tarif (dt/heure)</label
+            >
+            <input
+                formControlName="tarifFromAdmin"
+                id="tarifFromAdmin"
+                type="number"
+                class="sav-input"
+                placeholder="Entrez le tarif"
+            />
+        </div>
+        <div class="sav-form-actions">
             <p-button
                 (onClick)="confirmerTarifs()"
-                class="confirm-button-pricing"
                 icon="pi pi-check"
                 label="Confirmer"
+                severity="success"
             ></p-button>
         </div>
     </form>
 </p-dialog>
 
+<!-- ═══════════════════════════════════════════════
+     MODAL — CRÉER DI
+════════════════════════════════════════════════ -->
 <p-dialog
     header="Ajouter une nouvelle Demande d'intervention"
     [(visible)]="openAddDiModal"
     [modal]="true"
-    [style]="{ width: '50vw', height: '50vw' }"
+    [style]="{ width: '620px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog"
 >
-    <form [formGroup]="creationDiForm">
-        <!-- Form Group -->
-        <fieldset class="location-form">
+    <form [formGroup]="creationDiForm" class="sav-create-form">
+        <fieldset class="sav-fieldset">
             <legend>Informations Générales</legend>
 
-            <!-- Title -->
-            <div class="form-group">
-                <label for="title">Titre</label>
+            <div class="sav-form-row">
+                <label class="sav-label" for="title"
+                    >Titre <span class="sav-required">*</span></label
+                >
                 <input
                     formControlName="title"
                     id="title"
                     type="text"
-                    class="form-control"
-                    aria-label="Titre"
+                    class="sav-input"
+                    placeholder="Titre de la DI"
                     (keydown)="blockSpecialCharacters($event)"
                 />
             </div>
 
-            <!-- Description -->
-            <div class="form-group">
-                <label for="description">Description</label>
+            <div class="sav-form-row">
+                <label class="sav-label" for="description"
+                    >Description <span class="sav-required">*</span></label
+                >
                 <textarea
                     formControlName="description"
                     id="description"
                     rows="3"
-                    class="form-control"
-                    aria-label="Description"
+                    class="sav-textarea"
+                    placeholder="Décrivez le problème..."
                     (paste)="onPaste($event)"
                     (keydown.enter)="$event.preventDefault()"
                 ></textarea>
             </div>
 
-            <!-- N°Serie -->
-            <div class="form-group">
-                <label for="nSerie">N°Serie</label>
+            <div class="sav-form-row">
+                <label class="sav-label" for="nSerie">N° Série</label>
                 <input
                     formControlName="nSerie"
                     id="nSerie"
                     type="text"
-                    class="form-control"
-                    aria-label="N°Serie"
+                    class="sav-input"
+                    placeholder="Numéro de série"
                 />
             </div>
 
-            <!-- Location Dropdown -->
-            <div class="form-group">
-                <label for="location">Emplacement</label>
+            <div class="sav-form-row">
+                <label class="sav-label" for="location">Emplacement</label>
                 <p-dropdown
                     id="location"
-                    class="emplacement-css"
                     [options]="locationDropDown"
                     formControlName="location"
                     optionLabel="location_name"
                     optionValue="value"
                     placeholder="Choisir emplacement"
-                    aria-label="Choisir emplacement"
+                    styleClass="sav-dropdown"
+                    [style]="{ width: '100%' }"
                 ></p-dropdown>
             </div>
         </fieldset>
 
-        <!-- Radio Buttons for Type -->
-        <div class="grid">
-            <!-- Radio Button Group -->
-            <div class="col flex align-items-center flex-row gap-2">
-                <div class="radio-group">
-                    <p-radioButton
-                        (onClick)="getSt($event)"
-                        (ngModelChange)="getSt($event)"
-                        formControlName="typeClient"
-                        value="CLIENT"
-                        aria-label="Client"
-                    ></p-radioButton>
-                    <label class="radio-label ml-2">Client</label>
+        <!-- Client / Société -->
+        <div class="sav-radio-row">
+            <span class="sav-label">Type</span>
+            <div class="sav-radio-group">
+                <p-radioButton
+                    (onClick)="getSt($event)"
+                    (ngModelChange)="getSt($event)"
+                    formControlName="typeClient"
+                    value="CLIENT"
+                    inputId="rb_client"
+                ></p-radioButton>
+                <label for="rb_client" class="sav-radio-label">Client</label>
 
-                    <p-radioButton
-                        (onClick)="getSt($event)"
-                        formControlName="typeClient"
-                        value="COMPANY"
-                        aria-label="Société"
-                    ></p-radioButton>
-                    <label class="radio-label ml-2">Société</label>
-                </div>
-            </div>
-
-            <!-- Conditional Dropdowns -->
-            <div class="col" *ngIf="radioBtn === 'COMPANY'">
-                <label for="company" class="dropdown-label">Société</label>
-                <p-dropdown
-                    [options]="companiesListDropDown"
-                    formControlName="company_id"
-                    optionLabel="company_name"
-                    optionValue="value"
-                    [filter]="true"
-                    filterBy="company_name"
-                    [showClear]="true"
-                    placeholder="Choisir société"
-                    (onFilter)="onCompanyFilter($event)"
-                    (onChange)="selectedDropDownCompany($event)"
-                    (onClear)="clearCompanyDropDown()"
-                ></p-dropdown>
-                <!-- <p-dropdown
-                    [options]="composantList"
-                    optionLabel="name"
-                    optionValue="name"
-                    [filter]="true"
-                    filterBy="name"
-                    [showClear]="true"
-                    placeholder="Choisir composant"
-                    (onFilter)="onComposantFilter($event)"
-                    (onChange)="selectedDropDownComposant($event)"
-                    (onClear)="clearDropDown()"
-                ></p-dropdown> -->
-            </div>
-
-            <div class="col" *ngIf="radioBtn === 'CLIENT'">
-                <label for="client" class="dropdown-label">Client</label>
-                <p-dropdown
-                    id="client"
-                    class="dropdown"
-                    [options]="clientListDropDown"
-                    formControlName="client_id"
-                    optionLabel="label"
-                    optionValue="value"
-                    [showClear]="true"
-                    placeholder="Choisir client"
-                ></p-dropdown>
+                <p-radioButton
+                    (onClick)="getSt($event)"
+                    formControlName="typeClient"
+                    value="COMPANY"
+                    inputId="rb_company"
+                ></p-radioButton>
+                <label for="rb_company" class="sav-radio-label">Société</label>
             </div>
         </div>
 
-        <!-- Remarks -->
-        <div class="form-group">
-            <label for="remarqueManager">Remarque Administration</label>
+        <div class="sav-form-row" *ngIf="radioBtn === 'COMPANY'">
+            <label class="sav-label"
+                >Société <span class="sav-required">*</span></label
+            >
+            <p-dropdown
+                [options]="companiesListDropDown"
+                formControlName="company_id"
+                optionLabel="company_name"
+                optionValue="value"
+                [filter]="true"
+                filterBy="company_name"
+                [showClear]="true"
+                placeholder="Choisir société"
+                styleClass="sav-dropdown"
+                [style]="{ width: '100%' }"
+                (onFilter)="onCompanyFilter($event)"
+                (onChange)="selectedDropDownCompany($event)"
+                (onClear)="clearCompanyDropDown()"
+            ></p-dropdown>
+        </div>
+
+        <div class="sav-form-row" *ngIf="radioBtn === 'CLIENT'">
+            <label class="sav-label"
+                >Client <span class="sav-required">*</span></label
+            >
+            <p-dropdown
+                [options]="clientListDropDown"
+                formControlName="client_id"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                placeholder="Choisir client"
+                styleClass="sav-dropdown"
+                [style]="{ width: '100%' }"
+            ></p-dropdown>
+        </div>
+
+        <div class="sav-form-row">
+            <label class="sav-label" for="remarqueManager"
+                >Remarque Administration</label
+            >
             <textarea
                 id="remarqueManager"
                 rows="2"
-                cols="20"
                 pInputTextarea
                 formControlName="remarqueManager"
-                class="form-control"
+                class="sav-textarea"
+                placeholder="Remarque optionnelle..."
                 (keydown.enter)="$event.preventDefault()"
             ></textarea>
         </div>
 
-        <!-- File Upload -->
-        <div class="form-group">
+        <div class="sav-form-row">
             <p-fileUpload
                 mode="basic"
                 chooseLabel="Ajouter une image"
@@ -341,35 +379,40 @@
                 url="https://www.primefaces.org/cdn/api/upload.php"
                 accept="image/*"
                 maxFileSize="1000000"
+                (onSelect)="onImageSelect($event)"
                 (onUpload)="onUpload($event, 'image')"
+                (onError)="onImageUploadError()"
                 [auto]="true"
+                styleClass="sav-upload-btn"
             ></p-fileUpload>
-            <p *ngIf="uploadFileLoading" class="loading-indicator">
-                Uploading... Please wait.
-            </p>
+            <small *ngIf="uploadFileLoading" class="sav-uploading">
+                <i class="pi pi-spin pi-spinner"></i> Préparation de l'image...
+            </small>
         </div>
 
-        <!-- Toggle Button -->
-        <div class="field">
+        <div class="sav-form-row">
             <p-toggleButton
-                onLabel="Envoyer => Coordinatrice"
+                onLabel="Envoyer → Coordinatrice"
                 offLabel="Garder le DI"
                 (onChange)="onSelectStatusDefaultDI($event)"
+                styleClass="sav-toggle"
             ></p-toggleButton>
         </div>
 
-        <!-- Modal Footer with Action Buttons -->
-        <div class="modal-footer">
+        <div class="sav-dialog-footer">
             <p-button
                 (onClick)="annulerDi()"
                 label="Annuler"
                 severity="danger"
+                [outlined]="true"
+                size="small"
             ></p-button>
-
             <p-button
-                label="Créer"
+                label="Créer la DI"
+                icon="pi pi-plus"
                 [loading]="loadingCreatingDi || uploadFileLoading"
                 (onClick)="createDi()"
+                size="small"
                 [disabled]="
                     !creationDiForm.get('title').value ||
                     !creationDiForm.get('description').value ||
@@ -381,1717 +424,1454 @@
     </form>
 </p-dialog>
 
-<div class="card Header-btns flex justify-content-between">
-    <p-button
-        (click)="showDialogDiCreation()"
-        icon="pi pi-file"
-        label="Ajouter demande d'intervention"
-    ></p-button>
-    <p-button
-        (click)="showDialogCategoryDI()"
-        icon="pi pi-pencil"
-        label="Gérer les category DI"
-        severity="warning"
-    ></p-button>
-    <p-button
-        (click)="showDialogLocations()"
-        icon="pi pi-table"
-        label="Gérer les emplacements"
-        severity="info"
-    ></p-button>
-    <p-button
-        (click)="showDialogPriceTech()"
-        icon="pi pi-dollar"
-        label="Tarif des techniciens"
-        severity="success"
-    ></p-button>
-</div>
-<div class="card">
-    <p-table
-        [columns]="cols"
-        [value]="diList"
-        styleClass="p-datatable-sm"
-        [tableStyle]="{ 'min-width': '20rem' }"
-    >
-        <ng-template pTemplate="caption">
-            <div class="flex justify-content-between">
-                <div>
-                    <button
-                        type="button"
-                        pButton
-                        pRipple
-                        icon="pi pi-file-excel"
-                        (click)="exportExcel()"
-                        class="p-button-success mr-2"
-                        pTooltip="XLS"
-                        tooltipPosition="bottom"
-                    ></button>
-                    <button
-                        type="button"
-                        pButton
-                        pRipple
-                        icon="pi pi-file-pdf"
-                        (click)="exportPdf()"
-                        class="p-button-warning mr-2"
-                        pTooltip="PDF"
-                        tooltipPosition="bottom"
-                    ></button>
+<!-- ═══════════════════════════════════════════════
+     PAGE HEADER
+════════════════════════════════════════════════ -->
+<div class="sav-page">
+    <div class="sav-page-header">
+        <div class="sav-page-title">
+            <i class="pi pi-wrench"></i>
+            <h2>Interventions</h2>
+        </div>
+        <div class="sav-page-actions">
+            <!-- <button
+                pButton
+                icon="pi pi-download"
+                label="Export"
+                class="sav-btn-export"
+                (click)="exportExcel()"
+            ></button> -->
+            <button
+                pButton
+                icon="pi pi-plus"
+                label="+ Nouveau"
+                class="sav-btn-new"
+                (click)="showDialogDiCreation()"
+            ></button>
+        </div>
+    </div>
+
+    <!-- Secondary actions bar -->
+    <div class="sav-action-bar">
+        <button
+            pButton
+            icon="pi pi-pencil"
+            label="Catégories DI"
+            class="p-button-outlined p-button-warning p-button-sm"
+            (click)="showDialogCategoryDI()"
+        ></button>
+        <button
+            pButton
+            icon="pi pi-map-marker"
+            label="Emplacements"
+            class="p-button-outlined p-button-info p-button-sm"
+            (click)="showDialogLocations()"
+        ></button>
+        <button
+            pButton
+            icon="pi pi-dollar"
+            label="Tarifs techniciens"
+            class="p-button-outlined p-button-success p-button-sm"
+            (click)="showDialogPriceTech()"
+        ></button>
+    </div>
+
+    <!-- Retour legend -->
+    <div class="sav-retour-legend">
+        <span class="retour-dot r1"></span><span>1 retour</span>
+        <span class="retour-dot r2"></span><span>2 retours</span>
+        <span class="retour-dot r3"></span><span>3+ retours</span>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+       MAIN TABLE
+  ════════════════════════════════════════════════ -->
+    <div class="sav-table-wrapper">
+        <p-table
+            [columns]="cols"
+            [value]="diList"
+            styleClass="p-datatable-sm sav-main-table"
+            [tableStyle]="{ 'min-width': '100%' }"
+        >
+            <!-- CAPTION: date filter -->
+            <ng-template pTemplate="caption">
+                <div class="sav-table-caption">
+                    <div class="caption-left">
+                        <button
+                            pButton
+                            icon="pi pi-file-excel"
+                            (click)="exportExcel()"
+                            class="p-button-success p-button-sm p-button-outlined"
+                            pTooltip="Exporter XLS"
+                        ></button>
+                        <button
+                            pButton
+                            icon="pi pi-file-pdf"
+                            (click)="exportPdf()"
+                            class="p-button-warning p-button-sm p-button-outlined"
+                            pTooltip="Exporter PDF"
+                        ></button>
+                    </div>
+                    <div class="caption-right">
+                        <p-calendar
+                            [showIcon]="true"
+                            [showOnFocus]="false"
+                            selectionMode="range"
+                            (onSelect)="selectFilterRangeDate($event)"
+                            placeholder="Filtrer par date"
+                            styleClass="sav-cal"
+                        ></p-calendar>
+                    </div>
                 </div>
-                <div>
-                    <p-calendar
-                        [showIcon]="true"
-                        [showOnFocus]="false"
-                        selectionMode="range"
-                        inputId="buttondisplay"
-                        (onSelect)="selectFilterRangeDate($event)"
-                        placeholder="Select date range"
-                    ></p-calendar>
-                </div>
-            </div>
-        </ng-template>
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th *ngFor="let col of columns" style="min-width: 15rem">
-                    {{ col.header }}
-                </th>
-                <th style="min-width: 10rem">Actions</th>
-                <th
-                    style="min-width: 10rem"
-                    *ngIf="rowData?.status === 'PENDING2'"
+            </ng-template>
+
+            <!-- HEADER -->
+            <ng-template pTemplate="header" let-columns>
+                <tr class="sav-thead-row">
+                    <th *ngFor="let col of columns" class="sav-th">
+                        {{ col.header }}
+                    </th>
+                    <th class="sav-th sav-th-actions">Actions</th>
+                </tr>
+                <!-- FILTERS -->
+                <tr class="sav-filter-row">
+                    <th *ngFor="let col of columns" class="sav-th-filter">
+                        <input
+                            pInputText
+                            type="text"
+                            class="sav-filter-input"
+                            placeholder="Chercher..."
+                            (input)="
+                                onColumnSearch(
+                                    col.searchKey,
+                                    $event.target.value
+                                )
+                            "
+                        />
+                    </th>
+                    <th class="sav-th-filter"></th>
+                </tr>
+            </ng-template>
+
+            <!-- BODY -->
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr
+                    class="sav-row"
+                    [ngClass]="{
+                        'row-retour1': rowData.ignoreCount === 1,
+                        'row-retour2': rowData.ignoreCount === 2,
+                        'row-retour3': rowData.ignoreCount >= 3,
+                        'row-facture-logs':
+                            rowData.logs &&
+                            rowData.logs.length > 0 &&
+                            getLatestLogFacture(rowData.logs) &&
+                            rowData.status === 'FINISHED',
+                        'row-facture':
+                            rowData.facture &&
+                            rowData.status === 'FINISHED' &&
+                            rowData.ignoreCount == 0,
+                    }"
                 >
-                    Pricing
-                </th>
-            </tr>
-            <tr>
-                <th *ngFor="let col of columns">
-                    <input
-                        pInputText
-                        type="text"
-                        placeholder="Chercher"
-                        (input)="
-                            onColumnSearch(col.searchKey, $event.target.value)
-                        "
-                    />
-                </th>
-                <th></th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr
-                [ngClass]="{
-                    'row-in-retour1': rowData.ignoreCount === 1,
-                    'row-in-retour2': rowData.ignoreCount === 2,
-                    'row-in-retour3': rowData.ignoreCount === 3,
-                    'facture-checked-logs':
-                        rowData.logs &&
-                        rowData.logs.length > 0 &&
-                        getLatestLogFacture(rowData.logs) &&
-                        rowData.status === 'FINISHED',
-                    'facture-checked':
-                        rowData.facture &&
-                        rowData.status === 'FINISHED' &&
-                        rowData.ignoreCount == 0
-                }"
-            >
-                <td *ngFor="let col of columns">
-                    <ng-container
-                        *ngIf="
-                            col.field !== 'status' && col.field !== 'image';
-                            else specialColumn
-                        "
-                    >
-                        {{ rowData[col.field] || "-" }}
-                    </ng-container>
-                    <ng-template #specialColumn>
+                    <!-- DATA CELLS -->
+                    <td *ngFor="let col of columns" class="sav-td">
                         <ng-container
-                            *ngIf="col.field === 'status'; else imageColumn"
+                            *ngIf="
+                                col.field !== 'status' && col.field !== 'image';
+                                else specialCol
+                            "
                         >
-                            <p-tag
-                                [value]="rowData[col.field]"
-                                [severity]="getSeverity(rowData[col.field])"
-                            ></p-tag>
+                            <span
+                                *ngIf="col.field === 'id'"
+                                class="sav-id-link"
+                                >{{ rowData[col.field] || "—" }}</span
+                            >
+                            <span *ngIf="col.field !== 'id'">{{
+                                rowData[col.field] || "—"
+                            }}</span>
                         </ng-container>
-                        <ng-template #imageColumn>
-                            <p-image
-                                [src]="baseUrl + '/' + rowData.image"
-                                [alt]="rowData.image"
-                                width="50"
-                                class="shadow-4"
-                                [preview]="true"
-                            />
+
+                        <ng-template #specialCol>
+                            <ng-container
+                                *ngIf="col.field === 'status'; else imageCol"
+                            >
+                                <p-tag
+                                    [value]="getStatusLabel(rowData.status)"
+                                    styleClass="status-pill status-{{
+                                        rowData.status
+                                    }}"
+                                ></p-tag>
+                            </ng-container>
+                            <ng-template #imageCol>
+                                <p-image
+                                    [src]="baseUrl + '/' + rowData.image"
+                                    width="40"
+                                    [preview]="true"
+                                    styleClass="sav-thumb"
+                                ></p-image>
+                            </ng-template>
                         </ng-template>
-                    </ng-template>
-                </td>
+                    </td>
 
-                <td class="flex">
-                    <button
-                        pButton
-                        pRipple
-                        severity="help"
-                        icon="pi pi-book"
-                        class="p-button-rounded p-button-raised p-button-success mr-2"
-                        (click)="openTicketDetails(rowData)"
-                    ></button>
-                    <button
-                        *ngIf="rowData.status === 'FINISHED'"
-                        pButton
-                        pRipple
-                        icon="pi pi-link"
-                        class="p-button-rounded p-button-raised p-button-success mr-2"
-                        (click)="openUploadFileFinished(rowData)"
-                    ></button>
-                    <button
-                        *ngIf="
-                            rowData.status === 'CREATED' ||
-                            rowData.status === 'PENDING1'
-                        "
-                        pButton
-                        pRipple
-                        icon="pi pi-pencil"
-                        class="p-button-rounded p-button-raised p-button-success mr-2"
-                        (click)="updateDi(rowData)"
-                    ></button>
-                    <button
-                        pButton
-                        pRipple
-                        icon="pi pi-trash"
-                        class="p-button-rounded p-button-raised p-button-danger mr-2"
-                        (click)="deleteDi(rowData)"
-                    ></button>
+                    <!-- ACTION BUTTONS -->
+                    <td class="sav-td sav-actions-cell">
+                        <!-- Détails -->
+                        <button
+                            pButton
+                            pTooltip="Détails"
+                            tooltipPosition="top"
+                            icon="pi pi-book"
+                            class="sav-icon-btn"
+                            (click)="openTicketDetails(rowData)"
+                        ></button>
 
-                    <button
-                        *ngIf="rowData.status === 'PRICING'"
-                        pButton
-                        pRipple
-                        icon="pi pi-dollar"
-                        class="p-button-rounded p-button-raised mr-2"
-                        (click)="showDialogForPricing(rowData)"
-                    ></button>
-                    <button
-                        *ngIf="rowData.status === 'NEGOTIATION1'"
-                        pButton
-                        pRipple
-                        icon="pi pi-dollar"
-                        class="p-button-rounded p-button-raised p-button-warning mr-2"
-                        (click)="showDialogForNegociate1(rowData)"
-                    ></button>
-                    <button
-                        *ngIf="rowData.status === 'NEGOTIATION2'"
-                        pButton
-                        pRipple
-                        icon="pi pi-money-bill"
-                        class="p-button-rounded p-button-raised p-button-danger mr-2"
-                        (click)="showDialogForNegociate2(rowData)"
-                    ></button>
-                    <div class="flex">
-                        <p-button
-                            [label]="'Retour' + rowData.ignoreCount.toString()"
-                            severity="danger"
+                        <!-- Fichiers (FINISHED) -->
+                        <button
+                            *ngIf="rowData.status === 'FINISHED'"
+                            pButton
+                            pTooltip="Fichiers"
+                            tooltipPosition="top"
+                            icon="pi pi-paperclip"
+                            class="sav-icon-btn"
+                            (click)="openUploadFileFinished(rowData)"
+                        ></button>
+
+                        <!-- Modifier (CREATED / PENDING1) -->
+                        <button
+                            *ngIf="
+                                rowData.status === 'CREATED' ||
+                                rowData.status === 'PENDING1'
+                            "
+                            pButton
+                            pTooltip="Modifier"
+                            tooltipPosition="top"
+                            icon="pi pi-pencil"
+                            class="sav-icon-btn sav-icon-btn--warn"
+                            (click)="updateDi(rowData)"
+                        ></button>
+
+                        <!-- Supprimer -->
+                        <button
+                            pButton
+                            pTooltip="Supprimer"
+                            tooltipPosition="top"
+                            icon="pi pi-trash"
+                            class="sav-icon-btn sav-icon-btn--danger"
+                            (click)="deleteDi(rowData)"
+                        ></button>
+
+                        <!-- Prix initial (PRICING) -->
+                        <button
+                            *ngIf="rowData.status === 'PRICING'"
+                            pButton
+                            pTooltip="Affecter prix"
+                            tooltipPosition="top"
+                            icon="pi pi-dollar"
+                            class="sav-icon-btn sav-icon-btn--info"
+                            (click)="showDialogForPricing(rowData)"
+                        ></button>
+
+                        <!-- Négociation 1 -->
+                        <button
+                            *ngIf="rowData.status === 'NEGOTIATION1'"
+                            pButton
+                            pTooltip="Négociation"
+                            tooltipPosition="top"
+                            icon="pi pi-dollar"
+                            class="sav-icon-btn sav-icon-btn--warn"
+                            (click)="showDialogForNegociate1(rowData)"
+                        ></button>
+
+                        <!-- Négociation 2 -->
+                        <button
+                            *ngIf="rowData.status === 'NEGOTIATION2'"
+                            pButton
+                            pTooltip="Négociation Admin"
+                            tooltipPosition="top"
+                            icon="pi pi-money-bill"
+                            class="sav-icon-btn sav-icon-btn--danger"
+                            (click)="showDialogForNegociate2(rowData)"
+                        ></button>
+
+                        <!-- Retour / Relancer -->
+                        <button
+                            pButton
+                            pTooltip="Retour {{ rowData.ignoreCount }}"
+                            tooltipPosition="top"
+                            [label]="'R' + rowData.ignoreCount"
+                            class="sav-icon-btn sav-icon-btn--retour"
                             (click)="ignore(rowData)"
                             [disabled]="
                                 rowData.ignoreCount === 3 ||
                                 rowData.status !== 'FINISHED'
                             "
-                        ></p-button>
+                        ></button>
 
-                        <p-button
+                        <button
                             *ngIf="
-                                rowData.status === 'RETOUR1' ||
-                                rowData.status === 'RETOUR2' ||
-                                rowData.status === 'RETOUR3'
+                                ['RETOUR1', 'RETOUR2', 'RETOUR3'].includes(
+                                    rowData.status
+                                )
                             "
-                            label="Relancer"
-                            style="margin-left: 0.5rem"
-                            severity="info"
+                            pButton
+                            pTooltip="Relancer"
+                            tooltipPosition="top"
+                            icon="pi pi-refresh"
+                            class="sav-icon-btn sav-icon-btn--info"
                             (click)="changeToPending1(rowData)"
-                        ></p-button>
+                        ></button>
 
-                        <p-button
+                        <button
                             *ngIf="rowData.status === 'CREATED'"
-                            label="Pending1"
-                            severity="info"
+                            pButton
+                            pTooltip="Passer en Pending"
+                            tooltipPosition="top"
+                            icon="pi pi-send"
+                            class="sav-icon-btn sav-icon-btn--info"
                             (click)="changeToPending1(rowData)"
-                            class="pending1-Btn"
-                        ></p-button>
-                    </div>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-    <p-paginator
-        (onPageChange)="onPageChange($event)"
-        [first]="first"
-        [rows]="rows"
-        [totalRecords]="diListCount"
-        [rowsPerPageOptions]="[5, 10, 30]"
-    ></p-paginator>
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <!-- EMPTY STATE -->
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td
+                        [attr.colspan]="(cols?.length || 0) + 1"
+                        class="sav-empty"
+                    >
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucune demande d'intervention trouvée</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <!-- PAGINATOR -->
+        <div class="sav-paginator-wrapper">
+            <span class="sav-count"
+                >1–{{ rows }} sur {{ diListCount }} résultats</span
+            >
+            <p-paginator
+                (onPageChange)="onPageChange($event)"
+                [first]="first"
+                [rows]="rows"
+                [totalRecords]="diListCount"
+                [rowsPerPageOptions]="[5, 10, 30]"
+                styleClass="sav-paginator"
+            ></p-paginator>
+        </div>
+    </div>
 </div>
 
-<!-- NEGOTIATION1 -->
-
+<!-- ═══════════════════════════════════════════════
+     MODAL — NÉGOCIATION 1
+════════════════════════════════════════════════ -->
 <p-dialog
     header="Affectation du prix final"
     [(visible)]="negocite1Modal"
     [modal]="true"
-    [style]="{ width: '50vw' }"
+    [style]="{ width: '580px' }"
     [draggable]="false"
     [resizable]="false"
     (onHide)="hideNegModal($event)"
+    styleClass="sav-dialog"
 >
-    <ng-container>
-        <div class="dialog-body">
-            <!-- File Upload Section -->
-            <div class="file-upload-container">
-                <div>
-                    <p-fileUpload
-                        [disabled]="bcBtnDisabled"
-                        mode="basic"
-                        chooseLabel="Ajouter Bon de commande"
-                        chooseIcon="pi pi-upload"
-                        name="bonDeCommande"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="application/pdf"
-                        maxFileSize="10000000"
-                        (onUpload)="onUpload($event, 'BC')"
-                        [auto]="true"
-                    ></p-fileUpload>
-                    <div class="button-container-BC">
-                        <a
-                            *ngIf="selectedBc"
-                            [href]="baseUrl + selectedBc"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="BC Enregistré"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <a
-                            *ngIf="instantSelectedBc"
-                            [href]="instantSelectedBc"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="BC Selectionné"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <p-button
-                            [disabled]="enregistrerBcBtncondition"
-                            (click)="enregistrerBC()"
-                            label="Enregistrer BC"
-                            [link]="true"
-                        ></p-button>
-                    </div>
+    <div class="sav-neg-body">
+        <!-- Documents section -->
+        <p class="sav-section-label">Documents</p>
+        <div class="sav-upload-grid">
+            <!-- Bon de commande card -->
+            <div
+                class="sav-upload-card"
+                [class.sav-upload-card--done]="bcUploaded"
+            >
+                <div class="sav-card-header">
+                    <i class="pi pi-file"></i>
+                    <span>Bon de commande</span>
                 </div>
-                <div class="file-upload-section">
-                    <p-fileUpload
-                        [disabled]="devisBtnDisabled"
-                        mode="basic"
-                        chooseLabel="Ajouter Devis"
-                        chooseIcon="pi pi-upload"
-                        name="devis"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="application/pdf"
-                        maxFileSize="10000000"
-                        (onUpload)="onUpload($event, 'Devis')"
-                        [auto]="true"
-                    ></p-fileUpload>
-                    <div class="button-container-BC">
-                        <a
-                            *ngIf="selectedDevis"
-                            [href]="baseUrl + selectedDevis"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Devis Enregistré"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <a
-                            *ngIf="instantSelectedDevis"
-                            [href]="instantSelectedDevis"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Devis Selectionné"
-                                [link]="true"
-                            ></p-button>
-                        </a>
+                <p-fileUpload
+                    [disabled]="bcBtnDisabled || bcLoading"
+                    mode="basic"
+                    [chooseLabel]="
+                        bcLoading
+                            ? 'Chargement…'
+                            : bcUploaded
+                              ? 'BC chargé'
+                              : 'Téléverser BC'
+                    "
+                    [chooseIcon]="
+                        bcLoading
+                            ? 'pi pi-spin pi-spinner'
+                            : bcUploaded
+                              ? 'pi pi-check'
+                              : 'pi pi-upload'
+                    "
+                    name="bonDeCommande"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="application/pdf"
+                    maxFileSize="10000000"
+                    (onUpload)="onUpload($event, 'BC')"
+                    (onBeforeUpload)="bcLoading = true"
+                    [auto]="true"
+                    [styleClass]="
+                        'sav-upload-btn' +
+                        (bcUploaded ? ' sav-upload-btn--success' : '')
+                    "
+                ></p-fileUpload>
+                <div class="sav-file-links">
+                    <a
+                        *ngIf="selectedBc"
+                        [href]="baseUrl + selectedBc"
+                        target="_blank"
+                    >
                         <p-button
-                            [disabled]="enregistrerDevisBtncondition"
-                            (click)="enregistrerDevis()"
-                            label="Enregistrer Devis"
+                            label="BC enregistré"
+                            icon="pi pi-eye"
                             [link]="true"
+                            size="small"
                         ></p-button>
-                    </div>
+                    </a>
+                    <a
+                        *ngIf="instantSelectedBc"
+                        [href]="instantSelectedBc"
+                        target="_blank"
+                    >
+                        <p-button
+                            label="BC sélectionné"
+                            icon="pi pi-eye"
+                            [link]="true"
+                            size="small"
+                        ></p-button>
+                    </a>
+                    <p-button
+                        *ngIf="instantSelectedBc"
+                        [disabled]="enregistrerBcBtncondition"
+                        (click)="enregistrerBC()"
+                        label="Enregistrer"
+                        icon="pi pi-save"
+                        [link]="true"
+                        size="small"
+                    ></p-button>
                 </div>
             </div>
 
-            <!-- Price Details Section -->
-            <div class="price-details">
-                <h5>Prix Initial: {{ price }}</h5>
-                <h4>Prix Final: {{ finalPrice ?? "-" }}</h4>
+            <!-- Devis card -->
+            <div
+                class="sav-upload-card"
+                [class.sav-upload-card--done]="devisUploaded"
+            >
+                <div class="sav-card-header">
+                    <i class="pi pi-file-edit"></i>
+                    <span>Devis</span>
+                </div>
+                <p-fileUpload
+                    [disabled]="devisBtnDisabled || devisLoading"
+                    mode="basic"
+                    [chooseLabel]="
+                        devisLoading
+                            ? 'Chargement…'
+                            : devisUploaded
+                              ? 'Devis chargé'
+                              : 'Téléverser Devis'
+                    "
+                    [chooseIcon]="
+                        devisLoading
+                            ? 'pi pi-spin pi-spinner'
+                            : devisUploaded
+                              ? 'pi pi-check'
+                              : 'pi pi-upload'
+                    "
+                    name="devis"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="application/pdf"
+                    maxFileSize="10000000"
+                    (onUpload)="onUpload($event, 'Devis')"
+                    (onBeforeUpload)="devisLoading = true"
+                    [auto]="true"
+                    [styleClass]="
+                        'sav-upload-btn' +
+                        (devisUploaded ? ' sav-upload-btn--success' : '')
+                    "
+                ></p-fileUpload>
+                <div class="sav-file-links">
+                    <a
+                        *ngIf="selectedDevis"
+                        [href]="baseUrl + selectedDevis"
+                        target="_blank"
+                    >
+                        <p-button
+                            label="Devis enregistré"
+                            icon="pi pi-eye"
+                            [link]="true"
+                            size="small"
+                        ></p-button>
+                    </a>
+                    <a
+                        *ngIf="instantSelectedDevis"
+                        [href]="instantSelectedDevis"
+                        target="_blank"
+                    >
+                        <p-button
+                            label="Devis sélectionné"
+                            icon="pi pi-eye"
+                            [link]="true"
+                            size="small"
+                        ></p-button>
+                    </a>
+                    <p-button
+                        *ngIf="instantSelectedDevis"
+                        [disabled]="enregistrerDevisBtncondition"
+                        (click)="enregistrerDevis()"
+                        label="Enregistrer"
+                        icon="pi pi-save"
+                        [link]="true"
+                        size="small"
+                    ></p-button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing section -->
+        <p class="sav-section-label">Tarification</p>
+        <div class="sav-price-grid">
+            <div class="sav-price-card">
+                <span class="sav-price-label">Prix initial</span>
+                <strong class="sav-price-value">{{ price }}</strong>
+            </div>
+            <div class="sav-price-card sav-price-card--highlight">
+                <span class="sav-price-label">Prix final</span>
+                <strong class="sav-price-value">{{ finalPrice ?? "—" }}</strong>
+            </div>
+            <div class="sav-discount-wrap">
+                <label class="sav-price-label">Remise (%)</label>
                 <p-inputNumber
                     [(ngModel)]="discountPercent"
                     inputId="percent"
-                    prefix="%"
-                    [max]="20"
-                ></p-inputNumber>
-            </div>
-
-            <!-- Discount Slider Section -->
-            <div class="discount-slider">
-                <p-slider
+                    suffix="%"
                     [min]="0"
                     [max]="20"
-                    [(ngModel)]="discountPercent"
-                    class="slider-full-width"
-                    (onSlideEnd)="onSlideEnd($event)"
-                ></p-slider>
-            </div>
-
-            <!-- Action Buttons Section -->
-            <div class="action-buttons">
-                <p-button
-                    pRipple
-                    label="Appliquer Remise"
-                    icon="pi pi-dollar"
-                    class="button-success"
-                    severity="secondary"
-                    (click)="discountByPercent()"
-                ></p-button>
-                <ng-container *ngIf="slideEnd === 20">
-                    <button
-                        pButton
-                        pRipple
-                        label="Envoyer a l'Admin Manager"
-                        icon="pi pi-send"
-                        class="button-success"
-                        severity="warn"
-                        (click)="nextNegociate2()"
-                    ></button>
-                </ng-container>
-                <p-button
-                    pRipple
-                    label="Confirmer"
-                    icon="pi pi-check-circle"
-                    class="button-success"
-                    severity="success"
-                    [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
-                    (click)="confirmerNegociation(0)"
-                ></p-button>
+                    styleClass="sav-number-input"
+                ></p-inputNumber>
+                <small class="sav-hint">max 20%</small>
             </div>
         </div>
-    </ng-container>
+
+        <!-- Warning banner at 20% -->
+        <div class="sav-warn-banner" *ngIf="slideEnd === 20">
+            <i class="pi pi-exclamation-triangle"></i>
+            Remise maximale atteinte — validation Admin Manager requise.
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="sav-dialog-footer">
+            <p-button
+                label="Appliquer remise"
+                icon="pi pi-percentage"
+                severity="secondary"
+                size="small"
+                (click)="discountByPercent()"
+            ></p-button>
+            <p-button
+                *ngIf="slideEnd === 20"
+                label="Envoyer Admin Manager"
+                icon="pi pi-send"
+                severity="warning"
+                size="small"
+                (click)="nextNegociate2()"
+            ></p-button>
+            <p-button
+                label="Confirmer"
+                icon="pi pi-check"
+                severity="success"
+                size="small"
+                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
+                (click)="confirmerNegociation(0)"
+            ></p-button>
+        </div>
+    </ng-template>
 </p-dialog>
 
-<!-- NEGOTIATION2 -->
+<!-- ═══════════════════════════════════════════════
+     MODAL — NÉGOCIATION 2
+════════════════════════════════════════════════ -->
 <p-dialog
-    header="Affectation Prix Finale"
+    header="Affectation Prix Finale — Admin"
     [(visible)]="negocite2Modal"
     [modal]="true"
-    [style]="{ width: '50vw' }"
+    [style]="{ width: '580px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog"
 >
-    <ng-container>
-        <div class="dialog-body">
-            <div class="file-upload-container">
-                <div>
-                    <p-fileUpload
-                        [disabled]="bcBtnDisabled"
-                        mode="basic"
-                        chooseLabel="Ajouter Bon de commande"
-                        chooseIcon="pi pi-upload"
-                        name="bonDeCommande"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="application/pdf"
-                        maxFileSize="10000000"
-                        (onUpload)="onUpload($event, 'BC')"
-                        [auto]="true"
-                    />
-                    <div class="button-container-BC">
-                        <a
-                            *ngIf="selectedBc"
-                            [href]="baseUrl + selectedBc"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Consulter BC"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <a
-                            *ngIf="instantSelectedBc"
-                            [href]="instantSelectedBc"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Consulter BC preview"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <p-button
-                            [disabled]="enregistrerBcBtncondition"
-                            (click)="enregistrerBC()"
-                            label="Enregistrer BC"
+    <div class="sav-neg-body">
+        <div class="sav-upload-pair">
+            <div class="sav-upload-block">
+                <p-fileUpload
+                    [disabled]="bcBtnDisabled"
+                    mode="basic"
+                    chooseLabel="Bon de commande"
+                    chooseIcon="pi pi-upload"
+                    name="bonDeCommande"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="application/pdf"
+                    maxFileSize="10000000"
+                    (onUpload)="onUpload($event, 'BC')"
+                    [auto]="true"
+                    styleClass="sav-upload-btn"
+                />
+                <div class="sav-file-links">
+                    <a
+                        *ngIf="selectedBc"
+                        [href]="baseUrl + selectedBc"
+                        target="_blank"
+                        ><p-button
+                            label="Consulter BC"
                             [link]="true"
-                        ></p-button>
-                    </div>
-                </div>
-                <div class="file-upload-section">
-                    <p-fileUpload
-                        [disabled]="devisBtnDisabled"
-                        mode="basic"
-                        chooseLabel="Ajouter Devis"
-                        chooseIcon="pi pi-upload"
-                        name="devis"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept="application/pdf"
-                        maxFileSize="10000000"
-                        (onUpload)="onUpload($event, 'Devis')"
-                        [auto]="true"
-                    />
-                    <div class="button-container-BC">
-                        <a
-                            *ngIf="selectedDevis"
-                            [href]="baseUrl + selectedDevis"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Consulter Devis"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <a
-                            *ngIf="instantSelectedDevis"
-                            [href]="instantSelectedDevis"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Consulter Devis preview"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <p-button
-                            [disabled]="enregistrerDevisBtncondition"
-                            (click)="enregistrerDevis()"
-                            label="Enregistrer Devis"
+                            size="small"
+                        ></p-button
+                    ></a>
+                    <a
+                        *ngIf="instantSelectedBc"
+                        [href]="instantSelectedBc"
+                        target="_blank"
+                        ><p-button
+                            label="BC preview"
                             [link]="true"
-                        ></p-button>
-                    </div>
+                            size="small"
+                        ></p-button
+                    ></a>
+                    <p-button
+                        [disabled]="enregistrerBcBtncondition"
+                        (click)="enregistrerBC()"
+                        label="Enregistrer BC"
+                        [link]="true"
+                        size="small"
+                    ></p-button>
                 </div>
             </div>
-            <!-- Price Details Section -->
-            <div class="price-details">
-                <h5>Prix Initial: {{ price }}</h5>
-                <h4>Prix Final: {{ finalPrice }}</h4>
-                <p-inputNumber
-                    [(ngModel)]="discountPercent"
-                    inputId="percent"
-                    prefix="%"
-                ></p-inputNumber>
-            </div>
-
-            <!-- Discount Slider Section -->
-            <div class="discount-slider">
-                <p-slider
-                    [min]="20"
-                    [max]="25"
-                    [(ngModel)]="discountPercent"
-                    class="slider-full-width"
-                    (onSlideEnd)="onSlideAdminEnd($event)"
-                ></p-slider>
-            </div>
-
-            <div class="action-buttons">
-                <p-button
-                    pRipple
-                    label="Appliquer Remise"
-                    icon="pi pi-dollar"
-                    class="button-success"
-                    severity="secondary"
-                    (click)="discountByPercent2()"
+            <div class="sav-upload-block">
+                <p-fileUpload
+                    [disabled]="devisBtnDisabled"
+                    mode="basic"
+                    chooseLabel="Devis"
+                    chooseIcon="pi pi-upload"
+                    name="devis"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="application/pdf"
+                    maxFileSize="10000000"
+                    (onUpload)="onUpload($event, 'Devis')"
+                    [auto]="true"
+                    styleClass="sav-upload-btn"
                 />
-
-                <p-button
-                    pRipple
-                    label="Confirmer"
-                    icon="pi pi-check-circle"
-                    class="button-success"
-                    [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
-                    severity="success"
-                    (click)="confirmerNegociation(1)"
-                />
+                <div class="sav-file-links">
+                    <a
+                        *ngIf="selectedDevis"
+                        [href]="baseUrl + selectedDevis"
+                        target="_blank"
+                        ><p-button
+                            label="Consulter Devis"
+                            [link]="true"
+                            size="small"
+                        ></p-button
+                    ></a>
+                    <a
+                        *ngIf="instantSelectedDevis"
+                        [href]="instantSelectedDevis"
+                        target="_blank"
+                        ><p-button
+                            label="Devis preview"
+                            [link]="true"
+                            size="small"
+                        ></p-button
+                    ></a>
+                    <p-button
+                        [disabled]="enregistrerDevisBtncondition"
+                        (click)="enregistrerDevis()"
+                        label="Enregistrer Devis"
+                        [link]="true"
+                        size="small"
+                    ></p-button>
+                </div>
             </div>
         </div>
-    </ng-container>
+        <div class="sav-price-row">
+            <div class="sav-price-item">
+                <span>Prix Initial</span><strong>{{ price }}</strong>
+            </div>
+            <div class="sav-price-item highlight">
+                <span>Prix Final</span><strong>{{ finalPrice }}</strong>
+            </div>
+            <p-inputNumber
+                [(ngModel)]="discountPercent"
+                inputId="percent"
+                prefix="%"
+                styleClass="sav-number-input"
+            ></p-inputNumber>
+        </div>
+        <div class="sav-slider-wrap">
+            <span class="sav-slider-label">20%</span>
+            <p-slider
+                [min]="20"
+                [max]="25"
+                [(ngModel)]="discountPercent"
+                styleClass="sav-slider"
+                (onSlideEnd)="onSlideAdminEnd($event)"
+            ></p-slider>
+            <span class="sav-slider-label">25%</span>
+        </div>
+        <div class="sav-dialog-footer">
+            <p-button
+                label="Appliquer remise"
+                icon="pi pi-percentage"
+                severity="secondary"
+                size="small"
+                (click)="discountByPercent2()"
+            />
+            <p-button
+                label="Confirmer"
+                icon="pi pi-check"
+                severity="success"
+                size="small"
+                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
+                (click)="confirmerNegociation(1)"
+            />
+        </div>
+    </div>
 </p-dialog>
 
+<!-- ═══════════════════════════════════════════════
+     MODAL — PRICING INITIAL
+════════════════════════════════════════════════ -->
 <p-dialog
-    class="pricing-ad-dialog"
-    header="Affectation du prix Intial "
+    header="Affectation du prix Initial"
     [(visible)]="pricingModal"
     [modal]="true"
-    [style]="{ width: '50vw' }"
+    [style]="{ width: '560px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog"
 >
-    <ng-container>
-        <!-- First Flow -->
-        <div class="pricing-ad-container">
-            <div class="pricing-ad-content">
-                <div *ngIf="ignoreCountPricing > 0">
-                    <div>
-                        <h4>Avant Retour</h4>
+    <div class="sav-pricing-body">
+        <div *ngIf="ignoreCountPricing > 0" class="sav-pricing-history">
+            <div class="sav-pricing-hist-item">
+                <h5 class="sav-hist-title">Avant Retour</h5>
+                <div class="sav-price-row">
+                    <div class="sav-price-item">
+                        <span>Prix initial</span
+                        ><strong>{{ initialPriceAffichage }}</strong>
                     </div>
-
-                    <div class="price-container">
-                        <strong class="price-item"
-                            >Prix initial: {{ initialPriceAffichage }}</strong
-                        >
-                        <strong class="price-item"
-                            >Prix finale: {{ priceRemiseAffichage }}</strong
-                        >
-                        <!-- <strong class="price-item"
-                            >Remise {{ remiseAffichage }}%</strong
-                        > -->
+                    <div class="sav-price-item">
+                        <span>Prix final</span
+                        ><strong>{{ priceRemiseAffichage }}</strong>
                     </div>
                 </div>
-                <div *ngIf="ignoreCountPricing > 0">
-                    <div *ngFor="let item of pricesLogs" class="retourCenter">
-                        <h4>Retour {{ item.ignoreDispaly }}</h4>
-                        <div class="price-container">
-                            <strong class="price-item"
-                                >Prix initial: {{ item.priceLogs }}</strong
-                            >
-                            <strong class="price-item"
-                                >Prix finale:
-                                {{ item.final_priceLog ?? "N/A" }}</strong
-                            >
-                        </div>
+            </div>
+            <div *ngFor="let item of pricesLogs" class="sav-pricing-hist-item">
+                <h5 class="sav-hist-title">Retour {{ item.ignoreDispaly }}</h5>
+                <div class="sav-price-row">
+                    <div class="sav-price-item">
+                        <span>Prix initial</span
+                        ><strong>{{ item.priceLogs }}</strong>
                     </div>
-
-                    <h6 class="error-status">
-                        Erreur Fixtronix:
-                        <span
-                            class="{{
-                                isErrorFromFixtronix
-                                    ? 'status-yes'
-                                    : 'status-no'
-                            }}"
-                        >
-                            {{ isErrorFromFixtronix ? "OUI" : "NON" }}
-                        </span>
-                    </h6>
+                    <div class="sav-price-item">
+                        <span>Prix final</span
+                        ><strong>{{ item.final_priceLog ?? "N/A" }}</strong>
+                    </div>
                 </div>
-
-                <h5 class="pricing-ad-heading">
-                    Le temps de diagnostic est de {{ timeDiagnostique }}
-                </h5>
-                <h5 class="pricing-ad-heading">
-                    Facturation diagnostique technicien est de
-                    {{ facturationDiagnostique }} TND
-                </h5>
-                <h5
-                    *ngIf="
-                        totalComposant && totalComposant !== 0;
-                        else noComposant
-                    "
-                    class="pricing-ad-heading"
-                >
-                    Le total des composants est égal à {{ totalComposant }} TND
-                </h5>
-                <ng-template #noComposant>
-                    <h5 class="pricing-ad-heading">
-                        DI ne contient pas de composants
-                    </h5>
-                </ng-template>
-                <h4 class="pricing-ad-total">
-                    <span class="highlight-text">Le côut Total est de</span>
-                    {{ totalComposant + facturationDiagnostique }} TND
-                </h4>
+            </div>
+            <div
+                class="sav-error-badge"
+                [ngClass]="isErrorFromFixtronix ? 'error-yes' : 'error-no'"
+            >
+                Erreur Fixtronix :
+                <strong>{{ isErrorFromFixtronix ? "OUI" : "NON" }}</strong>
             </div>
         </div>
 
-        <!-- Return Flow -->
-        <div *ngIf="ignoreCount > 0" class="pricing-ad-return">
-            <!-- Old Data -->
-            <div class="pricing-ad-old-data">
-                <span class="pricing-ad-text"
-                    >Le temps de diagnostic initial est de
-                    {{ timeDiagnostique }}</span
+        <div class="sav-diag-info">
+            <div class="sav-diag-row">
+                <i class="pi pi-clock"></i
+                ><span
+                    >Temps diagnostic :
+                    <strong>{{ timeDiagnostique }}</strong></span
                 >
-                <span class="pricing-ad-text"
-                    >Facturation diagnostique initial est de
-                    {{ facturationDiagnostique }} TND</span
-                >
-                <span
-                    *ngIf="
-                        totalComposant && totalComposant !== 0;
-                        else noComposant
-                    "
-                    class="pricing-ad-text"
-                >
-                    Le total des composants avant retour égal à
-                    {{ totalComposant }} TND
-                </span>
-                <ng-template #noComposant>
-                    <h5 class="pricing-ad-heading">
-                        DI ne contient pas de composants avant retour
-                    </h5>
-                </ng-template>
-                <h4 class="pricing-ad-heading">
-                    Le côut Total initial est de
-                    {{ totalComposant + facturationDiagnostique }} TND
-                </h4>
             </div>
-            <!-- New Data of Return -->
-            <div class="pricing-ad-new-data">
-                <!-- Add any content for the new data of return -->
+            <div class="sav-diag-row">
+                <i class="pi pi-dollar"></i
+                ><span
+                    >Facturation diagnostic :
+                    <strong>{{ facturationDiagnostique }} TND</strong></span
+                >
+            </div>
+            <div
+                class="sav-diag-row"
+                *ngIf="totalComposant && totalComposant !== 0; else noComp"
+            >
+                <i class="pi pi-box"></i
+                ><span
+                    >Total composants :
+                    <strong>{{ totalComposant }} TND</strong></span
+                >
+            </div>
+            <ng-template #noComp>
+                <div class="sav-diag-row sav-muted">
+                    <i class="pi pi-info-circle"></i
+                    ><span>DI sans composants</span>
+                </div>
+            </ng-template>
+            <div class="sav-diag-total">
+                Coût total :
+                <strong
+                    >{{ totalComposant + facturationDiagnostique }} TND</strong
+                >
             </div>
         </div>
 
-        <ng-template #notPrice>
-            <i class="pi pi-spin pi-spinner pricing-ad-spinner"></i>
-        </ng-template>
-
-        <div class="pricing-ad-message">
-            <div class="pricing-ad-text">
-                Veuillez affecter le prix initial avant la négociation avec le
-                client.
-            </div>
+        <div class="sav-pricing-note">
+            Veuillez affecter le prix initial avant la négociation avec le
+            client.
         </div>
 
-        <div class="pricing-ad-footer">
-            <div class="pricing-ad-footer-container">
-                <p-inputNumber
-                    inputId="integeronly"
-                    [(ngModel)]="price"
-                    class="pricing-ad-input"
-                    [min]="0"
-                    [max]="50000"
-                    [step]="1"
-                    placeholder="Affecter le prix"
-                    mode="currency"
-                    currency="TND"
-                ></p-inputNumber>
-                <button
-                    pButton
-                    pRipple
-                    label="Affecter Prix"
-                    icon="pi pi-check-circle"
-                    class="p-button-rounded p-button-raised p-button-success pricing-ad-button"
-                    (click)="pricing()"
-                ></button>
-            </div>
+        <div class="sav-dialog-footer">
+            <p-inputNumber
+                [(ngModel)]="price"
+                inputId="integeronly"
+                [min]="0"
+                [max]="50000"
+                [step]="1"
+                placeholder="Affecter le prix"
+                mode="currency"
+                currency="TND"
+                styleClass="sav-number-input"
+            ></p-inputNumber>
+            <button
+                pButton
+                pRipple
+                label="Affecter Prix"
+                icon="pi pi-check-circle"
+                class="p-button-success p-button-raised"
+                [disabled]="price === null || price === undefined || price <= 0"
+                (click)="pricing()"
+            ></button>
         </div>
-    </ng-container>
+    </div>
 </p-dialog>
 
-<!-- finished status -->
+<!-- ═══════════════════════════════════════════════
+     MODAL — FICHIERS FINISHED
+════════════════════════════════════════════════ -->
 <p-dialog
     header="Affectation des Fichiers"
     [(visible)]="filsFinished"
     [modal]="true"
-    [style]="{ width: '50vw' }"
+    [style]="{ width: '560px' }"
     [draggable]="false"
     [resizable]="false"
     appendTo="body"
+    styleClass="sav-dialog"
 >
-    <div>
-        <!-- Consulter les fichiers section -->
-        <div>
-            <h3 class="dialog-title">Fichier avant retour</h3>
-            <div class="button-row">
-                <div class="button-container">
-                    <a
-                        *ngIf="filesSelected?.bon_de_commande"
-                        [href]="baseUrl + filesSelected?.bon_de_commande"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button label="Consulter BC" [link]="true"></p-button>
-                    </a>
-                </div>
-                <div class="button-container">
-                    <a
-                        *ngIf="filesSelected?.bon_de_livraison"
-                        [href]="baseUrl + filesSelected?.bon_de_livraison"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button label="Consulter BL" [link]="true"></p-button>
-                    </a>
-                </div>
-                <div class="button-container">
-                    <a
-                        *ngIf="filesSelected?.facture"
-                        [href]="baseUrl + filesSelected?.facture"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button
-                            label="Consulter facture"
-                            [link]="true"
-                        ></p-button>
-                    </a>
-                </div>
-                <div class="button-container">
-                    <a
-                        *ngIf="filesSelected?.devis"
-                        [href]="baseUrl + filesSelected?.devis"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <p-button
-                            label="Consulter Devis"
-                            [link]="true"
-                        ></p-button>
-                    </a>
-                </div>
-            </div>
+    <div class="sav-files-body">
+        <h4 class="sav-files-section-title">Fichiers principaux</h4>
+        <div class="sav-files-row">
+            <a
+                *ngIf="filesSelected?.bon_de_commande"
+                [href]="baseUrl + filesSelected?.bon_de_commande"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> BC</a
+            >
+            <a
+                *ngIf="filesSelected?.bon_de_livraison"
+                [href]="baseUrl + filesSelected?.bon_de_livraison"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> BL</a
+            >
+            <a
+                *ngIf="filesSelected?.facture"
+                [href]="baseUrl + filesSelected?.facture"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> Facture</a
+            >
+            <a
+                *ngIf="filesSelected?.devis"
+                [href]="baseUrl + filesSelected?.devis"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> Devis</a
+            >
         </div>
 
-        <!-- Retour section -->
         <div *ngFor="let files of finishedData?.logs; let i = index">
-            <h3 class="dialog-title">Retour N°{{ i + 1 }}</h3>
-            <div class="button-row">
+            <h4 class="sav-files-section-title">Retour N°{{ i + 1 }}</h4>
+            <div class="sav-files-row">
                 <a
                     *ngIf="files?.bon_de_commande"
                     [href]="baseUrl + files.bon_de_commande"
                     target="_blank"
-                    class="file-link"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BC</a
                 >
-                    <p-button label="Consulter BC" [link]="true"></p-button>
-                </a>
                 <a
                     *ngIf="files?.bon_de_livraison"
                     [href]="baseUrl + files.bon_de_livraison"
                     target="_blank"
-                    class="file-link"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BL</a
                 >
-                    <p-button label="Consulter BL" [link]="true"></p-button>
-                </a>
-
                 <a
                     *ngIf="files?.facture"
                     [href]="baseUrl + files.facture"
                     target="_blank"
-                    class="file-link"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Facture</a
                 >
-                    <p-button
-                        label="Consulter Facture"
-                        [link]="true"
-                    ></p-button>
-                </a>
                 <a
                     *ngIf="files?.devis"
                     [href]="baseUrl + files.devis"
                     target="_blank"
-                    class="file-link"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Devis</a
                 >
-                    <p-button label="Consulter Devis" [link]="true"></p-button>
-                </a>
+            </div>
+        </div>
+
+        <h4 class="sav-files-section-title">Affecter BL & Facture</h4>
+        <div class="sav-upload-pair">
+            <div class="sav-upload-block">
+                <p-fileUpload
+                    [disabled]="blBtnDisabled || blLoading"
+                    mode="basic"
+                    [chooseLabel]="
+                        blLoading ? 'Chargement BL...' : 'Bon de livraison'
+                    "
+                    [chooseIcon]="
+                        blLoading ? 'pi pi-spinner pi-spin' : 'pi pi-upload'
+                    "
+                    name="blUpload"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept=".pdf"
+                    maxFileSize="1000000"
+                    (onBeforeUpload)="blLoading = true"
+                    (onUpload)="onUpload($event, 'BL')"
+                    (onError)="blLoading = false"
+                    [auto]="true"
+                    styleClass="sav-upload-btn"
+                ></p-fileUpload>
+                <small *ngIf="blLoading" class="sav-uploading">
+                    <i class="pi pi-spinner pi-spin"></i>
+                    Préparation du bon de livraison...
+                </small>
+                <div class="sav-file-links">
+                    <a *ngIf="selectedBL" [href]="selectedBL" target="_blank"
+                        ><p-button
+                            label="Consulter BL"
+                            [link]="true"
+                            size="small"
+                        ></p-button
+                    ></a>
+                    <p-button
+                        [disabled]="enregistrerBlBtncondition || blLoading"
+                        (click)="enregistrerBL()"
+                        label="Enregistrer BL"
+                        [link]="true"
+                        size="small"
+                    ></p-button>
+                </div>
+            </div>
+            <div class="sav-upload-block">
+                <p-fileUpload
+                    [disabled]="factureBtnDisabled || factureLoading"
+                    mode="basic"
+                    [chooseLabel]="
+                        factureLoading ? 'Chargement facture...' : 'Facture'
+                    "
+                    [chooseIcon]="
+                        factureLoading
+                            ? 'pi pi-spinner pi-spin'
+                            : 'pi pi-upload'
+                    "
+                    name="factureUpload"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept=".pdf"
+                    maxFileSize="1000000"
+                    (onBeforeUpload)="factureLoading = true"
+                    (onUpload)="onUpload($event, 'Facture')"
+                    (onError)="factureLoading = false"
+                    [auto]="true"
+                    styleClass="sav-upload-btn"
+                ></p-fileUpload>
+                <small *ngIf="factureLoading" class="sav-uploading">
+                    <i class="pi pi-spinner pi-spin"></i>
+                    Préparation de la facture...
+                </small>
+                <div class="sav-file-links">
+                    <a
+                        *ngIf="selectedFacture"
+                        [href]="selectedFacture"
+                        target="_blank"
+                        ><p-button
+                            label="Consulter Facture"
+                            [link]="true"
+                            size="small"
+                        ></p-button
+                    ></a>
+                    <p-button
+                        [disabled]="
+                            enregistrerFactureBtncondition || factureLoading
+                        "
+                        (click)="enregistrerFacture()"
+                        label="Enregistrer Facture"
+                        [link]="true"
+                        size="small"
+                    ></p-button>
+                </div>
             </div>
         </div>
     </div>
-    <ng-container>
-        <div class="dialog-content">
-            <h3 class="dialog-title">Affecter Bon de livraison et Facture</h3>
-            <div class="file-upload-row">
-                <div class="file-upload-wrapper">
-                    <p-fileUpload
-                        [disabled]="blBtnDisabled"
-                        mode="basic"
-                        chooseLabel="Ajouter Bon de livraison"
-                        chooseIcon="pi pi-upload"
-                        name="blUpload"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept=".pdf"
-                        maxFileSize="1000000"
-                        (onUpload)="onUpload($event, 'BL')"
-                        [auto]="true"
-                    ></p-fileUpload>
-
-                    <div class="button-container-BC">
-                        <a
-                            *ngIf="selectedBL"
-                            [href]="
-                                selectedBL ??
-                                baseUrl +
-                                    finishedData?.original?.bon_de_livraison
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Consulter BL"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <p-button
-                            [disabled]="enregistrerBlBtncondition"
-                            (click)="enregistrerBL()"
-                            label="Enregistrer BL"
-                            [link]="true"
-                        ></p-button>
-                    </div>
-                </div>
-
-                <div class="file-upload-wrapper">
-                    <p-fileUpload
-                        [disabled]="factureBtnDisabled"
-                        mode="basic"
-                        chooseLabel="Ajouter Facture"
-                        chooseIcon="pi pi-upload"
-                        name="factureUpload"
-                        url="https://www.primefaces.org/cdn/api/upload.php"
-                        accept=".pdf"
-                        maxFileSize="1000000"
-                        (onUpload)="onUpload($event, 'Facture')"
-                        [auto]="true"
-                    ></p-fileUpload>
-                    <div class="button-container-BC">
-                        <a
-                            *ngIf="selectedFacture"
-                            [href]="
-                                selectedFacture ??
-                                baseUrl + finishedData?.original?.facture
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <p-button
-                                label="Consulter Facture"
-                                [link]="true"
-                            ></p-button>
-                        </a>
-                        <p-button
-                            [disabled]="enregistrerFactureBtncondition"
-                            (click)="enregistrerFacture()"
-                            label="Enregistrer facture"
-                            [link]="true"
-                        ></p-button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ng-container>
 </p-dialog>
 
-<!-- finished status -->
-
+<!-- ═══════════════════════════════════════════════
+     MODAL — TICKET DETAILS
+════════════════════════════════════════════════ -->
 <p-dialog
     header="Information demande d'intervention"
     [(visible)]="ticketDetailsInfo"
     [modal]="true"
-    [style]="{ width: '50vw', height: '50vw' }"
+    [style]="{ width: '620px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog"
 >
-    <div>
-        <!-- Title -->
-        <div>
-            <h3>Titre: {{ ticketData?.data?.title }}</h3>
-            <!-- Di classique information  -->
-            <div class="form-group1">
-                <strong class="form-group">Information Principale</strong>
-                <div class="form-item">
-                    <i class="pi pi-user"></i> <strong>Client ID:</strong>
-                    {{ ticketData?.data?.client_id }}
-                    {{ ticketData?.data?.company_id }}
-                </div>
-                <div class="form-item">
-                    <i class="pi pi-user-edit"></i>
-                    <strong>Di Créer Par:</strong>
-                    {{ ticketData?.data?.createdBy }}
-                </div>
-                <div class="form-item">
-                    <i class="pi pi-map-marker"></i>
-                    <strong>Emplacement:</strong>
-                    {{ ticketData?.data?.location_id }}
-                </div>
-                <div class="form-item">
-                    <i class="pi pi-calendar"></i>
-                    <strong>Date de creation:</strong>
-                    {{ ticketData?.data?.createdAt }}
-                </div>
+    <div class="sav-ticket-body">
+        <h3 class="sav-ticket-title">{{ ticketData?.data?.title }}</h3>
+
+        <div class="sav-info-grid">
+            <div class="sav-info-item">
+                <i class="pi pi-user"></i><span>Client / Société</span
+                ><strong>{{
+                    ticketData?.data?.client_id ||
+                        ticketData?.data?.company_id ||
+                        "—"
+                }}</strong>
+            </div>
+            <div class="sav-info-item">
+                <i class="pi pi-user-edit"></i><span>Créé par</span
+                ><strong>{{ ticketData?.data?.createdBy }}</strong>
+            </div>
+            <div class="sav-info-item">
+                <i class="pi pi-map-marker"></i><span>Emplacement</span
+                ><strong>{{ ticketData?.data?.location_id }}</strong>
+            </div>
+            <div class="sav-info-item">
+                <i class="pi pi-calendar"></i><span>Date création</span
+                ><strong>{{ ticketData?.data?.createdAt }}</strong>
             </div>
         </div>
-        <div>
-            <div class="pdr-container">
-                <div class="pdr-card">
-                    <h6>
-                        Prix Initial:
-                        <span>{{ ticketData?.data?.price ?? "N/A" }}</span>
-                    </h6>
-                    <h6>
-                        Prix Finale:
-                        <span>{{
-                            ticketData?.data?.final_price ?? "N/A"
-                        }}</span>
-                    </h6>
-                </div>
 
-                <div class="pdr-card">
-                    <h6>
-                        Réparable:
-                        <span>
-                            {{
-                                ticketData?.data?.can_be_repaired === true
-                                    ? "OUI"
-                                    : ticketData?.data?.can_be_repaired ===
-                                      false
-                                    ? "NON"
-                                    : "N/A"
-                            }}
-                        </span>
-                    </h6>
-                    <h6 *ngIf="ticketData?.data?.can_be_repaired === true">
-                        Contient PDR:
-                        <span>{{
-                            ticketData?.data?.contain_pdr ? "OUI" : "NON"
-                        }}</span>
-                    </h6>
-                </div>
-
-                <div class="pdr-card">
-                    <h6>
-                        Tech Diagnostique:
-                        <span>{{ ticketData?.data?.techDiag ?? "N/A" }}</span>
-                    </h6>
-                    <h6>
-                        Tech Réparation:
-                        <span>{{ ticketData?.data?.techRep ?? "N/A" }}</span>
-                    </h6>
-                </div>
+        <div class="sav-price-row">
+            <div class="sav-price-item">
+                <span>Prix Initial</span
+                ><strong>{{ ticketData?.data?.price ?? "N/A" }}</strong>
             </div>
-
-            <p-table
-                *ngIf="ticketData?.data?.contain_pdr == true"
-                [value]="ticketData?.data?.array_composants"
-                [paginator]="true"
-                [rows]="10"
-                [responsiveLayout]="'scroll'"
+            <div class="sav-price-item highlight">
+                <span>Prix Final</span
+                ><strong>{{ ticketData?.data?.final_price ?? "N/A" }}</strong>
+            </div>
+            <div class="sav-price-item">
+                <span>Réparable</span>
+                <strong
+                    [ngClass]="
+                        ticketData?.data?.can_be_repaired === true
+                            ? 'text-green'
+                            : ticketData?.data?.can_be_repaired === false
+                              ? 'text-red'
+                              : ''
+                    "
+                >
+                    {{
+                        ticketData?.data?.can_be_repaired === true
+                            ? "OUI"
+                            : ticketData?.data?.can_be_repaired === false
+                              ? "NON"
+                              : "N/A"
+                    }}
+                </strong>
+            </div>
+            <div
+                class="sav-price-item"
+                *ngIf="ticketData?.data?.can_be_repaired === true"
             >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Nom du Composant</th>
-                        <th>Quantité</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-composant>
-                    <tr>
-                        <td>{{ composant.nameComposant }}</td>
-                        <td>{{ composant.quantity }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+                <span>PDR</span
+                ><strong>{{
+                    ticketData?.data?.contain_pdr ? "OUI" : "NON"
+                }}</strong>
+            </div>
         </div>
 
-        <!-- Description -->
-        <div class="form-group">
-            <label for="description">Description</label>
+        <div class="sav-tech-row">
+            <div class="sav-tech-item">
+                <i class="pi pi-search"></i><span>Tech Diag</span
+                ><strong>{{ ticketData?.data?.techDiag ?? "—" }}</strong>
+            </div>
+            <div class="sav-tech-item">
+                <i class="pi pi-wrench"></i><span>Tech Répar.</span
+                ><strong>{{ ticketData?.data?.techRep ?? "—" }}</strong>
+            </div>
+        </div>
+
+        <p-table
+            *ngIf="ticketData?.data?.contain_pdr == true"
+            [value]="ticketData?.data?.array_composants"
+            [paginator]="true"
+            [rows]="5"
+            styleClass="p-datatable-sm sav-modal-table"
+        >
+            <ng-template pTemplate="header"
+                ><tr>
+                    <th>Composant</th>
+                    <th>Qté</th>
+                </tr></ng-template
+            >
+            <ng-template pTemplate="body" let-c
+                ><tr>
+                    <td>{{ c.nameComposant }}</td>
+                    <td>{{ c.quantity }}</td>
+                </tr></ng-template
+            >
+        </p-table>
+
+        <div class="sav-form-row">
+            <label class="sav-label">Description</label>
             <textarea
-                [(ngModel)]="ticketData?.data.description!"
-                id="description"
+                [(ngModel)]="ticketData?.data.description"
                 rows="3"
-                class="form-control"
-                aria-label="Description"
-                placeholder="Pas de Description"
-                disabled="true"
+                class="sav-textarea sav-textarea--readonly"
+                disabled
             ></textarea>
         </div>
-
-        <div class="form-group">
-            <span id="can_be_repaired"> </span>
-            <label for="remarque_tech_diagnostic"
-                >Remarque Administration
-            </label>
+        <div class="sav-form-row">
+            <label class="sav-label">Remarque Administration</label>
             <textarea
                 [(ngModel)]="ticketData?.data.remarque_manager"
-                id="Remarque Administration "
-                rows="3"
-                class="form-control"
-                aria-label="Remarque Administration "
-                placeholder="Pas de remarque"
-                disabled="true"
+                rows="2"
+                class="sav-textarea sav-textarea--readonly"
+                disabled
             ></textarea>
         </div>
-
-        <!-- Can Be Repaired -->
-        <div class="form-group">
-            <span id="can_be_repaired"> </span>
-            <label for="remarque_tech_diagnostic"
-                >Remarque Tech Diagnostique</label
-            >
+        <div class="sav-form-row">
+            <label class="sav-label">Remarque Tech Diagnostique</label>
             <textarea
                 [(ngModel)]="ticketData?.data.remarque_tech_diagnostic"
-                id="remarque_tech_diagnostic"
-                rows="3"
-                class="form-control"
-                aria-label="remarque_tech_diagnostic"
-                placeholder="Pas de remarque"
-                disabled="true"
+                rows="2"
+                class="sav-textarea sav-textarea--readonly"
+                disabled
             ></textarea>
         </div>
-
-        <div class="form-group">
-            <span id="can_be_repaired"> </span>
-            <label for="remarque_tech_diagnostic"
-                >Remarque Tech Reperation</label
-            >
+        <div class="sav-form-row">
+            <label class="sav-label">Remarque Tech Réparation</label>
             <textarea
                 [(ngModel)]="ticketData?.data.remarque_tech_repair"
-                id="remarque_tech_reperation"
-                rows="3"
-                class="form-control"
-                aria-label="remarque_tech_reperation"
-                placeholder="Pas de remarque"
-                disabled="true"
+                rows="2"
+                class="sav-textarea sav-textarea--readonly"
+                disabled
             ></textarea>
         </div>
 
-        <!-- All 4 files here  -->
-
-        <div class="center-content-files">
-            <div class="d-flex justify-content-between mb-3">
-                <a
-                    *ngIf="ticketData?.data?.bon_de_livraison"
-                    [href]="baseUrl + ticketData?.data?.bon_de_livraison"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de Livraison
-                </a>
-                <a
-                    *ngIf="ticketData?.data?.bon_de_commande"
-                    [href]="baseUrl + ticketData?.data?.bon_de_commande"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Bon de commande
-                </a>
-            </div>
-
-            <div class="d-flex flex-column space-between p-3">
-                <a
-                    *ngIf="ticketData?.data?.devis"
-                    [href]="baseUrl + ticketData?.data?.devis"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    DEVIS
-                </a>
-                <a
-                    *ngIf="ticketData?.data?.facture"
-                    [href]="baseUrl + ticketData?.data?.facture"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    class="p-button p-button-text font-bold"
-                >
-                    Facture
-                </a>
-            </div>
-        </div>
-
-        <div *ngIf="ticketData?.data?.PDR" class="form-group">
-            Liste des composants:
-            <!-- continue here spread all composant -->
-            <p-table
-                [value]="ticketData?.data?.array_composants"
-                [tableStyle]="{ 'min-width': '20rem' }"
+        <div class="sav-files-row">
+            <a
+                *ngIf="ticketData?.data?.bon_de_livraison"
+                [href]="baseUrl + ticketData?.data?.bon_de_livraison"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> BL</a
             >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Name</th>
-                        <th>Quantity</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-component>
-                    <tr>
-                        <td>{{ component.nameComposant }}</td>
-                        <td>{{ component.quantity }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+            <a
+                *ngIf="ticketData?.data?.bon_de_commande"
+                [href]="baseUrl + ticketData?.data?.bon_de_commande"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> BC</a
+            >
+            <a
+                *ngIf="ticketData?.data?.devis"
+                [href]="baseUrl + ticketData?.data?.devis"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> Devis</a
+            >
+            <a
+                *ngIf="ticketData?.data?.facture"
+                [href]="baseUrl + ticketData?.data?.facture"
+                target="_blank"
+                class="sav-file-link"
+                ><i class="pi pi-file-pdf"></i> Facture</a
+            >
         </div>
 
-        <hr />
-        <div class="btnretourInfo">
+        <div class="sav-retour-btns">
             <p-button
+                *ngIf="ignoreCountForBtns > 0"
                 (click)="infoRetour1OPEN()"
                 severity="warn"
-                *ngIf="ignoreCountForBtns > 0"
                 label="Info Retour 1"
+                size="small"
             />
             <p-button
+                *ngIf="ignoreCountForBtns > 1"
                 (click)="infoRetour2OPEN()"
                 severity="help"
-                *ngIf="ignoreCountForBtns > 1"
                 label="Info Retour 2"
+                size="small"
             />
             <p-button
+                *ngIf="ignoreCountForBtns > 2"
                 (click)="infoRetour3OPEN()"
                 severity="danger"
-                *ngIf="ignoreCountForBtns > 2"
                 label="Info Retour 3"
+                size="small"
             />
         </div>
-        <!---
-        ====> NOT FOR THE MOMENT 
-          <h6>Logs</h6>
-        <div>tech diag : {{ ticketData?.pauseLogs?.techDiag }}</div>
-        <div>tech rep : {{ ticketData?.pauseLogs?.techRep }}</div>
-        <div *ngFor="let item of ticketData?.pauseLogs?.pauseLogs">
-            <div>
-                Type:
-                {{ item.pauseType === "rep" ? "Réparation" : "Diagnotique" }}
-            </div>
-            <div>Start pause : {{ item.pauseStart }}</div>
-            <div>End pause {{ item.pauseEnd }}</div>
-        </div>
-        -->
-    </div>
 
-    <!--RETOUR1-->
-    <div>
-        <div
-            header="Information Retour 1"
-            *ngIf="modalRetour1Info"
-            class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
-        >
-            <div
-                style="
-                    display: flex;
-                    justify-content: center;
-                    padding-bottom: 2rem;
-                "
-            >
-                <h5>Information Retour 1</h5>
-            </div>
-
-            <div class="pdr-Rep">
-                <div>
-                    Prix Initial:
-                    <strong>{{ retour1InfoFromLogs?.price ?? "N/A" }} </strong>
+        <!-- RETOUR 1 -->
+        <div *ngIf="modalRetour1Info" class="sav-retour-info">
+            <h5 class="sav-retour-info-title">Information Retour 1</h5>
+            <div class="sav-price-row">
+                <div class="sav-price-item">
+                    <span>Prix Initial</span
+                    ><strong>{{ retour1InfoFromLogs?.price ?? "N/A" }}</strong>
                 </div>
-                <div>
-                    Prix Finale:
-                    <strong>
-                        {{ retour1InfoFromLogs?.final_price ?? "N/A" }}</strong
-                    >
+                <div class="sav-price-item">
+                    <span>Prix Final</span
+                    ><strong>{{
+                        retour1InfoFromLogs?.final_price ?? "N/A"
+                    }}</strong>
                 </div>
-                <div>
-                    Error Fixtronix
-                    <strong>{{
+                <div class="sav-price-item">
+                    <span>Erreur Fixtronix</span
+                    ><strong>{{
                         retour1InfoFromLogs?.isErrorFromFixtronix
                             ? "OUI"
                             : "NON"
                     }}</strong>
                 </div>
             </div>
-            <div class="pdr-Rep">
-                <div>
-                    <div>
-                        Réperable:<strong>
-                            {{
-                                retour1InfoFromLogs?.can_be_repaired
-                                    ? "OUI"
-                                    : "NON"
-                            }}</strong
-                        >
-                    </div>
-                </div>
-                <div *ngIf="retour1InfoFromLogs?.can_be_repaired == true">
-                    <div class="font-semibold">
-                        Contient PDR:<strong>
-                            {{
-                                retour1InfoFromLogs?.contain_pdr ? "OUI" : "NON"
-                            }}</strong
-                        >
-                    </div>
-                </div>
-            </div>
-            <p-table
-                *ngIf="
-                    retour1InfoFromLogs?.contain_pdr == true &&
-                    retour1InfoFromLogs?.can_be_repaired == true
-                "
-                [value]="retour1InfoFromLogs?.array_composants"
-                [tableStyle]="{ 'min-width': '20rem' }"
-            >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Name</th>
-                        <th>Quantity</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-component>
-                    <tr>
-                        <td>{{ component.nameComposant }}</td>
-                        <td>{{ component.quantity }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-            <div class="comments-retour">
-                <div style="padding-bottom: 2rem">
-                    <strong class="font-semibol"
-                        >Remarque Tech Diagnostique:</strong
-                    >
-                    {{ retour1InfoFromLogs?.remarque_tech_diagnostic || "N/A" }}
-                </div>
-                <div style="padding-bottom: 2rem">
-                    <strong class="font-semibold"
-                        >Remarque Tech Reparation:</strong
-                    >
-                    {{ retour1InfoFromLogs?.remarque_tech_repair || "N/A" }}
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <div class="center-content-files">
-                    <div class="d-flex justify-content-between mb-3">
-                        <a
-                            *ngIf="retour1InfoFromLogs?.bon_de_livraison"
-                            [href]="
-                                baseUrl + retour1InfoFromLogs?.bon_de_livraison
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Bon de Livraison Retour1
-                        </a>
-                        <a
-                            *ngIf="retour1InfoFromLogs?.bon_de_commande"
-                            [href]="
-                                baseUrl + retour1InfoFromLogs?.bon_de_commande
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Bon de commande Retour1
-                        </a>
-                    </div>
-
-                    <div class="d-flex flex-column gap-3">
-                        <a
-                            *ngIf="retour1InfoFromLogs?.devis"
-                            [href]="baseUrl + retour1InfoFromLogs?.devis"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            DEVIS Retour1
-                        </a>
-                        <a
-                            *ngIf="retour1InfoFromLogs?.facture"
-                            [href]="baseUrl + retour1InfoFromLogs?.facture"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Facture Retour1
-                        </a>
-                    </div>
-                </div>
+            <div class="sav-files-row mt-2">
+                <a
+                    *ngIf="retour1InfoFromLogs?.bon_de_livraison"
+                    [href]="baseUrl + retour1InfoFromLogs?.bon_de_livraison"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BL R1</a
+                >
+                <a
+                    *ngIf="retour1InfoFromLogs?.bon_de_commande"
+                    [href]="baseUrl + retour1InfoFromLogs?.bon_de_commande"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BC R1</a
+                >
+                <a
+                    *ngIf="retour1InfoFromLogs?.devis"
+                    [href]="baseUrl + retour1InfoFromLogs?.devis"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Devis R1</a
+                >
+                <a
+                    *ngIf="retour1InfoFromLogs?.facture"
+                    [href]="baseUrl + retour1InfoFromLogs?.facture"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Facture R1</a
+                >
             </div>
         </div>
-        <!---RETOUR2-->
-        <div
-            header="Information Retour 2"
-            *ngIf="modalRetour2Info"
-            class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
-        >
-            <div
-                style="
-                    display: flex;
-                    justify-content: center;
-                    padding-bottom: 2rem;
-                "
-            >
-                <h5>Information Retour 2</h5>
-            </div>
 
-            <div class="pdr-Rep">
-                <div>
-                    Prix Initial:
-                    <strong>{{ retour2InfoFromLogs?.price ?? "N/A" }} </strong>
+        <!-- RETOUR 2 -->
+        <div *ngIf="modalRetour2Info" class="sav-retour-info">
+            <h5 class="sav-retour-info-title">Information Retour 2</h5>
+            <div class="sav-price-row">
+                <div class="sav-price-item">
+                    <span>Prix Initial</span
+                    ><strong>{{ retour2InfoFromLogs?.price ?? "N/A" }}</strong>
                 </div>
-                <div>
-                    Prix Finale:
-                    <strong>
-                        {{ retour2InfoFromLogs?.final_price ?? "N/A" }}</strong
-                    >
+                <div class="sav-price-item">
+                    <span>Prix Final</span
+                    ><strong>{{
+                        retour2InfoFromLogs?.final_price ?? "N/A"
+                    }}</strong>
                 </div>
-                <div>
-                    Error Fixtronix
-                    <strong>{{
+                <div class="sav-price-item">
+                    <span>Erreur Fixtronix</span
+                    ><strong>{{
                         retour2InfoFromLogs?.isErrorFromFixtronix
                             ? "OUI"
                             : "NON"
                     }}</strong>
                 </div>
             </div>
-            <div class="pdr-Rep">
-                <div>
-                    <div>
-                        Réperable:<strong>
-                            {{
-                                retour2InfoFromLogs?.can_be_repaired
-                                    ? "OUI"
-                                    : "NON"
-                            }}</strong
-                        >
-                    </div>
-                </div>
-                <div *ngIf="retour2InfoFromLogs?.can_be_repaired == true">
-                    <div class="font-semibold">
-                        Contient PDR:
-                        <strong>
-                            {{
-                                retour2InfoFromLogs?.contain_pdr ? "OUI" : "NON"
-                            }}</strong
-                        >
-                    </div>
-                </div>
-            </div>
-            <p-table
-                *ngIf="
-                    retour2InfoFromLogs?.contain_pdr == true &&
-                    retour2InfoFromLogs?.can_be_repaired == true
-                "
-                [value]="retour2InfoFromLogs?.array_composants"
-                [tableStyle]="{ 'min-width': '20rem' }"
-            >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Name</th>
-                        <th>Quantity</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-component>
-                    <tr>
-                        <td>{{ component.nameComposant }}</td>
-                        <td>{{ component.quantity }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-            <div class="comments-retour">
-                <div style="padding-bottom: 2rem">
-                    <strong class="font-semibol"
-                        >Remarque Tech Diagnostique:</strong
-                    >
-                    {{ retour2InfoFromLogs?.remarque_tech_diagnostic || "N/A" }}
-                </div>
-                <div style="padding-bottom: 2rem">
-                    <strong class="font-semibold"
-                        >Remarque Tech Reparation:</strong
-                    >
-                    {{ retour2InfoFromLogs?.remarque_tech_repair || "N/A" }}
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <div class="center-content-files">
-                    <div class="d-flex justify-content-between mb-3">
-                        <a
-                            *ngIf="retour2InfoFromLogs?.bon_de_livraison"
-                            [href]="
-                                baseUrl + retour2InfoFromLogs?.bon_de_livraison
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Bon de Livraison Retour2
-                        </a>
-                        <a
-                            *ngIf="retour2InfoFromLogs?.bon_de_commande"
-                            [href]="
-                                baseUrl + retour2InfoFromLogs?.bon_de_commande
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Bon de commande Retour2
-                        </a>
-                    </div>
-
-                    <div class="d-flex flex-column gap-3">
-                        <a
-                            *ngIf="retour2InfoFromLogs?.devis"
-                            [href]="baseUrl + retour2InfoFromLogs?.devis"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            DEVIS Retour2
-                        </a>
-                        <a
-                            *ngIf="retour2InfoFromLogs?.facture"
-                            [href]="baseUrl + retour2InfoFromLogs?.facture"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Facture Retour2
-                        </a>
-                    </div>
-                </div>
+            <div class="sav-files-row mt-2">
+                <a
+                    *ngIf="retour2InfoFromLogs?.bon_de_livraison"
+                    [href]="baseUrl + retour2InfoFromLogs?.bon_de_livraison"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BL R2</a
+                >
+                <a
+                    *ngIf="retour2InfoFromLogs?.bon_de_commande"
+                    [href]="baseUrl + retour2InfoFromLogs?.bon_de_commande"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BC R2</a
+                >
+                <a
+                    *ngIf="retour2InfoFromLogs?.devis"
+                    [href]="baseUrl + retour2InfoFromLogs?.devis"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Devis R2</a
+                >
+                <a
+                    *ngIf="retour2InfoFromLogs?.facture"
+                    [href]="baseUrl + retour2InfoFromLogs?.facture"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Facture R2</a
+                >
             </div>
         </div>
-        <!--RETOUR3-->
-        <div
-            header="Information Retour 3"
-            *ngIf="modalRetour3Info"
-            class="p-4 border rounded-lg shadow-lg bg-gray-100 mb-4"
-        >
-            <div
-                style="
-                    display: flex;
-                    justify-content: center;
-                    padding-bottom: 2rem;
-                "
-            >
-                <h5>Information Retour 3</h5>
-            </div>
 
-            <div class="pdr-Rep">
-                <div>
-                    Prix Initial:
-                    <strong>{{ retour3InfoFromLogs?.price ?? "N/A" }} </strong>
+        <!-- RETOUR 3 -->
+        <div *ngIf="modalRetour3Info" class="sav-retour-info">
+            <h5 class="sav-retour-info-title">Information Retour 3</h5>
+            <div class="sav-price-row">
+                <div class="sav-price-item">
+                    <span>Prix Initial</span
+                    ><strong>{{ retour3InfoFromLogs?.price ?? "N/A" }}</strong>
                 </div>
-                <div>
-                    Prix Finale:
-                    <strong>
-                        {{ retour3InfoFromLogs?.final_price ?? "N/A" }}</strong
-                    >
+                <div class="sav-price-item">
+                    <span>Prix Final</span
+                    ><strong>{{
+                        retour3InfoFromLogs?.final_price ?? "N/A"
+                    }}</strong>
                 </div>
-                <div>
-                    Error Fixtronix
-                    <strong>{{
+                <div class="sav-price-item">
+                    <span>Erreur Fixtronix</span
+                    ><strong>{{
                         retour3InfoFromLogs?.isErrorFromFixtronix
                             ? "OUI"
                             : "NON"
                     }}</strong>
                 </div>
             </div>
-            <div class="pdr-Rep">
-                <div>
-                    <div>
-                        Réperable:<strong>
-                            {{
-                                retour3InfoFromLogs?.can_be_repaired
-                                    ? "OUI"
-                                    : "NON"
-                            }}</strong
-                        >
-                    </div>
-                </div>
-            </div>
-            <p-table
-                *ngIf="
-                    retour3InfoFromLogs?.contain_pdr == true &&
-                    retour3InfoFromLogs?.can_be_repaired == true
-                "
-                [value]="retour3InfoFromLogs?.array_composants"
-                [tableStyle]="{ 'min-width': '20rem' }"
-            >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Name</th>
-                        <th>Quantity</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-component>
-                    <tr>
-                        <td>{{ component.nameComposant }}</td>
-                        <td>{{ component.quantity }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-            <div class="comments-retour">
-                <div style="padding-bottom: 2rem">
-                    <strong class="font-semibol"
-                        >Remarque Tech Diagnostique:</strong
-                    >
-                    {{ retour3InfoFromLogs?.remarque_tech_diagnostic || "N/A" }}
-                </div>
-                <div style="padding-bottom: 2rem">
-                    <strong class="font-semibold"
-                        >Remarque Tech Reparation:</strong
-                    >
-                    {{ retour3InfoFromLogs?.remarque_tech_repair || "N/A" }}
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <div class="center-content-files">
-                    <div class="d-flex justify-content-between mb-3">
-                        <a
-                            *ngIf="retour3InfoFromLogs?.bon_de_livraison"
-                            [href]="
-                                baseUrl + retour3InfoFromLogs?.bon_de_livraison
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Bon de Livraison Retour3
-                        </a>
-                        <a
-                            *ngIf="retour3InfoFromLogs?.bon_de_commande"
-                            [href]="
-                                baseUrl + retour3InfoFromLogs?.bon_de_commande
-                            "
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Bon de commande Retour3
-                        </a>
-                    </div>
-
-                    <div class="d-flex flex-column gap-3">
-                        <a
-                            *ngIf="retour3InfoFromLogs?.devis"
-                            [href]="baseUrl + retour3InfoFromLogs?.devis"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            DEVIS Retour3
-                        </a>
-                        <a
-                            *ngIf="retour3InfoFromLogs?.facture"
-                            [href]="baseUrl + retour3InfoFromLogs?.facture"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="p-button p-button-text font-bold"
-                        >
-                            Facture Retour3
-                        </a>
-                    </div>
-                </div>
+            <div class="sav-files-row mt-2">
+                <a
+                    *ngIf="retour3InfoFromLogs?.bon_de_livraison"
+                    [href]="baseUrl + retour3InfoFromLogs?.bon_de_livraison"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BL R3</a
+                >
+                <a
+                    *ngIf="retour3InfoFromLogs?.bon_de_commande"
+                    [href]="baseUrl + retour3InfoFromLogs?.bon_de_commande"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> BC R3</a
+                >
+                <a
+                    *ngIf="retour3InfoFromLogs?.devis"
+                    [href]="baseUrl + retour3InfoFromLogs?.devis"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Devis R3</a
+                >
+                <a
+                    *ngIf="retour3InfoFromLogs?.facture"
+                    [href]="baseUrl + retour3InfoFromLogs?.facture"
+                    target="_blank"
+                    class="sav-file-link"
+                    ><i class="pi pi-file-pdf"></i> Facture R3</a
+                >
             </div>
         </div>
     </div>
 </p-dialog>
 
+<!-- ═══════════════════════════════════════════════
+     MODAL — MODIFIER DI
+════════════════════════════════════════════════ -->
 <p-dialog
+    header="Modifier la DI"
     [(visible)]="updateticketView"
-    [style]="{ width: '450px' }"
-    header="Modifier Di"
     [modal]="true"
-    styleClass="p-fluid"
+    [style]="{ width: '480px' }"
     [draggable]="false"
+    styleClass="sav-dialog"
 >
     <ng-template pTemplate="content">
-        <!-- Ticket ID (Hidden) -->
-        <input type="hidden" [(ngModel)]="selectedTicket._id" />
+        <div class="sav-create-form">
+            <input type="hidden" [(ngModel)]="selectedTicket._id" />
 
-        <!-- Ticket Title -->
-        <div class="field">
-            <label for="title">Titre</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.title"
-                pInputText
-                id="title"
-                required
-                autofocus
-            />
-        </div>
+            <div class="sav-form-row">
+                <label class="sav-label" for="edit-title">Titre</label>
+                <input
+                    type="text"
+                    [(ngModel)]="selectedTicket.title"
+                    pInputText
+                    id="edit-title"
+                    class="sav-input"
+                    required
+                    autofocus
+                />
+            </div>
 
-        <!-- Description -->
-        <div class="field">
-            <label for="description">Description</label>
-            <textarea
-                id="description"
-                rows="3"
-                [(ngModel)]="selectedTicket.description"
-                pInputTextarea
-                required
-            ></textarea>
-        </div>
-        <div class="field">
-            <label for="description">Remarque Admnistration</label>
-            <textarea
-                id="remarque_manager"
-                rows="3"
-                [(ngModel)]="selectedTicket.remarque_manager"
-                pInputTextarea
-                required
-            ></textarea>
-        </div>
-        <!-- 
-        <div class="field">
-            <label for="createdBy">Créé Par</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.createdBy"
-                pInputText
-                id="createdBy"
-                disabled
-            />
-        </div>
+            <div class="sav-form-row">
+                <label class="sav-label" for="edit-desc">Description</label>
+                <textarea
+                    id="edit-desc"
+                    rows="3"
+                    [(ngModel)]="selectedTicket.description"
+                    pInputTextarea
+                    class="sav-textarea"
+                    required
+                ></textarea>
+            </div>
 
-       
-        <div class="field">
-            <label for="locationId">ID de Localisation</label>
-            <input
-                type="text"
-                [(ngModel)]="selectedTicket.location_id"
-                pInputText
-                id="locationId"
-            />
-        </div>  
-    -->
+            <div class="sav-form-row">
+                <label class="sav-label" for="edit-remarque"
+                    >Remarque Administration</label
+                >
+                <textarea
+                    id="edit-remarque"
+                    rows="2"
+                    [(ngModel)]="selectedTicket.remarque_manager"
+                    pInputTextarea
+                    class="sav-textarea"
+                ></textarea>
+            </div>
 
-        <!-- Modal Footer with Action Buttons -->
-        <div class="modal-footer">
-            <p-button
-                (click)="cancelUpdateDi()"
-                icon="pi pi-times"
-                label="Annuler"
-                [text]="true"
-            ></p-button>
-            <p-button
-                (click)="saveUpdateTicket()"
-                icon="pi pi-plus"
-                label="Modifier"
-                [text]="true"
-            ></p-button>
+            <div class="sav-dialog-footer">
+                <p-button
+                    (click)="cancelUpdateDi()"
+                    icon="pi pi-times"
+                    label="Annuler"
+                    severity="danger"
+                    [outlined]="true"
+                    size="small"
+                ></p-button>
+                <p-button
+                    (click)="saveUpdateTicket()"
+                    icon="pi pi-check"
+                    label="Enregistrer"
+                    size="small"
+                ></p-button>
+            </div>
         </div>
     </ng-template>
 </p-dialog>
-
-<!-- <p-dropdown
-                    [options]="composantList"
-                    optionLabel="name"
-                    optionValue="name"
-                    [filter]="true"
-                    filterBy="name"
-                    [showClear]="true"
-                    placeholder="Choisir composant"
-                    (onFilter)="onComposantFilter($event)"
-                    (onChange)="selectedDropDownComposant($event)"
-                    (onClear)="clearDropDown()"
-                ></p-dropdown> -->

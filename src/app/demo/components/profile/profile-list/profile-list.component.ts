@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { Product } from 'src/app/demo/api/product';
-import { ProductService } from 'src/app/demo/service/product.service';
 import { ROLES } from '../constant/role-constants';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
@@ -11,7 +10,7 @@ import {
     PageEvent,
     ProfileAddMutationResponse,
 } from './profile-list.interfaces';
-import { debounceTime, Subject } from 'rxjs';
+import { debounceTime, finalize, Subject } from 'rxjs';
 
 @Component({
     selector: 'app-profile-list',
@@ -64,7 +63,6 @@ export class ProfileListComponent {
     }
 
     constructor(
-        private productService: ProductService,
         private apollo: Apollo,
         private profileService: ProfileService,
         private messageService: MessageService,
@@ -88,6 +86,8 @@ export class ProfileListComponent {
      * Handles both search and regular data fetching with pagination
      */
     loadData() {
+        this.loading = true;
+
         const hasActiveSearch =
             this.currentSearchField &&
             this.currentSearchValue &&
@@ -105,6 +105,7 @@ export class ProfileListComponent {
                     ),
                     fetchPolicy: 'no-cache',
                 })
+                .pipe(finalize(() => (this.loading = false)))
                 .subscribe(({ data }) => {
                     if (data && data.searchProfile) {
                         this.profileList = data.searchProfile.profileRecord;
@@ -182,9 +183,10 @@ export class ProfileListComponent {
         this.apollo
             .watchQuery<AllProfileQueryResponse>({
                 query: this.profileService.getAllProfile(rows, first),
-                useInitialLoading: true,
+                fetchPolicy: 'no-cache',
             })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
+            .valueChanges.pipe(finalize(() => (this.loading = false)))
+            .subscribe(({ data }) => {
                 if (data) {
                     this.profileList = data.getAllProfiles.profileRecord;
                     this.totalProfileCount =

@@ -82,7 +82,7 @@ export class AppTopBarComponent implements OnInit {
             .watchQuery<any>({
                 query: this.layoutService.getAllNotification(),
             })
-            .valueChanges.subscribe(({ data, loading }) => {
+            .valueChanges.subscribe(({ data }) => {
                 if (data) {
                     this.allNotification = data.getAllNotification;
                     this.nbNotification = this.allNotification.length;
@@ -99,7 +99,7 @@ export class AppTopBarComponent implements OnInit {
             .query<any>({
                 query: this.ticketService.getDiById(_idDoc),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(() => {});
     }
 
     confirmAndSendItBackToMagasin() {
@@ -129,7 +129,7 @@ export class AppTopBarComponent implements OnInit {
             .mutate<any>({
                 mutation: this.layoutService.markAsSeen(notificationId),
             })
-            .subscribe(({ data }) => {
+            .subscribe(() => {
                 // this.markAuditAsSeen(auditId, reminderId);
                 // this.disabledButtons[reminderId] = true;
             });
@@ -143,6 +143,6 @@ export class AppTopBarComponent implements OnInit {
                     reminderId
                 ),
             })
-            .subscribe(({ data }) => {});
+            .subscribe(() => {});
     }
 }

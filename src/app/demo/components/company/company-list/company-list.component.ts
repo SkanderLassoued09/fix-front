@@ -4,9 +4,8 @@ import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { CompanyService } from 'src/app/demo/service/company.service';
-import { ProductService } from 'src/app/demo/service/product.service';
 import { REGION } from '../../client/constant/region-constant';
-import { debounceTime, Subject } from 'rxjs';
+import { debounceTime, finalize, Subject } from 'rxjs';
 
 interface Column {
     field: string;
@@ -83,7 +82,7 @@ export class CompanyListComponent {
         website: new FormControl(''),
         activitePrincipale: new FormControl(''),
         activiteSecondaire: new FormControl(''),
-        exoneration: new FormControl(''),
+        Exoneration: new FormControl(''),
         rne: new FormControl(''),
         mf: new FormControl(''),
         achat: new FormGroup({
@@ -123,9 +122,9 @@ export class CompanyListComponent {
             searchKey: 'raisonSociale',
         },
         {
-            field: 'exoneration',
-            header: 'Exoneration',
-            searchKey: 'exoneration',
+            field: 'Exoneration',
+            header: 'Exonération',
+            searchKey: 'Exoneration',
         },
         { field: 'fax', header: 'Fax', searchKey: 'fax' },
     ];
@@ -145,7 +144,6 @@ export class CompanyListComponent {
     submitted: boolean = false;
 
     constructor(
-        private productService: ProductService,
         private apollo: Apollo,
         private companyService: CompanyService,
         private messageService: MessageService,
@@ -169,6 +167,8 @@ export class CompanyListComponent {
      * Handles both search and regular data fetching with pagination
      */
     loadData() {
+        this.loading = true;
+
         const hasActiveSearch =
             this.currentSearchField &&
             this.currentSearchValue &&
@@ -186,8 +186,8 @@ export class CompanyListComponent {
                     ),
                     fetchPolicy: 'no-cache',
                 })
-                .subscribe(({ data, loading }) => {
-                    this.loading = loading;
+                .pipe(finalize(() => (this.loading = false)))
+                .subscribe(({ data }) => {
                     if (data && data.searchCompany) {
                         this.companiesList = data.searchCompany.companyRecords;
                         this.totalCompanyRecord =
@@ -294,12 +294,12 @@ export class CompanyListComponent {
 
     companies(first, rows) {
         this.apollo
-            .watchQuery<GetAllCompanyQueryResponse>({
+            .query<GetAllCompanyQueryResponse>({
                 query: this.companyService.getAllCompany(first, rows),
-                useInitialLoading: true,
+                fetchPolicy: 'no-cache',
             })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
-                this.loading = loading;
+            .pipe(finalize(() => (this.loading = false)))
+            .subscribe(({ data }) => {
                 if (data) {
                     this.companiesList = data.findAllCompany.companyRecords;
                     this.totalCompanyRecord =

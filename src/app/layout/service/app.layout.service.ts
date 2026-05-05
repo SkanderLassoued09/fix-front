@@ -182,7 +182,7 @@ export class LayoutService {
         `;
     }
 
-    markAuditAsSeen(auditId: string, reminderId: string) {
+    markAuditAsSeen(_auditId: string, _reminderId: string) {
         return gql`
             mutation {
                 markReminderAsSeen(

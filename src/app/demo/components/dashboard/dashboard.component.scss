@@ -1,0 +1,628 @@
+// ═══════════════════════════════════════════════════
+//  SAV ATELIER — KPI DASHBOARD STYLES
+//  dashboard.component.scss
+// ═══════════════════════════════════════════════════
+
+// ── COLOR TOKENS ─────────────────────────────────
+$green-500: #22c55e;
+$green-100: #dcfce7;
+$orange-500: #f97316;
+$orange-100: #ffedd5;
+$red-500: #ef4444;
+$red-100: #fee2e2;
+$blue-500: #3b82f6;
+$blue-50: #eff6ff;
+$purple-500: #a855f7;
+$slate-800: #1e293b;
+$slate-600: #475569;
+$slate-200: #e2e8f0;
+$slate-50: #f8fafc;
+$white: #ffffff;
+
+// ── ROOT LAYOUT ──────────────────────────────────
+.sav-dashboard {
+    padding: 1.5rem 2rem;
+    background: $slate-50;
+    min-height: 100vh;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: $slate-800;
+}
+
+// ── HEADER ───────────────────────────────────────
+.dash-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: $white;
+    border-radius: 10px;
+    border-left: 4px solid $blue-500;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+    &__left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    &__icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: $blue-50;
+        color: $blue-500;
+        font-size: 1.25rem;
+    }
+
+    &__title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    &__sub {
+        font-size: 0.78rem;
+        color: $slate-600;
+    }
+
+    &__right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+}
+
+// ── SECTION LABEL ────────────────────────────────
+.section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: $slate-600;
+    margin: 1.5rem 0 0.5rem;
+    padding-left: 0.25rem;
+    border-left: 3px solid $blue-500;
+    padding-left: 0.6rem;
+}
+
+// ── KPI STRIP (Section A) ─────────────────────────
+.kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    @media (max-width: 1100px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.kpi-card {
+    background: $white;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-top: 3px solid $slate-200;
+    transition: box-shadow 0.2s;
+
+    &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    &__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: $white;
+        flex-shrink: 0;
+
+        &.bg-green {
+            background: $green-500;
+        }
+        &.bg-blue {
+            background: $blue-500;
+        }
+        &.bg-orange {
+            background: $orange-500;
+        }
+        &.bg-purple {
+            background: $purple-500;
+        }
+    }
+
+    &__body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    &__label {
+        font-size: 0.72rem;
+        color: $slate-600;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    &__value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    &__target {
+        font-size: 0.68rem;
+        color: $slate-600;
+        margin-top: 2px;
+    }
+
+    // Status borders
+    &.kpi-green {
+        border-top-color: $green-500;
+    }
+    &.kpi-orange {
+        border-top-color: $orange-500;
+    }
+    &.kpi-red {
+        border-top-color: $red-500;
+    }
+}
+
+// ── PROGRESS BAR ─────────────────────────────────
+::ng-deep .kpi-progress {
+    height: 4px !important;
+    border-radius: 4px;
+    margin-top: 4px;
+
+    .p-progressbar-value {
+        border-radius: 4px;
+    }
+}
+
+// ── 2-COLUMN GRID ────────────────────────────────
+.grid-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    @media (max-width: 900px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// ── 3-COLUMN GRID ────────────────────────────────
+.grid-3col {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+
+    @media (max-width: 1200px) {
+        grid-template-columns: 1fr 1fr;
+    }
+    @media (max-width: 750px) {
+        grid-template-columns: 1fr;
+    }
+
+    .span-2 {
+        grid-column: span 2;
+    }
+}
+
+// ── DASH CARD ────────────────────────────────────
+::ng-deep .dash-card {
+    border-radius: 10px !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06) !important;
+
+    .p-card-content {
+        padding-top: 0 !important;
+    }
+}
+
+.card-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem 0;
+    gap: 0.5rem;
+
+    h3 {
+        margin: 0;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: $slate-800;
+    }
+}
+
+.card-section-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: $blue-500;
+    color: $white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+// ── GAUGE ROW ────────────────────────────────────
+.gauge-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.5rem 0;
+    gap: 0.5rem;
+}
+
+.gauge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.gauge-label {
+    font-size: 0.72rem;
+    color: $slate-600;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.gauge-target {
+    font-size: 0.65rem;
+    color: $slate-600;
+}
+
+// ── VOLUME STATS ─────────────────────────────────
+.volume-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.vol-stat {
+    text-align: center;
+    padding: 0.5rem;
+    background: $slate-50;
+    border-radius: 8px;
+
+    &__num {
+        display: block;
+        font-size: 1.8rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    &__label {
+        display: block;
+        font-size: 0.65rem;
+        color: $slate-600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-top: 2px;
+    }
+
+    &__target {
+        display: block;
+        font-size: 0.6rem;
+        color: $slate-600;
+        margin-top: 1px;
+    }
+}
+
+// ── STATUS COLORS ─────────────────────────────────
+.kpi-green {
+    color: $green-500;
+}
+.kpi-orange {
+    color: $orange-500;
+}
+.kpi-red {
+    color: $red-500;
+}
+.kpi-neutral {
+    color: $blue-500;
+}
+
+// ── KPI BADGE (table cells) ───────────────────────
+.kpi-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+
+    &.kpi-green {
+        background: $green-100;
+        color: darken($green-500, 10%);
+    }
+    &.kpi-orange {
+        background: $orange-100;
+        color: darken($orange-500, 10%);
+    }
+    &.kpi-red {
+        background: $red-100;
+        color: darken($red-500, 10%);
+    }
+    &.kpi-neutral {
+        background: $blue-50;
+        color: $blue-500;
+    }
+}
+
+// ── TECHNICIAN TABLE ──────────────────────────────
+::ng-deep .tech-table {
+    .p-datatable-thead > tr > th {
+        background: $slate-50;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $slate-600;
+        font-weight: 700;
+        padding: 0.6rem 0.75rem;
+    }
+
+    .p-datatable-tbody > tr > td {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.85rem;
+    }
+}
+
+.table-footer-legend td {
+    padding: 0.5rem 0.75rem;
+    background: $slate-50;
+}
+
+.legend-item {
+    font-size: 0.72rem;
+    margin-right: 1rem;
+    font-weight: 600;
+}
+
+.chart-sub-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $slate-600;
+    margin: 0.5rem 0;
+}
+
+// ── SATISFACTION ─────────────────────────────────
+.satisfaction-row {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 0.5rem 0;
+}
+
+.sat-big {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.sat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: $slate-600;
+    text-transform: uppercase;
+}
+
+.claim-stat {
+    text-align: center;
+    padding: 1.5rem 2rem;
+    border-radius: 10px;
+    background: $slate-50;
+
+    &.kpi-green {
+        background: $green-100;
+    }
+    &.kpi-orange {
+        background: $orange-100;
+    }
+    &.kpi-red {
+        background: $red-100;
+    }
+}
+
+.claim-num {
+    display: block;
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.claim-lbl {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $slate-600;
+    margin-top: 0.25rem;
+}
+
+// ── FINANCE STRIP ─────────────────────────────────
+.finance-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    @media (max-width: 1100px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: 600px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fin-card {
+    background: $white;
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    border-left: 3px solid $slate-200;
+
+    &__icon {
+        font-size: 1rem;
+        margin-bottom: 2px;
+    }
+    &__label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $slate-600;
+        font-weight: 600;
+    }
+    &__value {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+    &__target {
+        font-size: 0.65rem;
+        color: $slate-600;
+    }
+
+    &.fin-green {
+        border-left-color: $green-500;
+        .fin-card__icon {
+            color: $green-500;
+        }
+    }
+    &.fin-blue {
+        border-left-color: $blue-500;
+        .fin-card__icon {
+            color: $blue-500;
+        }
+    }
+    &.fin-orange {
+        border-left-color: $orange-500;
+        .fin-card__icon {
+            color: $orange-500;
+        }
+    }
+    &.fin-red {
+        border-left-color: $red-500;
+        .fin-card__icon {
+            color: $red-500;
+        }
+    }
+}
+
+// ── RECOUVREMENT CARD ────────────────────────────
+.recouvrement-body {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.5rem 0;
+}
+
+.rec-details {
+    flex: 1;
+}
+
+.rec-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid $slate-200;
+
+    &.warn strong {
+        color: $red-500;
+    }
+    &:last-child {
+        border-bottom: none;
+    }
+
+    span {
+        color: $slate-600;
+    }
+    strong {
+        font-weight: 700;
+    }
+}
+
+// ── RH LIST ──────────────────────────────────────
+.rh-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.25rem 0;
+}
+
+.rh-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    &__label {
+        font-size: 0.78rem;
+        color: $slate-600;
+        min-width: 140px;
+    }
+
+    &__value {
+        font-size: 0.82rem;
+        font-weight: 700;
+        min-width: 55px;
+    }
+}
+
+::ng-deep .rh-bar {
+    flex: 1;
+    height: 6px !important;
+    border-radius: 6px;
+
+    .p-progressbar-value {
+        border-radius: 6px;
+    }
+}
+
+// ── ROLE TAG ─────────────────────────────────────
+::ng-deep .role-tag {
+    font-size: 0.68rem !important;
+    padding: 2px 7px !important;
+}
+
+// ── GLOBAL TAG ───────────────────────────────────
+::ng-deep .dash-global-tag {
+    font-size: 0.82rem !important;
+    padding: 4px 12px !important;
+}
+
+// ── CALENDAR ─────────────────────────────────────
+::ng-deep .dash-calendar {
+    .p-inputtext {
+        font-size: 0.82rem;
+        padding: 0.4rem 0.6rem;
+    }
+}

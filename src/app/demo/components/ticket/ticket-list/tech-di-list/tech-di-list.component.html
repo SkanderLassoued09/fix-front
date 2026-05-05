@@ -1,467 +1,529 @@
+<p-blockUI [blocked]="isLoading">
+    <!-- <i class="pi pi-spinner" style="font-size: 3rem"></i> -->
+    <p-progressSpinner ariaLabel="loading" />
+</p-blockUI>
+
 <p-toast></p-toast>
 <p-confirmDialog />
 
-<div class="container">
-    <p-card class="box-container improved-card">
-        <ng-template pTemplate="content">
-            <div class="card-content">
-                <h2 class="card-title">
-                    Total:
-                    {{
-                        diagEnPause_miniDashboard + diagNotOpened_miniDashboard
-                    }}
-                </h2>
-                <div class="card-stats">
-                    <h3>
-                        En pause:
-                        <span class="highlight">{{
-                            diagEnPause_miniDashboard
-                        }}</span>
-                    </h3>
-                    <h3>
-                        Non ouvert:
-                        <span class="highlight">{{
-                            diagNotOpened_miniDashboard
-                        }}</span>
-                    </h3>
+<!-- ═══════════════════════════════════════════════
+     MINI DASHBOARD
+════════════════════════════════════════════════ -->
+<div class="sav-page">
+    <div class="sav-page-header">
+        <div class="sav-page-title">
+            <i class="pi pi-desktop"></i>
+            <h2>Tableau de bord Technicien</h2>
+        </div>
+    </div>
+
+    <div class="sav-dashboard-grid">
+        <div class="sav-dash-card sav-dash-card--diag">
+            <div class="sav-dash-card__header">
+                <i class="pi pi-wrench sav-dash-card__icon"></i>
+                <span class="sav-dash-card__title">Diagnostic</span>
+            </div>
+            <div class="sav-dash-card__total">
+                <span class="sav-dash-card__total-label">Total</span>
+                <span class="sav-dash-card__total-value">{{
+                    diagEnPause_miniDashboard + diagNotOpened_miniDashboard
+                }}</span>
+            </div>
+            <div class="sav-dash-card__stats">
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-pause-circle"></i>
+                    <span class="sav-dash-card__stat-label">En pause</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        diagEnPause_miniDashboard
+                    }}</span>
                 </div>
-                <h1 class="card-status">Diagnostic</h1>
-            </div>
-        </ng-template>
-    </p-card>
-
-    <p-card class="box-container improved-card">
-        <ng-template pTemplate="content">
-            <div class="card-content">
-                <h2 class="card-title">
-                    Total:
-                    {{ repEnPause_miniDashboard + repNotOpened_miniDashboard }}
-                </h2>
-                <div class="card-stats">
-                    <h3>
-                        En pause:
-                        <span class="highlight">{{
-                            repEnPause_miniDashboard
-                        }}</span>
-                    </h3>
-                    <h3>
-                        Non ouvert:
-                        <span class="highlight">{{
-                            repNotOpened_miniDashboard
-                        }}</span>
-                    </h3>
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-envelope"></i>
+                    <span class="sav-dash-card__stat-label">Non ouvert</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        diagNotOpened_miniDashboard
+                    }}</span>
                 </div>
-                <h1 class="card-status">Reparation</h1>
             </div>
-        </ng-template>
-    </p-card>
+        </div>
 
-    <p-card class="box-container improved-card">
-        <ng-template pTemplate="content">
-            <div class="card-content">
-                <h2 class="card-title">
-                    Total:
-                    {{
-                        retour1_miniDashboard +
-                            retour2_miniDashboard +
-                            retour3_miniDashboard
-                    }}
-                </h2>
-                <div class="card-stats">
-                    <h3>
-                        Retour 1:
-                        <span class="highlight">{{
-                            retour1_miniDashboard
-                        }}</span>
-                    </h3>
-                    <h3>
-                        Retour 2:
-                        <span class="highlight">{{
-                            retour2_miniDashboard
-                        }}</span>
-                    </h3>
-                    <h3>
-                        Retour 3:
-                        <span class="highlight">{{
-                            retour3_miniDashboard
-                        }}</span>
-                    </h3>
+        <div class="sav-dash-card sav-dash-card--rep">
+            <div class="sav-dash-card__header">
+                <i class="pi pi-cog sav-dash-card__icon"></i>
+                <span class="sav-dash-card__title">Réparation</span>
+            </div>
+            <div class="sav-dash-card__total">
+                <span class="sav-dash-card__total-label">Total</span>
+                <span class="sav-dash-card__total-value">{{
+                    repEnPause_miniDashboard + repNotOpened_miniDashboard
+                }}</span>
+            </div>
+            <div class="sav-dash-card__stats">
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-pause-circle"></i>
+                    <span class="sav-dash-card__stat-label">En pause</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        repEnPause_miniDashboard
+                    }}</span>
                 </div>
-                <h1 class="card-status">Retour</h1>
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-envelope"></i>
+                    <span class="sav-dash-card__stat-label">Non ouvert</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        repNotOpened_miniDashboard
+                    }}</span>
+                </div>
             </div>
-        </ng-template>
-    </p-card>
+        </div>
 
-    <p-card class="box-container improved-card">
-        <ng-template pTemplate="content">
-            <div class="card-content">
-                <h2 class="card-title">
-                    Autre: {{ admnistration_miniDashboard }}
-                </h2>
-                <h2>Finie: {{ finished_miniDashboard }}</h2>
-                <h1 class="card-status">Administration</h1>
+        <div class="sav-dash-card sav-dash-card--retour">
+            <div class="sav-dash-card__header">
+                <i class="pi pi-refresh sav-dash-card__icon"></i>
+                <span class="sav-dash-card__title">Retour</span>
             </div>
-        </ng-template>
-    </p-card>
-</div>
+            <div class="sav-dash-card__total">
+                <span class="sav-dash-card__total-label">Total</span>
+                <span class="sav-dash-card__total-value">{{
+                    retour1_miniDashboard +
+                        retour2_miniDashboard +
+                        retour3_miniDashboard
+                }}</span>
+            </div>
+            <div class="sav-dash-card__stats">
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-angle-right"></i>
+                    <span class="sav-dash-card__stat-label">Retour 1</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        retour1_miniDashboard
+                    }}</span>
+                </div>
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-angle-right"></i>
+                    <span class="sav-dash-card__stat-label">Retour 2</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        retour2_miniDashboard
+                    }}</span>
+                </div>
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-angle-right"></i>
+                    <span class="sav-dash-card__stat-label">Retour 3</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        retour3_miniDashboard
+                    }}</span>
+                </div>
+            </div>
+        </div>
 
-<div class="card">
-    <p-table
-        [columns]="cols"
-        [value]="techList"
-        [tableStyle]="{ 'min-width': '20rem' }"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th *ngFor="let col of columns" style="min-width: 10rem">
-                    {{ col.header }}
-                </th>
-                <th style="min-width: 2rem">Diagnostique</th>
-                <th style="min-width: 2rem">Reparation</th>
-            </tr>
-            <tr>
-                <th *ngFor="let col of columns">
-                    <input
-                        pInputText
-                        type="text"
-                        placeholder="Chercher"
-                        (input)="
-                            onColumnSearch(col.searchKey, $event.target.value)
-                        "
-                    />
-                </th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr
-                [ngClass]="{
-                    'row-in-retour1': rowData.ignoreCount === 1,
-                    'row-in-retour2': rowData.ignoreCount === 2,
-                    'row-in-retour3': rowData.ignoreCount === 3
-                }"
-            >
-                <td *ngFor="let col of columns">
-                    <ng-container
-                        *ngIf="col.field !== 'status'; else statusColumn"
+        <div class="sav-dash-card sav-dash-card--admin">
+            <div class="sav-dash-card__header">
+                <i class="pi pi-shield sav-dash-card__icon"></i>
+                <span class="sav-dash-card__title">Administration</span>
+            </div>
+            <div class="sav-dash-card__total">
+                <span class="sav-dash-card__total-label">Autre</span>
+                <span class="sav-dash-card__total-value">{{
+                    admnistration_miniDashboard
+                }}</span>
+            </div>
+            <div class="sav-dash-card__stats">
+                <div class="sav-dash-card__stat">
+                    <i class="pi pi-check-circle"></i>
+                    <span class="sav-dash-card__stat-label">Finie</span>
+                    <span class="sav-dash-card__stat-value">{{
+                        finished_miniDashboard
+                    }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         MAIN TABLE
+    ════════════════════════════════════════════════ -->
+    <div class="sav-table-wrapper">
+        <p-table
+            [value]="techList"
+            [columns]="cols"
+            [paginator]="false"
+            styleClass="p-datatable-sm sav-main-table"
+            [tableStyle]="{ 'min-width': '100%' }"
+        >
+            <ng-template pTemplate="header" let-columns>
+                <tr class="sav-thead-row">
+                    <th *ngFor="let col of columns" class="sav-th">
+                        {{ col.header }}
+                    </th>
+                    <th class="sav-th sav-actions-th">Actions</th>
+                </tr>
+                <tr class="sav-filter-row">
+                    <th *ngFor="let col of columns" class="sav-th-filter">
+                        <input
+                            pInputText
+                            type="text"
+                            class="sav-filter-input"
+                            placeholder="Chercher..."
+                            (input)="
+                                onColumnSearch(
+                                    col.searchKey,
+                                    $event.target.value
+                                )
+                            "
+                        />
+                    </th>
+                    <th class="sav-th-filter"></th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr
+                    class="sav-row"
+                    [ngClass]="{
+                        'row-retour1': rowData.ignoreCount === 1,
+                        'row-retour2': rowData.ignoreCount === 2,
+                        'row-retour3': rowData.ignoreCount >= 3,
+                    }"
+                >
+                    <td *ngFor="let col of columns" class="sav-td">
+                        <ng-container
+                            *ngIf="col.field !== 'status'; else statusTpl"
+                        >
+                            {{ rowData[col.field] || "—" }}
+                        </ng-container>
+                        <ng-template #statusTpl>
+                            <p-tag
+                                [value]="getStatusLabel(rowData.status)"
+                                styleClass="status-pill status-{{
+                                    rowData.status
+                                }}"
+                            ></p-tag>
+                        </ng-template>
+                    </td>
+
+                    <td class="sav-td sav-actions-cell">
+                        <div class="sav-actions-row">
+                            <button
+                                pButton
+                                pTooltip="Diagnostic"
+                                tooltipPosition="top"
+                                icon="pi pi-search"
+                                class="sav-icon-btn"
+                                [disabled]="
+                                    ![
+                                        'DIAGNOSTIC',
+                                        'INDIAGNOSTIC',
+                                        'DIAGNOSTIC_Pause',
+                                    ].includes(rowData.status) ||
+                                    isFinishedDiag[rowData._id] ||
+                                    rowData.id_tech_diag !== idTech
+                                "
+                                (click)="diagModal(rowData)"
+                            ></button>
+                            <button
+                                pButton
+                                pTooltip="Réparation"
+                                tooltipPosition="top"
+                                icon="pi pi-wrench"
+                                class="sav-icon-btn"
+                                [disabled]="
+                                    ![
+                                        'REPARATION',
+                                        'INREPARATION',
+                                        'REPARATION_Pause',
+                                    ].includes(rowData.status) ||
+                                    isFinishedRep[rowData._id] ||
+                                    rowData.id_tech_rep !== idTech
+                                "
+                                (click)="repModal(rowData)"
+                            ></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td
+                        [attr.colspan]="(cols?.length || 0) + 1"
+                        class="sav-empty"
                     >
-                        {{ rowData[col.field] }}
-                    </ng-container>
-                    <ng-template #statusColumn>
-                        <p-tag
-                            [value]="rowData[col.field]"
-                            [severity]="getSeverity(rowData[col.field])"
-                        ></p-tag>
-                    </ng-template>
-                </td>
-                <td>
-                    <button
-                        [disabled]="
-                            (rowData?.status !== 'DIAGNOSTIC' &&
-                                rowData?.status !== 'INDIAGNOSTIC' &&
-                                rowData?.status !== 'DIAGNOSTIC_Pause') ||
-                            isFinishedDiag[rowData?._id] ||
-                            rowData?.id_tech_diag !== this.idTech
-                        "
-                        pButton
-                        pRipple
-                        icon="pi pi-search"
-                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
-                        (click)="diagModal(rowData)"
-                    ></button>
-                </td>
-                <td>
-                    <button
-                        [disabled]="
-                            (rowData.status !== 'REPARATION' &&
-                                rowData.status !== 'INREPARATION' &&
-                                rowData?.status !== 'REPARATION_Pause') ||
-                            isFinishedRep[rowData?._id] ||
-                            rowData?.id_tech_rep !== this.idTech
-                        "
-                        pButton
-                        pRipple
-                        icon="pi pi-wrench"
-                        class="p-button-rounded p-button-raised p-button-secondary mr-2"
-                        (click)="repModal(rowData)"
-                    ></button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-    <p-paginator
-        (onPageChange)="onPageChange($event)"
-        [first]="first"
-        [rows]="rows"
-        [totalRecords]="techListCount"
-        [rowsPerPageOptions]="[5, 10, 30]"
-    ></p-paginator>
-    <!-- DIAGNOSTIQUE MODAL -->
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucune demande d'intervention trouvée</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
 
+        <div class="sav-paginator-wrapper">
+            <span class="sav-count"
+                >1–{{ rows }} sur {{ techListCount }} résultats</span
+            >
+            <p-paginator
+                (onPageChange)="onPageChange($event)"
+                [first]="first"
+                [rows]="rows"
+                [totalRecords]="techListCount"
+                [rowsPerPageOptions]="[5, 10, 30]"
+                styleClass="sav-paginator"
+            ></p-paginator>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         MODAL — DIAGNOSTIC
+    ════════════════════════════════════════════════ -->
     <ng-container *ngIf="di?._id">
         <p-dialog
+            header="Diagnostic — DI"
             [(visible)]="diDialogDiag[di._id]"
-            [style]="{ width: '60%', height: '80vh' }"
             [modal]="true"
-            styleClass="p-fluid"
+            [style]="{ width: '680px' }"
+            [draggable]="false"
+            [resizable]="false"
             [closable]="false"
+            styleClass="sav-dialog"
         >
             <ng-template pTemplate="content">
-                <h3 *ngIf="ignoreCount > 0">Retour {{ di.ignoreCount }}</h3>
+                <div class="sav-ticket-body">
+                    <h3 class="sav-ticket-title" *ngIf="ignoreCount > 0">
+                        Retour {{ di.ignoreCount }}
+                    </h3>
 
-                <p-image
-                    *ngIf="imageValue"
-                    [src]="baseUrl + imageValue"
-                    [alt]="imageValue"
-                    width="300"
-                    height="150"
-                    class="imageContainer shadow-4"
-                    [preview]="true"
-                ></p-image>
-                <div>
-                    <div class="field" class="ID-Emplacement">
-                        <h3>_id DI: {{ _idnum }}</h3>
-                    </div>
-                    <div class="field">
-                        <p-fieldset legend="Description DI" [toggleable]="true">
-                            <p class="m-0">{{ description }}</p>
-                        </p-fieldset>
-                    </div>
+                    <p-image
+                        *ngIf="imageValue"
+                        [src]="baseUrl + imageValue"
+                        [alt]="imageValue"
+                        width="300"
+                        height="150"
+                        styleClass="sav-thumb"
+                        [preview]="true"
+                    ></p-image>
 
-                    <div class="field" *ngIf="di?.company">
-                        <p-fieldset
-                            legend="Company informations"
-                            [toggleable]="true"
-                        >
-                            <p class="m-0">
-                                name:
-                                {{
-                                    di?.company?.name ? di?.company?.name : "-"
-                                }}
-                            </p>
-                            <p class="m-0">
-                                Fax:
-                                {{ di?.company?.fax ? di?.company?.fax : "-" }}
-                            </p>
-                        </p-fieldset>
-                    </div>
-                    <div class="field" *ngIf="di?.client">
-                        <p-fieldset
-                            legend="Client informations"
-                            [toggleable]="true"
-                        >
-                            <p class="m-0">
-                                name:
-                                {{
-                                    di?.client?.first_name
-                                        ? di?.client?.first_name
-                                        : "-"
-                                }}
-                                {{
-                                    di?.client?.last_name
-                                        ? di?.client?.last_name
-                                        : "-"
-                                }}
-                            </p>
-                            <p class="m-0">
-                                phone:
-                                {{
-                                    di?.client?.phone ? di?.client?.phone : "-"
-                                }}
-                            </p>
-                        </p-fieldset>
-                    </div>
-                    <div class="field" *ngIf="remarque_manager">
-                        <p-fieldset
-                            legend="Remarque admnistration"
-                            [toggleable]="true"
-                        >
-                            <p class="m-0">{{ remarque_manager }}</p>
-                        </p-fieldset>
-                    </div>
-
-                    <div *ngIf="ignoreCount > 0">
-                        <div class="field" *ngIf="remarque_tech_diagnostic">
-                            <p-fieldset
-                                legend="Remarque Diagnostique Technicien"
-                                [toggleable]="true"
-                            >
-                                <p class="m-0">
-                                    {{ remarque_tech_diagnostic }}
-                                </p>
-                            </p-fieldset>
-                        </div>
-                        <div class="field" *ngIf="remarque_tech_repair">
-                            <p-fieldset
-                                legend="Remarque Reparation Technicien"
-                                [toggleable]="true"
-                            >
-                                <p class="m-0">{{ remarque_tech_repair }}</p>
-                            </p-fieldset>
+                    <div class="sav-info-grid">
+                        <div class="sav-info-item">
+                            <i class="pi pi-hashtag"></i>
+                            <span>ID DI</span>
+                            <strong>{{ _idnum }}</strong>
                         </div>
                     </div>
-                </div>
 
-                <div *ngIf="isLoading">
-                    <p>Chargement des données...</p>
-                </div>
+                    <div class="sav-form-row">
+                        <label class="sav-label">Description</label>
+                        <p-fieldset [toggleable]="true">
+                            <p class="m-0" style="font-size: 0.85rem">
+                                {{ description }}
+                            </p>
+                        </p-fieldset>
+                    </div>
 
-                <div *ngIf="error" class="error-message">
-                    {{ error }}
-                </div>
+                    <div class="sav-form-row" *ngIf="di?.company">
+                        <label class="sav-label">Informations société</label>
+                        <p-fieldset [toggleable]="true">
+                            <p class="m-0" style="font-size: 0.85rem">
+                                {{ di?.company?.name || "—" }}
+                            </p>
+                            <p class="m-0" style="font-size: 0.85rem">
+                                Fax : {{ di?.company?.fax || "—" }}
+                            </p>
+                        </p-fieldset>
+                    </div>
 
-                <div *ngIf="ignoreCount > 0" class="history-container">
-                    <div
-                        *ngIf="historyOfDi && historyOfDi.length > 0"
-                        class="history-list"
-                    >
+                    <div class="sav-form-row" *ngIf="di?.client">
+                        <label class="sav-label">Informations client</label>
+                        <p-fieldset [toggleable]="true">
+                            <p class="m-0" style="font-size: 0.85rem">
+                                {{ di?.client?.first_name }}
+                                {{ di?.client?.last_name }}
+                            </p>
+                            <p class="m-0" style="font-size: 0.85rem">
+                                Tél : {{ di?.client?.phone || "—" }}
+                            </p>
+                        </p-fieldset>
+                    </div>
+
+                    <div class="sav-form-row" *ngIf="remarque_manager">
+                        <label class="sav-label">Remarque administration</label>
+                        <textarea
+                            rows="2"
+                            class="sav-textarea sav-textarea--readonly"
+                            disabled
+                            >{{ remarque_manager }}</textarea
+                        >
+                    </div>
+
+                    <ng-container *ngIf="ignoreCount > 0">
                         <div
-                            *ngFor="let item of historyOfDi"
-                            class="history-item"
+                            class="sav-form-row"
+                            *ngIf="remarque_tech_diagnostic"
                         >
-                            <div class="flow-label">Tech/Temps</div>
-                            <div class="diagnostic-info">
-                                <span class="label"
-                                    >Technicien chargé Diagnostique:</span
-                                >
-                                <span class="value">{{
-                                    item?.id_tech_diag
-                                }}</span>
-                            </div>
-                            <div class="diagnostic-info">
-                                <span class="label">Temps Diagnostique:</span>
-                                <span class="value">{{ item?.diag_time }}</span>
-                            </div>
-                            <div class="repair-info">
-                                <span class="label"
-                                    >Technicien chargé Réparation:</span
-                                >
-                                <span class="value">{{
-                                    item?.id_tech_rep
-                                }}</span>
-                            </div>
-                            <div class="repair-info">
-                                <span class="label">Temps Réparation:</span>
-                                <span class="value">{{ item?.rep_time }}</span>
+                            <label class="sav-label"
+                                >Remarque diagnostique technicien</label
+                            >
+                            <textarea
+                                rows="2"
+                                class="sav-textarea sav-textarea--readonly"
+                                disabled
+                                >{{ remarque_tech_diagnostic }}</textarea
+                            >
+                        </div>
+                        <div class="sav-form-row" *ngIf="remarque_tech_repair">
+                            <label class="sav-label"
+                                >Remarque réparation technicien</label
+                            >
+                            <textarea
+                                rows="2"
+                                class="sav-textarea sav-textarea--readonly"
+                                disabled
+                                >{{ remarque_tech_repair }}</textarea
+                            >
+                        </div>
+
+                        <div
+                            class="sav-pricing-history"
+                            *ngIf="historyOfDi && historyOfDi.length > 0"
+                        >
+                            <div
+                                *ngFor="let item of historyOfDi; let i = index"
+                                class="sav-pricing-hist-item"
+                            >
+                                <h5 class="sav-hist-title">Flow {{ i }}</h5>
+                                <div class="sav-tech-row">
+                                    <div class="sav-tech-item">
+                                        <i class="pi pi-search"></i>
+                                        <span>Tech Diag</span>
+                                        <strong>{{
+                                            item?.id_tech_diag
+                                        }}</strong>
+                                    </div>
+                                    <div class="sav-tech-item">
+                                        <i class="pi pi-clock"></i>
+                                        <span>Temps Diag</span>
+                                        <strong>{{ item?.diag_time }}</strong>
+                                    </div>
+                                    <div class="sav-tech-item">
+                                        <i class="pi pi-wrench"></i>
+                                        <span>Tech Rép.</span>
+                                        <strong>{{ item?.id_tech_rep }}</strong>
+                                    </div>
+                                    <div class="sav-tech-item">
+                                        <i class="pi pi-clock"></i>
+                                        <span>Temps Rép.</span>
+                                        <strong>{{ item?.rep_time }}</strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div *ngIf="ignoreCount > 0">
-                    <h3>Liste des composants original et retour</h3>
-                    <p-table
-                        [value]="allComposants"
-                        [paginator]="true"
-                        [rows]="10"
-                        [responsiveLayout]="'scroll'"
-                    >
-                        <ng-template pTemplate="header">
-                            <tr>
-                                <th>Nom du Composant</th>
-                                <th>Quantité</th>
-                            </tr>
-                        </ng-template>
-                        <ng-template pTemplate="body" let-composant>
-                            <tr>
-                                <td>{{ composant.nameComposant }}</td>
-                                <td>{{ composant.quantity }}</td>
-                            </tr>
-                        </ng-template>
-                    </p-table>
-                </div>
+                        <p-table
+                            [value]="allComposants"
+                            [paginator]="true"
+                            [rows]="10"
+                            styleClass="p-datatable-sm sav-modal-table"
+                        >
+                            <ng-template pTemplate="caption">
+                                <span
+                                    style="
+                                        font-size: 0.78rem;
+                                        font-weight: 600;
+                                        color: #64748b;
+                                    "
+                                    >Composants originaux & retour</span
+                                >
+                            </ng-template>
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th>Nom composant</th>
+                                    <th>Quantité</th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-c>
+                                <tr>
+                                    <td>{{ c.nameComposant }}</td>
+                                    <td>{{ c.quantity }}</td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </ng-container>
 
-                <form [formGroup]="diagFormTech">
-                    <div class="flex flex-column">
-                        <div>
-                            <span *ngIf="ignoreCount > 0">
-                                Veuillez changer le type de panne seulement si
-                                nécessaire
-                            </span>
+                    <!-- FORM -->
+                    <form [formGroup]="diagFormTech" class="sav-create-form">
+                        <div class="sav-form-row">
+                            <label class="sav-label">Catégorie DI</label>
                             <p-dropdown
                                 id="Category_DI"
                                 [options]="categorieDiListDropDown"
                                 (onChange)="selectedDropDown($event)"
                                 optionLabel="category"
-                                placeholder="Choisir categorie"
+                                placeholder="Choisir catégorie"
                                 optionValue="value"
                                 [showClear]="true"
                                 formControlName="di_category_id"
-                            >
-                            </p-dropdown>
+                                styleClass="sav-dropdown"
+                                [style]="{ width: '100%' }"
+                            ></p-dropdown>
                         </div>
-                        <div *ngIf="ignoreCount > 0">
-                            <div class="justify-content-between">
-                                <h3>
-                                    Veuiller choisir le type d'erreur client ou
-                                    fixtronix
-                                </h3>
-                                <p-toggleButton
-                                    formControlName="isErrorFromFixtronix"
-                                    onLabel="Erreur_Fixtronix"
-                                    offLabel="Erreur_client"
-                                    onIcon="Unlocked"
-                                    offIcon="Locked"
-                                    styleClass="w-12rem"
-                                    ariaLabel="Do you confirm"
-                                    class="card flex justify-content-center"
-                                    (click)="updateDisableValues()"
-                                />
-                            </div>
+
+                        <div class="sav-form-row" *ngIf="ignoreCount > 0">
+                            <label class="sav-label">Type d'erreur</label>
+                            <p-toggleButton
+                                formControlName="isErrorFromFixtronix"
+                                onLabel="Erreur Fixtronix"
+                                offLabel="Erreur Client"
+                                (click)="updateDisableValues()"
+                                styleClass="sav-toggle"
+                            ></p-toggleButton>
                         </div>
-                        <div *ngIf="ignoreCount == 0" class="supheader field">
-                            <label for="name"
-                                >Description de la Panne a corriger</label
-                            >
-                            <textarea
-                                formControlName="remarqueTech"
-                                rows="2"
-                                cols="30"
-                                (keydown.enter)="$event.preventDefault()"
-                                pInputTextarea
-                            ></textarea>
-                        </div>
-                        <div *ngIf="ignoreCount > 0" class="supheader field">
-                            <label for="name"
-                                >Expliquer le retour pour cette Demande
-                                d'intervention
+
+                        <div class="sav-form-row">
+                            <label class="sav-label">
+                                {{
+                                    ignoreCount > 0
+                                        ? "Expliquer le retour"
+                                        : "Description de la panne à corriger"
+                                }}
+                                <span class="sav-required">*</span>
                             </label>
                             <textarea
                                 formControlName="remarqueTech"
                                 rows="3"
-                                cols="30"
+                                class="sav-textarea"
+                                (keydown.enter)="$event.preventDefault()"
                                 pInputTextarea
                             ></textarea>
                         </div>
 
-                        <!-- pdr or no -->
-                        <div class="condition-BTN">
-                            <div class="field">
-                                <label for="name"
-                                    >Cette piece est réparable ?</label
-                                >
-                                <p-toggleButton
-                                    onLabel="Oui"
-                                    offLabel="Non"
-                                    formControlName="isReparable"
-                                    (click)="updateDisableValues()"
-                                ></p-toggleButton>
-                            </div>
-                            <div class="field" *ngIf="isReperable">
-                                <label for="name">Di contient PDR ?</label>
-                                <p-toggleButton
-                                    onLabel="Oui"
-                                    offLabel="Non"
-                                    formControlName="isPdr"
-                                    (click)="updateDisableValues()"
-                                ></p-toggleButton>
-                            </div>
+                        <div class="sav-radio-row">
+                            <span class="sav-label"
+                                >Cette pièce est réparable ?</span
+                            >
+                            <p-toggleButton
+                                onLabel="Oui"
+                                offLabel="Non"
+                                formControlName="isReparable"
+                                (click)="updateDisableValues()"
+                                styleClass="sav-toggle"
+                            ></p-toggleButton>
+
+                            <span class="sav-label" *ngIf="isReperable"
+                                >DI contient PDR ?</span
+                            >
+                            <p-toggleButton
+                                *ngIf="isReperable"
+                                onLabel="Oui"
+                                offLabel="Non"
+                                formControlName="isPdr"
+                                (click)="updateDisableValues()"
+                                styleClass="sav-toggle"
+                            ></p-toggleButton>
                         </div>
 
-                        <!-- list of composant -->
+                        <!-- COMPOSANTS -->
                         <ng-container *ngIf="hasPdr && isReperable">
-                            <div class="grid align-items-center">
-                                <div class="col">
-                                    <label for="name"
+                            <div
+                                class="sav-upload-pair"
+                                style="align-items: flex-end"
+                            >
+                                <div class="sav-form-row" style="flex: 1">
+                                    <label class="sav-label"
                                         >Choisir un composant</label
                                     >
                                     <p-dropdown
@@ -470,90 +532,81 @@
                                         (onChange)="selectedDropDown($event)"
                                         optionLabel="name"
                                         placeholder="Choisir composant"
+                                        styleClass="sav-dropdown"
+                                        [style]="{ width: '100%' }"
                                     ></p-dropdown>
                                 </div>
-                                <div class="col" *ngIf="composantSelected">
-                                    <label for="integeronly">Quantité</label>
+                                <div
+                                    class="sav-form-row"
+                                    *ngIf="composantSelected"
+                                    style="flex: 1"
+                                >
+                                    <label class="sav-label">Quantité</label>
                                     <p-inputNumber
-                                        inputId="integeronly"
                                         formControlName="quantity"
-                                        [placeholder]="
-                                            'Add quantity for ' +
-                                            composantSelected.value.name
-                                        "
                                         [min]="1"
-                                        [mode]="'decimal'"
+                                        styleClass="sav-number-input"
                                     ></p-inputNumber>
                                 </div>
-                                <div class="col" *ngIf="composantSelected">
-                                    <button
-                                        pButton
-                                        pRipple
-                                        label="Ajouter"
-                                        class="p-button-success"
-                                        icon="pi pi-check"
-                                        (click)="comboComposantandQuantity()"
-                                    ></button>
-                                </div>
+                                <p-button
+                                    *ngIf="composantSelected"
+                                    label="Ajouter"
+                                    icon="pi pi-plus"
+                                    severity="success"
+                                    size="small"
+                                    (click)="comboComposantandQuantity()"
+                                ></p-button>
                             </div>
 
-                            <p-toast></p-toast>
-                            <p-toolbar styleClass="mb-4 gap-2">
-                                <ng-template pTemplate="left">
-                                    <p-button
-                                        pRipple
-                                        severity="success"
-                                        label="Créer composant"
-                                        icon="pi pi-save"
-                                        class="mr-2"
-                                        (click)="openNew()"
-                                    ></p-button>
-                                </ng-template>
-                            </p-toolbar>
+                            <div
+                                class="sav-dialog-footer"
+                                style="
+                                    justify-content: flex-start;
+                                    border: none;
+                                    padding-top: 0;
+                                "
+                            >
+                                <p-button
+                                    label="Créer composant"
+                                    icon="pi pi-save"
+                                    severity="success"
+                                    size="small"
+                                    (click)="openNew()"
+                                ></p-button>
+                            </div>
 
                             <p-table
                                 #dt
                                 [value]="composantCombo"
                                 [rows]="11"
-                                [tableStyle]="{ 'min-width': '75rem' }"
                                 [(selection)]="selectedComposants"
-                                [rowHover]="true"
                                 dataKey="nameComposant"
-                                [showCurrentPageReport]="true"
+                                styleClass="p-datatable-sm sav-modal-table"
                             >
                                 <ng-template pTemplate="caption">
-                                    <div
-                                        class="flex align-items-center justify-content-between"
+                                    <span
+                                        style="
+                                            font-size: 0.78rem;
+                                            font-weight: 600;
+                                            color: #64748b;
+                                        "
                                     >
-                                        <h5 class="m-0">
-                                            Listes des composants
-                                        </h5>
-                                    </div>
+                                        {{
+                                            composantCombo
+                                                ? composantCombo.length
+                                                : 0
+                                        }}
+                                        composant(s)
+                                    </span>
                                 </ng-template>
                                 <ng-template pTemplate="header">
                                     <tr>
-                                        <th style="width: 4rem">
+                                        <th style="width: 3rem">
                                             <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
                                         </th>
-                                        <th
-                                            pSortableColumn="name"
-                                            style="min-width: 15rem"
-                                        >
-                                            Nom composant
-                                            <p-sortIcon
-                                                field="name"
-                                            ></p-sortIcon>
-                                        </th>
-                                        <th
-                                            pSortableColumn="Quantité"
-                                            style="min-width: 15rem"
-                                        >
-                                            Quantité
-                                            <p-sortIcon
-                                                field="name"
-                                            ></p-sortIcon>
-                                        </th>
-                                        <th style="min-width: 10rem">Action</th>
+                                        <th>Nom composant</th>
+                                        <th>Quantité</th>
+                                        <th>Action</th>
                                     </tr>
                                 </ng-template>
                                 <ng-template pTemplate="body" let-composant>
@@ -568,436 +621,406 @@
                                         <td>
                                             <button
                                                 pButton
-                                                type="button"
-                                                icon="pi pi-info-circle"
-                                                label="Effacer"
+                                                icon="pi pi-trash"
+                                                class="sav-icon-btn sav-icon-btn--danger"
                                                 (click)="onRowClick(composant)"
                                             ></button>
                                         </td>
                                     </tr>
                                 </ng-template>
-                                <ng-template pTemplate="summary">
-                                    <div
-                                        class="flex align-items-center justify-content-between"
-                                    >
-                                        Ce DI contient
-                                        {{
-                                            composantCombo
-                                                ? composantCombo.length
-                                                : 0
-                                        }}
-                                        Composants.
-                                    </div>
-                                </ng-template>
                             </p-table>
                         </ng-container>
-
-                        <!-- ******* Start of composant creation ********* -->
-                        <p-dialog
-                            [(visible)]="creatComposantDialog"
-                            [style]="{ width: '450px' }"
-                            [modal]="true"
-                            styleClass="p-fluid"
-                            [draggable]="false"
-                            header="Création d'un nouveau composant"
-                        >
-                            <ng-template pTemplate="content">
-                                <form [formGroup]="composantTechnicien">
-                                    <div class="field">
-                                        <p-dropdown
-                                            [options]="composantCategory"
-                                            optionLabel="name"
-                                            optionValue="name"
-                                            placeholder="Choisir catégorie composant"
-                                            class="mr-2-magasin dropdown-magasin"
-                                            formControlName="category_composant_id"
-                                        >
-                                            <ng-template
-                                                let-option
-                                                pTemplate="item"
-                                            >
-                                                <p-tag
-                                                    [value]="option.name"
-                                                    [severity]="
-                                                        getSeverity(option.name)
-                                                    "
-                                                ></p-tag>
-                                            </ng-template>
-                                        </p-dropdown>
-
-                                        <label for="name">Nom composant</label>
-                                        <input
-                                            type="text"
-                                            pInputText
-                                            id="name"
-                                            formControlName="name"
-                                            required
-                                        />
-                                        <small
-                                            class="p-error"
-                                            *ngIf="
-                                                submitted && !composantTech.name
-                                            "
-                                        >
-                                            Name is required.
-                                        </small>
-                                    </div>
-                                    <div class="field">
-                                        <label for="packageComposant"
-                                            >Package composant</label
-                                        >
-                                        <input
-                                            type="text"
-                                            pInputText
-                                            id="package"
-                                            formControlName="packageComposant"
-                                            required
-                                        />
-                                    </div>
-                                    <div class="field">
-                                        <label for="link"
-                                            >Lien du composant</label
-                                        >
-                                        <input
-                                            type="text"
-                                            pInputText
-                                            id="link"
-                                            formControlName="link"
-                                        />
-                                    </div>
-                                    <div class="field">
-                                        <p-fileUpload
-                                            mode="basic"
-                                            chooseLabel="Ajouter un PDF"
-                                            chooseIcon="pi pi-upload"
-                                            name="demo[]"
-                                            url="https://www.primefaces.org/cdn/api/upload.php"
-                                            accept="image/*,application/pdf"
-                                            maxFileSize="1000000"
-                                            (onUpload)="onUpload($event)"
-                                            [auto]="true"
-                                        ></p-fileUpload>
-                                    </div>
-                                </form>
-                            </ng-template>
-                            <ng-template pTemplate="footer">
-                                <label
-                                    >Nom & Package sont des champs
-                                    obligatoire</label
-                                >
-                                <p-button
-                                    pRipple
-                                    label="Cancel"
-                                    icon="pi pi-times"
-                                    [text]="true"
-                                    (click)="closeComposantModal()"
-                                ></p-button>
-                                <p-button
-                                    [disabled]="
-                                        !composantTechnicien.get(
-                                            'packageComposant'
-                                        ).value ||
-                                        !composantTechnicien.get('name').value
-                                    "
-                                    pRipple
-                                    label="Save"
-                                    icon="pi pi-check"
-                                    [text]="true"
-                                    (click)="saveNewComposant()"
-                                ></p-button>
-                            </ng-template>
-                        </p-dialog>
-                        <!-- ******* END of composant creation ********* -->
-                    </div>
-                </form>
+                    </form>
+                </div>
             </ng-template>
+
             <ng-template pTemplate="footer">
-                <div class="foot">
-                    <button
-                        *ngIf="ignoreCount === 0"
-                        pButton
-                        pRipple
-                        label="Mettre DI en Pause"
-                        icon="pi pi-pause-circle"
-                        class="p-button-text"
-                        (click)="lapTimeForPauseAndGetBack()"
-                    ></button>
-                    <button
-                        *ngIf="ignoreCount > 0"
-                        pButton
-                        pRipple
-                        label="Retour DI en Pause"
-                        icon="pi pi-pause-circle"
-                        class="p-button-text"
-                        (click)="lapTimeForPauseAndGetBack()"
-                    ></button>
-                    <h1>{{ minutes }}:{{ seconds }}:{{ milliseconds }}</h1>
-                    <button
-                        *ngIf="ignoreCount === 0"
-                        [disabled]="
-                            disabledDiagnostiqueValue ||
-                            !diagFormTech.get('remarqueTech').value
-                        "
-                        pButton
-                        pRipple
-                        label="Fin diagnostique"
-                        icon="pi pi-check"
-                        class="p-button-text"
-                        (click)="techFinishDiag()"
-                    ></button>
-                    <button
-                        *ngIf="ignoreCount > 0"
-                        [disabled]="techRetourSendFinished"
-                        title="Reperable sans composants"
-                        pButton
-                        pRipple
-                        label="Envoyer vers finir"
-                        class="p-button-text"
-                        (click)="retourEnvoyerVersFinir()"
-                    ></button>
-                    <button
-                        *ngIf="ignoreCount > 0"
-                        [disabled]="
-                            disabledDiagnostiqueRetourValue ||
-                            !diagFormTech.get('remarqueTech').value
-                        "
-                        pButton
-                        pRipple
-                        label="Fin diagnostique retour"
-                        icon="pi pi-check"
-                        class="p-button-text"
-                        (click)="saveLogsDi()"
-                    ></button>
+                <div class="sav-tech-modal-footer">
+                    <div class="sav-timer">
+                        {{ minutes }}:{{ seconds }}:{{ milliseconds }}
+                    </div>
+                    <div
+                        class="sav-dialog-footer"
+                        style="border: none; padding: 0; margin: 0"
+                    >
+                        <p-button
+                            [label]="
+                                ignoreCount > 0
+                                    ? 'Retour DI en pause'
+                                    : 'Mettre DI en pause'
+                            "
+                            icon="pi pi-pause-circle"
+                            severity="secondary"
+                            [outlined]="true"
+                            size="small"
+                            (click)="lapTimeForPauseAndGetBack()"
+                        ></p-button>
+                        <p-button
+                            *ngIf="ignoreCount > 0"
+                            label="Envoyer vers finir"
+                            icon="pi pi-send"
+                            severity="info"
+                            size="small"
+                            [disabled]="techRetourSendFinished"
+                            (click)="retourEnvoyerVersFinir()"
+                        ></p-button>
+                        <p-button
+                            *ngIf="ignoreCount > 0"
+                            label="Fin diagnostique retour"
+                            icon="pi pi-check"
+                            severity="success"
+                            size="small"
+                            [disabled]="
+                                disabledDiagnostiqueRetourValue ||
+                                !diagFormTech.get('remarqueTech').value
+                            "
+                            (click)="saveLogsDi()"
+                        ></p-button>
+                        <p-button
+                            *ngIf="ignoreCount === 0"
+                            label="Fin diagnostique"
+                            icon="pi pi-check"
+                            severity="success"
+                            size="small"
+                            [disabled]="
+                                disabledDiagnostiqueValue ||
+                                !diagFormTech.get('remarqueTech').value
+                            "
+                            (click)="techFinishDiag()"
+                        ></p-button>
+                    </div>
                 </div>
             </ng-template>
         </p-dialog>
     </ng-container>
-    <!-- REPERATION MODAL -->
+
+    <!-- ═══════════════════════════════════════════════
+         MODAL — CRÉER COMPOSANT
+    ════════════════════════════════════════════════ -->
     <p-dialog
-        header="Reparation"
-        [(visible)]="diDialogRep"
-        [style]="{ width: '50%', height: '70vh' }"
+        header="Création d'un nouveau composant"
+        [(visible)]="creatComposantDialog"
         [modal]="true"
-        styleClass="p-fluid"
-        [maximizable]="true"
+        [style]="{ width: '450px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="sav-dialog"
+    >
+        <form [formGroup]="composantTechnicien" class="sav-create-form">
+            <div class="sav-form-row">
+                <label class="sav-label">Catégorie composant</label>
+                <p-dropdown
+                    [options]="composantCategory"
+                    optionLabel="name"
+                    optionValue="name"
+                    placeholder="Choisir catégorie"
+                    formControlName="category_composant_id"
+                    styleClass="sav-dropdown"
+                    [style]="{ width: '100%' }"
+                ></p-dropdown>
+            </div>
+            <div class="sav-form-row">
+                <label class="sav-label"
+                    >Nom composant <span class="sav-required">*</span></label
+                >
+                <input
+                    type="text"
+                    pInputText
+                    formControlName="name"
+                    class="sav-input"
+                    required
+                />
+            </div>
+            <div class="sav-form-row">
+                <label class="sav-label"
+                    >Package composant
+                    <span class="sav-required">*</span></label
+                >
+                <input
+                    type="text"
+                    pInputText
+                    formControlName="packageComposant"
+                    class="sav-input"
+                    required
+                />
+            </div>
+            <div class="sav-form-row">
+                <label class="sav-label">Lien du composant</label>
+                <input
+                    type="text"
+                    pInputText
+                    formControlName="link"
+                    class="sav-input"
+                />
+            </div>
+            <div class="sav-form-row">
+                <p-fileUpload
+                    mode="basic"
+                    chooseLabel="Ajouter un PDF"
+                    chooseIcon="pi pi-upload"
+                    name="demo[]"
+                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    accept="image/*,application/pdf"
+                    maxFileSize="1000000"
+                    (onUpload)="onUpload($event)"
+                    [auto]="true"
+                    styleClass="sav-upload-btn"
+                ></p-fileUpload>
+            </div>
+            <div class="sav-dialog-footer">
+                <p-button
+                    label="Annuler"
+                    icon="pi pi-times"
+                    severity="danger"
+                    [outlined]="true"
+                    size="small"
+                    (click)="closeComposantModal()"
+                ></p-button>
+                <p-button
+                    label="Enregistrer"
+                    icon="pi pi-check"
+                    size="small"
+                    [disabled]="
+                        !composantTechnicien.get('packageComposant').value ||
+                        !composantTechnicien.get('name').value
+                    "
+                    (click)="saveNewComposant()"
+                ></p-button>
+            </div>
+        </form>
+    </p-dialog>
+
+    <!-- ═══════════════════════════════════════════════
+         MODAL — RÉPARATION
+    ════════════════════════════════════════════════ -->
+    <p-dialog
+        header="Réparation — DI"
+        [(visible)]="diDialogRep"
+        [modal]="true"
+        [style]="{ width: '660px' }"
+        [draggable]="false"
+        [resizable]="false"
         [closable]="false"
+        styleClass="sav-dialog"
     >
         <ng-template pTemplate="content">
-            <p-image
-                *ngIf="imageValue"
-                [src]="baseUrl + imageValue"
-                [alt]="imageValue"
-                width="300"
-                height="150"
-                class="imageContainer shadow-4"
-                [preview]="true"
-            ></p-image>
-            <div class="flex flex-column">
-                <div [formGroup]="remarque" class="field">
-                    <div *ngIf="ignoreCount == 0">
-                        <div class="detail-section">
-                            <span class="detail-label"
-                                >Technicien chargé Diagnostique:</span
-                            >
-                            <span class="detail-value">{{
+            <div class="sav-ticket-body">
+                <p-image
+                    *ngIf="imageValue"
+                    [src]="baseUrl + imageValue"
+                    [alt]="imageValue"
+                    width="300"
+                    height="150"
+                    styleClass="sav-thumb"
+                    [preview]="true"
+                ></p-image>
+
+                <!-- ignoreCount === 0 -->
+                <ng-container *ngIf="ignoreCount == 0">
+                    <div class="sav-tech-row">
+                        <div class="sav-tech-item">
+                            <i class="pi pi-search"></i>
+                            <span>Tech Diag</span>
+                            <strong>{{
                                 diStatRepInfo?.getStatInfoForTechReparation
                                     .StatData.id_tech_diag
-                            }}</span>
-                            <span class="detail-label"
-                                >Temps Diagnostique:</span
-                            >
-                            <span class="detail-value">{{
+                            }}</strong>
+                        </div>
+                        <div class="sav-tech-item">
+                            <i class="pi pi-clock"></i>
+                            <span>Temps Diag</span>
+                            <strong>{{
                                 diStatRepInfo?.getStatInfoForTechReparation
                                     .StatData.diag_time
-                            }}</span>
-                        </div>
-
-                        <div
-                            *ngIf="
-                                diStatRepInfo?.getStatInfoForTechReparation
-                                    .diData?.array_composants.length > 0
-                            "
-                        >
-                            <p-table
-                                [value]="
-                                    diStatRepInfo?.getStatInfoForTechReparation
-                                        .diData?.array_composants
-                                "
-                                [paginator]="true"
-                                [rows]="10"
-                                [responsiveLayout]="'scroll'"
-                            >
-                                <ng-template pTemplate="header">
-                                    <tr>
-                                        <th>Retour</th>
-                                        <th>Nom du Composant</th>
-                                        <th>Quantité</th>
-                                    </tr>
-                                </ng-template>
-                                <ng-template pTemplate="body" let-composant>
-                                    <tr>
-                                        <td>{{ composant.ignoreCount }}</td>
-                                        <td>{{ composant.nameComposant }}</td>
-                                        <td>{{ composant.quantity }}</td>
-                                    </tr>
-                                </ng-template>
-                            </p-table>
+                            }}</strong>
                         </div>
                     </div>
-                    <div *ngIf="ignoreCount > 0">
+                    <p-table
+                        *ngIf="
+                            diStatRepInfo?.getStatInfoForTechReparation.diData
+                                ?.array_composants.length > 0
+                        "
+                        [value]="
+                            diStatRepInfo?.getStatInfoForTechReparation.diData
+                                ?.array_composants
+                        "
+                        [paginator]="true"
+                        [rows]="10"
+                        styleClass="p-datatable-sm sav-modal-table"
+                    >
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Retour</th>
+                                <th>Nom composant</th>
+                                <th>Quantité</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-c>
+                            <tr>
+                                <td>{{ c.ignoreCount }}</td>
+                                <td>{{ c.nameComposant }}</td>
+                                <td>{{ c.quantity }}</td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </ng-container>
+
+                <!-- ignoreCount > 0 -->
+                <ng-container *ngIf="ignoreCount > 0">
+                    <div
+                        class="sav-pricing-history"
+                        *ngIf="historyOfDi && historyOfDi.length > 0"
+                    >
                         <div
-                            *ngIf="historyOfDi && historyOfDi.length > 0"
-                            class="history-container"
+                            *ngFor="let item of historyOfDi; let i = index"
+                            class="sav-pricing-hist-item"
                         >
-                            <div
-                                *ngFor="let item of historyOfDi; let i = index"
-                                class="history-item"
-                            >
-                                <!-- Flow counter -->
-                                <div class="flow-counter">FLOW: {{ i }}</div>
-
-                                <!-- Diagnostic details -->
-                                <div class="detail-section">
-                                    <span class="detail-label"
-                                        >Technicien chargé Diagnostique:</span
-                                    >
-                                    <span class="detail-value">{{
-                                        item?.id_tech_diag
-                                    }}</span>
-                                    <span class="detail-label"
-                                        >Temps Diagnostique:</span
-                                    >
-                                    <span class="detail-value">{{
-                                        item?.diag_time
-                                    }}</span>
+                            <h5 class="sav-hist-title">Flow {{ i }}</h5>
+                            <div class="sav-tech-row">
+                                <div class="sav-tech-item">
+                                    <i class="pi pi-search"></i
+                                    ><span>Tech Diag</span
+                                    ><strong>{{ item?.id_tech_diag }}</strong>
                                 </div>
-
-                                <!-- Repair details -->
-                                <div class="detail-section">
-                                    <span class="detail-label"
-                                        >Technicien chargé Réparation:</span
-                                    >
-                                    <span class="detail-value">{{
-                                        item?.id_tech_rep
-                                    }}</span>
-                                    <span class="detail-label"
-                                        >Temps Réparation:</span
-                                    >
-                                    <span class="detail-value">{{
-                                        item?.rep_time
-                                    }}</span>
+                                <div class="sav-tech-item">
+                                    <i class="pi pi-clock"></i
+                                    ><span>Temps Diag</span
+                                    ><strong>{{ item?.diag_time }}</strong>
+                                </div>
+                                <div class="sav-tech-item">
+                                    <i class="pi pi-wrench"></i
+                                    ><span>Tech Rép.</span
+                                    ><strong>{{ item?.id_tech_rep }}</strong>
+                                </div>
+                                <div class="sav-tech-item">
+                                    <i class="pi pi-clock"></i
+                                    ><span>Temps Rép.</span
+                                    ><strong>{{ item?.rep_time }}</strong>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div *ngIf="ignoreCount > 0">
-                        <h3>Liste des composants changer</h3>
+                    <p-table
+                        [value]="allComposantLogsAndOriginal"
+                        [paginator]="true"
+                        [rows]="10"
+                        styleClass="p-datatable-sm sav-modal-table"
+                    >
+                        <ng-template pTemplate="caption">
+                            <span
+                                style="
+                                    font-size: 0.78rem;
+                                    font-weight: 600;
+                                    color: #64748b;
+                                "
+                                >Composants changés</span
+                            >
+                        </ng-template>
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th>Nom composant</th>
+                                <th>Quantité</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-c>
+                            <tr>
+                                <td>{{ c.nameComposant }}</td>
+                                <td>{{ c.quantity }}</td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </ng-container>
 
-                        <p-table
-                            [value]="allComposantLogsAndOriginal"
-                            [paginator]="true"
-                            [rows]="10"
-                            [responsiveLayout]="'scroll'"
-                        >
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th>Nom du Composant</th>
-                                    <th>Quantité</th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-composant>
-                                <tr>
-                                    <td>{{ composant.nameComposant }}</td>
-                                    <td>{{ composant.quantity }}</td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
+                <!-- Remarques -->
+                <div [formGroup]="remarque" class="sav-create-form">
+                    <div class="sav-form-row">
+                        <label class="sav-label">Remarque réparation</label>
+                        <textarea
+                            formControlName="remarqueRepair"
+                            rows="2"
+                            class="sav-textarea"
+                            pInputTextarea
+                            (keydown.enter)="$event.preventDefault()"
+                        ></textarea>
                     </div>
-                    <label for="name">
-                        Ajouter une remarque si nécessaire
-                    </label>
+                </div>
+
+                <div class="sav-form-row" *ngIf="description">
+                    <label class="sav-label">Description</label>
                     <textarea
-                        formControlName="remarqueRepair"
                         rows="2"
-                        cols="30"
-                        pInputTextarea
-                        (keydown.enter)="$event.preventDefault()"
-                    ></textarea>
-                </div>
-
-                <div class="field" *ngIf="description">
-                    <p-fieldset legend="Description" [toggleable]="true">
-                        <p class="m-0">{{ description }}</p>
-                    </p-fieldset>
-                </div>
-
-                <div class="field" *ngIf="remarque_manager">
-                    <p-fieldset
-                        legend="Remarque admnistration"
-                        [toggleable]="true"
+                        class="sav-textarea sav-textarea--readonly"
+                        disabled
+                        >{{ description }}</textarea
                     >
-                        <p class="m-0">{{ remarque_manager }}</p>
-                    </p-fieldset>
                 </div>
-                <div class="field" *ngIf="remarque_admin_manager">
-                    <p-fieldset
-                        legend="remarque_admin_manager"
-                        [toggleable]="true"
+                <div class="sav-form-row" *ngIf="remarque_manager">
+                    <label class="sav-label">Remarque administration</label>
+                    <textarea
+                        rows="2"
+                        class="sav-textarea sav-textarea--readonly"
+                        disabled
+                        >{{ remarque_manager }}</textarea
                     >
-                        <p class="m-0">{{ remarque_admin_manager }}</p>
-                    </p-fieldset>
                 </div>
-                <div class="field" *ngIf="remarque_admin_tech">
-                    <p-fieldset
-                        legend="remarque_admin_tech"
-                        [toggleable]="true"
+                <div class="sav-form-row" *ngIf="remarque_tech_diagnostic">
+                    <label class="sav-label"
+                        >Remarque technicien diagnostique</label
                     >
-                        <p class="m-0">{{ remarque_admin_tech }}</p>
-                    </p-fieldset>
+                    <textarea
+                        rows="2"
+                        class="sav-textarea sav-textarea--readonly"
+                        disabled
+                        >{{ remarque_tech_diagnostic }}</textarea
+                    >
                 </div>
-            </div>
-            <div class="field" *ngIf="remarque_tech_diagnostic">
-                <p-fieldset
-                    legend="Remarque Technicien Diagnostique"
-                    [toggleable]="true"
-                >
-                    <p class="m-0">{{ remarque_tech_diagnostic }}</p>
-                </p-fieldset>
-            </div>
-            <div class="field" *ngIf="remarque_magasin">
-                <p-fieldset legend="Remarque Magasin" [toggleable]="true">
-                    <p class="m-0">{{ remarque_magasin }}</p>
-                </p-fieldset>
-            </div>
-            <div class="field" *ngIf="remarque_coordinator">
-                <p-fieldset legend="Remarque Coordinatrice" [toggleable]="true">
-                    <p class="m-0">{{ remarque_coordinator }}</p>
-                </p-fieldset>
+                <div class="sav-form-row" *ngIf="remarque_magasin">
+                    <label class="sav-label">Remarque magasin</label>
+                    <textarea
+                        rows="2"
+                        class="sav-textarea sav-textarea--readonly"
+                        disabled
+                        >{{ remarque_magasin }}</textarea
+                    >
+                </div>
+                <div class="sav-form-row" *ngIf="remarque_coordinator">
+                    <label class="sav-label">Remarque coordinatrice</label>
+                    <textarea
+                        rows="2"
+                        class="sav-textarea sav-textarea--readonly"
+                        disabled
+                        >{{ remarque_coordinator }}</textarea
+                    >
+                </div>
             </div>
         </ng-template>
 
         <ng-template pTemplate="footer">
-            <div class="foot">
-                <button
-                    pButton
-                    pRipple
-                    label="Mettre DI en Pause"
-                    icon="pi pi-stopwatch"
-                    class="p-button-text"
-                    (click)="getReamrque(); lapTimeForPauseAndGetBack1()"
-                ></button>
-                <h1>{{ minutes1 }}:{{ seconds1 }}:{{ milliseconds1 }}</h1>
-                <button
-                    pButton
-                    pRipple
-                    label="Fin reperation"
-                    icon="pi pi-briefcase"
-                    class="p-button-text"
-                    (click)="getReamrque(); finishReparation()"
-                ></button>
+            <div class="sav-tech-modal-footer">
+                <div class="sav-timer">
+                    {{ minutes1 }}:{{ seconds1 }}:{{ milliseconds1 }}
+                </div>
+                <div
+                    class="sav-dialog-footer"
+                    style="border: none; padding: 0; margin: 0"
+                >
+                    <p-button
+                        label="Mettre DI en pause"
+                        icon="pi pi-stopwatch"
+                        severity="secondary"
+                        [outlined]="true"
+                        size="small"
+                        (click)="getReamrque(); lapTimeForPauseAndGetBack1()"
+                    ></p-button>
+                    <p-button
+                        label="Fin réparation"
+                        icon="pi pi-check"
+                        severity="success"
+                        size="small"
+                        (click)="getReamrque(); finishReparation()"
+                    ></p-button>
+                </div>
             </div>
         </ng-template>
     </p-dialog>
-
-    <!-- <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog> -->
 </div>

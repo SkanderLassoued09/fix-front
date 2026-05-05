@@ -7,8 +7,6 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { NotificationService } from 'src/app/demo/service/notification.service';
-import { compileNgModule } from '@angular/compiler';
-import * as moment from 'moment';
 
 // TODO check type of these fields
 export interface Composant {
@@ -24,17 +22,6 @@ export interface Composant {
     quantity_stocked: string;
     status: string;
 }
-function formatDate(dateString) {
-    const date = new Date(dateString); // Parse the date string into a Date object
-
-    // Format the day, month, and year with leading zeros if needed
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const year = date.getFullYear();
-
-    return `${day}/${month}/${year}`; // Return the formatted date
-}
-
 @Component({
     selector: 'app-details-composant',
     templateUrl: './details-composant.component.html',
@@ -199,7 +186,7 @@ export class DetailsComposantComponent implements OnInit {
             .watchQuery<any>({
                 query: this.ticketSerice.changeStatusDiToPending2(_id),
             })
-            .valueChanges.subscribe(({ data }) => {});
+            .valueChanges.subscribe(() => {});
     }
     updateComposant() {
         this.apollo
@@ -209,7 +196,7 @@ export class DetailsComposantComponent implements OnInit {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading }) => {
+            .subscribe(({ data }) => {
                 if (data) {
                      this.messageservice.add({
                                     severity: 'info',

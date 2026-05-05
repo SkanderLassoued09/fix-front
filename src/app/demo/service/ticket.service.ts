@@ -1,8 +1,6 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
 import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.interface';
-import { di } from '@fullcalendar/core/internal-common';
-import { ReturnStatement } from '@angular/compiler';
 
 @Injectable({
     providedIn: 'root',
@@ -272,6 +270,7 @@ export class TicketService {
           status
           createdAt
           updatedAt
+          _idnum
           current_roles
           client_id
           createdBy
@@ -306,6 +305,7 @@ export class TicketService {
                         status
                         createdAt
                         updatedAt
+                        _idnum
                         current_roles
                         client_id
                         createdBy

@@ -30,7 +30,7 @@ export class AppComponent implements OnInit {
         private readonly apollo: Apollo,
         private messageService: MessageService,
         @Inject(SwPush) private swPush: SwPush,
-        private notificationService: NotificationService
+        private notificationService: NotificationService,
     ) {
         this._idtech = localStorage.getItem('_id');
     }
@@ -39,10 +39,55 @@ export class AppComponent implements OnInit {
         this.notificationService.startWorker();
         this.primengConfig.ripple = true;
         this.notification();
+        // Notification subscription
+        this.notificationService.notification$.subscribe((message: any) => {
+            if (message) {
+                console.log('from app component', message);
+                // this.messageService.add({
+                //     severity: 'info',
+                //     summary: 'Nouveau ticket',
+                //     detail: 'Un nouveau ticket vient d’être assigné',
+                //     sticky: true,
+                // });
+                // setTimeout(() => {
+                //     this.loadData();
+                // }, 1000);
+            }
+        });
+        // this.notificationService.blAdded$.subscribe((message: any) => {
+        //     console.log('from app component BBBLLLLL', message);
+        //     if (message) {
+        //         //   this.messageService.add({
+        //         //       severity: 'info',
+        //         //       summary: 'Nouveau ticket',
+        //         //       detail: 'Un nouveau ticket vient d’être assigné',
+        //         //       sticky: true,
+        //         //   });
+        //         // setTimeout(() => {
+        //         //     this.loadData();
+        //         // }, 1000);
+        //     }
+        // });
+        this.notificationService.reminder$.subscribe((message: any) => {
+            if (message) {
+                //CONFIRMATION_COMPOSANT ??
+                console.log('from app component REPLYYY', message);
+                //   this.messageService.add({
+                //       severity: 'info',
+                //       summary: 'Nouveau ticket',
+                //       detail: 'Un nouveau ticket vient d’être assigné',
+                //       sticky: true,
+                //   });
+
+                // setTimeout(() => {
+                //     this.loadData();
+                // }, 1000);
+            }
+        });
     }
 
     notification() {
-        this.swPush.subscription.subscribe((res) => {
+        this.swPush.subscription.subscribe(() => {
             this.apollo
                 .subscribe<NotificationSubscriptionResponse>({
                     query: this.profileService.notificationDiagnostic(),

@@ -31,7 +31,7 @@ export class ChartsDemoComponent implements OnInit, OnDestroy {
     constructor(private layoutService: LayoutService) {
         this.subscription = this.layoutService.configUpdate$
             .pipe(debounceTime(25))
-            .subscribe((config) => {
+            .subscribe(() => {
                 this.initCharts();
             });
     }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
@@ -11,18 +11,19 @@ import { STATUS_DI } from 'src/app/layout/api/status-di';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
-import { debounceTime, Subject } from 'rxjs';
+import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
 
 @Component({
     selector: 'app-coordinator-di-list',
     templateUrl: './coordinator-di-list.component.html',
     styleUrl: './coordinator-di-list.component.scss',
 })
-export class CoordinatorDiListComponent {
+export class CoordinatorDiListComponent implements OnDestroy {
     // Search state tracking
     private currentSearchField: string = '';
     private currentSearchValue: string = '';
     private searchSubject$ = new Subject<void>();
+    private destroy$ = new Subject<void>();
 
     visible: boolean = false;
     products!: Product[];
@@ -47,6 +48,7 @@ export class CoordinatorDiListComponent {
     counterInReperation = 0;
     counterPending = 0;
     counterRetour = 0;
+    isLoading: boolean = true;
 
     uploadedFiles: any[] = [];
     cols = [
@@ -146,19 +148,53 @@ export class CoordinatorDiListComponent {
         this.confirmationBTN = false;
 
         // Setup search with debounce
-        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
-            this.loadData();
-        });
+        this.searchSubject$
+            .pipe(debounceTime(400), takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.loadData();
+            });
+
+        this.notificationService.sentComponentToCoordinator$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                console.log(
+                    'Composant comes from magasin this message should display in coordinator-di-list',
+                    message,
+                );
+                if (message) {
+                    console.log(
+                        'in condition composant comes from magasin this message should display in coordinator-di-list',
+                        message,
+                    );
+                    this.messageservice.add({
+                        severity: 'info',
+                        summary: 'Components Received',
+                        detail: `Components for DI #${message.message._id} are ready for your review and confirmation.`,
+                        sticky: true,
+                    });
+
+                    setTimeout(() => {
+                        this.loadData();
+                    }, 1000);
+                }
+            });
 
         // Notification subscription
-        this.notificationService.notification$.subscribe((message: any) => {
-            console.log('🍻[message]:', message);
-            if (message) {
-                console.log('🍚[message]:', message);
-                this.loadData();
-                this.getStatusCount();
-            }
-        });
+        this.notificationService.notification$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                console.log('🍻[message]:', message);
+                if (message) {
+                    console.log('🍚[message]:', message);
+                    this.loadData();
+                    this.getStatusCount();
+                }
+            });
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
     /**
@@ -166,6 +202,8 @@ export class CoordinatorDiListComponent {
      * Handles both search and regular data fetching with pagination
      */
     loadData() {
+        this.isLoading = true;
+
         const hasActiveSearch =
             this.currentSearchField &&
             this.currentSearchValue &&
@@ -183,6 +221,7 @@ export class CoordinatorDiListComponent {
                     ),
                     fetchPolicy: 'no-cache',
                 })
+                .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(({ data }) => {
                     if (data && data.searchCoordinatorDI) {
                         this.diList = data.searchCoordinatorDI.di;
@@ -194,13 +233,15 @@ export class CoordinatorDiListComponent {
         } else {
             // Regular data fetch
             this.apollo
-                .watchQuery<any>({
+                .query<any>({
                     query: this.ticketSerice.getAllDiForCoordinator(
                         this.first,
                         this.rows,
                     ),
+                    fetchPolicy: 'no-cache',
                 })
-                .valueChanges.subscribe(({ data, loading, errors }) => {
+                .pipe(finalize(() => (this.isLoading = false)))
+                .subscribe(({ data }) => {
                     console.log('🌶[*************data]:', data);
 
                     if (data && data.get_coordinatorDI) {
@@ -210,6 +251,30 @@ export class CoordinatorDiListComponent {
                     }
                 });
         }
+    }
+
+    getStatusLabel(status: string): string {
+        const map = {
+            CREATED: 'CREATED',
+            PENDING1: 'PENDING1',
+            PENDING2: 'PENDING2',
+            PENDING3: 'PENDING3',
+            DIAGNOSTIC: 'DIAGNOSTIC',
+            INDIAGNOSTIC: 'INDIAGNOSTIC',
+            INMAGASIN: 'INMAGASIN',
+            PRICING: 'PRICING',
+            NEGOTIATION1: 'NEGOTIATION1',
+            NEGOTIATION2: 'NEGOTIATION2',
+            REPARATION: 'REPARATION',
+            INREPARATION: 'INREPARATION',
+            FINISHED: 'FINISHED',
+            ANNULER: 'ANNULER',
+            RETOUR1: 'RETOUR1',
+            RETOUR2: 'RETOUR2',
+            RETOUR3: 'RETOUR3',
+        };
+
+        return map[status] || status;
     }
 
     /**
@@ -326,7 +391,8 @@ export class CoordinatorDiListComponent {
             .query<any>({
                 query: this.ticketSerice.getStatusCount(),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.statusCount = data.getStatusCount;
                     this.basicData = {
@@ -395,7 +461,8 @@ export class CoordinatorDiListComponent {
                     this.selectedDi,
                 ),
             })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
+            .valueChanges.subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.reperationCondition =
                         data.getDiById.di.gotComposantFromMagasin;
@@ -408,7 +475,8 @@ export class CoordinatorDiListComponent {
             .watchQuery<GetAllTechQueryResponse>({
                 query: this.ticketSerice.getAllTech(),
             })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
+            .valueChanges.subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.techList = data.getAllTech;
                 }
@@ -577,7 +645,7 @@ export class CoordinatorDiListComponent {
                 mutation: this.ticketSerice.changeStatusRepaire(_id),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading }) => {});
+            .subscribe(() => {});
     }
 
     sendDiToDiag(selectedDi, dataId, selectedDiLocation) {
@@ -590,7 +658,9 @@ export class CoordinatorDiListComponent {
                 ),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, loading, errors }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+
                 if (data) {
                     this.apollo
                         .mutate<TechStartDiagnosticMutationResponse>({
@@ -600,7 +670,9 @@ export class CoordinatorDiListComponent {
                                 ),
                             useMutationLoading: true,
                         })
-                        .subscribe(({ data, loading }) => {
+                        .subscribe(({ loading }) => {
+                            this.isLoading = loading;
+
                             this.loadData();
                             console.log('🥪 emit');
                         });
@@ -648,7 +720,9 @@ export class CoordinatorDiListComponent {
                         ),
                         useMutationLoading: true,
                     })
-                    .subscribe(({ data, loading, errors }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
+
                         if (data) {
                             this.changeStatusRepaire(this.selectedDi);
                             this.loadData();
@@ -659,7 +733,7 @@ export class CoordinatorDiListComponent {
         });
     }
 
-    changestatusToPricing(data) {
+    changestatusToPricing(_data) {
         this.confirmationService.confirm({
             message: "Envoyer aux admins pour l'affectation de prix",
             header: "Confirmation d'envoie",
@@ -671,7 +745,9 @@ export class CoordinatorDiListComponent {
                             this.di._id,
                         ),
                     })
-                    .subscribe(({ data }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
+
                         if (data) {
                             this.loadData();
                             this.diDialog = false;
@@ -694,7 +770,9 @@ export class CoordinatorDiListComponent {
                                 this.di._id,
                             ),
                     })
-                    .subscribe(({ data }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
+
                         if (data) {
                             console.log('🌯[data]:', data);
                             this.componentConfirmedFromCoordinator =
@@ -717,7 +795,9 @@ export class CoordinatorDiListComponent {
                     'CONFIRM',
                 ),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+
                 if (data) {
                     console.log('🎂[data]:', data);
                     this.isConfirmed =

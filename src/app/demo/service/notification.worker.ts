@@ -45,17 +45,26 @@ socket.on('sendNotifcationToAdmins', (message: string) => {
     postMessage(data); // Send the message to the main thread
 });
 
-socket.on('confirmAllComposant', (message: string) => {
+//continue here confirmation.
+
+socket.on('component:sent_to_coordinator', (message: string) => {
     const data = {
-        event: 'confirmAllComposant',
+        event: 'component:sent_to_coordinator',
         message,
     };
     postMessage(data); // Send the message to the main thread
 });
 
-socket.on('sendComponentToCoordinatorFromMagasin', (message: string) => {
+socket.on('component:confirmed_by_coordinator', (message: string) => {
     const data = {
-        event: 'sendComponentToCoordinatorFromMagasin',
+        event: 'component:confirmed_by_coordinator',
+        message,
+    };
+    postMessage(data); // Send the message to the main thread
+});
+socket.on('blAddedNotification', (message: string) => {
+    const data = {
+        event: 'blAddedNotification',
         message,
     };
     postMessage(data); // Send the message to the main thread

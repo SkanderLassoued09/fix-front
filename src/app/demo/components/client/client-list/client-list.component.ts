@@ -4,7 +4,7 @@ import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ClientService } from 'src/app/demo/service/client.service';
 import { REGION } from '../constant/region-constant';
-import { debounceTime, Subject } from 'rxjs';
+import { debounceTime, finalize, Subject } from 'rxjs';
 
 // Separate interface file
 interface Column {
@@ -106,6 +106,8 @@ export class ClientListComponent {
      * Handles both search and regular data fetching with pagination
      */
     loadData() {
+        this.loading = true;
+
         const hasActiveSearch =
             this.currentSearchField &&
             this.currentSearchValue &&
@@ -123,8 +125,8 @@ export class ClientListComponent {
                     ),
                     fetchPolicy: 'no-cache',
                 })
-                .subscribe(({ data, loading }) => {
-                    this.loading = loading;
+                .pipe(finalize(() => (this.loading = false)))
+                .subscribe(({ data }) => {
                     if (data && data.searchClient) {
                         this.clientsList = data.searchClient.clientRecords;
                         this.totalClientRecord =
@@ -133,7 +135,7 @@ export class ClientListComponent {
                 });
         } else {
             // Regular data fetch
-            this.clients(this.first, this.rows);
+            this.clients();
         }
     }
 
@@ -202,14 +204,14 @@ export class ClientListComponent {
         this.loadData(); // Use loadData instead of clients
     }
 
-    clients(first, rows) {
+    clients() {
         this.apollo
-            .watchQuery<GetAllClientQueryResponse>({
+            .query<GetAllClientQueryResponse>({
                 query: this.clientService.getAllClient(this.rows, this.first),
-                useInitialLoading: true,
+                fetchPolicy: 'no-cache',
             })
-            .valueChanges.subscribe(({ data, loading, errors }) => {
-                this.loading = loading;
+            .pipe(finalize(() => (this.loading = false)))
+            .subscribe(({ data }) => {
                 if (data) {
                     this.clientsList = data.findAllClient.clientRecords;
                     this.totalClientRecord =

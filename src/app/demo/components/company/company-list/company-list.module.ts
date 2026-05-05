@@ -8,11 +8,14 @@ import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { PaginatorModule } from 'primeng/paginator';
+import { DropdownModule } from 'primeng/dropdown';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 @NgModule({
     declarations: [CompanyListComponent],
     imports: [
@@ -24,10 +27,14 @@ import { PaginatorModule } from 'primeng/paginator';
         InputTextModule,
         InputGroupModule,
         InputGroupAddonModule,
+        FormsModule,
         ReactiveFormsModule,
+        DropdownModule,
         ToastModule,
         ConfirmDialogModule,
         PaginatorModule,
+        TagModule,
+        TooltipModule,
     ],
     providers: [MessageService, ConfirmationService],
 })

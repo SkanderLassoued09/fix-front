@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { ROLES } from '../components/profile/constant/role-constants';
 import { MessageService } from 'primeng/api';
 import {
     BehaviorSubject,
@@ -21,8 +20,16 @@ export class NotificationService {
 
     private notificationSubject = new Subject<any>(); // Subject to emit notifications
     private reminderSubject = new Subject<any>(); // Subject to emit notifications
-    public notification$ = this.notificationSubject.asObservable(); // Observable to expose notifications
+    private blAddedSubject = new Subject<any>(); // Subject to emit notifications
+    private sentComponentToCoordinatorSubject = new Subject<any>(); // Subject to emit notifications
+    private componentConfirmedByCoordinatorSubject = new Subject<any>(); // Subject to emit notifications
+    public notification$ = this.notificationSubject.asObservable(); // Observable to expose notificationsd
+    public blAdded$ = this.blAddedSubject.asObservable(); // Observable to expose notificationsd
     public reminder$ = this.reminderSubject.asObservable(); // Observable to expose notifications
+    public sentComponentToCoordinator$ =
+        this.sentComponentToCoordinatorSubject.asObservable(); // Observable to expose notifications
+    public componentConfirmedByCoordinator$ =
+        this.componentConfirmedByCoordinatorSubject.asObservable(); // Observable to expose notifications
     private handleState = new BehaviorSubject<any>(false); // Initialize with a default value or null
     public handleState$ = this.handleState.asObservable();
     // -- conx
@@ -34,12 +41,12 @@ export class NotificationService {
     public slowConnection$ = this.slowConnection.asObservable();
     constructor(
         private readonly messageservice: MessageService,
-        private http: HttpClient
+        private http: HttpClient,
     ) {
         // --
         window.addEventListener('online', () => this.updateOnlineStatus(true));
         window.addEventListener('offline', () =>
-            this.updateOnlineStatus(false)
+            this.updateOnlineStatus(false),
         );
         // --
 
@@ -53,7 +60,7 @@ export class NotificationService {
         if (typeof Worker !== 'undefined') {
             // Create a new web worker
             this.worker = new Worker(
-                new URL('./notification.worker.ts', import.meta.url)
+                new URL('./notification.worker.ts', import.meta.url),
             );
             this.worker.onmessage = ({ data }) => {
                 this.handlenotification(data);
@@ -73,17 +80,48 @@ export class NotificationService {
     }
 
     public handlenotification(data: any) {
+        console.log('handlenotification', data);
         switch (data.event) {
+            case 'confirmAllComposant':
+                if (localStorage.getItem('username')) {
+                    this.messageservice.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'confirmAllComposant',
+                        sticky: true,
+                    });
+
+                    this.reminderSubject.next(data);
+                    return 'confirmAllComposant';
+                }
+                break;
             case 'updateTicket':
                 if (data.message.action === 'updateState') {
                     this.notificationSubject.next(data.message.content.states); // Emit the message
                     return data.message.target;
                 }
-
+                break;
+            case 'sendDitoDiagnostique':
+                this.notificationSubject.next(data);
                 break;
             case 'sendComponentToCoordinatorFromMagasin':
                 this.notificationSubject.next(data.message); // Emit the message
-                return data.message;
+                break;
+
+            case 'blAddedNotification':
+                console.log('skander', data.message);
+                this.blAddedSubject.next(data);
+
+                break;
+
+            case 'component:sent_to_coordinator':
+                console.log('skander', data.message);
+                this.sentComponentToCoordinatorSubject.next(data);
+
+                break;
+            case 'component:confirmed_by_coordinator':
+                console.log('skander', data.message);
+                this.componentConfirmedByCoordinatorSubject.next(data);
 
                 break;
 
@@ -137,23 +175,7 @@ export class NotificationService {
             //     }
 
             //     break;
-            // case 'confirmAllComposant':
-            //     if (localStorage.getItem('username')) {
-            //         this.messageservice.add({
-            //             severity: 'success',
-            //             summary: 'Success',
-            //             detail: 'confirmAllComposant',
-            //             sticky: true,
-            //         });
-            //         // Implement your notification confirm composant
-            //
-            //             'Notification for confirmAllComposant:',
-            //             data.message
-            //         );
-            //         this.reminderSubject.next(data);
-            //         return 'confirmAllComposant';
-            //     }
-            //     break;
+
             default:
                 console.warn('Unhandled event:', data.event);
                 break;
@@ -174,7 +196,7 @@ export class NotificationService {
                 // Consider connection slow if the request fails
                 this.slowConnection.next(true);
                 return of(null);
-            })
+            }),
         );
     }
     startWorker() {

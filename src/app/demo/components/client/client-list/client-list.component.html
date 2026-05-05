@@ -1,88 +1,203 @@
-<div class="card">
-    <p-button
-        (click)="showDialog()"
-        icon="pi pi-plus"
-        label="Ajouter un client"
-    ></p-button>
+<p-toast></p-toast>
+<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
+
+<div class="sav-page">
+    <div class="sav-page-header">
+        <div class="sav-page-title">
+            <i class="pi pi-user"></i>
+            <h2>Gestion des clients</h2>
+        </div>
+        <div class="sav-page-actions">
+            <p-button
+                (click)="showDialog()"
+                icon="pi pi-plus"
+                label="Ajouter un client"
+                styleClass="sav-btn-new"
+            ></p-button>
+        </div>
+    </div>
+
+    <div class="sav-table-wrapper">
+        <p-table
+            [columns]="cols"
+            [value]="clientsList"
+            [tableStyle]="{ 'min-width': '100%' }"
+            styleClass="p-datatable-sm sav-main-table"
+        >
+            <ng-template pTemplate="header" let-columns>
+                <tr class="sav-thead-row">
+                    <th *ngFor="let col of columns" class="sav-th">
+                        {{ col.header }}
+                    </th>
+                    <th class="sav-th sav-th-actions">Actions</th>
+                </tr>
+                <tr class="sav-filter-row">
+                    <th *ngFor="let col of columns" class="sav-th-filter">
+                        <input
+                            pInputText
+                            type="text"
+                            class="sav-filter-input"
+                            placeholder="Chercher..."
+                            (input)="
+                                onColumnSearch(
+                                    col.searchKey,
+                                    $event.target.value
+                                )
+                            "
+                        />
+                    </th>
+                    <th class="sav-th-filter"></th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr class="sav-row">
+                    <td *ngFor="let col of columns" class="sav-td">
+                        {{ rowData[col.field] || "—" }}
+                    </td>
+                    <td class="sav-td sav-actions-cell">
+                        <button
+                            pButton
+                            pTooltip="Modifier"
+                            tooltipPosition="top"
+                            icon="pi pi-pencil"
+                            class="sav-icon-btn sav-icon-btn--success"
+                            (click)="editClient(rowData)"
+                        ></button>
+                        <button
+                            pButton
+                            pTooltip="Supprimer"
+                            tooltipPosition="top"
+                            icon="pi pi-trash"
+                            class="sav-icon-btn sav-icon-btn--danger"
+                            (click)="deleteSelectedClient(rowData._id)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td
+                        [attr.colspan]="(cols?.length || 0) + 1"
+                        class="sav-empty"
+                    >
+                        <i class="pi pi-inbox"></i>
+                        <span>Aucun client trouvé</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <div class="sav-paginator-wrapper">
+            <span class="sav-count">
+                {{ totalClientRecord ? first + 1 : 0 }}-{{
+                    first + (clientsList?.length || 0)
+                }}
+                sur {{ totalClientRecord || 0 }} résultats
+            </span>
+            <p-paginator
+                (onPageChange)="onPageChange($event)"
+                [first]="first"
+                [rows]="rows"
+                [totalRecords]="totalClientRecord"
+                [rowsPerPageOptions]="[5, 10, 30]"
+                styleClass="sav-paginator"
+            ></p-paginator>
+        </div>
+    </div>
 </div>
 
 <p-dialog
     header="Ajouter un nouveau client"
     [(visible)]="visible"
     [modal]="true"
-    [style]="{ width: '50vw', height: '27vw' }"
+    [style]="{ width: '620px' }"
     [draggable]="false"
     [resizable]="false"
+    styleClass="sav-dialog"
 >
-    <form [formGroup]="clientForm">
-        <div class="grid">
-            <div class="col">
-                <label for="first_name">Prénom</label>
-                <input
-                    formControlName="first_name"
-                    pInputText
-                    id="first_name"
-                    class="pInputText w-full"
-                />
+    <form [formGroup]="clientForm" class="sav-create-form">
+        <fieldset class="sav-fieldset">
+            <legend>Informations générales</legend>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="first_name">Prénom</label>
+                    <input
+                        formControlName="first_name"
+                        pInputText
+                        id="first_name"
+                        class="sav-input"
+                    />
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="last_name">Nom</label>
+                    <input
+                        formControlName="last_name"
+                        pInputText
+                        id="last_name"
+                        class="sav-input"
+                    />
+                </div>
             </div>
-            <div class="col">
-                <label for="last_name">Nom</label>
-                <input
-                    formControlName="last_name"
-                    pInputText
-                    id="last_name"
-                    class="pInputText w-full"
-                />
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="region">Région</label>
+                    <p-dropdown
+                        inputId="region"
+                        formControlName="region"
+                        [options]="region"
+                        optionLabel="name"
+                        [showClear]="true"
+                        placeholder="Choisir une région"
+                        styleClass="sav-dropdown"
+                        [style]="{ width: '100%' }"
+                    ></p-dropdown>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="address">Adresse</label>
+                    <input
+                        formControlName="address"
+                        pInputText
+                        id="address"
+                        class="sav-input"
+                    />
+                </div>
             </div>
-        </div>
-        <div class="grid">
-            <div class="col">
-                <label for="region">Région</label>
-                <p-dropdown
-                    formControlName="region"
-                    [options]="region"
-                    optionLabel="name"
-                    [showClear]="true"
-                    placeholder="Choisir une région"
-                    styleClass="w-full"
-                ></p-dropdown>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="email">E-mail</label>
+                    <input
+                        formControlName="email"
+                        pInputText
+                        id="email"
+                        type="email"
+                        class="sav-input"
+                    />
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="phone">Téléphone</label>
+                    <p-inputMask
+                        id="phone"
+                        mask="99 999 999"
+                        formControlName="phone"
+                        styleClass="sav-input-mask"
+                    ></p-inputMask>
+                </div>
             </div>
-            <div class="col">
-                <label for="address">Adresse</label>
-                <input
-                    formControlName="address"
-                    pInputText
-                    id="address"
-                    class="pInputText w-full"
-                />
-            </div>
-        </div>
-        <div class="grid">
-            <div class="col">
-                <label for="email">E-mail</label>
-                <input
-                    formControlName="email"
-                    pInputText
-                    id="email"
-                    class="pInputText w-full"
-                />
-            </div>
-            <div class="col">
-                <label for="phone">Téléphone</label>
-                <p-inputMask
-                    id="phone"
-                    mask="99 999 999"
-                    formControlName="phone"
-                    styleClass="w-full"
-                ></p-inputMask>
-            </div>
-        </div>
+        </fieldset>
     </form>
-    <div class="p-dialog-footer">
+
+    <div class="sav-dialog-footer">
         <p-button
             label="Annuler"
-            (onClick)="cancel()"
-            severity="danger"
+            icon="pi pi-times"
+            severity="secondary"
+            [text]="true"
+            (onClick)="cancel(); visible = false"
         ></p-button>
         <p-button
             [disabled]="
@@ -93,6 +208,7 @@
                 !clientForm.get('address').value
             "
             label="Ajouter"
+            icon="pi pi-check"
             severity="success"
             [loading]="loading"
             (onClick)="addClient()"
@@ -100,164 +216,127 @@
     </div>
 </p-dialog>
 
-<div class="card">
-    <p-toast></p-toast>
-    <p-table
-        [columns]="cols"
-        [value]="clientsList"
-        [tableStyle]="{ 'min-width': '50rem' }"
-    >
-        <ng-template pTemplate="header" let-columns>
-            <tr>
-                <th *ngFor="let col of columns">{{ col.header }}</th>
-                <th>Actions</th>
-            </tr>
-            <tr>
-                <th *ngFor="let col of columns">
-                    <input
-                        pInputText
-                        type="text"
-                        placeholder="Chercher"
-                        (input)="
-                            onColumnSearch(col.searchKey, $event.target.value)
-                        "
-                    />
-                </th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-rowData let-columns="columns">
-            <tr>
-                <td *ngFor="let col of columns">{{ rowData[col.field] }}</td>
-                <td>
-                    <button
-                        pButton
-                        pRipple
-                        icon="pi pi-pencil"
-                        class="p-button-rounded p-button-success mr-2"
-                        (click)="editClient(rowData)"
-                    ></button>
-                    <button
-                        pButton
-                        pRipple
-                        icon="pi pi-trash"
-                        class="p-button-rounded p-button-danger"
-                        (click)="deleteSelectedClient(rowData._id)"
-                    ></button>
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
-    <p-paginator
-        (onPageChange)="onPageChange($event)"
-        [first]="first"
-        [rows]="rows"
-        [totalRecords]="totalClientRecord"
-        [rowsPerPageOptions]="[10, 20, 30]"
-    ></p-paginator>
-</div>
-
 <p-dialog
     [(visible)]="clientModalCondition"
-    [style]="{ width: '450px' }"
+    [style]="{ width: '520px' }"
     header="Modifier le client"
     [modal]="true"
-    styleClass="p-fluid"
-    draggable="false"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="sav-dialog"
 >
     <ng-template pTemplate="content">
-        <div class="field">
-            <label for="first_name">Prénom</label>
-            <input
-                type="text"
-                pInputText
-                [(ngModel)]="clientData.first_name"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !clientData.first_name">
-                Prénom est requis.
-            </small>
-        </div>
-        <div class="field">
-            <label for="last_name">Nom</label>
-            <input
-                type="text"
-                pInputText
-                [(ngModel)]="clientData.last_name"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !clientData.last_name">
-                Nom est requis.
-            </small>
-        </div>
-        <div class="field">
-            <label for="region">Région</label>
-            <input
-                type="text"
-                pInputText
-                [(ngModel)]="clientData.region"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !clientData.region">
-                Région est requis.
-            </small>
-        </div>
-        <div class="field">
-            <label for="address">Adresse</label>
-            <input
-                type="text"
-                pInputText
-                [(ngModel)]="clientData.address"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !clientData.address">
-                Adresse est requis.
-            </small>
-        </div>
-        <div class="field">
-            <label for="email">E-mail</label>
-            <input
-                type="email"
-                pInputText
-                [(ngModel)]="clientData.email"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !clientData.email">
-                E-mail est requis.
-            </small>
-        </div>
-        <div class="field">
-            <label for="phone">Téléphone</label>
-            <input
-                type="tel"
-                pInputText
-                [(ngModel)]="clientData.phone"
-                required
-                autofocus
-            />
-            <small class="p-error" *ngIf="submitted && !clientData.phone">
-                Téléphone est requis.
-            </small>
+        <div class="sav-create-form" *ngIf="clientData">
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="editFirstName">Prénom</label>
+                    <input
+                        id="editFirstName"
+                        type="text"
+                        pInputText
+                        [(ngModel)]="clientData.first_name"
+                        class="sav-input"
+                        required
+                        autofocus
+                    />
+                    <small class="p-error" *ngIf="submitted && !clientData.first_name">
+                        Prénom requis.
+                    </small>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="editLastName">Nom</label>
+                    <input
+                        id="editLastName"
+                        type="text"
+                        pInputText
+                        [(ngModel)]="clientData.last_name"
+                        class="sav-input"
+                        required
+                    />
+                    <small class="p-error" *ngIf="submitted && !clientData.last_name">
+                        Nom requis.
+                    </small>
+                </div>
+            </div>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="editRegion">Région</label>
+                    <input
+                        id="editRegion"
+                        type="text"
+                        pInputText
+                        [(ngModel)]="clientData.region"
+                        class="sav-input"
+                        required
+                    />
+                    <small class="p-error" *ngIf="submitted && !clientData.region">
+                        Région requise.
+                    </small>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="editPhone">Téléphone</label>
+                    <input
+                        id="editPhone"
+                        type="tel"
+                        pInputText
+                        [(ngModel)]="clientData.phone"
+                        class="sav-input"
+                        required
+                    />
+                    <small class="p-error" *ngIf="submitted && !clientData.phone">
+                        Téléphone requis.
+                    </small>
+                </div>
+            </div>
+
+            <div class="sav-form-row">
+                <label class="sav-label" for="editAddress">Adresse</label>
+                <input
+                    id="editAddress"
+                    type="text"
+                    pInputText
+                    [(ngModel)]="clientData.address"
+                    class="sav-input"
+                    required
+                />
+                <small class="p-error" *ngIf="submitted && !clientData.address">
+                    Adresse requise.
+                </small>
+            </div>
+
+            <div class="sav-form-row">
+                <label class="sav-label" for="editEmail">E-mail</label>
+                <input
+                    id="editEmail"
+                    type="email"
+                    pInputText
+                    [(ngModel)]="clientData.email"
+                    class="sav-input"
+                    required
+                />
+                <small class="p-error" *ngIf="submitted && !clientData.email">
+                    E-mail requis.
+                </small>
+            </div>
         </div>
     </ng-template>
+
     <ng-template pTemplate="footer">
-        <p-button
-            label="Annuler"
-            icon="pi pi-times"
-            [text]="true"
-            (onClick)="cancel()"
-        />
-        <p-button
-            label="Sauvegarder"
-            icon="pi pi-check"
-            [text]="true"
-            (onClick)="updateClient()"
-        />
+        <div class="sav-dialog-footer">
+            <p-button
+                label="Annuler"
+                icon="pi pi-times"
+                severity="secondary"
+                [text]="true"
+                (onClick)="cancel()"
+            ></p-button>
+            <p-button
+                label="Sauvegarder"
+                icon="pi pi-check"
+                severity="success"
+                (onClick)="updateClient()"
+            ></p-button>
+        </div>
     </ng-template>
 </p-dialog>
-
-<p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>

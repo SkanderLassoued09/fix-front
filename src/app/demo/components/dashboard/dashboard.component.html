@@ -1,167 +1,555 @@
-<div class="grid">
-    <div class="col-12 xl:col-6">
-        <div class="card">
-            <h5>Listes des DI finie</h5>
-            <p-table
-                [value]="products"
-                [paginator]="true"
-                [rows]="5"
-                responsiveLayout="scroll"
-            >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>Image</th>
-                        <th pSortableColumn="name">
-                            Nom<p-sortIcon field="name"></p-sortIcon>
-                        </th>
-                        <th pSortableColumn="price">
-                            Prix <p-sortIcon field="price"></p-sortIcon>
-                        </th>
-                        <th>plus d'information</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-product>
-                    <tr>
-                        <td style="width: 15%; min-width: 5rem">
-                            <img
-                                src="assets/demo/images/product/{{
-                                    product.image
-                                }}"
-                                class="shadow-4"
-                                alt="{{ product.name }}"
-                                width="50"
-                            />
-                        </td>
-                        <td style="width: 35%; min-width: 7rem">
-                            {{ product.name }}
-                        </td>
-                        <td style="width: 35%; min-width: 8rem">
-                            {{ product.price | currency : "USD" }}
-                        </td>
-                        <td style="width: 15%">
-                            <button
-                                pButton
-                                pRipple
-                                type="button"
-                                icon="pi pi-search"
-                                class="p-button p-component p-button-text p-button-icon-only"
-                            ></button>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
-        <div class="card">
-            <h5>Demande d'interventions par categories</h5>
-            <div class="flex justify-content-center">
-                <p-chart
-                    type="pie"
-                    [data]="dataPie"
-                    [options]="optionPie"
-                ></p-chart>
+<!-- ═══════════════════════════════════════════════════
+     SAV ATELIER — KPI DASHBOARD
+     dashboard.component.html  (PrimeNG 17 compatible)
+════════════════════════════════════════════════════ -->
+
+<div class="sav-dashboard">
+    <!-- ── HEADER ───────────────────────────────────── -->
+    <div class="dash-header">
+        <div class="dash-header__left">
+            <span class="dash-header__icon"><i class="pi pi-cog"></i></span>
+            <div>
+                <h1 class="dash-header__title">Tableau de Bord SAV</h1>
+                <span class="dash-header__sub"
+                    >Atelier — Reporting Mensuel ·
+                    {{ today | date: "MMMM yyyy" }}</span
+                >
             </div>
         </div>
-    </div>
-
-    <div class="col-12 xl:col-6">
-        <div class="card">
-            <h5>Nombre de client & DI</h5>
-            <p-chart
-                type="line"
-                [data]="chartData"
-                [options]="chartOptions"
-            ></p-chart>
-        </div>
-
-        <div class="card">
-            <div class="flex align-items-center justify-content-between mb-4">
-                <h5>Histroique des Notifications</h5>
-                <div>
-                    <button
-                        pButton
-                        type="button"
-                        icon="pi pi-ellipsis-v"
-                        class="p-button-rounded p-button-text p-button-plain"
-                        (click)="menu.toggle($event)"
-                    ></button>
-                    <p-menu #menu [popup]="true" [model]="items"></p-menu>
-                </div>
-            </div>
-
-            <span class="block text-600 font-medium mb-3">TODAY</span>
-            <ul class="p-0 mx-0 mt-0 mb-4 list-none">
-                <li
-                    class="flex align-items-center py-2 border-bottom-1 surface-border"
-                >
-                    <div
-                        class="w-3rem h-3rem flex align-items-center justify-content-center bg-blue-100 border-circle mr-3 flex-shrink-0"
-                    >
-                        <i class="pi pi-dollar text-xl text-blue-500"></i>
-                    </div>
-                    <span class="text-900 line-height-3"
-                        >Richard Jones
-                        <span class="text-700">
-                            has purchased a blue t-shirt for
-                            <span class="text-blue-500">79$</span></span
-                        >
-                    </span>
-                </li>
-                <li class="flex align-items-center py-2">
-                    <div
-                        class="w-3rem h-3rem flex align-items-center justify-content-center bg-orange-100 border-circle mr-3 flex-shrink-0"
-                    >
-                        <i class="pi pi-download text-xl text-orange-500"></i>
-                    </div>
-                    <span class="text-700 line-height-3"
-                        >Your request for withdrawal of
-                        <span class="text-blue-500 font-medium">2500$</span> has
-                        been initiated.</span
-                    >
-                </li>
-            </ul>
-
-            <span class="block text-600 font-medium mb-3">YESTERDAY</span>
-            <ul class="p-0 m-0 list-none">
-                <li
-                    class="flex align-items-center py-2 border-bottom-1 surface-border"
-                >
-                    <div
-                        class="w-3rem h-3rem flex align-items-center justify-content-center bg-blue-100 border-circle mr-3 flex-shrink-0"
-                    >
-                        <i class="pi pi-dollar text-xl text-blue-500"></i>
-                    </div>
-                    <span class="text-900 line-height-3"
-                        >Keyser Wick
-                        <span class="text-700">
-                            has purchased a black jacket for
-                            <span class="text-blue-500">59$</span></span
-                        >
-                    </span>
-                </li>
-                <li
-                    class="flex align-items-center py-2 border-bottom-1 surface-border"
-                >
-                    <div
-                        class="w-3rem h-3rem flex align-items-center justify-content-center bg-pink-100 border-circle mr-3 flex-shrink-0"
-                    >
-                        <i class="pi pi-question text-xl text-pink-500"></i>
-                    </div>
-                    <span class="text-900 line-height-3"
-                        >Jane Davis<span class="text-700">
-                            has posted a new questions about your product.</span
-                        ></span
-                    >
-                </li>
-            </ul>
-        </div>
-    </div>
-    <div class="card">
-        <div class="flex align-items-center justify-content-between mb-4">
-            <h5>choisir la date Min et Max</h5>
+        <div class="dash-header__right">
+            <p-tag
+                [value]="globalStatus.label"
+                [severity]="globalStatus.severity"
+                styleClass="dash-global-tag"
+            ></p-tag>
             <p-calendar
-                [(ngModel)]="datescalender"
-                selectionMode="multiple"
+                [(ngModel)]="selectedMonth"
+                view="month"
+                dateFormat="mm/yy"
+                styleClass="dash-calendar"
             ></p-calendar>
         </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+       SECTION A — KPI ATELIER
+  ══════════════════════════════════════════════ -->
+    <div class="section-label">A — KPI ATELIER</div>
+    <div class="kpi-strip">
+        <div
+            class="kpi-card"
+            [ngClass]="kpiClass(kpiAtelier.tauxClotures, 80, 'gte')"
+        >
+            <div class="kpi-card__icon bg-green">
+                <i class="pi pi-check-circle"></i>
+            </div>
+            <div class="kpi-card__body">
+                <span class="kpi-card__label">Taux DI Clôturés</span>
+                <span class="kpi-card__value"
+                    >{{ kpiAtelier.tauxClotures }}%</span
+                >
+                <p-progressBar
+                    [value]="kpiAtelier.tauxClotures"
+                    [showValue]="false"
+                    styleClass="kpi-progress"
+                ></p-progressBar>
+                <span class="kpi-card__target">Cible ≥ 80%</span>
+            </div>
+            <div
+                class="knob-wrapper"
+                [ngClass]="kpiClass(kpiAtelier.tauxClotures, 80, 'gte')"
+            >
+                <p-knob
+                    [(ngModel)]="kpiAtelier.tauxClotures"
+                    valueTemplate="{value}%"
+                ></p-knob>
+            </div>
+        </div>
+
+        <div
+            class="kpi-card"
+            [ngClass]="kpiClass(kpiDelais.tatMoyen, 5, 'lte')"
+        >
+            <div class="kpi-card__icon bg-blue">
+                <i class="pi pi-clock"></i>
+            </div>
+            <div class="kpi-card__body">
+                <span class="kpi-card__label">TAT Moyen</span>
+                <span class="kpi-card__value">{{ kpiDelais.tatMoyen }} j</span>
+                <p-progressBar
+                    [value]="tatProgress"
+                    [showValue]="false"
+                    styleClass="kpi-progress"
+                ></p-progressBar>
+                <span class="kpi-card__target">Cible ≤ 5 jours</span>
+            </div>
+            <div
+                class="knob-wrapper"
+                [ngClass]="kpiClass(kpiDelais.tatMoyen, 5, 'lte')"
+            >
+                <p-knob
+                    [(ngModel)]="kpiDelais.tatMoyen"
+                    valueTemplate="{value}j"
+                ></p-knob>
+            </div>
+        </div>
+
+        <div class="kpi-card" [ngClass]="kpiClass(satisfactionScore, 4, 'gte')">
+            <div class="kpi-card__icon bg-orange">
+                <i class="pi pi-star"></i>
+            </div>
+            <div class="kpi-card__body">
+                <span class="kpi-card__label">Score Satisfaction</span>
+                <span class="kpi-card__value">{{ satisfactionScore }}/5</span>
+                <p-progressBar
+                    [value]="satisfactionScore * 20"
+                    [showValue]="false"
+                    styleClass="kpi-progress"
+                ></p-progressBar>
+                <span class="kpi-card__target">Cible ≥ 4/5</span>
+            </div>
+            <div
+                class="knob-wrapper"
+                [ngClass]="kpiClass(satisfactionScore, 4, 'gte')"
+            >
+                <p-knob
+                    [(ngModel)]="satisfactionScore"
+                    valueTemplate="{value}/5"
+                ></p-knob>
+            </div>
+        </div>
+
+        <div
+            class="kpi-card"
+            [ngClass]="kpiClass(kpiVolume.nbEnCours, 30, 'lte')"
+        >
+            <div class="kpi-card__icon bg-purple">
+                <i class="pi pi-list"></i>
+            </div>
+            <div class="kpi-card__body">
+                <span class="kpi-card__label">DI en Cours</span>
+                <span class="kpi-card__value">{{ kpiVolume.nbEnCours }}</span>
+                <p-progressBar
+                    [value]="(kpiVolume.nbEnCours / 30) * 100"
+                    [showValue]="false"
+                    styleClass="kpi-progress"
+                ></p-progressBar>
+                <span class="kpi-card__target">Cible ≤ 30</span>
+            </div>
+            <div
+                class="knob-wrapper"
+                [ngClass]="kpiClass(kpiVolume.nbEnCours, 30, 'lte')"
+            >
+                <p-knob
+                    [(ngModel)]="kpiVolume.nbEnCours"
+                    valueTemplate="{value}"
+                ></p-knob>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+       SECTION B — DÉLAIS  +  SECTION C — VOLUME
+  ══════════════════════════════════════════════ -->
+    <div class="grid-2col">
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header">
+                <div class="card-header-row">
+                    <span class="card-section-tag">B</span>
+                    <h3>Délais</h3>
+                </div>
+            </ng-template>
+            <div class="gauge-row">
+                <div class="gauge-item">
+                    <div
+                        class="knob-wrapper"
+                        [ngClass]="kpiClass(kpiDelais.tauxEnCours, 24, 'lte')"
+                    >
+                        <p-knob
+                            [(ngModel)]="kpiDelais.tauxEnCours"
+                            valueTemplate="{value}%"
+                        ></p-knob>
+                    </div>
+                    <span class="gauge-label">Taux DI en cours</span>
+                    <p-tag
+                        [value]="kpiDelais.tauxEnCours + '%'"
+                        [severity]="
+                            kpiDelais.tauxEnCours <= 24 ? 'success' : 'danger'
+                        "
+                    ></p-tag>
+                    <small class="gauge-target">≤ 24%</small>
+                </div>
+
+                <div class="gauge-item">
+                    <div
+                        class="knob-wrapper"
+                        [ngClass]="
+                            kpiClass(kpiDelais.tauxAttentePercent, 20, 'lte')
+                        "
+                    >
+                        <p-knob
+                            [(ngModel)]="kpiDelais.tauxAttentePercent"
+                            valueTemplate="{value}%"
+                        ></p-knob>
+                    </div>
+                    <span class="gauge-label">Taux attente PDR</span>
+                    <p-tag
+                        [value]="kpiDelais.tauxAttentePercent + '%'"
+                        [severity]="
+                            kpiDelais.tauxAttentePercent <= 20
+                                ? 'success'
+                                : 'danger'
+                        "
+                    ></p-tag>
+                    <small class="gauge-target">≤ 20%</small>
+                </div>
+
+                <div class="gauge-item">
+                    <div
+                        class="knob-wrapper"
+                        [ngClass]="kpiClass(kpiDelais.delaiApproPdr, 7, 'lte')"
+                    >
+                        <p-knob
+                            [(ngModel)]="kpiDelais.delaiApproPdr"
+                            valueTemplate="{value}j"
+                        ></p-knob>
+                    </div>
+                    <span class="gauge-label">Délai appro PDR</span>
+                    <p-tag
+                        [value]="kpiDelais.delaiApproPdr + ' j'"
+                        [severity]="
+                            kpiDelais.delaiApproPdr <= 7 ? 'success' : 'danger'
+                        "
+                    ></p-tag>
+                    <small class="gauge-target">≤ 7 jours</small>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header">
+                <div class="card-header-row">
+                    <span class="card-section-tag">C</span>
+                    <h3>Volume & Charge</h3>
+                </div>
+            </ng-template>
+            <div class="volume-grid">
+                <div class="vol-stat" *ngFor="let v of volumeStats">
+                    <span class="vol-stat__num" [ngClass]="v.class">{{
+                        v.value
+                    }}</span>
+                    <span class="vol-stat__label">{{ v.label }}</span>
+                    <span class="vol-stat__target" *ngIf="v.target">{{
+                        v.target
+                    }}</span>
+                </div>
+            </div>
+            <p-chart
+                type="bar"
+                [data]="volumeChartData"
+                [options]="volumeChartOptions"
+                height="160px"
+            ></p-chart>
+        </p-card>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+       TREND LINE + DONUT
+  ══════════════════════════════════════════════ -->
+    <div class="grid-3col">
+        <p-card styleClass="dash-card span-2">
+            <ng-template pTemplate="header">
+                <div class="card-header-row">
+                    <h3>Tendance Hebdomadaire — DI Reçus / Clôturés</h3>
+                    <p-tag value="12 semaines" severity="info"></p-tag>
+                </div>
+            </ng-template>
+            <p-chart
+                type="line"
+                [data]="trendChartData"
+                [options]="trendChartOptions"
+                height="220px"
+            ></p-chart>
+        </p-card>
+
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header">
+                <div class="card-header-row"><h3>DI par Catégorie</h3></div>
+            </ng-template>
+            <div class="flex justify-content-center">
+                <p-chart
+                    type="doughnut"
+                    [data]="categoryChartData"
+                    [options]="categoryChartOptions"
+                    height="220px"
+                ></p-chart>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+       SECTION D — SATISFACTION CLIENT
+  ══════════════════════════════════════════════ -->
+    <div class="section-label">D — SATISFACTION CLIENT</div>
+    <div class="grid-2col">
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header">
+                <div class="card-header-row"><h3>Score & Réclamations</h3></div>
+            </ng-template>
+            <div class="satisfaction-row">
+                <div class="sat-big">
+                    <div
+                        class="knob-wrapper"
+                        [ngClass]="kpiClass(satisfactionScore, 4, 'gte')"
+                    >
+                        <p-knob
+                            [(ngModel)]="satisfactionScore"
+                            valueTemplate="{value}/5"
+                        ></p-knob>
+                    </div>
+                    <span class="sat-label">Score Satisfaction</span>
+                    <p-tag
+                        [value]="
+                            satisfactionScore >= 4
+                                ? '✓ Objectif atteint'
+                                : '✗ Sous objectif'
+                        "
+                        [severity]="
+                            satisfactionScore >= 4 ? 'success' : 'danger'
+                        "
+                    ></p-tag>
+                </div>
+                <div class="sat-claims">
+                    <div
+                        class="claim-stat"
+                        [ngClass]="kpiClass(nbReclamations, 2, 'lte')"
+                    >
+                        <span class="claim-num">{{ nbReclamations }}</span>
+                        <span class="claim-lbl">Réclamations</span>
+                        <small>≤ 2/mois</small>
+                    </div>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header"
+                ><div class="card-header-row">
+                    <h3>Évolution Satisfaction</h3>
+                </div></ng-template
+            >
+            <p-chart
+                type="line"
+                [data]="satisfactionTrendData"
+                [options]="satisfactionTrendOptions"
+                height="180px"
+            ></p-chart>
+        </p-card>
+    </div>
+
+    <!-- ══════════════════════════════════════════════
+       SECTION E — KPI TECHNICIENS
+  ══════════════════════════════════════════════ -->
+    <div class="section-label">E — KPI TECHNICIENS</div>
+    <p-card styleClass="dash-card">
+        <ng-template pTemplate="header">
+            <div class="card-header-row">
+                <h3>Performance par Technicien</h3>
+                <p-tag value="Mois en cours" severity="info"></p-tag>
+            </div>
+        </ng-template>
+
+        <p-table
+            [value]="techniciens"
+            [rows]="6"
+            responsiveLayout="scroll"
+            styleClass="tech-table p-datatable-sm p-datatable-gridlines"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Technicien</th>
+                    <th>Rôle</th>
+                    <th pSortableColumn="nbDiTraites">
+                        DI Traités<p-sortIcon field="nbDiTraites"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="nbDiClotures">
+                        DI Clôturés<p-sortIcon
+                            field="nbDiClotures"
+                        ></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="firstTimeRight">
+                        FTR %<p-sortIcon field="firstTimeRight"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="tauxRetours">
+                        Taux Retours<p-sortIcon
+                            field="tauxRetours"
+                        ></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="tatMoyen">
+                        TAT Moyen<p-sortIcon field="tatMoyen"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="tauxIrreparables">
+                        Irréparables<p-sortIcon
+                            field="tauxIrreparables"
+                        ></p-sortIcon>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-t>
+                <tr>
+                    <td>
+                        <strong>{{ t.nom }}</strong>
+                    </td>
+                    <td>
+                        <p-tag
+                            [value]="t.role"
+                            severity="info"
+                            styleClass="role-tag"
+                        ></p-tag>
+                    </td>
+                    <td class="text-center">{{ t.nbDiTraites }}</td>
+                    <td class="text-center">{{ t.nbDiClotures }}</td>
+                    <td class="text-center">
+                        <span
+                            class="kpi-badge"
+                            [ngClass]="kpiClass(t.firstTimeRight, 85, 'gte')"
+                            >{{ t.firstTimeRight }}%</span
+                        >
+                    </td>
+                    <td class="text-center">
+                        <span
+                            class="kpi-badge"
+                            [ngClass]="kpiClass(t.tauxRetours, 10, 'lte')"
+                            >{{ t.tauxRetours }}%</span
+                        >
+                    </td>
+                    <td class="text-center">
+                        <span
+                            class="kpi-badge"
+                            [ngClass]="kpiClass(t.tatMoyen, 5, 'lte')"
+                            >{{ t.tatMoyen }}j</span
+                        >
+                    </td>
+                    <td class="text-center">
+                        <span class="kpi-badge kpi-neutral"
+                            >{{ t.tauxIrreparables }}%</span
+                        >
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="footer">
+                <tr class="table-footer-legend">
+                    <td colspan="8">
+                        <span class="legend-item kpi-green"
+                            >■ Objectif atteint</span
+                        >
+                        <span class="legend-item kpi-orange">■ Attention</span>
+                        <span class="legend-item kpi-red">■ Sous objectif</span>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+
+        <div class="mt-4">
+            <h4 class="chart-sub-title">First Time Right par Technicien (%)</h4>
+            <p-chart
+                type="bar"
+                [data]="techFtrChartData"
+                [options]="techFtrChartOptions"
+                height="160px"
+            ></p-chart>
+        </div>
+    </p-card>
+
+    <!-- ══════════════════════════════════════════════
+       SECTION F — FINANCE & RH
+  ══════════════════════════════════════════════ -->
+    <div class="section-label">F — FINANCE & RH</div>
+
+    <div class="finance-kpi-strip">
+        <div
+            class="fin-card"
+            *ngFor="let f of financeKpis"
+            [ngClass]="f.statusClass"
+        >
+            <i class="pi {{ f.icon }} fin-card__icon"></i>
+            <span class="fin-card__label">{{ f.label }}</span>
+            <span class="fin-card__value">{{ f.value }}</span>
+            <small class="fin-card__target" *ngIf="f.target">{{
+                f.target
+            }}</small>
+        </div>
+    </div>
+
+    <div class="grid-3col">
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header"
+                ><div class="card-header-row">
+                    <h3>CA & Facturation</h3>
+                </div></ng-template
+            >
+            <p-chart
+                type="bar"
+                [data]="financeBarData"
+                [options]="financeBarOptions"
+                height="180px"
+            ></p-chart>
+        </p-card>
+
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header"
+                ><div class="card-header-row">
+                    <h3>Recouvrement</h3>
+                </div></ng-template
+            >
+            <div class="recouvrement-body">
+                <div
+                    class="knob-wrapper"
+                    [ngClass]="kpiClass(finance.tauxRecouvrement, 85, 'gte')"
+                >
+                    <p-knob
+                        [(ngModel)]="finance.tauxRecouvrement"
+                        valueTemplate="{value}%"
+                    ></p-knob>
+                </div>
+                <div class="rec-details">
+                    <div class="rec-row">
+                        <span>Créances</span
+                        ><strong>{{
+                            finance.creances | currency: "EUR"
+                        }}</strong>
+                    </div>
+                    <div class="rec-row warn">
+                        <span>Fact. > 90j</span
+                        ><strong>{{
+                            finance.facturesGt90 | currency: "EUR"
+                        }}</strong>
+                    </div>
+                    <div class="rec-row">
+                        <span>Délai paiement</span
+                        ><strong>{{ finance.delaiPaiement }} j</strong>
+                    </div>
+                </div>
+            </div>
+        </p-card>
+
+        <p-card styleClass="dash-card">
+            <ng-template pTemplate="header"
+                ><div class="card-header-row"><h3>RH</h3></div></ng-template
+            >
+            <div class="rh-list">
+                <div class="rh-item" *ngFor="let r of rhKpis">
+                    <span class="rh-item__label">{{ r.label }}</span>
+                    <span class="rh-item__value" [ngClass]="r.class">{{
+                        r.value
+                    }}</span>
+                    <p-progressBar
+                        [value]="r.progress"
+                        [showValue]="false"
+                        styleClass="rh-bar"
+                    ></p-progressBar>
+                </div>
+            </div>
+        </p-card>
     </div>
 </div>

@@ -18,6 +18,7 @@ import { TagModule } from 'primeng/tag';
 import { ButtonModule } from 'primeng/button';
 import { ProfileListComponent } from './profile-list.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 @NgModule({
     declarations: [ProfileListComponent],
     imports: [
@@ -38,6 +39,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
         PaginatorModule,
         TagModule,
         ConfirmDialogModule,
+        TooltipModule,
     ],
     providers: [MessageService, ConfirmationService],
 })

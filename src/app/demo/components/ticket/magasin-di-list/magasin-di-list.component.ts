@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { TicketService } from 'src/app/demo/service/ticket.service';
@@ -12,18 +12,19 @@ import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { environment } from 'src/environments/environment';
 import { Subject } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'app-magasin-di-list',
     templateUrl: './magasin-di-list.component.html',
     styleUrl: './magasin-di-list.component.scss',
 })
-export class MagasinDiListComponent {
+export class MagasinDiListComponent implements OnDestroy {
     // Search state tracking
     private currentSearchField: string = '';
     private currentSearchValue: string = '';
     private searchSubject$ = new Subject<void>();
+    private destroy$ = new Subject<void>();
 
     baseUrl = environment.apiUrl;
     statusComposant = [
@@ -35,6 +36,7 @@ export class MagasinDiListComponent {
     magasinDiDialog: boolean = false;
     selectedComposant;
     cols = [
+        { field: '_idnum', header: 'ID', searchKey: '_id' },
         { field: 'title', header: 'Title', searchKey: 'title' },
         { field: 'status', header: 'Status', searchKey: 'status' },
     ];
@@ -44,6 +46,7 @@ export class MagasinDiListComponent {
     formMagasin = new FormGroup({
         composant: new FormControl(),
     });
+    isLoading: boolean = true;
     arrayComposant: any;
     selectedItem: any;
     loadedDataComposant: any;
@@ -110,6 +113,8 @@ export class MagasinDiListComponent {
     instantSelectedcPDF: string;
     payload: { file: string } = { file: '' };
     pdfAdded: any;
+    isPdfPreparing: boolean = false;
+    preparingPdfName: string = '';
     validerComposantValidtor: boolean = true;
     validatorFinirListeComposant: boolean = true;
     composantCatgorieList: any;
@@ -141,27 +146,72 @@ export class MagasinDiListComponent {
     }
 
     ngOnInit() {
+        console.log('init magasin di list');
         // Initial load
         this.loadData();
         this.getAllComposant();
         this.getStatusCount();
 
         // Setup search with debounce
-        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
-            this.loadData();
-        });
-
-        this.notificationService.notification$.subscribe((message: any) => {
-            if (message) {
+        this.searchSubject$
+            .pipe(debounceTime(400), takeUntil(this.destroy$))
+            .subscribe(() => {
                 this.loadData();
-                this.getStatusCount();
-            }
-        });
+            });
 
-        this.formUpdateComposant.statusChanges.subscribe((susb) => {
-            console.log('🎂susb', susb);
-            console.log(this.formUpdateComposant, 'form composants');
-        });
+        this.notificationService.blAdded$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                console.log('from app component BBBLLLLL', message);
+
+                this.messageservice.add({
+                    severity: 'success',
+                    summary: `New BL - ${message.message.di._idnum}`,
+                    detail: `${message.message.di.title}`,
+                    sticky: true,
+                });
+                setTimeout(() => {
+                    this.loadData();
+                }, 1000);
+            });
+
+        this.notificationService.componentConfirmedByCoordinator$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                console.log('Should display in magasin di list', message);
+
+                this.messageservice.add({
+                    severity: 'success',
+                    summary: 'Components Confirmed',
+                    detail: `All components for DI #${message.message._id} have been successfully confirmed by the coordinator.`,
+                    sticky: true,
+                });
+
+                setTimeout(() => {
+                    this.loadData();
+                }, 1000);
+            });
+
+        this.notificationService.notification$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                if (message) {
+                    this.loadData();
+                    this.getStatusCount();
+                }
+            });
+
+        this.formUpdateComposant.statusChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((susb) => {
+                console.log('🎂susb', susb);
+                console.log(this.formUpdateComposant, 'form composants');
+            });
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
     /**
@@ -169,6 +219,8 @@ export class MagasinDiListComponent {
      * Handles both search and regular data fetching with pagination
      */
     loadData() {
+        this.isLoading = true;
+
         const hasActiveSearch =
             this.currentSearchField &&
             this.currentSearchValue &&
@@ -186,6 +238,7 @@ export class MagasinDiListComponent {
                     ),
                     fetchPolicy: 'no-cache',
                 })
+                .pipe(finalize(() => (this.isLoading = false)))
                 .subscribe(({ data }) => {
                     if (data && data.searchDiForMagasin) {
                         this.diList = data.searchDiForMagasin.di;
@@ -195,13 +248,15 @@ export class MagasinDiListComponent {
         } else {
             // Regular data fetch
             this.apollo
-                .watchQuery<GetAllMagasinQueryResponse>({
+                .query<GetAllMagasinQueryResponse>({
                     query: this.ticketSerice.getAllMagasin(
                         this.first,
                         this.rows,
                     ),
+                    fetchPolicy: 'no-cache',
                 })
-                .valueChanges.subscribe(({ data, loading, errors }) => {
+                .pipe(finalize(() => (this.isLoading = false)))
+                .subscribe(({ data }) => {
                     if (data) {
                         this.diList = data.getDiForMagasin.di;
                         this.diListCount = data.getDiForMagasin.totalDiCount;
@@ -251,7 +306,8 @@ export class MagasinDiListComponent {
             .query<any>({
                 query: this.ticketSerice.getAllDiCategory(),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.categorieDiListDropDown = data.findAllDiCategory.map(
                         (categoryDi) => ({
@@ -275,7 +331,8 @@ export class MagasinDiListComponent {
             .query<any>({
                 query: this.ticketSerice.getStatusCount(),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.statusCount = data.getStatusCount;
                     this.basicData = {
@@ -391,6 +448,7 @@ export class MagasinDiListComponent {
                 query: this.ticketSerice.findAllComposant_Category(),
             })
             .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 console.log(data, 'data all category');
                 this.composantCatgorieList = data.findAllComposant_Category;
                 console.log(
@@ -414,7 +472,8 @@ export class MagasinDiListComponent {
                             this.loadedDataComposant._id,
                         ),
                     })
-                    .subscribe(({ data }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
                         console.log('🥨[data]:', data);
                         if (data) {
                             this.apollo
@@ -446,7 +505,8 @@ export class MagasinDiListComponent {
                             rowData._id,
                         ),
                     })
-                    .subscribe(({ data }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
                         if (data) {
                             this.apollo
                                 .query<any>({
@@ -474,14 +534,16 @@ export class MagasinDiListComponent {
                             this.addCategoryCompsant.value.categoryName,
                         ),
                     })
-                    .subscribe(({ data }) => {
+                    .subscribe(({ data, loading }) => {
+                        this.isLoading = loading;
                         if (data) {
                             this.addCategoryCompsant.reset();
                             this.apollo
                                 .query<any>({
                                     query: this.ticketSerice.findAllComposant_Category(),
                                 })
-                                .subscribe(({ data }) => {
+                                .subscribe(({ data, loading }) => {
+                                    this.isLoading = loading;
                                     this.composantCatgorieList =
                                         data.findAllComposant_Category;
                                 });
@@ -491,9 +553,49 @@ export class MagasinDiListComponent {
         });
     }
 
+    onPdfSelect(event: any, type: string) {
+        if (type !== 'cPDF') {
+            return;
+        }
+
+        this.isPdfPreparing = true;
+        this.preparingPdfName = event?.files?.[0]?.name || 'PDF';
+    }
+
+    onPdfUploadError(type: string) {
+        if (type !== 'cPDF') {
+            return;
+        }
+
+        this.isPdfPreparing = false;
+        this.preparingPdfName = '';
+        this.messageservice.add({
+            severity: 'error',
+            summary: 'PDF non chargé',
+            detail: 'Le fichier PDF n’a pas pu être préparé.',
+        });
+    }
+
     onUpload(event: any, type: string) {
         console.log('fired pdf composant');
         for (let file of event.files) {
+            const isAffectationPdf = type === 'cPDF';
+            if (isAffectationPdf) {
+                this.isPdfPreparing = true;
+                this.preparingPdfName = file?.name || 'PDF';
+            }
+
+            let previewReady = false;
+            let payloadReady = false;
+            const finishPreparing = () => {
+                if (!isAffectationPdf || !previewReady || !payloadReady) {
+                    return;
+                }
+
+                this.isPdfPreparing = false;
+                this.preparingPdfName = '';
+            };
+
             const reader = new FileReader();
             reader.readAsArrayBuffer(file);
             const readerForBase64 = new FileReader();
@@ -528,15 +630,25 @@ export class MagasinDiListComponent {
                     summary: 'Fichier enregistré',
                     detail: 'Fichier a été ajouté avec succès',
                 });
+                previewReady = true;
+                finishPreparing();
             };
 
             readerForBase64.onload = () => {
                 const base64 = readerForBase64.result as string;
                 this.uploadFile(base64, type);
+                payloadReady = true;
+                finishPreparing();
+            };
+
+            reader.onerror = (error) => {
+                console.error('PDF preview conversion error:', error);
+                this.onPdfUploadError(type);
             };
 
             readerForBase64.onerror = (error) => {
                 console.error('Base64 conversion error:', error);
+                this.onPdfUploadError(type);
             };
         }
     }
@@ -554,6 +666,7 @@ export class MagasinDiListComponent {
                 })
                 .subscribe(({ data, loading }) => {
                     this.loadedDataComposant = data.findOneComposant;
+                    this.isLoading = loading;
                     console.log(
                         '🍷[ this.loadedDataComposant]:',
                         this.loadedDataComposant,
@@ -600,7 +713,8 @@ export class MagasinDiListComponent {
                         item._id,
                     ),
                 })
-                .subscribe(({ data }) => {
+                .subscribe(({ data, loading }) => {
+                    this.isLoading = loading;
                     const logsDi = data?.getLigsById;
 
                     if (logsDi?.array_composants) {
@@ -652,7 +766,8 @@ export class MagasinDiListComponent {
             .query<any>({
                 query: this.ticketSerice.getAllComposant(),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.composantList = data.findAllComposant;
                 }
@@ -664,7 +779,8 @@ export class MagasinDiListComponent {
             .query<any>({
                 query: this.ticketSerice.findAllComposant_Category(),
             })
-            .subscribe(({ data }) => {
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
                 if (data) {
                     this.composantCategory = data.findAllComposant_Category.map(
                         (el) => {
@@ -712,6 +828,8 @@ export class MagasinDiListComponent {
                     ),
                 })
                 .subscribe(({ data, loading }) => {
+                    this.isLoading = loading;
+
                     this.loadedDataComposant = data.findOneComposant;
                     console.log(
                         '🍪[this.loadedDataComposant]:',
@@ -754,7 +872,9 @@ export class MagasinDiListComponent {
             .watchQuery<any>({
                 query: this.ticketSerice.changeStatusDiToPending2(_id),
             })
-            .valueChanges.subscribe(({ data, loading }) => {});
+            .valueChanges.subscribe(({ loading }) => {
+                this.isLoading = loading;
+            });
     }
 
     updateComposantIncreation() {
@@ -773,7 +893,8 @@ export class MagasinDiListComponent {
                         useMutationLoading: true,
                     })
                     .subscribe(
-                        ({ data }) => {
+                        ({ data, loading }) => {
+                            this.isLoading = loading;
                             if (data) {
                             }
                         },
@@ -861,7 +982,8 @@ export class MagasinDiListComponent {
                         useMutationLoading: true,
                     })
                     .subscribe(
-                        ({ data }) => {
+                        ({ data, loading }) => {
+                            this.isLoading = loading;
                             if (data) {
                                 this.pdfAdded = data.addComposantInfo.pdf;
                                 console.log(
@@ -943,7 +1065,8 @@ export class MagasinDiListComponent {
                                     composantDataTosend,
                                 ),
                         })
-                        .subscribe(({ data }) => {
+                        .subscribe(({ data, loading }) => {
+                            this.isLoading = loading;
                             if (data) {
                                 console.log('data inside function', data);
                                 this.messageservice.add({
@@ -987,7 +1110,8 @@ export class MagasinDiListComponent {
                             ),
                             useMutationLoading: true,
                         })
-                        .subscribe(({ data }) => {
+                        .subscribe(({ data, loading }) => {
+                            this.isLoading = loading;
                             if (data) {
                                 this.composantMagasin.reset();
                             }
@@ -1001,5 +1125,28 @@ export class MagasinDiListComponent {
 
     directToComposantManagement() {
         this.router.navigate(['tickets/ticket/composant-management']);
+    }
+    getStatusLabel(status: string): string {
+        const map = {
+            CREATED: 'CREATED',
+            PENDING1: 'PENDING1',
+            PENDING2: 'PENDING2',
+            PENDING3: 'PENDING3',
+            DIAGNOSTIC: 'DIAGNOSTIC',
+            INDIAGNOSTIC: 'INDIAGNOSTIC',
+            INMAGASIN: 'INMAGASIN',
+            PRICING: 'PRICING',
+            NEGOTIATION1: 'NEGOTIATION1',
+            NEGOTIATION2: 'NEGOTIATION2',
+            REPARATION: 'REPARATION',
+            INREPARATION: 'INREPARATION',
+            FINISHED: 'FINISHED',
+            ANNULER: 'ANNULER',
+            RETOUR1: 'RETOUR1',
+            RETOUR2: 'RETOUR2',
+            RETOUR3: 'RETOUR3',
+        };
+
+        return map[status] || status;
     }
 }
