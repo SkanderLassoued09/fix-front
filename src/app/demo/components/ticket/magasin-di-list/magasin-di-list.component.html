@@ -359,7 +359,7 @@
 
                     <div class="sav-files-row">
                         <a
-                            *ngIf="loadedDataComposant.pdf || pdfAdded"
+                            *ngIf="loadedDataComposant?.pdf || pdfAdded"
                             [href]="
                                 pdfAdded
                                     ? baseUrl + pdfAdded
