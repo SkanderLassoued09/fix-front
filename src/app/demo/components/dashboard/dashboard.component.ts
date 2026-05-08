@@ -2,7 +2,13 @@
 //  SAV ATELIER — KPI DASHBOARD
 //  dashboard.component.ts
 // ═══════════════════════════════════════════════════
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Apollo } from 'apollo-angular';
+import { Subject, finalize, takeUntil } from 'rxjs';
+import { NotificationService } from 'src/app/demo/service/notification.service';
+import { ProfileService } from 'src/app/demo/service/profile.service';
+import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
+import { TicketService } from 'src/app/demo/service/ticket.service';
 
 interface Technicien {
     nom: string;
@@ -30,14 +36,36 @@ interface RhKpi {
     class: string;
 }
 
+interface TechWorkflowCard {
+    key: string;
+    title: string;
+    icon: string;
+    className: string;
+    totalLabel: string;
+    total: number;
+    stats: Array<{
+        label: string;
+        value: number;
+        icon: string;
+    }>;
+}
+
 @Component({
     selector: 'app-sav-dashboard',
     templateUrl: './dashboard.component.html',
     styleUrls: ['./dashboard.component.scss'],
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+    private destroy$ = new Subject<void>();
+    private isTechWorkflowRequestInFlight = false;
+    private hasPendingTechWorkflowRefresh = false;
+    private isDestroyed = false;
+
     today = new Date();
     selectedMonth: Date = new Date();
+    isTechWorkflowLoading = false;
+
+    techWorkflowCards: TechWorkflowCard[] = [];
 
     // ─── A — KPI ATELIER ──────────────────────────────
     kpiAtelier = {
@@ -248,13 +276,237 @@ export class DashboardComponent implements OnInit {
     financeBarData: any;
     financeBarOptions: any;
 
+    constructor(
+        private apollo: Apollo,
+        private ticketService: TicketService,
+        private notificationService: NotificationService,
+        private ticketRefreshService: TicketRefreshService,
+        private profileService: ProfileService,
+    ) {}
+
     ngOnInit(): void {
+        this.buildTechWorkflowCards({});
+        this.loadTechWorkflowCounts();
+        this.setupRealtimeRefresh();
         this._buildVolumeChart();
         this._buildTrendChart();
         this._buildCategoryChart();
         this._buildSatisfactionTrendChart();
         this._buildTechFtrChart();
         this._buildFinanceChart();
+    }
+
+    ngOnDestroy(): void {
+        this.isDestroyed = true;
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    trackByTechWorkflowCard(_: number, card: TechWorkflowCard): string {
+        return card.key;
+    }
+
+    trackByTechWorkflowStat(_: number, stat: { label: string }): string {
+        return stat.label;
+    }
+
+    private setupRealtimeRefresh(): void {
+        this.ticketRefreshService
+            .listen('dashboard-tech-workflow')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => this.loadTechWorkflowCounts());
+
+        this.notificationService.notification$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message) => {
+                if (message) {
+                    this.ticketRefreshService.requestRefresh(
+                        'dashboard-tech-workflow',
+                        { source: 'websocket:updateTicket' },
+                    );
+                }
+            });
+
+        this.notificationService.blAdded$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message) => {
+                if (message) {
+                    this.ticketRefreshService.requestRefresh(
+                        'dashboard-tech-workflow',
+                        { source: 'websocket:blAdded' },
+                    );
+                }
+            });
+
+        this.apollo
+            .subscribe<any>({
+                query: this.profileService.notificationDiagnostic(),
+            })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.ticketRefreshService.requestRefresh(
+                    'dashboard-tech-workflow',
+                    { source: 'graphql:notificationDiagnostic' },
+                );
+            });
+
+        this.apollo
+            .subscribe<any>({
+                query: this.profileService.notificationrep(),
+            })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.ticketRefreshService.requestRefresh(
+                    'dashboard-tech-workflow',
+                    { source: 'graphql:notificationReparation' },
+                );
+            });
+    }
+
+    private loadTechWorkflowCounts(): void {
+        if (this.isTechWorkflowRequestInFlight) {
+            this.hasPendingTechWorkflowRefresh = true;
+            return;
+        }
+
+        this.isTechWorkflowRequestInFlight = true;
+        this.isTechWorkflowLoading = true;
+
+        this.apollo
+            .query<any>({
+                query: this.ticketService.getDataForTech(),
+                fetchPolicy: 'no-cache',
+            })
+            .pipe(
+                finalize(() => {
+                    this.isTechWorkflowLoading = false;
+                    this.isTechWorkflowRequestInFlight = false;
+
+                    if (
+                        !this.isDestroyed &&
+                        this.hasPendingTechWorkflowRefresh
+                    ) {
+                        this.hasPendingTechWorkflowRefresh = false;
+                        this.loadTechWorkflowCounts();
+                    }
+                }),
+                takeUntil(this.destroy$),
+            )
+            .subscribe(({ data }) => {
+                this.buildTechWorkflowCards(
+                    this.normalizeTechWorkflowCounts(data?.getDiStatusCounts),
+                );
+            });
+    }
+
+    private normalizeTechWorkflowCounts(
+        rows: Array<{ status: string; count: number }> = [],
+    ): Record<string, number> {
+        return rows.reduce<Record<string, number>>((acc, item) => {
+            acc[item.status] = Number(item.count || 0);
+            return acc;
+        }, {});
+    }
+
+    private buildTechWorkflowCards(counts: Record<string, number>): void {
+        const diagPaused = counts['DIAGNOSTIC_Pause'] || 0;
+        const diagNotOpened = counts['DIAGNOSTIC'] || 0;
+        const repPaused = counts['REPARATION_Pause'] || 0;
+        const repNotOpened = counts['REPARATION'] || 0;
+        const retour1 = counts['RETOUR1'] || 0;
+        const retour2 = counts['RETOUR2'] || 0;
+        const retour3 = counts['RETOUR3'] || 0;
+        const finished = counts['FINISHED'] || 0;
+        const knownStatuses = [
+            'DIAGNOSTIC_Pause',
+            'DIAGNOSTIC',
+            'REPARATION_Pause',
+            'REPARATION',
+            'RETOUR1',
+            'RETOUR2',
+            'RETOUR3',
+            'FINISHED',
+        ];
+        const administration = Object.entries(counts).reduce(
+            (sum, [status, count]) =>
+                knownStatuses.includes(status) ? sum : sum + count,
+            0,
+        );
+
+        this.techWorkflowCards = [
+            {
+                key: 'diagnostic',
+                title: 'Diagnostic',
+                icon: 'pi pi-wrench',
+                className: 'sav-dash-card--diag',
+                totalLabel: 'Total',
+                total: diagPaused + diagNotOpened,
+                stats: this.nonZeroStats([
+                    {
+                        label: 'En pause',
+                        value: diagPaused,
+                        icon: 'pi pi-pause-circle',
+                    },
+                    {
+                        label: 'Non ouvert',
+                        value: diagNotOpened,
+                        icon: 'pi pi-envelope',
+                    },
+                ]),
+            },
+            {
+                key: 'repair',
+                title: 'Réparation',
+                icon: 'pi pi-cog',
+                className: 'sav-dash-card--rep',
+                totalLabel: 'Total',
+                total: repPaused + repNotOpened,
+                stats: this.nonZeroStats([
+                    {
+                        label: 'En pause',
+                        value: repPaused,
+                        icon: 'pi pi-pause-circle',
+                    },
+                    {
+                        label: 'Non ouvert',
+                        value: repNotOpened,
+                        icon: 'pi pi-envelope',
+                    },
+                ]),
+            },
+            {
+                key: 'retour',
+                title: 'Retour',
+                icon: 'pi pi-refresh',
+                className: 'sav-dash-card--retour',
+                totalLabel: 'Total',
+                total: retour1 + retour2 + retour3,
+                stats: this.nonZeroStats([
+                    { label: 'Retour 1', value: retour1, icon: 'pi pi-angle-right' },
+                    { label: 'Retour 2', value: retour2, icon: 'pi pi-angle-right' },
+                    { label: 'Retour 3', value: retour3, icon: 'pi pi-angle-right' },
+                ]),
+            },
+            {
+                key: 'admin',
+                title: 'Administration',
+                icon: 'pi pi-shield',
+                className: 'sav-dash-card--admin',
+                totalLabel: 'Autre',
+                total: administration,
+                stats: this.nonZeroStats([
+                    {
+                        label: 'Finie',
+                        value: finished,
+                        icon: 'pi pi-check-circle',
+                    },
+                ]),
+            },
+        ];
+    }
+
+    private nonZeroStats(stats: TechWorkflowCard['stats']) {
+        return stats.filter((stat) => stat.value > 0);
     }
 
     // ── HELPERS ──────────────────────────────────────

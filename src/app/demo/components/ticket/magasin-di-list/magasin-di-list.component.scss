@@ -822,3 +822,25 @@ $white: #ffffff;
     border-top: 1px solid #e2e8f0;
     margin-top: 0.25rem;
 }
+
+.sav-location-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sav-location-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--surface-400);
+    flex: 0 0 auto;
+}
+
+.sav-location-dot--filled {
+    background: var(--green-500);
+}
+
+.sav-location-dot--empty {
+    background: var(--red-300);
+}

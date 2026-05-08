@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { MessageService } from 'primeng/api';
 import {
     BehaviorSubject,
@@ -42,6 +42,7 @@ export class NotificationService {
     constructor(
         private readonly messageservice: MessageService,
         private http: HttpClient,
+        private readonly zone: NgZone,
     ) {
         // --
         window.addEventListener('online', () => this.updateOnlineStatus(true));
@@ -63,7 +64,11 @@ export class NotificationService {
                 new URL('./notification.worker.ts', import.meta.url),
             );
             this.worker.onmessage = ({ data }) => {
-                this.handlenotification(data);
+                // Web worker onmessage is not always patched by zone.js under
+                // Angular's ESBuild worker bundling, so dispatch inside NgZone
+                // to guarantee change detection runs for purely-local handlers
+                // such as patchBlAddedRow (no HTTP follow-up to re-trigger CD).
+                this.zone.run(() => this.handlenotification(data));
             };
         } else {
             console.warn('Web Workers are not supported in this environment.');

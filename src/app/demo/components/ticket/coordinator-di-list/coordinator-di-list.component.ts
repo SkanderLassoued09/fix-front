@@ -12,6 +12,13 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
+import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
+import {
+    formatTableValue,
+    isLocationColumn,
+    rowHasLoadedComposants,
+    trackByColumn,
+} from '../table-display.utils';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -24,6 +31,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
     private currentSearchValue: string = '';
     private searchSubject$ = new Subject<void>();
     private destroy$ = new Subject<void>();
+    private lastSearchKey = '';
 
     visible: boolean = false;
     products!: Product[];
@@ -138,6 +146,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
         private messageservice: MessageService,
         private confirmationService: ConfirmationService,
         private notificationService: NotificationService,
+        private ticketRefreshService: TicketRefreshService,
     ) {}
 
     ngOnInit() {
@@ -150,6 +159,13 @@ export class CoordinatorDiListComponent implements OnDestroy {
         // Setup search with debounce
         this.searchSubject$
             .pipe(debounceTime(400), takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.loadData();
+            });
+
+        this.ticketRefreshService
+            .listen('coordinator-list')
+            .pipe(takeUntil(this.destroy$))
             .subscribe(() => {
                 this.loadData();
             });
@@ -172,10 +188,13 @@ export class CoordinatorDiListComponent implements OnDestroy {
                         detail: `Components for DI #${message.message._id} are ready for your review and confirmation.`,
                         sticky: true,
                     });
-
-                    setTimeout(() => {
-                        this.loadData();
-                    }, 1000);
+                    this.ticketRefreshService.requestRefresh(
+                        'coordinator-list',
+                        {
+                            source: 'component:sent_to_coordinator',
+                            message,
+                        },
+                    );
                 }
             });
 
@@ -186,7 +205,13 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 console.log('🍻[message]:', message);
                 if (message) {
                     console.log('🍚[message]:', message);
-                    this.loadData();
+                    this.ticketRefreshService.requestRefresh(
+                        'coordinator-list',
+                        {
+                            source: 'updateTicket',
+                            message,
+                        },
+                    );
                     this.getStatusCount();
                 }
             });
@@ -325,11 +350,15 @@ export class CoordinatorDiListComponent implements OnDestroy {
      * Handle column search
      */
     onColumnSearch(field: string, value: string) {
-        console.log('value', value);
-        console.log('field', field);
-
         const v = value?.trim();
         const f = field?.trim();
+        const searchKey = `${f || ''}:${v || ''}`;
+
+        if (searchKey === this.lastSearchKey) {
+            return;
+        }
+
+        this.lastSearchKey = searchKey;
 
         if (v && v.length > 0 && f && f.length > 0) {
             // Set search state
@@ -348,6 +377,20 @@ export class CoordinatorDiListComponent implements OnDestroy {
             this.loadData();
         }
     }
+
+    formatCell(row: any, field: string): string {
+        return formatTableValue(row, field);
+    }
+
+    isLocationCell(field: string): boolean {
+        return isLocationColumn(field);
+    }
+
+    hasLoadedComposants(row: any): boolean {
+        return rowHasLoadedComposants(row);
+    }
+
+    trackByColumn = trackByColumn;
 
     /**
      * Handle page change

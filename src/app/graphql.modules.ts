@@ -42,32 +42,33 @@ export function createApollo(httpLink: HttpLink) {
             const context = operation.getContext();
             const { clientAwareness } = context;
 
-            const ws = new WebSocket(
-                `ws://${environment.apiUrl}graphql`, //changed apiUrl
-                'graphql-ws'
-            );
+            const wsUrl = environment.apiUrl
+                .replace('http://', 'ws://')
+                .replace('https://', 'wss://');
+
+            const ws = new WebSocket(`${wsUrl}graphql`, 'graphql-ws');
 
             ws.addEventListener('open', () => {
-                // Send the GQL_START message
+                console.log('GraphQL WS connected');
+
                 ws.send(
                     JSON.stringify({
                         type: 'connection_init',
                         payload: clientAwareness || {},
-                    })
+                    }),
                 );
 
-                // Send the GQL_START message
                 ws.send(
                     JSON.stringify({
-                        id: '1', // You can use a unique identifier here
+                        id: '1',
                         type: 'start',
                         payload: {
                             variables: operation.variables,
                             extensions: operation.extensions,
                             operationName: operation.operationName,
-                            query: operation.query,
+                            query: operation.query.loc?.source.body,
                         },
-                    })
+                    }),
                 );
             });
 
@@ -87,8 +88,15 @@ export function createApollo(httpLink: HttpLink) {
                 }
             });
 
+            ws.addEventListener('error', (error) => {
+                console.error('GraphQL WS error', error);
+            });
+
+            ws.addEventListener('close', () => {
+                console.warn('GraphQL WS disconnected');
+            });
+
             return () => {
-                // Cleanup logic when the Observable is unsubscribed
                 ws.close();
             };
         });

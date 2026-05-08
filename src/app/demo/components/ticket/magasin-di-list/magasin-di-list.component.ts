@@ -13,6 +13,12 @@ import { NotificationService } from 'src/app/demo/service/notification.service';
 import { environment } from 'src/environments/environment';
 import { Subject } from 'rxjs';
 import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
+import {
+    formatTableValue,
+    isLocationColumn,
+    rowHasLoadedComposants,
+    trackByColumn,
+} from '../table-display.utils';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -25,6 +31,7 @@ export class MagasinDiListComponent implements OnDestroy {
     private currentSearchValue: string = '';
     private searchSubject$ = new Subject<void>();
     private destroy$ = new Subject<void>();
+    private lastSearchKey = '';
 
     baseUrl = environment.apiUrl;
     statusComposant = [
@@ -269,11 +276,15 @@ export class MagasinDiListComponent implements OnDestroy {
      * Handle column search
      */
     onColumnSearch(field: string, value: string) {
-        console.log('value', value);
-        console.log('field', field);
-
         const v = value?.trim();
         const f = field?.trim();
+        const searchKey = `${f || ''}:${v || ''}`;
+
+        if (searchKey === this.lastSearchKey) {
+            return;
+        }
+
+        this.lastSearchKey = searchKey;
 
         if (v && v.length > 0 && f && f.length > 0) {
             // Set search state
@@ -292,6 +303,20 @@ export class MagasinDiListComponent implements OnDestroy {
             this.loadData();
         }
     }
+
+    formatCell(row: any, field: string): string {
+        return formatTableValue(row, field);
+    }
+
+    isLocationCell(field: string): boolean {
+        return isLocationColumn(field);
+    }
+
+    hasLoadedComposants(row: any): boolean {
+        return rowHasLoadedComposants(row);
+    }
+
+    trackByColumn = trackByColumn;
 
     onComposantFilter(event: any) {
         const searchValue = event.filter?.trim();

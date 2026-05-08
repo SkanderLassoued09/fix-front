@@ -1497,6 +1497,8 @@ export class TicketService {
                     location_name
                     max_capacity
                     current_item_stored
+                    storedDiCount
+                    hasStoredDi
                     avaible
                 }
             }
@@ -1519,6 +1521,11 @@ export class TicketService {
                 findAllLocation {
                     _id
                     location_name
+                    max_capacity
+                    current_item_stored
+                    storedDiCount
+                    hasStoredDi
+                    avaible
                 }
             }
         `;
@@ -1531,6 +1538,8 @@ export class TicketService {
                     location_name
                     max_capacity
                     current_item_stored
+                    storedDiCount
+                    hasStoredDi
                     avaible
                 }
             }

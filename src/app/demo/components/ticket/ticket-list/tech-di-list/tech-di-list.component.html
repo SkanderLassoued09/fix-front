@@ -6,137 +6,7 @@
 <p-toast></p-toast>
 <p-confirmDialog />
 
-<!-- ═══════════════════════════════════════════════
-     MINI DASHBOARD
-════════════════════════════════════════════════ -->
 <div class="sav-page">
-    <div class="sav-page-header">
-        <div class="sav-page-title">
-            <i class="pi pi-desktop"></i>
-            <h2>Tableau de bord Technicien</h2>
-        </div>
-    </div>
-
-    <div class="sav-dashboard-grid">
-        <div class="sav-dash-card sav-dash-card--diag">
-            <div class="sav-dash-card__header">
-                <i class="pi pi-wrench sav-dash-card__icon"></i>
-                <span class="sav-dash-card__title">Diagnostic</span>
-            </div>
-            <div class="sav-dash-card__total">
-                <span class="sav-dash-card__total-label">Total</span>
-                <span class="sav-dash-card__total-value">{{
-                    diagEnPause_miniDashboard + diagNotOpened_miniDashboard
-                }}</span>
-            </div>
-            <div class="sav-dash-card__stats">
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-pause-circle"></i>
-                    <span class="sav-dash-card__stat-label">En pause</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        diagEnPause_miniDashboard
-                    }}</span>
-                </div>
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-envelope"></i>
-                    <span class="sav-dash-card__stat-label">Non ouvert</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        diagNotOpened_miniDashboard
-                    }}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="sav-dash-card sav-dash-card--rep">
-            <div class="sav-dash-card__header">
-                <i class="pi pi-cog sav-dash-card__icon"></i>
-                <span class="sav-dash-card__title">Réparation</span>
-            </div>
-            <div class="sav-dash-card__total">
-                <span class="sav-dash-card__total-label">Total</span>
-                <span class="sav-dash-card__total-value">{{
-                    repEnPause_miniDashboard + repNotOpened_miniDashboard
-                }}</span>
-            </div>
-            <div class="sav-dash-card__stats">
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-pause-circle"></i>
-                    <span class="sav-dash-card__stat-label">En pause</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        repEnPause_miniDashboard
-                    }}</span>
-                </div>
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-envelope"></i>
-                    <span class="sav-dash-card__stat-label">Non ouvert</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        repNotOpened_miniDashboard
-                    }}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="sav-dash-card sav-dash-card--retour">
-            <div class="sav-dash-card__header">
-                <i class="pi pi-refresh sav-dash-card__icon"></i>
-                <span class="sav-dash-card__title">Retour</span>
-            </div>
-            <div class="sav-dash-card__total">
-                <span class="sav-dash-card__total-label">Total</span>
-                <span class="sav-dash-card__total-value">{{
-                    retour1_miniDashboard +
-                        retour2_miniDashboard +
-                        retour3_miniDashboard
-                }}</span>
-            </div>
-            <div class="sav-dash-card__stats">
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-angle-right"></i>
-                    <span class="sav-dash-card__stat-label">Retour 1</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        retour1_miniDashboard
-                    }}</span>
-                </div>
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-angle-right"></i>
-                    <span class="sav-dash-card__stat-label">Retour 2</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        retour2_miniDashboard
-                    }}</span>
-                </div>
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-angle-right"></i>
-                    <span class="sav-dash-card__stat-label">Retour 3</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        retour3_miniDashboard
-                    }}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="sav-dash-card sav-dash-card--admin">
-            <div class="sav-dash-card__header">
-                <i class="pi pi-shield sav-dash-card__icon"></i>
-                <span class="sav-dash-card__title">Administration</span>
-            </div>
-            <div class="sav-dash-card__total">
-                <span class="sav-dash-card__total-label">Autre</span>
-                <span class="sav-dash-card__total-value">{{
-                    admnistration_miniDashboard
-                }}</span>
-            </div>
-            <div class="sav-dash-card__stats">
-                <div class="sav-dash-card__stat">
-                    <i class="pi pi-check-circle"></i>
-                    <span class="sav-dash-card__stat-label">Finie</span>
-                    <span class="sav-dash-card__stat-value">{{
-                        finished_miniDashboard
-                    }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- ═══════════════════════════════════════════════
          MAIN TABLE
     ════════════════════════════════════════════════ -->
@@ -150,13 +20,19 @@
         >
             <ng-template pTemplate="header" let-columns>
                 <tr class="sav-thead-row">
-                    <th *ngFor="let col of columns" class="sav-th">
+                    <th
+                        *ngFor="let col of columns; trackBy: trackByColumn"
+                        class="sav-th"
+                    >
                         {{ col.header }}
                     </th>
                     <th class="sav-th sav-actions-th">Actions</th>
                 </tr>
                 <tr class="sav-filter-row">
-                    <th *ngFor="let col of columns" class="sav-th-filter">
+                    <th
+                        *ngFor="let col of columns; trackBy: trackByColumn"
+                        class="sav-th-filter"
+                    >
                         <input
                             pInputText
                             type="text"
@@ -183,11 +59,31 @@
                         'row-retour3': rowData.ignoreCount >= 3,
                     }"
                 >
-                    <td *ngFor="let col of columns" class="sav-td">
+                    <td
+                        *ngFor="let col of columns; trackBy: trackByColumn"
+                        class="sav-td"
+                    >
                         <ng-container
                             *ngIf="col.field !== 'status'; else statusTpl"
                         >
-                            {{ rowData[col.field] || "—" }}
+                            <span
+                                *ngIf="isLocationCell(col.field)"
+                                class="sav-location-cell"
+                            >
+                                <span
+                                    class="sav-location-dot"
+                                    [ngClass]="{
+                                        'sav-location-dot--filled':
+                                            hasLoadedComposants(rowData),
+                                        'sav-location-dot--empty':
+                                            !hasLoadedComposants(rowData),
+                                    }"
+                                ></span>
+                                {{ formatCell(rowData, col.field) }}
+                            </span>
+                            <span *ngIf="!isLocationCell(col.field)">
+                                {{ formatCell(rowData, col.field) }}
+                            </span>
                         </ng-container>
                         <ng-template #statusTpl>
                             <p-tag
@@ -273,7 +169,7 @@
     ════════════════════════════════════════════════ -->
     <ng-container *ngIf="di?._id">
         <p-dialog
-            header="Diagnostic — DI"
+            [header]="getModalTitle('diagnostic')"
             [(visible)]="diDialogDiag[di._id]"
             [modal]="true"
             [style]="{ width: '680px' }"
@@ -303,6 +199,21 @@
                             <i class="pi pi-hashtag"></i>
                             <span>ID DI</span>
                             <strong>{{ _idnum }}</strong>
+                        </div>
+                        <div class="sav-info-item">
+                            <i class="pi pi-building"></i>
+                            <span>Client / Société</span>
+                            <strong>{{ getModalPartyLabel() }}</strong>
+                        </div>
+                        <div class="sav-info-item">
+                            <i class="pi pi-map-marker"></i>
+                            <span>Emplacement</span>
+                            <strong>{{ getModalLocationLabel() }}</strong>
+                        </div>
+                        <div class="sav-info-item">
+                            <i class="pi pi-tag"></i>
+                            <span>Status</span>
+                            <strong>{{ getModalStatusLabel() }}</strong>
                         </div>
                     </div>
 
@@ -794,7 +705,7 @@
          MODAL — RÉPARATION
     ════════════════════════════════════════════════ -->
     <p-dialog
-        header="Réparation — DI"
+        [header]="getModalTitle('repair')"
         [(visible)]="diDialogRep"
         [modal]="true"
         [style]="{ width: '660px' }"
@@ -814,6 +725,29 @@
                     styleClass="sav-thumb"
                     [preview]="true"
                 ></p-image>
+
+                <div class="sav-info-grid">
+                    <div class="sav-info-item">
+                        <i class="pi pi-hashtag"></i>
+                        <span>ID DI</span>
+                        <strong>{{ _idnum || "—" }}</strong>
+                    </div>
+                    <div class="sav-info-item">
+                        <i class="pi pi-building"></i>
+                        <span>Client / Société</span>
+                        <strong>{{ getModalPartyLabel() }}</strong>
+                    </div>
+                    <div class="sav-info-item">
+                        <i class="pi pi-map-marker"></i>
+                        <span>Emplacement</span>
+                        <strong>{{ getModalLocationLabel() }}</strong>
+                    </div>
+                    <div class="sav-info-item">
+                        <i class="pi pi-tag"></i>
+                        <span>Status</span>
+                        <strong>{{ getModalStatusLabel() }}</strong>
+                    </div>
+                </div>
 
                 <!-- ignoreCount === 0 -->
                 <ng-container *ngIf="ignoreCount == 0">

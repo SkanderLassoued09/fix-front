@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -10,20 +10,69 @@ import {
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
-import { debounceTime, finalize, Subject } from 'rxjs';
+import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
 import * as moment from 'moment';
 import { environment } from 'src/environments/environment';
+import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
+import { ProfileService } from 'src/app/demo/service/profile.service';
+import {
+    formatTableValue,
+    isLocationColumn,
+    rowHasLoadedComposants,
+    trackByColumn,
+} from '../../table-display.utils';
+
+type TechDialogMode = 'diagnostic' | 'repair';
+
+interface PersistedTechDialogState {
+    mode: TechDialogMode;
+    diId: string;
+    statId: string;
+    /**
+     * Wall-clock at which this state was last persisted. Kept for
+     * diagnostics; the timer no longer uses it as a cross-session
+     * elapsed-time anchor — see initialElapsedMs.
+     */
+    startedAt: number;
+    savedAt: number;
+    /**
+     * Frozen accumulated active-work duration (ms) at the moment of
+     * persistence. On restore, this becomes the new offset and the
+     * fresh run leg starts from Date.now(). Wall-clock idle while the
+     * modal/session was closed never enters this number.
+     */
+    initialElapsedMs: number;
+    /**
+     * Whether the timer was running when this state was persisted. On
+     * restore, the timer is resumed only if this is true. Older entries
+     * without this flag are treated as running for backward compatibility.
+     */
+    wasRunning?: boolean;
+    statSnapshot?: any;
+    diagFormValue?: any;
+    repairFormValue?: any;
+    composantCombo?: any[];
+}
 
 @Component({
     selector: 'app-tech-di-list',
     templateUrl: './tech-di-list.component.html',
     styleUrl: './tech-di-list.component.scss',
 })
-export class TechDiListComponent implements OnInit {
+export class TechDiListComponent implements OnInit, OnDestroy {
+    private readonly dialogStateStorageKey = 'fix.tech-dialog-state.v1';
+    private readonly assignmentToastStorageKey = 'fix.tech-assignment-toasts.v1';
+    private readonly dialogStateMaxAgeMs = 12 * 60 * 60 * 1000;
     // Search state tracking
     private currentSearchField: string = '';
     private currentSearchValue: string = '';
     private searchSubject$ = new Subject<void>();
+    private destroy$ = new Subject<void>();
+    private lastSearchKey = '';
+    private hasAttemptedDialogRestore = false;
+    private pendingRestoredDialogState: PersistedTechDialogState | null = null;
+    private diagnosticTimerId: any = null;
+    private repairTimerId: any = null;
 
     baseUrl = environment.apiUrl;
     selectedComposants: any[] = [];
@@ -112,6 +161,7 @@ export class TechDiListComponent implements OnInit {
     lapTime1: string;
     isRunning1: boolean;
     startTime1: number;
+    initialOffset1: number;
     laps1: any[];
 
     formGroupchips: any;
@@ -204,6 +254,8 @@ export class TechDiListComponent implements OnInit {
         private confirmationService: ConfirmationService,
         private notificationService: NotificationService,
         private cdr: ChangeDetectorRef,
+        private ticketRefreshService: TicketRefreshService,
+        private profileService: ProfileService,
     ) {
         this.idTech = localStorage.getItem('_id');
     }
@@ -213,56 +265,216 @@ export class TechDiListComponent implements OnInit {
         this.getComposant();
         this.checkValueChanges();
         this.checkValueChangesReperable();
-        this.getDataForTech();
-        this.barChart();
+        this.notificationService.startWorker();
 
         // Setup search with debounce
-        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
-            this.loadData();
-        });
+        this.searchSubject$
+            .pipe(debounceTime(400), takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.loadData();
+            });
+
+        this.diagFormTech.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => this.persistActiveDialogState());
+
+        this.remarque.valueChanges
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => this.persistActiveDialogState());
+
+        this.ticketRefreshService
+            .listen('tech-list')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.loadData();
+            });
 
         // Notification subscription
-        this.notificationService.notification$.subscribe((message: any) => {
-            if (this.isTechAssignmentNotification(message)) {
-                console.log('message from tech component', message);
-                this.messageService.add({
-                    severity: 'info',
-                    summary: 'Nouveau ticket',
-                    detail: 'Un nouveau ticket vient d’être assigné',
-                    sticky: true,
-                });
+        this.notificationService.notification$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                this.handleTechRealtimeMessage(message, 'websocket:updateTicket');
+            });
 
-                setTimeout(() => {
-                    this.loadData();
-                }, 1000);
-            }
-        });
+        this.subscribeToTechAssignmentNotifications();
 
         // Initial load
         this.loadData();
     }
 
-    private isTechAssignmentNotification(message: any): boolean {
+    ngOnDestroy() {
+        this.stopDiagnosticTimer();
+        this.stopRepairTimer();
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
+
+    private handleTechRealtimeMessage(message: any, source: string): void {
+        const assignment = this.getTechAssignmentInfo(message);
+
+        if (assignment.isRelevant) {
+            if (assignment.isNewAssignment) {
+                this.showTechAssignmentToast(assignment);
+            }
+
+            this.ticketRefreshService.requestRefresh('tech-list', {
+                source,
+                assignmentType: assignment.type,
+                diIds: assignment.diIds,
+            });
+        }
+    }
+
+    private subscribeToTechAssignmentNotifications(): void {
+        this.apollo
+            .subscribe<any>({
+                query: this.profileService.notificationDiagnostic(),
+            })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(({ data }) => {
+                const message = data?.notificationDiagnostic;
+                this.handleTechRealtimeMessage(
+                    { ...message, status: 'DIAGNOSTIC' },
+                    'graphql:notificationDiagnostic',
+                );
+            });
+
+        this.apollo
+            .subscribe<any>({
+                query: this.profileService.notificationrep(),
+            })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(({ data }) => {
+                const message = data?.notificationReparation;
+                this.handleTechRealtimeMessage(
+                    { ...message, status: 'REPARATION' },
+                    'graphql:notificationReparation',
+                );
+            });
+    }
+
+    private getTechAssignmentInfo(message: any): {
+        isRelevant: boolean;
+        isNewAssignment: boolean;
+        type: TechDialogMode;
+        diIds: string[];
+        diNumber?: string;
+    } {
         const currentTechId = this.idTech || localStorage.getItem('_id');
         const currentUsername = localStorage.getItem('username');
 
         if (!message || (!currentTechId && !currentUsername)) {
-            return false;
+            return {
+                isRelevant: false,
+                isNewAssignment: false,
+                type: 'diagnostic',
+                diIds: [],
+            };
         }
 
         const recipients = this.collectTechRecipientsFromNotification(message);
         const diIds = this.collectDiIdsFromNotification(message);
-        const isKnownDi = diIds.some((diId) => this.knownTechDiIds.has(diId));
+        const statuses = this.collectValuesFromNotification(message, [
+            'status',
+        ]).map((status) => status.toUpperCase());
+        const diNumber = this.collectValuesFromNotification(message, [
+            '_idnum',
+        ])[0];
         const isTargetedToCurrentTech =
             (!!currentTechId && recipients.includes(currentTechId)) ||
             (!!currentUsername && recipients.includes(currentUsername));
+        const hasRepairMarker =
+            statuses.includes('REPARATION') ||
+            statuses.includes('INREPARATION') ||
+            this.hasKeyInNotification(message, [
+                'id_tech_rep',
+                '_idtechRep',
+                'notificationReparation',
+            ]);
+        const hasDiagnosticMarker =
+            statuses.includes('DIAGNOSTIC') ||
+            statuses.includes('INDIAGNOSTIC') ||
+            this.hasKeyInNotification(message, [
+                'id_tech_diag',
+                '_idtechDiag',
+                'notificationDiagnostic',
+            ]) ||
+            this.hasTechAssignmentMarker(message);
+        const type: TechDialogMode = hasRepairMarker ? 'repair' : 'diagnostic';
+        const isRelevant =
+            isTargetedToCurrentTech &&
+            (hasRepairMarker || hasDiagnosticMarker || diIds.length > 0);
+        const isNewAssignment =
+            isRelevant &&
+            (diIds.length === 0 ||
+                diIds.some((diId) => !this.knownTechDiIds.has(diId))) &&
+            !this.wasAssignmentToastShown(type, diIds);
 
-        if (isTargetedToCurrentTech && diIds.length > 0) {
+        if (isRelevant && diIds.length > 0) {
             diIds.forEach((diId) => this.knownTechDiIds.add(diId));
-            return !isKnownDi;
         }
 
-        return isTargetedToCurrentTech && this.hasTechAssignmentMarker(message);
+        return {
+            isRelevant,
+            isNewAssignment,
+            type,
+            diIds,
+            diNumber,
+        };
+    }
+
+    private showTechAssignmentToast(assignment: {
+        type: TechDialogMode;
+        diIds: string[];
+        diNumber?: string;
+    }): void {
+        this.rememberAssignmentToast(assignment.type, assignment.diIds);
+
+        this.messageService.add({
+            severity: 'info',
+            summary:
+                assignment.type === 'repair'
+                    ? 'New repair task assigned'
+                    : 'New diagnostic task assigned',
+            detail: assignment.diNumber
+                ? `DI #${assignment.diNumber}`
+                : 'Un nouveau ticket vient d’être assigné',
+            sticky: true,
+        });
+    }
+
+    private wasAssignmentToastShown(
+        type: TechDialogMode,
+        diIds: string[],
+    ): boolean {
+        if (diIds.length === 0) {
+            return false;
+        }
+
+        const shown = this.getShownAssignmentToastKeys();
+        return diIds.every((diId) => shown.has(`${type}:${diId}`));
+    }
+
+    private rememberAssignmentToast(type: TechDialogMode, diIds: string[]) {
+        if (diIds.length === 0) {
+            return;
+        }
+
+        const shown = this.getShownAssignmentToastKeys();
+        diIds.forEach((diId) => shown.add(`${type}:${diId}`));
+        sessionStorage.setItem(
+            this.assignmentToastStorageKey,
+            JSON.stringify(Array.from(shown).slice(-200)),
+        );
+    }
+
+    private getShownAssignmentToastKeys(): Set<string> {
+        try {
+            const raw = sessionStorage.getItem(this.assignmentToastStorageKey);
+            return new Set(raw ? JSON.parse(raw) : []);
+        } catch {
+            return new Set();
+        }
     }
 
     private collectTechRecipientsFromNotification(message: any): string[] {
@@ -391,6 +603,92 @@ export class TechDiListComponent implements OnInit {
         return Array.from(diIds);
     }
 
+    private collectValuesFromNotification(
+        message: any,
+        keys: string[],
+    ): string[] {
+        const values = new Set<string>();
+        const stack = [message];
+
+        while (stack.length) {
+            const current = stack.pop();
+
+            if (!current) {
+                continue;
+            }
+
+            if (typeof current === 'string') {
+                try {
+                    stack.push(JSON.parse(current));
+                } catch {
+                    // plain strings are not keyed values
+                }
+                continue;
+            }
+
+            if (typeof current !== 'object') {
+                continue;
+            }
+
+            if (Array.isArray(current)) {
+                stack.push(...current);
+                continue;
+            }
+
+            keys.forEach((key) => {
+                const value = current[key];
+                if (typeof value === 'string' || typeof value === 'number') {
+                    values.add(String(value));
+                }
+            });
+
+            ['message', 'content', 'state', 'states', 'stat', 'data'].forEach(
+                (key) => {
+                    if (current[key]) {
+                        stack.push(current[key]);
+                    }
+                },
+            );
+        }
+
+        return Array.from(values);
+    }
+
+    private hasKeyInNotification(message: any, keys: string[]): boolean {
+        const stack = [message];
+
+        while (stack.length) {
+            const current = stack.pop();
+
+            if (!current) {
+                continue;
+            }
+
+            if (typeof current !== 'object') {
+                continue;
+            }
+
+            if (Array.isArray(current)) {
+                stack.push(...current);
+                continue;
+            }
+
+            if (keys.some((key) => Object.prototype.hasOwnProperty.call(current, key))) {
+                return true;
+            }
+
+            ['message', 'content', 'state', 'states', 'stat', 'data'].forEach(
+                (key) => {
+                    if (current[key]) {
+                        stack.push(current[key]);
+                    }
+                },
+            );
+        }
+
+        return false;
+    }
+
     private hasTechAssignmentMarker(message: any): boolean {
         const stack = [message];
 
@@ -468,6 +766,7 @@ export class TechDiListComponent implements OnInit {
                     if (data && data.searchTechDI) {
                         this.techList = data.searchTechDI.stat;
                         this.rememberTechDiIds(this.techList);
+                        this.restorePersistedDialogStateOnce();
                         this.techListCount =
                             data.searchTechDI.totalTechDataCount;
                     }
@@ -484,6 +783,13 @@ export class TechDiListComponent implements OnInit {
     onColumnSearch(field: string, value: string) {
         const v = value?.trim();
         const f = field?.trim();
+        const searchKey = `${f || ''}:${v || ''}`;
+
+        if (searchKey === this.lastSearchKey) {
+            return;
+        }
+
+        this.lastSearchKey = searchKey;
 
         if (v && v.length > 0 && f && f.length > 0) {
             // Set search state
@@ -502,6 +808,43 @@ export class TechDiListComponent implements OnInit {
             this.loadData();
         }
     }
+
+    formatCell(row: any, field: string): string {
+        return formatTableValue(row, field);
+    }
+
+    isLocationCell(field: string): boolean {
+        return isLocationColumn(field);
+    }
+
+    hasLoadedComposants(row: any): boolean {
+        return rowHasLoadedComposants(row);
+    }
+
+    getModalTitle(mode: TechDialogMode): string {
+        const prefix = mode === 'repair' ? 'Repair' : 'Diagnostic';
+        const diNumber = this._idnum || this.di?._idnum || this.di?.diId;
+        return `${prefix} — ${diNumber || 'DI'}`;
+    }
+
+    getModalPartyLabel(): string {
+        const company = this.di?.company?.name;
+        const client = [this.di?.client?.first_name, this.di?.client?.last_name]
+            .filter(Boolean)
+            .join(' ');
+
+        return company || client || '—';
+    }
+
+    getModalLocationLabel(): string {
+        return this.emplacement || this.formatCell(this.di, 'location_id');
+    }
+
+    getModalStatusLabel(): string {
+        return this.diStatus || this.di?.status || '—';
+    }
+
+    trackByColumn = trackByColumn;
 
     barChart() {
         const documentStyle = getComputedStyle(document.documentElement);
@@ -706,6 +1049,7 @@ export class TechDiListComponent implements OnInit {
                 if (data) {
                     this.techList = data.getDiForTech.stat;
                     this.rememberTechDiIds(this.techList);
+                    this.restorePersistedDialogStateOnce();
                     this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
@@ -756,6 +1100,217 @@ export class TechDiListComponent implements OnInit {
     resetModalFormRep() {
         this.remarque.reset();
         this.di = null;
+    }
+
+    private persistActiveDialogState(
+        mode?: TechDialogMode,
+        statSnapshot?: any,
+    ): void {
+        const activeMode = mode || this.getActiveDialogMode();
+
+        if (!activeMode) {
+            return;
+        }
+
+        const isDiagnostic = activeMode === 'diagnostic';
+        const statId = isDiagnostic ? this.selectedDi : this.statId;
+        const diId = isDiagnostic ? this.selectedDi_id : this.selectedRep;
+
+        if (!statId || !diId) {
+            return;
+        }
+
+        // Save the LIVE accumulated elapsed (offset + current run leg). This
+        // is the only value that matters for restoration. startedAt is no
+        // longer used as a cross-session anchor; persisted purely for
+        // diagnostics.
+        const liveAccumulatedMs = isDiagnostic
+            ? this.computeLiveElapsedDiag()
+            : this.computeLiveElapsedRep();
+        const wasRunning = isDiagnostic ? this.isRunning : this.isRunning1;
+
+        const state: PersistedTechDialogState = {
+            mode: activeMode,
+            diId,
+            statId,
+            startedAt: Date.now(),
+            savedAt: Date.now(),
+            initialElapsedMs: liveAccumulatedMs,
+            wasRunning,
+            statSnapshot: statSnapshot || this.di,
+            diagFormValue: this.diagFormTech.value,
+            repairFormValue: this.remarque.value,
+            composantCombo: this.composantCombo || [],
+        };
+
+        try {
+            localStorage.setItem(
+                this.dialogStateStorageKey,
+                JSON.stringify(state),
+            );
+        } catch (error) {
+            console.warn('Unable to persist tech dialog state', error);
+        }
+    }
+
+    private getActiveDialogMode(): TechDialogMode | null {
+        if (this.selectedDi && this.diDialogDiag[this.selectedDi]) {
+            return 'diagnostic';
+        }
+
+        if (this.diDialogRep) {
+            return 'repair';
+        }
+
+        return null;
+    }
+
+    private clearPersistedDialogState(mode?: TechDialogMode): void {
+        const existing = this.readPersistedDialogState();
+
+        if (!existing || !mode || existing.mode === mode) {
+            localStorage.removeItem(this.dialogStateStorageKey);
+        }
+    }
+
+    private readPersistedDialogState(): PersistedTechDialogState | null {
+        try {
+            const raw = localStorage.getItem(this.dialogStateStorageKey);
+            if (!raw) {
+                return null;
+            }
+
+            const parsed = JSON.parse(raw) as PersistedTechDialogState;
+            if (
+                !parsed?.mode ||
+                !parsed?.diId ||
+                !parsed?.statId ||
+                Date.now() - parsed.savedAt > this.dialogStateMaxAgeMs
+            ) {
+                localStorage.removeItem(this.dialogStateStorageKey);
+                return null;
+            }
+
+            return parsed;
+        } catch {
+            localStorage.removeItem(this.dialogStateStorageKey);
+            return null;
+        }
+    }
+
+    private restorePersistedDialogStateOnce(): void {
+        if (this.hasAttemptedDialogRestore) {
+            return;
+        }
+
+        const state = this.readPersistedDialogState();
+        this.hasAttemptedDialogRestore = true;
+
+        if (!state?.statSnapshot) {
+            return;
+        }
+
+        this.pendingRestoredDialogState = state;
+        console.debug({
+            event: 'tech.dialog.restore_requested',
+            mode: state.mode,
+            statId: state.statId,
+            diId: state.diId,
+        });
+
+        if (state.mode === 'diagnostic') {
+            this.diagModal(state.statSnapshot);
+        } else {
+            this.repModal(state.statSnapshot);
+        }
+    }
+
+    private applyPendingRestoredDialogState(
+        mode: TechDialogMode,
+        statId: string,
+    ): void {
+        const state = this.pendingRestoredDialogState;
+
+        if (!state || state.mode !== mode || state.statId !== statId) {
+            return;
+        }
+
+        if (state.diagFormValue) {
+            this.diagFormTech.patchValue(state.diagFormValue, {
+                emitEvent: false,
+            });
+        }
+
+        if (state.repairFormValue) {
+            this.remarque.patchValue(state.repairFormValue, {
+                emitEvent: false,
+            });
+        }
+
+        if (state.composantCombo) {
+            this.composantCombo = state.composantCombo;
+        }
+
+        // Restore from accumulated elapsed time, NOT from the previous
+        // session's wall-clock anchor. This keeps wall-clock idle out of
+        // the timer: the new run leg starts at Date.now() with offset =
+        // last-saved accumulated, so the first tick displays exactly
+        // initialElapsedMs and counts forward from there.
+        const savedAccumulatedMs = state.initialElapsedMs || 0;
+        // Older persisted entries didn't carry wasRunning — fall back to
+        // resuming so we don't accidentally freeze a timer that was live.
+        const wasRunning =
+            state.wasRunning !== undefined ? !!state.wasRunning : true;
+
+        if (mode === 'diagnostic') {
+            this.stopDiagnosticTimer();
+            this.initialOffset = savedAccumulatedMs;
+            this.startTime = 0;
+            this.isRunning = false;
+            // Render the saved value immediately while paused.
+            const elapsed = this.computeLiveElapsedDiag();
+            this.minutes = this.padZero(
+                Math.floor(elapsed / (1000 * 60 * 60)),
+            );
+            this.seconds = this.padZero(
+                Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60)),
+            );
+            this.milliseconds = this.padZero(
+                Math.floor((elapsed % (1000 * 60)) / 1000),
+            );
+            if (wasRunning) {
+                this.startStopwatch();
+            }
+        } else {
+            this.stopRepairTimer();
+            this.initialOffset1 = savedAccumulatedMs;
+            this.startTime1 = 0;
+            this.isRunning1 = false;
+            const elapsed = this.computeLiveElapsedRep();
+            this.minutes1 = this.padZero(
+                Math.floor(elapsed / (1000 * 60 * 60)),
+            );
+            this.seconds1 = this.padZero(
+                Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60)),
+            );
+            this.milliseconds1 = this.padZero(
+                Math.floor((elapsed % (1000 * 60)) / 1000),
+            );
+            if (wasRunning) {
+                this.startStopwatch1();
+            }
+        }
+
+        console.debug({
+            event: 'tech.timer.restored',
+            mode,
+            statId,
+            accumulatedMs: savedAccumulatedMs,
+            wasRunning,
+        });
+
+        this.pendingRestoredDialogState = null;
+        this.persistActiveDialogState();
     }
 
     getCurrentPauseLog(pauseLogs) {
@@ -848,6 +1403,7 @@ export class TechDiListComponent implements OnInit {
                 this.ignoreCount = di.ignoreCount;
 
                 this.diDialogDiag[di._id] = true;
+                this.persistActiveDialogState('diagnostic', di);
                 this.updateDisableValues();
             }
         } catch (error) {
@@ -930,6 +1486,7 @@ export class TechDiListComponent implements OnInit {
             }
         }
         this.getDataStatsByIdDi(di._idDi);
+        this._idnum = di._idnum;
         this.selectedRep = di._idDi;
         this.statId = di._id;
 
@@ -1028,6 +1585,7 @@ export class TechDiListComponent implements OnInit {
         this.resetModalForm();
         this.selectedDi = di._id;
         this.diDialogRep = true;
+        this.persistActiveDialogState('repair', di);
         this.getTimeSpentRep(di._id);
         this.getImage(di._idDi);
         this.changeStatusInReparation(di._idDi);
@@ -1124,10 +1682,12 @@ export class TechDiListComponent implements OnInit {
 
     hideDialogDiag() {
         this.diDialogDiag[this.selectedDi] = false;
+        this.clearPersistedDialogState('diagnostic');
     }
 
     hideDialogRep() {
         this.diDialogRep = false;
+        this.clearPersistedDialogState('repair');
     }
 
     btnConditionReperation() {
@@ -1189,29 +1749,85 @@ export class TechDiListComponent implements OnInit {
             });
     }
 
+    // Timer model — accumulated active duration, never wall-clock anchor.
+    //   initialOffset    : frozen elapsed for diag (ms) before current run leg
+    //   initialOffset1   : frozen elapsed for rep
+    //   startTime/startTime1 : wall-clock at which the current run leg
+    //                          started. 0 means the timer is paused/stopped.
+    // Live elapsed = offset + (running ? now - runStartedAt : 0).
+    // Wall-clock idle while the modal is closed cannot enter the elapsed
+    // total because runStartedAt is frozen the moment the timer stops.
+
+    private computeLiveElapsedDiag(): number {
+        const running = this.isRunning && this.startTime > 0;
+        return (
+            (this.initialOffset || 0) +
+            (running ? Math.max(0, Date.now() - this.startTime) : 0)
+        );
+    }
+
+    private computeLiveElapsedRep(): number {
+        const running = this.isRunning1 && this.startTime1 > 0;
+        return (
+            (this.initialOffset1 || 0) +
+            (running ? Math.max(0, Date.now() - this.startTime1) : 0)
+        );
+    }
+
     startStopwatch() {
         if (!this.isRunning) {
             this.isRunning = true;
-            this.startTime = Date.now() - this.initialOffset;
+            this.startTime = Date.now();
+            console.debug({
+                event: 'tech.timer.started',
+                mode: 'diagnostic',
+                statId: this.selectedDi,
+                startedAt: this.startTime,
+                offsetMs: this.initialOffset || 0,
+            });
+            this.persistActiveDialogState();
             this.updateTimer();
         } else {
-            this.isRunning = false;
+            this.stopDiagnosticTimer();
+            this.persistActiveDialogState();
         }
     }
 
     startStopwatch1() {
         if (!this.isRunning1) {
             this.isRunning1 = true;
-            this.startTime1 = Date.now() - this.initialOffset;
+            this.startTime1 = Date.now();
+            console.debug({
+                event: 'tech.timer.started',
+                mode: 'repair',
+                statId: this.statId,
+                startedAt: this.startTime1,
+                offsetMs: this.initialOffset1 || 0,
+            });
+            this.persistActiveDialogState();
             this.updateTimer1();
         } else {
-            this.isRunning1 = false;
+            this.stopRepairTimer();
+            this.persistActiveDialogState();
         }
     }
 
     updateTimer() {
-        if (this.isRunning) {
-            const elapsedTime = Date.now() - this.startTime;
+        if (!this.isRunning) {
+            return;
+        }
+
+        if (this.diagnosticTimerId) {
+            console.debug({
+                event: 'tech.timer.duplicate_prevented',
+                mode: 'diagnostic',
+                statId: this.selectedDi,
+            });
+            return;
+        }
+
+        const tick = () => {
+            const elapsedTime = this.computeLiveElapsedDiag();
             this.minutes = this.padZero(
                 Math.floor(elapsedTime / (1000 * 60 * 60)),
             );
@@ -1221,14 +1837,31 @@ export class TechDiListComponent implements OnInit {
             this.milliseconds = this.padZero(
                 Math.floor((elapsedTime % (1000 * 60)) / 1000),
             );
+            // Persist live accumulated every tick so a crash loses at most
+            // ~1s of work, never wall-clock idle while disconnected.
+            this.persistActiveDialogState();
+        };
 
-            requestAnimationFrame(() => this.updateTimer());
-        }
+        tick();
+        this.diagnosticTimerId = window.setInterval(tick, 1000);
     }
 
     updateTimer1() {
-        if (this.isRunning1) {
-            const elapsedTime = Date.now() - this.startTime1;
+        if (!this.isRunning1) {
+            return;
+        }
+
+        if (this.repairTimerId) {
+            console.debug({
+                event: 'tech.timer.duplicate_prevented',
+                mode: 'repair',
+                statId: this.statId,
+            });
+            return;
+        }
+
+        const tick = () => {
+            const elapsedTime = this.computeLiveElapsedRep();
             this.minutes1 = this.padZero(
                 Math.floor(elapsedTime / (1000 * 60 * 60)),
             );
@@ -1238,9 +1871,11 @@ export class TechDiListComponent implements OnInit {
             this.milliseconds1 = this.padZero(
                 Math.floor((elapsedTime % (1000 * 60)) / 1000),
             );
+            this.persistActiveDialogState();
+        };
 
-            requestAnimationFrame(() => this.updateTimer1());
-        }
+        tick();
+        this.repairTimerId = window.setInterval(tick, 1000);
     }
 
     lap() {
@@ -1256,54 +1891,104 @@ export class TechDiListComponent implements OnInit {
     }
 
     reset() {
+        this.stopDiagnosticTimer();
         this.minutes = '00';
         this.seconds = '00';
         this.milliseconds = '00';
-        this.isRunning = false;
         this.startTime = 0;
         this.initialOffset = 0;
-        this.startTime1 = 0;
         this.laps = [];
     }
 
     reset1() {
+        this.stopRepairTimer();
         this.minutes1 = '00';
         this.seconds1 = '00';
         this.milliseconds1 = '00';
-        this.isRunning1 = false;
         this.startTime1 = 0;
-        this.startTime1 = 0;
+        this.initialOffset1 = 0;
         this.laps1 = [];
+    }
+
+    private stopDiagnosticTimer() {
+        if (this.diagnosticTimerId) {
+            clearInterval(this.diagnosticTimerId);
+            this.diagnosticTimerId = null;
+        }
+
+        if (this.isRunning && this.startTime > 0) {
+            // Freeze the elapsed time of the current run leg into the
+            // accumulated offset. After this, any wall-clock time that
+            // passes while the modal is closed is *not* counted.
+            this.initialOffset =
+                (this.initialOffset || 0) +
+                Math.max(0, Date.now() - this.startTime);
+            console.debug({
+                event: 'tech.timer.stopped',
+                mode: 'diagnostic',
+                statId: this.selectedDi,
+                accumulatedMs: this.initialOffset,
+            });
+        }
+
+        this.startTime = 0;
+        this.isRunning = false;
+    }
+
+    private stopRepairTimer() {
+        if (this.repairTimerId) {
+            clearInterval(this.repairTimerId);
+            this.repairTimerId = null;
+        }
+
+        if (this.isRunning1 && this.startTime1 > 0) {
+            this.initialOffset1 =
+                (this.initialOffset1 || 0) +
+                Math.max(0, Date.now() - this.startTime1);
+            console.debug({
+                event: 'tech.timer.stopped',
+                mode: 'repair',
+                statId: this.statId,
+                accumulatedMs: this.initialOffset1,
+            });
+        }
+
+        this.startTime1 = 0;
+        this.isRunning1 = false;
     }
 
     padZero(value: number): string {
         return value.toString().padStart(2, '0');
     }
 
+    private timeStringToMs(timeString: string): number {
+        if (!this.isValidTimeFormat(timeString)) {
+            return 0;
+        }
+
+        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        return hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000;
+    }
+
     setInitialTime(timeString: string) {
-        const [minutes, seconds, milliseconds] = timeString
-            .split(':')
-            .map(Number);
-        this.initialOffset =
-            minutes * 60 * 60 * 1000 +
-            seconds * 60 * 1000 +
-            milliseconds * 1000;
-        this.minutes = this.padZero(minutes);
-        this.seconds = this.padZero(seconds);
-        this.milliseconds = this.padZero(milliseconds);
+        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        // Reset run-leg state — the offset is the new floor, no idle to fold.
+        this.startTime = 0;
+        this.isRunning = false;
+        this.initialOffset = this.timeStringToMs(timeString);
+        this.minutes = this.padZero(hours);
+        this.seconds = this.padZero(minutes);
+        this.milliseconds = this.padZero(seconds);
     }
 
     setInitialTime1(timeString: string) {
-        const [minutes, seconds, milliseconds] = timeString
-            .split(':')
-            .map(Number);
-        this.initialOffset =
-            minutes * 60 * 60 * 1000 +
-            seconds * 60 * 1000 +
-            milliseconds * 1000;
-        this.minutes1 = this.padZero(minutes);
-        this.seconds1 = this.padZero(seconds);
-        this.milliseconds1 = this.padZero(milliseconds);
+        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        this.startTime1 = 0;
+        this.isRunning1 = false;
+        this.initialOffset1 = this.timeStringToMs(timeString);
+        this.minutes1 = this.padZero(hours);
+        this.seconds1 = this.padZero(minutes);
+        this.milliseconds1 = this.padZero(seconds);
     }
 
     getComposant() {
@@ -1311,7 +1996,8 @@ export class TechDiListComponent implements OnInit {
             .watchQuery<any>({
                 query: this.ticketSerice.getAllComposant(),
             })
-            .valueChanges.subscribe(({ data, loading }) => {
+            .valueChanges.pipe(takeUntil(this.destroy$))
+            .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
                     this.composantList = data.findAllComposant;
@@ -1432,7 +2118,8 @@ export class TechDiListComponent implements OnInit {
             .watchQuery<any>({
                 query: this.ticketSerice.getDataForTech(),
             })
-            .valueChanges.subscribe(({ data, loading }) => {
+            .valueChanges.pipe(takeUntil(this.destroy$))
+            .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
                     this.dataBarChartIsReady = true;
@@ -1750,13 +2437,14 @@ export class TechDiListComponent implements OnInit {
                         }
                     });
 
-                setTimeout(() => {
-                    this.loadData(); // Use loadData instead of getAllTechDi
-                }, 1000);
+                this.ticketRefreshService.requestRefresh('tech-list', {
+                    source: 'mutation:saveLogsDi',
+                });
 
                 this.startStopwatch();
                 this.getComposant();
                 this.diDialogDiag[this.selectedDi] = false;
+                this.clearPersistedDialogState('diagnostic');
             },
         });
     }
@@ -1846,13 +2534,14 @@ export class TechDiListComponent implements OnInit {
                         }
                     });
 
-                setTimeout(() => {
-                    this.loadData(); // Use loadData instead of getAllTechDi
-                }, 1000);
+                this.ticketRefreshService.requestRefresh('tech-list', {
+                    source: 'mutation:techFinishDiag',
+                });
 
                 this.startStopwatch();
                 this.getComposant();
                 this.diDialogDiag[this.selectedDi] = false;
+                this.clearPersistedDialogState('diagnostic');
             },
         });
     }
@@ -1884,7 +2573,8 @@ export class TechDiListComponent implements OnInit {
             .watchQuery<any>({
                 query: this.ticketSerice.getLastPauseTime(_idStat),
             })
-            .valueChanges.subscribe(({ data, loading }) => {
+            .valueChanges.pipe(takeUntil(this.destroy$))
+            .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (
                     data &&
@@ -1897,6 +2587,7 @@ export class TechDiListComponent implements OnInit {
                     this.setInitialTime('00:00:00');
                     this.startStopwatch();
                 }
+                this.applyPendingRestoredDialogState('diagnostic', _idStat);
             });
     }
 
@@ -1915,9 +2606,10 @@ export class TechDiListComponent implements OnInit {
                     this.setInitialTime1(data.getLastPauseTime.rep_time);
                     this.startStopwatch1();
                 } else {
-                    this.setInitialTime('00:00:00');
+                    this.setInitialTime1('00:00:00');
                     this.startStopwatch1();
                 }
+                this.applyPendingRestoredDialogState('repair', _idStat);
             });
     }
 
@@ -1986,20 +2678,34 @@ export class TechDiListComponent implements OnInit {
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
+                    // The pause mutation is chained one HTTP roundtrip after
+                    // lapTimeForPauseAndGetBack1's synchronous loadData(),
+                    // so the initial refresh reads stale INREPARATION. Also,
+                    // the WS updateTicket payload carries no tech identifier,
+                    // so the relevance filter in handleTechRealtimeMessage
+                    // rejects it and no refresh is requested. Trigger one
+                    // here, after the pause has actually persisted.
+                    this.ticketRefreshService.requestRefresh('tech-list', {
+                        source: 'mutation:setDiInReparationPause',
+                    });
                 }
             });
     }
 
     checkValueChanges() {
-        this.diagFormTech.get('isPdr')?.valueChanges.subscribe((value) => {
-            this.hasPdr = value;
-        });
+        this.diagFormTech
+            .get('isPdr')
+            ?.valueChanges.pipe(takeUntil(this.destroy$))
+            .subscribe((value) => {
+                this.hasPdr = value;
+            });
     }
 
     checkValueChangesReperable() {
         this.diagFormTech
             .get('isReparable')
-            ?.valueChanges.subscribe((value) => {
+            ?.valueChanges.pipe(takeUntil(this.destroy$))
+            .subscribe((value) => {
                 this.isReperable = value;
             });
     }
@@ -2044,11 +2750,11 @@ export class TechDiListComponent implements OnInit {
                         }
                     });
 
-                this.loadData(); // Use loadData instead of getAllTechDi
-                setTimeout(() => {
-                    this.loadData();
-                }, 1000);
+                this.ticketRefreshService.requestRefresh('tech-list', {
+                    source: 'mutation:finishReparation',
+                });
                 this.startStopwatch1();
+                this.clearPersistedDialogState('repair');
             },
             reject: () => {},
         });

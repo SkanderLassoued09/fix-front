@@ -2,6 +2,7 @@
 //  SAV — TECH LIST PAGE  ·  tech-list.component.scss
 //  Inherits the same light ERP design as di-list
 // ═══════════════════════════════════════════════════════
+@use "../../tech-workflow-cards";
 
 // ── TOKENS (mirrored from di-list) ────────────────────
 $bg-page: #f1f5f9;
@@ -52,113 +53,6 @@ $red: #dc2626;
     .pi {
         color: $accent-blue;
         font-size: 1.1rem;
-    }
-}
-
-// ── MINI DASHBOARD GRID ───────────────────────────────
-.sav-dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-    margin-bottom: 1.25rem;
-}
-
-.sav-dash-card {
-    border-radius: 12px;
-    padding: 1.1rem 1.25rem;
-    color: $white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    transition:
-        transform 0.2s,
-        box-shadow 0.2s;
-
-    &:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-    }
-
-    &--diag {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-    }
-    &--rep {
-        background: linear-gradient(135deg, #f093fb, #f5576c);
-    }
-    &--retour {
-        background: linear-gradient(135deg, #4facfe, #00f2fe);
-    }
-    &--admin {
-        background: linear-gradient(135deg, #43e97b, #38f9d7);
-    }
-
-    &__header {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-        margin-bottom: 0.85rem;
-        padding-bottom: 0.6rem;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-    }
-
-    &__icon {
-        font-size: 1.2rem;
-        opacity: 0.9;
-    }
-
-    &__title {
-        font-size: 1rem;
-        font-weight: 700;
-        letter-spacing: 0.3px;
-        margin: 0;
-    }
-
-    &__total {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 7px;
-        padding: 0.45rem 0.75rem;
-        margin-bottom: 0.75rem;
-    }
-
-    &__total-label {
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-        opacity: 0.85;
-    }
-
-    &__total-value {
-        font-size: 1.55rem;
-        font-weight: 800;
-    }
-
-    &__stats {
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-    }
-
-    &__stat {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        font-size: 0.82rem;
-        opacity: 0.92;
-
-        i {
-            font-size: 0.78rem;
-            opacity: 0.75;
-        }
-    }
-
-    &__stat-label {
-        flex: 1;
-    }
-
-    &__stat-value {
-        font-weight: 700;
-        font-size: 0.95rem;
     }
 }
 
@@ -990,4 +884,26 @@ $red: #dc2626;
 }
 .text-red {
     color: $red !important;
+}
+
+.sav-location-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sav-location-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--surface-400);
+    flex: 0 0 auto;
+}
+
+.sav-location-dot--filled {
+    background: var(--green-500);
+}
+
+.sav-location-dot--empty {
+    background: var(--red-300);
 }

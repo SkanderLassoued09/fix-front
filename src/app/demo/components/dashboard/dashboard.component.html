@@ -31,6 +31,65 @@
         </div>
     </div>
 
+    <div class="section-label">Flux Technicien</div>
+    <div class="sav-dashboard-grid">
+        <div
+            class="sav-dash-card"
+            *ngFor="
+                let card of techWorkflowCards;
+                trackBy: trackByTechWorkflowCard
+            "
+            [ngClass]="card.className"
+        >
+            <div class="sav-dash-card__header">
+                <i [class]="card.icon + ' sav-dash-card__icon'"></i>
+                <span class="sav-dash-card__title">{{ card.title }}</span>
+            </div>
+
+            <div class="sav-dash-card__total">
+                <span class="sav-dash-card__total-label">
+                    {{ card.totalLabel }}
+                </span>
+                <strong
+                    class="sav-dash-card__total-value"
+                    *ngIf="card.total > 0; else noTechTotal"
+                >
+                    {{ card.total }}
+                </strong>
+                <ng-template #noTechTotal>
+                    <strong class="sav-dash-card__empty">Aucune</strong>
+                </ng-template>
+            </div>
+
+            <div
+                class="sav-dash-card__stats"
+                *ngIf="card.stats.length > 0; else noTechStats"
+            >
+                <div
+                    class="sav-dash-card__stat"
+                    *ngFor="
+                        let stat of card.stats;
+                        trackBy: trackByTechWorkflowStat
+                    "
+                >
+                    <i [class]="stat.icon"></i>
+                    <span class="sav-dash-card__stat-label">
+                        {{ stat.label }}
+                    </span>
+                    <strong class="sav-dash-card__stat-value">
+                        {{ stat.value }}
+                    </strong>
+                </div>
+            </div>
+
+            <ng-template #noTechStats>
+                <div class="sav-dash-card__no-stats">
+                    Aucun élément actif
+                </div>
+            </ng-template>
+        </div>
+    </div>
+
     <!-- ══════════════════════════════════════════════
        SECTION A — KPI ATELIER
   ══════════════════════════════════════════════ -->

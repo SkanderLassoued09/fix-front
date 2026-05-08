@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 
@@ -31,8 +31,16 @@ import {
     switchMap,
     tap,
     finalize,
+    takeUntil,
 } from 'rxjs';
 import { environment } from 'src/environments/environment';
+import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
+import {
+    formatTableValue,
+    isLocationColumn,
+    rowHasLoadedComposants,
+    trackByColumn,
+} from '../table-display.utils';
 
 @Component({
     selector: 'app-ticket-list',
@@ -40,12 +48,14 @@ import { environment } from 'src/environments/environment';
     templateUrl: './ticket-list.component.html',
     styleUrl: './ticket-list.component.scss',
 })
-export class TicketListComponent implements OnInit {
+export class TicketListComponent implements OnInit, OnDestroy {
     private companySearch$ = new Subject<string>();
     // Search state tracking
     private currentSearchField: string = '';
     private currentSearchValue: string = '';
     private searchSubject$ = new Subject<void>();
+    private destroy$ = new Subject<void>();
+    private lastSearchKey = '';
 
     baseUrl = environment.apiUrl;
 
@@ -171,7 +181,10 @@ export class TicketListComponent implements OnInit {
 
     colCategory = [{ field: 'category_name', name: 'Name' }];
 
-    colEmplacement = [{ field: 'location_name', name: 'Emplacement' }];
+    colEmplacement = [
+        { field: 'location_name', name: 'Emplacement' },
+        { field: 'storedDiCount', name: 'DI stockées' },
+    ];
 
     diList: any[];
     diListCount: any;
@@ -278,6 +291,7 @@ export class TicketListComponent implements OnInit {
         private readonly notificationService: NotificationService,
         private config: PrimeNGConfig,
         private confirmationService: ConfirmationService,
+        private ticketRefreshService: TicketRefreshService,
     ) {}
 
     ngOnInit() {
@@ -290,16 +304,33 @@ export class TicketListComponent implements OnInit {
         this.notificationService.startWorker();
 
         // Setup search with debounce
-        this.searchSubject$.pipe(debounceTime(400)).subscribe(() => {
-            this.loadData();
-        });
-
-        this.notificationService.notification$.subscribe((message: any) => {
-            if (message) {
+        this.searchSubject$
+            .pipe(debounceTime(400), takeUntil(this.destroy$))
+            .subscribe(() => {
                 this.loadData();
-                this.getStatusCount();
-            }
-        });
+            });
+
+        this.ticketRefreshService
+            .listen('ticket-list')
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.loadData();
+            });
+
+        this.notificationService.notification$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                if (message) {
+                    this.ticketRefreshService.requestRefresh('ticket-list', {
+                        source: 'updateTicket',
+                        message,
+                    });
+                    this.getStatusCount();
+                }
+            });
+        this.notificationService.blAdded$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => this.patchBlAddedRow(message));
         this.companySearch$
             .pipe(
                 debounceTime(400),
@@ -313,6 +344,11 @@ export class TicketListComponent implements OnInit {
             .subscribe(({ data }) => {
                 this.companiesListDropDown = data.searchCompanies;
             });
+    }
+
+    ngOnDestroy() {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
     /**
@@ -417,11 +453,15 @@ export class TicketListComponent implements OnInit {
      * Handle column search
      */
     onColumnSearch(field: string, value: string) {
-        console.log('value', value);
-        console.log('field', field);
-
         const v = value?.trim();
         const f = field?.trim();
+        const searchKey = `${f || ''}:${v || ''}`;
+
+        if (searchKey === this.lastSearchKey) {
+            return;
+        }
+
+        this.lastSearchKey = searchKey;
 
         if (v && v.length > 0 && f && f.length > 0) {
             // Set search state
@@ -439,6 +479,53 @@ export class TicketListComponent implements OnInit {
             // Load regular data
             this.loadData();
         }
+    }
+
+    formatCell(row: any, field: string): string {
+        return formatTableValue(row, field);
+    }
+
+    isLocationCell(field: string): boolean {
+        return isLocationColumn(field);
+    }
+
+    hasLoadedComposants(row: any): boolean {
+        return rowHasLoadedComposants(row);
+    }
+
+    trackByColumn = trackByColumn;
+
+    private patchBlAddedRow(message: any): void {
+        const di = message?.message?.di || message?.di;
+        const diId = di?._id;
+
+        if (!diId || !this.diList?.length) {
+            return;
+        }
+
+        const rowIndex = this.diList.findIndex((item) => item?._id === diId);
+        const row = rowIndex >= 0 ? this.diList[rowIndex] : null;
+
+        if (!row || row.status !== 'FINISHED') {
+            return;
+        }
+
+        // Replace the row with a new object reference and reassign the array
+        // so PrimeNG's p-table re-renders the row template; in-place mutation
+        // alone is not enough when default change detection is paired with
+        // PrimeNG's internal value caching.
+        const updatedRow = {
+            ...row,
+            bon_de_livraison:
+                row.bon_de_livraison || di?.bon_de_livraison || true,
+            __blAdded: true,
+        };
+        this.diList = [
+            ...this.diList.slice(0, rowIndex),
+            updatedRow,
+            ...this.diList.slice(rowIndex + 1),
+        ];
+        this.cdr.markForCheck();
     }
 
     /**
@@ -858,16 +945,32 @@ export class TicketListComponent implements OnInit {
     }
 
     showDialogForPricing(data) {
-        this.seletedRow = data;
+        // Reset every modal-bound field synchronously so the dialog never
+        // renders with residue from the previously selected DI. Capture the
+        // current row id and gate every async callback against it: a late
+        // response from a prior selection must not overwrite the current
+        // modal state.
         const MyID = data._id;
+        this.current_id = MyID;
+        const requestedRowId = MyID;
+
+        this.seletedRow = data;
         this.isErrorFromFixtronix = data.isErrorFromFixtronix;
         this.ignoreCountPricing = data.ignoreCount;
-        console.log('ignoreCount =>', data.ignoreCount);
         this.ignoreCountN1 = data.ignoreCount - 1;
 
         this.tarif_Technicien = null;
         this.timeDiagnostique = null;
         this.facturationDiagnostique = null;
+        this.timepart = null;
+        this.initialPriceAffichage = null;
+        this.priceRemiseAffichage = null;
+        this.pricesLogs = [];
+        this.totalComposant = null;
+        this.composantQuantity = 0;
+        this.allComposants = [];
+
+        const isStale = () => this.current_id !== requestedRowId;
 
         const tarifQuery = this.apollo
             .query<any>({
@@ -875,6 +978,7 @@ export class TicketListComponent implements OnInit {
             })
             .toPromise()
             .then(({ data }) => {
+                if (isStale()) return;
                 if (data) {
                     this.tarif_Technicien = data.getTarif.tarif;
                 }
@@ -887,17 +991,15 @@ export class TicketListComponent implements OnInit {
                     query: this.ticketSerice.getDiById(data._id),
                 })
                 .subscribe(({ data, loading }) => {
+                    if (isStale()) return;
                     this.isLoading = loading;
-                    console.log('🥝[skander]:', data);
                     if (data) {
-                        console.log(data.getDiById.di.price, 'data originale');
                         this.initialPriceAffichage = data.getDiById.di.price;
                         this.priceRemiseAffichage =
                             data.getDiById.di.final_price;
 
                         this.pricesLogs = data.getDiById.logsDi
                             .map((el) => {
-                                console.log('🍚[logs each one]:', el);
                                 if (el.price && el.idIgnore) {
                                     return {
                                         priceLogs: el.price,
@@ -908,8 +1010,6 @@ export class TicketListComponent implements OnInit {
                                 return null;
                             })
                             .filter((log) => log !== null);
-
-                        console.log('pricesLogs', this.pricesLogs);
                     }
                 });
 
@@ -921,9 +1021,9 @@ export class TicketListComponent implements OnInit {
                     ),
                 })
                 .subscribe(({ data, loading }) => {
+                    if (isStale()) return;
                     this.isLoading = loading;
                     if (data) {
-                        console.log('🍎[data]:', data);
                         this.isErrorFromFixtronix =
                             data.getLigsById.isErrorFromFixtronix;
                     }
@@ -937,7 +1037,7 @@ export class TicketListComponent implements OnInit {
                 })
                 .toPromise()
                 .then(({ data }) => {
-                    console.log('🥪[data]:', data);
+                    if (isStale()) return;
                     if (data) {
                         this.timeDiagnostique =
                             data.getInfoStatByIdDi.diag_time;
@@ -952,8 +1052,8 @@ export class TicketListComponent implements OnInit {
                     query: this.ticketSerice.getDiById(data._id),
                 })
                 .subscribe(({ data, loading }) => {
+                    if (isStale()) return;
                     this.isLoading = loading;
-                    console.log('🥝[data]:', data);
                     if (data) {
                         this.isErrorFromFixtronix =
                             data.getDiById.di.isErrorFromFixtronix;
@@ -965,6 +1065,7 @@ export class TicketListComponent implements OnInit {
                 })
                 .toPromise()
                 .then(({ data }) => {
+                    if (isStale()) return;
                     if (data) {
                         this.timeDiagnostique =
                             data.getInfoStatByIdDi.diag_time;
@@ -976,6 +1077,7 @@ export class TicketListComponent implements OnInit {
         }
 
         Promise.all([tarifQuery, statQuery]).then(() => {
+            if (isStale()) return;
             if (this.timepart && this.tarif_Technicien) {
                 this.facturationDiagnostique = parseFloat(
                     (
@@ -990,7 +1092,6 @@ export class TicketListComponent implements OnInit {
             }
         });
 
-        this.current_id = data._id;
         for (let oneComposant of data.array_composants) {
             this.getcomposantByName(oneComposant.nameComposant);
         }
@@ -1685,15 +1786,9 @@ export class TicketListComponent implements OnInit {
                     .subscribe(({ data, loading }) => {
                         this.isLoading = loading;
                         if (data) {
-                            let obj: { location_name: string; value: string } =
-                                {
-                                    location_name: '',
-                                    value: '',
-                                };
-                            obj.value = data?.createLocation?._id;
-                            obj.location_name =
-                                data?.createLocation?.location_name;
-                            this.locationDropDown.push(obj);
+                            this.locationDropDown.push(
+                                this.toLocationOption(data?.createLocation),
+                            );
                             this.locationForm.reset();
                         }
                     });
@@ -1738,11 +1833,41 @@ export class TicketListComponent implements OnInit {
                 this.isLoading = loading;
                 console.log(data, 'data LOCATIONS ');
 
-                this.locationDropDown = data.findAllLocation.map((el) => ({
-                    location_name: el.location_name,
-                    value: el._id,
-                }));
+                this.locationDropDown = data.findAllLocation.map((el) =>
+                    this.toLocationOption(el),
+                );
             });
+    }
+
+    toLocationOption(location: any) {
+        const storedDiCount =
+            location?.storedDiCount ?? location?.current_item_stored ?? 0;
+
+        return {
+            ...location,
+            location_name: location?.location_name || '—',
+            value: location?._id,
+            storedDiCount,
+            hasStoredDi: location?.hasStoredDi ?? storedDiCount > 0,
+        };
+    }
+
+    getLocationOccupancyLabel(location: any): string {
+        const count = location?.storedDiCount ?? 0;
+        return count > 0 ? `Occupied (${count})` : 'Empty';
+    }
+
+    getLocationOccupancyClass(location: any): string {
+        const count = location?.storedDiCount ?? 0;
+        const capacity = location?.max_capacity;
+
+        if (capacity && count >= capacity) {
+            return 'location-occupancy--full';
+        }
+
+        return count > 0
+            ? 'location-occupancy--occupied'
+            : 'location-occupancy--empty';
     }
 
     onImageSelect(event: any) {

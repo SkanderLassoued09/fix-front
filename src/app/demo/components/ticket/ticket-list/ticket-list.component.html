@@ -64,8 +64,8 @@
             </ng-template>
             <ng-template pTemplate="body" let-rowData let-columns="columns">
                 <tr>
-                    <td *ngFor="let col of columns">
-                        {{ rowData[col.field] || "—" }}
+                    <td *ngFor="let col of columns; trackBy: trackByColumn">
+                        {{ formatCell(rowData, col.field) }}
                     </td>
                     <td class="sav-modal-actions-cell">
                         <button
@@ -152,8 +152,8 @@
             </ng-template>
             <ng-template pTemplate="body" let-rowData let-columns="columns">
                 <tr>
-                    <td *ngFor="let col of columns">
-                        {{ rowData[col.field] || "—" }}
+                    <td *ngFor="let col of columns; trackBy: trackByColumn">
+                        {{ formatCell(rowData, col.field) }}
                     </td>
                     <td class="sav-modal-actions-cell">
                         <button
@@ -291,7 +291,30 @@
                     placeholder="Choisir emplacement"
                     styleClass="sav-dropdown"
                     [style]="{ width: '100%' }"
-                ></p-dropdown>
+                >
+                    <ng-template pTemplate="selectedItem" let-location>
+                        <div class="location-option" *ngIf="location">
+                            <span>{{ location.location_name || "—" }}</span>
+                            <span
+                                class="location-occupancy"
+                                [ngClass]="getLocationOccupancyClass(location)"
+                            >
+                                {{ getLocationOccupancyLabel(location) }}
+                            </span>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="item" let-location>
+                        <div class="location-option">
+                            <span>{{ location.location_name || "—" }}</span>
+                            <span
+                                class="location-occupancy"
+                                [ngClass]="getLocationOccupancyClass(location)"
+                            >
+                                {{ getLocationOccupancyLabel(location) }}
+                            </span>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
             </div>
         </fieldset>
 
@@ -528,14 +551,20 @@
             <!-- HEADER -->
             <ng-template pTemplate="header" let-columns>
                 <tr class="sav-thead-row">
-                    <th *ngFor="let col of columns" class="sav-th">
+                    <th
+                        *ngFor="let col of columns; trackBy: trackByColumn"
+                        class="sav-th"
+                    >
                         {{ col.header }}
                     </th>
                     <th class="sav-th sav-th-actions">Actions</th>
                 </tr>
                 <!-- FILTERS -->
                 <tr class="sav-filter-row">
-                    <th *ngFor="let col of columns" class="sav-th-filter">
+                    <th
+                        *ngFor="let col of columns; trackBy: trackByColumn"
+                        class="sav-th-filter"
+                    >
                         <input
                             pInputText
                             type="text"
@@ -570,10 +599,17 @@
                             rowData.facture &&
                             rowData.status === 'FINISHED' &&
                             rowData.ignoreCount == 0,
+                        'row-bl-added':
+                            (rowData.bon_de_livraison ||
+                                rowData.__blAdded) &&
+                            rowData.status === 'FINISHED',
                     }"
                 >
                     <!-- DATA CELLS -->
-                    <td *ngFor="let col of columns" class="sav-td">
+                    <td
+                        *ngFor="let col of columns; trackBy: trackByColumn"
+                        class="sav-td"
+                    >
                         <ng-container
                             *ngIf="
                                 col.field !== 'status' && col.field !== 'image';
@@ -581,13 +617,26 @@
                             "
                         >
                             <span
-                                *ngIf="col.field === 'id'"
-                                class="sav-id-link"
-                                >{{ rowData[col.field] || "—" }}</span
+                                *ngIf="isLocationCell(col.field)"
+                                class="sav-location-cell"
                             >
-                            <span *ngIf="col.field !== 'id'">{{
-                                rowData[col.field] || "—"
-                            }}</span>
+                                <span
+                                    class="sav-location-dot"
+                                    [ngClass]="{
+                                        'sav-location-dot--filled':
+                                            hasLoadedComposants(rowData),
+                                        'sav-location-dot--empty':
+                                            !hasLoadedComposants(rowData),
+                                    }"
+                                ></span>
+                                {{ formatCell(rowData, col.field) }}
+                            </span>
+                            <span
+                                *ngIf="!isLocationCell(col.field)"
+                                [ngClass]="{ 'sav-id-link': col.field === 'id' }"
+                            >
+                                {{ formatCell(rowData, col.field) }}
+                            </span>
                         </ng-container>
 
                         <ng-template #specialCol>

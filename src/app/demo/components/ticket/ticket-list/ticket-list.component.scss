@@ -1499,3 +1499,60 @@ $blue: #2563eb;
     gap: 8px;
     justify-content: flex-end;
 }
+
+.location-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.location-occupancy {
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    white-space: nowrap;
+}
+
+.location-occupancy--empty {
+    background: var(--green-50);
+    color: var(--green-700);
+}
+
+.location-occupancy--occupied {
+    background: var(--orange-50);
+    color: var(--orange-700);
+}
+
+.location-occupancy--full {
+    background: var(--red-50);
+    color: var(--red-700);
+}
+
+.sav-location-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sav-location-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--surface-400);
+    flex: 0 0 auto;
+}
+
+.sav-location-dot--filled {
+    background: var(--green-500);
+}
+
+.sav-location-dot--empty {
+    background: var(--red-300);
+}
+
+::ng-deep .sav-main-table .row-bl-added > td {
+    background: var(--green-50) !important;
+}
