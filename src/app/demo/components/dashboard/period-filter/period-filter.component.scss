@@ -1,0 +1,52 @@
+.sav-period-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+
+    &__chips {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        padding: 0.2rem;
+        background: var(--surface-100, #f1f5f9);
+        border: 1px solid var(--surface-200, #e2e8f0);
+        border-radius: 999px;
+    }
+
+    &__range {
+        ::ng-deep .p-calendar {
+            width: 18rem;
+        }
+    }
+}
+
+.sav-period-chip {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--text-color-secondary, #475569);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 120ms ease, color 120ms ease;
+
+    &:hover {
+        color: var(--text-color, #1e293b);
+        background: var(--surface-0, #ffffff);
+    }
+
+    &--active {
+        background: var(--primary-color, #3b82f6);
+        color: var(--primary-color-text, #ffffff);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+
+        &:hover {
+            background: var(--primary-color, #3b82f6);
+            color: var(--primary-color-text, #ffffff);
+        }
+    }
+}

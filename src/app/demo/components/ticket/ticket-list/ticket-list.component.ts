@@ -114,6 +114,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     locationForm = new FormGroup({
         locationName: new FormControl(),
     });
+    composantCategoryForm = new FormGroup({
+        composantCategoryName: new FormControl(),
+    });
     pricesLogs: any[];
     statuses = [
         { label: 'Created', value: 'CREATED' },
@@ -149,6 +152,46 @@ export class TicketListComponent implements OnInit, OnDestroy {
     openCategoryModal: boolean = false;
     openLocationsModal: boolean = false;
     openPriceTechModal: boolean = false;
+    // Unified Relations & Structure modal — supersedes the standalone
+    // "Catégories DI" and "Emplacements" modals. Tabs:
+    //   0 = Emplacements (location CRUD + DI reassignment)
+    //   1 = Catégories DI (category CRUD + linked-DI count)
+    //   2 = Catégories Composants (component-category CRUD)
+    openRelationsModal: boolean = false;
+    relationsActiveTabIndex: number = 0;
+    composantCategoryList: Array<{
+        _id: string;
+        category_composant: string;
+    }> = [];
+    composantsForCategoryCount: Array<{
+        _id: string;
+        category_composant_id: string | null;
+    }> = [];
+    composantsForReassignment: Array<{
+        _id: string;
+        name: string;
+        package?: string;
+        category_composant_id: string | null;
+    }> = [];
+    relationsLoading: boolean = false;
+    reassigningDiId: string | null = null;
+    reassigningCategoryDiId: string | null = null;
+    reassigningComposantId: string | null = null;
+    /** DI rows recently modified via the Relations modal — used to flash
+     *  a brief highlight in the table. Cleared automatically. */
+    recentlyModifiedDiIds = new Set<string>();
+    recentlyModifiedComposantIds = new Set<string>();
+    colComposantCategory = [
+        { field: 'category_composant', header: 'Nom' },
+        { field: 'linkedComposants', header: 'Composants liés' },
+    ];
+    colRelationsDi = [
+        { field: '_idnum', header: 'DI' },
+        { field: 'title', header: 'Titre' },
+        { field: 'currentLocation', header: 'Emplacement' },
+        { field: 'di_category_id', header: 'Catégorie DI' },
+        { field: 'status', header: 'Status' },
+    ];
 
     radioBtn;
     selectedStatusDefault;
@@ -170,7 +213,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
     cols = [
         { field: '_idnum', header: 'ID', searchKey: '_idnum' },
         { field: 'title', header: 'Titre', searchKey: 'title' },
-        { field: 'location_id', header: 'Location', searchKey: 'location' },
+        { field: 'location_name', header: 'Location', searchKey: 'location' },
         { field: 'status', header: 'Status', searchKey: 'status' },
         { field: 'company_id', header: 'Company', searchKey: 'company' },
         { field: 'client_id', header: 'Client', searchKey: 'client' },
@@ -579,6 +622,493 @@ export class TicketListComponent implements OnInit, OnDestroy {
     showDialogLocations() {
         this.openLocationsModal = true;
         this.getLocationList();
+    }
+
+    /**
+     * Open the centralized Relations & Structure modal. Loads everything
+     * the three tabs need on demand: locations, DI categories, component
+     * categories, and a lightweight component list for linked-count
+     * computation. The DI rows shown in tab 1 reuse `this.diList`, which
+     * is the same data already loaded in the underlying ticket-list — no
+     * extra round trip needed.
+     */
+    showDialogRelations(initialTab: number = 0) {
+        this.openRelationsModal = true;
+        this.relationsActiveTabIndex = initialTab;
+        this.relationsLoading = true;
+        this.recentlyModifiedDiIds.clear();
+        this.recentlyModifiedComposantIds.clear();
+
+        // Refresh location & category dropdowns; both are used by the
+        // reassignment tables and the linked-count columns.
+        this.getLocationList();
+        this.allCategoryDi();
+        this.getComposantCategories();
+        this.getComposantsForCategoryCount();
+        this.loadComposantsForReassignment();
+    }
+
+    /** Mark a DI row as freshly modified for ~3s (UI highlight). */
+    private flashDiRow(diId: string) {
+        if (!diId) return;
+        this.recentlyModifiedDiIds.add(diId);
+        setTimeout(() => {
+            this.recentlyModifiedDiIds.delete(diId);
+        }, 3000);
+    }
+
+    private flashComposantRow(composantId: string) {
+        if (!composantId) return;
+        this.recentlyModifiedComposantIds.add(composantId);
+        setTimeout(() => {
+            this.recentlyModifiedComposantIds.delete(composantId);
+        }, 3000);
+    }
+
+    /** Template helpers — invoked from [ngClass] on the rows. */
+    isRecentlyModifiedDi(diId: string): boolean {
+        return this.recentlyModifiedDiIds.has(diId);
+    }
+
+    isRecentlyModifiedComposant(composantId: string): boolean {
+        return this.recentlyModifiedComposantIds.has(composantId);
+    }
+
+    /**
+     * Load a fuller component list (with name + package + current
+     * category id) for the reassignment table in tab 3. The lighter
+     * `composantsForCategoryCount` list is kept separately for the
+     * linked-count column on the categories table.
+     */
+    loadComposantsForReassignment() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllComposantsForReassignment(),
+                fetchPolicy: 'no-cache',
+            })
+            .subscribe(({ data }) => {
+                if (data?.findAllComposant) {
+                    this.composantsForReassignment =
+                        data.findAllComposant.map((c: any) => ({
+                            _id: c._id,
+                            name: c.name,
+                            package: c.package,
+                            category_composant_id:
+                                c.category_composant_id || null,
+                        }));
+                }
+            });
+    }
+
+    /**
+     * Reassign a DI to a different category via the partial updateDi
+     * mutation. Patches the loaded diList and flashes the row.
+     */
+    reassignDiCategory(di: any, newCategoryId: string): void {
+        if (
+            !di?._id ||
+            !newCategoryId ||
+            newCategoryId === di.di_category_id
+        ) {
+            return;
+        }
+        this.reassigningCategoryDiId = di._id;
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.reassignDiCategory(
+                    di._id,
+                    newCategoryId,
+                ),
+            })
+            .subscribe({
+                next: ({ data }) => {
+                    if (data?.updateDi) {
+                        // Keep both id and name in sync for the same
+                        // reason as the location reassignment above.
+                        const newCategoryName =
+                            this.getDiCategoryNameById(newCategoryId);
+                        const idx = this.diList?.findIndex(
+                            (row: any) => row?._id === di._id,
+                        );
+                        if (idx !== undefined && idx >= 0) {
+                            this.diList = [
+                                ...this.diList.slice(0, idx),
+                                {
+                                    ...this.diList[idx],
+                                    di_category_id: newCategoryId,
+                                    di_category_name: newCategoryName,
+                                },
+                                ...this.diList.slice(idx + 1),
+                            ];
+                        }
+                        this.flashDiRow(di._id);
+                        this.messageservice.add({
+                            severity: 'success',
+                            summary: 'Catégorie mise à jour',
+                            detail: `DI ${di._idnum} → ${newCategoryName}`,
+                        });
+                        this.ticketRefreshService.requestRefresh(
+                            'ticket-list',
+                            { source: 'mutation:reassignDiCategory' },
+                        );
+                    }
+                    this.reassigningCategoryDiId = null;
+                },
+                error: (err) => {
+                    console.error('reassignDiCategory failed', err);
+                    this.messageservice.add({
+                        severity: 'error',
+                        summary: 'Échec',
+                        detail: 'Impossible de mettre à jour la catégorie',
+                    });
+                    this.reassigningCategoryDiId = null;
+                },
+            });
+    }
+
+    /**
+     * Reassign a composant to a different category via the new
+     * `updateComposantPartial` mutation. Patches the local composant
+     * list immutably and flashes the row.
+     */
+    reassignComposantCategory(comp: any, newCategoryId: string): void {
+        if (
+            !comp?._id ||
+            !newCategoryId ||
+            newCategoryId === comp.category_composant_id
+        ) {
+            return;
+        }
+        this.reassigningComposantId = comp._id;
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.reassignComposantCategory(
+                    comp._id,
+                    newCategoryId,
+                ),
+            })
+            .subscribe({
+                next: ({ data }) => {
+                    if (data?.updateComposantPartial) {
+                        // Patch the reassignment list.
+                        const idx = this.composantsForReassignment.findIndex(
+                            (c) => c._id === comp._id,
+                        );
+                        if (idx >= 0) {
+                            this.composantsForReassignment = [
+                                ...this.composantsForReassignment.slice(
+                                    0,
+                                    idx,
+                                ),
+                                {
+                                    ...this.composantsForReassignment[idx],
+                                    category_composant_id: newCategoryId,
+                                },
+                                ...this.composantsForReassignment.slice(
+                                    idx + 1,
+                                ),
+                            ];
+                        }
+                        // Patch the linked-count list so the count column
+                        // updates without a refetch.
+                        const idx2 =
+                            this.composantsForCategoryCount.findIndex(
+                                (c) => c._id === comp._id,
+                            );
+                        if (idx2 >= 0) {
+                            this.composantsForCategoryCount = [
+                                ...this.composantsForCategoryCount.slice(
+                                    0,
+                                    idx2,
+                                ),
+                                {
+                                    ...this.composantsForCategoryCount[
+                                        idx2
+                                    ],
+                                    category_composant_id: newCategoryId,
+                                },
+                                ...this.composantsForCategoryCount.slice(
+                                    idx2 + 1,
+                                ),
+                            ];
+                        }
+                        this.flashComposantRow(comp._id);
+                        const catName =
+                            this.composantCategoryList.find(
+                                (c) => c._id === newCategoryId,
+                            )?.category_composant || '—';
+                        this.messageservice.add({
+                            severity: 'success',
+                            summary: 'Catégorie composant mise à jour',
+                            detail: `${comp.name} → ${catName}`,
+                        });
+                    }
+                    this.reassigningComposantId = null;
+                },
+                error: (err) => {
+                    console.error('reassignComposantCategory failed', err);
+                    this.messageservice.add({
+                        severity: 'error',
+                        summary: 'Échec',
+                        detail: "Impossible de mettre à jour la catégorie du composant",
+                    });
+                    this.reassigningComposantId = null;
+                },
+            });
+    }
+
+    /** Resolve a composant-category display name for the table. */
+    getComposantCategoryNameById(categoryId: string | null): string {
+        if (!categoryId) return '—';
+        const found = this.composantCategoryList?.find(
+            (c) => c._id === categoryId,
+        );
+        return found?.category_composant || '—';
+    }
+
+    /**
+     * Compute how many DIs (in the currently loaded list) reference a
+     * given location. Visible as the "DIs liés" column in the Emplacements
+     * tab. Pure client-side aggregation — no backend roundtrip.
+     */
+    getLinkedDiCountForLocation(locationId: string): number {
+        if (!locationId || !this.diList?.length) {
+            return 0;
+        }
+        return this.diList.filter(
+            (di: any) => di?.location_id === locationId,
+        ).length;
+    }
+
+    /**
+     * Same idea for DI categories.
+     */
+    getLinkedDiCountForCategory(categoryId: string): number {
+        if (!categoryId || !this.diList?.length) {
+            return 0;
+        }
+        return this.diList.filter(
+            (di: any) => di?.di_category_id === categoryId,
+        ).length;
+    }
+
+    /**
+     * How many components reference the given component category.
+     */
+    getLinkedComposantCountForCategory(categoryId: string): number {
+        if (!categoryId || !this.composantsForCategoryCount?.length) {
+            return 0;
+        }
+        return this.composantsForCategoryCount.filter(
+            (c) => c?.category_composant_id === categoryId,
+        ).length;
+    }
+
+    /**
+     * Resolve a location name from its id by looking up the already
+     * loaded locations list. Used in the reassignment table.
+     */
+    getLocationNameById(locationId: string): string {
+        if (!locationId) return '—';
+        const found = this.locationDropDown?.find(
+            (l: any) => l?.value === locationId || l?._id === locationId,
+        );
+        return found?.location_name || '—';
+    }
+
+    /**
+     * Resolve a DI-category name from its id by looking up the loaded
+     * categories list. Used in the reassignment table.
+     */
+    getDiCategoryNameById(categoryId: string): string {
+        if (!categoryId) return '—';
+        const found = this.categorieDiListDropDown?.find(
+            (c: any) => c?.value === categoryId || c?._id === categoryId,
+        );
+        return found?.category_name || '—';
+    }
+
+    /**
+     * Reassign a DI to a different emplacement via the existing updateDi
+     * mutation. The backend now broadcasts updateTicket after a successful
+     * updateDi (see di.service.ts), so subscribed lists/dashboards refresh
+     * automatically. We also patch the loaded diList row so the modal
+     * itself reflects the change without waiting for the WS round trip.
+     */
+    reassignLocation(di: any, newLocationId: string): void {
+        if (!di?._id || !newLocationId || newLocationId === di.location_id) {
+            return;
+        }
+        this.reassigningDiId = di._id;
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.reassignDiLocation(
+                    di._id,
+                    newLocationId,
+                ),
+            })
+            .subscribe({
+                next: ({ data }) => {
+                    if (data?.updateDi) {
+                        // Patch in place so the modal table updates instantly.
+                        // Keep both `location_id` (the lookup key) and
+                        // `location_name` (the displayed column) in sync,
+                        // otherwise the main ticket-list column would
+                        // briefly flash the old name until the next
+                        // server reload arrives.
+                        const newLocationName =
+                            this.getLocationNameById(newLocationId);
+                        const idx = this.diList?.findIndex(
+                            (row: any) => row?._id === di._id,
+                        );
+                        if (idx !== undefined && idx >= 0) {
+                            this.diList = [
+                                ...this.diList.slice(0, idx),
+                                {
+                                    ...this.diList[idx],
+                                    location_id: newLocationId,
+                                    location_name: newLocationName,
+                                },
+                                ...this.diList.slice(idx + 1),
+                            ];
+                        }
+                        this.messageservice.add({
+                            severity: 'success',
+                            summary: 'Emplacement mis à jour',
+                            detail: `DI ${di._idnum} → ${this.getLocationNameById(newLocationId)}`,
+                        });
+                        // The backend's updateTicket broadcast will also
+                        // trigger the standard refresh pipeline; this
+                        // local request keeps things tight.
+                        this.ticketRefreshService.requestRefresh(
+                            'ticket-list',
+                            { source: 'mutation:reassignDiLocation' },
+                        );
+                    }
+                    this.reassigningDiId = null;
+                },
+                error: (err) => {
+                    console.error('reassignDiLocation failed', err);
+                    this.messageservice.add({
+                        severity: 'error',
+                        summary: 'Échec',
+                        detail: "Impossible de mettre à jour l'emplacement",
+                    });
+                    this.reassigningDiId = null;
+                },
+            });
+    }
+
+    /**
+     * Component-category list loader — backs the third tab.
+     */
+    getComposantCategories() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllComposantCategory(),
+                fetchPolicy: 'no-cache',
+            })
+            .subscribe(({ data }) => {
+                this.relationsLoading = false;
+                if (data?.findAllComposant_Category) {
+                    this.composantCategoryList =
+                        data.findAllComposant_Category.map((c: any) => ({
+                            _id: c._id,
+                            category_composant: c.category_composant,
+                        }));
+                }
+            });
+    }
+
+    /**
+     * Lightweight component fetch used only to compute linked-count per
+     * component category. Selects only id + category id so payload stays
+     * tiny.
+     */
+    getComposantsForCategoryCount() {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getAllComposantsForCategoryCount(),
+                fetchPolicy: 'no-cache',
+            })
+            .subscribe(({ data }) => {
+                if (data?.findAllComposant) {
+                    this.composantsForCategoryCount =
+                        data.findAllComposant.map((c: any) => ({
+                            _id: c._id,
+                            category_composant_id:
+                                c.category_composant_id || null,
+                        }));
+                }
+            });
+    }
+
+    addComposantCategory() {
+        const name =
+            this.composantCategoryForm.value.composantCategoryName?.trim();
+        if (!name) return;
+        this.confirmationService.confirm({
+            message: 'Voulez-vous créer cette catégorie de composant ?',
+            header: 'Confirmation Création',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation:
+                            this.ticketSerice.addComposantCategory(name),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data?.createComposant_Category) {
+                            this.composantCategoryList = [
+                                ...this.composantCategoryList,
+                                {
+                                    _id: data.createComposant_Category._id,
+                                    category_composant:
+                                        data.createComposant_Category
+                                            .category_composant,
+                                },
+                            ];
+                            this.composantCategoryForm.reset();
+                            this.messageservice.add({
+                                severity: 'success',
+                                summary: 'Catégorie créée',
+                                detail: name,
+                            });
+                        }
+                    });
+            },
+        });
+    }
+
+    deleteComposantCategory(row: { _id: string; category_composant: string }) {
+        if (!row?._id) return;
+        this.confirmationService.confirm({
+            message: `Supprimer la catégorie « ${row.category_composant} » ?`,
+            header: 'Confirmation Suppression',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation:
+                            this.ticketSerice.removeComposantCategoryById(
+                                row._id,
+                            ),
+                    })
+                    .subscribe(({ data }) => {
+                        if (data?.removeComposant_Category) {
+                            this.composantCategoryList =
+                                this.composantCategoryList.filter(
+                                    (c) => c._id !== row._id,
+                                );
+                            this.messageservice.add({
+                                severity: 'success',
+                                summary: 'Catégorie supprimée',
+                                detail: row.category_composant,
+                            });
+                        }
+                    });
+            },
+        });
     }
 
     saveUpdateTicket() {

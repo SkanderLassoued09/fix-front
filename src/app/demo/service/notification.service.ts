@@ -23,6 +23,10 @@ export class NotificationService {
     private blAddedSubject = new Subject<any>(); // Subject to emit notifications
     private sentComponentToCoordinatorSubject = new Subject<any>(); // Subject to emit notifications
     private componentConfirmedByCoordinatorSubject = new Subject<any>(); // Subject to emit notifications
+    // Generic operational alerts (stagnation, future monitors). Components
+    // subscribe selectively without coupling to specific alert types.
+    private alertCreatedSubject = new Subject<any>();
+    private alertResolvedSubject = new Subject<any>();
     public notification$ = this.notificationSubject.asObservable(); // Observable to expose notificationsd
     public blAdded$ = this.blAddedSubject.asObservable(); // Observable to expose notificationsd
     public reminder$ = this.reminderSubject.asObservable(); // Observable to expose notifications
@@ -30,6 +34,8 @@ export class NotificationService {
         this.sentComponentToCoordinatorSubject.asObservable(); // Observable to expose notifications
     public componentConfirmedByCoordinator$ =
         this.componentConfirmedByCoordinatorSubject.asObservable(); // Observable to expose notifications
+    public alertCreated$ = this.alertCreatedSubject.asObservable();
+    public alertResolved$ = this.alertResolvedSubject.asObservable();
     private handleState = new BehaviorSubject<any>(false); // Initialize with a default value or null
     public handleState$ = this.handleState.asObservable();
     // -- conx
@@ -128,6 +134,14 @@ export class NotificationService {
                 console.log('skander', data.message);
                 this.componentConfirmedByCoordinatorSubject.next(data);
 
+                break;
+
+            // -- Generic operational alerts (stagnation + future monitors) --
+            case 'alert.created':
+                this.alertCreatedSubject.next(data.message);
+                break;
+            case 'alert.resolved':
+                this.alertResolvedSubject.next(data.message);
                 break;
 
             // case 'sendDitoDiagnostique':

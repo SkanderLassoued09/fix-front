@@ -44,7 +44,12 @@ export function rowHasLoadedComposants(row: any): boolean {
 }
 
 export function isLocationColumn(field: string): boolean {
-    return ['location', 'location_id', 'emplacement'].includes(field);
+    return [
+        'location',
+        'location_id',
+        'location_name',
+        'emplacement',
+    ].includes(field);
 }
 
 export function trackByColumn(_: number, col: any): string {

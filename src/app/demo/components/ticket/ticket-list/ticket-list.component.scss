@@ -875,6 +875,194 @@ $blue: #2563eb;
     }
 }
 
+// ── RELATIONS & STRUCTURE MODAL ────────────────────────
+// Card-based section layout. Each tab consists of one or more
+// `.sav-relations-card` blocks, each carrying a header row with a
+// title + subtitle and the body table/form.
+
+.sav-relations-card {
+    background: $bg-card;
+    border: 1px solid $border;
+    border-radius: 10px;
+    padding: 1rem 1.1rem 1.15rem;
+    margin-bottom: 1rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.sav-relations-card__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid $border;
+}
+
+.sav-relations-card__title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: $text-primary;
+    margin: 0;
+    letter-spacing: -0.005em;
+
+    & + .sav-relations-card__subtitle {
+        margin-top: 0.18rem;
+    }
+}
+
+.sav-relations-card__subtitle {
+    font-size: 0.74rem;
+    font-weight: 400;
+    color: $text-secondary;
+    margin: 0;
+}
+
+.sav-relations-card__heading {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.sav-relations-card__count {
+    background: $bg-surface;
+    border: 1px solid $border;
+    border-radius: 999px;
+    color: $text-secondary;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.18rem 0.65rem;
+    white-space: nowrap;
+    flex: 0 0 auto;
+}
+
+// Inline form row inside a card — one input + one button, gracefully
+// wrapping on narrow viewports.
+.sav-relations-card__form {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+
+    .sav-form-row {
+        flex: 1 1 200px;
+        margin: 0;
+    }
+
+    .p-button {
+        flex: 0 0 auto;
+        align-self: flex-end;
+    }
+}
+
+// Legacy section helpers — keep them for any consumer outside the
+// redesigned tabs.
+.sav-relations-section {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid $border;
+
+    &:first-child {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+    }
+}
+
+.sav-relations-helper {
+    color: $text-secondary;
+    font-size: 0.78rem;
+    margin: 0 0 0.6rem 0;
+}
+
+::ng-deep .sav-relations-dropdown.p-dropdown {
+    width: 100%;
+    min-width: 160px;
+}
+
+::ng-deep .sav-relations-dialog .p-dialog-content {
+    background: $bg-page;
+    padding: 1.1rem 1.25rem 1.4rem;
+}
+
+::ng-deep .sav-relations-dialog .p-dialog-header {
+    background: $bg-card;
+    border-bottom: 1px solid $border;
+    padding: 0.85rem 1.25rem;
+    font-weight: 600;
+}
+
+::ng-deep .sav-relations-dialog .p-tabview .p-tabview-nav {
+    background: transparent;
+    border-bottom: 1px solid $border;
+    margin-bottom: 1.25rem;
+    padding: 0;
+
+    li {
+        margin: 0 0.15rem 0 0;
+    }
+
+    li .p-tabview-nav-link {
+        background: transparent !important;
+        border: none !important;
+        border-bottom: 2px solid transparent !important;
+        color: $text-secondary !important;
+        font-size: 0.84rem;
+        font-weight: 500;
+        padding: 0.7rem 1rem !important;
+        transition: color 0.15s ease, border-color 0.15s ease;
+
+        &:hover {
+            color: $text-primary !important;
+        }
+    }
+
+    li.p-highlight .p-tabview-nav-link {
+        color: $accent-blue !important;
+        border-bottom-color: $accent-blue !important;
+        background: transparent !important;
+    }
+
+    li .p-tabview-nav-link .p-tabview-left-icon {
+        margin-right: 0.45rem;
+        font-size: 0.85rem;
+    }
+}
+
+::ng-deep .sav-relations-dialog .p-tabview .p-tabview-panels {
+    background: transparent;
+    padding: 0;
+}
+
+// Compact density for tables inside the relations modal — each row is
+// short and the dropdown sits inline on its own column without pushing
+// the layout around.
+::ng-deep .sav-relations-dialog .sav-modal-table {
+    &.p-datatable .p-datatable-thead > tr > th {
+        background: $bg-surface !important;
+        font-size: 0.7rem !important;
+        padding: 0.5rem 0.7rem !important;
+    }
+
+    &.p-datatable .p-datatable-tbody > tr > td {
+        font-size: 0.8rem !important;
+        padding: 0.5rem 0.7rem !important;
+        vertical-align: middle;
+    }
+
+    &.p-datatable .p-datatable-tbody > tr > td .p-dropdown {
+        height: 32px;
+    }
+
+    .p-paginator {
+        background: transparent !important;
+        padding: 0.4rem 0 0 !important;
+    }
+}
+
 // ── MODAL TABLE ───────────────────────────────────────
 ::ng-deep .sav-modal-table {
     &.p-datatable .p-datatable-thead > tr > th {
@@ -898,6 +1086,13 @@ $blue: #2563eb;
 
     &.p-datatable .p-datatable-tbody > tr:hover > td {
         background: $bg-row-hover !important;
+    }
+
+    // Row that was just modified through the Relations & Structure modal
+    // gets a brief green tint so the user can see the change landed.
+    &.p-datatable .p-datatable-tbody > tr.sav-row-flash > td {
+        background: var(--green-50, #f0fdf4) !important;
+        transition: background 0.4s ease-out;
     }
 
     .p-paginator {

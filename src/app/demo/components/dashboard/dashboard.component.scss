@@ -627,3 +627,72 @@ $white: #ffffff;
         padding: 0.4rem 0.6rem;
     }
 }
+
+// ── EMPTY STATES (Phase B placeholders + leaderboard fallback) ──────────
+.sav-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1rem;
+    color: var(--text-color-secondary, #64748b);
+    background: var(--surface-50, #f8fafc);
+    border: 1px dashed var(--surface-200, #e2e8f0);
+    border-radius: 0.5rem;
+    font-size: 0.85rem;
+    text-align: center;
+
+    i {
+        font-size: 1.1rem;
+        color: var(--text-color-secondary, #94a3b8);
+    }
+
+    &--inline {
+        margin: 0.75rem 0;
+        padding: 0.65rem 0.85rem;
+        flex-direction: row;
+    }
+
+    &--chart {
+        min-height: 160px;
+    }
+}
+
+// ── PHASE B PLACEHOLDER TILES (finance / RH) ────────────────────────────
+.fin-card.fin-card--placeholder,
+.fin-card.fin-neutral {
+    background: var(--surface-50, #f8fafc);
+    border-style: dashed;
+
+    .fin-card__icon {
+        color: var(--text-color-secondary, #94a3b8);
+        background: transparent;
+    }
+    .fin-card__value {
+        color: var(--text-color-secondary, #64748b);
+    }
+}
+
+.rh-item--placeholder {
+    opacity: 0.55;
+}
+
+// Knob slot fallback (satisfaction tile when no data) ───────────────────
+.knob-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 1px dashed var(--surface-300, #cbd5e1);
+    color: var(--text-color-secondary, #94a3b8);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+// p-blockUI overlay positioning so the spinner sits over the dashboard
+::ng-deep .p-blockui-overlay {
+    background: rgba(255, 255, 255, 0.55);
+}

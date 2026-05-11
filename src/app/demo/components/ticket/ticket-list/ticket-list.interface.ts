@@ -14,7 +14,9 @@ export interface Di {
     remarque_id: string;
     createdBy: string;
     location_id: string;
+    location_name?: string;
     di_category_id: string;
+    di_category_name?: string;
 }
 
 export interface DiQueryResult {

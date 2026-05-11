@@ -22,14 +22,16 @@
                 [severity]="globalStatus.severity"
                 styleClass="dash-global-tag"
             ></p-tag>
-            <p-calendar
-                [(ngModel)]="selectedMonth"
-                view="month"
-                dateFormat="mm/yy"
-                styleClass="dash-calendar"
-            ></p-calendar>
+            <app-sav-period-filter
+                [selection]="periodSelection"
+                (selectionChange)="onPeriodChange($event)"
+            ></app-sav-period-filter>
         </div>
     </div>
+
+    <p-blockUI [blocked]="isDashboardLoading || isTechWorkflowLoading">
+        <p-progressSpinner ariaLabel="loading"></p-progressSpinner>
+    </p-blockUI>
 
     <div class="section-label">Flux Technicien</div>
     <div class="sav-dashboard-grid">
@@ -153,28 +155,49 @@
             </div>
         </div>
 
-        <div class="kpi-card" [ngClass]="kpiClass(satisfactionScore, 4, 'gte')">
+        <div
+            class="kpi-card"
+            [ngClass]="
+                hasSatisfactionData
+                    ? kpiClass(satisfactionScore || 0, 4, 'gte')
+                    : 'kpi-neutral'
+            "
+        >
             <div class="kpi-card__icon bg-orange">
                 <i class="pi pi-star"></i>
             </div>
             <div class="kpi-card__body">
                 <span class="kpi-card__label">Score Satisfaction</span>
-                <span class="kpi-card__value">{{ satisfactionScore }}/5</span>
-                <p-progressBar
-                    [value]="satisfactionScore * 20"
-                    [showValue]="false"
-                    styleClass="kpi-progress"
-                ></p-progressBar>
-                <span class="kpi-card__target">Cible ≥ 4/5</span>
+                <ng-container *ngIf="hasSatisfactionData; else satScoreEmpty">
+                    <span class="kpi-card__value">{{ satisfactionScore }}/5</span>
+                    <p-progressBar
+                        [value]="(satisfactionScore || 0) * 20"
+                        [showValue]="false"
+                        styleClass="kpi-progress"
+                    ></p-progressBar>
+                    <span class="kpi-card__target">Cible ≥ 4/5</span>
+                </ng-container>
+                <ng-template #satScoreEmpty>
+                    <span class="kpi-card__value">—</span>
+                    <span class="kpi-card__target">Bientôt disponible</span>
+                </ng-template>
             </div>
             <div
                 class="knob-wrapper"
-                [ngClass]="kpiClass(satisfactionScore, 4, 'gte')"
+                [ngClass]="
+                    hasSatisfactionData
+                        ? kpiClass(satisfactionScore || 0, 4, 'gte')
+                        : 'kpi-neutral'
+                "
             >
                 <p-knob
-                    [(ngModel)]="satisfactionScore"
+                    *ngIf="hasSatisfactionData; else satKnobEmpty"
+                    [ngModel]="satisfactionScore"
                     valueTemplate="{value}/5"
                 ></p-knob>
+                <ng-template #satKnobEmpty>
+                    <div class="knob-placeholder">—</div>
+                </ng-template>
             </div>
         </div>
 
@@ -243,19 +266,19 @@
                     <div
                         class="knob-wrapper"
                         [ngClass]="
-                            kpiClass(kpiDelais.tauxAttentePercent, 20, 'lte')
+                            kpiClass(kpiDelais.tauxStagnant, 20, 'lte')
                         "
                     >
                         <p-knob
-                            [(ngModel)]="kpiDelais.tauxAttentePercent"
+                            [(ngModel)]="kpiDelais.tauxStagnant"
                             valueTemplate="{value}%"
                         ></p-knob>
                     </div>
-                    <span class="gauge-label">Taux attente PDR</span>
+                    <span class="gauge-label">Taux DI stagnants</span>
                     <p-tag
-                        [value]="kpiDelais.tauxAttentePercent + '%'"
+                        [value]="kpiDelais.tauxStagnant + '%'"
                         [severity]="
-                            kpiDelais.tauxAttentePercent <= 20
+                            kpiDelais.tauxStagnant <= 20
                                 ? 'success'
                                 : 'danger'
                         "
@@ -266,21 +289,21 @@
                 <div class="gauge-item">
                     <div
                         class="knob-wrapper"
-                        [ngClass]="kpiClass(kpiDelais.delaiApproPdr, 7, 'lte')"
+                        [ngClass]="kpiClass(kpiDelais.delaiMoyenStatut, 3, 'lte')"
                     >
                         <p-knob
-                            [(ngModel)]="kpiDelais.delaiApproPdr"
+                            [(ngModel)]="kpiDelais.delaiMoyenStatut"
                             valueTemplate="{value}j"
                         ></p-knob>
                     </div>
-                    <span class="gauge-label">Délai appro PDR</span>
+                    <span class="gauge-label">Délai moyen par statut</span>
                     <p-tag
-                        [value]="kpiDelais.delaiApproPdr + ' j'"
+                        [value]="kpiDelais.delaiMoyenStatut + ' j'"
                         [severity]="
-                            kpiDelais.delaiApproPdr <= 7 ? 'success' : 'danger'
+                            kpiDelais.delaiMoyenStatut <= 3 ? 'success' : 'danger'
                         "
                     ></p-tag>
-                    <small class="gauge-target">≤ 7 jours</small>
+                    <small class="gauge-target">≤ 3 jours</small>
                 </div>
             </div>
         </p-card>
@@ -355,33 +378,35 @@
             <ng-template pTemplate="header">
                 <div class="card-header-row"><h3>Score & Réclamations</h3></div>
             </ng-template>
-            <div class="satisfaction-row">
+            <div class="satisfaction-row" *ngIf="hasSatisfactionData; else satRowEmpty">
                 <div class="sat-big">
                     <div
                         class="knob-wrapper"
-                        [ngClass]="kpiClass(satisfactionScore, 4, 'gte')"
+                        [ngClass]="kpiClass(satisfactionScore || 0, 4, 'gte')"
                     >
                         <p-knob
-                            [(ngModel)]="satisfactionScore"
+                            [ngModel]="satisfactionScore"
                             valueTemplate="{value}/5"
                         ></p-knob>
                     </div>
                     <span class="sat-label">Score Satisfaction</span>
                     <p-tag
                         [value]="
-                            satisfactionScore >= 4
+                            (satisfactionScore || 0) >= 4
                                 ? '✓ Objectif atteint'
                                 : '✗ Sous objectif'
                         "
                         [severity]="
-                            satisfactionScore >= 4 ? 'success' : 'danger'
+                            (satisfactionScore || 0) >= 4
+                                ? 'success'
+                                : 'danger'
                         "
                     ></p-tag>
                 </div>
                 <div class="sat-claims">
                     <div
                         class="claim-stat"
-                        [ngClass]="kpiClass(nbReclamations, 2, 'lte')"
+                        [ngClass]="kpiClass(nbReclamations || 0, 2, 'lte')"
                     >
                         <span class="claim-num">{{ nbReclamations }}</span>
                         <span class="claim-lbl">Réclamations</span>
@@ -389,6 +414,12 @@
                     </div>
                 </div>
             </div>
+            <ng-template #satRowEmpty>
+                <div class="sav-empty-state">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Suivi satisfaction bientôt disponible</span>
+                </div>
+            </ng-template>
         </p-card>
 
         <p-card styleClass="dash-card">
@@ -398,11 +429,18 @@
                 </div></ng-template
             >
             <p-chart
+                *ngIf="hasSatisfactionData; else satTrendEmpty"
                 type="line"
                 [data]="satisfactionTrendData"
                 [options]="satisfactionTrendOptions"
                 height="180px"
             ></p-chart>
+            <ng-template #satTrendEmpty>
+                <div class="sav-empty-state sav-empty-state--chart">
+                    <i class="pi pi-chart-line"></i>
+                    <span>Données satisfaction bientôt disponibles</span>
+                </div>
+            </ng-template>
         </p-card>
     </div>
 
@@ -418,7 +456,12 @@
             </div>
         </ng-template>
 
+        <div class="sav-empty-state sav-empty-state--inline" *ngIf="!hasLeaderboardData">
+            <i class="pi pi-info-circle"></i>
+            <span>Aucun technicien actif sur la période</span>
+        </div>
         <p-table
+            *ngIf="hasLeaderboardData"
             [value]="techniciens"
             [rows]="6"
             responsiveLayout="scroll"
@@ -529,7 +572,10 @@
         <div
             class="fin-card"
             *ngFor="let f of financeKpis"
-            [ngClass]="f.statusClass"
+            [ngClass]="[
+                f.statusClass,
+                f.isPlaceholder ? 'fin-card--placeholder' : ''
+            ]"
         >
             <i class="pi {{ f.icon }} fin-card__icon"></i>
             <span class="fin-card__label">{{ f.label }}</span>
@@ -548,11 +594,18 @@
                 </div></ng-template
             >
             <p-chart
+                *ngIf="hasFinanceTrendData; else financeChartEmpty"
                 type="bar"
                 [data]="financeBarData"
                 [options]="financeBarOptions"
                 height="180px"
             ></p-chart>
+            <ng-template #financeChartEmpty>
+                <div class="sav-empty-state sav-empty-state--chart">
+                    <i class="pi pi-chart-bar"></i>
+                    <span>Aucune facture sur la période</span>
+                </div>
+            </ng-template>
         </p-card>
 
         <p-card styleClass="dash-card">
@@ -561,13 +614,15 @@
                     <h3>Recouvrement</h3>
                 </div></ng-template
             >
-            <div class="recouvrement-body">
+            <div class="recouvrement-body" *ngIf="hasRecouvrementData; else recEmpty">
                 <div
                     class="knob-wrapper"
-                    [ngClass]="kpiClass(finance.tauxRecouvrement, 85, 'gte')"
+                    [ngClass]="
+                        kpiClass(finance.tauxRecouvrement || 0, 85, 'gte')
+                    "
                 >
                     <p-knob
-                        [(ngModel)]="finance.tauxRecouvrement"
+                        [ngModel]="finance.tauxRecouvrement"
                         valueTemplate="{value}%"
                     ></p-knob>
                 </div>
@@ -590,6 +645,12 @@
                     </div>
                 </div>
             </div>
+            <ng-template #recEmpty>
+                <div class="sav-empty-state">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Module recouvrement bientôt disponible</span>
+                </div>
+            </ng-template>
         </p-card>
 
         <p-card styleClass="dash-card">
@@ -597,7 +658,11 @@
                 ><div class="card-header-row"><h3>RH</h3></div></ng-template
             >
             <div class="rh-list">
-                <div class="rh-item" *ngFor="let r of rhKpis">
+                <div
+                    class="rh-item"
+                    *ngFor="let r of rhKpis"
+                    [class.rh-item--placeholder]="r.isPlaceholder"
+                >
                     <span class="rh-item__label">{{ r.label }}</span>
                     <span class="rh-item__value" [ngClass]="r.class">{{
                         r.value
@@ -607,6 +672,10 @@
                         [showValue]="false"
                         styleClass="rh-bar"
                     ></p-progressBar>
+                </div>
+                <div class="sav-empty-state sav-empty-state--inline">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Module RH bientôt disponible</span>
                 </div>
             </div>
         </p-card>

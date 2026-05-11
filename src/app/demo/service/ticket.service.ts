@@ -63,7 +63,9 @@ export class TicketService {
             createdBy
             ignoreCount
             location_id
+            location_name
             di_category_id
+            di_category_name
             logs {
                 idIgnore
                 facture
@@ -115,7 +117,9 @@ export class TicketService {
             createdBy
             ignoreCount
             location_id
+            location_name
             di_category_id
+            di_category_name
             logs {
                 idIgnore
                 facture
@@ -1563,6 +1567,127 @@ export class TicketService {
                     _id
                     category
                     isDeleted
+                }
+            }
+        `;
+    }
+
+    // ── Component categories (used by the Relations & Structure modal) ──
+
+    getAllComposantCategory() {
+        return gql`
+            query {
+                findAllComposant_Category {
+                    _id
+                    category_composant
+                }
+            }
+        `;
+    }
+
+    addComposantCategory(name: string) {
+        return gql`
+            mutation {
+                createComposant_Category(
+                    createComposant_CategoryInput: {
+                        category_composant: "${name}"
+                    }
+                ) {
+                    _id
+                    category_composant
+                }
+            }
+        `;
+    }
+
+    removeComposantCategoryById(_id: string) {
+        return gql`
+            mutation {
+                removeComposant_Category(_id: "${_id}") {
+                    _id
+                    category_composant
+                    isDeleted
+                }
+            }
+        `;
+    }
+
+    // Lightweight components list — used to compute "linked component count"
+    // per component category in the Relations & Structure modal.
+    getAllComposantsForCategoryCount() {
+        return gql`
+            query {
+                findAllComposant {
+                    _id
+                    category_composant_id
+                }
+            }
+        `;
+    }
+
+    // Reassign a DI to a different emplacement. Reuses the existing
+    // updateDi mutation on the backend, which broadcasts updateTicket so
+    // all subscribed lists refresh automatically.
+    reassignDiLocation(diId: string, locationId: string) {
+        return gql`
+            mutation {
+                updateDi(
+                    UpdateDi: { _id: "${diId}", location_id: "${locationId}" }
+                ) {
+                    _id
+                    location_id
+                }
+            }
+        `;
+    }
+
+    // Reassign a DI to a different category. Same partial-update pathway
+    // as the location reassignment.
+    reassignDiCategory(diId: string, diCategoryId: string) {
+        return gql`
+            mutation {
+                updateDi(
+                    UpdateDi: {
+                        _id: "${diId}"
+                        di_category_id: "${diCategoryId}"
+                    }
+                ) {
+                    _id
+                    di_category_id
+                }
+            }
+        `;
+    }
+
+    // Full component list with name + current category, used by the
+    // composant-category reassignment table in the Relations & Structure
+    // modal.
+    getAllComposantsForReassignment() {
+        return gql`
+            query {
+                findAllComposant {
+                    _id
+                    name
+                    package
+                    category_composant_id
+                }
+            }
+        `;
+    }
+
+    // Reassign a composant to a different category. Uses the new partial
+    // update mutation so we don't have to resend name/package/price.
+    reassignComposantCategory(composantId: string, categoryId: string) {
+        return gql`
+            mutation {
+                updateComposantPartial(
+                    updateComposantInput: {
+                        _id: "${composantId}"
+                        category_composant_id: "${categoryId}"
+                    }
+                ) {
+                    _id
+                    category_composant_id
                 }
             }
         `;

@@ -1,7 +1,15 @@
 /// <reference lib="webworker" />
 import { io } from 'socket.io-client';
+import { environment } from '../../../environments/environment';
 
-const socket = io('http://localhost:3000');
+// Resolve the backend origin from the same source the rest of the app
+// already uses (graphql HTTP + graphql WS). Hardcoding `localhost` here
+// broke realtime whenever the page was opened from a LAN device — the
+// worker runs on that device, where `localhost` is the device itself,
+// not the backend machine. Strip the trailing slash so socket.io-client
+// receives a clean origin, e.g. http://192.168.1.22:3000.
+const socketUrl = (environment.apiUrl || '').replace(/\/$/, '');
+const socket = io(socketUrl);
 
 socket.on('connect', () => {});
 
@@ -69,6 +77,14 @@ socket.on('blAddedNotification', (message: string) => {
     };
     postMessage(data); // Send the message to the main thread
 });
+
+// -- Generic operational alerts (stagnation, future monitors) --
+const alertEvents = ['alert.created', 'alert.resolved'];
+for (const eventName of alertEvents) {
+    socket.on(eventName, (message: any) => {
+        postMessage({ event: eventName, message });
+    });
+}
 
 addEventListener('message', ({ data }) => {
     if (data === 'start') {

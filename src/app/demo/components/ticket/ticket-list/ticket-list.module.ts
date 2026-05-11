@@ -44,6 +44,7 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ComposantManagementComponent } from '../composant-management/composant-management.component';
 import { BlockUIModule } from 'primeng/blockui';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TabViewModule } from 'primeng/tabview';
 
 @NgModule({
     declarations: [
@@ -96,6 +97,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         PaginatorModule,
         ToggleButtonModule,
         ProgressSpinnerModule,
+        TabViewModule,
     ],
     providers: [ConfirmationService, MessageService],
 })

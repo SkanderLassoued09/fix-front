@@ -7,7 +7,586 @@
 <p-confirmDialog></p-confirmDialog>
 
 <!-- ═══════════════════════════════════════════════
-     MODAL — CATÉGORIES DI
+     MODAL — RELATIONS & STRUCTURE (unified admin)
+     Centralizes Emplacements, Catégories DI, and Catégories Composants.
+     Supersedes the individual modals further down in this file.
+════════════════════════════════════════════════ -->
+<p-dialog
+    header="Relations & Structure"
+    [(visible)]="openRelationsModal"
+    [modal]="true"
+    [style]="{ width: '1100px', maxWidth: '96vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    appendTo="body"
+    styleClass="sav-dialog sav-relations-dialog"
+>
+    <p-tabView [(activeIndex)]="relationsActiveTabIndex">
+        <!-- ── TAB 1 — EMPLACEMENTS ────────────────────────────────── -->
+        <p-tabPanel header="Emplacements" leftIcon="pi pi-map-marker">
+            <div class="sav-relations-card">
+                <div class="sav-relations-card__header">
+                    <div class="sav-relations-card__heading">
+                        <h4 class="sav-relations-card__title">
+                            Liste des emplacements
+                        </h4>
+                        <p class="sav-relations-card__subtitle">
+                            Créez, supprimez et suivez l'occupation de chaque
+                            emplacement.
+                        </p>
+                    </div>
+                    <span class="sav-relations-card__count">
+                        {{ locationDropDown?.length || 0 }} emplacement(s)
+                    </span>
+                </div>
+
+                <form
+                    [formGroup]="locationForm"
+                    class="sav-relations-card__form"
+                >
+                    <div class="sav-form-row">
+                        <label class="sav-label" for="relLocationName">
+                            Nom de l'emplacement
+                        </label>
+                        <input
+                            formControlName="locationName"
+                            id="relLocationName"
+                            type="text"
+                            class="sav-input"
+                            placeholder="Ex: Atelier A"
+                        />
+                    </div>
+                    <p-button
+                        [disabled]="!locationForm.get('locationName').value"
+                        (click)="addLocation()"
+                        icon="pi pi-plus"
+                        label="Ajouter"
+                        severity="success"
+                        size="small"
+                    ></p-button>
+                </form>
+
+                <p-table
+                    [value]="locationDropDown"
+                    [paginator]="true"
+                    [rows]="5"
+                    [rowsPerPageOptions]="[5, 10, 20]"
+                    styleClass="p-datatable-sm sav-modal-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Capacité</th>
+                            <th>DIs liés</th>
+                            <th class="sav-modal-actions-th">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr>
+                            <td>{{ rowData?.location_name || "—" }}</td>
+                            <td>{{ rowData?.max_capacity ?? "—" }}</td>
+                            <td>
+                                {{
+                                    getLinkedDiCountForLocation(
+                                        rowData?._id || rowData?.value
+                                    )
+                                }}
+                            </td>
+                            <td class="sav-modal-actions-cell">
+                                <button
+                                    pButton
+                                    pTooltip="Supprimer"
+                                    tooltipPosition="top"
+                                    icon="pi pi-trash"
+                                    class="sav-icon-btn sav-icon-btn--danger"
+                                    (click)="deletLocation(rowData)"
+                                ></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="4" class="sav-modal-empty">
+                                <i class="pi pi-inbox"></i>
+                                <span>Aucun emplacement trouvé</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+
+            <div class="sav-relations-card">
+                <div class="sav-relations-card__header">
+                    <div class="sav-relations-card__heading">
+                        <h4 class="sav-relations-card__title">
+                            Réaffecter les emplacements
+                        </h4>
+                        <p class="sav-relations-card__subtitle">
+                            Modifiez l'emplacement d'une DI directement depuis
+                            le menu déroulant. La mise à jour est diffusée en
+                            temps réel sur tous les écrans.
+                        </p>
+                    </div>
+                    <span class="sav-relations-card__count">
+                        {{ diList?.length || 0 }} DI(s)
+                    </span>
+                </div>
+
+                <p-table
+                    [value]="diList"
+                    [paginator]="true"
+                    [rows]="8"
+                    [rowsPerPageOptions]="[8, 16, 32]"
+                    styleClass="p-datatable-sm sav-modal-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>DI</th>
+                            <th>Titre</th>
+                            <th>Emplacement</th>
+                            <th>Catégorie DI</th>
+                            <th>Status</th>
+                            <th>Réaffecter</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr
+                            [ngClass]="{
+                                'sav-row-flash': isRecentlyModifiedDi(
+                                    rowData?._id
+                                )
+                            }"
+                        >
+                            <td>{{ rowData?._idnum || "—" }}</td>
+                            <td>{{ rowData?.title || "—" }}</td>
+                            <td>
+                                {{
+                                    rowData?.location_name ||
+                                        getLocationNameById(
+                                            rowData?.location_id
+                                        )
+                                }}
+                            </td>
+                            <td>
+                                {{
+                                    rowData?.di_category_name ||
+                                        getDiCategoryNameById(
+                                            rowData?.di_category_id
+                                        )
+                                }}
+                            </td>
+                            <td>{{ rowData?.status || "—" }}</td>
+                            <td>
+                                <p-dropdown
+                                    [options]="locationDropDown"
+                                    optionLabel="location_name"
+                                    optionValue="value"
+                                    [ngModel]="rowData?.location_id"
+                                    (onChange)="
+                                        reassignLocation(
+                                            rowData,
+                                            $event.value
+                                        )
+                                    "
+                                    [disabled]="
+                                        reassigningDiId === rowData?._id
+                                    "
+                                    placeholder="—"
+                                    appendTo="body"
+                                    styleClass="sav-relations-dropdown"
+                                ></p-dropdown>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="6" class="sav-modal-empty">
+                                <i class="pi pi-inbox"></i>
+                                <span>Aucune DI dans la liste actuelle</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabPanel>
+
+        <!-- ── TAB 2 — CATÉGORIES DI ───────────────────────────────── -->
+        <p-tabPanel header="Catégories DI" leftIcon="pi pi-tags">
+            <div class="sav-relations-card">
+                <div class="sav-relations-card__header">
+                    <div class="sav-relations-card__heading">
+                        <h4 class="sav-relations-card__title">
+                            Liste des catégories DI
+                        </h4>
+                        <p class="sav-relations-card__subtitle">
+                            Gérez les catégories utilisées dans la création
+                            et le tri des demandes d'intervention.
+                        </p>
+                    </div>
+                    <span class="sav-relations-card__count">
+                        {{ categorieDiListDropDown?.length || 0 }}
+                        catégorie(s)
+                    </span>
+                </div>
+
+                <form
+                    [formGroup]="categoryForm"
+                    class="sav-relations-card__form"
+                >
+                    <div class="sav-form-row">
+                        <label class="sav-label" for="relCategoryName">
+                            Nom de la catégorie
+                        </label>
+                        <input
+                            formControlName="categoryName"
+                            id="relCategoryName"
+                            type="text"
+                            class="sav-input"
+                            placeholder="Ex: Électronique"
+                        />
+                    </div>
+                    <p-button
+                        [disabled]="!categoryForm.get('categoryName').value"
+                        (click)="addCategoryDi()"
+                        icon="pi pi-plus"
+                        label="Ajouter"
+                        severity="success"
+                        size="small"
+                    ></p-button>
+                </form>
+
+                <p-table
+                    [value]="categorieDiListDropDown"
+                    [paginator]="true"
+                    [rows]="6"
+                    [rowsPerPageOptions]="[6, 12, 24]"
+                    styleClass="p-datatable-sm sav-modal-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Nom</th>
+                            <th>DIs liés</th>
+                            <th class="sav-modal-actions-th">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr>
+                            <td>{{ rowData?.category_name || "—" }}</td>
+                            <td>
+                                {{
+                                    getLinkedDiCountForCategory(
+                                        rowData?.value
+                                    )
+                                }}
+                            </td>
+                            <td class="sav-modal-actions-cell">
+                                <button
+                                    pButton
+                                    pTooltip="Supprimer"
+                                    tooltipPosition="top"
+                                    icon="pi pi-trash"
+                                    class="sav-icon-btn sav-icon-btn--danger"
+                                    (click)="deleteCategory(rowData)"
+                                ></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="3" class="sav-modal-empty">
+                                <i class="pi pi-inbox"></i>
+                                <span>Aucune catégorie trouvée</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+
+            <div class="sav-relations-card">
+                <div class="sav-relations-card__header">
+                    <div class="sav-relations-card__heading">
+                        <h4 class="sav-relations-card__title">
+                            Réaffecter les catégories DI
+                        </h4>
+                        <p class="sav-relations-card__subtitle">
+                            Affectez chaque DI à la catégorie appropriée
+                            via le menu déroulant. La modification est
+                            propagée immédiatement.
+                        </p>
+                    </div>
+                    <span class="sav-relations-card__count">
+                        {{ diList?.length || 0 }} DI(s)
+                    </span>
+                </div>
+
+                <p-table
+                    [value]="diList"
+                    [paginator]="true"
+                    [rows]="8"
+                    [rowsPerPageOptions]="[8, 16, 32]"
+                    styleClass="p-datatable-sm sav-modal-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>DI</th>
+                            <th>Titre</th>
+                            <th>Catégorie actuelle</th>
+                            <th>Status</th>
+                            <th>Réaffecter</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr
+                            [ngClass]="{
+                                'sav-row-flash': isRecentlyModifiedDi(
+                                    rowData?._id
+                                )
+                            }"
+                        >
+                            <td>{{ rowData?._idnum || "—" }}</td>
+                            <td>{{ rowData?.title || "—" }}</td>
+                            <td>
+                                {{
+                                    rowData?.di_category_name ||
+                                        getDiCategoryNameById(
+                                            rowData?.di_category_id
+                                        )
+                                }}
+                            </td>
+                            <td>{{ rowData?.status || "—" }}</td>
+                            <td>
+                                <p-dropdown
+                                    [options]="categorieDiListDropDown"
+                                    optionLabel="category_name"
+                                    optionValue="value"
+                                    [ngModel]="rowData?.di_category_id"
+                                    (onChange)="
+                                        reassignDiCategory(
+                                            rowData,
+                                            $event.value
+                                        )
+                                    "
+                                    [disabled]="
+                                        reassigningCategoryDiId ===
+                                        rowData?._id
+                                    "
+                                    placeholder="—"
+                                    appendTo="body"
+                                    styleClass="sav-relations-dropdown"
+                                ></p-dropdown>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="5" class="sav-modal-empty">
+                                <i class="pi pi-inbox"></i>
+                                <span>Aucune DI dans la liste actuelle</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabPanel>
+
+        <!-- ── TAB 3 — CATÉGORIES COMPOSANTS ───────────────────────── -->
+        <p-tabPanel header="Catégories Composants" leftIcon="pi pi-cog">
+            <div class="sav-relations-card">
+                <div class="sav-relations-card__header">
+                    <div class="sav-relations-card__heading">
+                        <h4 class="sav-relations-card__title">
+                            Liste des catégories de composants
+                        </h4>
+                        <p class="sav-relations-card__subtitle">
+                            Organisez vos composants par familles
+                            techniques pour faciliter la sélection.
+                        </p>
+                    </div>
+                    <span class="sav-relations-card__count">
+                        {{ composantCategoryList?.length || 0 }}
+                        catégorie(s)
+                    </span>
+                </div>
+
+                <form
+                    [formGroup]="composantCategoryForm"
+                    class="sav-relations-card__form"
+                >
+                    <div class="sav-form-row">
+                        <label
+                            class="sav-label"
+                            for="relComposantCategoryName"
+                        >
+                            Nom de la catégorie
+                        </label>
+                        <input
+                            formControlName="composantCategoryName"
+                            id="relComposantCategoryName"
+                            type="text"
+                            class="sav-input"
+                            placeholder="Ex: Carte mère"
+                        />
+                    </div>
+                    <p-button
+                        [disabled]="
+                            !composantCategoryForm.get(
+                                'composantCategoryName'
+                            ).value
+                        "
+                        (click)="addComposantCategory()"
+                        icon="pi pi-plus"
+                        label="Ajouter"
+                        severity="success"
+                        size="small"
+                    ></p-button>
+                </form>
+
+                <p-table
+                    [value]="composantCategoryList"
+                    [paginator]="true"
+                    [rows]="6"
+                    [rowsPerPageOptions]="[6, 12, 24]"
+                    styleClass="p-datatable-sm sav-modal-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Nom</th>
+                            <th>Composants liés</th>
+                            <th class="sav-modal-actions-th">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr>
+                            <td>
+                                {{ rowData?.category_composant || "—" }}
+                            </td>
+                            <td>
+                                {{
+                                    getLinkedComposantCountForCategory(
+                                        rowData?._id
+                                    )
+                                }}
+                            </td>
+                            <td class="sav-modal-actions-cell">
+                                <button
+                                    pButton
+                                    pTooltip="Supprimer"
+                                    tooltipPosition="top"
+                                    icon="pi pi-trash"
+                                    class="sav-icon-btn sav-icon-btn--danger"
+                                    (click)="
+                                        deleteComposantCategory(rowData)
+                                    "
+                                ></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="3" class="sav-modal-empty">
+                                <i class="pi pi-inbox"></i>
+                                <span
+                                    >Aucune catégorie de composant
+                                    trouvée</span
+                                >
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+
+            <div class="sav-relations-card">
+                <div class="sav-relations-card__header">
+                    <div class="sav-relations-card__heading">
+                        <h4 class="sav-relations-card__title">
+                            Réaffecter les composants
+                        </h4>
+                        <p class="sav-relations-card__subtitle">
+                            Affectez chaque composant à la catégorie qui
+                            convient via le menu déroulant.
+                        </p>
+                    </div>
+                    <span class="sav-relations-card__count">
+                        {{ composantsForReassignment?.length || 0 }}
+                        composant(s)
+                    </span>
+                </div>
+
+                <p-table
+                    [value]="composantsForReassignment"
+                    [paginator]="true"
+                    [rows]="8"
+                    [rowsPerPageOptions]="[8, 16, 32]"
+                    styleClass="p-datatable-sm sav-modal-table"
+                >
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Composant</th>
+                            <th>Package</th>
+                            <th>Catégorie actuelle</th>
+                            <th>Réaffecter</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-rowData>
+                        <tr
+                            [ngClass]="{
+                                'sav-row-flash':
+                                    isRecentlyModifiedComposant(
+                                        rowData?._id
+                                    )
+                            }"
+                        >
+                            <td>{{ rowData?.name || "—" }}</td>
+                            <td>{{ rowData?.package || "—" }}</td>
+                            <td>
+                                {{
+                                    getComposantCategoryNameById(
+                                        rowData?.category_composant_id
+                                    )
+                                }}
+                            </td>
+                            <td>
+                                <p-dropdown
+                                    [options]="composantCategoryList"
+                                    optionLabel="category_composant"
+                                    optionValue="_id"
+                                    [ngModel]="
+                                        rowData?.category_composant_id
+                                    "
+                                    (onChange)="
+                                        reassignComposantCategory(
+                                            rowData,
+                                            $event.value
+                                        )
+                                    "
+                                    [disabled]="
+                                        reassigningComposantId ===
+                                        rowData?._id
+                                    "
+                                    placeholder="—"
+                                    appendTo="body"
+                                    styleClass="sav-relations-dropdown"
+                                ></p-dropdown>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td colspan="4" class="sav-modal-empty">
+                                <i class="pi pi-inbox"></i>
+                                <span>Aucun composant trouvé</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </p-tabPanel>
+    </p-tabView>
+</p-dialog>
+
+<!-- ═══════════════════════════════════════════════
+     MODAL — CATÉGORIES DI (legacy, no longer triggered;
+     superseded by the Relations & Structure modal above)
 ════════════════════════════════════════════════ -->
 <p-dialog
     header="Gérer les catégories des demandes d'interventions"
@@ -471,25 +1050,19 @@
                 class="sav-btn-new"
                 (click)="showDialogDiCreation()"
             ></button>
+            <button
+                pButton
+                icon="pi pi-sitemap"
+                label="Relations & Structure"
+                class="sav-btn-new p-button-outlined"
+                (click)="showDialogRelations()"
+            ></button>
         </div>
     </div>
 
-    <!-- Secondary actions bar -->
+    <!-- Secondary actions bar — Catégories DI and Emplacements were
+         consolidated into the Relations & Structure modal above. -->
     <div class="sav-action-bar">
-        <button
-            pButton
-            icon="pi pi-pencil"
-            label="Catégories DI"
-            class="p-button-outlined p-button-warning p-button-sm"
-            (click)="showDialogCategoryDI()"
-        ></button>
-        <button
-            pButton
-            icon="pi pi-map-marker"
-            label="Emplacements"
-            class="p-button-outlined p-button-info p-button-sm"
-            (click)="showDialogLocations()"
-        ></button>
         <button
             pButton
             icon="pi pi-dollar"
@@ -1513,7 +2086,11 @@
             </div>
             <div class="sav-info-item">
                 <i class="pi pi-map-marker"></i><span>Emplacement</span
-                ><strong>{{ ticketData?.data?.location_id }}</strong>
+                ><strong>{{
+                    ticketData?.data?.location_name ||
+                        ticketData?.data?.location_id ||
+                        "—"
+                }}</strong>
             </div>
             <div class="sav-info-item">
                 <i class="pi pi-calendar"></i><span>Date création</span

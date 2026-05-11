@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DashboardComponent } from './dashboard.component';
+import { PeriodFilterComponent } from './period-filter/period-filter.component';
 import { ChartModule } from 'primeng/chart';
 import { MenuModule } from 'primeng/menu';
 import { TableModule } from 'primeng/table';
@@ -13,6 +14,9 @@ import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { KnobModule } from 'primeng/knob';
+import { CalendarModule } from 'primeng/calendar';
+import { BlockUIModule } from 'primeng/blockui';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @NgModule({
     imports: [
@@ -29,7 +33,10 @@ import { KnobModule } from 'primeng/knob';
         TagModule,
         ProgressBarModule,
         KnobModule,
+        CalendarModule,
+        BlockUIModule,
+        ProgressSpinnerModule,
     ],
-    declarations: [DashboardComponent],
+    declarations: [DashboardComponent, PeriodFilterComponent],
 })
 export class DashboardModule {}
