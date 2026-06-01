@@ -712,142 +712,342 @@
          MODAL — FLOW COORDINATRICE
     ════════════════════════════════════════════════ -->
     <p-dialog
-        header="Coordinatrice — contrôle du flow"
         [(visible)]="diDialog"
         [modal]="true"
-        [style]="{ width: '560px' }"
+        [style]="{ width: '1180px', maxWidth: '98vw' }"
         [draggable]="false"
         [resizable]="false"
         styleClass="sav-dialog"
     >
-        <div class="sav-create-form">
-            <h5 class="sav-ticket-title" *ngIf="ignoreCount > 0">
-                Retour {{ ignoreCount }}
-            </h5>
+        <ng-template pTemplate="header">
+            <div class="sav-flow-dialog-header">
+                <span class="sav-flow-header-icon"><i class="pi pi-sliders-h"></i></span>
+                <strong>Coordination — contrôle du flow</strong>
+            </div>
+        </ng-template>
 
-            <!-- Diagnostic -->
-            <fieldset class="sav-fieldset">
-                <legend>Diagnostic</legend>
-                <div class="sav-form-row">
-                    <label class="sav-label">Technicien diagnostique</label>
-                    <p-dropdown
-                        [options]="techList"
-                        optionLabel="firstName"
-                        [showClear]="true"
-                        placeholder="Choisir technicien"
-                        (onChange)="selectedTechDiag($event)"
-                        [disabled]="diag_condition"
-                        [(ngModel)]="selectedTechDiagModel"
-                        styleClass="sav-dropdown"
-                        [style]="{ width: '100%' }"
-                    ></p-dropdown>
-                </div>
-            </fieldset>
+        <div class="sav-flow-modal">
+            <div class="sav-flow-main">
+                <section class="sav-flow-left">
+                    <article class="sav-control-section">
+                        <h4>1. Diagnostic</h4>
+                        <label>Technicien diagnostique</label>
+                        <div class="sav-select-card">
+                            <strong>{{ getAssignedDiagnosticTech() }}</strong>
+                            <span
+                                class="sav-select-card-state"
+                                *ngIf="getFlowTimestamp('diagnostic') as ts"
+                            >
+                                <i class="pi pi-check"></i>
+                                {{ ts }}
+                            </span>
+                            <i class="pi pi-chevron-down"></i>
+                        </div>
+                    </article>
 
-            <!-- Admin pricing -->
-            <fieldset class="sav-fieldset">
-                <legend>Administration</legend>
-                <div class="sav-form-row">
-                    <label class="sav-label"
-                        >Ouvrir DI pour affecter les prix</label
-                    >
-                    <p-button
-                        [disabled]="admin_condition"
-                        label="Envoyer aux admins"
-                        icon="pi pi-send"
-                        severity="info"
-                        size="small"
-                        (onClick)="changestatusToPricing($event)"
-                    ></p-button>
-                </div>
-            </fieldset>
-
-            <!-- Composants magasin -->
-            <fieldset class="sav-fieldset">
-                <legend>Magasin</legend>
-                <div class="sav-form-row">
-                    <label class="sav-label"
-                        >Confirmer la réception des composants</label
-                    >
-                    <p-button
-                        [disabled]="
-                            componentConfirmedFromCoordinator !== 'IN_MAGASIN'
-                        "
-                        label="Confirmer tous les composants"
-                        icon="pi pi-check"
-                        severity="success"
-                        size="small"
-                        (onClick)="gotcomposantfromMagasin()"
-                    ></p-button>
-                </div>
-                <ng-container *ngIf="componentInfo">
-                    <p-table
-                        [value]="componentInfo.array_composant"
-                        styleClass="p-datatable-sm sav-modal-table"
-                        [tableStyle]="{ 'min-width': '100%' }"
-                    >
-                        <ng-template pTemplate="header"
-                            ><tr>
-                                <th>Composant</th>
-                                <th>Qté</th>
-                            </tr></ng-template
+                    <article class="sav-control-section">
+                        <h4>2. Administration</h4>
+                        <label>Ouvrir DI pour affecter les prix</label>
+                        <div
+                            *ngIf="adminSentAt; else adminAction"
+                            class="sav-confirm-state"
                         >
-                        <ng-template pTemplate="body" let-c
-                            ><tr>
-                                <td>{{ c.nameComposant }}</td>
-                                <td>{{ c.quantity }}</td>
-                            </tr></ng-template
+                            <i class="pi pi-send"></i>
+                            <span>Envoyé aux admins le {{ formatDateTime(adminSentAt) }}</span>
+                            <i class="pi pi-check sav-confirm-end"></i>
+                        </div>
+                        <ng-template #adminAction>
+                            <p-button
+                                [disabled]="
+                                    admin_condition ||
+                                    adminSentAt ||
+                                    pricingRequestInFlight
+                                "
+                                label="Envoyer aux admins"
+                                icon="pi pi-send"
+                                severity="info"
+                                size="small"
+                                (onClick)="changestatusToPricing($event)"
+                            ></p-button>
+                        </ng-template>
+                    </article>
+
+                    <article class="sav-control-section">
+                        <h4>3. Magasin</h4>
+                        <label>Confirmer la réception des composants</label>
+                        <div
+                            *ngIf="magasinConfirmedAt; else magasinAction"
+                            class="sav-confirm-state"
                         >
-                    </p-table>
-                </ng-container>
-            </fieldset>
+                            <i class="pi pi-check-circle"></i>
+                            <span>Composants confirmés le {{ formatDateTime(magasinConfirmedAt) }}</span>
+                            <i class="pi pi-check sav-confirm-end"></i>
+                        </div>
+                        <ng-template #magasinAction>
+                            <p-button
+                                [disabled]="
+                                    componentConfirmedFromCoordinator !==
+                                        'IN_MAGASIN' ||
+                                    magasinConfirmedAt ||
+                                    componentsConfirmInFlight
+                                "
+                                label="Confirmer tous les composants"
+                                icon="pi pi-check"
+                                severity="success"
+                                size="small"
+                                (onClick)="gotcomposantfromMagasin()"
+                            ></p-button>
+                        </ng-template>
+                        <ng-container *ngIf="componentInfo">
+                            <p-table
+                                [value]="componentInfo.array_composant"
+                                styleClass="p-datatable-sm sav-modal-table"
+                                [tableStyle]="{ 'min-width': '100%' }"
+                            >
+                                <ng-template pTemplate="header">
+                                    <tr>
+                                        <th>Composant</th>
+                                        <th>Qté</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-c>
+                                    <tr>
+                                        <td>{{ c.nameComposant }}</td>
+                                        <td>{{ c.quantity }}</td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                        </ng-container>
+                    </article>
 
-            <!-- Réparation -->
-            <fieldset class="sav-fieldset">
-                <legend>Réparation</legend>
-                <div class="sav-form-row">
-                    <label class="sav-label">Technicien réparation</label>
-                    <p-dropdown
-                        [options]="techList"
-                        optionLabel="firstName"
-                        [showClear]="true"
-                        placeholder="Choisir technicien"
-                        [disabled]="rep_condition"
-                        (onChange)="selectedTechRep($event)"
-                        styleClass="sav-dropdown"
-                        [style]="{ width: '100%' }"
-                    ></p-dropdown>
+                    <article class="sav-control-section">
+                        <h4>4. Réparation</h4>
+                        <label>Technicien réparation</label>
+                        <div class="sav-select-card">
+                            <strong>{{ getAssignedRepairTech() }}</strong>
+                            <span
+                                class="sav-select-card-state"
+                                *ngIf="getFlowTimestamp('repair') as ts"
+                            >
+                                <i class="pi pi-check"></i>
+                                {{ ts }}
+                            </span>
+                            <i class="pi pi-chevron-down"></i>
+                        </div>
+                    </article>
+
+                    <div class="sav-control-remark">
+                        <label>Remarque administration</label>
+                        <textarea
+                            class="sav-textarea sav-textarea--readonly"
+                            rows="4"
+                            disabled
+                            [ngModel]="remarque_manager || 'N/A'"
+                        ></textarea>
+                    </div>
+
+                    <div class="sav-control-actions">
+                        <p-button
+                            label="Annuler"
+                            severity="secondary"
+                            size="small"
+                            (onClick)="hideDialog()"
+                        ></p-button>
+                        <p-button
+                            label="Enregistrer les modifications"
+                            icon="pi pi-save"
+                            size="small"
+                            (onClick)="saveProduct()"
+                        ></p-button>
+                    </div>
+                </section>
+
+                <section class="sav-flow-right">
+                    <article class="sav-flow-panel sav-flow-panel--plain">
+                        <div class="sav-flow-panel-head">
+                            <h4 class="sav-panel-title">État actuel du flow</h4>
+                            <span class="sav-realtime-pill">
+                                <span class="sav-realtime-dot"></span>
+                                Mise à jour en temps réel
+                            </span>
+                        </div>
+
+                        <div class="sav-flow-timeline">
+                            <ng-container
+                                *ngFor="let phase of getFlowPhases(); let last = last; let i = index"
+                            >
+                                <div
+                                    class="sav-flow-step"
+                                    [ngClass]="
+                                        'sav-flow-step--' + phase.state +
+                                        ' sav-flow-step--tone-' + (i % 6)
+                                    "
+                                >
+                                    <span class="sav-flow-number">{{ phase.number }}</span>
+                                    <i [class]="phase.icon + ' sav-flow-step-icon'"></i>
+                                    <strong>{{ phase.label }}</strong>
+                                    <span class="sav-flow-badge">{{ phase.badgeLabel }}</span>
+                                    <small
+                                        class="sav-flow-step-date"
+                                        *ngIf="phase.timestamp as ts"
+                                    >
+                                        <i class="pi pi-calendar"></i>
+                                        {{ ts }}
+                                    </small>
+                                </div>
+                                <div
+                                    *ngIf="!last"
+                                    class="sav-flow-connector"
+                                    [ngClass]="'sav-flow-connector--tone-' + (i % 6)"
+                                ></div>
+                            </ng-container>
+                        </div>
+                    </article>
+
+                    <div class="sav-flow-info-box">
+                        <i class="pi pi-info-circle"></i>
+                        <div>
+                            <strong>À propos du flow</strong>
+                            <p>La coordination permet de suivre et valider chaque étape du processus de réparation.</p>
+                            <p><strong>Toutes les étapes doivent être complétées dans l'ordre.</strong></p>
+                        </div>
+                    </div>
+
+                    <article class="sav-flow-panel sav-flow-panel--plain">
+                        <div class="sav-tech-panel-head">
+                            <div>
+                                <h4 class="sav-panel-title">Affecter un technicien</h4>
+                                <p class="sav-panel-subtitle">
+                                    Sélectionnez un technicien pour l'étape :
+                                    <strong class="sav-current-stage">{{ getCurrentAssignmentStageLabel() }}</strong>
+                                </p>
+                            </div>
+                            <div class="sav-tech-toolbar">
+                                <div class="sav-tech-search">
+                                    <i class="pi pi-search"></i>
+                                    <input
+                                        type="text"
+                                        pInputText
+                                        placeholder="Rechercher un technicien…"
+                                        [(ngModel)]="techSearchTerm"
+                                    />
+                                </div>
+                                <button class="sav-tech-filter-btn" type="button">
+                                    <i class="pi pi-filter"></i>
+                                    Filter
+                                    <i class="pi pi-chevron-down"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="sav-tech-grid" *ngIf="getFilteredTechList().length; else noTech">
+                            <div
+                                class="sav-tech-card sav-tech-card--rich"
+                                *ngFor="let tech of getFilteredTechList()"
+                                [class.sav-tech-card--selected]="isTechAssigned(tech)"
+                            >
+                                <div class="sav-tech-card-top">
+                                    <div
+                                        class="sav-tech-avatar"
+                                        [style.background]="getTechAvatarColor(tech)"
+                                    >
+                                        <span>{{ getTechInitials(tech) }}</span>
+                                        <span
+                                            class="sav-tech-avatar-dot"
+                                            [ngClass]="getTechLoadClass(tech).replace('sav-tech-status--', 'sav-tech-dot--')"
+                                        ></span>
+                                    </div>
+                                    <div class="sav-tech-id">
+                                        <strong>{{ formatTechName(tech) }}</strong>
+                                        <span class="sav-tech-role">{{ getTechRoleDisplay(tech) }}</span>
+                                        <span
+                                            class="sav-tech-status sav-tech-status--inline"
+                                            [ngClass]="getTechLoadClass(tech)"
+                                        >
+                                            {{ getTechLoadLabel(tech) }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="sav-tech-metrics-row">
+                                    <div class="sav-tech-metric">
+                                        <i class="pi pi-list"></i>
+                                        <div>
+                                            <small>DI actifs</small>
+                                            <b>{{ getTechActiveDiCount(tech) }}</b>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="sav-tech-metric"
+                                        *ngIf="getTechAvgRepairDays(tech) as avg"
+                                    >
+                                        <i class="pi pi-clock"></i>
+                                        <div>
+                                            <small>Temps moyen réparation</small>
+                                            <b>{{ avg }} j</b>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="sav-tech-assign-btn"
+                                    [class.sav-tech-assign-btn--selected]="isTechAssigned(tech)"
+                                    [disabled]="getCoordinatorActionMode() === 'none' || isTechAssigned(tech)"
+                                    (click)="assignTechnician(tech)"
+                                >
+                                    <i [class]="isTechAssigned(tech) ? 'pi pi-check' : 'pi pi-user-plus'"></i>
+                                    {{ isTechAssigned(tech) ? 'Technicien assigné' : 'Assigner ce technicien' }}
+                                </button>
+                            </div>
+                        </div>
+                        <ng-template #noTech>
+                            <div class="sav-tech-empty">
+                                <i class="pi pi-info-circle"></i>
+                                <span>Aucun technicien ne correspond à la recherche.</span>
+                            </div>
+                        </ng-template>
+                    </article>
+                </section>
+            </div>
+
+            <div class="sav-flow-footer sav-flow-footer--rich">
+                <div class="sav-flow-footer-card">
+                    <span class="sav-flow-footer-icon sav-flow-footer-icon--blue">
+                        <i class="pi pi-id-card"></i>
+                    </span>
+                    <div>
+                        <span class="sav-flow-footer-label">DI actif</span>
+                        <strong>{{ getModalInfoValue("id") }}</strong>
+                    </div>
                 </div>
-            </fieldset>
-
-            <!-- Remarques -->
-            <div class="sav-form-row" *ngIf="remarque_manager">
-                <label class="sav-label">Remarque Administration</label>
-                <p class="sav-retour-rq-text">{{ remarque_manager }}</p>
-            </div>
-            <div class="sav-form-row" *ngIf="remarque_admin_manager">
-                <label class="sav-label">Remarque Admin Manager</label>
-                <p class="sav-retour-rq-text">{{ remarque_admin_manager }}</p>
-            </div>
-            <div class="sav-form-row" *ngIf="remarque_admin_tech">
-                <label class="sav-label">Remarque Admin Tech</label>
-                <p class="sav-retour-rq-text">{{ remarque_admin_tech }}</p>
-            </div>
-            <div class="sav-form-row" *ngIf="remarque_tech_diagnostic">
-                <label class="sav-label">Remarque Tech Diagnostique</label>
-                <p class="sav-retour-rq-text">{{ remarque_tech_diagnostic }}</p>
-            </div>
-            <div class="sav-form-row" *ngIf="remarque_tech_repair">
-                <label class="sav-label">Remarque Tech Réparation</label>
-                <p class="sav-retour-rq-text">{{ remarque_tech_repair }}</p>
-            </div>
-            <div class="sav-form-row" *ngIf="remarque_magasin">
-                <label class="sav-label">Remarque Magasin</label>
-                <p class="sav-retour-rq-text">{{ remarque_magasin }}</p>
-            </div>
-            <div class="sav-form-row" *ngIf="remarque_coordinator">
-                <label class="sav-label">Remarque Coordinatrice</label>
-                <p class="sav-retour-rq-text">{{ remarque_coordinator }}</p>
+                <div class="sav-flow-footer-card">
+                    <span class="sav-flow-footer-icon sav-flow-footer-icon--purple">
+                        <i class="pi pi-flag"></i>
+                    </span>
+                    <div>
+                        <span class="sav-flow-footer-label">Étape actuelle</span>
+                        <strong>{{ getCurrentPhaseLabel() }}</strong>
+                    </div>
+                </div>
+                <div class="sav-flow-footer-card">
+                    <span class="sav-flow-footer-icon sav-flow-footer-icon--orange">
+                        <i class="pi pi-clock"></i>
+                    </span>
+                    <div>
+                        <span class="sav-flow-footer-label">Dernière mise à jour</span>
+                        <strong>{{ getLastUpdateDisplay() }}</strong>
+                    </div>
+                </div>
+                <div class="sav-flow-footer-card">
+                    <span class="sav-flow-footer-icon sav-flow-footer-icon--green">
+                        <i class="pi pi-user"></i>
+                    </span>
+                    <div>
+                        <span class="sav-flow-footer-label">Créé par</span>
+                        <strong>{{ getModifiedByDisplay() }}</strong>
+                    </div>
+                </div>
             </div>
         </div>
     </p-dialog>

@@ -1,5 +1,6 @@
 import { Component, OnDestroy } from '@angular/core';
 import { Apollo } from 'apollo-angular';
+import gql from 'graphql-tag';
 import { Product } from 'src/app/demo/api/product';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import {
@@ -131,6 +132,106 @@ export class CoordinatorDiListComponent implements OnDestroy {
     magasinsentToCoordinator: boolean;
     gotComposantFromMagasinCondition: boolean;
     ignoreCount: any;
+    adminSentAt: any = null;
+    magasinConfirmedAt: any = null;
+    pricingRequestInFlight = false;
+    componentsConfirmInFlight = false;
+
+    /** ─── Coordination-modal: real-data-only state ─────────────────────────
+     *  techAvgRepairByTechId is populated by the dashboardTechLeaderboard
+     *  query when the modal opens. Keys = Profile._id, value = avg days
+     *  spent on FINISHED DIs. Techs with zero finished DIs are absent from
+     *  the map → UI hides the "Temps moyen réparation" tile for them.
+     *  techSearchTerm filters the tech grid; empty = show all.
+     */
+    techAvgRepairByTechId: Record<string, number> = {};
+    techSearchTerm = '';
+
+    /** Status-code → user-readable French label. Used in the dynamic flow
+     *  timeline so every node always shows the REAL underlying DB status,
+     *  never a generic "En attente / Terminé" placeholder when the system
+     *  knows more. */
+    private readonly STATUS_LABEL_FR: Record<string, string> = {
+        CREATED: 'Créé',
+        PENDING1: 'En attente diagnostic',
+        DIAGNOSTIC: 'Diagnostic assigné',
+        DIAGNOSTIC_Pause: 'Diagnostic en pause',
+        INDIAGNOSTIC: 'En diagnostic',
+        MagasinEstimation: 'Estimation magasin',
+        INMAGASIN: 'En magasin',
+        PENDING2: 'En attente prix',
+        PRICING: 'En tarification',
+        NEGOTIATION1: 'Négociation 1',
+        NEGOTIATION2: 'Négociation 2',
+        PENDING3: 'En attente réparation',
+        REPARATION: 'Réparation assignée',
+        REPARATION_Pause: 'Réparation en pause',
+        INREPARATION: 'En réparation',
+        FINISHED: 'Terminé',
+        ANNULER: 'Annulé',
+        RETOUR1: 'Retour 1',
+        RETOUR2: 'Retour 2',
+        RETOUR3: 'Retour 3',
+    };
+
+    /** Canonical status ordering — used to decide if a phase is `done`
+     *  (current status comes AFTER the phase's last status) vs `pending`. */
+    private readonly ALL_STATUS_ORDER: string[] = [
+        'CREATED',
+        'PENDING1',
+        'DIAGNOSTIC',
+        'DIAGNOSTIC_Pause',
+        'INDIAGNOSTIC',
+        'MagasinEstimation',
+        'INMAGASIN',
+        'PENDING2',
+        'PRICING',
+        'NEGOTIATION1',
+        'NEGOTIATION2',
+        'PENDING3',
+        'REPARATION',
+        'REPARATION_Pause',
+        'INREPARATION',
+        'FINISHED',
+        'RETOUR1',
+        'RETOUR2',
+        'RETOUR3',
+    ];
+
+    /** Base phases — always rendered. Retour 1/2/3 are appended dynamically
+     *  by getFlowPhases() ONLY when the DI is in or past that retour cycle. */
+    private readonly BASE_PHASES = [
+        {
+            key: 'diagnostic' as const,
+            label: 'Diagnostic',
+            icon: 'pi pi-clipboard',
+            statuses: ['PENDING1', 'DIAGNOSTIC', 'DIAGNOSTIC_Pause', 'INDIAGNOSTIC'],
+        },
+        {
+            key: 'magasin' as const,
+            label: 'Magasin',
+            icon: 'pi pi-box',
+            statuses: ['MagasinEstimation', 'INMAGASIN'],
+        },
+        {
+            key: 'admin' as const,
+            label: 'Administration',
+            icon: 'pi pi-file',
+            statuses: ['PENDING2', 'PRICING', 'NEGOTIATION1', 'NEGOTIATION2'],
+        },
+        {
+            key: 'repair' as const,
+            label: 'Réparation',
+            icon: 'pi pi-wrench',
+            statuses: ['PENDING3', 'REPARATION', 'REPARATION_Pause', 'INREPARATION'],
+        },
+        {
+            key: 'closed' as const,
+            label: 'Clôture',
+            icon: 'pi pi-check-circle',
+            statuses: ['FINISHED'],
+        },
+    ];
     ticketData: { data: any; pauseLogs: any; logsDi: any };
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
@@ -537,7 +638,13 @@ export class CoordinatorDiListComponent implements OnDestroy {
     openModalConfig(di) {
         console.log('🍷[di]:', di);
         this.di = { ...di };
+        this.adminSentAt = di.pricingRequestSentAt ?? null;
+        this.magasinConfirmedAt = di.componentsConfirmedAt ?? null;
+        this.pricingRequestInFlight = false;
+        this.componentsConfirmInFlight = false;
         this.gotComposantFromMagasinCondition = di.gotComposantFromMagasin;
+        this.techSearchTerm = '';
+        this.fetchTechAvgRepair();
         if (di.logs && di.logs.length > 0) {
             const highestIgnoreLog = di.logs.reduce((prev, current) =>
                 prev.idIgnore > current.idIgnore ? prev : current,
@@ -587,6 +694,470 @@ export class CoordinatorDiListComponent implements OnDestroy {
         di.status == STATUS_DI.PENDING3
             ? (this.rep_condition = false)
             : (this.rep_condition = true);
+    }
+
+    formatDateTime(value: any): string {
+        if (!value) return '—';
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) return '—';
+        return date.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+
+    formatTechName(tech: any): string {
+        if (!tech) return 'N/A';
+        if (typeof tech === 'string') return tech || 'N/A';
+        return [tech.firstName, tech.lastName].filter(Boolean).join(' ') || 'N/A';
+    }
+
+    getAssignedDiagnosticTech(): string {
+        const selected = this.formatTechName(this.selectedTechDiagModel);
+        return selected !== 'N/A'
+            ? selected
+            : this.formatTableValueFallback(this.di?.techDiag);
+    }
+
+    getAssignedRepairTech(): string {
+        return this.formatTableValueFallback(this.di?.techRep);
+    }
+
+    private formatTableValueFallback(value: any): string {
+        const formatted = formatTableValue({ value }, 'value');
+        return formatted && formatted !== '—' && formatted !== 'N/A' ? formatted : 'N/A';
+    }
+
+    getFlowStepState(step: 'diagnostic' | 'admin' | 'magasin' | 'repair') {
+        const status = this.di?.status;
+        const afterDiagnostic = [
+            STATUS_DI.PENDING2,
+            STATUS_DI.PRICING,
+            STATUS_DI.NEGOTIATION1,
+            STATUS_DI.NEGOTIATION2,
+            STATUS_DI.PENDING3,
+            STATUS_DI.REPARATION,
+            STATUS_DI.INREPARATION,
+            STATUS_DI.FINISHED,
+            STATUS_DI.RETOUR1,
+            STATUS_DI.RETOUR2,
+            STATUS_DI.RETOUR3,
+        ];
+        const afterAdmin = [
+            STATUS_DI.PENDING3,
+            STATUS_DI.REPARATION,
+            STATUS_DI.INREPARATION,
+            STATUS_DI.FINISHED,
+            STATUS_DI.RETOUR1,
+            STATUS_DI.RETOUR2,
+            STATUS_DI.RETOUR3,
+        ];
+        const afterRepair = [STATUS_DI.FINISHED, STATUS_DI.RETOUR1, STATUS_DI.RETOUR2, STATUS_DI.RETOUR3];
+
+        if (step === 'diagnostic') {
+            return afterDiagnostic.includes(status) ? 'done' : 'pending';
+        }
+
+        if (step === 'admin') {
+            return this.adminSentAt || afterAdmin.includes(status)
+                ? 'done'
+                : 'pending';
+        }
+
+        if (step === 'magasin') {
+            return this.magasinConfirmedAt ||
+                this.componentConfirmedFromCoordinator === 'DEFAULT'
+                ? 'done'
+                : 'pending';
+        }
+
+        return afterRepair.includes(status) ? 'done' : 'pending';
+    }
+
+    getFlowStepLabel(step: 'diagnostic' | 'admin' | 'magasin' | 'repair') {
+        return this.getFlowStepState(step) === 'done' ? 'Terminé' : 'En attente';
+    }
+
+    getFlowStepClass(step: 'diagnostic' | 'admin' | 'magasin' | 'repair') {
+        return `sav-flow-step--${this.getFlowStepState(step)}`;
+    }
+
+    /**
+     * Returns the formatted real DB timestamp for this step, or null if no
+     * per-step timestamp exists in the document. The template uses *ngIf
+     * to hide the line entirely when null — NO fabricated fallback.
+     *
+     * Step → DB field mapping:
+     *   diagnostic → none stored per-step → always null (hidden)
+     *   admin      → di.pricingRequestSentAt
+     *   magasin    → di.componentsConfirmedAt
+     *   repair     → none stored per-step → always null (hidden)
+     *
+     * Previously this method fell back to `di.updatedAt` for "done" steps,
+     * which was misleading — updatedAt is the last write of ANY field,
+     * not the moment the step completed.
+     */
+    getFlowTimestamp(step: 'diagnostic' | 'admin' | 'magasin' | 'repair'): string | null {
+        if (step === 'admin' && this.adminSentAt) {
+            return this.formatDateTime(this.adminSentAt);
+        }
+        if (step === 'magasin' && this.magasinConfirmedAt) {
+            return this.formatDateTime(this.magasinConfirmedAt);
+        }
+        return null;
+    }
+
+    getCoordinatorActionMode(): 'diagnostic' | 'repair' | 'none' {
+        if (!this.diag_condition) return 'diagnostic';
+        if (!this.rep_condition) return 'repair';
+        return 'none';
+    }
+
+    assignTechnician(tech: any) {
+        const mode = this.getCoordinatorActionMode();
+        if (mode === 'diagnostic') {
+            this.selectedTechDiag({ value: tech });
+            return;
+        }
+        if (mode === 'repair') {
+            this.selectedTechRep({ value: tech });
+        }
+    }
+
+    getAssignButtonLabel(): string {
+        const mode = this.getCoordinatorActionMode();
+        if (mode === 'diagnostic') return 'Affecter diagnostic';
+        if (mode === 'repair') return 'Affecter réparation';
+        return 'Affectation indisponible';
+    }
+
+    getCurrentAssignmentStageLabel(): string {
+        const mode = this.getCoordinatorActionMode();
+        if (mode === 'diagnostic') return 'Diagnostic';
+        if (mode === 'repair') return 'Réparation';
+        return 'Aucune étape ouverte';
+    }
+
+    /**
+     * Active DI count per technician, derived from the live diList (real DB
+     * snapshot). Used for the availability badge and for filtering. Returns
+     * 0 if we cannot match the tech (never null/undefined).
+     */
+    getTechActiveDiCount(tech: any): number {
+        const name = this.formatTechName(tech).toLowerCase();
+        if (!name || name === 'n/a') return 0;
+        const activeStatuses = new Set([
+            STATUS_DI.DIAGNOSTIC,
+            'DIAGNOSTIC_Pause',
+            STATUS_DI.INDIAGNOSTIC,
+            STATUS_DI.REPARATION,
+            'REPARATION_Pause',
+            STATUS_DI.INREPARATION,
+            STATUS_DI.PENDING1,
+            STATUS_DI.PENDING3,
+        ]);
+
+        return (this.diList || []).filter((di) => {
+            if (!activeStatuses.has(di?.status)) return false;
+            const diagName = this.formatTableValueFallback(di?.techDiag).toLowerCase();
+            const repName = this.formatTableValueFallback(di?.techRep).toLowerCase();
+            return diagName === name || repName === name;
+        }).length;
+    }
+
+    /**
+     * Availability label derived strictly from real active DI count.
+     * "Charge actuelle" fake percent was removed — only the bucket label
+     * remains because it's computed from real data.
+     */
+    getTechLoadLabel(tech: any): string {
+        const active = this.getTechActiveDiCount(tech);
+        if (active <= 2) return 'Disponible';
+        if (active <= 5) return 'Occupé';
+        return 'Saturé';
+    }
+
+    getTechLoadClass(tech: any): string {
+        const active = this.getTechActiveDiCount(tech);
+        if (active <= 2) return 'sav-tech-status--available';
+        if (active <= 5) return 'sav-tech-status--busy';
+        return 'sav-tech-status--full';
+    }
+
+    /**
+     * Returns the historical avg repair time in days for this tech, or
+     * null if no FINISHED DI exists yet. Populated by fetchTechAvgRepair
+     * from the existing dashboardTechLeaderboard query (Phase A backend).
+     * The UI uses null to HIDE the field entirely.
+     */
+    getTechAvgRepairDays(tech: any): number | null {
+        if (!tech?._id) return null;
+        const v = this.techAvgRepairByTechId[tech._id];
+        return typeof v === 'number' && v > 0 ? Math.round(v * 10) / 10 : null;
+    }
+
+    /**
+     * Filtered tech list (search bar). Empty term → show all.
+     */
+    getFilteredTechList(): any[] {
+        const term = (this.techSearchTerm || '').trim().toLowerCase();
+        const list = this.techList || [];
+        if (!term) return list;
+        return list.filter((t) =>
+            this.formatTechName(t).toLowerCase().includes(term),
+        );
+    }
+
+    /**
+     * True if `tech` is the already-assigned technician for the current
+     * stage (diagnostic or repair). Used for the highlighted-card state.
+     */
+    isTechAssigned(tech: any): boolean {
+        if (!tech) return false;
+        const candidate = this.formatTechName(tech).toLowerCase();
+        if (!candidate || candidate === 'n/a') return false;
+        const mode = this.getCoordinatorActionMode();
+        if (mode === 'diagnostic') {
+            const sel = this.formatTechName(this.selectedTechDiagModel).toLowerCase();
+            const fromDi = this.formatTableValueFallback(this.di?.techDiag).toLowerCase();
+            return candidate === sel || candidate === fromDi;
+        }
+        if (mode === 'repair') {
+            const fromDi = this.formatTableValueFallback(this.di?.techRep).toLowerCase();
+            return candidate === fromDi;
+        }
+        return false;
+    }
+
+    /**
+     * Dynamic phase model — drives the "État actuel du flow" timeline.
+     * Always renders the 5 base phases (Diagnostic, Magasin, Administration,
+     * Réparation, Clôture). Retour 1/2/3 are appended ONLY when the DI is
+     * currently in or past that retour cycle, derived from `di.status` and
+     * `di.ignoreCount` (real DB fields — no fabrication).
+     */
+    getFlowPhases(): Array<{
+        key: string;
+        label: string;
+        number: number;
+        icon: string;
+        state: 'done' | 'current' | 'pending';
+        badgeLabel: string;
+        timestamp: string | null;
+    }> {
+        const status = this.di?.status;
+        const ignoreCount = Number(this.di?.ignoreCount ?? 0);
+        const retourStatuses = ['RETOUR1', 'RETOUR2', 'RETOUR3'];
+        const out: any[] = [];
+
+        // Base phases
+        this.BASE_PHASES.forEach((phase, idx) => {
+            const state = this.computePhaseState(phase, status);
+            out.push({
+                key: phase.key,
+                label: phase.label,
+                number: idx + 1,
+                icon: phase.icon,
+                state,
+                badgeLabel: this.computePhaseBadgeLabel(phase, status, state),
+                timestamp: this.computePhaseTimestamp(phase.key, state),
+            });
+        });
+
+        // Conditional retour phases — only show ones the DI has reached
+        const isInRetour = retourStatuses.includes(status);
+        const retourReached = Math.min(
+            3,
+            Math.max(
+                ignoreCount,
+                isInRetour ? retourStatuses.indexOf(status) + 1 : 0,
+            ),
+        );
+        for (let i = 0; i < retourReached; i++) {
+            const retourStatus = retourStatuses[i];
+            const isCurrent = status === retourStatus;
+            out.push({
+                key: `retour${i + 1}`,
+                label: `Retour ${i + 1}`,
+                number: this.BASE_PHASES.length + i + 1,
+                icon: 'pi pi-refresh',
+                state: isCurrent ? 'current' : 'done',
+                badgeLabel: this.STATUS_LABEL_FR[retourStatus] ?? retourStatus,
+                timestamp: null,
+            });
+        }
+
+        return out;
+    }
+
+    private computePhaseState(
+        phase: { key: string; statuses: string[] },
+        status: string,
+    ): 'done' | 'current' | 'pending' {
+        if (!status) return 'pending';
+        if (phase.statuses.includes(status)) return 'current';
+        const lastPhaseStatus = phase.statuses[phase.statuses.length - 1];
+        const lastIdx = this.ALL_STATUS_ORDER.indexOf(lastPhaseStatus);
+        const currentIdx = this.ALL_STATUS_ORDER.indexOf(status);
+        // Closed phase: only 'done' if we're in a retour AFTER finishing
+        if (phase.key === 'closed') {
+            return currentIdx > lastIdx ? 'done' : 'pending';
+        }
+        return currentIdx > lastIdx ? 'done' : 'pending';
+    }
+
+    private computePhaseBadgeLabel(
+        _phase: { statuses: string[] },
+        status: string,
+        state: 'done' | 'current' | 'pending',
+    ): string {
+        if (state === 'current') return this.STATUS_LABEL_FR[status] ?? status;
+        if (state === 'done') return 'Terminé';
+        return 'En attente';
+    }
+
+    private computePhaseTimestamp(
+        phaseKey: string,
+        state: 'done' | 'current' | 'pending',
+    ): string | null {
+        if (state === 'pending') return null;
+        if (phaseKey === 'admin' && this.adminSentAt) {
+            return this.formatDateTime(this.adminSentAt);
+        }
+        if (phaseKey === 'magasin' && this.magasinConfirmedAt) {
+            return this.formatDateTime(this.magasinConfirmedAt);
+        }
+        if (
+            phaseKey === 'closed' &&
+            state === 'current' &&
+            this.di?.statusUpdatedAt
+        ) {
+            return this.formatDateTime(this.di.statusUpdatedAt);
+        }
+        // No real per-step DB timestamp → hide
+        return null;
+    }
+
+    /** Footer card: human-readable current phase label. */
+    getCurrentPhaseLabel(): string {
+        const current = this.getFlowPhases().find((p) => p.state === 'current');
+        return current ? current.label : 'N/A';
+    }
+
+    /** Footer card: last DB update — uses statusUpdatedAt (real per-status
+     *  timestamp from the Phase 1 backend stagnation hook) with fallback to
+     *  updatedAt. Returns 'N/A' if neither field exists. */
+    getLastUpdateDisplay(): string {
+        const ts = this.di?.statusUpdatedAt ?? this.di?.updatedAt;
+        return ts ? this.formatDateTime(ts) : 'N/A';
+    }
+
+    /** Footer card: who created the DI (closest field we have in DB — no
+     *  `lastModifiedBy` column exists; per safety rule we show N/A when
+     *  the data isn't there rather than fabricate). */
+    getModifiedByDisplay(): string {
+        return this.formatTableValueFallback(this.di?.createdBy);
+    }
+
+    /** Tech card avatar — initials in a colored circle (stable per tech id).
+     *  We don't have real photo URLs in DB; this is a derived display
+     *  element, not a fake DB value. */
+    getTechInitials(tech: any): string {
+        const first = (tech?.firstName ?? '').trim()[0] ?? '';
+        const last = (tech?.lastName ?? '').trim()[0] ?? '';
+        const initials = (first + last).toUpperCase();
+        if (initials) return initials;
+        const name = this.formatTechName(tech);
+        return (name[0] ?? '?').toUpperCase();
+    }
+
+    getTechAvatarColor(tech: any): string {
+        const seed = tech?._id ?? this.formatTechName(tech);
+        let hash = 0;
+        for (let i = 0; i < seed.length; i++) {
+            hash = (hash << 5) - hash + seed.charCodeAt(i);
+        }
+        const palette = [
+            '#3b82f6',
+            '#8b5cf6',
+            '#f59e0b',
+            '#10b981',
+            '#ef4444',
+            '#06b6d4',
+        ];
+        return palette[Math.abs(hash) % palette.length];
+    }
+
+    getTechRoleDisplay(tech: any): string {
+        return tech?.role && typeof tech.role === 'string' ? tech.role : 'N/A';
+    }
+
+    /**
+     * Pull avg repair days per tech from the existing leaderboard query.
+     * No new backend endpoint — reuses Phase A's dashboardTechLeaderboard.
+     * All-time window (no date filter). Failure is silent (degrades to
+     * "field hidden" for every tech) — capture happens server-side.
+     */
+    private fetchTechAvgRepair() {
+        this.techAvgRepairByTechId = {};
+        this.apollo
+            .query<{
+                dashboardTechLeaderboard: Array<{
+                    techId: string;
+                    tatMoyenJours: number;
+                    nbDiClotures: number;
+                }>;
+            }>({
+                query: gql`
+                    query DashboardTechLeaderboardForModal($limit: Int) {
+                        dashboardTechLeaderboard(limit: $limit) {
+                            techId
+                            tatMoyenJours
+                            nbDiClotures
+                        }
+                    }
+                `,
+                variables: { limit: 100 },
+                fetchPolicy: 'no-cache',
+            })
+            .subscribe({
+                next: ({ data }) => {
+                    const rows = data?.dashboardTechLeaderboard ?? [];
+                    const map: Record<string, number> = {};
+                    for (const r of rows) {
+                        // Only keep techs with at least one FINISHED DI — otherwise
+                        // `tatMoyenJours` would be 0 and the UI would mislead.
+                        if (r?.nbDiClotures > 0 && typeof r.tatMoyenJours === 'number') {
+                            map[r.techId] = r.tatMoyenJours;
+                        }
+                    }
+                    this.techAvgRepairByTechId = map;
+                },
+                error: () => {
+                    // Silent — UI will hide the "Temps moyen réparation" tile
+                    // for every tech, which is the correct N/A behavior.
+                    this.techAvgRepairByTechId = {};
+                },
+            });
+    }
+
+    getModalInfoValue(field: 'id' | 'client' | 'location' | 'status'): string {
+        if (field === 'id') return this.di?._idnum || this.di?._id || 'N/A';
+        if (field === 'client') {
+            const company = this.formatTableValueFallback(this.di?.company_id);
+            if (company !== 'N/A') return company;
+            return this.formatTableValueFallback(this.di?.client_id);
+        }
+        if (field === 'location') {
+            return (
+                this.di?.location_name ||
+                this.formatTableValueFallback(this.di?.location_id)
+            );
+        }
+        return this.di?.status || 'N/A';
     }
 
     showDialogForPricing() {
@@ -782,18 +1353,25 @@ export class CoordinatorDiListComponent implements OnDestroy {
             header: "Confirmation d'envoie",
             icon: 'pi pi-question-circle',
             accept: () => {
+                if (this.adminSentAt || this.pricingRequestInFlight) {
+                    return;
+                }
+                this.pricingRequestInFlight = true;
                 this.apollo
                     .mutate<any>({
-                        mutation: this.ticketSerice.changeStatusPricing(
+                        mutation: this.ticketSerice.sendDiToAdminsForPricing(
                             this.di._id,
                         ),
                     })
+                    .pipe(finalize(() => (this.pricingRequestInFlight = false)))
                     .subscribe(({ data, loading }) => {
                         this.isLoading = loading;
 
-                        if (data) {
+                        if (data?.sendDiToAdminsForPricing) {
+                            const updated = data.sendDiToAdminsForPricing;
+                            this.adminSentAt = updated.pricingRequestSentAt;
+                            this.di = { ...this.di, ...updated };
                             this.loadData();
-                            this.diDialog = false;
                         }
                     });
             },
@@ -806,22 +1384,32 @@ export class CoordinatorDiListComponent implements OnDestroy {
             header: 'Confirmation Magasin',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
+                if (this.magasinConfirmedAt || this.componentsConfirmInFlight) {
+                    return;
+                }
+                this.componentsConfirmInFlight = true;
                 this.apollo
                     .mutate<any>({
                         mutation:
-                            this.ticketSerice.componentConfirmedFromCoordinator(
+                            this.ticketSerice.confirmDiComponents(
                                 this.di._id,
                             ),
                     })
+                    .pipe(
+                        finalize(() => (this.componentsConfirmInFlight = false)),
+                    )
                     .subscribe(({ data, loading }) => {
                         this.isLoading = loading;
 
-                        if (data) {
+                        if (data?.confirmDiComponents) {
                             console.log('🌯[data]:', data);
+                            const updated = data.confirmDiComponents;
                             this.componentConfirmedFromCoordinator =
-                                data.componentConfirmedFromCoordinator.handleSendingNotificationBetweenCoordinatorAndMagasin;
+                                updated.handleSendingNotificationBetweenCoordinatorAndMagasin;
+                            this.magasinConfirmedAt =
+                                updated.componentsConfirmedAt;
+                            this.di = { ...this.di, ...updated };
                             this.loadData();
-                            this.diDialog = false;
                             this.reperationCondition = true;
                         }
                     });

@@ -170,6 +170,10 @@ export class TicketService {
           company_id
           client_id
           location_id
+          pricingRequestSentAt
+          pricingRequestSentBy
+          componentsConfirmedAt
+          componentsConfirmedBy
           logs {
             idIgnore
             isSentToCoordinator
@@ -221,6 +225,10 @@ export class TicketService {
                         ignoreCount
                         createdBy
                         handleSendingNotificationBetweenCoordinatorAndMagasin
+                        pricingRequestSentAt
+                        pricingRequestSentBy
+                        componentsConfirmedAt
+                        componentsConfirmedBy
                         logs{idIgnore isSentToCoordinator isConfirmedComponentFromCoordinator handleSendingNotificationBetweenCoordinatorAndMagasin}
                         location_id
                         di_category_id
@@ -1160,6 +1168,18 @@ export class TicketService {
             }
         `;
     }
+    sendDiToAdminsForPricing(_id: string) {
+        return gql`
+            mutation {
+                sendDiToAdminsForPricing(diId: "${_id}") {
+                    _id
+                    status
+                    pricingRequestSentAt
+                    pricingRequestSentBy
+                }
+            }
+        `;
+    }
     changeStatusNegociate1(_id: string) {
         return gql`
             mutation {
@@ -1248,6 +1268,8 @@ export class TicketService {
                     isSentToCoordinator
                     isConfirmedComponentFromCoordinator
                     handleSendingNotificationBetweenCoordinatorAndMagasin
+                    componentsConfirmedAt
+                    componentsConfirmedBy
                 }
             }
         `;
@@ -1266,6 +1288,28 @@ export class TicketService {
                     isSentToCoordinator
                     isConfirmedComponentFromCoordinator
                     handleSendingNotificationBetweenCoordinatorAndMagasin
+                    componentsConfirmedAt
+                    componentsConfirmedBy
+                }
+            }
+        `;
+    }
+
+    confirmDiComponents(_id: string) {
+        return gql`
+            mutation {
+                confirmDiComponents(diId: "${_id}") {
+                    _id
+                    array_composants {
+                        nameComposant
+                        quantity
+                        isUpdated
+                    }
+                    isSentToCoordinator
+                    isConfirmedComponentFromCoordinator
+                    handleSendingNotificationBetweenCoordinatorAndMagasin
+                    componentsConfirmedAt
+                    componentsConfirmedBy
                 }
             }
         `;
