@@ -1,0 +1,26 @@
+<ng-container *ngIf="visible">
+<app-repair-modal
+    *ngIf="repairContext as ctx"
+    [visible]="visible"
+    (visibleChange)="setRepairModalVisible($event)"
+    [context]="ctx"
+    [steps]="repairSteps"
+    [activeStep]="activeRepairStep"
+    [progress]="repairProgress"
+    [clientLine]="clientLine"
+    [categoryLabel]="categoryLabel"
+    [repairPlan]="repairPlanValue"
+    [repairSuccess]="repairSuccessLabel"
+    [testsValidated]="testsValidatedLabel"
+    [warrantyLabel]="warrantyLabel"
+    [elapsedLabel]="elapsedLabel"
+    [headerStatusTone]="headerStatusTone"
+    [canMinimize]="canMinimize"
+    (pauseClicked)="onRepairPause()"
+    (minimizeClicked)="onRepairMinimize()"
+    (stepChanged)="onRepairStepChange($event)"
+    (addPart)="onRepairAddPart()"
+    (removePart)="onRepairRemovePart($event)"
+    (finishRepair)="onRepairFinish()"
+></app-repair-modal>
+</ng-container>

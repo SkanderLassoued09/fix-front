@@ -1,4 +1,10 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import {
+    ChangeDetectorRef,
+    Component,
+    DoCheck,
+    OnDestroy,
+    OnInit,
+} from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
@@ -21,6 +27,16 @@ import {
     rowHasLoadedComposants,
     trackByColumn,
 } from '../../table-display.utils';
+import {
+    AutosaveHint,
+    CategoryOption,
+    ComposantOption,
+    DiagnosticContext,
+    DiagnosticDiSummary,
+    DiagnosticProgress,
+    DiagnosticStep,
+    DiagnosticStepKey,
+} from './diagnostic-modal/diagnostic-modal.types';
 
 type TechDialogMode = 'diagnostic' | 'repair';
 
@@ -48,6 +64,7 @@ interface PersistedTechDialogState {
      * without this flag are treated as running for backward compatibility.
      */
     wasRunning?: boolean;
+    status?: string;
     statSnapshot?: any;
     diagFormValue?: any;
     repairFormValue?: any;
@@ -73,6 +90,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private pendingRestoredDialogState: PersistedTechDialogState | null = null;
     private diagnosticTimerId: any = null;
     private repairTimerId: any = null;
+    private dialogAutoSaveTimerId: any = null;
+    private activeDiagnosticDraft = false;
+    private diagCategorySourceRef: any[] | null = null;
+    private diagCategoryOptionsCache: CategoryOption[] = [];
+    private diagComposantSourceRef: any[] | null = null;
+    private diagComposantOptionsCache: ComposantOption[] = [];
 
     baseUrl = environment.apiUrl;
     selectedComposants: any[] = [];
@@ -80,6 +103,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         _idDi: new FormControl(),
         diag_time: new FormControl(),
         remarqueTech: new FormControl(''),
+        // New diagnostic-modal fields (UI only — not yet wired to backend
+        // mutations). The redesigned wizard separates "description /
+        // symptômes / remarque" into three distinct textareas. The legacy
+        // `finish()` / `finishLogsDi()` mutations still consume only
+        // `remarqueTech`; the other two stay local until the backend is
+        // ready to receive them.
+        symptomes: new FormControl(''),
+        remarqueExtra: new FormControl(''),
         isPdr: new FormControl(true),
         isReparable: new FormControl(true),
         isErrorFromFixtronix: new FormControl(false),
@@ -88,6 +119,309 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         di_category_id: new FormControl(),
         composantSelected: new FormControl(),
     });
+
+    /** Active step in the redesigned 5-step diagnostic wizard. */
+    activeDiagStep: DiagnosticStepKey = 'failure';
+    diagModalVisibleVm = false;
+    diagContextVm: DiagnosticContext | null = null;
+    diagStepsVm: readonly DiagnosticStep[] = [];
+    diagProgressVm: DiagnosticProgress = {
+        completedSteps: 0,
+        totalSteps: 0,
+        percent: 0,
+    };
+    diagAutosaveVm: AutosaveHint = {
+        state: 'idle',
+        lastSavedAt: null,
+    };
+    diagClientLineVm = '';
+    diagReparableLabelVm = 'Non défini';
+    diagPdrLabelVm = 'Non défini';
+    diagCategoryLabelVm = '';
+    diagHeaderStatusToneVm: 'running' | 'paused' | 'info' | 'neutral' =
+        'neutral';
+    diagCanMinimizeVm = false;
+
+    /**
+     * Feature flag for the legacy single-screen diagnostic dialog. Set to
+     * false now that the redesigned wizard (<app-diagnostic-modal>) is the
+     * canonical UI. The old `<p-dialog>` markup remains in the template so
+     * its TS-side bindings keep compiling — its `*ngIf` just never matches.
+     * Flip back to `true` to re-enable the legacy view if needed.
+     */
+    readonly legacyDiagModalEnabled = false;
+
+    /**
+     * Same gate for the repair flow — the new `<app-tech-repair-list>`
+     * modal is now the canonical UI. The legacy `<p-dialog>` markup
+     * remains so its `diDialogRep` bindings keep compiling; its `*ngIf`
+     * just never matches. Flip back to `true` to re-enable the legacy view.
+     */
+    readonly legacyRepModalEnabled = false;
+
+    /** Controls the new redesigned repair modal. Mirrors `diagModalVisibleVm`. */
+    showRepairModal = false;
+
+    /** Snapshot of the row's DI passed to `<app-tech-repair-list>` when opened. */
+    repairDiInputVm: DiagnosticDiSummary | null = null;
+
+    /** True when the modal should open with the timer already paused (status === REPARATION_Pause). */
+    repairInitiallyPaused: boolean = false;
+
+    /**
+     * Map a loosely-typed row payload into the strict `DiagnosticDiSummary`
+     * shape expected by the new repair modal. Mirrors the implicit shape
+     * the diagnostic modal feeds through `diagContextVm`.
+     */
+    /**
+     * Optimistic row-level patch — when the user pauses/resumes inside an
+     * open wizard, mutate the matching row in `techList` so the status
+     * chip + tooltip + disabled buttons reflect the new state IMMEDIATELY,
+     * before the Apollo round-trip + WS broadcast lands.
+     *
+     * This is the front-half of a two-step sync: the server-truth refresh
+     * (`ticketRefreshService.requestRefresh('tech-list', …)`) runs in
+     * parallel as the back-half. If they disagree, the refresh wins.
+     *
+     * Without this, the new status only appears after the 350ms debounced
+     * refresh completes — long enough for the user to perceive the UI as
+     * stale.
+     *
+     * Returns a NEW array (reference change) so any future migration to
+     * OnPush on the list table picks up the diff cheaply.
+     */
+    private patchTechListRowStatus(diId: string, newStatus: string): void {
+        if (!diId || !Array.isArray(this.techList) || this.techList.length === 0) {
+            return;
+        }
+        // Use the friendly French label so the row chip reads "En pause" /
+        // "En cours" instead of the raw enum code.
+        const label = this.formatHeaderStatus(newStatus);
+        let touched = false;
+        this.techList = this.techList.map((row) => {
+            if (!row) return row;
+            const matches =
+                row._id === diId ||
+                row._idDi === diId ||
+                row._idnum === diId;
+            if (!matches) return row;
+            touched = true;
+            return { ...row, status: newStatus, statusLabel: label };
+        });
+        if (touched) {
+            this.cdr.markForCheck();
+        }
+    }
+
+    /**
+     * Request a fresh `tech-list` query from the server. The
+     * `ticketRefreshService` already debounces at 350ms across emitters,
+     * so calling this from multiple sites (pause/resume/WS handler) is
+     * safe — duplicate requests collapse to a single fetch.
+     */
+    private requestTechListRefresh(source: string): void {
+        this.ticketRefreshService.requestRefresh('tech-list', { source });
+    }
+
+    /**
+     * Mutual-exclusion helper — called at the top of `diagModal()` and
+     * `repModal()` so opening one wizard always closes the other. The
+     * persisted localStorage state is left intact: the user can still
+     * reopen the closed wizard later (manually via the row button or
+     * automatically on the next session restore). What we kill is only
+     * the *visible* modal — its form values were already autosaved at
+     * 1Hz so no data is lost.
+     */
+    private closeOppositeModal(opening: 'diagnostic' | 'repair'): void {
+        if (opening === 'diagnostic') {
+            // Tear down any open repair modal (new wizard + legacy flag).
+            this.showRepairModal = false;
+            this.diDialogRep = false;
+            this.repairDiInputVm = null;
+        } else {
+            // Tear down any open diagnostic modal. We can't rely on
+            // `selectedDi` here because the caller (`repModal`) has already
+            // reassigned it to the repair DI's id by the time we run, so
+            // checking `diDialogDiag[selectedDi]` would test the wrong key.
+            // Iterate the whole map instead — only one entry can be true at
+            // a time anyway.
+            this.diagModalVisibleVm = false;
+            this.diagContextVm = null;
+            if (this.diDialogDiag) {
+                for (const k of Object.keys(this.diDialogDiag)) {
+                    this.diDialogDiag[k] = false;
+                }
+            }
+            // Drop the pending restore hint for diagnostic so the restore
+            // pipeline doesn't immediately re-open it on the next change-
+            // detection cycle.
+            if (this.pendingRestoredDialogState?.mode === 'diagnostic') {
+                this.pendingRestoredDialogState = null;
+            }
+        }
+    }
+
+    /**
+     * Handler for the redesigned repair wizard's pause button. Mirrors
+     * `onDiagPause()` for the diagnostic flow — branches between pause and
+     * resume based on the current repair status, and updates the local
+     * `di.status` so the header tone (paused/orange vs running/green) flips
+     * immediately while the Apollo mutations are in flight.
+     *
+     * - When the repair stopwatch is running → fire
+     *   `lapTimeForPauseAndGetBack1(false, keepOpen=true)` which saves the
+     *   lap, calls `setDiInReparationPause` to transition the DI to
+     *   REPARATION_Pause server-side, but skips the legacy
+     *   `diDialogRep = false` that would close the new modal.
+     * - When already paused → fire `changeStatusInReparation` to transition
+     *   back to INREPARATION and resume the local timer state.
+     */
+    onRepairModalPause(): void {
+        const currentStatus = this.di?.status ?? '';
+        console.log(
+            '[REPAIR][HOST] onRepairModalPause entered. currentStatus=',
+            currentStatus,
+            'this.di=',
+            this.di
+                ? {
+                      _id: this.di._id,
+                      _idDi: (this.di as any)._idDi,
+                      status: this.di.status,
+                  }
+                : null,
+            'selectedRep=',
+            this.selectedRep,
+            'statId=',
+            this.statId,
+        );
+
+        // Status is the authoritative source — branch on it first so we can't
+        // accidentally re-pause a ticket that the server already considers
+        // paused (which would corrupt the pause log + time accumulator), or
+        // resume one that's already running.
+        if (currentStatus === 'REPARATION_Pause') {
+            // Paused -> Resume.
+            // Optimistic UI first: list row + open `di` flip instantly
+            // (no waiting on the mutation round-trip or WS broadcast).
+            // Server-truth reconcile fires in parallel via the refresh
+            // service.
+            console.log(
+                '[onRepairModalPause][resume] di=',
+                this.di
+                    ? {
+                          _id: this.di._id,
+                          _idDi: (this.di as any)._idDi,
+                          status: this.di.status,
+                      }
+                    : null,
+                'selectedRep=',
+                this.selectedRep,
+                'statId=',
+                this.statId,
+            );
+            if (this.di) {
+                this.di = { ...this.di, status: 'INREPARATION' };
+                this.repairDiInputVm = this.mapDiToRepairSummary(this.di);
+            }
+            this.patchTechListRowStatus(this.di?._id, 'INREPARATION');
+
+            // Close the open pause log first (stops backend pause accrual),
+            // then transition the status back to INREPARATION.
+            const openLog = this.getCurrentPauseLog(this.di?.pauseLogs);
+            if (openLog && this.di?._id) {
+                this.updatePauseLog(this.di._id, openLog._id);
+            }
+            // Mirror the diagnostic pattern: use the stable `selectedRep`
+            // captured in `repModal()` rather than re-reading `_idDi` off
+            // the optimistically-mutated `this.di`. `selectedRep` is set
+            // once at modal open and matches what the pause mutation uses.
+            const diId =
+                this.selectedRep || (this.di as any)?._idDi;
+            console.log(
+                '[onRepairModalPause][resume] firing changeStatusInReparation with diId=',
+                diId,
+                'selectedRep=',
+                this.selectedRep,
+            );
+            if (diId) {
+                this.changeStatusInReparation(diId);
+            } else {
+                console.error(
+                    '[onRepairModalPause][resume] ABORT — no Di id available',
+                );
+            }
+            this.startStopwatch1();
+            this.persistActiveDialogState('repair');
+            this.requestTechListRefresh('action:repair-resume');
+            return;
+        }
+
+        // Active -> Pause: optimistic UI, then persist + transition to
+        // REPARATION_Pause.
+        if (this.di) {
+            this.di = { ...this.di, status: 'REPARATION_Pause' };
+            this.repairDiInputVm = this.mapDiToRepairSummary(this.di);
+        }
+        this.patchTechListRowStatus(this.di?._id, 'REPARATION_Pause');
+        this.lapTimeForPauseAndGetBack1(false, /* keepOpen */ true);
+        this.requestTechListRefresh('action:repair-pause');
+    }
+
+    /**
+     * Bridge handler — when the new repair wizard's visibility flips, mirror
+     * the change on the legacy `diDialogRep` flag so any downstream legacy
+     * code paths reading it (timer pause-on-close, persistence) see a
+     * consistent state.
+     */
+    onRepairModalVisibleChange(v: boolean): void {
+        this.showRepairModal = v;
+        this.diDialogRep = v;
+        if (!v) {
+            this.repairDiInputVm = null;
+        }
+    }
+
+    private mapDiToRepairSummary(di: any): DiagnosticDiSummary {
+        return {
+            _id: di?._id ?? '',
+            _idnum: di?._idnum ?? '',
+            title: di?.title ?? '',
+            description: di?.description ?? '',
+            status: di?.status ?? '',
+            statusLabel: this.formatHeaderStatus(di?.status, di?.statusLabel),
+            clientName: di?.clientName ?? di?.client?.name ?? '',
+            clientPhone: di?.clientPhone ?? di?.client?.phone ?? '',
+            companyName: di?.companyName ?? di?.company?.name ?? '',
+            locationName: di?.locationName ?? di?.location?.name ?? '',
+            technicianName:
+                di?.technicianName ?? di?.id_tech_rep?.username ?? '',
+            remarqueManager: di?.remarqueManager ?? '',
+        };
+    }
+
+    /**
+     * Map a raw backend status code (DIAGNOSTIC_Pause, INREPARATION, …)
+     * into the user-facing label rendered inside the modal header pill.
+     *
+     * The user wants the same wording as the diagnostic flow:
+     * "En pause" for any *_Pause state and "En cours" for any active
+     * processing state. (The pill CSS already applies
+     * `text-transform: uppercase`, so the visible result reads
+     * "EN PAUSE" / "EN COURS".)
+     *
+     * Anything else falls back to whatever label the backend sent so we
+     * don't accidentally hide a meaningful status.
+     */
+    private formatHeaderStatus(
+        status: string | null | undefined,
+        fallbackLabel?: string | null,
+    ): string {
+        const s = (status ?? '').toString();
+        if (!s) return fallbackLabel ?? 'N/A';
+        if (s.endsWith('_Pause')) return 'En pause';
+        if (s === 'INREPARATION' || s === 'INDIAGNOSTIC') return 'En cours';
+        return fallbackLabel ?? s;
+    }
 
     composantTechnicien = new FormGroup({
         _idComposant: new FormControl(),
@@ -275,11 +609,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
 
         this.diagFormTech.valueChanges
-            .pipe(takeUntil(this.destroy$))
-            .subscribe(() => this.persistActiveDialogState());
+            .pipe(debounceTime(150), takeUntil(this.destroy$))
+            .subscribe(() => {
+                this.persistActiveDialogState();
+                this.refreshDiagnosticVm();
+            });
 
         this.remarque.valueChanges
-            .pipe(takeUntil(this.destroy$))
+            .pipe(debounceTime(150), takeUntil(this.destroy$))
             .subscribe(() => this.persistActiveDialogState());
 
         this.ticketRefreshService
@@ -297,12 +634,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
 
         this.subscribeToTechAssignmentNotifications();
+        this.startDialogAutoSave();
 
         // Initial load
         this.loadData();
     }
 
     ngOnDestroy() {
+        this.stopDialogAutoSave();
         this.stopDiagnosticTimer();
         this.stopRepairTimer();
         this.destroy$.next();
@@ -1128,6 +1467,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             ? this.computeLiveElapsedDiag()
             : this.computeLiveElapsedRep();
         const wasRunning = isDiagnostic ? this.isRunning : this.isRunning1;
+        const status = isDiagnostic
+            ? this.di?.status || this.diStatus
+            : undefined;
+        const snapshot = statSnapshot || this.di;
 
         const state: PersistedTechDialogState = {
             mode: activeMode,
@@ -1137,7 +1480,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             savedAt: Date.now(),
             initialElapsedMs: liveAccumulatedMs,
             wasRunning,
-            statSnapshot: statSnapshot || this.di,
+            status,
+            statSnapshot: snapshot
+                ? {
+                      ...snapshot,
+                      status: status || snapshot.status,
+                  }
+                : snapshot,
             diagFormValue: this.diagFormTech.value,
             repairFormValue: this.remarque.value,
             composantCombo: this.composantCombo || [],
@@ -1158,6 +1507,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return 'diagnostic';
         }
 
+        if (this.activeDiagnosticDraft && this.selectedDi && this.selectedDi_id) {
+            return 'diagnostic';
+        }
+
         if (this.diDialogRep) {
             return 'repair';
         }
@@ -1165,11 +1518,34 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         return null;
     }
 
+    private startDialogAutoSave(): void {
+        if (this.dialogAutoSaveTimerId) {
+            return;
+        }
+
+        this.dialogAutoSaveTimerId = window.setInterval(() => {
+            this.persistActiveDialogState();
+        }, 1000);
+    }
+
+    private stopDialogAutoSave(): void {
+        if (!this.dialogAutoSaveTimerId) {
+            return;
+        }
+
+        clearInterval(this.dialogAutoSaveTimerId);
+        this.dialogAutoSaveTimerId = null;
+    }
+
     private clearPersistedDialogState(mode?: TechDialogMode): void {
         const existing = this.readPersistedDialogState();
 
         if (!existing || !mode || existing.mode === mode) {
             localStorage.removeItem(this.dialogStateStorageKey);
+        }
+
+        if (!mode || mode === 'diagnostic') {
+            this.activeDiagnosticDraft = false;
         }
     }
 
@@ -1256,30 +1632,34 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // the timer: the new run leg starts at Date.now() with offset =
         // last-saved accumulated, so the first tick displays exactly
         // initialElapsedMs and counts forward from there.
-        const savedAccumulatedMs = state.initialElapsedMs || 0;
-        // Older persisted entries didn't carry wasRunning — fall back to
-        // resuming so we don't accidentally freeze a timer that was live.
         const wasRunning =
             state.wasRunning !== undefined ? !!state.wasRunning : true;
+        const savedAccumulatedMs =
+            (state.initialElapsedMs || 0) +
+            (wasRunning ? Math.max(0, Date.now() - (state.savedAt || Date.now())) : 0);
+        // Older persisted entries didn't carry wasRunning — fall back to
+        // resuming so we don't accidentally freeze a timer that was live.
 
         if (mode === 'diagnostic') {
             this.stopDiagnosticTimer();
+            if (state.status) {
+                this.diStatus = state.status;
+                if (this.di) {
+                    this.di = {
+                        ...this.di,
+                        status: state.status,
+                    };
+                }
+            }
             this.initialOffset = savedAccumulatedMs;
             this.startTime = 0;
             this.isRunning = false;
             // Render the saved value immediately while paused.
-            const elapsed = this.computeLiveElapsedDiag();
-            this.minutes = this.padZero(
-                Math.floor(elapsed / (1000 * 60 * 60)),
-            );
-            this.seconds = this.padZero(
-                Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60)),
-            );
-            this.milliseconds = this.padZero(
-                Math.floor((elapsed % (1000 * 60)) / 1000),
-            );
+            this.renderDiagnosticElapsed(this.computeLiveElapsedDiag());
             if (wasRunning) {
                 this.startStopwatch();
+            } else {
+                this.refreshDiagnosticVm();
             }
         } else {
             this.stopRepairTimer();
@@ -1314,20 +1694,29 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     getCurrentPauseLog(pauseLogs) {
-        const findNull = pauseLogs.find((log) => log.pauseEnd === null);
+        const findNull = (pauseLogs ?? []).find((log) => log.pauseEnd === null);
         return findNull;
     }
 
     async diagModal(di) {
         this.composantSelected = null;
+        // Mutual exclusion — opening a diagnostic must close any open repair
+        // modal. Without this, the persisted-state restoration on init can
+        // open the repair modal first, and then a user-triggered diagnostic
+        // would stack on top. The autosave (1Hz) has already flushed any
+        // in-flight repair form changes so closing here is safe.
+        this.closeOppositeModal('diagnostic');
 
         try {
-            if (di.status === 'DIAGNOSTIC_Pause') {
-                const getLog = this.getCurrentPauseLog(di.pauseLogs);
-                if (getLog) {
-                    await this.updatePauseLog(di._id, getLog._id);
-                }
-            }
+            const isRestoringDiagnostic =
+                this.pendingRestoredDialogState?.mode === 'diagnostic' &&
+                this.pendingRestoredDialogState.statId === di._id;
+
+            // NOTE: do NOT call `updatePauseLog` here. Same reason as
+            // `repModal`: stamping `pauseEnd: now()` on the open log makes
+            // the backend treat this as a resume, silently flipping the
+            // status back to INDIAGNOSTIC. The resume call lives in
+            // `onDiagPause()` under the "Paused -> Resume" branch.
 
             const promises = [];
 
@@ -1347,7 +1736,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 .toPromise();
             promises.push(diagnosticDataPromise);
 
-            promises.push(this.changeStatus(di._idDi));
+            // Don't auto-transition to INDIAGNOSTIC if the user is reopening a
+            // paused ticket — the explicit Resume button is the only path
+            // out of DIAGNOSTIC_Pause. Skipping this also matches the
+            // symmetric guard in repModal() for REPARATION_Pause.
+            if (!isRestoringDiagnostic && di?.status !== 'DIAGNOSTIC_Pause') {
+                promises.push(this.changeStatus(di._idDi));
+            }
             promises.push(this.getTimeSpent(di._id));
             promises.push(this.getImage(di._idDi));
             promises.push(this.getAllRemarque(di._idDi));
@@ -1403,8 +1798,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.ignoreCount = di.ignoreCount;
 
                 this.diDialogDiag[di._id] = true;
+                this.diagModalVisibleVm = true;
+                this.activeDiagnosticDraft = true;
                 this.persistActiveDialogState('diagnostic', di);
                 this.updateDisableValues();
+                this.refreshDiagnosticVm();
             }
         } catch (error) {
             console.error('Error in diagModal:', error);
@@ -1424,37 +1822,50 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private processDiagnosticWithLogs(di, detailsLogs) {
         const dataLogs = this.getHighestIdIgnore(detailsLogs);
 
-        this.diagFormTech.patchValue({
-            _idDi: di._id,
-            diag_time: di.diag_time || dataLogs.diag_time || '',
-            remarqueTech:
-                di.remarqueTech || dataLogs.remarque_tech_diagnostic || '',
-            isPdr: di.isPdr || dataLogs.contain_pdr || true,
-            di_category_id:
-                di.di_category_id || dataLogs.di_category_id || true,
-            isReparable: di.isReparable || dataLogs.can_be_repaired || true,
-            quantity: di.quantity || 0,
-            composantSelectedDropdown:
-                di.composantSelectedDropdown ?? dataLogs.array_composants,
-        });
+        this.diagFormTech.patchValue(
+            {
+                _idDi: di._id,
+                diag_time: di.diag_time || dataLogs.diag_time || '',
+                remarqueTech:
+                    di.remarqueTech ||
+                    dataLogs.remarque_tech_diagnostic ||
+                    '',
+                isPdr: di.isPdr || dataLogs.contain_pdr || true,
+                di_category_id:
+                    di.di_category_id || dataLogs.di_category_id || true,
+                isReparable:
+                    di.isReparable || dataLogs.can_be_repaired || true,
+                quantity: di.quantity || 0,
+                composantSelectedDropdown:
+                    di.composantSelectedDropdown ?? dataLogs.array_composants,
+            },
+            { emitEvent: false },
+        );
 
         this.composantCombo = dataLogs.array_composants;
         this.allComposantLogsAndOriginal = [...dataLogs.array_composants];
     }
 
     private processDiagnosticWithoutLogs(di, detailsDi) {
-        this.diagFormTech.patchValue({
-            _idDi: di._id,
-            diag_time: di.diag_time || detailsDi.diag_time || '',
-            remarqueTech:
-                di.remarqueTech || detailsDi.remarque_tech_diagnostic || '',
-            isPdr: di.isPdr || detailsDi.contain_pdr || true,
-            isReparable: di.isReparable || detailsDi.can_be_repaired || true,
-            di_category_id: di.di_category_id || detailsDi.di_category_id || '',
-            quantity: di.quantity || 0,
-            composantSelectedDropdown:
-                di.composantSelectedDropdown ?? detailsDi.array_composants,
-        });
+        this.diagFormTech.patchValue(
+            {
+                _idDi: di._id,
+                diag_time: di.diag_time || detailsDi.diag_time || '',
+                remarqueTech:
+                    di.remarqueTech ||
+                    detailsDi.remarque_tech_diagnostic ||
+                    '',
+                isPdr: di.isPdr || detailsDi.contain_pdr || true,
+                isReparable:
+                    di.isReparable || detailsDi.can_be_repaired || true,
+                di_category_id:
+                    di.di_category_id || detailsDi.di_category_id || '',
+                quantity: di.quantity || 0,
+                composantSelectedDropdown:
+                    di.composantSelectedDropdown ?? detailsDi.array_composants,
+            },
+            { emitEvent: false },
+        );
 
         this.composantCombo = detailsDi.array_composants.map((composant) => ({
             ...composant,
@@ -1478,13 +1889,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     repModal(di) {
-        if (di.status === 'REPARATION_Pause') {
-            const getLog = this.getCurrentPauseLog(di.pauseLogs);
-
-            if (getLog) {
-                this.updatePauseLog(di._id, getLog._id);
-            }
-        }
+        // NOTE: do NOT call `updatePauseLog` here even if the DI is in
+        // REPARATION_Pause. That mutation stamps `pauseEnd: now()` on the
+        // open pause log, which the backend treats as "user resumed work" —
+        // transitioning the DI back to INREPARATION on the next refresh.
+        // The user must explicitly click Reprendre to end the pause. The
+        // resume call lives in `onRepairModalPause()`.
         this.getDataStatsByIdDi(di._idDi);
         this._idnum = di._idnum;
         this.selectedRep = di._idDi;
@@ -1584,11 +1994,30 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.ignoreCount = di.ignoreCount;
         this.resetModalForm();
         this.selectedDi = di._id;
+        // Mutual exclusion — opening a repair must close any open diagnostic.
+        // Otherwise a restored-on-init diagnostic stacks under the manually-
+        // opened repair, leaving two modals visible at once.
+        this.closeOppositeModal('repair');
         this.diDialogRep = true;
+        // Mirror what diagModal() does for the diagnostic flow: snapshot the
+        // row into a normalized DI summary and flip the new redesigned modal
+        // open. The legacy `<p-dialog>` above is gated by
+        // `legacyRepModalEnabled` so only the new wizard renders.
+        this.repairDiInputVm = this.mapDiToRepairSummary(di);
+        // Hint the modal to start paused if the DI is already in
+        // REPARATION_Pause — otherwise the timer would tick while showing
+        // a paused server status.
+        this.repairInitiallyPaused = di?.status === 'REPARATION_Pause';
+        this.showRepairModal = true;
         this.persistActiveDialogState('repair', di);
         this.getTimeSpentRep(di._id);
         this.getImage(di._idDi);
-        this.changeStatusInReparation(di._idDi);
+        // Only transition the DI to INREPARATION when it's NOT already paused.
+        // Otherwise reopening a paused ticket would silently revive it on the
+        // server and the user's pause would be lost.
+        if (di?.status !== 'REPARATION_Pause') {
+            this.changeStatusInReparation(di._idDi);
+        }
         this.getAllRemarque(di._idDi);
         this.apollo
             .query<any>({
@@ -1738,14 +2167,30 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     changeStatusInReparation(_id) {
+        console.log(
+            '[changeStatusInReparation] Apollo mutate _id=',
+            _id,
+        );
         this.apollo
             .mutate<Boolean>({
                 mutation: this.ticketSerice.changeStatusInRepair(_id),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                }
+            .subscribe({
+                next: ({ data, loading }) => {
+                    console.log(
+                        '[changeStatusInReparation] response data=',
+                        data,
+                        'loading=',
+                        loading,
+                    );
+                    this.isLoading = loading;
+                },
+                error: (err) => {
+                    console.error(
+                        '[changeStatusInReparation] GraphQL error:',
+                        err,
+                    );
+                },
             });
     }
 
@@ -1772,6 +2217,28 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             (this.initialOffset1 || 0) +
             (running ? Math.max(0, Date.now() - this.startTime1) : 0)
         );
+    }
+
+    private renderDiagnosticElapsed(elapsedTime: number): void {
+        this.minutes = this.padZero(
+            Math.floor(elapsedTime / (1000 * 60 * 60)),
+        );
+        this.seconds = this.padZero(
+            Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60)),
+        );
+        this.milliseconds = this.padZero(
+            Math.floor((elapsedTime % (1000 * 60)) / 1000),
+        );
+    }
+
+    private markDiagnosticPausedFrontend(): void {
+        this.diStatus = 'DIAGNOSTIC_Pause';
+        if (this.di) {
+            this.di = {
+                ...this.di,
+                status: 'DIAGNOSTIC_Pause',
+            };
+        }
     }
 
     startStopwatch() {
@@ -1828,18 +2295,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
         const tick = () => {
             const elapsedTime = this.computeLiveElapsedDiag();
-            this.minutes = this.padZero(
-                Math.floor(elapsedTime / (1000 * 60 * 60)),
-            );
-            this.seconds = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60)),
-            );
-            this.milliseconds = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60)) / 1000),
-            );
+            this.renderDiagnosticElapsed(elapsedTime);
             // Persist live accumulated every tick so a crash loses at most
             // ~1s of work, never wall-clock idle while disconnected.
             this.persistActiveDialogState();
+            this.refreshDiagnosticVm();
         };
 
         tick();
@@ -2001,6 +2461,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.isLoading = loading;
                 if (data) {
                     this.composantList = data.findAllComposant;
+                    this.refreshDiagnosticVm();
                 }
             });
     }
@@ -2055,7 +2516,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     lapTimeForPauseAndGetBack() {
-        this.lap();
+        if (!this.selectedDi || !this.selectedDi_id) {
+            return;
+        }
+
+        this.stopDiagnosticTimer();
+        this.renderDiagnosticElapsed(this.computeLiveElapsedDiag());
+        this.markDiagnosticPausedFrontend();
+        this.lapTime = ` ${this.minutes}:${this.seconds}:${this.milliseconds}`;
+        this.persistActiveDialogState('diagnostic');
+        this.refreshDiagnosticVm();
 
         const formValues = {
             _idDi: this.selectedDi_id,
@@ -2074,6 +2544,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 mutation: this.ticketSerice.finish(formValues),
                 useMutationLoading: true,
             })
+            .pipe(takeUntil(this.destroy$))
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
@@ -2088,10 +2559,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 ),
                 useMutationLoading: true,
             })
+            .pipe(takeUntil(this.destroy$))
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
-                    this.diDialogDiag[this.selectedDi] = false;
+                    this.persistActiveDialogState('diagnostic');
                 }
             });
 
@@ -2102,15 +2574,20 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 ),
                 useMutationLoading: true,
             })
+            .pipe(takeUntil(this.destroy$))
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
+                    this.markDiagnosticPausedFrontend();
+                    this.refreshDiagnosticVm();
+                    this.persistActiveDialogState('diagnostic');
                 }
             });
 
         this.addPauseLogs(this.selectedDi, 'diag');
         this.loadData(); // Use loadData instead of getAllTechDi
-        this.startStopwatch();
+        this.persistActiveDialogState('diagnostic');
+        this.refreshDiagnosticVm();
     }
 
     getDataForTech() {
@@ -2174,6 +2651,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     selectedDropDown(selectedItem) {
         this.composantSelected = selectedItem;
+        this.diagFormTech
+            .get('composantSelected')
+            ?.setValue(selectedItem?.value ?? selectedItem ?? null);
     }
 
     getStatusLabel(status: string): string {
@@ -2263,19 +2743,82 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
     }
 
-    comboComposantandQuantity() {
-        const selectedName = this.composantSelected.value.name;
-        let composantSelected = {
+    private resolveSelectedComposantName(): string | null {
+        const formSelection =
+            this.diagFormTech.get('composantSelected')?.value ?? null;
+        const legacySelection = this.composantSelected ?? null;
+        const selected = formSelection ?? legacySelection?.value ?? legacySelection;
+
+        if (typeof selected === 'string') {
+            return selected.trim() || null;
+        }
+
+        const name = selected?.name ?? selected?.nameComposant ?? null;
+        return typeof name === 'string' && name.trim() ? name.trim() : null;
+    }
+
+    private resolveSelectedQuantity(): number | null {
+        const rawQuantity = this.diagFormTech.get('quantity')?.value;
+        const quantity =
+            typeof rawQuantity === 'number'
+                ? rawQuantity
+                : Number(rawQuantity);
+
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+            return null;
+        }
+
+        return quantity;
+    }
+
+    private showComponentAddValidation(detail: string): void {
+        this.messageService.add({
+            severity: 'warn',
+            summary: 'Composant requis',
+            detail,
+            life: 2500,
+        });
+    }
+
+    comboComposantandQuantity(): void {
+        const selectedName = this.resolveSelectedComposantName();
+        if (!selectedName) {
+            this.showComponentAddValidation(
+                'Sélectionnez un composant avant de l’ajouter.',
+            );
+            return;
+        }
+
+        const quantity = this.resolveSelectedQuantity();
+        if (quantity === null) {
+            this.showComponentAddValidation(
+                'Indiquez une quantité valide supérieure à 0.',
+            );
+            return;
+        }
+
+        const composantSelected = {
             nameComposant: selectedName,
-            quantity: this.diagFormTech.value.quantity,
+            quantity,
         };
-        this.composantCombo.push(composantSelected);
-        this.composantList = this.composantList.filter(
-            (composant) => composant.name !== selectedName,
+
+        this.composantCombo = [
+            ...(this.composantCombo ?? []),
+            composantSelected,
+        ];
+        this.composantList = (this.composantList ?? []).filter(
+            (composant) => composant?.name !== selectedName,
         );
 
         this.composantSelected = null;
+        this.diagFormTech.patchValue(
+            {
+                composantSelected: null,
+            },
+            { emitEvent: false },
+        );
         this.updateDisableValues();
+        this.refreshDiagnosticVm();
     }
 
     changeStatusToFinish(_id: string) {
@@ -2576,15 +3119,21 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .valueChanges.pipe(takeUntil(this.destroy$))
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
+                // Authoritative source of "should the timer tick?" is the
+                // server-side status, NOT the historical timer flag. When the
+                // user reopens a paused DI, we hydrate the accumulated time
+                // but keep the stopwatch idle until they hit Resume.
+                const isPaused = this.di?.status === 'DIAGNOSTIC_Pause';
                 if (
                     data &&
                     data.getLastPauseTime.diag_time &&
                     this.isValidTimeFormat(data.getLastPauseTime.diag_time)
                 ) {
                     this.setInitialTime(data.getLastPauseTime.diag_time);
-                    this.startStopwatch();
                 } else {
                     this.setInitialTime('00:00:00');
+                }
+                if (!isPaused) {
                     this.startStopwatch();
                 }
                 this.applyPendingRestoredDialogState('diagnostic', _idStat);
@@ -2598,15 +3147,18 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             })
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
+                // Same guard as getTimeSpent: don't tick on a paused DI.
+                const isPaused = this.di?.status === 'REPARATION_Pause';
                 if (
                     data &&
                     data.getLastPauseTime.rep_time &&
                     this.isValidTimeFormat(data.getLastPauseTime.rep_time)
                 ) {
                     this.setInitialTime1(data.getLastPauseTime.rep_time);
-                    this.startStopwatch1();
                 } else {
                     this.setInitialTime1('00:00:00');
+                }
+                if (!isPaused) {
                     this.startStopwatch1();
                 }
                 this.applyPendingRestoredDialogState('repair', _idStat);
@@ -2627,9 +3179,36 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.remarqueReparationnn = this.remarque.value.remarqueRepair;
     }
 
-    lapTimeForPauseAndGetBack1(isFinishRep: boolean) {
+    /**
+     * @param isFinishRep  true when called from the "Fin réparation" flow.
+     * @param keepOpen     true to keep the modal mounted in paused state —
+     *                     used by the redesigned wizard (`tech-repair-list`)
+     *                     so pause mirrors the diagnostic UX (paused but
+     *                     still visible). Defaults to false to preserve the
+     *                     legacy save-and-close behavior.
+     */
+    lapTimeForPauseAndGetBack1(
+        isFinishRep: boolean,
+        keepOpen: boolean = false,
+    ) {
+        // Mirror `lapTimeForPauseAndGetBack()` (diagnostic) exactly:
+        // 1. STOP the timer first (the previous version forgot this, so
+        //    the chrono kept ticking through the pause and into the next
+        //    session).
+        // 2. Snapshot the lap time for the backend persist.
+        // 3. Fire mutations.
+        // 4. Form reset only when this is a finalization, never on plain
+        //    pause — otherwise the user loses their typed remarks.
+        // 5. Do NOT call startStopwatch1() at the end. Pause = stopped.
+        //    Resume is the explicit user action that ticks the timer back
+        //    on (via `onRepairModalPause()`'s Resume branch +
+        //    `getTimeSpentRep()` on reopen).
+        this.stopRepairTimer();
         this.lap1();
-        this.resetModalFormRep();
+
+        if (isFinishRep) {
+            this.resetModalFormRep();
+        }
 
         this.apollo
             .mutate<any>({
@@ -2658,7 +3237,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.isLoading = loading;
                 if (data) {
                     this.setDiInReparationPause(this.selectedRep);
-                    this.diDialogRep = false;
+                    if (!keepOpen) {
+                        this.diDialogRep = false;
+                    }
                 }
             });
 
@@ -2666,8 +3247,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.addPauseLogs(this.statId, 'rep');
         }
 
-        this.loadData(); // Use loadData instead of getAllTechDi
-        this.startStopwatch1();
+        this.loadData();
     }
 
     setDiInReparationPause(_id: string) {
@@ -2803,6 +3383,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                             value: Category_DI._id,
                         }),
                     );
+                    this.refreshDiagnosticVm();
                 }
             });
     }
@@ -2834,5 +3415,467 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         });
         this.composantCombo.splice(index, 1);
         this.updateDisableValues();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // DIAGNOSTIC MODAL (redesigned wizard) — view-model adapters
+    //
+    // These getters/handlers translate the legacy loosely-typed state
+    // (this.di, this.diagFormTech, this.composantCombo, timer fields,
+    // etc.) into the strict shapes that <app-diagnostic-modal> expects.
+    //
+    // No legacy methods are modified — handlers just delegate to existing
+    // mutations (techFinishDiag, saveLogsDi, lapTimeForPauseAndGetBack,
+    // comboComposantandQuantity, openNew, persistActiveDialogState).
+    // ═══════════════════════════════════════════════════════════════════
+
+    /** Whether the redesigned diagnostic modal is open for the active DI. */
+    get diagModalVisible(): boolean {
+        return !!(this.selectedDi && this.diDialogDiag[this.selectedDi]);
+    }
+
+    /** Tone driver for the header status badge. */
+    get diagHeaderStatusTone(): 'running' | 'paused' | 'info' | 'neutral' {
+        const status: string = this.di?.status ?? '';
+        if (status.endsWith('_Pause')) return 'paused';
+        if (status === 'INDIAGNOSTIC' || status === 'DIAGNOSTIC') {
+            return this.isRunning ? 'running' : 'info';
+        }
+        return 'neutral';
+    }
+
+    private isDiagnosticOfficiallyPaused(): boolean {
+        return (
+            this.di?.status === 'DIAGNOSTIC_Pause' ||
+            this.diStatus === 'DIAGNOSTIC_Pause'
+        );
+    }
+
+    private canMinimizeDiagnostic(): boolean {
+        return this.isDiagnosticOfficiallyPaused() && !this.isRunning;
+    }
+
+    /** Built-in label maps so the strip/sidebar never show raw enum codes. */
+    private static readonly DIAG_STATUS_LABEL: Record<string, string> = {
+        CREATED: 'Créé',
+        PENDING1: 'En attente diagnostic',
+        DIAGNOSTIC: 'Diagnostic assigné',
+        DIAGNOSTIC_Pause: 'En pause',
+        INDIAGNOSTIC: 'En cours',
+        MagasinEstimation: 'Estimation magasin',
+        INMAGASIN: 'En magasin',
+        PENDING2: 'En attente prix',
+        PRICING: 'En tarification',
+        NEGOTIATION1: 'Négociation 1',
+        NEGOTIATION2: 'Négociation 2',
+        PENDING3: 'En attente réparation',
+        REPARATION: 'Réparation assignée',
+        REPARATION_Pause: 'Réparation en pause',
+        INREPARATION: 'En réparation',
+        FINISHED: 'Terminé',
+        ANNULER: 'Annulé',
+        RETOUR1: 'Retour 1',
+        RETOUR2: 'Retour 2',
+        RETOUR3: 'Retour 3',
+    };
+
+    /** Normalize this.di → DiagnosticDiSummary (strict shape, never null). */
+    private buildDiSummary(): DiagnosticDiSummary {
+        const d: any = this.di ?? {};
+        const status: string = d.status ?? '';
+        const clientName = [d.client?.first_name, d.client?.last_name]
+            .filter(Boolean)
+            .join(' ')
+            .trim();
+        const companyName = d.company?.name || '';
+        const techName = d.techDiag || d.techRep || '';
+        return {
+            _id: d._id ?? '',
+            _idnum: d._idnum ?? '',
+            title: d.title ?? '',
+            description: d.description ?? '',
+            status,
+            statusLabel:
+                TechDiListComponent.DIAG_STATUS_LABEL[status] ?? status,
+            clientName,
+            clientPhone: d.client?.phone ?? '',
+            companyName,
+            locationName:
+                d.location_name ??
+                (typeof d.location_id === 'string' ? d.location_id : '') ??
+                '',
+            technicianName: typeof techName === 'string' ? techName : '',
+            remarqueManager: d.remarque_manager ?? '',
+        };
+    }
+
+    /** Pre-composed "Client / Société" line for the info strip. */
+    get diagClientLine(): string {
+        const s = this.buildDiSummary();
+        if (s.companyName && s.clientName) {
+            return `${s.companyName} · ${s.clientName}`;
+        }
+        return s.companyName || s.clientName || '';
+    }
+
+    /** Categories — adapt the existing dropdown array shape. */
+    private get diagCategoryOptions(): CategoryOption[] {
+        const list: any[] = (this as any).categorieDiListDropDown ?? [];
+        if (list === this.diagCategorySourceRef) {
+            return this.diagCategoryOptionsCache;
+        }
+
+        this.diagCategorySourceRef = list;
+        this.diagCategoryOptionsCache = list.map((c) => ({
+            _id: c.value ?? c._id ?? '',
+            category: c.category ?? c.label ?? 'N/A',
+        }));
+        return this.diagCategoryOptionsCache;
+    }
+
+    /** Composants — adapt the existing list. */
+    private get diagComposantOptions(): ComposantOption[] {
+        const list: any[] = this.composantList ?? [];
+        if (list === this.diagComposantSourceRef) {
+            return this.diagComposantOptionsCache;
+        }
+
+        this.diagComposantSourceRef = list;
+        this.diagComposantOptionsCache = list.map((c) => ({
+            _id: c._id ?? c.name ?? '',
+            name: c.name ?? c.nameComposant ?? '',
+        }));
+        return this.diagComposantOptionsCache;
+    }
+
+    /** "Oui / Non / Non défini" for boolean form values. */
+    private booleanLabel(value: unknown): string {
+        if (value === true) return 'Oui';
+        if (value === false) return 'Non';
+        return 'Non défini';
+    }
+
+    get diagReparableLabel(): string {
+        return this.booleanLabel(this.diagFormTech.get('isReparable')?.value);
+    }
+    get diagPdrLabel(): string {
+        return this.booleanLabel(this.diagFormTech.get('isPdr')?.value);
+    }
+    get diagCategoryLabel(): string {
+        const id = this.diagFormTech.get('di_category_id')?.value;
+        const match = this.diagCategoryOptions.find((c) => c._id === id);
+        return match?.category ?? '';
+    }
+
+    /** Build the typed context object passed into the modal. */
+    get diagContext(): DiagnosticContext {
+        return {
+            di: this.buildDiSummary(),
+            ignoreCount: this.ignoreCount ?? 0,
+            form: this.diagFormTech,
+            timer: {
+                display: `${this.minutes ?? '00'}:${this.seconds ?? '00'}:${this.milliseconds ?? '00'}`,
+                isRunning: !!this.isRunning,
+            },
+            hasPdr: !!this.hasPdr,
+            isReperable: !!this.isReperable,
+            isErrorFromFixtronix:
+                !!this.diagFormTech.get('isErrorFromFixtronix')?.value,
+            composantCombo: this.composantCombo ?? [],
+            composantOptions: this.diagComposantOptions,
+            categories: this.diagCategoryOptions,
+            disabledFinish: !!this.disabledDiagnostiqueValue,
+            disabledRetour: !!this.disabledDiagnostiqueRetourValue,
+            retourSendFinished: !!(this as any).techRetourSendFinished,
+        };
+    }
+
+    /** Step states derived from form completeness + active step. */
+    get diagSteps(): readonly DiagnosticStep[] {
+        const form = this.diagFormTech;
+        const hasInfo = !!this.di?._idnum;
+        const hasFailure =
+            !!form.get('di_category_id')?.value &&
+            !!(form.get('remarqueTech')?.value ?? '').trim();
+        const hasComponentsDecision =
+            form.get('isPdr')?.value === false ||
+            (this.composantCombo ?? []).length > 0;
+        const hasValidation =
+            form.get('isPdr')?.value !== null &&
+            form.get('isReparable')?.value !== null;
+
+        // Per-step hint labels match the target screenshot exactly:
+        //   "Complétée" (green ✓) for completed
+        //   "En cours" for the active step
+        //   "À faire" for pending
+        // The hint is overridden to "En cours" when the step is the active
+        // one so the user sees stage-by-stage progress regardless of form
+        // completion order.
+        const hintFor = (
+            key: DiagnosticStepKey,
+            done: boolean,
+        ): string => {
+            if (key === this.activeDiagStep) return 'En cours';
+            if (done) return 'Complétée';
+            return 'À faire';
+        };
+
+        const order: { key: DiagnosticStepKey; label: string; hint: string }[] =
+            [
+                {
+                    key: 'info',
+                    label: 'Informations générales',
+                    hint: hintFor('info', hasInfo),
+                },
+                {
+                    key: 'failure',
+                    label: 'Panne & Symptômes',
+                    hint: hintFor('failure', hasFailure),
+                },
+                {
+                    key: 'components',
+                    label: 'Composants',
+                    hint: hintFor('components', hasComponentsDecision),
+                },
+                {
+                    key: 'validation',
+                    label: 'Validation',
+                    hint: hintFor('validation', hasValidation),
+                },
+                {
+                    key: 'summary',
+                    label: 'Résumé',
+                    hint: hintFor('summary', false),
+                },
+            ];
+
+        const completedFlags: Record<DiagnosticStepKey, boolean> = {
+            info: hasInfo,
+            failure: hasFailure,
+            components: hasComponentsDecision,
+            validation: hasValidation,
+            summary: false,
+        };
+
+        return order.map(({ key, label, hint }) => {
+            let state: 'completed' | 'current' | 'pending';
+            if (key === this.activeDiagStep) state = 'current';
+            else if (completedFlags[key]) state = 'completed';
+            else state = 'pending';
+            return {
+                key,
+                number: order.findIndex((o) => o.key === key) + 1,
+                label,
+                hint,
+                state,
+            };
+        });
+    }
+
+    /** Progress derived from the same completion flags. */
+    get diagProgress(): DiagnosticProgress {
+        const completedSteps = this.diagSteps.filter(
+            (s) => s.state === 'completed',
+        ).length;
+        const totalSteps = this.diagSteps.length;
+        return {
+            completedSteps,
+            totalSteps,
+            percent:
+                totalSteps > 0
+                    ? Math.round((completedSteps / totalSteps) * 100)
+                    : 0,
+        };
+    }
+
+    /** Autosave hint — driven by form pristine/dirty state. */
+    get diagAutosave(): AutosaveHint {
+        return {
+            state: this.diagFormTech.dirty ? 'saved' : 'idle',
+            lastSavedAt: this.diagFormTech.dirty ? new Date() : null,
+        };
+    }
+
+    /**
+     * The modal inputs are intentionally cached instead of bound to getters in
+     * the template. The old getter path allocates arrays/objects and maps the
+     * full composant/category lists; doing that on every change-detection tick
+     * can lock Chrome while the PrimeNG dialog is opening.
+     */
+    private refreshDiagnosticVm(): void {
+        // Mutual-exclusion guard — when a repair flow is active, the
+        // diagnostic VM must NOT rebuild. The shared `this.di` /
+        // `this.selectedDi` fields get overwritten by `repModal()`, so
+        // without this short-circuit the diag context silently rebuilds
+        // with stale data and PrimeNG renders an empty shell under the
+        // repair wizard.
+        if (this.showRepairModal || this.diDialogRep) {
+            this.diagModalVisibleVm = false;
+            this.diagContextVm = null;
+            return;
+        }
+
+        if (!this.di?._id && !this.selectedDi) {
+            this.diagModalVisibleVm = false;
+            this.diagContextVm = null;
+            return;
+        }
+
+        this.diagModalVisibleVm = this.diagModalVisible;
+        this.diagHeaderStatusToneVm = this.diagHeaderStatusTone;
+        this.diagClientLineVm = this.diagClientLine;
+        this.diagReparableLabelVm = this.diagReparableLabel;
+        this.diagPdrLabelVm = this.diagPdrLabel;
+        this.diagCategoryLabelVm = this.diagCategoryLabel;
+        this.diagCanMinimizeVm = this.canMinimizeDiagnostic();
+        this.diagContextVm = this.diagContext;
+        this.diagStepsVm = this.diagSteps;
+
+        const completedSteps = this.diagStepsVm.filter(
+            (s) => s.state === 'completed',
+        ).length;
+        const totalSteps = this.diagStepsVm.length;
+        this.diagProgressVm = {
+            completedSteps,
+            totalSteps,
+            percent:
+                totalSteps > 0
+                    ? Math.round((completedSteps / totalSteps) * 100)
+                    : 0,
+        };
+        this.diagAutosaveVm = this.diagAutosave;
+    }
+
+    setDiagModalVisible(visible: boolean): void {
+        this.diagModalVisibleVm = visible;
+        if (this.selectedDi) {
+            this.diDialogDiag[this.selectedDi] = visible;
+        }
+        if (!visible) {
+            this.onDiagMinimize();
+            return;
+        }
+        this.refreshDiagnosticVm();
+    }
+
+    // ─── Modal output handlers — pure delegation to existing methods ───
+
+    onDiagPause(): void {
+        // Status is the authoritative source — `isRunning` can drift out of
+        // sync with the server when the user reopens a paused DI (a stray
+        // setInterval can leave the flag true on a paused ticket). Branch on
+        // status first so the action matches what the user sees in the
+        // header pill.
+        if (this.isDiagnosticOfficiallyPaused()) {
+            // Paused -> Resume.
+            // Optimistic UI first (modal + list row), then close the pause
+            // log so the backend stops accruing pause duration, then flip
+            // the status to INDIAGNOSTIC, then ask the list to reconcile
+            // against server truth.
+            this.diStatus = 'INDIAGNOSTIC';
+            if (this.di) {
+                this.di = {
+                    ...this.di,
+                    status: 'INDIAGNOSTIC',
+                };
+            }
+            this.patchTechListRowStatus(this.di?._id, 'INDIAGNOSTIC');
+            this.refreshDiagnosticVm();
+
+            const openLog = this.getCurrentPauseLog(this.di?.pauseLogs);
+            if (openLog && this.di?._id) {
+                this.updatePauseLog(this.di._id, openLog._id);
+            }
+            this.changeStatus(this.selectedDi_id);
+            this.startStopwatch();
+            this.persistActiveDialogState('diagnostic');
+            this.requestTechListRefresh('action:diag-resume');
+            return;
+        }
+
+        // Active -> Pause. The heavy `lapTimeForPauseAndGetBack()` already
+        // fires the backend mutations; we layer optimistic UI + a refresh
+        // request on top so the list row + chip flip immediately.
+        if (this.di) {
+            this.di = { ...this.di, status: 'DIAGNOSTIC_Pause' };
+        }
+        this.patchTechListRowStatus(this.di?._id, 'DIAGNOSTIC_Pause');
+        this.lapTimeForPauseAndGetBack();
+        this.requestTechListRefresh('action:diag-pause');
+    }
+
+    onDiagMinimize(): void {
+        if (!this.canMinimizeDiagnostic()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Diagnostic actif',
+                detail: 'Mettez le diagnostic en pause avant de réduire la fenêtre.',
+                life: 2500,
+            });
+            return;
+        }
+
+        this.persistActiveDialogState('diagnostic');
+        if (this.selectedDi) {
+            this.diDialogDiag[this.selectedDi] = false;
+        }
+        this.diagModalVisibleVm = false;
+        this.diagContextVm = null;
+    }
+
+    onDiagStepChange(step: DiagnosticStepKey): void {
+        this.activeDiagStep = step;
+        this.refreshDiagnosticVm();
+    }
+
+    onDiagSaveDraft(): void {
+        try {
+            this.persistActiveDialogState?.('diagnostic');
+        } catch {
+            // best-effort — don't break the UX if persistence is unavailable
+        }
+        this.messageService?.add?.({
+            severity: 'success',
+            summary: 'Brouillon enregistré',
+            detail: 'Vos modifications sont sauvegardées localement.',
+            life: 2500,
+        });
+    }
+
+    onDiagAddComposant(): void {
+        try {
+            this.comboComposantandQuantity();
+        } catch {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Ajout impossible',
+                detail: 'Le composant n’a pas pu être ajouté. Vérifiez la sélection et la quantité.',
+                life: 3000,
+            });
+        }
+    }
+
+    onDiagRemoveComposant(name: string): void {
+        this.composantCombo = (this.composantCombo ?? []).filter(
+            (c) => c.nameComposant !== name,
+        );
+        this.updateDisableValues?.();
+        this.refreshDiagnosticVm();
+    }
+
+    onDiagCreateComposant(): void {
+        (this as any).openNew?.();
+    }
+
+    onDiagFinish(): void {
+        this.techFinishDiag?.();
+    }
+
+    onDiagFinishRetour(): void {
+        (this as any).saveLogsDi?.();
+    }
+
+    onDiagSendToFinishRetour(): void {
+        (this as any).retourEnvoyerVersFinir?.();
     }
 }

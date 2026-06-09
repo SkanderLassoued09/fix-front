@@ -1,0 +1,111 @@
+<p-dialog
+    [visible]="visible"
+    (visibleChange)="onVisibleChange($event)"
+    [modal]="true"
+    [closable]="false"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '1280px', maxWidth: '95vw' }"
+    [contentStyle]="{ padding: '0' }"
+    styleClass="sav-diag-modal-dialog"
+    [showHeader]="false"
+>
+    <div class="sav-diag-modal" *ngIf="context as ctx">
+        <sav-diag-header
+            [diIdnum]="ctx.di._idnum"
+            [statusLabel]="ctx.di.statusLabel || ctx.di.status || 'N/A'"
+            [statusTone]="headerStatusTone"
+            [timer]="ctx.timer"
+            [canMinimize]="canMinimize"
+            (pause)="pauseClicked.emit()"
+            (minimize)="minimizeClicked.emit()"
+        ></sav-diag-header>
+
+        <sav-diag-info-strip
+            [di]="ctx.di"
+            [clientLine]="clientLine"
+        ></sav-diag-info-strip>
+
+        <div class="sav-diag-modal__body">
+            <sav-diag-stepper
+                [steps]="steps"
+                (stepSelected)="stepChanged.emit($event)"
+            ></sav-diag-stepper>
+
+            <main class="sav-diag-modal__center">
+                <ng-container [ngSwitch]="activeStep">
+                    <sav-diag-info-step
+                        *ngSwitchCase="'info'"
+                        [di]="ctx.di"
+                    ></sav-diag-info-step>
+
+                    <sav-diag-failure-step
+                        *ngSwitchCase="'failure'"
+                        [form]="ctx.form"
+                        [categories]="ctx.categories"
+                    ></sav-diag-failure-step>
+
+                    <sav-diag-components-step
+                        *ngSwitchCase="'components'"
+                        [form]="ctx.form"
+                        [composantOptions]="ctx.composantOptions"
+                        [composants]="ctx.composantCombo"
+                        (add)="addComposant.emit()"
+                        (create)="createComposant.emit()"
+                        (remove)="removeComposant.emit($event)"
+                    ></sav-diag-components-step>
+
+                    <sav-diag-validation-step
+                        *ngSwitchCase="'validation'"
+                        [form]="ctx.form"
+                        [showErrorFromFixtronix]="ctx.ignoreCount > 0"
+                    ></sav-diag-validation-step>
+
+                    <sav-diag-summary-step
+                        *ngSwitchCase="'summary'"
+                        [di]="ctx.di"
+                        [description]="ctx.form.get('remarqueTech')?.value || ''"
+                        [categoryLabel]="categoryLabel"
+                        [reparableLabel]="reparableLabel"
+                        [pdrLabel]="pdrLabel"
+                        [composants]="ctx.composantCombo"
+                        [isRetour]="ctx.ignoreCount > 0"
+                        [primaryDisabled]="ctx.ignoreCount > 0 ? ctx.disabledRetour : ctx.disabledFinish"
+                        [retourSendDisabled]="ctx.retourSendFinished"
+                        (finishDiag)="finishDiag.emit()"
+                        (finishRetour)="finishRetour.emit()"
+                        (sendToFinishRetour)="sendToFinishRetour.emit()"
+                    ></sav-diag-summary-step>
+                </ng-container>
+
+                <nav class="sav-diag-modal__nav">
+                    <button
+                        type="button"
+                        class="sav-diag-modal__nav-btn"
+                        [disabled]="isFirstStep"
+                        (click)="goPrevious()"
+                    >
+                        <i class="pi pi-chevron-left"></i>
+                        Précédent
+                    </button>
+                    <button
+                        *ngIf="!isLastStep"
+                        type="button"
+                        class="sav-diag-modal__nav-btn sav-diag-modal__nav-btn--primary"
+                        (click)="goNext()"
+                    >
+                        Suivant
+                        <i class="pi pi-arrow-right"></i>
+                    </button>
+                </nav>
+            </main>
+
+            <sav-diag-sidebar
+                [di]="ctx.di"
+                [progress]="progress"
+                [reparableLabel]="reparableLabel"
+                [pdrLabel]="pdrLabel"
+            ></sav-diag-sidebar>
+        </div>
+    </div>
+</p-dialog>

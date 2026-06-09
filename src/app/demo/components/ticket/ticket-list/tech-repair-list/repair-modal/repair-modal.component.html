@@ -1,0 +1,107 @@
+<p-dialog
+    [visible]="visible"
+    (visibleChange)="onVisibleChange($event)"
+    [modal]="true"
+    [closable]="false"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '1280px', maxWidth: '95vw' }"
+    [contentStyle]="{ padding: '0' }"
+    styleClass="sav-diag-modal-dialog"
+    [showHeader]="false"
+>
+    <div class="sav-diag-modal" *ngIf="context as ctx">
+        <sav-diag-header
+            title="Réparation"
+            [diIdnum]="ctx.di._idnum"
+            [statusLabel]="ctx.di.statusLabel || ctx.di.status || 'N/A'"
+            [statusTone]="headerStatusTone"
+            [timer]="ctx.timer"
+            [canMinimize]="canMinimize"
+            (pause)="pauseClicked.emit()"
+            (minimize)="minimizeClicked.emit()"
+        ></sav-diag-header>
+
+        <sav-diag-info-strip
+            [di]="ctx.di"
+            [clientLine]="clientLine"
+        ></sav-diag-info-strip>
+
+        <div class="sav-diag-modal__body">
+            <sav-diag-stepper
+                [steps]="steps"
+                (stepSelected)="onStepperSelected($event)"
+            ></sav-diag-stepper>
+
+            <main class="sav-diag-modal__center">
+                <ng-container [ngSwitch]="activeStep">
+                    <sav-repair-info-step
+                        *ngSwitchCase="'info'"
+                        [di]="ctx.di"
+                    ></sav-repair-info-step>
+
+                    <sav-repair-plan-step
+                        *ngSwitchCase="'plan'"
+                        [form]="ctx.form"
+                        [categories]="ctx.categories"
+                    ></sav-repair-plan-step>
+
+                    <sav-repair-parts-step
+                        *ngSwitchCase="'parts'"
+                        [form]="ctx.form"
+                        [partOptions]="ctx.partOptions"
+                        [parts]="ctx.parts"
+                        (add)="addPart.emit()"
+                        (remove)="removePart.emit($event)"
+                    ></sav-repair-parts-step>
+
+                    <sav-repair-works-step
+                        *ngSwitchCase="'works'"
+                        [form]="ctx.form"
+                    ></sav-repair-works-step>
+
+                    <sav-repair-summary-step
+                        *ngSwitchCase="'summary'"
+                        [di]="ctx.di"
+                        [repairPlan]="repairPlan"
+                        [categoryLabel]="categoryLabel"
+                        [parts]="ctx.parts"
+                        [repairSuccess]="repairSuccess"
+                        [testsValidated]="testsValidated"
+                        [primaryDisabled]="ctx.disabledFinish"
+                        (finishRepair)="finishRepair.emit()"
+                    ></sav-repair-summary-step>
+                </ng-container>
+
+                <nav class="sav-diag-modal__nav">
+                    <button
+                        type="button"
+                        class="sav-diag-modal__nav-btn"
+                        [disabled]="isFirstStep"
+                        (click)="goPrevious()"
+                    >
+                        <i class="pi pi-chevron-left"></i>
+                        Précédent
+                    </button>
+                    <button
+                        *ngIf="!isLastStep"
+                        type="button"
+                        class="sav-diag-modal__nav-btn sav-diag-modal__nav-btn--primary"
+                        (click)="goNext()"
+                    >
+                        Suivant
+                        <i class="pi pi-arrow-right"></i>
+                    </button>
+                </nav>
+            </main>
+
+            <sav-diag-sidebar
+                [di]="ctx.di"
+                [progress]="progress"
+                title="Résumé de la réparation"
+                decisionsLabel="CLÔTURE (À VENIR)"
+                [decisions]="closureDecisions"
+            ></sav-diag-sidebar>
+        </div>
+    </div>
+</p-dialog>

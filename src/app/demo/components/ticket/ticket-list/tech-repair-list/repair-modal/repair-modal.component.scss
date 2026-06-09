@@ -1,0 +1,125 @@
+// Root layout. Identical to diagnostic-modal.component.scss so the repair
+// modal renders with the exact same chrome (3-column body grid, 16px
+// radius, Inter font stack, 92vh max height, etc.). The shared `.sav-*`
+// class names match the dumb child components imported from the diagnostic
+// tree — same selectors, same paddings, same breakpoints.
+
+:host {
+    display: block;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+::ng-deep .sav-diag-modal-dialog {
+    .p-dialog-content { padding: 0; }
+    .p-dialog {
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 32px 64px -16px rgba(15, 23, 42, 0.24);
+    }
+}
+
+.sav-diag-modal {
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    min-height: 700px;
+    max-height: 92vh;
+    font-family: inherit;
+}
+
+.sav-diag-modal__body {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr) 340px;
+    flex: 1;
+    min-height: 0;
+}
+
+.sav-diag-modal__center {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    background: #ffffff;
+}
+
+.sav-diag-modal__nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.1rem 1.75rem 1.35rem;
+    border-top: 1px solid #f1f5f9;
+    margin-top: auto;
+}
+
+.sav-diag-modal__nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1.2rem;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease;
+
+    &:hover:not(:disabled) {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+    }
+    &:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    &--primary {
+        background: #3b82f6;
+        color: #ffffff;
+        border-color: #2563eb;
+
+        &:hover:not(:disabled) {
+            background: #2563eb;
+            border-color: #1d4ed8;
+        }
+    }
+}
+
+@media (max-width: 1280px) {
+    .sav-diag-modal__body {
+        grid-template-columns: 240px minmax(0, 1fr) 300px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .sav-diag-modal__body {
+        grid-template-columns: 1fr;
+    }
+
+    ::ng-deep sav-diag-stepper,
+    ::ng-deep sav-diag-sidebar {
+        display: none !important;
+    }
+
+    .sav-diag-modal__center {
+        min-height: 420px;
+    }
+}
+
+@media (max-width: 640px) {
+    .sav-diag-modal {
+        min-height: 0;
+        max-height: 92vh;
+    }
+
+    .sav-diag-modal__nav {
+        flex-wrap: wrap;
+        padding: 0.85rem 1rem 1rem;
+
+        &-btn {
+            flex: 1 1 100%;
+            justify-content: center;
+        }
+    }
+}

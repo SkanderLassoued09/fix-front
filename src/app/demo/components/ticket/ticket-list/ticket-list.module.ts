@@ -45,6 +45,9 @@ import { ComposantManagementComponent } from '../composant-management/composant-
 import { BlockUIModule } from 'primeng/blockui';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TabViewModule } from 'primeng/tabview';
+import { DiagnosticModalComponent } from './tech-di-list/diagnostic-modal/diagnostic-modal.component';
+import { TechRepairListComponent } from './tech-repair-list/tech-repair-list.component';
+import { RepairModalComponent } from './tech-repair-list/repair-modal/repair-modal.component';
 
 @NgModule({
     declarations: [
@@ -52,6 +55,7 @@ import { TabViewModule } from 'primeng/tabview';
         CoordinatorDiListComponent,
         MagasinDiListComponent,
         TechDiListComponent,
+        TechRepairListComponent,
         DetailsComposantComponent,
         ComposantManagementComponent,
     ],
@@ -98,6 +102,8 @@ import { TabViewModule } from 'primeng/tabview';
         ToggleButtonModule,
         ProgressSpinnerModule,
         TabViewModule,
+        DiagnosticModalComponent,
+        RepairModalComponent,
     ],
     providers: [ConfirmationService, MessageService],
 })

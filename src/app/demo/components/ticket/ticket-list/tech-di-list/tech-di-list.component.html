@@ -167,7 +167,51 @@
     <!-- ═══════════════════════════════════════════════
          MODAL — DIAGNOSTIC
     ════════════════════════════════════════════════ -->
-    <ng-container *ngIf="di?._id">
+    <!-- NEW redesigned diagnostic wizard — replaces the legacy single-screen
+         <p-dialog> below. The legacy markup is preserved (gated by
+         legacyDiagModalEnabled = false) so its TS bindings stay valid; this
+         component delegates every action back to the same handlers via
+         output emissions. -->
+    <app-diagnostic-modal
+        *ngIf="diagContextVm as diagnosticContext"
+        [visible]="diagModalVisibleVm"
+        (visibleChange)="setDiagModalVisible($event)"
+        [context]="diagnosticContext"
+        [steps]="diagStepsVm"
+        [activeStep]="activeDiagStep"
+        [progress]="diagProgressVm"
+        [autosave]="diagAutosaveVm"
+        [clientLine]="diagClientLineVm"
+        [reparableLabel]="diagReparableLabelVm"
+        [pdrLabel]="diagPdrLabelVm"
+        [categoryLabel]="diagCategoryLabelVm"
+        [headerStatusTone]="diagHeaderStatusToneVm"
+        [canMinimize]="diagCanMinimizeVm"
+        (pauseClicked)="onDiagPause()"
+        (minimizeClicked)="onDiagMinimize()"
+        (stepChanged)="onDiagStepChange($event)"
+        (addComposant)="onDiagAddComposant()"
+        (removeComposant)="onDiagRemoveComposant($event)"
+        (createComposant)="onDiagCreateComposant()"
+        (finishDiag)="onDiagFinish()"
+        (finishRetour)="onDiagFinishRetour()"
+        (sendToFinishRetour)="onDiagSendToFinishRetour()"
+    ></app-diagnostic-modal>
+
+    <!-- NEW redesigned repair wizard — same mounting pattern as the
+         diagnostic modal above. Visibility is two-way bound to
+         `showRepairModal`, flipped on by `repModal(rowData)` (legacy
+         entry point on the wrench button) and flipped off when the
+         user closes / pauses-minimizes / finishes the repair. -->
+    <app-tech-repair-list
+        [(visible)]="showRepairModal"
+        [diInput]="repairDiInputVm"
+        [initiallyPaused]="repairInitiallyPaused"
+        (visibleChange)="onRepairModalVisibleChange($event)"
+        (pauseClicked)="onRepairModalPause()"
+    ></app-tech-repair-list>
+
+    <ng-container *ngIf="legacyDiagModalEnabled && di?._id">
         <p-dialog
             [header]="getModalTitle('diagnostic')"
             [(visible)]="diDialogDiag[di._id]"
@@ -702,9 +746,14 @@
     </p-dialog>
 
     <!-- ═══════════════════════════════════════════════
-         MODAL — RÉPARATION
+         MODAL — RÉPARATION (legacy, gated)
+         The redesigned repair wizard `<app-tech-repair-list>` is mounted
+         next to the diagnostic modal above. The legacy dialog markup is
+         preserved here so its TS bindings (`diDialogRep`) keep compiling;
+         the `*ngIf` simply never matches when the flag is false.
     ════════════════════════════════════════════════ -->
     <p-dialog
+        *ngIf="legacyRepModalEnabled"
         [header]="getModalTitle('repair')"
         [(visible)]="diDialogRep"
         [modal]="true"
