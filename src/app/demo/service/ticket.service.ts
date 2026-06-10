@@ -452,6 +452,7 @@ export class TicketService {
           status
           diag_time
           rep_time
+          repRunStartedAt
           id_tech_diag
           id_tech_rep
           client {
@@ -494,6 +495,7 @@ export class TicketService {
                         id_tech_rep
                         diag_time
                         rep_time
+                        repRunStartedAt
                         status
                         _idnum
                               client {

@@ -207,6 +207,8 @@
         [(visible)]="showRepairModal"
         [diInput]="repairDiInputVm"
         [initiallyPaused]="repairInitiallyPaused"
+        [elapsedBaseMs]="repairElapsedBaseMs"
+        [runStartedAtMs]="repairRunStartedAtMs"
         (visibleChange)="onRepairModalVisibleChange($event)"
         (pauseClicked)="onRepairModalPause()"
     ></app-tech-repair-list>

@@ -92,10 +92,18 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     });
 
     // ───────────────────────────────────────────────────────────────
-    // Timer (mirrors tech-di-list's 1Hz tick approach)
+    // Timer — SERVER-ANCHORED (no in-memory 0-based counter, no localStorage),
+    // so it survives refresh / tabs / devices. The host derives both values
+    // from persisted data (Stat.rep_time + Stat.repRunStartedAt + DI.status):
+    //   elapsedBaseMs  : accumulated repair time, frozen at the last pause.
+    //   runStartedAtMs : epoch ms when the current run leg started; null while
+    //                    paused. Displayed elapsed =
+    //                    elapsedBaseMs + (running ? now - runStartedAtMs : 0).
     // ───────────────────────────────────────────────────────────────
-    timer: TimerDisplayState = { display: '00:00:00', isRunning: true };
-    private timerSeconds: number = 0;
+    @Input() elapsedBaseMs: number = 0;
+    @Input() runStartedAtMs: number | null = null;
+
+    timer: TimerDisplayState = { display: '00:00:00', isRunning: false };
     private timerHandle: ReturnType<typeof setInterval> | null = null;
 
     // ───────────────────────────────────────────────────────────────
@@ -126,23 +134,18 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     ) {}
 
     ngOnInit(): void {
+        this.renderTimer();
         if (this.visible) this.startTimer();
-        // TODO: load real DI / categories / parts catalog via TicketService
-        // when the repair Apollo endpoints are ready.
     }
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['diInput'] && this.diInput) {
             this.di = this.diInput;
         }
-        if (changes['initiallyPaused']) {
-            // Reflect the host's "open in paused state" hint into the local
-            // timer so the header shows the right pill (paused/orange) and
-            // the seconds don't start ticking on REPARATION_Pause tickets.
-            this.timer = {
-                display: this.timer.display,
-                isRunning: !this.initiallyPaused,
-            };
+        if (changes['elapsedBaseMs'] || changes['runStartedAtMs']) {
+            // Re-derive the display from the server-provided anchor. open,
+            // refresh-restore, pause and resume all flow through here.
+            this.renderTimer();
         }
         if (changes['visible']) {
             if (this.visible) {
@@ -170,18 +173,11 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     // Intent handlers (dumb tree → smart parent)
     // ───────────────────────────────────────────────────────────────
     onRepairPause(): void {
-        console.log(
-            '[REPAIR][CLICK] tech-repair-list.onRepairPause timer.isRunning=',
-            this.timer.isRunning,
-            'di.status=',
-            this.di?.status,
-        );
-        if (this.timer.isRunning) this.pauseTimer();
-        else this.resumeTimer();
+        // Intent only. The host (tech-di-list.onRepairModalPause) decides
+        // pause vs resume from the DI status and flips `runStartedAtMs`, which
+        // flows back through ngOnChanges → renderTimer to freeze / resume the
+        // displayed elapsed.
         this.pauseClicked.emit();
-        console.log(
-            '[REPAIR][CLICK] tech-repair-list emitted pauseClicked',
-        );
     }
 
     onRepairMinimize(): void {
@@ -392,25 +388,30 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     // Timer plumbing — keep things explicit; mirrors tech-di-list's 1Hz
     // approach (setInterval + ChangeDetectorRef) but localized here.
     // ───────────────────────────────────────────────────────────────
+    /**
+     * Recompute the displayed elapsed from the server-anchored model. Now-based
+     * and idempotent: the interval just re-renders each second, advancing only
+     * while running (runStartedAtMs != null) and showing the frozen base while
+     * paused.
+     */
+    private renderTimer(): void {
+        const running = this.runStartedAtMs != null;
+        const ms =
+            (this.elapsedBaseMs || 0) +
+            (running
+                ? Math.max(0, Date.now() - (this.runStartedAtMs as number))
+                : 0);
+        this.timer = {
+            display: this.formatHMS(Math.floor(ms / 1000)),
+            isRunning: running,
+        };
+        this.cdr.markForCheck();
+    }
+
     private startTimer(): void {
         this.stopTimer();
-        this.timerHandle = setInterval(() => {
-            if (!this.timer.isRunning) return;
-            this.timerSeconds += 1;
-            this.timer = {
-                display: this.formatHMS(this.timerSeconds),
-                isRunning: true,
-            };
-            this.cdr.markForCheck();
-        }, 1000);
-    }
-
-    private pauseTimer(): void {
-        this.timer = { display: this.timer.display, isRunning: false };
-    }
-
-    private resumeTimer(): void {
-        this.timer = { display: this.timer.display, isRunning: true };
+        this.renderTimer();
+        this.timerHandle = setInterval(() => this.renderTimer(), 1000);
     }
 
     private stopTimer(): void {

@@ -278,22 +278,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
      */
     onRepairModalPause(): void {
         const currentStatus = this.di?.status ?? '';
-        console.log(
-            '[REPAIR][HOST] onRepairModalPause entered. currentStatus=',
-            currentStatus,
-            'this.di=',
-            this.di
-                ? {
-                      _id: this.di._id,
-                      _idDi: (this.di as any)._idDi,
-                      status: this.di.status,
-                  }
-                : null,
-            'selectedRep=',
-            this.selectedRep,
-            'statId=',
-            this.statId,
-        );
 
         // Status is the authoritative source — branch on it first so we can't
         // accidentally re-pause a ticket that the server already considers
@@ -305,22 +289,19 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             // (no waiting on the mutation round-trip or WS broadcast).
             // Server-truth reconcile fires in parallel via the refresh
             // service.
-            console.log(
-                '[onRepairModalPause][resume] di=',
-                this.di
-                    ? {
-                          _id: this.di._id,
-                          _idDi: (this.di as any)._idDi,
-                          status: this.di.status,
-                      }
-                    : null,
-                'selectedRep=',
-                this.selectedRep,
-                'statId=',
-                this.statId,
-            );
+            // Resume the server-anchored timer from the accumulated base; the
+            // server stamps Stat.repRunStartedAt = now via changeStatusInRepair.
+            // Mirror that anchor onto `this.di` so the restore-on-refresh
+            // snapshot stays correct — otherwise it keeps the PRE-pause anchor
+            // and double-counts the elapsed time after a reload.
+            const resumeAnchor = Date.now();
+            this.repairRunStartedAtMs = resumeAnchor;
             if (this.di) {
-                this.di = { ...this.di, status: 'INREPARATION' };
+                this.di = {
+                    ...this.di,
+                    status: 'INREPARATION',
+                    repRunStartedAt: new Date(resumeAnchor),
+                };
                 this.repairDiInputVm = this.mapDiToRepairSummary(this.di);
             }
             this.patchTechListRowStatus(this.di?._id, 'INREPARATION');
@@ -337,12 +318,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             // once at modal open and matches what the pause mutation uses.
             const diId =
                 this.selectedRep || (this.di as any)?._idDi;
-            console.log(
-                '[onRepairModalPause][resume] firing changeStatusInReparation with diId=',
-                diId,
-                'selectedRep=',
-                this.selectedRep,
-            );
             if (diId) {
                 this.changeStatusInReparation(diId);
             } else {
@@ -358,12 +333,42 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
         // Active -> Pause: optimistic UI, then persist + transition to
         // REPARATION_Pause.
+        // Freeze the server-anchored timer FIRST: fold the current run leg into
+        // the accumulated base and drop the anchor so the display stops advancing.
+        this.repairElapsedBaseMs =
+            this.repairElapsedBaseMs +
+            (this.repairRunStartedAtMs
+                ? Math.max(0, Date.now() - this.repairRunStartedAtMs)
+                : 0);
+        this.repairRunStartedAtMs = null;
+        const frozenRepTime = this.msToTimeString(this.repairElapsedBaseMs);
         if (this.di) {
-            this.di = { ...this.di, status: 'REPARATION_Pause' };
+            // Carry the frozen rep_time + paused status onto `this.di` so the
+            // restore-on-refresh snapshot reopens FROZEN (not auto-resumed) at
+            // the exact displayed value.
+            this.di = {
+                ...this.di,
+                status: 'REPARATION_Pause',
+                rep_time: frozenRepTime,
+            };
             this.repairDiInputVm = this.mapDiToRepairSummary(this.di);
         }
         this.patchTechListRowStatus(this.di?._id, 'REPARATION_Pause');
+        // Persist EXACTLY the displayed (server-anchored) elapsed as rep_time so
+        // a reopen/refresh restores the same frozen value. Pre-set lapTime1 and
+        // mark the legacy timer stopped so lapTimeForPauseAndGetBack1's lap1()
+        // (which only writes while isRunning1) can't overwrite it with the
+        // now-anchored legacy value.
+        this.lapTime1 = frozenRepTime;
+        this.isRunning1 = false;
+        this.startTime1 = 0;
+        this.initialOffset1 = this.repairElapsedBaseMs;
         this.lapTimeForPauseAndGetBack1(false, /* keepOpen */ true);
+        // Persist the dialog snapshot in its PAUSED form (status + frozen
+        // rep_time) so restoreDialogState() reopens it paused on refresh instead
+        // of replaying the stale INREPARATION snapshot — which repModal() would
+        // auto-resume via changeStatusInReparation.
+        this.persistActiveDialogState('repair');
         this.requestTechListRefresh('action:repair-pause');
     }
 
@@ -497,6 +502,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     startTime1: number;
     initialOffset1: number;
     laps1: any[];
+
+    // Server-anchored timer model fed to the new repair wizard
+    // (<app-tech-repair-list>), mirroring how diagContextVm feeds the diagnostic
+    // modal. Derived from persisted data (Stat.rep_time + Stat.repRunStartedAt +
+    // DI.status) so the repair timer survives refresh / tabs / devices — no
+    // localStorage. elapsed = base + (anchor ? now - anchor : 0).
+    repairElapsedBaseMs: number = 0;
+    repairRunStartedAtMs: number | null = null;
 
     formGroupchips: any;
     chipsValues: string[] = [];
@@ -1990,9 +2003,18 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     this.error = 'Failed to load data';
                 },
             });
-        this.di = { ...di };
         this.ignoreCount = di.ignoreCount;
         this.resetModalForm();
+        // `resetModalForm()` nulls `this.di` (it clears the diagnostic form and
+        // the working DI). Assign the repair DI AFTER the reset so the
+        // pause/resume handler `onRepairModalPause()` can branch on
+        // `this.di.status`. Previously `this.di` was set on the line above and
+        // immediately nulled here, leaving it null at click time — so every
+        // header click was treated as a pause (Reprendre never resumed) and the
+        // optimistic `if (this.di)` UI update was skipped (header pill stuck).
+        // The diagnostic flow is immune because it branches on `diStatus`, not
+        // `this.di`; this realigns repair with that reliability.
+        this.di = { ...di };
         this.selectedDi = di._id;
         // Mutual exclusion — opening a repair must close any open diagnostic.
         // Otherwise a restored-on-init diagnostic stacks under the manually-
@@ -2008,6 +2030,21 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // REPARATION_Pause — otherwise the timer would tick while showing
         // a paused server status.
         this.repairInitiallyPaused = di?.status === 'REPARATION_Pause';
+        // Seed the server-anchored repair timer from the row's persisted data:
+        //   - paused          → frozen at accumulated rep_time (no anchor)
+        //   - already running → use the persisted run-leg start (survives refresh)
+        //   - fresh start     → anchor "now"; the open auto-transition stamps
+        //                       Stat.repRunStartedAt = now server-side to match.
+        this.repairElapsedBaseMs = this.timeStringToMs(di?.rep_time || '00:00:00');
+        if (di?.status === 'REPARATION_Pause') {
+            this.repairRunStartedAtMs = null;
+        } else if (di?.status === 'INREPARATION') {
+            this.repairRunStartedAtMs = di?.repRunStartedAt
+                ? new Date(di.repRunStartedAt).getTime()
+                : Date.now();
+        } else {
+            this.repairRunStartedAtMs = Date.now();
+        }
         this.showRepairModal = true;
         this.persistActiveDialogState('repair', di);
         this.getTimeSpentRep(di._id);
@@ -2428,6 +2465,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
         const [hours, minutes, seconds] = timeString.split(':').map(Number);
         return hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000;
+    }
+
+    /** Inverse of timeStringToMs — "HH:MM:SS" for persisting rep_time. */
+    private msToTimeString(ms: number): string {
+        const total = Math.max(0, Math.floor(ms / 1000));
+        const h = Math.floor(total / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        return `${this.padZero(h)}:${this.padZero(m)}:${this.padZero(s)}`;
     }
 
     setInitialTime(timeString: string) {
@@ -3236,12 +3282,28 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
-                    this.setDiInReparationPause(this.selectedRep);
+                    // FINISH path keeps its original behavior: the status is
+                    // persisted here, after the lap mutation resolves.
+                    if (isFinishRep) {
+                        this.setDiInReparationPause(this.selectedRep);
+                    }
                     if (!keepOpen) {
                         this.diDialogRep = false;
                     }
                 }
             });
+
+        // PAUSE path: persist REPARATION_Pause DIRECTLY, in parallel with the
+        // lap mutation — mirroring the diagnostic flow, where
+        // `lapTimeForPauseAndGetBack()` fires `diDiagnostiqueInPAUSE(...)`
+        // directly (not chained behind another mutation's response). Firing it
+        // here flips the status in a single roundtrip, so the 350ms-debounced
+        // tech-list refresh reads the fresh REPARATION_Pause instead of stale
+        // INREPARATION (which previously reverted the optimistic chip back to
+        // "En cours"). The finish path above keeps its chained behavior.
+        if (!isFinishRep) {
+            this.setDiInReparationPause(this.selectedRep);
+        }
 
         if (!isFinishRep) {
             this.addPauseLogs(this.statId, 'rep');
@@ -3258,13 +3320,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
                 if (data) {
-                    // The pause mutation is chained one HTTP roundtrip after
-                    // lapTimeForPauseAndGetBack1's synchronous loadData(),
-                    // so the initial refresh reads stale INREPARATION. Also,
-                    // the WS updateTicket payload carries no tech identifier,
-                    // so the relevance filter in handleTechRealtimeMessage
-                    // rejects it and no refresh is requested. Trigger one
-                    // here, after the pause has actually persisted.
+                    // Belt-and-suspenders reconcile. The backend already
+                    // broadcasts this status change over WS WITH the Stat's
+                    // tech ids (di.service.broadcastDiStatusChange →
+                    // target.id_tech_rep), which tech-list's relevance filter
+                    // (handleTechRealtimeMessage / getTechAssignmentInfo)
+                    // accepts. We still request one refresh here so the current
+                    // view reconciles against server truth the instant the
+                    // pause persists, independent of WS delivery/timing.
                     this.ticketRefreshService.requestRefresh('tech-list', {
                         source: 'mutation:setDiInReparationPause',
                     });
