@@ -125,6 +125,29 @@ export class MagasinDiListComponent implements OnDestroy {
     validerComposantValidtor: boolean = true;
     validatorFinirListeComposant: boolean = true;
     composantCatgorieList: any;
+
+    // ── Master-detail « Affectation des composants » ──────────────────────
+    /** DI `_idnum` shown after the modal title (« — {code DI} »). */
+    selectedDiCode: string = '';
+    /** The requested line currently loaded in the right-hand detail form. */
+    activeLine: any = null;
+    /** Freshly chosen PDF (drag & drop zone) for the active component, if any. */
+    pdfFile: File | null = null;
+    /**
+     * TODO(stock-policy): the `Composant` entity has NO per-component reorder
+     * threshold (`seuilReappro`) yet — see backend `composant.entity.ts`. Until
+     * one exists, `stockHealth`'s low/ok boundary falls back to this constant.
+     * Make it configurable / move it server-side when the field is added.
+     */
+    readonly SEUIL_REAPPRO_DEFAUT = 5;
+    /**
+     * TODO(stock-policy): out-of-stock validation policy = "back-order" (product
+     * decision 2026-06-11). Validation stays allowed even at stock 0. Flip to
+     * false to BLOCK validation when `quantity_stocked < qtyDemandee`, or
+     * implement line-splitting, when the policy changes.
+     */
+    readonly allowValidateWhenOutOfStock = true;
+    private readonly CATEGORY_PALETTES: Array<'a' | 'b' | 'c'> = ['a', 'b', 'c'];
     colCategoryComposants = [
         { field: 'category_composant', header: 'Category Composant' },
     ];
@@ -728,7 +751,26 @@ export class MagasinDiListComponent implements OnDestroy {
         this.findAllComposant_Category();
 
         this.selectedDi_id = item._id;
+        this.selectedDiCode = item._idnum || '';
         this.ignoreCount = item.ignoreCount;
+        // Reset the master-detail state for a clean open.
+        this.activeLine = null;
+        this.selectedItem = null;
+        this.nameComposananrSelected = null;
+        this.pdfFile = null;
+        this.payload = { file: '' };
+        this.formUpdateComposant.reset();
+
+        // Map a raw DI/logs component line into a card view-model. Unlike the
+        // legacy dropdown (which dropped already-validated lines via
+        // `isUpdated === false`), the master-detail KEEPS them so they render
+        // greyed with a « ✓ Validé » pill and feed the progress count.
+        const mapLine = (el: any) => ({
+            infoComposant: el.nameComposant + ': ' + el.quantity,
+            nameComposant: el.nameComposant,
+            quantity: el.quantity,
+            validated: el.isUpdated === true,
+        });
 
         if (item && item.ignoreCount && item.ignoreCount > 0) {
             this.apollo
@@ -741,41 +783,270 @@ export class MagasinDiListComponent implements OnDestroy {
                 .subscribe(({ data, loading }) => {
                     this.isLoading = loading;
                     const logsDi = data?.getLigsById;
-
-                    if (logsDi?.array_composants) {
-                        console.log('inside logs array composant');
-                        console.log('logsDi', logsDi.array_composants);
-                        this.arrayComposant = logsDi.array_composants
-                            .filter((el: any) => el.isUpdated === false)
-                            .map((el: any) => {
-                                console.log('el', el);
-                                return {
-                                    infoComposant:
-                                        el.nameComposant + ': ' + el.quantity,
-                                    nameComposant: el.nameComposant,
-                                    quantity: el.quantity,
-                                };
-                            });
-                    }
+                    this.arrayComposant = (logsDi?.array_composants || []).map(
+                        mapLine,
+                    );
+                    this.afterLinesLoaded();
                 });
         } else {
-            console.log('inside DI array composant');
-            this.arrayComposant = item.array_composants
-                .filter((el) => el.isUpdated === false)
-                .map((el) => {
-                    return {
-                        infoComposant: el.nameComposant + ': ' + el.quantity,
-                        nameComposant: el.nameComposant,
-                        quantity: el.quantity,
-                    };
-                });
+            this.arrayComposant = (item.array_composants || []).map(mapLine);
+            this.afterLinesLoaded();
         }
-        console.log(this.arrayComposant?.length, 'ARR COMPOSANTS');
-        this.arrayComposant?.length == 0
-            ? (this.validatorFinirListeComposant = false)
-            : (this.validatorFinirListeComposant = true);
         this.magasinDiDialog = true;
-        console.log('this.arrayComposant in', this.arrayComposant.length);
+    }
+
+    /** After the requested lines arrive: gate « Terminer » and auto-open the
+     *  first pending component in the detail pane. */
+    private afterLinesLoaded(): void {
+        this.validatorFinirListeComposant = !this.allValidated;
+        this.advanceToNextUnvalidated();
+    }
+
+    // ── Master-detail helpers ─────────────────────────────────────────────
+
+    get totalLines(): number {
+        return (this.arrayComposant || []).length;
+    }
+    get validatedLines(): number {
+        return (this.arrayComposant || []).filter((l: any) => l.validated)
+            .length;
+    }
+    /** True when every requested line is validated (vacuously true if none). */
+    get allValidated(): boolean {
+        return this.validatedLines === this.totalLines;
+    }
+    get progressPct(): number {
+        return this.totalLines
+            ? Math.round((this.validatedLines / this.totalLines) * 100)
+            : 0;
+    }
+
+    /** Demanded quantity for a requested line. */
+    qtyOf(line: any): number {
+        return Number(line?.quantity ?? 0) || 0;
+    }
+
+    /**
+     * Current stock for a line. The ACTIVE line reflects live edits in the
+     * detail form (so the badge/banner recompute as the user types); the others
+     * use the catalog snapshot from `getAllComposant()`.
+     */
+    stockOf(line: any): number {
+        if (!line) return 0;
+        if (this.activeLine && line === this.activeLine) {
+            const v = this.formUpdateComposant.get('quantity_stocked')?.value;
+            if (v !== null && v !== undefined && v !== '') {
+                return Number(v) || 0;
+            }
+        }
+        const cat = (this.composantList || []).find(
+            (c: any) => c.name === line.nameComposant,
+        );
+        return Number(cat?.quantity_stocked ?? 0) || 0;
+    }
+
+    /** ok / low / out — low/ok boundary uses SEUIL_REAPPRO_DEFAUT (see TODO). */
+    stockHealthOf(line: any): 'ok' | 'low' | 'out' {
+        const s = this.stockOf(line);
+        if (s <= 0) return 'out';
+        if (s < this.SEUIL_REAPPRO_DEFAUT) return 'low';
+        return 'ok';
+    }
+    stockBadgeLabel(line: any): string {
+        const s = this.stockOf(line);
+        switch (this.stockHealthOf(line)) {
+            case 'out':
+                return 'Rupture · ' + s;
+            case 'low':
+                return 'Stock faible · ' + s;
+            default:
+                return 'En stock · ' + s;
+        }
+    }
+
+    /** disponible / partiel / indisponible — stock vs demanded quantity. */
+    availabilityOf(line: any): 'disponible' | 'partiel' | 'indisponible' {
+        const s = this.stockOf(line);
+        const q = this.qtyOf(line);
+        if (s <= 0) return 'indisponible';
+        if (s < q) return 'partiel';
+        return 'disponible';
+    }
+
+    /** Two-letter initials for a component avatar. */
+    initialsOf(name: string): string {
+        if (!name) return '?';
+        const parts = String(name)
+            .trim()
+            .split(/[\s\-_./]+/)
+            .filter(Boolean);
+        const a = parts[0]?.[0] ?? '';
+        const b = parts[1]?.[0] ?? parts[0]?.[1] ?? '';
+        return (a + b).toUpperCase() || '?';
+    }
+
+    /**
+     * Stable A/B/C avatar palette. The DI/logs lines and the catalog list don't
+     * carry `category_composant_id`, so we bucket deterministically by name —
+     * same component always gets the same colour.
+     */
+    paletteOf(line: any): 'a' | 'b' | 'c' {
+        const name = String(line?.nameComposant ?? '');
+        let h = 0;
+        for (let i = 0; i < name.length; i++) {
+            h = (h * 31 + name.charCodeAt(i)) >>> 0;
+        }
+        return this.CATEGORY_PALETTES[h % 3];
+    }
+
+    /** Load a requested line into the detail form (greyed/validated cards are
+     *  non-cliquable). Reuses the existing fetch+patch in `selectedDropDown`. */
+    selectLine(line: any): void {
+        if (!line || line.validated) return;
+        this.activeLine = line;
+        // Switching components drops any pending (unsaved) PDF + staged base64.
+        this.pdfFile = null;
+        this.payload = { file: '' };
+        this.selectedDropDown({ value: line.nameComposant });
+    }
+
+    /**
+     * A PDF was chosen in the dropzone: stage it for the active component.
+     * Reuses the EXISTING upload pipeline (`onUpload` → base64 → `payload.file`)
+     * so the save mutation keeps sending the PDF exactly as before, and mirrors
+     * the file name onto the `pdf` form control.
+     */
+    onPdfFileSelected(file: File): void {
+        this.pdfFile = file;
+        this.onUpload({ files: [file] }, 'cPDF');
+        this.formUpdateComposant.patchValue({ pdf: file.name });
+        this.formUpdateComposant.get('pdf')?.markAsDirty();
+    }
+
+    /** The dropzone was cleared: drop the staged PDF + control value. */
+    onPdfFileRemoved(): void {
+        this.pdfFile = null;
+        this.payload = { file: '' };
+        this.instantSelectedcPDF = '';
+        this.pdfAdded = null;
+        this.formUpdateComposant.patchValue({ pdf: null });
+        this.formUpdateComposant.get('pdf')?.markAsDirty();
+    }
+
+    /** Select the first still-pending line, or clear the detail when done. */
+    private advanceToNextUnvalidated(): void {
+        const next = (this.arrayComposant || []).find(
+            (l: any) => !l.validated,
+        );
+        if (next) {
+            this.selectLine(next);
+        } else {
+            this.activeLine = null;
+        }
+    }
+
+    /** True when the active line can be validated (form complete; back-order
+     *  allowed per policy — see `allowValidateWhenOutOfStock`). */
+    get canValidateActive(): boolean {
+        if (!this.activeLine || this.activeLine.validated) return false;
+        if (this.formUpdateComposant.invalid) return false;
+        if (
+            !this.allowValidateWhenOutOfStock &&
+            this.availabilityOf(this.activeLine) !== 'disponible'
+        ) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * « Valider ce composant » — persists the edited fields then marks the DI
+     * line done, both via the EXISTING save logic (`updateComposant` /
+     * `setComposantAsUpdated`). On success the card greys out and the next
+     * pending component opens.
+     */
+    validateCurrentComponent(): void {
+        const line = this.activeLine;
+        if (!line || line.validated) return;
+        if (this.formUpdateComposant.invalid) {
+            this.formUpdateComposant.markAllAsTouched();
+            this.messageservice.add({
+                severity: 'warn',
+                summary: 'Champs requis',
+                detail: 'Complétez les champs obligatoires avant de valider.',
+            });
+            return;
+        }
+
+        this.confirmationService.confirm({
+            message:
+                'Une fois validé, ce composant sera figé et retiré de la liste en attente.',
+            header: 'Valider le composant',
+            icon: 'pi pi-check-circle',
+            accept: () => {
+                const updatedComposantData = {
+                    ...this.formUpdateComposant.value,
+                    pdf: this.payload.file
+                        ? this.payload.file
+                        : this.formUpdateComposant.value.pdf,
+                };
+                // 1) persist edited fields (same mutation as « Enregistrer »)
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.updateComposant(
+                            updatedComposantData,
+                        ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe({
+                        next: () => {
+                            // 2) mark the DI line done (handshake mutation)
+                            this.apollo
+                                .mutate<any>({
+                                    mutation:
+                                        this.ticketSerice.setComposantAsUpdated(
+                                            this.selectedDi_id,
+                                            line.nameComposant,
+                                        ),
+                                })
+                                .subscribe({
+                                    next: () => {
+                                        line.validated = true;
+                                        this.validatorFinirListeComposant =
+                                            !this.allValidated;
+                                        this.messageservice.add({
+                                            severity: 'success',
+                                            summary: 'Composant validé',
+                                            detail: line.nameComposant,
+                                        });
+                                        // keep card stocks fresh, then advance
+                                        this.getAllComposant();
+                                        this.advanceToNextUnvalidated();
+                                    },
+                                    error: (e) => {
+                                        console.error(
+                                            'setComposantAsUpdated error',
+                                            e,
+                                        );
+                                        this.messageservice.add({
+                                            severity: 'error',
+                                            summary: 'Erreur',
+                                            detail: 'Validation impossible.',
+                                        });
+                                    },
+                                });
+                        },
+                        error: (e) => {
+                            console.error('updateComposant error', e);
+                            this.messageservice.add({
+                                severity: 'error',
+                                summary: 'Erreur',
+                                detail: 'Sauvegarde impossible.',
+                            });
+                        },
+                    });
+            },
+        });
     }
 
     MagasinEstimation_Condition() {}

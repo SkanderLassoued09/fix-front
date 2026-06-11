@@ -48,6 +48,7 @@ import { TabViewModule } from 'primeng/tabview';
 import { DiagnosticModalComponent } from './tech-di-list/diagnostic-modal/diagnostic-modal.component';
 import { TechRepairListComponent } from './tech-repair-list/tech-repair-list.component';
 import { RepairModalComponent } from './tech-repair-list/repair-modal/repair-modal.component';
+import { PdfDropzoneComponent } from '../magasin-di-list/pdf-dropzone/pdf-dropzone.component';
 
 @NgModule({
     declarations: [
@@ -104,6 +105,7 @@ import { RepairModalComponent } from './tech-repair-list/repair-modal/repair-mod
         TabViewModule,
         DiagnosticModalComponent,
         RepairModalComponent,
+        PdfDropzoneComponent,
     ],
     providers: [ConfirmationService, MessageService],
 })

@@ -183,292 +183,466 @@
     <!-- ═══════════ MODAL : AFFECTATION POUR LES COMPOSANTS ═══════════ -->
     <p-dialog
         [(visible)]="magasinDiDialog"
-        header="Affectation pour les composants"
         [modal]="true"
+        [showHeader]="false"
         [draggable]="false"
         [resizable]="false"
-        styleClass="sav-dialog"
-        [style]="{ width: '620px', height: '100%' }"
+        [dismissableMask]="false"
+        styleClass="cmp-assign-dialog"
+        [style]="{ width: '960px', maxWidth: '96vw' }"
     >
-        <form [formGroup]="formUpdateComposant" class="sav-create-form">
-            <!-- Retour badge -->
-            <div *ngIf="ignoreCount > 0" class="sav-retour-badge">
-                <i class="pi pi-refresh"></i>
-                Retour {{ ignoreCount }}
-            </div>
-
-            <!-- ① Sélection du composant -->
-            <div class="sav-form-row">
-                <label class="sav-label">Choisir un composant</label>
-                <p-dropdown
-                    [showClear]="true"
-                    [options]="arrayComposant"
-                    optionLabel="infoComposant"
-                    optionValue="nameComposant"
-                    placeholder="Choisir composant"
-                    (onChange)="selectedDropDown($event)"
-                    (onClear)="onClear()"
-                    styleClass="sav-dropdown"
-                    [style]="{ width: '100%' }"
-                ></p-dropdown>
-            </div>
-
-            <!-- ② Détails (visible après sélection) -->
-            <ng-container *ngIf="selectedItem">
-                <fieldset class="sav-fieldset">
-                    <legend>Informations générales</legend>
-
-                    <!-- Nom & Package -->
-                    <div class="sav-two-col">
-                        <div class="sav-form-row">
-                            <label class="sav-label">Nom du composant</label>
-                            <input
-                                formControlName="name"
-                                pInputText
-                                class="sav-input"
-                            />
-                        </div>
-                        <div class="sav-form-row">
-                            <label class="sav-label">Package</label>
-                            <input
-                                formControlName="package"
-                                pInputText
-                                class="sav-input"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- Catégorie -->
-                    <div class="sav-form-row">
-                        <label class="sav-label">Catégorie composant</label>
-                        <p-dropdown
-                            [options]="composantCategory"
-                            optionLabel="name"
-                            optionValue="name"
-                            placeholder="Choisir catégorie"
-                            formControlName="category_composant_id"
-                            styleClass="sav-dropdown"
-                            [style]="{ width: '100%' }"
+        <div class="cmp-assign" *ngIf="magasinDiDialog">
+            <!-- ─────────── Header ─────────── -->
+            <header class="cmp-head">
+                <div class="cmp-head__left">
+                    <span class="cmp-head__icon"><i class="pi pi-box"></i></span>
+                    <h2 class="cmp-head__title">
+                        Affectation pour les composants<span
+                            class="cmp-head__di"
+                            *ngIf="selectedDiCode"
                         >
-                            <ng-template let-option pTemplate="item">
-                                <p-tag
-                                    [value]="option.name"
-                                    [severity]="getSeverity(option.name)"
-                                ></p-tag>
-                            </ng-template>
-                        </p-dropdown>
-                    </div>
-
-                    <!-- Lien composant -->
-                    <div class="sav-form-row">
-                        <label class="sav-label">Lien composant</label>
-                        <div class="sav-input-with-action">
-                            <input
-                                formControlName="link"
-                                pInputText
-                                class="sav-input"
-                                placeholder="https://..."
-                            />
-                            <a
-                                [href]="formUpdateComposant.get('link')?.value"
-                                target="_blank"
-                                class="sav-file-link"
-                                [class.disabled]="
-                                    !formUpdateComposant.get('link')?.value
-                                "
-                            >
-                                <i class="pi pi-external-link"></i> Ouvrir
-                            </a>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <fieldset class="sav-fieldset">
-                    <legend>Tarification</legend>
-
-                    <div class="sav-two-col">
-                        <div class="sav-form-row">
-                            <label class="sav-label">Prix d'achat (TND)</label>
-                            <p-inputNumber
-                                [showButtons]="true"
-                                formControlName="prix_achat"
-                                buttonLayout="horizontal"
-                                spinnerMode="horizontal"
-                                decrementButtonClass="p-button-outlined p-button-secondary"
-                                incrementButtonClass="p-button-outlined p-button-secondary"
-                                incrementButtonIcon="pi pi-plus"
-                                decrementButtonIcon="pi pi-minus"
-                                mode="currency"
-                                currency="TND"
-                                [step]="0.25"
-                                styleClass="sav-number-input"
-                            ></p-inputNumber>
-                        </div>
-                        <div class="sav-form-row">
-                            <label class="sav-label">Prix de vente (TND)</label>
-                            <p-inputNumber
-                                [showButtons]="true"
-                                formControlName="prix_vente"
-                                buttonLayout="horizontal"
-                                spinnerMode="horizontal"
-                                decrementButtonClass="p-button-outlined p-button-secondary"
-                                incrementButtonClass="p-button-outlined p-button-secondary"
-                                incrementButtonIcon="pi pi-plus"
-                                decrementButtonIcon="pi pi-minus"
-                                mode="currency"
-                                currency="TND"
-                                [step]="0.25"
-                                styleClass="sav-number-input"
-                            ></p-inputNumber>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <fieldset class="sav-fieldset">
-                    <legend>Stock & Disponibilité</legend>
-
-                    <!-- Statut & Date d'arrivage -->
-                    <div class="sav-two-col">
-                        <div class="sav-form-row">
-                            <label class="sav-label">Statut</label>
-                            <p-dropdown
-                                formControlName="status"
-                                [options]="statusComposant"
-                                optionLabel="name"
-                                optionValue="value"
-                                placeholder="Choisir état"
-                                styleClass="sav-dropdown"
-                                [style]="{ width: '100%' }"
-                                (onChange)="getSelectedStatus($event)"
-                            >
-                                <ng-template let-option pTemplate="item">
-                                    <p-tag
-                                        [value]="option.name"
-                                        [severity]="getSeverity(option.name)"
-                                    ></p-tag>
-                                </ng-template>
-                            </p-dropdown>
-                        </div>
-                        <div class="sav-form-row">
-                            <label class="sav-label">Date d'arrivage</label>
-                            <p-calendar
-                                dateFormat="dd.mm.yy"
-                                formControlName="coming_date"
-                                [showButtonBar]="true"
-                                appendTo="body"
-                                styleClass="sav-calendar"
-                                [style]="{ width: '100%' }"
-                            ></p-calendar>
-                        </div>
-                    </div>
-
-                    <!-- Quantité en stock -->
-                    <div class="sav-form-row">
-                        <label class="sav-label">Quantité en stock</label>
-                        <p-inputNumber
-                            mode="decimal"
-                            [showButtons]="true"
-                            buttonLayout="horizontal"
-                            spinnerMode="horizontal"
-                            decrementButtonClass="p-button-outlined p-button-secondary"
-                            incrementButtonClass="p-button-outlined p-button-secondary"
-                            incrementButtonIcon="pi pi-plus"
-                            decrementButtonIcon="pi pi-minus"
-                            formControlName="quantity_stocked"
-                            styleClass="sav-number-input"
-                        ></p-inputNumber>
-                    </div>
-                </fieldset>
-
-                <fieldset class="sav-fieldset">
-                    <legend>Fiche technique</legend>
-
-                    <div class="sav-files-row">
-                        <a
-                            *ngIf="loadedDataComposant?.pdf || pdfAdded"
-                            [href]="
-                                pdfAdded
-                                    ? baseUrl + pdfAdded
-                                    : baseUrl + loadedDataComposant.pdf
-                            "
-                            target="_blank"
-                            class="sav-file-link"
+                            — {{ selectedDiCode }}</span
                         >
-                            <i class="pi pi-file-pdf"></i> Consulter Datasheet
-                        </a>
-                        <div class="sav-upload-inline">
-                            <p-fileUpload
-                                mode="basic"
-                                chooseLabel="Ajouter PDF"
-                                chooseIcon="pi pi-upload"
-                                name="bonDeCommande"
-                                url="https://www.primefaces.org/cdn/api/upload.php"
-                                accept="application/pdf"
-                                maxFileSize="10000000"
-                                (onSelect)="onPdfSelect($event, 'cPDF')"
-                                (onUpload)="onUpload($event, 'cPDF')"
-                                (onError)="onPdfUploadError('cPDF')"
-                                [auto]="true"
-                                styleClass="sav-upload-btn"
-                            ></p-fileUpload>
-                            <span
-                                *ngIf="isPdfPreparing"
-                                class="sav-upload-loading"
-                            >
-                                <i class="pi pi-spin pi-spinner"></i>
-                                Préparation du PDF...
-                            </span>
-                        </div>
-                    </div>
-                </fieldset>
-
-                <!-- Valider ce composant -->
-                <div class="sav-validate-row">
-                    <div class="sav-validate-hint">
-                        <i class="pi pi-info-circle"></i>
-                        Validez ce composant pour le retirer de la liste en
-                        attente.
-                    </div>
-                    <p-button
-                        [disabled]="validerComposantValidtor"
-                        label="Valider ce composant"
-                        icon="pi pi-check"
-                        severity="success"
-                        size="small"
-                        (click)="setComposantAsUpdate()"
-                    ></p-button>
+                    </h2>
                 </div>
-            </ng-container>
-        </form>
+                <div class="cmp-head__right">
+                    <span class="cmp-retour" *ngIf="ignoreCount > 0">
+                        <i class="pi pi-refresh"></i> Retour {{ ignoreCount }}
+                    </span>
+                    <span class="cmp-head__progress"
+                        >{{ validatedLines }} / {{ totalLines }} validés</span
+                    >
+                    <span class="cmp-head__bar">
+                        <span
+                            class="cmp-head__bar-fill"
+                            [style.width.%]="progressPct"
+                        ></span>
+                    </span>
+                    <button
+                        type="button"
+                        class="cmp-head__close"
+                        (click)="annulerMagasinEstimation()"
+                        aria-label="Fermer"
+                    >
+                        <i class="pi pi-times"></i>
+                    </button>
+                </div>
+            </header>
 
-        <ng-template pTemplate="footer">
-            <div class="sav-dialog-footer">
-                <p-button
-                    label="Annuler"
-                    icon="pi pi-times"
-                    severity="danger"
-                    [outlined]="true"
-                    size="small"
+            <!-- ─────────── Body : rail | détail ─────────── -->
+            <div class="cmp-body">
+                <!-- Rail gauche : cartes -->
+                <aside class="cmp-rail">
+                    <div class="cmp-rail__head">
+                        <span class="cmp-rail__title">Composants demandés</span>
+                        <span class="cmp-rail__count">{{ totalLines }}</span>
+                    </div>
+                    <div class="cmp-rail__list">
+                        <button
+                            type="button"
+                            class="cmp-card"
+                            *ngFor="let line of arrayComposant"
+                            [class.cmp-card--active]="line === activeLine"
+                            [class.cmp-card--done]="line.validated"
+                            [disabled]="line.validated"
+                            (click)="selectLine(line)"
+                        >
+                            <span
+                                class="cmp-avatar"
+                                [attr.data-palette]="paletteOf(line)"
+                                >{{ initialsOf(line.nameComposant) }}</span
+                            >
+                            <span class="cmp-card__body">
+                                <span class="cmp-card__name">{{
+                                    line.nameComposant
+                                }}</span>
+                                <span class="cmp-card__sub"
+                                    >Demandé : {{ qtyOf(line) }} · Stock :
+                                    {{ stockOf(line) }}</span
+                                >
+                                <span
+                                    class="cmp-badge"
+                                    [attr.data-health]="stockHealthOf(line)"
+                                >
+                                    <span class="cmp-badge__dot"></span
+                                    >{{ stockBadgeLabel(line) }}
+                                </span>
+                            </span>
+                            <span class="cmp-card__done" *ngIf="line.validated"
+                                ><i class="pi pi-check"></i> Validé</span
+                            >
+                        </button>
+
+                        <div class="cmp-rail__empty" *ngIf="totalLines === 0">
+                            Aucun composant demandé.
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Pane droit : détail -->
+                <section class="cmp-detail">
+                    <div class="cmp-detail__scroll">
+                        <ng-container *ngIf="activeLine; else allDone">
+                            <!-- Titre -->
+                            <div class="cmp-detail__title">
+                                <span
+                                    class="cmp-avatar cmp-avatar--sm"
+                                    [attr.data-palette]="paletteOf(activeLine)"
+                                    >{{
+                                        initialsOf(activeLine.nameComposant)
+                                    }}</span
+                                >
+                                <span class="cmp-detail__name">{{
+                                    activeLine.nameComposant
+                                }}</span>
+                            </div>
+
+                            <!-- Bannière de disponibilité (live) -->
+                            <div
+                                class="cmp-avail"
+                                [attr.data-avail]="availabilityOf(activeLine)"
+                            >
+                                <span class="cmp-avail__icon">
+                                    <i
+                                        class="pi"
+                                        [class.pi-check-circle]="
+                                            availabilityOf(activeLine) ===
+                                            'disponible'
+                                        "
+                                        [class.pi-exclamation-triangle]="
+                                            availabilityOf(activeLine) ===
+                                            'partiel'
+                                        "
+                                        [class.pi-times-circle]="
+                                            availabilityOf(activeLine) ===
+                                            'indisponible'
+                                        "
+                                    ></i>
+                                </span>
+                                <span class="cmp-avail__txt">
+                                    <span class="cmp-avail__title">{{
+                                        availabilityOf(activeLine) ===
+                                        'disponible'
+                                            ? 'Composant disponible'
+                                            : availabilityOf(activeLine) ===
+                                              'partiel'
+                                            ? 'Stock partiel'
+                                            : 'Composant indisponible'
+                                    }}</span>
+                                    <span class="cmp-avail__sub"
+                                        >Demandé : {{ qtyOf(activeLine) }} · En
+                                        stock : {{ stockOf(activeLine) }}</span
+                                    >
+                                </span>
+                                <span class="cmp-avail__verdict">{{
+                                    availabilityOf(activeLine)
+                                }}</span>
+                            </div>
+
+                            <form
+                                [formGroup]="formUpdateComposant"
+                                class="cmp-form"
+                            >
+                                <!-- Informations générales -->
+                                <div class="cmp-group">
+                                    <div class="cmp-group__title">
+                                        Informations générales
+                                    </div>
+                                    <div class="cmp-grid cmp-grid--2">
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Nom
+                                                <span class="cmp-req"
+                                                    >*</span
+                                                ></label
+                                            >
+                                            <input
+                                                pInputText
+                                                formControlName="name"
+                                                class="cmp-input"
+                                            />
+                                        </div>
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Package</label
+                                            >
+                                            <input
+                                                pInputText
+                                                formControlName="package"
+                                                class="cmp-input"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div class="cmp-grid cmp-grid--2">
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Catégorie
+                                                <span class="cmp-req"
+                                                    >*</span
+                                                ></label
+                                            >
+                                            <p-dropdown
+                                                formControlName="category_composant_id"
+                                                [options]="composantCategory"
+                                                optionLabel="name"
+                                                optionValue="name"
+                                                placeholder="Choisir catégorie"
+                                                appendTo="body"
+                                                styleClass="cmp-dd"
+                                                [style]="{ width: '100%' }"
+                                            >
+                                                <ng-template
+                                                    let-option
+                                                    pTemplate="item"
+                                                >
+                                                    <p-tag
+                                                        [value]="option.name"
+                                                        [severity]="
+                                                            getSeverity(
+                                                                option.name
+                                                            )
+                                                        "
+                                                    ></p-tag>
+                                                </ng-template>
+                                            </p-dropdown>
+                                        </div>
+                                        <div class="cmp-field">
+                                            <label class="cmp-label">Lien</label>
+                                            <div class="cmp-input-action">
+                                                <input
+                                                    pInputText
+                                                    formControlName="link"
+                                                    class="cmp-input"
+                                                    placeholder="https://..."
+                                                />
+                                                <a
+                                                    class="cmp-input-action__btn"
+                                                    [href]="
+                                                        formUpdateComposant.get(
+                                                            'link'
+                                                        )?.value || null
+                                                    "
+                                                    target="_blank"
+                                                    [class.disabled]="
+                                                        !formUpdateComposant.get(
+                                                            'link'
+                                                        )?.value
+                                                    "
+                                                    aria-label="Ouvrir le lien"
+                                                >
+                                                    <i
+                                                        class="pi pi-external-link"
+                                                    ></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tarification -->
+                                <div class="cmp-group">
+                                    <div class="cmp-group__title">
+                                        Tarification
+                                    </div>
+                                    <div class="cmp-grid cmp-grid--2">
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Prix d'achat (TND)</label
+                                            >
+                                            <p-inputNumber
+                                                formControlName="prix_achat"
+                                                [showButtons]="true"
+                                                buttonLayout="horizontal"
+                                                spinnerMode="horizontal"
+                                                [min]="0"
+                                                [step]="0.25"
+                                                mode="currency"
+                                                currency="TND"
+                                                incrementButtonIcon="pi pi-plus"
+                                                decrementButtonIcon="pi pi-minus"
+                                                styleClass="cmp-counter"
+                                            ></p-inputNumber>
+                                        </div>
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Prix de vente (TND)</label
+                                            >
+                                            <p-inputNumber
+                                                formControlName="prix_vente"
+                                                [showButtons]="true"
+                                                buttonLayout="horizontal"
+                                                spinnerMode="horizontal"
+                                                [min]="0"
+                                                [step]="0.25"
+                                                mode="currency"
+                                                currency="TND"
+                                                incrementButtonIcon="pi pi-plus"
+                                                decrementButtonIcon="pi pi-minus"
+                                                styleClass="cmp-counter"
+                                            ></p-inputNumber>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Stock & disponibilité -->
+                                <div class="cmp-group">
+                                    <div class="cmp-group__title">
+                                        Stock &amp; disponibilité
+                                        <span
+                                            class="cmp-seuil"
+                                            [attr.data-health]="
+                                                stockHealthOf(activeLine)
+                                            "
+                                            >seuil
+                                            {{ SEUIL_REAPPRO_DEFAUT }}</span
+                                        >
+                                    </div>
+                                    <div class="cmp-grid cmp-grid--3">
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Statut</label
+                                            >
+                                            <p-dropdown
+                                                formControlName="status"
+                                                [options]="statusComposant"
+                                                optionLabel="name"
+                                                optionValue="value"
+                                                placeholder="Statut"
+                                                appendTo="body"
+                                                styleClass="cmp-dd"
+                                                [style]="{ width: '100%' }"
+                                                (onChange)="
+                                                    getSelectedStatus($event)
+                                                "
+                                            ></p-dropdown>
+                                        </div>
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Date d'arrivée</label
+                                            >
+                                            <p-calendar
+                                                formControlName="coming_date"
+                                                dateFormat="dd.mm.yy"
+                                                [showButtonBar]="true"
+                                                appendTo="body"
+                                                styleClass="cmp-cal"
+                                                [style]="{ width: '100%' }"
+                                            ></p-calendar>
+                                        </div>
+                                        <div class="cmp-field">
+                                            <label class="cmp-label"
+                                                >Quantité
+                                                <span class="cmp-req"
+                                                    >*</span
+                                                ></label
+                                            >
+                                            <p-inputNumber
+                                                formControlName="quantity_stocked"
+                                                mode="decimal"
+                                                [showButtons]="true"
+                                                buttonLayout="horizontal"
+                                                spinnerMode="horizontal"
+                                                [min]="0"
+                                                [step]="1"
+                                                incrementButtonIcon="pi pi-plus"
+                                                decrementButtonIcon="pi pi-minus"
+                                                styleClass="cmp-counter"
+                                            ></p-inputNumber>
+                                        </div>
+                                    </div>
+
+                                    <!-- Fiche technique : lien vers le PDF
+                                         déjà stocké (le cas échéant) + dropzone -->
+                                    <div class="cmp-fiche">
+                                        <span class="cmp-fiche__label"
+                                            >Fiche technique</span
+                                        >
+                                        <a
+                                            *ngIf="
+                                                loadedDataComposant?.pdf ||
+                                                pdfAdded
+                                            "
+                                            class="cmp-fiche__view"
+                                            [href]="
+                                                pdfAdded
+                                                    ? baseUrl + pdfAdded
+                                                    : baseUrl +
+                                                      loadedDataComposant?.pdf
+                                            "
+                                            target="_blank"
+                                        >
+                                            <i class="pi pi-file-pdf"></i>
+                                            Consulter le PDF actuel
+                                        </a>
+                                    </div>
+                                    <app-pdf-dropzone
+                                        class="cmp-dropzone"
+                                        [value]="pdfFile"
+                                        [maxSizeMo]="10"
+                                        (fileSelected)="
+                                            onPdfFileSelected($event)
+                                        "
+                                        (fileRemoved)="onPdfFileRemoved()"
+                                    ></app-pdf-dropzone>
+                                </div>
+                            </form>
+                        </ng-container>
+
+                        <ng-template #allDone>
+                            <div class="cmp-empty">
+                                <i class="pi pi-check-circle"></i>
+                                <p>
+                                    Tous les composants demandés sont validés.
+                                </p>
+                            </div>
+                        </ng-template>
+                    </div>
+
+                    <!-- Footer interne du pane -->
+                    <div class="cmp-detail__foot" *ngIf="activeLine">
+                        <span class="cmp-detail__hint"
+                            >Validez pour figer ce composant et le retirer de la
+                            liste.</span
+                        >
+                        <button
+                            type="button"
+                            class="cmp-validate"
+                            [disabled]="!canValidateActive"
+                            (click)="validateCurrentComponent()"
+                        >
+                            <i class="pi pi-check"></i> Valider ce composant
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ─────────── Footer modal ─────────── -->
+            <footer class="cmp-foot">
+                <button
+                    type="button"
+                    class="cmp-btn cmp-btn--cancel"
                     (click)="annulerMagasinEstimation()"
-                ></p-button>
-                <p-button
-                    label="Enregistrer"
-                    icon="pi pi-save"
-                    severity="secondary"
-                    size="small"
+                >
+                    <i class="pi pi-times"></i> Annuler
+                </button>
+                <button
+                    type="button"
+                    class="cmp-btn cmp-btn--save"
                     [disabled]="!formUpdateComposant.valid"
                     (click)="updateComposant()"
-                ></p-button>
-                <p-button
-                    label="Terminer"
-                    icon="pi pi-check-circle"
-                    severity="success"
-                    size="small"
-                    [disabled]="validatorFinirListeComposant"
+                >
+                    <i class="pi pi-save"></i> Enregistrer
+                </button>
+                <button
+                    type="button"
+                    class="cmp-btn cmp-btn--finish"
+                    [disabled]="!allValidated"
                     (click)="finishMagasinEstimation()"
-                ></p-button>
-            </div>
-        </ng-template>
+                >
+                    <i class="pi pi-check"></i> Terminer
+                </button>
+            </footer>
+        </div>
     </p-dialog>
 
     <!-- ═══════════ DIALOG 2 — CRÉATION CATÉGORIE COMPOSANT ═══════════ -->
