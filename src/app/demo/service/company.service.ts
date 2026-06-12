@@ -1,113 +1,58 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
 
+/**
+ * Company GraphQL operations — parameterised with typed VARIABLES (not string
+ * interpolation). This closes the S10 interpolation-injection risk and lets the
+ * backend validate typed inputs. Each method returns a document; the caller
+ * passes the matching `variables` to `apollo.mutate/query`.
+ */
+const COMPANY_FIELDS = `
+    _id
+    name
+    region
+    address
+    email
+    phone
+    activitePrincipale
+    activiteSecondaire
+    raisonSociale
+    Exoneration
+    fax
+    webSiteLink
+    mf
+    rne
+    driveFolderId
+    driveFolderUrl
+    serviceAchat { name email phone }
+    serviceFinancier { name email phone }
+    serviceTechnique { name email phone }
+`;
+
 @Injectable({
     providedIn: 'root',
 })
 export class CompanyService {
     constructor() {}
 
-    addCompany(companyInfo) {
+    /** variables: { input: CreateCompanyInput } */
+    addCompany() {
         return gql`
-            mutation {
-                createCompany(
-                    createCompanyInput: {
-                        name: "${companyInfo.companyName}"
-                        region: "${companyInfo.region.name}"
-                        address: "${companyInfo.address}"
-                        email: "${companyInfo.email}"
-                        raisonSociale: "${companyInfo.raisonSociale}"
-                        Exoneration: "${companyInfo.Exoneration}"
-                        fax: "${companyInfo.fax}"
-                        webSiteLink: "${companyInfo.website}"
-                        mf: "${companyInfo.mf}"
-                        rne: "${companyInfo.rne}"
-                        activitePrincipale: "${companyInfo.activitePrincipale}"
-                        activiteSecondaire: "${companyInfo.activiteSecondaire}"
-                        serviceAchat: { name: "${companyInfo.achat.fullName}", email: "${companyInfo.achat.email}", phone: "${companyInfo.achat.phone}" }
-                        serviceTechnique: { name: "${companyInfo.technique.fullName}", email: "${companyInfo.technique.email}", phone: "${companyInfo.technique.phone}" }
-                        serviceFinancier: { name: "${companyInfo.financier.fullName}", email: "${companyInfo.financier.email}", phone: "${companyInfo.financier.phone}" }
-                    }
-                ) {
+            mutation CreateCompany($input: CreateCompanyInput!) {
+                createCompany(createCompanyInput: $input) {
                     _id
                 }
             }
         `;
     }
 
-    searchCompany(field: string, value: string, first: number, rows: number) {
+    /** variables: { config: PaginationConfig, search: SearchInput } */
+    searchCompany() {
         return gql`
-    {
-      searchCompany(
-        paginationConfig: { first: ${first}, rows: ${rows} }
-        search: { field: "${field}", value: "${value}" }
-      ) {
-        companyRecords {
-          _id
-          name
-          region
-          address
-          email
-          activitePrincipale
-          activiteSecondaire
-          raisonSociale
-          Exoneration
-          fax
-          webSiteLink
-          serviceAchat {
-            name
-            email
-            phone
-          }
-          serviceFinancier {
-            name
-            email
-            phone
-          }
-          serviceTechnique {
-            name
-            email
-            phone
-          }
-        }
-        totalCompanyRecord
-      }
-    }
-  `;
-    }
-
-    getAllCompany(first, row) {
-        return gql`
-            {
-                findAllCompany(PaginationConfig: { rows: ${row}, first: ${first} }) {
+            query SearchCompany($config: PaginationConfig!, $search: SearchInput!) {
+                searchCompany(paginationConfig: $config, search: $search) {
                     companyRecords {
-                        _id
-                        name
-                        region
-                        address
-                        email
-                        activitePrincipale
-                        activitePrincipale
-                        activiteSecondaire
-                        raisonSociale
-                        Exoneration
-                        fax
-                        webSiteLink
-                        serviceAchat {
-                            name
-                            email
-                            phone
-                        }
-                        serviceFinancier {
-                            name
-                            email
-                            phone
-                        }
-                        serviceTechnique {
-                            name
-                            email
-                            phone
-                        }
+                        ${COMPANY_FIELDS}
                     }
                     totalCompanyRecord
                 }
@@ -115,79 +60,49 @@ export class CompanyService {
         `;
     }
 
-    removeCompany(_id: string) {
+    /** variables: { config: PaginationConfig } */
+    getAllCompany() {
         return gql`
-        mutation {
-            removeCompany(_id:"${_id}"){isDeleted}
-        }
-    `;
-    }
-
-    findOneCompany(_id: string) {
-        return gql`
-        query {
-            findOneCompany(_id: "${_id}") {
-                _id
-                name
-                region
-                address
-                email
-                activitePrincipale
-                activitePrincipale
-                activiteSecondaire
-                raisonSociale
-                Exoneration
-                fax
-                webSiteLink
-                serviceAchat {
-                    name
-                    email
-                    phone
-                }
-                serviceFinancier {
-                    name
-                    email
-                    phone
-                }
-                serviceTechnique {
-                    name
-                    email
-                    phone
+            query FindAllCompany($config: PaginationConfig!) {
+                findAllCompany(PaginationConfig: $config) {
+                    companyRecords {
+                        ${COMPANY_FIELDS}
+                    }
+                    totalCompanyRecord
                 }
             }
-        }
-    `;
+        `;
     }
 
-    /**
-     * Update company
-     */
-
-    updatecompany(company: any) {
+    /** variables: { id: String } */
+    removeCompany() {
         return gql`
-            mutation {
-                updateCompany(
-                    updateCompanyInput: {
-                        _id: "${company._id}"
-                        name: "${company.name}"
-                        region: "${company.region}"
-                        address: "${company.address}"
-                        email: "${company.email}"
-                        Exoneration: "${company.Exoneration}"
-                        raisonSociale: "${company.raisonSociale}"
-                        fax: "${company.fax}"
-                        webSiteLink: "${company.webSiteLink}"
-                    }
-                ) {
+            mutation RemoveCompany($id: String!) {
+                removeCompany(_id: $id) {
                     _id
-                    name
-                    region
-                    address
-                    email
-                    raisonSociale
-                    Exoneration
-                    fax
-                    webSiteLink
+                    isDeleted
+                }
+            }
+        `;
+    }
+
+    /** variables: { id: String } */
+    findOneCompany() {
+        return gql`
+            query FindOneCompany($id: String!) {
+                findOneCompany(_id: $id) {
+                    ${COMPANY_FIELDS}
+                }
+            }
+        `;
+    }
+
+    /** variables: { input: UpdateCompanyInput } */
+    updatecompany() {
+        return gql`
+            mutation UpdateCompany($input: UpdateCompanyInput!) {
+                updateCompany(updateCompanyInput: $input) {
+                    ${COMPANY_FIELDS}
                 }
             }
         `;

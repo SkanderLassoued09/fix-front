@@ -1,4 +1,6 @@
 <p-toast></p-toast>
 
-<router-outlet></router-outlet>
+<!-- Single primary outlet. There were TWO unnamed <router-outlet> here, which
+     mounted every routed page TWICE (duplicate component instances) — the root
+     cause of the duplicate toast (and duplicated dialogs/handlers). -->
 <router-outlet></router-outlet>

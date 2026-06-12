@@ -36,6 +36,12 @@ import { TooltipModule } from 'primeng/tooltip';
         TagModule,
         TooltipModule,
     ],
-    providers: [MessageService, ConfirmationService],
+    // NOTE: MessageService is intentionally NOT provided here — use the ROOT
+    // instance (provided in AppModule) so toasts render in the single global
+    // <p-toast> in app.component. A module-level provider created a 2nd
+    // MessageService instance, which (with the local <p-toast>, now removed)
+    // caused the duplicate-toast bug. ConfirmationService stays for the local
+    // <p-confirmDialog>.
+    providers: [ConfirmationService],
 })
 export class CompanyListModule {}

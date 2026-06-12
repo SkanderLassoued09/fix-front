@@ -494,3 +494,544 @@ $purple: #7c3aed;
         grid-template-columns: 1fr;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Modal « Ajouter une nouvelle société » — refonte design system
+   (cf. company-list.component.html)
+   ═══════════════════════════════════════════════════════════════════════ */
+::ng-deep .co-modal-dialog.p-dialog {
+    border-radius: 18px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 18px 54px -18px rgba(15, 23, 42, 0.32);
+    overflow: hidden;
+    max-height: 92vh;
+
+    .p-dialog-content {
+        padding: 0;
+        overflow: hidden;
+        border-radius: 18px;
+        max-height: 92vh;
+        display: flex;
+    }
+}
+
+::ng-deep .co-modal {
+    --c-border: #e2e8f0;
+    --c-border-soft: #eef2f6;
+    --c-ink: #0f172a;
+    --c-muted: #64748b;
+    --c-faint: #94a3b8;
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 92vh;
+    background: #fff;
+    color: var(--c-ink);
+
+    * {
+        box-sizing: border-box;
+    }
+    input,
+    button,
+    .p-component,
+    .p-inputtext {
+        font-family: inherit;
+    }
+
+    /* ── Header ── */
+    .co-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--c-border-soft);
+        background: linear-gradient(180deg, #fff, #fbfcfe);
+        flex: none;
+    }
+    .co-head__left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+    }
+    .co-head__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        background: #eff6ff;
+        color: #2563eb;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        flex: none;
+    }
+    .co-head__titles {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .co-head__title {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--c-ink);
+        line-height: 1.2;
+    }
+    .co-head__sub {
+        font-size: 11.5px;
+        color: #94a3b8;
+        margin-top: 2px;
+    }
+    .co-head__close {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #64748b;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        flex: none;
+        transition: background 0.15s, border-color 0.15s;
+        &:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+    }
+
+    /* ── Body ── */
+    .co-body {
+        padding: 20px 24px;
+        overflow-y: auto;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    /* ── Section (fieldset + légende chevauchante) ── */
+    .co-section {
+        position: relative;
+        border: 1px solid var(--c-border);
+        border-radius: 13px;
+        padding: 18px 16px 15px;
+        margin-bottom: 16px;
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+    .co-section__legend {
+        position: absolute;
+        top: -8px;
+        left: 14px;
+        background: #fff;
+        padding: 0 6px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        color: #94a3b8;
+        i {
+            font-size: 12px;
+        }
+    }
+    .co-section__legend--info i {
+        color: #2563eb;
+    }
+    .co-section__legend--users i {
+        color: #7c3aed;
+    }
+
+    /* ── Grille + champs ── */
+    .co-grid {
+        display: grid;
+        gap: 14px 16px;
+    }
+    .co-grid--3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .co-field {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+    .co-label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 6px;
+    }
+    .co-req {
+        color: #dc2626;
+    }
+    .co-input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        font-size: 13.5px;
+        color: #0f172a;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        &::placeholder {
+            color: #b8c2cf;
+        }
+        &:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+        }
+    }
+    /* Invalid field state + error message under the field. */
+    .co-input--err {
+        border-color: #fecaca;
+        &:focus {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.13);
+        }
+    }
+    .co-err {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        color: #dc2626;
+    }
+
+    /* ── Cartes « Contacts par service » ── */
+    .co-services {
+        gap: 13px;
+    }
+    .co-service {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 11px;
+        background: #fcfdff;
+        transition: border-color 0.15s;
+        &:hover {
+            border-color: #cbd5e1;
+        }
+    }
+    .co-service__head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .co-service__icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        font-size: 16px;
+        flex: none;
+    }
+    .co-service[data-svc='achat'] .co-service__icon {
+        background: #ecfdf5;
+        color: #16a34a;
+    }
+    .co-service[data-svc='technique'] .co-service__icon {
+        background: #f5f3ff;
+        color: #7c3aed;
+    }
+    .co-service[data-svc='financier'] .co-service__icon {
+        background: #eff6ff;
+        color: #2563eb;
+    }
+    .co-service__name {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .co-service__state {
+        min-height: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+    }
+    .co-service__empty {
+        font-size: 11px;
+        color: #94a3b8;
+    }
+    .co-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        border-radius: 99px;
+        padding: 3px 4px 3px 9px;
+        max-width: 100%;
+    }
+    .co-chip__name {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #334155;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .co-chip__x {
+        width: 16px;
+        height: 16px;
+        border-radius: 99px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        flex: none;
+        transition: background 0.12s, color 0.12s;
+        i {
+            font-size: 9px;
+        }
+        &:hover {
+            background: #e2e8f0;
+            color: #dc2626;
+        }
+    }
+    .co-service__add {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #2563eb;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 11px;
+        cursor: pointer;
+        transition: background 0.12s, border-color 0.12s;
+        i {
+            font-size: 11px;
+        }
+        &:hover {
+            background: #eff6ff;
+            border-color: #cbd5e1;
+        }
+    }
+
+    /* ── Éditeur de contact inline ── */
+    .co-editor {
+        margin-top: 13px;
+        padding: 14px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 11px;
+        background: #fafbfd;
+    }
+    .co-editor__title {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: #94a3b8;
+        margin-bottom: 10px;
+    }
+
+    /* ── Contrôles PrimeNG (dropdowns) ── */
+    .p-dropdown {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 9px;
+        .p-dropdown-label {
+            padding: 10px 12px;
+            font-size: 13.5px;
+            color: #0f172a;
+        }
+        .p-dropdown-label.p-placeholder {
+            color: #b8c2cf;
+        }
+        &:not(.p-disabled).p-focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
+        }
+    }
+
+    /* ── Footer ── */
+    .co-foot {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 14px 24px;
+        border-top: 1px solid var(--c-border-soft);
+        background: #fafbfd;
+        flex: none;
+    }
+    .co-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 16px;
+        border-radius: 9px;
+        font-size: 13.5px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background 0.12s, transform 0.12s, opacity 0.12s;
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+    .co-btn--ghost {
+        background: transparent;
+        color: #64748b;
+        &:hover {
+            background: #f1f5f9;
+        }
+    }
+    .co-btn--primary {
+        color: #fff;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        box-shadow: 0 8px 18px -10px rgba(22, 163, 74, 0.7);
+        &:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+    }
+    /* Édition → bleu (sauvegarde). Le vert reste réservé à la création. */
+    .co-btn--save {
+        color: #fff;
+        background: #3b82f6;
+        &:hover:not(:disabled) {
+            background: #2563eb;
+        }
+    }
+
+    /* Focus clavier visible. */
+    .co-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+    }
+    .co-head__close:focus-visible,
+    .co-service__add:focus-visible,
+    .co-chip__x:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+}
+
+/* ── Responsive ── */
+@media (max-width: 820px) {
+    ::ng-deep .co-modal .co-grid--3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    ::ng-deep .co-modal .co-services {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+@media (max-width: 560px) {
+    ::ng-deep .co-modal .co-grid--3 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* ═══════════ Dialog « Supprimer la société ? » (destructif) ═══════════ */
+::ng-deep .co-delete {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    width: 100%;
+    padding: 22px 22px 18px;
+    color: #0f172a;
+
+    * {
+        box-sizing: border-box;
+    }
+    button {
+        font-family: inherit;
+    }
+
+    .co-delete__icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #fef2f2;
+        color: #dc2626;
+        display: grid;
+        place-items: center;
+        font-size: 18px;
+        margin-bottom: 13px;
+    }
+    .co-delete__title {
+        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .co-delete__body {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.5;
+        strong {
+            color: #0f172a;
+            font-weight: 700;
+        }
+    }
+    .co-delete__info {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 11px;
+        font-size: 12px;
+        color: #b45309;
+        background: #fffbeb;
+        border: 1px solid #fde9c3;
+        border-radius: 9px;
+        padding: 8px 11px;
+    }
+    .co-delete__foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+    }
+
+    .co-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 16px;
+        border-radius: 9px;
+        font-size: 13.5px;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: background 0.12s, opacity 0.12s;
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        &:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35);
+        }
+    }
+    .co-btn--ghost {
+        background: transparent;
+        color: #64748b;
+        &:hover:not(:disabled) {
+            background: #f1f5f9;
+        }
+    }
+    .co-btn--danger {
+        color: #fff;
+        background: #dc2626;
+        &:hover:not(:disabled) {
+            background: #b91c1c;
+        }
+        &:focus-visible {
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.35);
+        }
+    }
+}
