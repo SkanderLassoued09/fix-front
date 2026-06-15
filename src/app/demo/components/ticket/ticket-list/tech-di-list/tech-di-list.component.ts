@@ -9,6 +9,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import {
     ConfigDiagAffectationMutationResult,
     ConfigRepAffectationMutationResult,
@@ -167,6 +168,20 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     /** True when the modal should open with the timer already paused (status === REPARATION_Pause). */
     repairInitiallyPaused: boolean = false;
+
+    /** True while « Fin réparation » mutations are in flight (anti double-submit;
+     *  disables the wizard's finish button). */
+    repairFinishing = false;
+    /** Pre-fill payload handed to the wizard on open (category, repair remark,
+     *  already-selected parts) so the tech doesn't re-enter everything. */
+    repairPrefill: {
+        di_category_id?: string | null;
+        remarqueExtra?: string;
+        parts?: Array<{ nameComposant: string; reference?: string; quantity: number }>;
+    } | null = null;
+    /** Parts catalog + categories fed to the wizard's pickers. */
+    repairPartOptions: Array<{ name: string; reference?: string }> = [];
+    repairCategories: Array<{ _id: string; category: string }> = [];
 
     /**
      * Map a loosely-typed row payload into the strict `DiagnosticDiSummary`
@@ -386,6 +401,102 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * B1/B2 — « Fin réparation » from the redesigned wizard. Persists the used
+     * parts + repair remark (B2), then finishes the repair and moves the DI to
+     * FINISHED. Anti double-submit; one success toast; on error the modal stays
+     * open + the button re-enables (no frozen spinner).
+     */
+    onRepairModalFinish(payload: {
+        remarque: string;
+        parts: Array<{ nameComposant: string; quantity: number }>;
+    }): void {
+        if (this.repairFinishing) return; // anti double-submit
+        const diId = this.selectedRep || (this.di as any)?._idDi;
+        if (!diId) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Erreur',
+                detail: 'DI introuvable.',
+            });
+            return;
+        }
+        this.repairFinishing = true;
+        const remark = payload?.remarque ?? '';
+        const parts = (payload?.parts ?? []).map((p) => ({
+            nameComposant: p.nameComposant,
+            quantity: p.quantity,
+        }));
+
+        const fail = (e: unknown) => {
+            console.error('[repair-finish] error', e);
+            this.repairFinishing = false;
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Erreur',
+                detail: 'Échec de la clôture. Réessayez.',
+            });
+        };
+
+        // 1) persist parts + repair remark → 2) tech_finishReperation →
+        // 3) changestatusToFinishReparation (FINISHED). Sequential so the
+        // status only flips once the data is saved.
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.saveRepairParts(diId, parts, remark),
+            })
+            .subscribe({
+                next: () => {
+                    this.apollo
+                        .mutate<any>({
+                            mutation: this.ticketSerice.finishReparationSafe(
+                                diId,
+                                remark,
+                            ),
+                            useMutationLoading: true,
+                        })
+                        .subscribe({
+                            next: ({ loading }) => {
+                                if (loading) return; // skip the loading frame
+                                this.apollo
+                                    .mutate<any>({
+                                        mutation:
+                                            this.ticketSerice.changeFinishStatus(
+                                                diId,
+                                            ),
+                                    })
+                                    .subscribe({
+                                        next: ({ data }) => {
+                                            if (!data) return;
+                                            this.repairFinishing = false;
+                                            this.stopRepairTimer();
+                                            this.messageService.add({
+                                                severity: 'success',
+                                                summary: 'Réparation terminée',
+                                                detail: 'DI clôturée (FINISHED).',
+                                            });
+                                            this.showRepairModal = false;
+                                            this.diDialogRep = false;
+                                            this.repairDiInputVm = null;
+                                            this.repairPrefill = null;
+                                            this.clearPersistedDialogState(
+                                                'repair',
+                                            );
+                                            this.loadData();
+                                            this.requestTechListRefresh(
+                                                'action:repair-finish',
+                                            );
+                                        },
+                                        error: fail,
+                                    });
+                            },
+                            error: fail,
+                        });
+                },
+                error: fail,
+            });
+    }
+
     private mapDiToRepairSummary(di: any): DiagnosticDiSummary {
         return {
             _id: di?._id ?? '',
@@ -603,6 +714,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         private cdr: ChangeDetectorRef,
         private ticketRefreshService: TicketRefreshService,
         private profileService: ProfileService,
+        private readonly mutationRunner: MutationRunner,
     ) {
         this.idTech = localStorage.getItem('_id');
     }
@@ -1965,6 +2077,34 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                                 ...composant,
                                 ignoreCount: 0,
                             }));
+
+                        // B3 — pre-fill the redesigned repair wizard from the DI
+                        // so the tech doesn't re-enter category / remark / parts.
+                        this.repairPrefill = {
+                            di_category_id: detailsDi.di_category_id ?? null,
+                            remarqueExtra:
+                                di.remarque_tech_repair ||
+                                detailsDi.remarque_tech_repair ||
+                                '',
+                            parts: (detailsDi.array_composants || []).map(
+                                (c: any) => ({
+                                    nameComposant: c.nameComposant,
+                                    reference: c.reference ?? '',
+                                    quantity: c.quantity,
+                                }),
+                            ),
+                        };
+                        // Feed the wizard's pickers from the catalogs already
+                        // loaded by the host (best-effort — empty until loaded).
+                        this.repairPartOptions = (this.composantList || []).map(
+                            (c: any) => ({
+                                name: c.name,
+                                reference: c.package ?? '',
+                            }),
+                        );
+                        this.repairCategories = (
+                            this.composantCategory || []
+                        ).map((c: any) => ({ _id: c.name, category: c.value }));
                     }
 
                     this.diagFormTech.patchValue({
@@ -3061,7 +3201,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation Diagnostique',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
+            accept: async () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
                     pdr: this.diagFormTech.value.isPdr,
@@ -3073,64 +3213,69 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     composant: this.composantCombo,
                 };
 
+                // Snapshot the elapsed diag time BEFORE the chain (pure
+                // computation; `saveTimeDiag` sends `this.lapTime`).
                 this.lap();
 
-                if (dataDiag.pdr && dataDiag.reparable) {
-                    this.apollo
-                        .mutate<any>({
-                            mutation: this.ticketSerice.finish(dataDiag),
-                            useMutationLoading: true,
-                        })
-                        .subscribe(({ data, loading }) => {
-                            this.isLoading = loading;
-                            if (data) {
-                                this.disable = data.tech_startDiagnostic;
-                                this.cdr.detectChanges();
-                                this.changeStatusMagasinEstimation(
-                                    dataDiag._idDi,
-                                );
-                            }
-                        });
-                } else {
-                    this.apollo
-                        .mutate<any>({
-                            mutation: this.ticketSerice.finish(dataDiag),
-                            useMutationLoading: true,
-                        })
-                        .subscribe(({ data, loading }) => {
-                            this.isLoading = loading;
-                            if (data) {
-                                this.disable = data.tech_startDiagnostic;
-                                this.cdr.detectChanges();
-                                this.changeStatusToPending2(dataDiag._idDi);
-                            }
-                        });
-                }
+                // Branch preserved EXACTLY: pdr && reparable → MagasinEstimation,
+                // otherwise → Pending2. The transition is the LAST step so it
+                // only fires after the diagnostic is saved (and from the right
+                // source status, satisfying the M1 guard).
+                const transitionStep =
+                    dataDiag.pdr && dataDiag.reparable
+                        ? {
+                              mutation:
+                                  this.ticketSerice.changeStatusMagasinEstimation(
+                                      dataDiag._idDi,
+                                  ),
+                          }
+                        : {
+                              mutation: this.ticketSerice.changeStatusDiToPending2(
+                                  dataDiag._idDi,
+                              ),
+                          };
 
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.saveTimeDiag(
-                            this.selectedDi,
-                            this.lapTime,
-                        ),
-                        useMutationLoading: true,
-                    })
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
-
-                        if (data) {
-                            this.diDialogDiag[this.selectedDi] = false;
-                        }
+                try {
+                    // Serialized: saveTimeDiag → finish → transition. A failure
+                    // aborts the rest; anti double-submit; single toast; loading
+                    // reset on every path.
+                    await this.mutationRunner.runChain({
+                        key: `techFinishDiag:${dataDiag._idDi}`,
+                        steps: [
+                            {
+                                mutation: this.ticketSerice.saveTimeDiag(
+                                    this.selectedDi,
+                                    this.lapTime,
+                                ),
+                            },
+                            { mutation: this.ticketSerice.finish(dataDiag) },
+                            transitionStep,
+                        ],
+                        successToast: {
+                            summary: 'Diagnostic terminé',
+                            detail: 'DI transmise à l’étape suivante.',
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Échec de la clôture du diagnostic. Réessayez.',
+                        },
+                        onLoading: (v) => (this.isLoading = v),
                     });
 
-                this.ticketRefreshService.requestRefresh('tech-list', {
-                    source: 'mutation:techFinishDiag',
-                });
-
-                this.startStopwatch();
-                this.getComposant();
-                this.diDialogDiag[this.selectedDi] = false;
-                this.clearPersistedDialogState('diagnostic');
+                    // Side effects ONLY after the whole cascade succeeded —
+                    // never before (no premature close / stopwatch restart).
+                    this.cdr.detectChanges();
+                    this.ticketRefreshService.requestRefresh('tech-list', {
+                        source: 'mutation:techFinishDiag',
+                    });
+                    this.startStopwatch();
+                    this.getComposant();
+                    this.diDialogDiag[this.selectedDi] = false;
+                    this.clearPersistedDialogState('diagnostic');
+                } catch {
+                    /* toast shown by the runner; modal stays open, stopwatch
+                       not restarted, status unchanged past the failed step */
+                }
             },
         });
     }

@@ -832,6 +832,50 @@ export class TicketService {
         `;
     }
 
+    /** Safe variant of `finishReparation` — escapes the remark (quotes/newlines)
+     *  so a tech's free text can't break the GraphQL document. Used by the
+     *  redesigned repair wizard's « Fin réparation ». */
+    finishReparationSafe(diId: string, remarque: string) {
+        return gql`
+            mutation {
+                tech_finishReperation(_id: ${JSON.stringify(diId)}, remarque: ${JSON.stringify(
+                    remarque ?? '',
+                )}) {
+                    status
+                }
+            }
+        `;
+    }
+
+    /** Persist the repair's used parts + repair remark on the DI (partial
+     *  update). `array_composants` is the DI↔parts link; `remarque_tech_repair`
+     *  is the tech's repair note. Escaped to survive special characters. */
+    saveRepairParts(
+        diId: string,
+        parts: Array<{ nameComposant: string; quantity: number }>,
+        remarque: string,
+    ) {
+        const arr = (parts || [])
+            .map(
+                (p) =>
+                    `{ nameComposant: ${JSON.stringify(
+                        String(p?.nameComposant ?? ''),
+                    )}, quantity: ${Number(p?.quantity) || 0} }`,
+            )
+            .join(', ');
+        return gql`
+            mutation {
+                updateDi(UpdateDi: {
+                    _id: ${JSON.stringify(diId)}
+                    remarque_tech_repair: ${JSON.stringify(remarque ?? '')}
+                    array_composants: [${arr}]
+                }) {
+                    _id
+                }
+            }
+        `;
+    }
+
     finish(diagInfo) {
         const array = diagInfo.composant.map((el) => {
             return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
@@ -1033,42 +1077,68 @@ export class TicketService {
     }
 
     updateComposant(composantInfo) {
-        console.log('🍬[composantInfo]:', composantInfo);
-        console.log('🍬[composantInfo statusstatus]:', composantInfo.status);
+        // Build a safe GraphQL string literal (escapes quotes/newlines, maps
+        // null/undefined → ""), so a price with a comma or a name with a quote
+        // can't break the document and hang the save.
+        const s = (v: unknown) =>
+            JSON.stringify(v === null || v === undefined ? '' : String(v));
+        // Numeric field → a number literal, or `null` when not a finite number.
+        const n = (v: unknown) => {
+            const x = Number(v);
+            return Number.isFinite(x) ? x : null;
+        };
+        // Date → a STABLE `YYYY-MM-DD` literal (local parts, no TZ shift). The
+        // form holds a Date object; sending its raw toString() rewrote
+        // coming_date into a noisy locale string on every save.
+        const d = (v: unknown) => {
+            if (!v) return s('');
+            const dt = v instanceof Date ? v : new Date(v as any);
+            if (isNaN(dt.getTime())) return s(String(v));
+            const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
+                2,
+                '0',
+            )}-${String(dt.getDate()).padStart(2, '0')}`;
+            return s(iso);
+        };
+        // Send `_id` when we have it so the backend matches the exact row
+        // (required for the « Nom » edit to persist). Omit it for legacy
+        // callers without an id (backend falls back to matching by name).
+        const id = composantInfo?._id;
+        const idLine =
+            id && id !== 'null' && id !== 'undefined' ? `_id: ${s(id)}\n` : '';
         return gql`
             mutation {
                 addComposantInfo(
-                    updateComposant: {    
-                        name: "${composantInfo.name}"
-                        package: "${composantInfo.package}"
-                        prix_achat: ${composantInfo.prix_achat}
-                        prix_vente: ${composantInfo.prix_vente}
-                        coming_date: "${composantInfo.coming_date}"
-                        link: "${composantInfo.link}"
-                        quantity_stocked: ${composantInfo.quantity_stocked}
-                        pdf: "${composantInfo.pdf}"
-                        status_composant: "${
+                    updateComposant: {
+                        ${idLine}name: ${s(composantInfo.name)}
+                        package: ${s(composantInfo.package)}
+                        prix_achat: ${n(composantInfo.prix_achat)}
+                        prix_vente: ${n(composantInfo.prix_vente)}
+                        coming_date: ${d(composantInfo.coming_date)}
+                        link: ${s(composantInfo.link)}
+                        quantity_stocked: ${n(composantInfo.quantity_stocked)}
+                        pdf: ${s(composantInfo.pdf)}
+                        status_composant: ${s(
                             composantInfo.status ||
-                            composantInfo.status_composant
-                        }"
-                        category_composant_id: "${
-                            composantInfo.category_composant_id
-                        }"
+                                composantInfo.status_composant,
+                        )}
+                        category_composant_id: ${s(
+                            composantInfo.category_composant_id,
+                        )}
                     }
-                )
-                 {
-    _id
-    name
-    package
-    prix_achat
-    prix_vente
-    coming_date
-    link
-    quantity_stocked
-    pdf
-    status_composant
-    
-  }
+                ) {
+                    _id
+                    name
+                    package
+                    prix_achat
+                    prix_vente
+                    coming_date
+                    link
+                    quantity_stocked
+                    pdf
+                    status_composant
+                    category_composant_id
+                }
             }
         `;
     }

@@ -8,6 +8,7 @@ import {
     ConfirmationService,
 } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
 import {
     FormControl,
@@ -335,6 +336,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         private config: PrimeNGConfig,
         private confirmationService: ConfirmationService,
         private ticketRefreshService: TicketRefreshService,
+        private readonly mutationRunner: MutationRunner,
     ) {}
 
     ngOnInit() {
@@ -1280,48 +1282,101 @@ export class TicketListComponent implements OnInit, OnDestroy {
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation du prix final',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.nego1nego2_InMagasin(
-                    this._idDi,
-                    this.price,
-                    this.finalPrice,
-                );
+            accept: async () => {
+                const r1 = this.selectedRowInNegociate1;
+                const r2 = this.selectedRowInNegociate2;
 
-                if (
-                    !this.selectedRowInNegociate1?.contain_pdr ||
-                    (this.selectedRowInNegociate2 &&
-                        !this.selectedRowInNegociate2?.contain_pdr)
-                ) {
-                    this.changeStatusPending3(this._idDi);
+                // Branch conditions preserved from the original, made MUTUALLY
+                // EXCLUSIVE (priority) so the serialized cascade runs exactly
+                // ONE transition. Non-repairable wins: the original fired BOTH
+                // Pending3 and Finished for (!pdr && !repairable) — a race; the
+                // intent is FINISHED (can't repair → done).
+                const notRepairable =
+                    r1?.can_be_repaired === false ||
+                    r2?.can_be_repaired === false;
+                const notContainPdr =
+                    !r1?.contain_pdr || (!!r2 && !r2?.contain_pdr);
+                const containPdrAndRepairable =
+                    (r1?.contain_pdr && r1?.can_be_repaired) ||
+                    (r2?.contain_pdr && r2?.can_be_repaired);
+
+                let transitionStep:
+                    | { mutation: any; variables?: any }
+                    | undefined;
+                if (notRepairable) {
+                    transitionStep = {
+                        mutation: this.ticketSerice.changeFinishStatus(
+                            this._idDi,
+                        ),
+                    };
+                } else if (notContainPdr) {
+                    transitionStep = {
+                        mutation: this.ticketSerice.changeStatusPending3(
+                            this._idDi,
+                        ),
+                    };
+                } else if (containPdrAndRepairable) {
+                    transitionStep = {
+                        mutation: this.ticketSerice.changeStatusDiToInMagasin(
+                            this._idDi,
+                        ),
+                    };
                 }
-                if (
-                    this.selectedRowInNegociate1?.can_be_repaired === false ||
-                    this.selectedRowInNegociate2?.can_be_repaired === false
-                ) {
-                    this.changeStatusFinished(this._idDi);
+
+                // Step 1: persist the price (no status change). Step 2 (LAST):
+                // the transition — only fires after the price is saved, and
+                // from the correct source status (M1 guard).
+                const priceStep =
+                    this.finalPrice == undefined
+                        ? {
+                              mutation:
+                                  this.ticketSerice.nego1nego2_InMagasin_noFinalPrice(
+                                      this._idDi,
+                                      this.price,
+                                  ),
+                          }
+                        : {
+                              mutation: this.ticketSerice.nego1nego2_InMagasin(
+                                  this._idDi,
+                                  this.price,
+                                  this.finalPrice,
+                              ),
+                          };
+                const steps = transitionStep
+                    ? [priceStep, transitionStep]
+                    : [priceStep];
+
+                try {
+                    await this.mutationRunner.runChain({
+                        key: `confirmerNegociation:${this._idDi}`,
+                        steps,
+                        successToast: {
+                            summary: 'Prix confirmé',
+                            detail: 'DI transmise à l’étape suivante.',
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Échec de la confirmation. Réessayez.',
+                        },
+                        onLoading: (v) => (this.isLoading = v),
+                    });
+
+                    // Side effects ONLY after the whole cascade succeeded.
+                    this.loadData();
+                    this.payload.file = '';
+                    this.negocite1Modal = false;
+                    this.negocite2Modal = false;
+                    this.isBCUploaded = false;
+                    this.isDevisUploaded = false;
+                    this.selectedBc = null;
+                    this.selectedDevis = null;
+                    this.discountPercent = 0;
+                    this.price = 0;
+                    this.finalPrice = 0;
+                } catch {
+                    /* toasted; modals stay open, status unchanged past the
+                       failed step (no status advance on unsaved price) */
                 }
-                if (
-                    (this.selectedRowInNegociate1?.contain_pdr &&
-                        this.selectedRowInNegociate1?.can_be_repaired) ||
-                    (this.selectedRowInNegociate2?.contain_pdr &&
-                        this.selectedRowInNegociate2?.can_be_repaired)
-                ) {
-                    this.changeStatusDiToInMagasin(this._idDi);
-                }
-
-                this.loadData();
-
-                this.payload.file = '';
-                this.negocite1Modal = false;
-                this.negocite2Modal = false;
-
-                this.isBCUploaded = false;
-                this.isDevisUploaded = false;
-                this.selectedBc = null;
-                this.selectedDevis = null;
-                this.discountPercent = 0;
-                this.price = 0;
-                this.finalPrice = 0;
             },
         });
     }

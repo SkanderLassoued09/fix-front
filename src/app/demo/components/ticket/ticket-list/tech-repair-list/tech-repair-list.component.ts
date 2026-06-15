@@ -73,6 +73,34 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
      */
     @Output() pauseClicked = new EventEmitter<void>();
 
+    /**
+     * Emitted when the user confirms « Fin réparation ». The host
+     * (tech-di-list) runs the real finish mutations (persist parts + remark,
+     * tech_finishReperation, changestatusToFinishReparation → FINISHED). The
+     * payload carries the typed remark and the used parts so nothing is lost.
+     */
+    @Output() finishClicked = new EventEmitter<{
+        remarque: string;
+        parts: RepairPartEntry[];
+    }>();
+
+    /** True while the host's finish mutation chain is in flight — disables the
+     *  « Fin réparation » button so it can't be double-submitted. */
+    @Input() finishing = false;
+
+    /**
+     * Initial values to pre-fill the form + parts when the wizard opens on an
+     * existing DI (category, repair remark, already-selected parts). Patched
+     * once per open in ngOnChanges so the tech doesn't re-enter everything.
+     */
+    @Input() prefill: {
+        di_category_id?: string | null;
+        repairPlan?: string;
+        worksDone?: string;
+        remarqueExtra?: string;
+        parts?: RepairPartEntry[];
+    } | null = null;
+
     activeRepairStep: RepairStepKey = 'info';
 
     // ───────────────────────────────────────────────────────────────
@@ -124,8 +152,8 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         remarqueManager: '',
     };
 
-    categories: readonly CategoryOption[] = [];
-    partOptions: readonly RepairPartOption[] = [];
+    @Input() categories: readonly CategoryOption[] = [];
+    @Input() partOptions: readonly RepairPartOption[] = [];
     parts: readonly RepairPartEntry[] = [];
 
     constructor(
@@ -141,6 +169,21 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['diInput'] && this.diInput) {
             this.di = this.diInput;
+        }
+        // B3 — pre-fill from the DI when the host hands us a prefill (once per
+        // open; a new object reference is passed only on open, so timer ticks
+        // never clobber the tech's edits).
+        if (changes['prefill'] && this.prefill) {
+            this.repairForm.patchValue({
+                di_category_id:
+                    this.prefill.di_category_id ??
+                    this.repairForm.get('di_category_id')?.value ??
+                    null,
+                repairPlan: this.prefill.repairPlan ?? '',
+                worksDone: this.prefill.worksDone ?? '',
+                remarqueExtra: this.prefill.remarqueExtra ?? '',
+            });
+            this.parts = [...(this.prefill.parts ?? [])];
         }
         if (changes['elapsedBaseMs'] || changes['runStartedAtMs']) {
             // Re-derive the display from the server-provided anchor. open,
@@ -222,10 +265,30 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     onRepairFinish(): void {
-        // TODO: call the "Fin réparation" Apollo mutation when the schema lands.
-        // For now we just close the modal so the visual flow is testable.
+        // Anti double-submit + respect the form gate. The host owns the
+        // mutations (it has Apollo + the DI/stat ids); we emit the payload and
+        // let it run finish → FINISHED. The host closes the modal on success;
+        // we do NOT close here (so a failure keeps the modal open + editable).
+        if (this.finishing || this.computeFinishDisabled()) return;
         this.stopTimer();
-        this.setRepairModalVisible(false);
+        this.finishClicked.emit({
+            remarque: this.buildRepairRemark(),
+            parts: [...this.parts],
+        });
+    }
+
+    /** Fold the wizard's free-text fields into the single repair remark the
+     *  backend stores (`tech_finishReperation` takes one `remarque`). */
+    private buildRepairRemark(): string {
+        const v = this.repairForm.value;
+        return [
+            v.worksDone && `Travaux: ${v.worksDone}`,
+            v.testsDone && `Tests: ${v.testsDone}`,
+            v.remarqueExtra && `Remarque: ${v.remarqueExtra}`,
+        ]
+            .filter(Boolean)
+            .join(' · ')
+            .trim();
     }
 
     // ───────────────────────────────────────────────────────────────
@@ -377,10 +440,14 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
             !!(this.repairForm.get('worksDone')?.value as string)?.trim();
         const success = this.repairForm.get('repairSuccess')?.value;
         const tests = this.repairForm.get('testsValidated')?.value;
-        return !(
-            requiredFilled &&
-            (success === true || success === false) &&
-            (tests === true || tests === false)
+        // Also disabled while a finish is in flight (anti double-submit).
+        return (
+            this.finishing ||
+            !(
+                requiredFilled &&
+                (success === true || success === false) &&
+                (tests === true || tests === false)
+            )
         );
     }
 

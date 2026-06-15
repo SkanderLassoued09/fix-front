@@ -209,8 +209,13 @@
         [initiallyPaused]="repairInitiallyPaused"
         [elapsedBaseMs]="repairElapsedBaseMs"
         [runStartedAtMs]="repairRunStartedAtMs"
+        [finishing]="repairFinishing"
+        [prefill]="repairPrefill"
+        [partOptions]="repairPartOptions"
+        [categories]="repairCategories"
         (visibleChange)="onRepairModalVisibleChange($event)"
         (pauseClicked)="onRepairModalPause()"
+        (finishClicked)="onRepairModalFinish($event)"
     ></app-tech-repair-list>
 
     <ng-container *ngIf="legacyDiagModalEnabled && di?._id">

@@ -2,6 +2,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import {
     ComposantByNameQueryResponse,
     GetAllMagasinQueryResponse,
@@ -159,6 +160,7 @@ export class MagasinDiListComponent implements OnDestroy {
         private router: Router,
         private confirmationService: ConfirmationService,
         private notificationService: NotificationService,
+        private readonly mutationRunner: MutationRunner,
     ) {
         this.formUpdateComposant = new FormGroup({
             _id: new FormControl(null),
@@ -983,68 +985,52 @@ export class MagasinDiListComponent implements OnDestroy {
                 'Une fois validé, ce composant sera figé et retiré de la liste en attente.',
             header: 'Valider le composant',
             icon: 'pi pi-check-circle',
-            accept: () => {
+            accept: async () => {
                 const updatedComposantData = {
                     ...this.formUpdateComposant.value,
                     pdf: this.payload.file
                         ? this.payload.file
                         : this.formUpdateComposant.value.pdf,
                 };
-                // 1) persist edited fields (same mutation as « Enregistrer »)
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.updateComposant(
-                            updatedComposantData,
-                        ),
-                        useMutationLoading: true,
-                    })
-                    .subscribe({
-                        next: () => {
-                            // 2) mark the DI line done (handshake mutation)
-                            this.apollo
-                                .mutate<any>({
-                                    mutation:
-                                        this.ticketSerice.setComposantAsUpdated(
-                                            this.selectedDi_id,
-                                            line.nameComposant,
-                                        ),
-                                })
-                                .subscribe({
-                                    next: () => {
-                                        line.validated = true;
-                                        this.validatorFinirListeComposant =
-                                            !this.allValidated;
-                                        this.messageservice.add({
-                                            severity: 'success',
-                                            summary: 'Composant validé',
-                                            detail: line.nameComposant,
-                                        });
-                                        // keep card stocks fresh, then advance
-                                        this.getAllComposant();
-                                        this.advanceToNextUnvalidated();
-                                    },
-                                    error: (e) => {
-                                        console.error(
-                                            'setComposantAsUpdated error',
-                                            e,
-                                        );
-                                        this.messageservice.add({
-                                            severity: 'error',
-                                            summary: 'Erreur',
-                                            detail: 'Validation impossible.',
-                                        });
-                                    },
-                                });
+                try {
+                    // Central pattern: anti double-submit + SERIALIZED cascade
+                    // (save the edited fields, THEN mark the line done — the
+                    // handshake only fires after the save persists) + a single
+                    // error toast + loading reset on every path.
+                    await this.mutationRunner.runChain({
+                        key: `validateComposant:${this.selectedDi_id}:${line.nameComposant}`,
+                        steps: [
+                            {
+                                mutation: this.ticketSerice.updateComposant(
+                                    updatedComposantData,
+                                ),
+                            },
+                            {
+                                mutation:
+                                    this.ticketSerice.setComposantAsUpdated(
+                                        this.selectedDi_id,
+                                        line.nameComposant,
+                                    ),
+                            },
+                        ],
+                        successToast: {
+                            summary: 'Composant validé',
+                            detail: line.nameComposant,
                         },
-                        error: (e) => {
-                            console.error('updateComposant error', e);
-                            this.messageservice.add({
-                                severity: 'error',
-                                summary: 'Erreur',
-                                detail: 'Sauvegarde impossible.',
-                            });
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Validation impossible. Réessayez.',
                         },
+                        onLoading: (v) => (this.isLoading = v),
                     });
+                    // Post-success only — never runs if a step failed.
+                    line.validated = true;
+                    this.validatorFinirListeComposant = !this.allValidated;
+                    this.getAllComposant();
+                    this.advanceToNextUnvalidated();
+                } catch {
+                    /* toast already shown by the runner; line NOT validated */
+                }
             },
         });
     }
@@ -1249,26 +1235,38 @@ export class MagasinDiListComponent implements OnDestroy {
         });
     }
 
+    /**
+     * « Enregistrer » — persist the edited fields of the CURRENT component
+     * WITHOUT validating/greying it (that's « Valider ce composant », a
+     * separate handler: `validateCurrentComponent`). The spinner must always
+     * stop and exactly one toast must show.
+     */
     updateComposant() {
-        console.log('🥔updateComposant 2');
+        if (this.formUpdateComposant.invalid) {
+            this.formUpdateComposant.markAllAsTouched();
+            this.messageservice.add({
+                severity: 'warn',
+                summary: 'Champs requis',
+                detail: 'Complétez les champs obligatoires avant d’enregistrer.',
+            });
+            return;
+        }
 
         this.confirmationService.confirm({
             message: 'Voulez-vous confirmer les changements ?',
-            header: 'Confirmation Diagnostique',
+            header: 'Confirmation',
             icon: 'pi pi-exclamation-triangle',
             accept: () => {
-                Object.keys(this.formUpdateComposant.controls).forEach(
-                    (key) => {
-                        this.formUpdateComposant.get(key)?.markAsDirty();
-                    },
-                );
-
+                // Keep a staged PDF if one was just selected; otherwise keep the
+                // already-saved file name from the form.
                 const updatedComposantData = {
                     ...this.formUpdateComposant.value,
-                    pdf: this.payload.file,
+                    pdf: this.payload?.file
+                        ? this.payload.file
+                        : this.formUpdateComposant.value.pdf,
                 };
 
-                console.log('🍡[updatedComposantData]:', updatedComposantData);
+                this.isLoading = true;
                 this.apollo
                     .mutate<any>({
                         mutation:
@@ -1277,26 +1275,54 @@ export class MagasinDiListComponent implements OnDestroy {
                             ),
                         useMutationLoading: true,
                     })
-                    .subscribe(
-                        ({ data, loading }) => {
-                            this.isLoading = loading;
-                            if (data) {
-                                this.pdfAdded = data.addComposantInfo.pdf;
-                                console.log(
-                                    '🍝[ this.pdfAdded]:',
-                                    this.pdfAdded,
-                                );
+                    .subscribe({
+                        next: ({ data, loading }) => {
+                            // `useMutationLoading` emits a partial loading frame
+                            // first — ignore it so we don't act on no data.
+                            if (loading) return;
+                            // ALWAYS release the block-UI overlay.
+                            this.isLoading = false;
+                            if (!data?.addComposantInfo) return;
+
+                            this.pdfAdded = data.addComposantInfo.pdf;
+                            this.messageservice.add({
+                                severity: 'success',
+                                summary: 'Enregistré',
+                                detail: 'Composant mis à jour.',
+                            });
+
+                            // Proof of persistence + keep the form in sync (incl.
+                            // a renamed component): reload the saved row by its
+                            // current name. Does NOT validate/grey the line.
+                            const savedName =
+                                data.addComposantInfo.name ??
+                                this.activeLine?.nameComposant;
+                            if (this.activeLine) {
+                                this.activeLine.nameComposant = savedName;
                             }
+                            if (savedName) {
+                                this.selectedDropDown({ value: savedName });
+                            }
+                            this.getAllComposant();
+                            // Refresh the DI list so a later re-open reads the
+                            // up-to-date requested lines (a rename is cascaded
+                            // onto `array_composants[].nameComposant` server-side;
+                            // without this the in-memory row stays stale).
+                            this.loadData();
                         },
-                        (error) => {
+                        error: (error) => {
+                            // Never freeze the UI: drop the overlay + one toast.
+                            this.isLoading = false;
                             console.error('Error updating composant: ', error);
+                            this.messageservice.add({
+                                severity: 'error',
+                                summary: 'Erreur',
+                                detail: 'Sauvegarde impossible. Réessayez.',
+                            });
                         },
-                    );
-                this.validerComposantValidtor = false;
+                    });
             },
         });
-
-        this.loadData();
     }
 
     finishMagasinEstimation() {
