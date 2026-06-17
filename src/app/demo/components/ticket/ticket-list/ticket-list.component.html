@@ -973,18 +973,21 @@
         </div>
 
         <div class="sav-form-row">
+            <!-- customUpload: opt out of PrimeNG's HTTP POST (was hitting the
+                 PrimeFaces demo CDN and losing files). FileReader → base64
+                 happens in onUpload, persisted via the DI mutation. -->
             <p-fileUpload
                 mode="basic"
                 chooseLabel="Ajouter une image"
                 chooseIcon="pi pi-upload"
-                name="demo[]"
-                url="https://www.primefaces.org/cdn/api/upload.php"
+                name="diImage"
                 accept="image/*"
                 maxFileSize="1000000"
-                (onSelect)="onImageSelect($event)"
-                (onUpload)="onUpload($event, 'image')"
-                (onError)="onImageUploadError()"
+                [customUpload]="true"
                 [auto]="true"
+                (onSelect)="onImageSelect($event)"
+                (uploadHandler)="onUpload($event, 'image')"
+                (onError)="onImageUploadError()"
                 styleClass="sav-upload-btn"
             ></p-fileUpload>
             <small *ngIf="uploadFileLoading" class="sav-uploading">
@@ -1387,379 +1390,510 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════
-     MODAL — NÉGOCIATION 1
+     MODAL — NÉGOCIATION 1 (Prix final)
 ════════════════════════════════════════════════ -->
 <p-dialog
-    header="Affectation du prix final"
     [(visible)]="negocite1Modal"
     [modal]="true"
-    [style]="{ width: '580px' }"
+    [style]="{ width: '600px' }"
     [draggable]="false"
     [resizable]="false"
+    [closable]="false"
+    [showHeader]="false"
     (onHide)="hideNegModal($event)"
-    styleClass="sav-dialog"
+    styleClass="sav-dialog pricing-dialog"
 >
-    <div class="sav-neg-body">
-        <!-- Documents section -->
-        <p class="sav-section-label">Documents</p>
-        <div class="sav-upload-grid">
-            <!-- Bon de commande card -->
-            <div
-                class="sav-upload-card"
-                [class.sav-upload-card--done]="bcUploaded"
+    <div class="pricing-modal">
+        <header class="pricing-modal__head">
+            <div class="pricing-modal__tile" aria-hidden="true">
+                <i class="pi pi-wallet"></i>
+            </div>
+            <div class="pricing-modal__titles">
+                <h3 class="pricing-modal__title">Affectation du prix final</h3>
+                <p class="pricing-modal__subtitle">
+                    {{ seletedRow?._idnum ?? "DI" }}
+                    <span *ngIf="seletedRow?.title"> · {{ seletedRow.title }}</span>
+                </p>
+            </div>
+            <button
+                type="button"
+                class="pricing-modal__close"
+                aria-label="Fermer"
+                (click)="negocite1Modal = false"
             >
-                <div class="sav-card-header">
-                    <i class="pi pi-file"></i>
-                    <span>Bon de commande</span>
+                <i class="pi pi-times"></i>
+            </button>
+        </header>
+
+        <p class="pricing-modal__section-label">Documents</p>
+        <div class="fp-doc-grid">
+            <!-- ── Bon de commande ────────────────────────────── -->
+            <div class="fp-doc-card" [class.fp-doc-card--done]="bcReady">
+                <div class="fp-doc-card__head">
+                    <span class="fp-doc-card__title">
+                        <i class="pi pi-file"></i> Bon de commande
+                    </span>
+                    <span
+                        class="fp-doc-badge"
+                        [ngClass]="bcReady ? 'fp-doc-badge--done' : 'fp-doc-badge--idle'"
+                    >
+                        <i [class]="bcReady ? 'pi pi-check' : 'pi pi-clock'"></i>
+                        {{ bcReady ? "Chargé" : "Non chargé" }}
+                    </span>
                 </div>
+
+                <!-- File row (persisted or selected) -->
+                <div *ngIf="bcReady" class="fp-doc-file">
+                    <span class="fp-doc-file__icon" aria-hidden="true">
+                        <i class="pi pi-file-pdf"></i>
+                    </span>
+                    <span class="fp-doc-file__name">
+                        {{ instantSelectedBc ? "Bon de commande (nouveau)" : "Bon de commande" }}
+                    </span>
+                    <a
+                        class="fp-doc-file__action"
+                        *ngIf="selectedBc || instantSelectedBc"
+                        [href]="instantSelectedBc || (baseUrl + selectedBc)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-eye"></i> Voir
+                    </a>
+                </div>
+
+                <!-- Hidden uploader (the "Remplacer / Charger" trigger) -->
                 <p-fileUpload
                     [disabled]="bcBtnDisabled || bcLoading"
                     mode="basic"
                     [chooseLabel]="
-                        bcLoading
-                            ? 'Chargement…'
-                            : bcUploaded
-                              ? 'BC chargé'
-                              : 'Téléverser BC'
+                        bcLoading ? 'Chargement…' : bcReady ? 'Remplacer' : 'Charger'
                     "
                     [chooseIcon]="
                         bcLoading
                             ? 'pi pi-spin pi-spinner'
-                            : bcUploaded
-                              ? 'pi pi-check'
+                            : bcReady
+                              ? 'pi pi-refresh'
                               : 'pi pi-upload'
                     "
                     name="bonDeCommande"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    [customUpload]="true"
                     accept="application/pdf"
                     maxFileSize="10000000"
-                    (onUpload)="onUpload($event, 'BC')"
+                    (uploadHandler)="onUpload($event, 'BC')"
                     (onBeforeUpload)="bcLoading = true"
                     [auto]="true"
                     [styleClass]="
-                        'sav-upload-btn' +
-                        (bcUploaded ? ' sav-upload-btn--success' : '')
+                        'fp-doc-upload' +
+                        (bcReady ? ' fp-doc-upload--secondary' : '')
                     "
                 ></p-fileUpload>
-                <div class="sav-file-links">
-                    <a
-                        *ngIf="selectedBc"
-                        [href]="baseUrl + selectedBc"
-                        target="_blank"
-                    >
-                        <p-button
-                            label="BC enregistré"
-                            icon="pi pi-eye"
-                            [link]="true"
-                            size="small"
-                        ></p-button>
-                    </a>
-                    <a
-                        *ngIf="instantSelectedBc"
-                        [href]="instantSelectedBc"
-                        target="_blank"
-                    >
-                        <p-button
-                            label="BC sélectionné"
-                            icon="pi pi-eye"
-                            [link]="true"
-                            size="small"
-                        ></p-button>
-                    </a>
-                    <p-button
-                        *ngIf="instantSelectedBc"
-                        [disabled]="enregistrerBcBtncondition"
-                        (click)="enregistrerBC()"
-                        label="Enregistrer"
-                        icon="pi pi-save"
-                        [link]="true"
-                        size="small"
-                    ></p-button>
-                </div>
+
+                <!-- Persist (when a new file is selected but not yet saved) -->
+                <p-button
+                    *ngIf="instantSelectedBc"
+                    [disabled]="enregistrerBcBtncondition"
+                    (click)="enregistrerBC()"
+                    label="Enregistrer"
+                    icon="pi pi-save"
+                    severity="success"
+                    [text]="true"
+                    size="small"
+                ></p-button>
             </div>
 
-            <!-- Devis card -->
-            <div
-                class="sav-upload-card"
-                [class.sav-upload-card--done]="devisUploaded"
-            >
-                <div class="sav-card-header">
-                    <i class="pi pi-file-edit"></i>
-                    <span>Devis</span>
+            <!-- ── Devis ───────────────────────────────────────── -->
+            <div class="fp-doc-card" [class.fp-doc-card--done]="devisReady">
+                <div class="fp-doc-card__head">
+                    <span class="fp-doc-card__title">
+                        <i class="pi pi-file-edit"></i> Devis
+                    </span>
+                    <span
+                        class="fp-doc-badge"
+                        [ngClass]="devisReady ? 'fp-doc-badge--done' : 'fp-doc-badge--idle'"
+                    >
+                        <i [class]="devisReady ? 'pi pi-check' : 'pi pi-clock'"></i>
+                        {{ devisReady ? "Chargé" : "Non chargé" }}
+                    </span>
                 </div>
+
+                <div *ngIf="devisReady" class="fp-doc-file">
+                    <span class="fp-doc-file__icon" aria-hidden="true">
+                        <i class="pi pi-file-pdf"></i>
+                    </span>
+                    <span class="fp-doc-file__name">
+                        {{ instantSelectedDevis ? "Devis (nouveau)" : "Devis" }}
+                    </span>
+                    <a
+                        class="fp-doc-file__action"
+                        *ngIf="selectedDevis || instantSelectedDevis"
+                        [href]="instantSelectedDevis || (baseUrl + selectedDevis)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-eye"></i> Voir
+                    </a>
+                </div>
+
                 <p-fileUpload
                     [disabled]="devisBtnDisabled || devisLoading"
                     mode="basic"
                     [chooseLabel]="
                         devisLoading
                             ? 'Chargement…'
-                            : devisUploaded
-                              ? 'Devis chargé'
-                              : 'Téléverser Devis'
+                            : devisReady
+                              ? 'Remplacer'
+                              : 'Charger'
                     "
                     [chooseIcon]="
                         devisLoading
                             ? 'pi pi-spin pi-spinner'
-                            : devisUploaded
-                              ? 'pi pi-check'
+                            : devisReady
+                              ? 'pi pi-refresh'
                               : 'pi pi-upload'
                     "
                     name="devis"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    [customUpload]="true"
                     accept="application/pdf"
                     maxFileSize="10000000"
-                    (onUpload)="onUpload($event, 'Devis')"
+                    (uploadHandler)="onUpload($event, 'Devis')"
                     (onBeforeUpload)="devisLoading = true"
                     [auto]="true"
                     [styleClass]="
-                        'sav-upload-btn' +
-                        (devisUploaded ? ' sav-upload-btn--success' : '')
+                        'fp-doc-upload' +
+                        (devisReady ? ' fp-doc-upload--secondary' : '')
                     "
                 ></p-fileUpload>
-                <div class="sav-file-links">
-                    <a
-                        *ngIf="selectedDevis"
-                        [href]="baseUrl + selectedDevis"
-                        target="_blank"
-                    >
-                        <p-button
-                            label="Devis enregistré"
-                            icon="pi pi-eye"
-                            [link]="true"
-                            size="small"
-                        ></p-button>
-                    </a>
-                    <a
-                        *ngIf="instantSelectedDevis"
-                        [href]="instantSelectedDevis"
-                        target="_blank"
-                    >
-                        <p-button
-                            label="Devis sélectionné"
-                            icon="pi pi-eye"
-                            [link]="true"
-                            size="small"
-                        ></p-button>
-                    </a>
-                    <p-button
-                        *ngIf="instantSelectedDevis"
-                        [disabled]="enregistrerDevisBtncondition"
-                        (click)="enregistrerDevis()"
-                        label="Enregistrer"
-                        icon="pi pi-save"
-                        [link]="true"
-                        size="small"
-                    ></p-button>
+
+                <p-button
+                    *ngIf="instantSelectedDevis"
+                    [disabled]="enregistrerDevisBtncondition"
+                    (click)="enregistrerDevis()"
+                    label="Enregistrer"
+                    icon="pi pi-save"
+                    severity="success"
+                    [text]="true"
+                    size="small"
+                ></p-button>
+            </div>
+        </div>
+
+        <p class="pricing-modal__section-label">Tarification</p>
+        <div class="fp-tarif-card">
+            <div class="fp-tarif-row">
+                <span class="fp-tarif-row__label">Prix initial</span>
+                <strong class="fp-tarif-row__value">{{ formatTnd3(price) }}</strong>
+            </div>
+
+            <div class="fp-tarif-discount">
+                <div class="fp-tarif-discount__head">
+                    <span class="fp-tarif-row__label">Remise</span>
+                    <span class="fp-tarif-discount__hint">maximum 20 %</span>
                 </div>
+                <div class="fp-tarif-discount__controls">
+                    <p-slider
+                        [min]="0"
+                        [max]="25"
+                        [(ngModel)]="discountPercent"
+                        (onSlideEnd)="onDiscountChange()"
+                        (ngModelChange)="onDiscountChange()"
+                        styleClass="fp-tarif-slider"
+                    ></p-slider>
+                    <div class="fp-tarif-discount__input">
+                        <p-inputNumber
+                            [(ngModel)]="discountPercent"
+                            (ngModelChange)="onDiscountChange()"
+                            [min]="0"
+                            [max]="25"
+                            [maxFractionDigits]="1"
+                            suffix=" %"
+                            styleClass="fp-tarif-percent"
+                        ></p-inputNumber>
+                    </div>
+                </div>
+                <div
+                    *ngIf="discountPercent > 20"
+                    class="fp-tarif-warn"
+                    role="alert"
+                >
+                    <i class="pi pi-exclamation-triangle"></i>
+                    Remise au-delà de 20 % : validation Admin Manager requise.
+                </div>
+                <p class="fp-tarif-discount__applied" *ngIf="discountedPriceNeg > 0">
+                    Remise appliquée : −{{ formatTnd3(discountedPriceNeg) }}
+                </p>
+            </div>
+
+            <div class="fp-tarif-final">
+                <span class="fp-tarif-final__label">
+                    <i class="pi pi-check-circle"></i> Prix final
+                </span>
+                <strong class="fp-tarif-final__value">
+                    {{ formatTnd3(finalPrice ?? price) }}
+                </strong>
             </div>
         </div>
 
-        <!-- Pricing section -->
-        <p class="sav-section-label">Tarification</p>
-        <div class="sav-price-grid">
-            <div class="sav-price-card">
-                <span class="sav-price-label">Prix initial</span>
-                <strong class="sav-price-value">{{ price }}</strong>
-            </div>
-            <div class="sav-price-card sav-price-card--highlight">
-                <span class="sav-price-label">Prix final</span>
-                <strong class="sav-price-value">{{ finalPrice ?? "—" }}</strong>
-            </div>
-            <div class="sav-discount-wrap">
-                <label class="sav-price-label">Remise (%)</label>
-                <p-inputNumber
-                    [(ngModel)]="discountPercent"
-                    inputId="percent"
-                    suffix="%"
-                    [min]="0"
-                    [max]="20"
-                    styleClass="sav-number-input"
-                ></p-inputNumber>
-                <small class="sav-hint">max 20%</small>
-            </div>
-        </div>
-
-        <!-- Warning banner at 20% -->
-        <div class="sav-warn-banner" *ngIf="slideEnd === 20">
-            <i class="pi pi-exclamation-triangle"></i>
-            Remise maximale atteinte — validation Admin Manager requise.
-        </div>
-    </div>
-
-    <ng-template pTemplate="footer">
-        <div class="sav-dialog-footer">
+        <footer class="pricing-modal__footer">
             <p-button
-                label="Appliquer remise"
-                icon="pi pi-percentage"
+                label="Annuler"
                 severity="secondary"
-                size="small"
-                (click)="discountByPercent()"
+                [outlined]="true"
+                (click)="negocite1Modal = false"
             ></p-button>
             <p-button
-                *ngIf="slideEnd === 20"
+                *ngIf="discountPercent > 20"
                 label="Envoyer Admin Manager"
                 icon="pi pi-send"
                 severity="warning"
-                size="small"
                 (click)="nextNegociate2()"
             ></p-button>
             <p-button
-                label="Confirmer"
+                label="Confirmer le prix final"
                 icon="pi pi-check"
                 severity="success"
-                size="small"
-                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
+                [disabled]="
+                    !(
+                        prixFinalCanConfirm &&
+                        discountPercent <= 20 &&
+                        (isFormComplete() || ignoreCountNeg1 != 0)
+                    )
+                "
                 (click)="confirmerNegociation(0)"
             ></p-button>
-        </div>
-    </ng-template>
+        </footer>
+    </div>
 </p-dialog>
 
 <!-- ═══════════════════════════════════════════════
-     MODAL — NÉGOCIATION 2
+     MODAL — NÉGOCIATION 2 (Prix final · Admin Manager)
 ════════════════════════════════════════════════ -->
 <p-dialog
-    header="Affectation Prix Finale — Admin"
     [(visible)]="negocite2Modal"
     [modal]="true"
-    [style]="{ width: '580px' }"
+    [style]="{ width: '600px' }"
     [draggable]="false"
     [resizable]="false"
-    styleClass="sav-dialog"
+    [closable]="false"
+    [showHeader]="false"
+    styleClass="sav-dialog pricing-dialog"
 >
-    <div class="sav-neg-body">
-        <div class="sav-upload-pair">
-            <div class="sav-upload-block">
+    <div class="pricing-modal">
+        <header class="pricing-modal__head">
+            <div
+                class="pricing-modal__tile pricing-modal__tile--admin"
+                aria-hidden="true"
+            >
+                <i class="pi pi-shield"></i>
+            </div>
+            <div class="pricing-modal__titles">
+                <h3 class="pricing-modal__title">
+                    Affectation du prix final — Admin
+                </h3>
+                <p class="pricing-modal__subtitle">
+                    {{ selectedRowInNegociate2?._idnum ?? seletedRow?._idnum ?? "DI" }}
+                    <span
+                        *ngIf="selectedRowInNegociate2?.title || seletedRow?.title"
+                    >
+                        ·
+                        {{
+                            selectedRowInNegociate2?.title || seletedRow?.title
+                        }}
+                    </span>
+                </p>
+            </div>
+            <button
+                type="button"
+                class="pricing-modal__close"
+                aria-label="Fermer"
+                (click)="negocite2Modal = false"
+            >
+                <i class="pi pi-times"></i>
+            </button>
+        </header>
+
+        <p class="pricing-modal__section-label">Documents</p>
+        <div class="fp-doc-grid">
+            <div class="fp-doc-card" [class.fp-doc-card--done]="bcReady">
+                <div class="fp-doc-card__head">
+                    <span class="fp-doc-card__title">
+                        <i class="pi pi-file"></i> Bon de commande
+                    </span>
+                    <span
+                        class="fp-doc-badge"
+                        [ngClass]="bcReady ? 'fp-doc-badge--done' : 'fp-doc-badge--idle'"
+                    >
+                        <i [class]="bcReady ? 'pi pi-check' : 'pi pi-clock'"></i>
+                        {{ bcReady ? "Chargé" : "Non chargé" }}
+                    </span>
+                </div>
+                <div *ngIf="bcReady" class="fp-doc-file">
+                    <span class="fp-doc-file__icon">
+                        <i class="pi pi-file-pdf"></i>
+                    </span>
+                    <span class="fp-doc-file__name">
+                        {{ instantSelectedBc ? "Bon de commande (nouveau)" : "Bon de commande" }}
+                    </span>
+                    <a
+                        class="fp-doc-file__action"
+                        *ngIf="selectedBc || instantSelectedBc"
+                        [href]="instantSelectedBc || (baseUrl + selectedBc)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-eye"></i> Voir
+                    </a>
+                </div>
                 <p-fileUpload
                     [disabled]="bcBtnDisabled"
                     mode="basic"
-                    chooseLabel="Bon de commande"
-                    chooseIcon="pi pi-upload"
+                    [chooseLabel]="bcReady ? 'Remplacer' : 'Charger'"
+                    [chooseIcon]="bcReady ? 'pi pi-refresh' : 'pi pi-upload'"
                     name="bonDeCommande"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    [customUpload]="true"
                     accept="application/pdf"
                     maxFileSize="10000000"
-                    (onUpload)="onUpload($event, 'BC')"
+                    (uploadHandler)="onUpload($event, 'BC')"
                     [auto]="true"
-                    styleClass="sav-upload-btn"
-                />
-                <div class="sav-file-links">
-                    <a
-                        *ngIf="selectedBc"
-                        [href]="baseUrl + selectedBc"
-                        target="_blank"
-                        ><p-button
-                            label="Consulter BC"
-                            [link]="true"
-                            size="small"
-                        ></p-button
-                    ></a>
-                    <a
-                        *ngIf="instantSelectedBc"
-                        [href]="instantSelectedBc"
-                        target="_blank"
-                        ><p-button
-                            label="BC preview"
-                            [link]="true"
-                            size="small"
-                        ></p-button
-                    ></a>
-                    <p-button
-                        [disabled]="enregistrerBcBtncondition"
-                        (click)="enregistrerBC()"
-                        label="Enregistrer BC"
-                        [link]="true"
-                        size="small"
-                    ></p-button>
-                </div>
+                    [styleClass]="
+                        'fp-doc-upload' +
+                        (bcReady ? ' fp-doc-upload--secondary' : '')
+                    "
+                ></p-fileUpload>
+                <p-button
+                    *ngIf="instantSelectedBc"
+                    [disabled]="enregistrerBcBtncondition"
+                    (click)="enregistrerBC()"
+                    label="Enregistrer"
+                    icon="pi pi-save"
+                    severity="success"
+                    [text]="true"
+                    size="small"
+                ></p-button>
             </div>
-            <div class="sav-upload-block">
+            <div class="fp-doc-card" [class.fp-doc-card--done]="devisReady">
+                <div class="fp-doc-card__head">
+                    <span class="fp-doc-card__title">
+                        <i class="pi pi-file-edit"></i> Devis
+                    </span>
+                    <span
+                        class="fp-doc-badge"
+                        [ngClass]="devisReady ? 'fp-doc-badge--done' : 'fp-doc-badge--idle'"
+                    >
+                        <i [class]="devisReady ? 'pi pi-check' : 'pi pi-clock'"></i>
+                        {{ devisReady ? "Chargé" : "Non chargé" }}
+                    </span>
+                </div>
+                <div *ngIf="devisReady" class="fp-doc-file">
+                    <span class="fp-doc-file__icon">
+                        <i class="pi pi-file-pdf"></i>
+                    </span>
+                    <span class="fp-doc-file__name">
+                        {{ instantSelectedDevis ? "Devis (nouveau)" : "Devis" }}
+                    </span>
+                    <a
+                        class="fp-doc-file__action"
+                        *ngIf="selectedDevis || instantSelectedDevis"
+                        [href]="instantSelectedDevis || (baseUrl + selectedDevis)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-eye"></i> Voir
+                    </a>
+                </div>
                 <p-fileUpload
                     [disabled]="devisBtnDisabled"
                     mode="basic"
-                    chooseLabel="Devis"
-                    chooseIcon="pi pi-upload"
+                    [chooseLabel]="devisReady ? 'Remplacer' : 'Charger'"
+                    [chooseIcon]="devisReady ? 'pi pi-refresh' : 'pi pi-upload'"
                     name="devis"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    [customUpload]="true"
                     accept="application/pdf"
                     maxFileSize="10000000"
-                    (onUpload)="onUpload($event, 'Devis')"
+                    (uploadHandler)="onUpload($event, 'Devis')"
                     [auto]="true"
-                    styleClass="sav-upload-btn"
-                />
-                <div class="sav-file-links">
-                    <a
-                        *ngIf="selectedDevis"
-                        [href]="baseUrl + selectedDevis"
-                        target="_blank"
-                        ><p-button
-                            label="Consulter Devis"
-                            [link]="true"
-                            size="small"
-                        ></p-button
-                    ></a>
-                    <a
-                        *ngIf="instantSelectedDevis"
-                        [href]="instantSelectedDevis"
-                        target="_blank"
-                        ><p-button
-                            label="Devis preview"
-                            [link]="true"
-                            size="small"
-                        ></p-button
-                    ></a>
-                    <p-button
-                        [disabled]="enregistrerDevisBtncondition"
-                        (click)="enregistrerDevis()"
-                        label="Enregistrer Devis"
-                        [link]="true"
-                        size="small"
-                    ></p-button>
+                    [styleClass]="
+                        'fp-doc-upload' +
+                        (devisReady ? ' fp-doc-upload--secondary' : '')
+                    "
+                ></p-fileUpload>
+                <p-button
+                    *ngIf="instantSelectedDevis"
+                    [disabled]="enregistrerDevisBtncondition"
+                    (click)="enregistrerDevis()"
+                    label="Enregistrer"
+                    icon="pi pi-save"
+                    severity="success"
+                    [text]="true"
+                    size="small"
+                ></p-button>
+            </div>
+        </div>
+
+        <p class="pricing-modal__section-label">Tarification</p>
+        <div class="fp-tarif-card">
+            <div class="fp-tarif-row">
+                <span class="fp-tarif-row__label">Prix initial</span>
+                <strong class="fp-tarif-row__value">{{ formatTnd3(price) }}</strong>
+            </div>
+            <div class="fp-tarif-discount">
+                <div class="fp-tarif-discount__head">
+                    <span class="fp-tarif-row__label">Remise (admin)</span>
+                    <span class="fp-tarif-discount__hint">plage 20–25 %</span>
                 </div>
+                <div class="fp-tarif-discount__controls">
+                    <p-slider
+                        [min]="20"
+                        [max]="25"
+                        [(ngModel)]="discountPercent"
+                        (onSlideEnd)="onDiscountChange()"
+                        (ngModelChange)="onDiscountChange()"
+                        styleClass="fp-tarif-slider"
+                    ></p-slider>
+                    <div class="fp-tarif-discount__input">
+                        <p-inputNumber
+                            [(ngModel)]="discountPercent"
+                            (ngModelChange)="onDiscountChange()"
+                            [min]="20"
+                            [max]="25"
+                            [maxFractionDigits]="1"
+                            suffix=" %"
+                            styleClass="fp-tarif-percent"
+                        ></p-inputNumber>
+                    </div>
+                </div>
+                <p
+                    class="fp-tarif-discount__applied"
+                    *ngIf="discountedPriceNeg > 0"
+                >
+                    Remise appliquée : −{{ formatTnd3(discountedPriceNeg) }}
+                </p>
+            </div>
+            <div class="fp-tarif-final">
+                <span class="fp-tarif-final__label">
+                    <i class="pi pi-check-circle"></i> Prix final
+                </span>
+                <strong class="fp-tarif-final__value">
+                    {{ formatTnd3(finalPrice ?? price) }}
+                </strong>
             </div>
         </div>
-        <div class="sav-price-row">
-            <div class="sav-price-item">
-                <span>Prix Initial</span><strong>{{ price }}</strong>
-            </div>
-            <div class="sav-price-item highlight">
-                <span>Prix Final</span><strong>{{ finalPrice }}</strong>
-            </div>
-            <p-inputNumber
-                [(ngModel)]="discountPercent"
-                inputId="percent"
-                prefix="%"
-                styleClass="sav-number-input"
-            ></p-inputNumber>
-        </div>
-        <div class="sav-slider-wrap">
-            <span class="sav-slider-label">20%</span>
-            <p-slider
-                [min]="20"
-                [max]="25"
-                [(ngModel)]="discountPercent"
-                styleClass="sav-slider"
-                (onSlideEnd)="onSlideAdminEnd($event)"
-            ></p-slider>
-            <span class="sav-slider-label">25%</span>
-        </div>
-        <div class="sav-dialog-footer">
+
+        <footer class="pricing-modal__footer">
             <p-button
-                label="Appliquer remise"
-                icon="pi pi-percentage"
+                label="Annuler"
                 severity="secondary"
-                size="small"
-                (click)="discountByPercent2()"
-            />
+                [outlined]="true"
+                (click)="negocite2Modal = false"
+            ></p-button>
             <p-button
-                label="Confirmer"
+                label="Confirmer le prix final"
                 icon="pi pi-check"
                 severity="success"
-                size="small"
-                [disabled]="!isFormComplete() && ignoreCountNeg1 == 0"
+                [disabled]="
+                    !(
+                        prixFinalCanConfirm &&
+                        (isFormComplete() || ignoreCountNeg1 != 0)
+                    )
+                "
                 (click)="confirmerNegociation(1)"
-            />
-        </div>
+            ></p-button>
+        </footer>
     </div>
 </p-dialog>
 
@@ -1767,117 +1901,166 @@
      MODAL — PRICING INITIAL
 ════════════════════════════════════════════════ -->
 <p-dialog
-    header="Affectation du prix Initial"
     [(visible)]="pricingModal"
     [modal]="true"
-    [style]="{ width: '560px' }"
+    [style]="{ width: '496px' }"
     [draggable]="false"
     [resizable]="false"
-    styleClass="sav-dialog"
+    [closable]="false"
+    [showHeader]="false"
+    styleClass="sav-dialog pricing-dialog"
 >
-    <div class="sav-pricing-body">
-        <div *ngIf="ignoreCountPricing > 0" class="sav-pricing-history">
-            <div class="sav-pricing-hist-item">
-                <h5 class="sav-hist-title">Avant Retour</h5>
-                <div class="sav-price-row">
-                    <div class="sav-price-item">
-                        <span>Prix initial</span
-                        ><strong>{{ initialPriceAffichage }}</strong>
-                    </div>
-                    <div class="sav-price-item">
-                        <span>Prix final</span
-                        ><strong>{{ priceRemiseAffichage }}</strong>
-                    </div>
+    <div class="pricing-modal">
+        <header class="pricing-modal__head">
+            <div class="pricing-modal__tile" aria-hidden="true">
+                <i class="pi pi-tag"></i>
+            </div>
+            <div class="pricing-modal__titles">
+                <h3 class="pricing-modal__title">Affectation du prix initial</h3>
+                <p class="pricing-modal__subtitle">
+                    {{ seletedRow?._idnum ?? "DI" }}
+                    <span *ngIf="seletedRow?.title"> · {{ seletedRow.title }}</span>
+                </p>
+            </div>
+            <button
+                type="button"
+                class="pricing-modal__close"
+                aria-label="Fermer"
+                (click)="pricingModal = false"
+            >
+                <i class="pi pi-times"></i>
+            </button>
+        </header>
+
+        <p class="pricing-modal__section-label">Détail des coûts</p>
+        <div class="pricing-cost-card">
+            <div class="pricing-cost-row">
+                <span class="pricing-cost-row__label">
+                    <i class="pi pi-clock"></i>Temps diagnostic
+                </span>
+                <strong class="pricing-cost-row__value">
+                    {{ timeDiagnostique || "—" }}
+                </strong>
+            </div>
+            <div class="pricing-cost-row">
+                <span class="pricing-cost-row__label">
+                    <i class="pi pi-dollar"></i>Facturation diagnostic
+                </span>
+                <strong class="pricing-cost-row__value">
+                    {{ formatTnd3(facturationDiagnostique) }}
+                </strong>
+            </div>
+            <div class="pricing-cost-row">
+                <span class="pricing-cost-row__label">
+                    <i class="pi pi-wrench"></i>Total composants
+                </span>
+                <strong class="pricing-cost-row__value">
+                    {{ formatTnd3(totalComposant) }}
+                </strong>
+            </div>
+            <div class="pricing-cost-total">
+                <span class="pricing-cost-total__label">
+                    <i class="pi pi-check-circle"></i>Coût total
+                </span>
+                <strong class="pricing-cost-total__value">
+                    {{ formatTnd3(pricingCoutTotal) }}
+                </strong>
+            </div>
+        </div>
+
+        <!-- History block: kept for retours (legacy data); rendered only when relevant -->
+        <div *ngIf="ignoreCountPricing > 0" class="pricing-history">
+            <div class="pricing-history__item">
+                <h5 class="pricing-history__title">Avant Retour</h5>
+                <div class="pricing-history__row">
+                    <span>Prix initial : <strong>{{ formatTnd3(initialPriceAffichage) }}</strong></span>
+                    <span>Prix final : <strong>{{ formatTnd3(priceRemiseAffichage) }}</strong></span>
                 </div>
             </div>
-            <div *ngFor="let item of pricesLogs" class="sav-pricing-hist-item">
-                <h5 class="sav-hist-title">Retour {{ item.ignoreDispaly }}</h5>
-                <div class="sav-price-row">
-                    <div class="sav-price-item">
-                        <span>Prix initial</span
-                        ><strong>{{ item.priceLogs }}</strong>
-                    </div>
-                    <div class="sav-price-item">
-                        <span>Prix final</span
-                        ><strong>{{ item.final_priceLog ?? "N/A" }}</strong>
-                    </div>
+            <div *ngFor="let item of pricesLogs" class="pricing-history__item">
+                <h5 class="pricing-history__title">Retour {{ item.ignoreDispaly }}</h5>
+                <div class="pricing-history__row">
+                    <span>Prix initial : <strong>{{ formatTnd3(item.priceLogs) }}</strong></span>
+                    <span>Prix final :
+                        <strong>{{ item.final_priceLog == null ? "N/A" : formatTnd3(item.final_priceLog) }}</strong>
+                    </span>
                 </div>
             </div>
             <div
-                class="sav-error-badge"
-                [ngClass]="isErrorFromFixtronix ? 'error-yes' : 'error-no'"
+                class="pricing-history__badge"
+                [ngClass]="isErrorFromFixtronix ? 'pricing-history__badge--yes' : 'pricing-history__badge--no'"
             >
                 Erreur Fixtronix :
                 <strong>{{ isErrorFromFixtronix ? "OUI" : "NON" }}</strong>
             </div>
         </div>
 
-        <div class="sav-diag-info">
-            <div class="sav-diag-row">
-                <i class="pi pi-clock"></i
-                ><span
-                    >Temps diagnostic :
-                    <strong>{{ timeDiagnostique }}</strong></span
-                >
-            </div>
-            <div class="sav-diag-row">
-                <i class="pi pi-dollar"></i
-                ><span
-                    >Facturation diagnostic :
-                    <strong>{{ facturationDiagnostique }} TND</strong></span
-                >
-            </div>
-            <div
-                class="sav-diag-row"
-                *ngIf="totalComposant && totalComposant !== 0; else noComp"
-            >
-                <i class="pi pi-box"></i
-                ><span
-                    >Total composants :
-                    <strong>{{ totalComposant }} TND</strong></span
-                >
-            </div>
-            <ng-template #noComp>
-                <div class="sav-diag-row sav-muted">
-                    <i class="pi pi-info-circle"></i
-                    ><span>DI sans composants</span>
-                </div>
-            </ng-template>
-            <div class="sav-diag-total">
-                Coût total :
-                <strong
-                    >{{ totalComposant + facturationDiagnostique }} TND</strong
-                >
-            </div>
-        </div>
-
-        <div class="sav-pricing-note">
-            Veuillez affecter le prix initial avant la négociation avec le
-            client.
-        </div>
-
-        <div class="sav-dialog-footer">
+        <label class="pricing-modal__field-label" for="pricing-init-input">
+            Prix initial à affecter
+        </label>
+        <div class="pricing-input-row">
             <p-inputNumber
+                inputId="pricing-init-input"
                 [(ngModel)]="price"
-                inputId="integeronly"
                 [min]="0"
-                [max]="50000"
-                [step]="1"
-                placeholder="Affecter le prix"
-                mode="currency"
-                currency="TND"
-                styleClass="sav-number-input"
+                [maxFractionDigits]="3"
+                [minFractionDigits]="3"
+                locale="fr-TN"
+                placeholder="0,000"
+                styleClass="pricing-input"
             ></p-inputNumber>
-            <button
-                pButton
-                pRipple
-                label="Affecter Prix"
-                icon="pi pi-check-circle"
-                class="p-button-success p-button-raised"
-                [disabled]="price === null || price === undefined || price <= 0"
-                (click)="pricing()"
-            ></button>
+            <span class="pricing-input-suffix">TND</span>
         </div>
+
+        <div class="pricing-marge" *ngIf="pricingMarge as m">
+            <span
+                class="pricing-marge__pill"
+                [ngClass]="m.positive ? 'pricing-marge__pill--up' : 'pricing-marge__pill--down'"
+            >
+                <i [class]="m.positive ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'"></i>
+                {{ m.positive ? "+" : "" }}{{ formatTnd3(m.tnd) }}
+            </span>
+            <span class="pricing-marge__text">
+                de marge sur le coût · {{ m.positive ? "+" : "" }}{{ m.percent | number: "1.1-1" }} %
+            </span>
+        </div>
+
+        <div class="pricing-chips" role="group" aria-label="Suggestions de prix">
+            <button
+                *ngFor="let chip of pricingChips; let i = index"
+                type="button"
+                class="pricing-chip"
+                [class.pricing-chip--active]="activePricingChip === i"
+                [disabled]="!pricingCoutTotal"
+                (click)="applyPricingChip(i)"
+            >
+                <ng-container *ngIf="i === 0; else markupChip">
+                    Coût ({{ formatTnd3(pricingCoutTotal) }})
+                </ng-container>
+                <ng-template #markupChip>{{ chip.label }}</ng-template>
+            </button>
+        </div>
+
+        <div class="pricing-note">
+            <i class="pi pi-info-circle"></i>
+            Ce prix sert de base à la négociation avec le client. Il pourra être ajusté ensuite.
+        </div>
+
+        <footer class="pricing-modal__footer">
+            <p-button
+                label="Annuler"
+                severity="secondary"
+                [outlined]="true"
+                (click)="pricingModal = false"
+            ></p-button>
+            <p-button
+                label="Affecter le prix"
+                icon="pi pi-check"
+                severity="success"
+                [disabled]="!(price > 0) || isLoading"
+                (click)="pricing()"
+            ></p-button>
+        </footer>
     </div>
 </p-dialog>
 
@@ -1974,11 +2157,11 @@
                         blLoading ? 'pi pi-spinner pi-spin' : 'pi pi-upload'
                     "
                     name="blUpload"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    [customUpload]="true"
                     accept=".pdf"
                     maxFileSize="1000000"
                     (onBeforeUpload)="blLoading = true"
-                    (onUpload)="onUpload($event, 'BL')"
+                    (uploadHandler)="onUpload($event, 'BL')"
                     (onError)="blLoading = false"
                     [auto]="true"
                     styleClass="sav-upload-btn"
@@ -2017,11 +2200,11 @@
                             : 'pi pi-upload'
                     "
                     name="factureUpload"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    [customUpload]="true"
                     accept=".pdf"
                     maxFileSize="1000000"
                     (onBeforeUpload)="factureLoading = true"
-                    (onUpload)="onUpload($event, 'Facture')"
+                    (uploadHandler)="onUpload($event, 'Facture')"
                     (onError)="factureLoading = false"
                     [auto]="true"
                     styleClass="sav-upload-btn"

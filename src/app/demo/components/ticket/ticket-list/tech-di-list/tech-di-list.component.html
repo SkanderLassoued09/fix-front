@@ -716,16 +716,20 @@
                 />
             </div>
             <div class="sav-form-row">
+                <!-- customUpload: opt out of PrimeNG's HTTP POST (was hitting
+                     the PrimeFaces demo CDN and losing files). FileReader →
+                     base64 happens in onUpload, persisted via the relevant
+                     mutation when the user saves. -->
                 <p-fileUpload
                     mode="basic"
                     chooseLabel="Ajouter un PDF"
                     chooseIcon="pi pi-upload"
-                    name="demo[]"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    name="techDiagAttachment"
                     accept="image/*,application/pdf"
                     maxFileSize="1000000"
-                    (onUpload)="onUpload($event)"
+                    [customUpload]="true"
                     [auto]="true"
+                    (uploadHandler)="onUpload($event)"
                     styleClass="sav-upload-btn"
                 ></p-fileUpload>
             </div>

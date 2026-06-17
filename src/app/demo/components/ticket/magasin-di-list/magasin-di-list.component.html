@@ -800,16 +800,20 @@
 
             <div class="sav-form-row">
                 <label class="sav-label">Fiche technique (PDF)</label>
+                <!-- customUpload: opt out of PrimeNG's HTTP POST. Files are
+                     read locally (onUpload handler → base64) and persisted via
+                     the existing TicketService.updateComposant mutation when
+                     the user clicks Enregistrer. -->
                 <p-fileUpload
                     mode="basic"
                     chooseLabel="Ajouter PDF"
                     chooseIcon="pi pi-upload"
-                    name="demo[]"
-                    url="https://www.primefaces.org/cdn/api/upload.php"
+                    name="ficheTechnique"
                     accept="application/pdf"
                     maxFileSize="1000000"
-                    (onUpload)="onUpload($event, 'addComposant')"
+                    [customUpload]="true"
                     [auto]="true"
+                    (uploadHandler)="onUpload($event, 'addComposant')"
                 ></p-fileUpload>
             </div>
             <div *ngIf="composantMagasin.value.pdf" class="sav-form-row">

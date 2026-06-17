@@ -317,6 +317,99 @@ export class TicketListComponent implements OnInit, OnDestroy {
     enregistrerFactureBtncondition: boolean = true;
     enregistrerBcBtncondition: boolean = true;
     enregistrerDevisBtncondition: boolean = true;
+
+    // Pricing-modal chips: label + multiplier vs the cost base (1.0 = Coût).
+    // Order matters: rendered as a row.
+    readonly pricingChips: Array<{ label: string; mult: number }> = [
+        { label: 'Coût', mult: 1 },
+        { label: '+20 %', mult: 1.2 },
+        { label: '+30 %', mult: 1.3 },
+        { label: '+50 %', mult: 1.5 },
+    ];
+    activePricingChip: number | null = null;
+
+    /** Coût total = facturation diagnostic + total composants. Single source
+     *  of truth for the marge calc + chip multipliers. Components may be null
+     *  while the modal is still loading; coerce to 0 so the UI shows 0,000 TND
+     *  rather than NaN. */
+    get pricingCoutTotal(): number {
+        const f = Number(this.facturationDiagnostique) || 0;
+        const c = Number(this.totalComposant) || 0;
+        return f + c;
+    }
+
+    /** Marge live vs the cost base: positive=green, negative=red (price below
+     *  cost). Returned as both TND delta and % so the pill can show both. */
+    get pricingMarge(): {
+        tnd: number;
+        percent: number;
+        positive: boolean;
+    } | null {
+        const base = this.pricingCoutTotal;
+        const p = Number(this.price);
+        if (!base || !Number.isFinite(p)) return null;
+        const tnd = p - base;
+        const percent = (tnd / base) * 100;
+        return { tnd, percent, positive: tnd >= 0 };
+    }
+
+    /** Gating for "Confirmer le prix final": both BC and Devis must be present
+     *  (already persisted OR uploaded in this session). Same rule applies to
+     *  négo1 and négo2 — no bypass per spec. */
+    get bcReady(): boolean {
+        return !!(this.selectedBc || this.instantSelectedBc);
+    }
+    get devisReady(): boolean {
+        return !!(this.selectedDevis || this.instantSelectedDevis);
+    }
+    get prixFinalCanConfirm(): boolean {
+        return (
+            this.bcReady &&
+            this.devisReady &&
+            Number(this.price) > 0 &&
+            !this.isLoading
+        );
+    }
+
+    /** TND with 3 decimals, fr-TN locale ("X XXX,XXX TND"). Falsy → "—". */
+    formatTnd3(value: any): string {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return '—';
+        return (
+            n.toLocaleString('fr-TN', {
+                minimumFractionDigits: 3,
+                maximumFractionDigits: 3,
+            }) + ' TND'
+        );
+    }
+
+    /** Click on a pricing chip → fill price with cost × multiplier (rounded to
+     *  3 dp to match the display format). Stores the active chip index for the
+     *  pressed-state highlight. */
+    applyPricingChip(index: number) {
+        const chip = this.pricingChips[index];
+        if (!chip) return;
+        const base = this.pricingCoutTotal;
+        if (!base) return;
+        this.price = Math.round(base * chip.mult * 1000) / 1000;
+        this.activePricingChip = index;
+    }
+
+    /** Recompute the final price live as the user moves the slider / types in
+     *  the input — spec says no separate "Appliquer remise" button. Source of
+     *  truth = remise %. Soft cap at 20: values > 20 trigger a warning banner
+     *  in the template (negociation 2 / admin approval path). */
+    onDiscountChange() {
+        const p = Number(this.price);
+        const d = Number(this.discountPercent);
+        if (!Number.isFinite(p) || !Number.isFinite(d)) {
+            this.finalPrice = null;
+            this.discountedPriceNeg = 0;
+            return;
+        }
+        this.discountedPriceNeg = Math.round(p * (d / 100) * 1000) / 1000;
+        this.finalPrice = Math.round((p - this.discountedPriceNeg) * 1000) / 1000;
+    }
     ignoreCountForBtns: number = 0;
     modalRetour1Info: boolean = false;
     modalRetour2Info: boolean = false;
@@ -1554,6 +1647,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.totalComposant = null;
         this.composantQuantity = 0;
         this.allComposants = [];
+        this.price = null;
+        this.activePricingChip = null;
 
         const isStale = () => this.current_id !== requestedRowId;
 
@@ -1874,22 +1969,38 @@ export class TicketListComponent implements OnInit, OnDestroy {
             message: 'Voulez vous confirmer les changements',
             header: 'Confirmation du prix Initial',
             icon: 'pi pi-question-circle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.pricing(
-                            this.current_id,
-                            this.price,
-                        ),
-                    })
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
-                        if (data) {
-                            this.loadData();
-                            this.pricingModal = false;
-                            this.changeStatusNegiciate1(this.current_id);
-                        }
+            accept: async () => {
+                // Cascade sérialisée (M2/M5 pattern): persist initial price,
+                // THEN transition status. Step 2 only runs if step 1 succeeds,
+                // so a failed save never advances the workflow. Per-DI key
+                // prevents double-clicks from firing the chain twice.
+                const id = this.current_id;
+                const priceStep = {
+                    mutation: this.ticketSerice.pricing(id, this.price),
+                };
+                const transitionStep = {
+                    mutation: this.ticketSerice.changeStatusNegociate1(id),
+                };
+                try {
+                    await this.mutationRunner.runChain({
+                        key: `pricing:${id}`,
+                        steps: [priceStep, transitionStep],
+                        successToast: {
+                            summary: 'Prix initial affecté',
+                            detail: 'DI transmise à la négociation.',
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: "Échec de l'affectation. Réessayez.",
+                        },
+                        onLoading: (v) => (this.isLoading = v),
                     });
+                    this.loadData();
+                    this.pricingModal = false;
+                    this.activePricingChip = null;
+                } catch {
+                    /* toasted; modal stays open, status unchanged */
+                }
             },
         });
     }
