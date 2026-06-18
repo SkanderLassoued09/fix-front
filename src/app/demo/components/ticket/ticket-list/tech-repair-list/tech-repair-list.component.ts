@@ -101,7 +101,7 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         parts?: RepairPartEntry[];
     } | null = null;
 
-    activeRepairStep: RepairStepKey = 'info';
+    activeRepairStep: RepairStepKey = 'works';
 
     // ───────────────────────────────────────────────────────────────
     // Form (single FormGroup; one control per UI field across all steps)
@@ -294,10 +294,14 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     // ───────────────────────────────────────────────────────────────
     // View-model getters — feed the dumb tree
     // ───────────────────────────────────────────────────────────────
+    // Repair wizard reduced to the two steps that actually capture the tech's
+    // input: « Travaux & tests » then « Résumé ». The former « Informations
+    // générales », « Plan d'intervention » and « Pièces utilisées » steps were
+    // removed — their data is prefilled from the DI (category / plan / parts
+    // sourced upstream in the magasin B3 flow) and is display-only here, so it
+    // no longer needs its own wizard step. Numbering/progress derive from this
+    // array, so the stepper now shows 1/2 → 2/2 automatically.
     private static readonly STEP_ORDER: readonly RepairStepKey[] = [
-        'info',
-        'plan',
-        'parts',
         'works',
         'summary',
     ];
@@ -432,12 +436,14 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     private computeFinishDisabled(): boolean {
-        // Mirrors the diagnostic "disabledFinish" logic: required form
-        // controls + the two yes/no toggles must be set.
-        const requiredFilled =
-            !!this.repairForm.get('di_category_id')?.value &&
-            !!(this.repairForm.get('repairPlan')?.value as string)?.trim() &&
-            !!(this.repairForm.get('worksDone')?.value as string)?.trim();
+        // The wizard is reduced to « Travaux & tests » + « Résumé », so the gate
+        // only requires what those steps collect: the works description and the
+        // two yes/no validations. di_category_id / repairPlan are prefilled,
+        // display-only, and NOT part of the finish payload, so they must not
+        // block closure (otherwise an empty prefill would freeze « Fin réparation »).
+        const requiredFilled = !!(
+            this.repairForm.get('worksDone')?.value as string
+        )?.trim();
         const success = this.repairForm.get('repairSuccess')?.value;
         const tests = this.repairForm.get('testsValidated')?.value;
         // Also disabled while a finish is in flight (anti double-submit).

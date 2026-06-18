@@ -22,7 +22,7 @@ import { RepairBadgeValue, RepairPartEntry } from '../repair-modal.types';
   template: `
     <div class="step">
       <header class="step__head">
-        <span class="step__num">5</span>
+        <span class="step__num">2</span>
         <div>
           <h3>Résumé de la réparation</h3>
           <p>Revoyez les informations avant de clôturer le ticket.</p>

@@ -565,9 +565,10 @@
                                             class="cmp-fiche__view"
                                             [href]="
                                                 pdfAdded
-                                                    ? baseUrl + pdfAdded
-                                                    : baseUrl +
-                                                      loadedDataComposant?.pdf
+                                                    ? docHref(pdfAdded)
+                                                    : docHref(
+                                                          loadedDataComposant?.pdf
+                                                      )
                                             "
                                             target="_blank"
                                         >

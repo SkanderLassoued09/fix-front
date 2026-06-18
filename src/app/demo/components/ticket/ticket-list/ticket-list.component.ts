@@ -60,6 +60,19 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     baseUrl = environment.apiUrl;
 
+    /**
+     * Resolve a stored document reference into an openable href. Drive uploads
+     * now store an absolute `webViewLink` (opened as-is, in a new tab); a freshly
+     * picked file is a `data:` URL; any other value is treated as a legacy local
+     * name under the API root. Used by every "Voir" link.
+     */
+    docHref(value?: string | null): string {
+        if (!value) return '';
+        return /^https?:\/\//i.test(value) || value.startsWith('data:')
+            ? value
+            : this.baseUrl + value;
+    }
+
     ticketSelected: any;
     openUpdateModal: boolean = false;
     isBCUploaded: boolean = false;

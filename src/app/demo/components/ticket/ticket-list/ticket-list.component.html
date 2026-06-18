@@ -1453,7 +1453,7 @@
                     <a
                         class="fp-doc-file__action"
                         *ngIf="selectedBc || instantSelectedBc"
-                        [href]="instantSelectedBc || (baseUrl + selectedBc)"
+                        [href]="instantSelectedBc || docHref(selectedBc)"
                         target="_blank"
                     >
                         <i class="pi pi-eye"></i> Voir
@@ -1525,7 +1525,7 @@
                     <a
                         class="fp-doc-file__action"
                         *ngIf="selectedDevis || instantSelectedDevis"
-                        [href]="instantSelectedDevis || (baseUrl + selectedDevis)"
+                        [href]="instantSelectedDevis || docHref(selectedDevis)"
                         target="_blank"
                     >
                         <i class="pi pi-eye"></i> Voir
@@ -1734,7 +1734,7 @@
                     <a
                         class="fp-doc-file__action"
                         *ngIf="selectedBc || instantSelectedBc"
-                        [href]="instantSelectedBc || (baseUrl + selectedBc)"
+                        [href]="instantSelectedBc || docHref(selectedBc)"
                         target="_blank"
                     >
                         <i class="pi pi-eye"></i> Voir
@@ -1790,7 +1790,7 @@
                     <a
                         class="fp-doc-file__action"
                         *ngIf="selectedDevis || instantSelectedDevis"
-                        [href]="instantSelectedDevis || (baseUrl + selectedDevis)"
+                        [href]="instantSelectedDevis || docHref(selectedDevis)"
                         target="_blank"
                     >
                         <i class="pi pi-eye"></i> Voir
@@ -2082,28 +2082,28 @@
         <div class="sav-files-row">
             <a
                 *ngIf="filesSelected?.bon_de_commande"
-                [href]="baseUrl + filesSelected?.bon_de_commande"
+                [href]="docHref(filesSelected?.bon_de_commande)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> BC</a
             >
             <a
                 *ngIf="filesSelected?.bon_de_livraison"
-                [href]="baseUrl + filesSelected?.bon_de_livraison"
+                [href]="docHref(filesSelected?.bon_de_livraison)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> BL</a
             >
             <a
                 *ngIf="filesSelected?.facture"
-                [href]="baseUrl + filesSelected?.facture"
+                [href]="docHref(filesSelected?.facture)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> Facture</a
             >
             <a
                 *ngIf="filesSelected?.devis"
-                [href]="baseUrl + filesSelected?.devis"
+                [href]="docHref(filesSelected?.devis)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> Devis</a
@@ -2115,28 +2115,28 @@
             <div class="sav-files-row">
                 <a
                     *ngIf="files?.bon_de_commande"
-                    [href]="baseUrl + files.bon_de_commande"
+                    [href]="docHref(files.bon_de_commande)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BC</a
                 >
                 <a
                     *ngIf="files?.bon_de_livraison"
-                    [href]="baseUrl + files.bon_de_livraison"
+                    [href]="docHref(files.bon_de_livraison)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BL</a
                 >
                 <a
                     *ngIf="files?.facture"
-                    [href]="baseUrl + files.facture"
+                    [href]="docHref(files.facture)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Facture</a
                 >
                 <a
                     *ngIf="files?.devis"
-                    [href]="baseUrl + files.devis"
+                    [href]="docHref(files.devis)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Devis</a
@@ -2393,28 +2393,28 @@
         <div class="sav-files-row">
             <a
                 *ngIf="ticketData?.data?.bon_de_livraison"
-                [href]="baseUrl + ticketData?.data?.bon_de_livraison"
+                [href]="docHref(ticketData?.data?.bon_de_livraison)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> BL</a
             >
             <a
                 *ngIf="ticketData?.data?.bon_de_commande"
-                [href]="baseUrl + ticketData?.data?.bon_de_commande"
+                [href]="docHref(ticketData?.data?.bon_de_commande)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> BC</a
             >
             <a
                 *ngIf="ticketData?.data?.devis"
-                [href]="baseUrl + ticketData?.data?.devis"
+                [href]="docHref(ticketData?.data?.devis)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> Devis</a
             >
             <a
                 *ngIf="ticketData?.data?.facture"
-                [href]="baseUrl + ticketData?.data?.facture"
+                [href]="docHref(ticketData?.data?.facture)"
                 target="_blank"
                 class="sav-file-link"
                 ><i class="pi pi-file-pdf"></i> Facture</a
@@ -2471,28 +2471,28 @@
             <div class="sav-files-row mt-2">
                 <a
                     *ngIf="retour1InfoFromLogs?.bon_de_livraison"
-                    [href]="baseUrl + retour1InfoFromLogs?.bon_de_livraison"
+                    [href]="docHref(retour1InfoFromLogs?.bon_de_livraison)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BL R1</a
                 >
                 <a
                     *ngIf="retour1InfoFromLogs?.bon_de_commande"
-                    [href]="baseUrl + retour1InfoFromLogs?.bon_de_commande"
+                    [href]="docHref(retour1InfoFromLogs?.bon_de_commande)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BC R1</a
                 >
                 <a
                     *ngIf="retour1InfoFromLogs?.devis"
-                    [href]="baseUrl + retour1InfoFromLogs?.devis"
+                    [href]="docHref(retour1InfoFromLogs?.devis)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Devis R1</a
                 >
                 <a
                     *ngIf="retour1InfoFromLogs?.facture"
-                    [href]="baseUrl + retour1InfoFromLogs?.facture"
+                    [href]="docHref(retour1InfoFromLogs?.facture)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Facture R1</a
@@ -2526,28 +2526,28 @@
             <div class="sav-files-row mt-2">
                 <a
                     *ngIf="retour2InfoFromLogs?.bon_de_livraison"
-                    [href]="baseUrl + retour2InfoFromLogs?.bon_de_livraison"
+                    [href]="docHref(retour2InfoFromLogs?.bon_de_livraison)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BL R2</a
                 >
                 <a
                     *ngIf="retour2InfoFromLogs?.bon_de_commande"
-                    [href]="baseUrl + retour2InfoFromLogs?.bon_de_commande"
+                    [href]="docHref(retour2InfoFromLogs?.bon_de_commande)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BC R2</a
                 >
                 <a
                     *ngIf="retour2InfoFromLogs?.devis"
-                    [href]="baseUrl + retour2InfoFromLogs?.devis"
+                    [href]="docHref(retour2InfoFromLogs?.devis)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Devis R2</a
                 >
                 <a
                     *ngIf="retour2InfoFromLogs?.facture"
-                    [href]="baseUrl + retour2InfoFromLogs?.facture"
+                    [href]="docHref(retour2InfoFromLogs?.facture)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Facture R2</a
@@ -2581,28 +2581,28 @@
             <div class="sav-files-row mt-2">
                 <a
                     *ngIf="retour3InfoFromLogs?.bon_de_livraison"
-                    [href]="baseUrl + retour3InfoFromLogs?.bon_de_livraison"
+                    [href]="docHref(retour3InfoFromLogs?.bon_de_livraison)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BL R3</a
                 >
                 <a
                     *ngIf="retour3InfoFromLogs?.bon_de_commande"
-                    [href]="baseUrl + retour3InfoFromLogs?.bon_de_commande"
+                    [href]="docHref(retour3InfoFromLogs?.bon_de_commande)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> BC R3</a
                 >
                 <a
                     *ngIf="retour3InfoFromLogs?.devis"
-                    [href]="baseUrl + retour3InfoFromLogs?.devis"
+                    [href]="docHref(retour3InfoFromLogs?.devis)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Devis R3</a
                 >
                 <a
                     *ngIf="retour3InfoFromLogs?.facture"
-                    [href]="baseUrl + retour3InfoFromLogs?.facture"
+                    [href]="docHref(retour3InfoFromLogs?.facture)"
                     target="_blank"
                     class="sav-file-link"
                     ><i class="pi pi-file-pdf"></i> Facture R3</a

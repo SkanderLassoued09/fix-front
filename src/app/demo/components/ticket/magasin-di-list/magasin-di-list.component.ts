@@ -35,6 +35,16 @@ export class MagasinDiListComponent implements OnDestroy {
     private lastSearchKey = '';
 
     baseUrl = environment.apiUrl;
+
+    /** Resolve a stored doc reference into an openable href: Drive uploads store
+     *  an absolute webViewLink (opened as-is); legacy values get the API root. */
+    docHref(value?: string | null): string {
+        if (!value) return '';
+        return /^https?:\/\//i.test(value) || value.startsWith('data:')
+            ? value
+            : this.baseUrl + value;
+    }
+
     statusComposant = [
         { name: 'En stock', value: 'En stock' },
         { name: 'Interne', value: 'Interne' },

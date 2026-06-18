@@ -9,6 +9,7 @@ import {
     TechStartDiagnosticMutationResponse,
 } from './coordinator-di-list.interfaces';
 import { STATUS_DI } from 'src/app/layout/api/status-di';
+import { environment } from 'src/environments/environment';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
@@ -239,7 +240,16 @@ export class CoordinatorDiListComponent implements OnDestroy {
     ignoreCountForBtns: number = 0;
     ticketDetailsInfo: boolean;
     techInfo: any;
-    baseUrl: string; // Add this if you're using it in the template
+    baseUrl = environment.apiUrl;
+
+    /** Resolve a stored doc reference into an openable href: Drive uploads store
+     *  an absolute webViewLink (opened as-is); legacy values get the API root. */
+    docHref(value?: string | null): string {
+        if (!value) return '';
+        return /^https?:\/\//i.test(value) || value.startsWith('data:')
+            ? value
+            : this.baseUrl + value;
+    }
 
     constructor(
         private ticketSerice: TicketService,

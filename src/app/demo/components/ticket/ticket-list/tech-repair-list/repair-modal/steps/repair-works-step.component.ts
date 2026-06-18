@@ -16,7 +16,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
   template: `
     <div class="step" [formGroup]="form">
       <header class="step__head">
-        <span class="step__num">4</span>
+        <span class="step__num">1</span>
         <div>
           <h3>Travaux &amp; tests</h3>
           <p>Décrivez les travaux effectués et confirmez les tests de validation.</p>
