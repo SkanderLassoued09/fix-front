@@ -422,11 +422,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
      * FINISHED. Anti double-submit; one success toast; on error the modal stays
      * open + the button re-enables (no frozen spinner).
      */
-    onRepairModalFinish(payload: {
+    async onRepairModalFinish(payload: {
         remarque: string;
         parts: Array<{ nameComposant: string; quantity: number }>;
-    }): void {
-        if (this.repairFinishing) return; // anti double-submit
+    }): Promise<void> {
         const diId = this.selectedRep || (this.di as any)?._idDi;
         if (!diId) {
             this.messageService.add({
@@ -436,80 +435,67 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
             return;
         }
-        this.repairFinishing = true;
+        const key = `repairFinish:${diId}`;
+        if (this.mutationRunner.isBusy(key)) return; // anti double-submit
         const remark = payload?.remarque ?? '';
         const parts = (payload?.parts ?? []).map((p) => ({
             nameComposant: p.nameComposant,
             quantity: p.quantity,
         }));
 
-        const fail = (e: unknown) => {
-            console.error('[repair-finish] error', e);
-            this.repairFinishing = false;
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: 'Échec de la clôture. Réessayez.',
-            });
-        };
-
-        // 1) persist parts + repair remark → 2) tech_finishReperation →
-        // 3) changestatusToFinishReparation (FINISHED). Sequential so the
-        // status only flips once the data is saved.
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.saveRepairParts(diId, parts, remark),
-            })
-            .subscribe({
-                next: () => {
-                    this.apollo
-                        .mutate<any>({
-                            mutation: this.ticketSerice.finishReparationSafe(
-                                diId,
-                                remark,
-                            ),
-                            useMutationLoading: true,
-                        })
-                        .subscribe({
-                            next: ({ loading }) => {
-                                if (loading) return; // skip the loading frame
-                                this.apollo
-                                    .mutate<any>({
-                                        mutation:
-                                            this.ticketSerice.changeFinishStatus(
-                                                diId,
-                                            ),
-                                    })
-                                    .subscribe({
-                                        next: ({ data }) => {
-                                            if (!data) return;
-                                            this.repairFinishing = false;
-                                            this.stopRepairTimer();
-                                            this.messageService.add({
-                                                severity: 'success',
-                                                summary: 'Réparation terminée',
-                                                detail: 'DI clôturée (FINISHED).',
-                                            });
-                                            this.showRepairModal = false;
-                                            this.diDialogRep = false;
-                                            this.repairDiInputVm = null;
-                                            this.repairPrefill = null;
-                                            this.clearPersistedDialogState(
-                                                'repair',
-                                            );
-                                            this.loadData();
-                                            this.requestTechListRefresh(
-                                                'action:repair-finish',
-                                            );
-                                        },
-                                        error: fail,
-                                    });
-                            },
-                            error: fail,
-                        });
+        try {
+            // Serialized: saveRepairParts → tech_finishReperation →
+            // changestatusToFinishReparation (FINISHED). step N+1 fires only
+            // after N succeeds; any failure ABORTS the rest. Exactly ONE toast
+            // (success only if the WHOLE chain succeeds, else one clear error —
+            // no success-then-error double toast); anti double-submit; loading
+            // reset on every path; no leaked subscription. FINISHED is reachable
+            // from the tech's real state — INREPARATION *and* REPARATION_Pause
+            // are both allowed sources in the M1 guard.
+            await this.mutationRunner.runChain({
+                key,
+                steps: [
+                    {
+                        mutation: this.ticketSerice.saveRepairParts(
+                            diId,
+                            parts,
+                            remark,
+                        ),
+                    },
+                    {
+                        mutation: this.ticketSerice.finishReparationSafe(
+                            diId,
+                            remark,
+                        ),
+                    },
+                    { mutation: this.ticketSerice.changeFinishStatus(diId) },
+                ],
+                successToast: {
+                    summary: 'Réparation terminée',
+                    detail: 'DI clôturée (FINISHED).',
                 },
-                error: fail,
+                errorToast: {
+                    summary: 'Erreur',
+                    detail: 'Échec de la clôture. Réessayez.',
+                },
+                onLoading: (v) => (this.repairFinishing = v),
             });
+
+            // Side effects ONLY after the whole cascade succeeded.
+            this.stopRepairTimer();
+            this.showRepairModal = false;
+            this.diDialogRep = false;
+            this.repairDiInputVm = null;
+            this.repairPrefill = null;
+            this.clearPersistedDialogState('repair');
+            this.loadData();
+            this.requestTechListRefresh('action:repair-finish');
+        } catch (e) {
+            // runChain already showed the single error toast + reset loading.
+            // The modal stays open + the button re-enables so the tech retries.
+            // Log the REAL underlying error (the actual failing step) for diag.
+            console.error('[repair-finish] cascade failed:', e);
+        }
     }
 
     private mapDiToRepairSummary(di: any): DiagnosticDiSummary {
