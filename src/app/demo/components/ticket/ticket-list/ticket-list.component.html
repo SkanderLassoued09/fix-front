@@ -1457,44 +1457,22 @@
                     </a>
                 </div>
 
-                <!-- Hidden uploader (the "Remplacer / Charger" trigger) -->
-                <p-fileUpload
-                    [disabled]="bcBtnDisabled || bcLoading"
-                    mode="basic"
-                    [chooseLabel]="
-                        bcLoading ? 'Chargement…' : bcReady ? 'Remplacer' : 'Charger'
+                <!-- Drag & drop — dropping a PDF uploads AND saves it directly
+                     (no separate "Enregistrer" button; badge → "Chargé ✓"). -->
+                <app-pdf-dropzone
+                    *ngIf="!bcLoading"
+                    [maxSizeMo]="10"
+                    [title]="
+                        bcReady
+                            ? 'Remplacer le bon de commande'
+                            : 'Déposer le bon de commande'
                     "
-                    [chooseIcon]="
-                        bcLoading
-                            ? 'pi pi-spin pi-spinner'
-                            : bcReady
-                              ? 'pi pi-refresh'
-                              : 'pi pi-upload'
-                    "
-                    name="bonDeCommande"
-                    [customUpload]="true"
-                    accept="application/pdf"
-                    maxFileSize="10000000"
-                    (uploadHandler)="onUpload($event, 'BC')"
-                    (onBeforeUpload)="bcLoading = true"
-                    [auto]="true"
-                    [styleClass]="
-                        'fp-doc-upload' +
-                        (bcReady ? ' fp-doc-upload--secondary' : '')
-                    "
-                ></p-fileUpload>
-
-                <!-- Persist (when a new file is selected but not yet saved) -->
-                <p-button
-                    *ngIf="instantSelectedBc"
-                    [disabled]="enregistrerBcBtncondition"
-                    (click)="enregistrerBC()"
-                    label="Enregistrer"
-                    icon="pi pi-save"
-                    severity="success"
-                    [text]="true"
-                    size="small"
-                ></p-button>
+                    ariaLabel="Déposer le bon de commande (PDF)"
+                    (fileSelected)="onDocDrop($event, 'BC')"
+                ></app-pdf-dropzone>
+                <div *ngIf="bcLoading" class="fp-doc-saving">
+                    <i class="pi pi-spin pi-spinner"></i> Enregistrement…
+                </div>
             </div>
 
             <!-- ── Devis ───────────────────────────────────────── -->
@@ -1529,46 +1507,19 @@
                     </a>
                 </div>
 
-                <p-fileUpload
-                    [disabled]="devisBtnDisabled || devisLoading"
-                    mode="basic"
-                    [chooseLabel]="
-                        devisLoading
-                            ? 'Chargement…'
-                            : devisReady
-                              ? 'Remplacer'
-                              : 'Charger'
+                <!-- Drag & drop — dropping a PDF uploads AND saves it directly. -->
+                <app-pdf-dropzone
+                    *ngIf="!devisLoading"
+                    [maxSizeMo]="10"
+                    [title]="
+                        devisReady ? 'Remplacer le devis' : 'Déposer le devis'
                     "
-                    [chooseIcon]="
-                        devisLoading
-                            ? 'pi pi-spin pi-spinner'
-                            : devisReady
-                              ? 'pi pi-refresh'
-                              : 'pi pi-upload'
-                    "
-                    name="devis"
-                    [customUpload]="true"
-                    accept="application/pdf"
-                    maxFileSize="10000000"
-                    (uploadHandler)="onUpload($event, 'Devis')"
-                    (onBeforeUpload)="devisLoading = true"
-                    [auto]="true"
-                    [styleClass]="
-                        'fp-doc-upload' +
-                        (devisReady ? ' fp-doc-upload--secondary' : '')
-                    "
-                ></p-fileUpload>
-
-                <p-button
-                    *ngIf="instantSelectedDevis"
-                    [disabled]="enregistrerDevisBtncondition"
-                    (click)="enregistrerDevis()"
-                    label="Enregistrer"
-                    icon="pi pi-save"
-                    severity="success"
-                    [text]="true"
-                    size="small"
-                ></p-button>
+                    ariaLabel="Déposer le devis (PDF)"
+                    (fileSelected)="onDocDrop($event, 'Devis')"
+                ></app-pdf-dropzone>
+                <div *ngIf="devisLoading" class="fp-doc-saving">
+                    <i class="pi pi-spin pi-spinner"></i> Enregistrement…
+                </div>
             </div>
         </div>
 

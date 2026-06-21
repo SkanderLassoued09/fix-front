@@ -2777,6 +2777,75 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.payload = { file: '' };
     }
 
+    /** BC / Devis dropped in the price-final modal → upload AND persist in one
+     *  step (no separate "Enregistrer" button, no confirm dialog). The card
+     *  badge flips to "Chargé ✓" once saved. */
+    onDocDrop(file: File, type: 'BC' | 'Devis') {
+        if (!file) return;
+        if (type === 'BC') this.bcLoading = true;
+        else this.devisLoading = true;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64 = reader.result as string;
+            const blobUrl = URL.createObjectURL(file);
+            if (type === 'BC') {
+                this.instantSelectedBc = blobUrl;
+                this.bcUploaded = true;
+            } else {
+                this.instantSelectedDevis = blobUrl;
+                this.devisUploaded = true;
+            }
+            this.payload = { file: base64 };
+            this.persistDoc(type);
+        };
+        reader.onerror = () => {
+            if (type === 'BC') this.bcLoading = false;
+            else this.devisLoading = false;
+            this.messageservice.add({
+                severity: 'error',
+                summary: 'Fichier non chargé',
+                detail: 'Le PDF n’a pas pu être préparé.',
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /** Persist a dropped BC/Devis straight away (auto-save). */
+    private persistDoc(type: 'BC' | 'Devis') {
+        const mutation =
+            type === 'BC'
+                ? this.ticketSerice.addBC(this._idDi, this.payload.file)
+                : this.ticketSerice.addDevis(this._idDi, this.payload.file);
+        this.apollo
+            .mutate<any>({ mutation, useMutationLoading: true })
+            .subscribe({
+                next: ({ loading }) => {
+                    if (type === 'BC') {
+                        this.bcLoading = loading;
+                        this.devisBtnDisabled = loading;
+                    } else {
+                        this.devisLoading = loading;
+                        this.bcBtnDisabled = loading;
+                    }
+                    this.isLoading = loading;
+                    if (!loading) {
+                        this.messageservice.add({
+                            severity: 'success',
+                            summary: 'Enregistré',
+                            detail: `${
+                                type === 'BC' ? 'Bon de commande' : 'Devis'
+                            } enregistré avec succès`,
+                        });
+                    }
+                },
+                error: () => {
+                    if (type === 'BC') this.bcLoading = false;
+                    else this.devisLoading = false;
+                },
+            });
+    }
+
     onUpload(event: any, type: string) {
         this.uploadFileLoading = true;
         if (type !== 'image') {

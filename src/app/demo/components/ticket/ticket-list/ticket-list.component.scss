@@ -2252,6 +2252,16 @@ $pricing-red: #dc2626;
 }
 
 // PrimeNG p-fileUpload chooser → flat secondary look inside doc cards.
+.fp-doc-saving {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 18px 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2563eb;
+}
 ::ng-deep .fp-doc-upload {
     .p-button {
         width: 100%;
