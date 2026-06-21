@@ -1,0 +1,563 @@
+// ═══════════════════════════════════════════════════════
+//  DI INFO MODAL (read-only) — shared between Coordinator
+//  and Interventions. Palette: existing design system —
+//  blue / green / amber / slate ONLY (no purple).
+// ═══════════════════════════════════════════════════════
+
+// ── DS tokens reused from sav-* pages ───────────────────
+$bg-card: #ffffff;
+$bg-surface: #f8fafc;
+$border: #e2e8f0;
+$text-primary: #0f172a; // slate-900 (a touch darker for read-only emphasis)
+$text-body: #1e293b; // slate-800
+$text-secondary: #64748b; // slate-500
+$text-muted: #94a3b8; // slate-400
+$accent-blue: #2563eb; // blue-600 — primary accent
+$accent-blue-soft: #eff6ff; // blue-50
+$accent-blue-border: #bfdbfe; // blue-200
+$accent-blue-dark: #1d4ed8; // blue-700
+$blue-500: #3b82f6;
+$green: #16a34a;
+$green-soft: #dcfce7;
+$green-border: #a7f3d0;
+$green-dark: #14532d;
+$amber: #b45309; // amber-700
+$amber-soft: #fef3c7; // amber-100
+$red: #dc2626;
+$red-soft: #fee2e2;
+
+::ng-deep .di-info-dialog .p-dialog-content {
+    padding: 0 !important;
+}
+::ng-deep .di-info-dialog .p-dialog {
+    border-radius: 12px !important;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important;
+}
+
+.di-info-modal {
+    display: flex;
+    flex-direction: column;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: $text-body;
+    background: $bg-card;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+// ── Header ──────────────────────────────────────────────
+.di-info-modal__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 1.1rem 1.35rem;
+    border-bottom: 1px solid $border;
+    background: $bg-surface;
+}
+
+.di-info-modal__tile {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: $accent-blue-soft;
+    border: 1px solid $accent-blue-border;
+    color: $accent-blue-dark;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 0.02em;
+}
+
+.di-info-modal__titles {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.di-info-modal__title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.di-info-modal__title {
+    margin: 0;
+    font-size: 1.0625rem; // ~17px
+    font-weight: 700;
+    color: $text-primary;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+}
+
+.di-info-modal__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: $accent-blue-soft;
+    color: $accent-blue-dark;
+    font-size: 0.75rem; // ~12px
+    font-weight: 600;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    letter-spacing: 0.04em;
+}
+
+.di-info-modal__subtitle {
+    margin: 0.3rem 0 0;
+    font-size: 0.8rem; // ~12.8px
+    color: $text-secondary;
+}
+
+.di-info-modal__close {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: $bg-card;
+    border: 1px solid $border;
+    color: $text-secondary;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    .pi {
+        font-size: 0.9rem;
+    }
+    &:hover {
+        background: $bg-surface;
+        color: $text-body;
+        border-color: #cbd5e1;
+    }
+}
+
+// ── Body grid ───────────────────────────────────────────
+.di-info-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 1.35rem;
+    padding: 1.35rem;
+}
+
+.di-info-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.di-info-col--side {
+    border-left: 1px solid $border;
+    padding-left: 1.25rem;
+}
+
+// ── Sections ────────────────────────────────────────────
+.di-info-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.di-info-section__label {
+    margin: 0;
+    font-size: 0.72rem; // ~11.5px
+    font-weight: 700;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.di-info-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: $accent-blue-soft;
+    color: $accent-blue-dark;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+// ── Description card ────────────────────────────────────
+.di-info-card {
+    background: $bg-surface;
+    border: 1px solid $border;
+    border-radius: 9px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.9rem; // ~14.4px
+    color: $text-body;
+    line-height: 1.5;
+}
+
+// ── Composants table card ──────────────────────────────
+.di-info-table-card {
+    border: 1px solid $border;
+    border-radius: 10px;
+    overflow: hidden;
+}
+::ng-deep .di-info-table {
+    .p-datatable-thead > tr > th {
+        background: $bg-surface !important;
+        color: $text-secondary !important;
+        font-size: 0.72rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        padding: 0.7rem 0.95rem !important;
+        border-bottom: 1px solid $border !important;
+    }
+    .p-datatable-tbody > tr > td {
+        padding: 0.7rem 0.95rem !important;
+        border-bottom: 1px solid $border !important;
+        font-size: 0.875rem !important; // ~14px
+        color: $text-body !important;
+    }
+    .p-datatable-tbody > tr:last-child > td {
+        border-bottom: 0 !important;
+    }
+    .p-paginator {
+        background: $bg-surface !important;
+        border-top: 1px solid $border !important;
+        padding: 0.5rem 0.5rem !important;
+        font-size: 0.82rem !important;
+    }
+    // Active page → accent blue (no purple).
+    .p-paginator .p-paginator-page.p-highlight {
+        background: $accent-blue !important;
+        color: #fff !important;
+        border-color: $accent-blue !important;
+    }
+    .p-paginator .p-paginator-page,
+    .p-paginator .p-paginator-prev,
+    .p-paginator .p-paginator-next {
+        min-width: 28px !important;
+        height: 28px !important;
+        font-size: 0.85rem !important;
+    }
+}
+.di-info-th--right,
+.di-info-td--right {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+.di-info-td--muted {
+    color: $text-muted !important;
+    font-style: italic;
+    text-align: center;
+}
+.di-info-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1.5px solid #cbd5e1;
+    background: $bg-card;
+    margin-right: 0.6rem;
+    vertical-align: middle;
+}
+
+// ── Remarques cards ─────────────────────────────────────
+//  Three remark types, accented via left border. Charte colours: blue for
+//  admin (primary accent), lighter blue for tech diag, amber for tech rep.
+.di-remark {
+    background: $bg-card;
+    border: 1px solid $border;
+    border-radius: 9px;
+    border-left-width: 4px;
+    padding: 0.7rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    &__head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    &__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex: 0 0 8px;
+    }
+    &__label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: $text-secondary;
+    }
+    &__body {
+        margin: 0;
+        font-size: 0.9rem; // ~14.4px
+        color: $text-body;
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.45;
+    }
+
+    &--admin {
+        border-left-color: $accent-blue-dark;
+        .di-remark__dot {
+            background: $accent-blue-dark;
+        }
+    }
+    &--diag {
+        border-left-color: $blue-500;
+        .di-remark__dot {
+            background: $blue-500;
+        }
+    }
+    &--rep {
+        border-left-color: $amber;
+        .di-remark__dot {
+            background: $amber;
+        }
+    }
+}
+
+// ── ÉTAT chips ──────────────────────────────────────────
+.di-info-state {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+.di-info-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 0.82rem; // ~13px
+    font-weight: 600;
+    border: 1px solid transparent;
+    .pi {
+        font-size: 0.72rem;
+    }
+    &--ok {
+        background: $green-soft;
+        color: $green-dark;
+        border-color: $green-border;
+    }
+    &--ko {
+        background: $red-soft;
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+    &--accent {
+        background: $accent-blue-soft;
+        color: $accent-blue-dark;
+        border-color: $accent-blue-border;
+    }
+    &--muted {
+        background: $bg-surface;
+        color: $text-secondary;
+        border-color: $border;
+    }
+}
+
+// ── Tarification ────────────────────────────────────────
+.di-info-tarif {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    &__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 0.9rem; // ~14.4px
+        color: $text-secondary;
+        strong {
+            color: $text-primary;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        &--accent strong {
+            color: $accent-blue-dark;
+        }
+        &--ecart {
+            border-top: 1px dashed $border;
+            margin-top: 0.25rem;
+            padding-top: 0.6rem;
+        }
+    }
+}
+.di-info-ecart--up {
+    color: $amber !important;
+}
+.di-info-ecart--down {
+    color: $green !important;
+}
+.di-info-ecart--neutral {
+    color: $text-muted !important;
+    font-weight: 500 !important;
+}
+
+// ── Équipe ──────────────────────────────────────────────
+.di-info-team {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    &__row {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+    &__avatar {
+        flex: 0 0 36px;
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        &--creator {
+            background: $accent-blue-soft;
+            color: $accent-blue-dark;
+        }
+        &--diag {
+            background: #cffafe;
+            color: #155e75;
+        }
+        &--rep {
+            background: $amber-soft;
+            color: $amber;
+        }
+    }
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+        min-width: 0;
+    }
+    &__role {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: $text-secondary;
+    }
+    &__name {
+        font-size: 0.9rem; // ~14.4px
+        color: $text-primary;
+        font-weight: 700;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+// ── Détails ─────────────────────────────────────────────
+.di-info-details {
+    display: flex;
+    flex-direction: column;
+    &__row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        font-size: 0.875rem; // ~14px
+        color: $text-secondary;
+        border-bottom: 1px dashed $border;
+        strong {
+            color: $text-primary;
+            font-weight: 700;
+        }
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+}
+
+// ── Footer ──────────────────────────────────────────────
+.di-info-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.9rem 1.35rem;
+    border-top: 1px solid $border;
+    background: $bg-surface;
+    ::ng-deep .p-button {
+        font-size: 0.875rem !important; // readable on the footer
+    }
+    ::ng-deep .p-button[severity="primary"] {
+        background: $accent-blue !important;
+        border-color: $accent-blue !important;
+        &:hover {
+            background: $accent-blue-dark !important;
+            border-color: $accent-blue-dark !important;
+        }
+    }
+}
+.di-info-modal__creator {
+    font-size: 0.82rem;
+    color: $text-secondary;
+    strong {
+        color: $text-primary;
+        font-weight: 700;
+    }
+}
+.di-info-modal__actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+// ═══════════════════════════════════════════════════════
+//  PRINT — only the modal subtree (triggered by body class
+//  `di-info-printing` set in print())
+// ═══════════════════════════════════════════════════════
+@media print {
+    :host-context(body.di-info-printing) {
+        :host {
+            display: block;
+        }
+    }
+}
+::ng-deep body.di-info-printing {
+    background: #fff !important;
+    > *:not(.p-dialog-mask) {
+        display: none !important;
+    }
+    .p-dialog-mask {
+        position: static !important;
+        background: transparent !important;
+    }
+    .p-dialog {
+        box-shadow: none !important;
+        border: none !important;
+        position: static !important;
+        transform: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    .di-info-modal {
+        border-radius: 0 !important;
+        box-shadow: none !important;
+    }
+    .di-info-modal__close,
+    .di-info-modal__actions,
+    .p-paginator {
+        display: none !important;
+    }
+    .di-info-section,
+    .di-remark,
+    .di-info-team__row,
+    .di-info-tarif__row {
+        page-break-inside: avoid;
+    }
+}

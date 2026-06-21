@@ -49,6 +49,7 @@ import { DiagnosticModalComponent } from './tech-di-list/diagnostic-modal/diagno
 import { TechRepairListComponent } from './tech-repair-list/tech-repair-list.component';
 import { RepairModalComponent } from './tech-repair-list/repair-modal/repair-modal.component';
 import { PdfDropzoneComponent } from '../magasin-di-list/pdf-dropzone/pdf-dropzone.component';
+import { DiInfoModalComponent } from '../shared/di-info-modal/di-info-modal.component';
 
 @NgModule({
     declarations: [
@@ -106,6 +107,7 @@ import { PdfDropzoneComponent } from '../magasin-di-list/pdf-dropzone/pdf-dropzo
         DiagnosticModalComponent,
         RepairModalComponent,
         PdfDropzoneComponent,
+        DiInfoModalComponent,
     ],
     providers: [ConfirmationService, MessageService],
 })

@@ -2027,3 +2027,723 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 .sav-location-dot--empty {
     background: var(--red-300);
 }
+
+// ═══════════════════════════════════════════════════════
+//  COORDINATION — CONTRÔLE DU FLOW · Retour-aware modal
+//  Palette: existing DS tokens (blue/green/slate/amber).
+//  Red is restricted to the RETOUR badge/escalation.
+// ═══════════════════════════════════════════════════════
+$cf-blue: #2563eb;
+$cf-blue-soft: #eff6ff;
+$cf-blue-border: #bfdbfe;
+$cf-blue-dark: #1d4ed8;
+$cf-blue-500: #3b82f6;
+$cf-green: #16a34a;
+$cf-green-soft: #dcfce7;
+$cf-green-border: #a7f3d0;
+$cf-green-dark: #14532d;
+$cf-amber: #b45309;
+$cf-amber-soft: #fef3c7;
+$cf-red: #ef4444;
+$cf-red-strong: #b91c1c;
+$cf-red-critical: #7f1d1d;
+$cf-red-soft: #fef2f2;
+$cf-red-soft-2: #fee2e2;
+$cf-text: #0f172a;
+$cf-text-body: #1e293b;
+$cf-text-secondary: #64748b;
+$cf-text-muted: #94a3b8;
+$cf-border: #e2e8f0;
+$cf-surface: #f8fafc;
+
+::ng-deep .sav-dialog.cf-dialog .p-dialog-content {
+    padding: 0 !important;
+}
+::ng-deep .sav-dialog.cf-dialog .p-dialog {
+    border-radius: 12px !important;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important;
+}
+
+.cf-modal {
+    display: flex;
+    flex-direction: column;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: $cf-text-body;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+// ── Header ──────────────────────────────────────────────
+.cf-modal__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding: 1.05rem 1.35rem;
+    border-bottom: 1px solid $cf-border;
+    background: $cf-surface;
+}
+.cf-modal__tile {
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: $cf-blue-soft;
+    border: 1px solid $cf-blue-border;
+    color: $cf-blue-dark;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .pi {
+        font-size: 1.2rem;
+    }
+}
+.cf-modal__titles {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.cf-modal__title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+.cf-modal__title {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    color: $cf-text;
+    line-height: 1.2;
+}
+.cf-modal__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 6px;
+    background: $cf-blue-soft;
+    color: $cf-blue-dark;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    letter-spacing: 0.04em;
+}
+.cf-modal__flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: $cf-red-soft;
+    border: 1px solid #fecaca;
+    color: $cf-red-strong;
+    font-size: 0.72rem;
+    font-weight: 700;
+    .pi {
+        font-size: 0.72rem;
+    }
+}
+.cf-modal__flag.cf-retour-pill--strong {
+    background: $cf-red-soft-2;
+    border-color: #f87171;
+    color: $cf-red-critical;
+}
+.cf-modal__flag.cf-retour-pill--critical {
+    background: #fecaca;
+    border-color: $cf-red;
+    color: $cf-red-critical;
+}
+.cf-modal__subtitle {
+    margin: 0.3rem 0 0;
+    font-size: 0.82rem;
+    color: $cf-text-secondary;
+}
+.cf-modal__close {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid $cf-border;
+    color: $cf-text-secondary;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background 0.15s,
+        color 0.15s,
+        border-color 0.15s;
+    &:hover {
+        background: $cf-surface;
+        color: $cf-text-body;
+        border-color: #cbd5e1;
+    }
+}
+
+// ── Banner ──────────────────────────────────────────────
+.cf-banner {
+    background: linear-gradient(180deg, #fafbff 0%, #ffffff 100%);
+    border-bottom: 1px solid $cf-border;
+    padding: 0.95rem 1.35rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.cf-banner__row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.cf-banner__status {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+.cf-banner__label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $cf-text-secondary;
+}
+.cf-banner__current {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: $cf-blue;
+}
+.cf-banner__remarks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.95rem;
+    p {
+        margin: 0.25rem 0 0;
+        font-size: 0.875rem;
+        color: $cf-text-body;
+        line-height: 1.5;
+    }
+}
+.cf-banner__remark {
+    padding-left: 0.55rem;
+    border-left: 2px solid $cf-border;
+}
+
+// Red retour pill — only place red is used decoratively
+.cf-retour-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: 10px;
+    background: $cf-red-soft;
+    border: 1px solid #fecaca;
+    color: $cf-red-strong;
+    .pi {
+        font-size: 1.05rem;
+    }
+    strong {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    small {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.85;
+    }
+    // Escalation: mild (1) → strong (2) → critical (3+)
+    &--mild {
+        background: $cf-red-soft;
+        border-color: #fecaca;
+        color: $cf-red-strong;
+    }
+    &--strong {
+        background: $cf-red-soft-2;
+        border-color: #f87171;
+        color: $cf-red-critical;
+    }
+    &--critical {
+        background: #fecaca;
+        border-color: $cf-red;
+        color: $cf-red-critical;
+    }
+}
+
+// ── 2-col grid body ─────────────────────────────────────
+.cf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 1.35rem;
+    padding: 1.35rem;
+}
+
+.cf-section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $cf-text-secondary;
+    .pi {
+        color: $cf-text-secondary;
+        font-size: 0.9rem;
+    }
+}
+
+// ── LEFT — Historique du flow ───────────────────────────
+.cf-history {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    min-width: 0;
+}
+.cf-history__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.cf-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: $cf-text-secondary;
+    span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+}
+.cf-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: $cf-text-muted;
+    &--done {
+        background: $cf-green;
+    }
+    &--current {
+        background: $cf-blue;
+    }
+    &--pending {
+        background: $cf-text-muted;
+    }
+    &--retour {
+        background: $cf-red;
+    }
+}
+
+// Tabs Flow Original / Retour #N
+.cf-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+.cf-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid $cf-border;
+    background: #fff;
+    color: $cf-text-body;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+    &:hover {
+        background: $cf-surface;
+    }
+    &--active {
+        background: $cf-surface;
+        border-color: #cbd5e1;
+        font-weight: 600;
+    }
+    &--retour.cf-tab--active {
+        background: $cf-red-soft;
+        border-color: #fecaca;
+        color: $cf-red-strong;
+    }
+}
+.cf-tab__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    &--done {
+        background: $cf-green-soft;
+        color: $cf-green-dark;
+    }
+    &--current {
+        background: $cf-blue-soft;
+        color: $cf-blue;
+    }
+    &--retour {
+        background: $cf-red-soft-2;
+        color: $cf-red-strong;
+    }
+}
+
+// Motif retour banner
+.cf-motif {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.8rem 0.9rem;
+    background: $cf-red-soft;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    color: $cf-red-strong;
+    font-size: 0.9rem;
+    .pi {
+        margin-top: 0.15rem;
+    }
+    strong {
+        color: $cf-red-strong;
+        font-weight: 700;
+    }
+    small {
+        color: $cf-red-critical;
+        opacity: 0.85;
+        font-size: 0.78rem;
+    }
+}
+
+// Progress bar
+.cf-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.cf-progress__label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $cf-text-secondary;
+    white-space: nowrap;
+}
+.cf-progress__bar {
+    flex: 1 1 auto;
+    height: 6px;
+    border-radius: 999px;
+    background: $cf-border;
+    overflow: hidden;
+}
+.cf-progress__fill {
+    height: 100%;
+    background: $cf-blue;
+    transition: width 0.25s ease;
+    &--retour {
+        background: $cf-red;
+    }
+}
+
+// Timeline
+.cf-timeline {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+.cf-stage {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.8rem 0;
+    position: relative;
+    border-bottom: 1px dashed $cf-border;
+    &:last-child {
+        border-bottom: none;
+    }
+}
+.cf-stage__bullet {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid $cf-text-muted;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    .pi {
+        font-size: 0.72rem;
+    }
+}
+.cf-stage--done .cf-stage__bullet {
+    background: $cf-green;
+    border-color: $cf-green;
+}
+.cf-stage--current .cf-stage__bullet {
+    background: $cf-blue;
+    border-color: $cf-blue;
+}
+.cf-stage--pending .cf-stage__bullet {
+    background: #fff;
+    border-color: $cf-text-muted;
+}
+
+.cf-stage__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+}
+.cf-stage__row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
+}
+.cf-stage__name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $cf-text;
+}
+.cf-stage--pending .cf-stage__name {
+    color: $cf-text-muted;
+}
+.cf-stage__badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    &--done {
+        background: $cf-green-soft;
+        color: $cf-green-dark;
+    }
+    &--current {
+        background: $cf-blue-soft;
+        color: $cf-blue;
+    }
+    &--pending {
+        background: $cf-amber-soft;
+        color: $cf-amber;
+    }
+}
+.cf-substatus {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: $cf-surface;
+    border: 1px solid $cf-border;
+    color: $cf-text-secondary;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    letter-spacing: 0.03em;
+    &--active {
+        background: $cf-blue-soft;
+        border-color: #93c5fd;
+        color: $cf-blue;
+    }
+}
+.cf-substatus-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+.cf-stage__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    color: $cf-text-secondary;
+}
+.cf-stage__actor {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    .pi {
+        font-size: 0.78rem;
+    }
+}
+.cf-stage__when {
+    font-size: 0.82rem;
+    color: $cf-text-secondary;
+    text-align: right;
+    line-height: 1.4;
+    &--state {
+        color: $cf-blue;
+        font-weight: 600;
+    }
+    &--muted {
+        color: $cf-text-muted;
+    }
+}
+
+// ── RIGHT — Contrôles par étape ─────────────────────────
+.cf-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    border-left: 1px solid $cf-border;
+    padding-left: 1.25rem;
+    min-width: 0;
+}
+.cf-controls__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+.cf-controls__retour-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: $cf-red-soft;
+    color: $cf-red-strong;
+    border: 1px solid #fecaca;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    &.cf-retour-pill--strong {
+        background: $cf-red-soft-2;
+        border-color: #f87171;
+        color: $cf-red-critical;
+    }
+    &.cf-retour-pill--critical {
+        background: #fecaca;
+        border-color: $cf-red;
+        color: $cf-red-critical;
+    }
+}
+
+.cf-card {
+    background: #fff;
+    border: 1px solid $cf-border;
+    border-radius: 10px;
+    padding: 0.85rem 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    &--closure {
+        border-style: dashed;
+        background: $cf-surface;
+    }
+}
+.cf-card__head {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.cf-card__num {
+    flex: 0 0 26px;
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: $cf-blue-soft;
+    color: $cf-blue-dark;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.cf-card__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: $cf-text;
+}
+.cf-card__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: $cf-text-secondary;
+}
+.cf-card__hint {
+    margin: 0;
+    font-size: 0.82rem;
+    color: $cf-text-secondary;
+    line-height: 1.45;
+}
+::ng-deep .cf-card__dropdown {
+    .p-dropdown {
+        width: 100% !important;
+        border-radius: 8px !important;
+        border-color: $cf-border !important;
+    }
+    .p-dropdown-label {
+        font-size: 0.9rem !important;
+        color: $cf-text-body !important;
+    }
+}
+.cf-card__state {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    strong {
+        display: block;
+        font-size: 0.9rem;
+    }
+    small {
+        font-size: 0.78rem;
+        opacity: 0.9;
+    }
+    &--ok {
+        background: $cf-green-soft;
+        border: 1px solid $cf-green-border;
+        color: $cf-green-dark;
+        .pi {
+            color: $cf-green;
+            font-size: 1.05rem;
+        }
+    }
+}
+::ng-deep .cf-card__action {
+    .p-button {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+    }
+    &--ghost .p-button {
+        background: $cf-blue-soft !important;
+        color: $cf-blue !important;
+        border-color: $cf-blue-border !important;
+    }
+}
+
+// ── Footer ──────────────────────────────────────────────
+.cf-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.65rem;
+    padding: 0.95rem 1.35rem;
+    border-top: 1px solid $cf-border;
+    background: $cf-surface;
+    ::ng-deep .p-button {
+        font-size: 0.875rem !important;
+    }
+    ::ng-deep .p-button[severity="primary"] {
+        background: $cf-blue !important;
+        border-color: $cf-blue !important;
+        &:hover {
+            background: $cf-blue-dark !important;
+            border-color: $cf-blue-dark !important;
+        }
+    }
+}

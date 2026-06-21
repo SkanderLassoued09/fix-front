@@ -2065,552 +2065,323 @@
 </p-dialog>
 
 <!-- ═══════════════════════════════════════════════
-     MODAL — FICHIERS FINISHED
+     MODAL — AFFECTATION DES FICHIERS  (FINISHED row)
+     Triggered by `openUploadFileFinished(rowData)` → `filsFinished = true`.
+     Body redesigned to match design/image.png ; same handlers as before:
+     onUpload($event,'BL'|'Facture') · enregistrerBL() · enregistrerFacture().
 ════════════════════════════════════════════════ -->
 <p-dialog
-    header="Affectation des Fichiers"
     [(visible)]="filsFinished"
     [modal]="true"
-    [style]="{ width: '560px' }"
+    [style]="{ width: '680px', maxWidth: '95vw' }"
     [draggable]="false"
     [resizable]="false"
+    [closable]="false"
+    [showHeader]="false"
     appendTo="body"
-    styleClass="sav-dialog"
+    styleClass="sav-dialog af-dialog"
 >
-    <div class="sav-files-body">
-        <h4 class="sav-files-section-title">Fichiers principaux</h4>
-        <div class="sav-files-row">
-            <a
-                *ngIf="filesSelected?.bon_de_commande"
-                [href]="docHref(filesSelected?.bon_de_commande)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> BC</a
-            >
-            <a
-                *ngIf="filesSelected?.bon_de_livraison"
-                [href]="docHref(filesSelected?.bon_de_livraison)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> BL</a
-            >
-            <a
-                *ngIf="filesSelected?.facture"
-                [href]="docHref(filesSelected?.facture)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> Facture</a
-            >
-            <a
-                *ngIf="filesSelected?.devis"
-                [href]="docHref(filesSelected?.devis)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> Devis</a
-            >
-        </div>
-
-        <div *ngFor="let files of finishedData?.logs; let i = index">
-            <h4 class="sav-files-section-title">Retour N°{{ i + 1 }}</h4>
-            <div class="sav-files-row">
-                <a
-                    *ngIf="files?.bon_de_commande"
-                    [href]="docHref(files.bon_de_commande)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BC</a
-                >
-                <a
-                    *ngIf="files?.bon_de_livraison"
-                    [href]="docHref(files.bon_de_livraison)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BL</a
-                >
-                <a
-                    *ngIf="files?.facture"
-                    [href]="docHref(files.facture)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Facture</a
-                >
-                <a
-                    *ngIf="files?.devis"
-                    [href]="docHref(files.devis)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Devis</a
-                >
+    <div class="af-modal">
+        <!-- ── Header ──────────────────────────────────── -->
+        <header class="af-modal__head">
+            <span class="af-modal__tile" aria-hidden="true">
+                <i class="pi pi-folder"></i>
+            </span>
+            <div class="af-modal__titles">
+                <h3 class="af-modal__title">Affectation des Fichiers</h3>
+                <p class="af-modal__subtitle">
+                    {{ finishedData?._idnum || filesSelected?._idnum || "DI" }}
+                    <span> · documents joints au dossier</span>
+                </p>
             </div>
-        </div>
+            <button
+                type="button"
+                class="af-modal__close"
+                aria-label="Fermer"
+                (click)="filsFinished = false"
+            >
+                <i class="pi pi-times"></i>
+            </button>
+        </header>
 
-        <h4 class="sav-files-section-title">Affecter BL & Facture</h4>
-        <div class="sav-upload-pair">
-            <div class="sav-upload-block">
-                <p-fileUpload
-                    [disabled]="blBtnDisabled || blLoading"
-                    mode="basic"
-                    [chooseLabel]="
-                        blLoading ? 'Chargement BL...' : 'Bon de livraison'
-                    "
-                    [chooseIcon]="
-                        blLoading ? 'pi pi-spinner pi-spin' : 'pi pi-upload'
-                    "
-                    name="blUpload"
-                    [customUpload]="true"
-                    accept=".pdf"
-                    maxFileSize="1000000"
-                    (onBeforeUpload)="blLoading = true"
-                    (uploadHandler)="onUpload($event, 'BL')"
-                    (onError)="blLoading = false"
-                    [auto]="true"
-                    styleClass="sav-upload-btn"
-                ></p-fileUpload>
-                <small *ngIf="blLoading" class="sav-uploading">
-                    <i class="pi pi-spinner pi-spin"></i>
-                    Préparation du bon de livraison...
-                </small>
-                <div class="sav-file-links">
-                    <a *ngIf="selectedBL" [href]="selectedBL" target="_blank"
-                        ><p-button
-                            label="Consulter BL"
-                            [link]="true"
-                            size="small"
-                        ></p-button
-                    ></a>
-                    <p-button
-                        [disabled]="enregistrerBlBtncondition || blLoading"
-                        (click)="enregistrerBL()"
-                        label="Enregistrer BL"
-                        [link]="true"
-                        size="small"
-                    ></p-button>
-                </div>
-            </div>
-            <div class="sav-upload-block">
-                <p-fileUpload
-                    [disabled]="factureBtnDisabled || factureLoading"
-                    mode="basic"
-                    [chooseLabel]="
-                        factureLoading ? 'Chargement facture...' : 'Facture'
-                    "
-                    [chooseIcon]="
-                        factureLoading
-                            ? 'pi pi-spinner pi-spin'
-                            : 'pi pi-upload'
-                    "
-                    name="factureUpload"
-                    [customUpload]="true"
-                    accept=".pdf"
-                    maxFileSize="1000000"
-                    (onBeforeUpload)="factureLoading = true"
-                    (uploadHandler)="onUpload($event, 'Facture')"
-                    (onError)="factureLoading = false"
-                    [auto]="true"
-                    styleClass="sav-upload-btn"
-                ></p-fileUpload>
-                <small *ngIf="factureLoading" class="sav-uploading">
-                    <i class="pi pi-spinner pi-spin"></i>
-                    Préparation de la facture...
-                </small>
-                <div class="sav-file-links">
+        <!-- ── FICHIERS PRINCIPAUX ─────────────────────── -->
+        <section class="af-section">
+            <h4 class="af-section__label">
+                Fichiers principaux
+                <span class="af-count-pill">{{ affectationAvailableCount }}</span>
+            </h4>
+            <div class="af-status-grid">
+                <div
+                    *ngFor="let t of affectationDocTypes"
+                    class="af-status-card"
+                    [class.af-status-card--missing]="!filesSelected?.[t.field]"
+                >
+                    <span class="af-status-card__icon" aria-hidden="true">
+                        <i class="pi pi-file"></i>
+                    </span>
+                    <span
+                        class="af-status-card__dot"
+                        [class.af-status-card__dot--ok]="!!filesSelected?.[t.field]"
+                    ></span>
+                    <strong class="af-status-card__type">{{ t.key }}</strong>
+                    <span class="af-status-card__state">
+                        {{ filesSelected?.[t.field] ? "Disponible" : "Manquant" }}
+                    </span>
                     <a
-                        *ngIf="selectedFacture"
-                        [href]="selectedFacture"
+                        *ngIf="filesSelected?.[t.field]"
+                        [href]="docHref(filesSelected?.[t.field])"
                         target="_blank"
-                        ><p-button
-                            label="Consulter Facture"
-                            [link]="true"
-                            size="small"
-                        ></p-button
-                    ></a>
-                    <p-button
-                        [disabled]="
-                            enregistrerFactureBtncondition || factureLoading
-                        "
-                        (click)="enregistrerFacture()"
-                        label="Enregistrer Facture"
-                        [link]="true"
-                        size="small"
-                    ></p-button>
+                        class="af-status-card__link"
+                        title="Voir le document"
+                    >
+                        <i class="pi pi-eye"></i>
+                    </a>
                 </div>
             </div>
-        </div>
+        </section>
+
+        <!-- ── Retours (kept legacy retour history, flattened) ── -->
+        <section
+            class="af-section af-retours"
+            *ngIf="finishedData?.logs?.length"
+        >
+            <h4 class="af-section__label">Historique des retours</h4>
+            <div
+                *ngFor="let files of finishedData?.logs; let i = index"
+                class="af-retour-row"
+            >
+                <strong>Retour N°{{ i + 1 }}</strong>
+                <div class="af-retour-row__links">
+                    <a
+                        *ngIf="files?.bon_de_commande"
+                        [href]="docHref(files.bon_de_commande)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-file-pdf"></i> BC
+                    </a>
+                    <a
+                        *ngIf="files?.bon_de_livraison"
+                        [href]="docHref(files.bon_de_livraison)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-file-pdf"></i> BL
+                    </a>
+                    <a
+                        *ngIf="files?.facture"
+                        [href]="docHref(files.facture)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-file-pdf"></i> Facture
+                    </a>
+                    <a
+                        *ngIf="files?.devis"
+                        [href]="docHref(files.devis)"
+                        target="_blank"
+                    >
+                        <i class="pi pi-file-pdf"></i> Devis
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── AFFECTER & TÉLÉVERSER (BL + Facture) ────── -->
+        <section class="af-section">
+            <h4 class="af-section__label">Affecter &amp; téléverser</h4>
+            <div class="af-upload-grid">
+                <!-- BL slot -->
+                <div class="af-upload-cell">
+                    <div class="af-upload-cell__head">
+                        <span class="af-tag">BL</span>
+                        <span class="af-upload-cell__label">Bon de livraison</span>
+                    </div>
+
+                    <div *ngIf="selectedBL; else blDrop" class="af-file-card">
+                        <span class="af-file-card__icon" aria-hidden="true">
+                            <i class="pi pi-file-pdf"></i>
+                        </span>
+                        <div class="af-file-card__meta">
+                            <span class="af-file-card__name">
+                                Bon de livraison sélectionné
+                            </span>
+                            <span class="af-file-card__size">
+                                <i class="pi pi-check"></i>
+                                Prêt à enregistrer
+                            </span>
+                        </div>
+                        <a
+                            [href]="selectedBL"
+                            target="_blank"
+                            class="af-file-card__view"
+                            title="Voir l'aperçu"
+                        >
+                            <i class="pi pi-eye"></i>
+                        </a>
+                    </div>
+
+                    <ng-template #blDrop>
+                        <label
+                            class="af-dropzone"
+                            [class.af-dropzone--active]="afDragActive['BL']"
+                            [class.af-dropzone--disabled]="
+                                blBtnDisabled || blLoading
+                            "
+                            (dragover)="onAfDragOver($event, 'BL')"
+                            (dragleave)="onAfDragLeave($event, 'BL')"
+                            (drop)="onAfDrop($event, 'BL')"
+                        >
+                            <input
+                                type="file"
+                                accept="application/pdf"
+                                hidden
+                                [disabled]="blBtnDisabled || blLoading"
+                                (change)="onAfPicker($event, 'BL')"
+                            />
+                            <span class="af-dropzone__icon" aria-hidden="true">
+                                <i
+                                    [class]="
+                                        blLoading
+                                            ? 'pi pi-spinner pi-spin'
+                                            : 'pi pi-upload'
+                                    "
+                                ></i>
+                            </span>
+                            <span class="af-dropzone__title">
+                                {{
+                                    blLoading
+                                        ? "Chargement…"
+                                        : filesSelected?.bon_de_livraison
+                                          ? "Remplacer le PDF"
+                                          : "Ajouter un PDF"
+                                }}
+                            </span>
+                            <span class="af-dropzone__hint">
+                                Glissez le fichier ici ou cliquez · max 10 Mo
+                            </span>
+                        </label>
+                    </ng-template>
+
+                </div>
+
+                <!-- Facture slot -->
+                <div class="af-upload-cell">
+                    <div class="af-upload-cell__head">
+                        <span class="af-tag">FAC</span>
+                        <span class="af-upload-cell__label">Facture</span>
+                    </div>
+
+                    <div
+                        *ngIf="selectedFacture; else factureDrop"
+                        class="af-file-card"
+                    >
+                        <span class="af-file-card__icon" aria-hidden="true">
+                            <i class="pi pi-file-pdf"></i>
+                        </span>
+                        <div class="af-file-card__meta">
+                            <span class="af-file-card__name">
+                                Facture sélectionnée
+                            </span>
+                            <span class="af-file-card__size">
+                                <i class="pi pi-check"></i>
+                                Prêt à enregistrer
+                            </span>
+                        </div>
+                        <a
+                            [href]="selectedFacture"
+                            target="_blank"
+                            class="af-file-card__view"
+                            title="Voir l'aperçu"
+                        >
+                            <i class="pi pi-eye"></i>
+                        </a>
+                    </div>
+
+                    <ng-template #factureDrop>
+                        <label
+                            class="af-dropzone"
+                            [class.af-dropzone--active]="afDragActive['Facture']"
+                            [class.af-dropzone--disabled]="
+                                factureBtnDisabled || factureLoading
+                            "
+                            (dragover)="onAfDragOver($event, 'Facture')"
+                            (dragleave)="onAfDragLeave($event, 'Facture')"
+                            (drop)="onAfDrop($event, 'Facture')"
+                        >
+                            <input
+                                type="file"
+                                accept="application/pdf"
+                                hidden
+                                [disabled]="
+                                    factureBtnDisabled || factureLoading
+                                "
+                                (change)="onAfPicker($event, 'Facture')"
+                            />
+                            <span class="af-dropzone__icon" aria-hidden="true">
+                                <i
+                                    [class]="
+                                        factureLoading
+                                            ? 'pi pi-spinner pi-spin'
+                                            : 'pi pi-upload'
+                                    "
+                                ></i>
+                            </span>
+                            <span class="af-dropzone__title">
+                                {{
+                                    factureLoading
+                                        ? "Chargement…"
+                                        : filesSelected?.facture
+                                          ? "Remplacer le PDF"
+                                          : "Ajouter un PDF"
+                                }}
+                            </span>
+                            <span class="af-dropzone__hint">
+                                Glissez le fichier ici ou cliquez · max 10 Mo
+                            </span>
+                        </label>
+                    </ng-template>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Footer ──────────────────────────────────── -->
+        <footer class="af-modal__footer">
+            <span class="af-modal__counter">
+                <ng-container *ngIf="affectationPendingCount > 0; else nothing">
+                    <strong>{{ affectationPendingCount }}</strong>
+                    fichier{{ affectationPendingCount > 1 ? "s" : "" }}
+                    prêt{{ affectationPendingCount > 1 ? "s" : "" }} à enregistrer
+                </ng-container>
+                <ng-template #nothing>
+                    Aucun fichier en attente.
+                </ng-template>
+            </span>
+            <div class="af-modal__actions">
+                <p-button
+                    label="Annuler"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="filsFinished = false"
+                ></p-button>
+                <p-button
+                    label="Enregistrer"
+                    icon="pi pi-save"
+                    severity="primary"
+                    [disabled]="affectationPendingCount === 0 || isLoading"
+                    (onClick)="saveAffectationFichiers()"
+                ></p-button>
+            </div>
+        </footer>
     </div>
 </p-dialog>
 
 <!-- ═══════════════════════════════════════════════
-     MODAL — TICKET DETAILS
+     MODAL — INFORMATION DI (shared read-only component)
 ════════════════════════════════════════════════ -->
-<p-dialog
-    header="Information demande d'intervention"
+<app-di-info-modal
     [(visible)]="ticketDetailsInfo"
-    [modal]="true"
-    [style]="{ width: '620px' }"
-    [draggable]="false"
-    [resizable]="false"
-    styleClass="sav-dialog"
->
-    <div class="sav-ticket-body">
-        <h3 class="sav-ticket-title">{{ ticketData?.data?.title }}</h3>
-
-        <div class="sav-info-grid">
-            <div class="sav-info-item">
-                <i class="pi pi-user"></i><span>Client / Société</span
-                ><strong>{{
-                    ticketData?.data?.client_id ||
-                        ticketData?.data?.company_id ||
-                        "—"
-                }}</strong>
-            </div>
-            <div class="sav-info-item">
-                <i class="pi pi-user-edit"></i><span>Créé par</span
-                ><strong>{{ ticketData?.data?.createdBy }}</strong>
-            </div>
-            <div class="sav-info-item">
-                <i class="pi pi-map-marker"></i><span>Emplacement</span
-                ><strong>{{
-                    ticketData?.data?.location_name ||
-                        ticketData?.data?.location_id ||
-                        "—"
-                }}</strong>
-            </div>
-            <div class="sav-info-item">
-                <i class="pi pi-calendar"></i><span>Date création</span
-                ><strong>{{ ticketData?.data?.createdAt }}</strong>
-            </div>
-        </div>
-
-        <div class="sav-price-row">
-            <div class="sav-price-item">
-                <span>Prix Initial</span
-                ><strong>{{ ticketData?.data?.price ?? "N/A" }}</strong>
-            </div>
-            <div class="sav-price-item highlight">
-                <span>Prix Final</span
-                ><strong>{{ ticketData?.data?.final_price ?? "N/A" }}</strong>
-            </div>
-            <div class="sav-price-item">
-                <span>Réparable</span>
-                <strong
-                    [ngClass]="
-                        ticketData?.data?.can_be_repaired === true
-                            ? 'text-green'
-                            : ticketData?.data?.can_be_repaired === false
-                              ? 'text-red'
-                              : ''
-                    "
-                >
-                    {{
-                        ticketData?.data?.can_be_repaired === true
-                            ? "OUI"
-                            : ticketData?.data?.can_be_repaired === false
-                              ? "NON"
-                              : "N/A"
-                    }}
-                </strong>
-            </div>
-            <div
-                class="sav-price-item"
-                *ngIf="ticketData?.data?.can_be_repaired === true"
-            >
-                <span>PDR</span
-                ><strong>{{
-                    ticketData?.data?.contain_pdr ? "OUI" : "NON"
-                }}</strong>
-            </div>
-        </div>
-
-        <div class="sav-tech-row">
-            <div class="sav-tech-item">
-                <i class="pi pi-search"></i><span>Tech Diag</span
-                ><strong>{{ ticketData?.data?.techDiag ?? "—" }}</strong>
-            </div>
-            <div class="sav-tech-item">
-                <i class="pi pi-wrench"></i><span>Tech Répar.</span
-                ><strong>{{ ticketData?.data?.techRep ?? "—" }}</strong>
-            </div>
-        </div>
-
-        <p-table
-            *ngIf="ticketData?.data?.contain_pdr == true"
-            [value]="ticketData?.data?.array_composants"
-            [paginator]="true"
-            [rows]="5"
-            styleClass="p-datatable-sm sav-modal-table"
-        >
-            <ng-template pTemplate="header"
-                ><tr>
-                    <th>Composant</th>
-                    <th>Qté</th>
-                </tr></ng-template
-            >
-            <ng-template pTemplate="body" let-c
-                ><tr>
-                    <td>{{ c.nameComposant }}</td>
-                    <td>{{ c.quantity }}</td>
-                </tr></ng-template
-            >
-        </p-table>
-
-        <div class="sav-form-row">
-            <label class="sav-label">Description</label>
-            <textarea
-                [(ngModel)]="ticketData?.data.description"
-                rows="3"
-                class="sav-textarea sav-textarea--readonly"
-                disabled
-            ></textarea>
-        </div>
-        <div class="sav-form-row">
-            <label class="sav-label">Remarque Administration</label>
-            <textarea
-                [(ngModel)]="ticketData?.data.remarque_manager"
-                rows="2"
-                class="sav-textarea sav-textarea--readonly"
-                disabled
-            ></textarea>
-        </div>
-        <div class="sav-form-row">
-            <label class="sav-label">Remarque Tech Diagnostique</label>
-            <textarea
-                [(ngModel)]="ticketData?.data.remarque_tech_diagnostic"
-                rows="2"
-                class="sav-textarea sav-textarea--readonly"
-                disabled
-            ></textarea>
-        </div>
-        <div class="sav-form-row">
-            <label class="sav-label">Remarque Tech Réparation</label>
-            <textarea
-                [(ngModel)]="ticketData?.data.remarque_tech_repair"
-                rows="2"
-                class="sav-textarea sav-textarea--readonly"
-                disabled
-            ></textarea>
-        </div>
-
-        <div class="sav-files-row">
-            <a
-                *ngIf="ticketData?.data?.bon_de_livraison"
-                [href]="docHref(ticketData?.data?.bon_de_livraison)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> BL</a
-            >
-            <a
-                *ngIf="ticketData?.data?.bon_de_commande"
-                [href]="docHref(ticketData?.data?.bon_de_commande)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> BC</a
-            >
-            <a
-                *ngIf="ticketData?.data?.devis"
-                [href]="docHref(ticketData?.data?.devis)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> Devis</a
-            >
-            <a
-                *ngIf="ticketData?.data?.facture"
-                [href]="docHref(ticketData?.data?.facture)"
-                target="_blank"
-                class="sav-file-link"
-                ><i class="pi pi-file-pdf"></i> Facture</a
-            >
-        </div>
-
-        <div class="sav-retour-btns">
-            <p-button
-                *ngIf="ignoreCountForBtns > 0"
-                (click)="infoRetour1OPEN()"
-                severity="warn"
-                label="Info Retour 1"
-                size="small"
-            />
-            <p-button
-                *ngIf="ignoreCountForBtns > 1"
-                (click)="infoRetour2OPEN()"
-                severity="help"
-                label="Info Retour 2"
-                size="small"
-            />
-            <p-button
-                *ngIf="ignoreCountForBtns > 2"
-                (click)="infoRetour3OPEN()"
-                severity="danger"
-                label="Info Retour 3"
-                size="small"
-            />
-        </div>
-
-        <!-- RETOUR 1 -->
-        <div *ngIf="modalRetour1Info" class="sav-retour-info">
-            <h5 class="sav-retour-info-title">Information Retour 1</h5>
-            <div class="sav-price-row">
-                <div class="sav-price-item">
-                    <span>Prix Initial</span
-                    ><strong>{{ retour1InfoFromLogs?.price ?? "N/A" }}</strong>
-                </div>
-                <div class="sav-price-item">
-                    <span>Prix Final</span
-                    ><strong>{{
-                        retour1InfoFromLogs?.final_price ?? "N/A"
-                    }}</strong>
-                </div>
-                <div class="sav-price-item">
-                    <span>Erreur Fixtronix</span
-                    ><strong>{{
-                        retour1InfoFromLogs?.isErrorFromFixtronix
-                            ? "OUI"
-                            : "NON"
-                    }}</strong>
-                </div>
-            </div>
-            <div class="sav-files-row mt-2">
-                <a
-                    *ngIf="retour1InfoFromLogs?.bon_de_livraison"
-                    [href]="docHref(retour1InfoFromLogs?.bon_de_livraison)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BL R1</a
-                >
-                <a
-                    *ngIf="retour1InfoFromLogs?.bon_de_commande"
-                    [href]="docHref(retour1InfoFromLogs?.bon_de_commande)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BC R1</a
-                >
-                <a
-                    *ngIf="retour1InfoFromLogs?.devis"
-                    [href]="docHref(retour1InfoFromLogs?.devis)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Devis R1</a
-                >
-                <a
-                    *ngIf="retour1InfoFromLogs?.facture"
-                    [href]="docHref(retour1InfoFromLogs?.facture)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Facture R1</a
-                >
-            </div>
-        </div>
-
-        <!-- RETOUR 2 -->
-        <div *ngIf="modalRetour2Info" class="sav-retour-info">
-            <h5 class="sav-retour-info-title">Information Retour 2</h5>
-            <div class="sav-price-row">
-                <div class="sav-price-item">
-                    <span>Prix Initial</span
-                    ><strong>{{ retour2InfoFromLogs?.price ?? "N/A" }}</strong>
-                </div>
-                <div class="sav-price-item">
-                    <span>Prix Final</span
-                    ><strong>{{
-                        retour2InfoFromLogs?.final_price ?? "N/A"
-                    }}</strong>
-                </div>
-                <div class="sav-price-item">
-                    <span>Erreur Fixtronix</span
-                    ><strong>{{
-                        retour2InfoFromLogs?.isErrorFromFixtronix
-                            ? "OUI"
-                            : "NON"
-                    }}</strong>
-                </div>
-            </div>
-            <div class="sav-files-row mt-2">
-                <a
-                    *ngIf="retour2InfoFromLogs?.bon_de_livraison"
-                    [href]="docHref(retour2InfoFromLogs?.bon_de_livraison)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BL R2</a
-                >
-                <a
-                    *ngIf="retour2InfoFromLogs?.bon_de_commande"
-                    [href]="docHref(retour2InfoFromLogs?.bon_de_commande)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BC R2</a
-                >
-                <a
-                    *ngIf="retour2InfoFromLogs?.devis"
-                    [href]="docHref(retour2InfoFromLogs?.devis)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Devis R2</a
-                >
-                <a
-                    *ngIf="retour2InfoFromLogs?.facture"
-                    [href]="docHref(retour2InfoFromLogs?.facture)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Facture R2</a
-                >
-            </div>
-        </div>
-
-        <!-- RETOUR 3 -->
-        <div *ngIf="modalRetour3Info" class="sav-retour-info">
-            <h5 class="sav-retour-info-title">Information Retour 3</h5>
-            <div class="sav-price-row">
-                <div class="sav-price-item">
-                    <span>Prix Initial</span
-                    ><strong>{{ retour3InfoFromLogs?.price ?? "N/A" }}</strong>
-                </div>
-                <div class="sav-price-item">
-                    <span>Prix Final</span
-                    ><strong>{{
-                        retour3InfoFromLogs?.final_price ?? "N/A"
-                    }}</strong>
-                </div>
-                <div class="sav-price-item">
-                    <span>Erreur Fixtronix</span
-                    ><strong>{{
-                        retour3InfoFromLogs?.isErrorFromFixtronix
-                            ? "OUI"
-                            : "NON"
-                    }}</strong>
-                </div>
-            </div>
-            <div class="sav-files-row mt-2">
-                <a
-                    *ngIf="retour3InfoFromLogs?.bon_de_livraison"
-                    [href]="docHref(retour3InfoFromLogs?.bon_de_livraison)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BL R3</a
-                >
-                <a
-                    *ngIf="retour3InfoFromLogs?.bon_de_commande"
-                    [href]="docHref(retour3InfoFromLogs?.bon_de_commande)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> BC R3</a
-                >
-                <a
-                    *ngIf="retour3InfoFromLogs?.devis"
-                    [href]="docHref(retour3InfoFromLogs?.devis)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Devis R3</a
-                >
-                <a
-                    *ngIf="retour3InfoFromLogs?.facture"
-                    [href]="docHref(retour3InfoFromLogs?.facture)"
-                    target="_blank"
-                    class="sav-file-link"
-                    ><i class="pi pi-file-pdf"></i> Facture R3</a
-                >
-            </div>
-        </div>
-    </div>
-</p-dialog>
+    [di]="ticketData?.data"
+    context="interventions"
+></app-di-info-modal>
 
 <!-- ═══════════════════════════════════════════════
      MODAL — MODIFIER DI
@@ -2684,3 +2455,4 @@
         </div>
     </ng-template>
 </p-dialog>
+

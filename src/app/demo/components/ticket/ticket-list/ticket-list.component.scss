@@ -2409,3 +2409,419 @@ $pricing-red: #dc2626;
         font-variant-numeric: tabular-nums;
     }
 }
+
+// ═══════════════════════════════════════════════════════
+//  AFFECTATION DES FICHIERS — BC / BL / Facture / Devis
+//  Design: fix-front/design/image.png. Palette: existing DS
+//  tokens (blue/green/slate). Red is restricted to the PDF
+//  thumbnail (semantic = file format), not decoration.
+// ═══════════════════════════════════════════════════════
+$af-blue: #2563eb;
+$af-blue-soft: #eff6ff;
+$af-blue-border: #bfdbfe;
+$af-blue-dark: #1d4ed8;
+$af-green: #16a34a;
+$af-green-soft: #dcfce7;
+$af-green-border: #a7f3d0;
+$af-red: #dc2626;
+$af-red-soft: #fee2e2;
+$af-pdf: #b91c1c;
+
+::ng-deep .sav-dialog.af-dialog .p-dialog-content {
+    padding: 0 !important;
+}
+
+.af-modal {
+    display: flex;
+    flex-direction: column;
+    background: $bg-card;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: $text-primary;
+}
+
+// ── Header ──────────────────────────────────────────────
+.af-modal__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid $border;
+    background: $bg-surface;
+}
+.af-modal__tile {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: $af-blue-soft;
+    border: 1px solid $af-blue-border;
+    color: $af-blue-dark;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .pi {
+        font-size: 1.05rem;
+    }
+}
+.af-modal__titles {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.af-modal__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: $text-primary;
+}
+.af-modal__subtitle {
+    margin: 0.2rem 0 0;
+    font-size: 0.82rem;
+    color: $text-secondary;
+}
+.af-modal__close {
+    flex: 0 0 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: $bg-card;
+    border: 1px solid $border;
+    color: $text-secondary;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    &:hover {
+        background: $bg-surface;
+        color: $text-primary;
+        border-color: #cbd5e1;
+    }
+}
+
+// ── Sections ────────────────────────────────────────────
+.af-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid $border;
+    &:last-of-type {
+        border-bottom: 0;
+    }
+}
+.af-section__label {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $text-secondary;
+}
+.af-count-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: $af-blue-soft;
+    color: $af-blue-dark;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+// ── Status cards (4 doc types) ─────────────────────────
+.af-status-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+.af-status-card {
+    position: relative;
+    background: $bg-card;
+    border: 1px solid $border;
+    border-radius: 10px;
+    padding: 0.8rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    transition: background 0.15s, border-color 0.15s;
+    &--missing {
+        background: $bg-surface;
+        color: $text-muted;
+        border-style: dashed;
+    }
+    &__icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 7px;
+        background: $af-blue-soft;
+        color: $af-blue-dark;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .pi {
+            font-size: 0.9rem;
+        }
+    }
+    &--missing .af-status-card__icon {
+        background: #e2e8f0;
+        color: $text-muted;
+    }
+    &__dot {
+        position: absolute;
+        top: 0.65rem;
+        right: 0.7rem;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #cbd5e1;
+        &--ok {
+            background: $af-green;
+        }
+    }
+    &__type {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: $text-primary;
+    }
+    &--missing .af-status-card__type {
+        color: $text-muted;
+    }
+    &__state {
+        font-size: 0.82rem;
+        color: $af-green;
+        font-weight: 600;
+    }
+    &--missing .af-status-card__state {
+        color: $text-muted;
+        font-weight: 500;
+    }
+    &__link {
+        position: absolute;
+        right: 0.6rem;
+        bottom: 0.5rem;
+        color: $accent-blue;
+        font-size: 0.9rem;
+        text-decoration: none;
+        opacity: 0.9;
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
+
+// ── Upload grid (one cell per doc type) ────────────────
+.af-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.95rem;
+}
+.af-upload-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+    min-width: 0;
+}
+.af-upload-cell__head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.af-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 5px;
+    background: $af-blue-soft;
+    color: $af-blue-dark;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+.af-upload-cell__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $text-primary;
+}
+.af-upload-cell__hint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: $text-muted;
+    text-align: center;
+}
+
+// Dropzone — native <label> wraps a hidden file input. Click anywhere
+// triggers the picker ; dragover lifts the visual ; drop calls onAfDrop.
+.af-dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 130px;
+    padding: 1.1rem 1rem;
+    background: $bg-surface;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: 10px;
+    color: $text-secondary;
+    cursor: pointer;
+    text-align: center;
+    transition:
+        background 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+
+    &:hover {
+        background: $af-blue-soft;
+        border-color: $accent-blue;
+        color: $text-primary;
+    }
+    &--active {
+        background: $af-blue-soft;
+        border-color: $accent-blue;
+        border-style: solid;
+        color: $text-primary;
+    }
+    &--disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    &__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        background: $bg-card;
+        border: 1px solid $border;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .pi {
+            font-size: 1.15rem;
+            color: $accent-blue;
+        }
+    }
+    &__title {
+        font-size: 0.92rem;
+        font-weight: 600;
+        color: $text-primary;
+    }
+    &__hint {
+        font-size: 0.75rem;
+        color: $text-muted;
+    }
+}
+
+// File card (a pending upload, ready to save)
+.af-file-card {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.6rem 0.7rem;
+    background: $af-red-soft;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    min-width: 0;
+    &__icon {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 40px;
+        border-radius: 8px;
+        background: $bg-card;
+        color: $af-pdf;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .pi {
+            font-size: 1.15rem;
+        }
+    }
+    &__meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    &__name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: $text-primary;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    &__size {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.75rem;
+        color: $af-green;
+        font-weight: 500;
+        .pi {
+            font-size: 0.7rem;
+        }
+    }
+    &__remove {
+        flex: 0 0 32px;
+        width: 32px;
+        height: 32px;
+        border-radius: 7px;
+        background: transparent;
+        border: 1px solid #fecaca;
+        color: $af-red;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, color 0.15s;
+        &:hover {
+            background: $af-red;
+            color: #fff;
+        }
+        .pi {
+            font-size: 0.9rem;
+        }
+    }
+}
+
+// ── Footer ──────────────────────────────────────────────
+.af-modal__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid $border;
+    background: $bg-surface;
+}
+.af-modal__counter {
+    font-size: 0.85rem;
+    color: $text-secondary;
+    strong {
+        color: $text-primary;
+        font-weight: 700;
+        margin-right: 0.15rem;
+    }
+}
+.af-modal__actions {
+    display: flex;
+    gap: 0.5rem;
+    ::ng-deep .p-button[severity="primary"] {
+        background: $af-blue !important;
+        border-color: $af-blue !important;
+        &:hover {
+            background: $af-blue-dark !important;
+            border-color: $af-blue-dark !important;
+        }
+    }
+}

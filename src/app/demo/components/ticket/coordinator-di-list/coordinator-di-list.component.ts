@@ -138,6 +138,18 @@ export class CoordinatorDiListComponent implements OnDestroy {
     pricingRequestInFlight = false;
     componentsConfirmInFlight = false;
 
+    // ─── Retour-aware flow state ──────────────────────────────────────────
+    // A DI that returns (`Di.ignoreCount > 0`) runs through the same 5-stage
+    // pipeline again — each retour is a fresh cycle with its own snapshot
+    // logged to LogsDi. The modal now models that as N+1 tabs (Flow Original
+    // + one Retour #N per ignoreCount), with per-segment timeline + motif.
+    /** All LogsDi snapshots for the open DI, sorted by `idIgnore` ASC. */
+    flowLogsDi: any[] = [];
+    /** Active segment in the flow-history tabs.
+     *  0 = Flow Original ; 1..N = Retour #N. Defaults to the latest open
+     *  segment so the modal lands on the currently-active cycle. */
+    selectedFlowSegment = 0;
+
     /** ─── Coordination-modal: real-data-only state ─────────────────────────
      *  techAvgRepairByTechId is populated by the dashboardTechLeaderboard
      *  query when the modal opens. Keys = Profile._id, value = avg days
@@ -655,6 +667,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
         this.gotComposantFromMagasinCondition = di.gotComposantFromMagasin;
         this.techSearchTerm = '';
         this.fetchTechAvgRepair();
+        // Pull the LogsDi snapshots for this DI's past retour cycles (motif +
+        // date + status per cycle). Empty array on `ignoreCount === 0`; the
+        // timeline still renders the Flow Original segment.
+        this.fetchFlowLogsDi(di._id, Number(di.ignoreCount ?? 0));
         if (di.logs && di.logs.length > 0) {
             const highestIgnoreLog = di.logs.reduce((prev, current) =>
                 prev.idIgnore > current.idIgnore ? prev : current,
@@ -704,6 +720,211 @@ export class CoordinatorDiListComponent implements OnDestroy {
         di.status == STATUS_DI.PENDING3
             ? (this.rep_condition = false)
             : (this.rep_condition = true);
+    }
+
+    // ── Retour-aware flow helpers (Flow Original + Retour #1/2/3) ─────────
+
+    /** Pull all LogsDi snapshots for the open DI. The flow-history left
+     *  column reads from `this.flowLogsDi` for retour motif/date/status.
+     *  Pre-selects the most recent open segment so the modal lands on the
+     *  active cycle (Flow Original when ignoreCount=0, Retour #N otherwise). */
+    private fetchFlowLogsDi(_idDi: string, ignoreCount: number) {
+        this.flowLogsDi = [];
+        this.selectedFlowSegment = ignoreCount > 0 ? ignoreCount : 0;
+        if (!_idDi) return;
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getLogsDi(_idDi),
+                fetchPolicy: 'no-cache',
+            })
+            .subscribe(({ data }) => {
+                const logs = data?.getAllLogsByDi || [];
+                this.flowLogsDi = [...logs].sort(
+                    (a, b) => (a.idIgnore ?? 0) - (b.idIgnore ?? 0),
+                );
+            });
+    }
+
+    /** Retour count = the DI's `ignoreCount`. Source of truth for the red
+     *  top badge + the number of `Retour #N` tabs. */
+    get diRetourCount(): number {
+        return Number(this.di?.ignoreCount ?? 0);
+    }
+
+    /** Latest LogsDi snapshot — surfaces motif + date in the status banner. */
+    get diLatestRetour(): any | null {
+        if (!this.flowLogsDi?.length) return null;
+        return this.flowLogsDi[this.flowLogsDi.length - 1];
+    }
+
+    /** Motif = `LogsDi.comment` field (already in getLogsDi selection). */
+    get diRetourMotif(): string {
+        return this.diLatestRetour?.comment || 'Motif non renseigné';
+    }
+
+    /** Date du retour = `LogsDi.createdAt`. */
+    get diRetourDate(): string {
+        return this.formatDateTime(this.diLatestRetour?.createdAt);
+    }
+
+    /** Red-badge escalation: 1 → mild, 2 → strong, 3+ → critical. */
+    get diRetourEscalationClass(): string {
+        const n = this.diRetourCount;
+        if (n >= 3) return 'cf-retour-pill--critical';
+        if (n === 2) return 'cf-retour-pill--strong';
+        if (n === 1) return 'cf-retour-pill--mild';
+        return '';
+    }
+
+    /** Tab segments above the timeline: "Flow Original" + one "Retour #N"
+     *  per opened retour cycle. Current segment = the highest open one. */
+    get flowSegments(): Array<{
+        idx: number;
+        label: string;
+        state: 'done' | 'current';
+    }> {
+        const total = this.diRetourCount;
+        const segs: Array<{
+            idx: number;
+            label: string;
+            state: 'done' | 'current';
+        }> = [];
+        segs.push({
+            idx: 0,
+            label: 'Flow Original',
+            state: total === 0 ? 'current' : 'done',
+        });
+        for (let i = 1; i <= total; i++) {
+            segs.push({
+                idx: i,
+                label: `Retour #${i}`,
+                state: i === total ? 'current' : 'done',
+            });
+        }
+        return segs;
+    }
+
+    /** Effective status for the SELECTED segment. Active segment reads live
+     *  `di.status` ; closed segments read the status captured on their
+     *  LogsDi snapshot. */
+    private getSegmentStatus(segIdx: number): string {
+        if (segIdx === this.diRetourCount) return this.di?.status ?? '';
+        const log = this.flowLogsDi.find((l) => l.idIgnore === segIdx);
+        return log?.status ?? 'FINISHED';
+    }
+
+    /** Timeline stages for the currently selected segment. State + sub-status
+     *  badge + sub-status list (for the active row) + actor + timestamp. */
+    getSegmentStages(): Array<{
+        key: string;
+        label: string;
+        state: 'done' | 'current' | 'pending';
+        badgeLabel: string;
+        subStatus: string;
+        subStatusList: string[];
+        actor: string;
+        timestamp: string | null;
+    }> {
+        const segIdx = this.selectedFlowSegment;
+        const isActive = segIdx === this.diRetourCount;
+        const status = this.getSegmentStatus(segIdx);
+        const log = isActive
+            ? null
+            : this.flowLogsDi.find((l) => l.idIgnore === segIdx);
+
+        return this.BASE_PHASES.map((phase) => {
+            const state = this.computePhaseState(phase, status);
+            const sub = state === 'pending' ? '' : status;
+            return {
+                key: phase.key,
+                label: phase.label,
+                state,
+                badgeLabel: this.computePhaseBadgeLabel(phase, status, state),
+                subStatus: sub,
+                subStatusList: phase.statuses,
+                actor: this.computePhaseActor(
+                    phase.key,
+                    state,
+                    isActive,
+                    log,
+                ),
+                timestamp: isActive
+                    ? this.computePhaseTimestamp(phase.key, state)
+                    : this.formatDateTime(log?.createdAt) || null,
+            };
+        });
+    }
+
+    /** Best-effort actor per stage. Diagnostic/Réparation = techDiag/techRep
+     *  (live) or the snapshot's workers (history) ; Magasin =
+     *  `componentsConfirmedBy` ; Admin = `pricingRequestSentBy`. Fallbacks
+     *  keep the UI from rendering raw nulls. */
+    private computePhaseActor(
+        phaseKey: string,
+        state: 'done' | 'current' | 'pending',
+        isActive: boolean,
+        log: any | null,
+    ): string {
+        if (state === 'pending') return '—';
+        if (phaseKey === 'diagnostic') {
+            if (isActive)
+                return this.formatTableValueFallback(this.di?.techDiag);
+            return (
+                this.formatTableValueFallback(
+                    log?.current_workers_ids?.[0],
+                ) ||
+                this.formatTableValueFallback(this.di?.techDiag)
+            );
+        }
+        if (phaseKey === 'magasin') {
+            return (
+                this.formatTableValueFallback(
+                    this.di?.componentsConfirmedBy,
+                ) || 'Équipe Magasin'
+            );
+        }
+        if (phaseKey === 'admin') {
+            return (
+                this.formatTableValueFallback(
+                    this.di?.pricingRequestSentBy,
+                ) || 'Équipe Admin'
+            );
+        }
+        if (phaseKey === 'repair') {
+            const t = this.formatTableValueFallback(this.di?.techRep);
+            return t === 'N/A' ? 'Non assigné' : t;
+        }
+        if (phaseKey === 'closed') {
+            return state === 'done' || state === 'current'
+                ? this.formatTableValueFallback(this.di?.createdBy) || '—'
+                : '—';
+        }
+        return '—';
+    }
+
+    /** Progression `done / 5 étapes` — `done + 0.5×current` for a smooth fill. */
+    get flowProgress(): { done: number; total: number; pct: number } {
+        const stages = this.getSegmentStages();
+        const total = stages.length || 5;
+        const done = stages.filter((s) => s.state === 'done').length;
+        const current = stages.filter((s) => s.state === 'current').length;
+        const effective = done + (current > 0 ? 0.5 : 0);
+        return {
+            done,
+            total,
+            pct: Math.round((effective / total) * 100),
+        };
+    }
+
+    /** Set the active flow segment from the tab header. Pure view-state. */
+    selectFlowSegment(idx: number) {
+        if (idx < 0 || idx > this.diRetourCount) return;
+        this.selectedFlowSegment = idx;
+    }
+
+    /** Status pill for the top banner — French label via the existing map. */
+    get diCurrentStatusLabel(): string {
+        return this.STATUS_LABEL_FR[this.di?.status] ?? (this.di?.status || '—');
     }
 
     formatDateTime(value: any): string {

@@ -351,6 +351,8 @@ export class TicketService {
                     status
                     createdAt
                     updatedAt
+                    comment
+                    current_workers_ids
                     remarque_tech_diagnostic
                     remarque_tech_repair
                     remarque_manager

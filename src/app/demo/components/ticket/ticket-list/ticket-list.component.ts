@@ -331,6 +331,162 @@ export class TicketListComponent implements OnInit, OnDestroy {
     enregistrerBcBtncondition: boolean = true;
     enregistrerDevisBtncondition: boolean = true;
 
+    // ─── "Affectation des Fichiers" modal (redesign of `filsFinished`) ─────
+    // The existing modal lives on the FINISHED row's `pi-paperclip` button →
+    // `openUploadFileFinished()` → `filsFinished = true`. We keep that flow
+    // and just redesign its body to the design/image.png target. These two
+    // helpers are pure presentation:
+    //   `affectationDocTypes` drives the 4 status cards (BC/BL/Facture/Devis).
+    //   `formatFileSize` formats pending file sizes.
+    readonly affectationDocTypes: Array<{
+        key: 'BC' | 'BL' | 'Facture' | 'Devis';
+        tag: string;
+        label: string;
+        field:
+            | 'bon_de_commande'
+            | 'bon_de_livraison'
+            | 'facture'
+            | 'devis';
+    }> = [
+        { key: 'BC', tag: 'BC', label: 'Bon de commande', field: 'bon_de_commande' },
+        { key: 'BL', tag: 'BL', label: 'Bon de livraison', field: 'bon_de_livraison' },
+        { key: 'Facture', tag: 'FAC', label: 'Facture', field: 'facture' },
+        { key: 'Devis', tag: 'DEV', label: 'Devis', field: 'devis' },
+    ];
+
+    /** Count of "Disponible" docs on the current `filesSelected` row.
+     *  Drives the `FICHIERS PRINCIPAUX (n)` pill in the header. */
+    get affectationAvailableCount(): number {
+        if (!this.filesSelected) return 0;
+        return this.affectationDocTypes.filter(
+            (t) => !!this.filesSelected[t.field],
+        ).length;
+    }
+
+    /** Files ready to persist (selected via PrimeNG `customUpload` but not yet
+     *  saved). The existing flow keeps the BL preview in `selectedBL` and the
+     *  Facture preview in `selectedFacture` (set by `onUpload`). */
+    get affectationPendingCount(): number {
+        return (
+            (this.selectedBL ? 1 : 0) + (this.selectedFacture ? 1 : 0)
+        );
+    }
+
+    /** Per-slot drag-over highlight (key = `'BL'` / `'Facture'`). Visual only —
+     *  reset on drag-leave / drop / picker-pick. */
+    afDragActive: Record<string, boolean> = {};
+
+    /** Per-type base64 cache so the single footer "Enregistrer" can persist
+     *  BOTH BL and Facture in one cascade. The legacy `this.payload.file` is
+     *  a single string that gets overwritten on every upload — using it for a
+     *  multi-file save would re-send the LAST file's content for every slot.
+     *  Populated by `onUpload` once FileReader resolves the data-URL. */
+    affectationBase64: Record<string, string> = {};
+
+    /** Drag-and-drop or picker → reuse the existing `onUpload(event, key)`
+     *  flow (FileReader → base64 → mutation). The event shape is exactly what
+     *  PrimeNG's customUpload provides: `{ files: File[] }` — `onUpload`
+     *  iterates `event.files` so the synthesized object stays compatible. */
+    onAfDragOver(ev: DragEvent, key: string) {
+        ev.preventDefault();
+        this.afDragActive = { ...this.afDragActive, [key]: true };
+    }
+    onAfDragLeave(ev: DragEvent, key: string) {
+        ev.preventDefault();
+        this.afDragActive = { ...this.afDragActive, [key]: false };
+    }
+    onAfDrop(ev: DragEvent, key: string) {
+        ev.preventDefault();
+        this.afDragActive = { ...this.afDragActive, [key]: false };
+        const all = Array.from(ev.dataTransfer?.files ?? []);
+        // Keep PDFs only — the dropzone's accept attribute is hint-only on drop.
+        const files = all.filter((f) => /pdf/i.test(f.type) || /\.pdf$/i.test(f.name));
+        if (!files.length) {
+            this.messageservice?.add?.({
+                severity: 'warn',
+                summary: 'Format non supporté',
+                detail: 'Glissez un fichier PDF.',
+            });
+            return;
+        }
+        this.onUpload({ files }, key);
+    }
+    onAfPicker(ev: Event, key: string) {
+        const input = ev.target as HTMLInputElement;
+        const files = Array.from(input.files ?? []);
+        if (!files.length) return;
+        this.onUpload({ files }, key);
+        // Reset so picking the same file again still fires `change`.
+        input.value = '';
+    }
+
+    /** Single "Enregistrer" for the Affectation modal — persists every
+     *  pending file (BL and/or Facture) in one cascade, with one confirm
+     *  dialog and one toast. Matches the design's single-CTA footer (the
+     *  legacy per-slot "Enregistrer BL / Facture" buttons are gone).
+     *  MutationRunner handles anti-double-click and spinner reset. */
+    saveAffectationFichiers() {
+        const id = this._idPDFFinished;
+        if (!id) return;
+        const bl = this.affectationBase64['BL'];
+        const fac = this.affectationBase64['Facture'];
+        if (!bl && !fac) {
+            this.filsFinished = false;
+            return;
+        }
+        const count = (bl ? 1 : 0) + (fac ? 1 : 0);
+        this.confirmationService.confirm({
+            message: `Enregistrer ${count} fichier${count > 1 ? 's' : ''} ?`,
+            header: 'Confirmation',
+            icon: 'pi pi-question-circle',
+            accept: async () => {
+                const steps: Array<{ mutation: any }> = [];
+                if (bl) steps.push({ mutation: this.ticketSerice.addBL(id, bl) });
+                if (fac)
+                    steps.push({
+                        mutation: this.ticketSerice.addFacture(id, fac),
+                    });
+                try {
+                    await this.mutationRunner.runChain({
+                        key: `affectationFichiers:${id}`,
+                        steps,
+                        successToast: {
+                            summary: 'Fichiers enregistrés',
+                            detail: `${count} fichier${count > 1 ? 's' : ''} ajouté${count > 1 ? 's' : ''} au dossier Drive.`,
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: "Échec de l'enregistrement. Réessayez.",
+                        },
+                        onLoading: (v) => (this.isLoading = v),
+                    });
+                    // Reset selection / cache so the cards flip to "Disponible"
+                    // on the next data refresh.
+                    this.selectedBL = '';
+                    this.selectedFacture = '';
+                    this.affectationBase64 = {};
+                    this.enregistrerBlBtncondition = true;
+                    this.enregistrerFactureBtncondition = true;
+                    this.blBtnDisabled = false;
+                    this.factureBtnDisabled = false;
+                    this.filsFinished = false;
+                    this.loadData();
+                } catch {
+                    /* toasted; modal stays open so the user can retry */
+                }
+            },
+        });
+    }
+
+    /** Pretty file size: `n o` / `n Ko` / `n,nn Mo`. */
+    formatFileSize(bytes: number | undefined): string {
+        if (!Number.isFinite(bytes) || (bytes ?? 0) <= 0) return '0 o';
+        const n = bytes as number;
+        if (n < 1024) return `${n} o`;
+        if (n < 1024 * 1024) return `${Math.round(n / 1024)} Ko`;
+        return `${(n / (1024 * 1024)).toFixed(2).replace('.', ',')} Mo`;
+    }
+
     // Pricing-modal chips: label + multiplier vs the cost base (1.0 = Coût).
     // Order matters: rendered as a row.
     readonly pricingChips: Array<{ label: string; mult: number }> = [
@@ -2666,6 +2822,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
             readerForBase64.onload = () => {
                 const base64 = readerForBase64.result as string;
                 this.uploadFile(base64, type);
+                // Per-type cache so the global footer save can persist BL +
+                // Facture together without overwriting `payload.file`.
+                if (type === 'BL' || type === 'Facture') {
+                    this.affectationBase64 = {
+                        ...this.affectationBase64,
+                        [type]: base64,
+                    };
+                }
                 if (type === 'BL') {
                     this.blLoading = false;
                     this.enregistrerBlBtncondition = false;

@@ -1,0 +1,360 @@
+<p-dialog
+    [visible]="visible"
+    (visibleChange)="onVisibleChange($event)"
+    [modal]="true"
+    [style]="{ width: '960px', maxWidth: '95vw' }"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="false"
+    [showHeader]="false"
+    styleClass="di-info-dialog"
+>
+    <div class="di-info-modal">
+        <!-- ── Header ──────────────────────────────────── -->
+        <header class="di-info-modal__head">
+            <div class="di-info-modal__tile" aria-hidden="true">
+                {{ initials(di?.title) }}
+            </div>
+            <div class="di-info-modal__titles">
+                <div class="di-info-modal__title-row">
+                    <h3 class="di-info-modal__title">
+                        {{ di?.title || "—" }}
+                    </h3>
+                    <span class="di-info-modal__badge">
+                        {{ di?._idnum || "DI" }}
+                    </span>
+                </div>
+                <p class="di-info-modal__subtitle">
+                    Information demande d'intervention · lecture seule
+                </p>
+            </div>
+            <button
+                type="button"
+                class="di-info-modal__close"
+                aria-label="Fermer"
+                (click)="close()"
+            >
+                <i class="pi pi-times"></i>
+            </button>
+        </header>
+
+        <!-- ── Body 2-col grid ─────────────────────────── -->
+        <div class="di-info-grid">
+            <!-- ─── LEFT ──────────────────────────────── -->
+            <div class="di-info-col di-info-col--main">
+                <!-- DESCRIPTION -->
+                <section class="di-info-section">
+                    <h4 class="di-info-section__label">Description</h4>
+                    <div class="di-info-card">
+                        {{ di?.description || "—" }}
+                    </div>
+                </section>
+
+                <!-- COMPOSANTS -->
+                <section class="di-info-section">
+                    <h4 class="di-info-section__label">
+                        Composants
+                        <span class="di-info-count-pill">
+                            {{ di?.array_composants?.length ?? 0 }}
+                        </span>
+                    </h4>
+                    <div class="di-info-table-card">
+                        <p-table
+                            [value]="di?.array_composants || []"
+                            [paginator]="
+                                (di?.array_composants?.length || 0) > 4
+                            "
+                            [rows]="4"
+                            styleClass="di-info-table"
+                        >
+                            <ng-template pTemplate="header">
+                                <tr>
+                                    <th class="di-info-th">Composant</th>
+                                    <th class="di-info-th di-info-th--right">
+                                        Qté
+                                    </th>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="body" let-c>
+                                <tr class="di-info-tr">
+                                    <td class="di-info-td">
+                                        <span
+                                            class="di-info-dot"
+                                            aria-hidden="true"
+                                        ></span>
+                                        {{ c.nameComposant }}
+                                    </td>
+                                    <td
+                                        class="di-info-td di-info-td--right"
+                                    >
+                                        {{ c.quantity }}
+                                    </td>
+                                </tr>
+                            </ng-template>
+                            <ng-template pTemplate="emptymessage">
+                                <tr>
+                                    <td
+                                        colspan="2"
+                                        class="di-info-td di-info-td--muted"
+                                    >
+                                        Aucun composant.
+                                    </td>
+                                </tr>
+                            </ng-template>
+                        </p-table>
+                    </div>
+                </section>
+
+                <!-- REMARQUES -->
+                <section class="di-info-section">
+                    <h4 class="di-info-section__label">Remarques</h4>
+                    <div class="di-remark di-remark--admin">
+                        <div class="di-remark__head">
+                            <span
+                                class="di-remark__dot"
+                                aria-hidden="true"
+                            ></span>
+                            <span class="di-remark__label">
+                                Remarque administration
+                            </span>
+                        </div>
+                        <p class="di-remark__body">
+                            {{
+                                di?.remarque_manager ||
+                                    di?.remarque_admin_manager ||
+                                    "Aucune remarque"
+                            }}
+                        </p>
+                    </div>
+                    <div class="di-remark di-remark--diag">
+                        <div class="di-remark__head">
+                            <span
+                                class="di-remark__dot"
+                                aria-hidden="true"
+                            ></span>
+                            <span class="di-remark__label">
+                                Remarque tech diagnostique
+                            </span>
+                        </div>
+                        <p class="di-remark__body">
+                            {{
+                                di?.remarque_tech_diagnostic ||
+                                    "Aucune remarque"
+                            }}
+                        </p>
+                    </div>
+                    <div class="di-remark di-remark--rep">
+                        <div class="di-remark__head">
+                            <span
+                                class="di-remark__dot"
+                                aria-hidden="true"
+                            ></span>
+                            <span class="di-remark__label">
+                                Remarque tech réparation
+                            </span>
+                        </div>
+                        <p class="di-remark__body">
+                            {{
+                                di?.remarque_tech_repair || "Aucune remarque"
+                            }}
+                        </p>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ─── RIGHT (sidebar) ───────────────────── -->
+            <aside class="di-info-col di-info-col--side">
+                <!-- ÉTAT -->
+                <section class="di-info-section">
+                    <h4 class="di-info-section__label">État</h4>
+                    <div class="di-info-state">
+                        <span
+                            class="di-info-chip"
+                            [ngClass]="
+                                di?.can_be_repaired === true
+                                    ? 'di-info-chip--ok'
+                                    : di?.can_be_repaired === false
+                                      ? 'di-info-chip--ko'
+                                      : 'di-info-chip--muted'
+                            "
+                        >
+                            <i
+                                [class]="
+                                    di?.can_be_repaired === true
+                                        ? 'pi pi-check'
+                                        : di?.can_be_repaired === false
+                                          ? 'pi pi-times'
+                                          : 'pi pi-minus'
+                                "
+                            ></i>
+                            {{
+                                di?.can_be_repaired === true
+                                    ? "Réparable"
+                                    : di?.can_be_repaired === false
+                                      ? "Non réparable"
+                                      : "Réparable ?"
+                            }}
+                        </span>
+                        <span
+                            class="di-info-chip"
+                            [ngClass]="
+                                di?.contain_pdr
+                                    ? 'di-info-chip--accent'
+                                    : 'di-info-chip--muted'
+                            "
+                        >
+                            {{ di?.contain_pdr ? "PDR dispo" : "Sans PDR" }}
+                        </span>
+                    </div>
+                </section>
+
+                <!-- TARIFICATION -->
+                <section class="di-info-section">
+                    <h4 class="di-info-section__label">Tarification</h4>
+                    <div class="di-info-tarif">
+                        <div class="di-info-tarif__row">
+                            <span>Prix initial</span>
+                            <strong>
+                                {{
+                                    di?.price == null
+                                        ? "—"
+                                        : formatTnd3(di?.price)
+                                }}
+                            </strong>
+                        </div>
+                        <div
+                            class="di-info-tarif__row di-info-tarif__row--accent"
+                        >
+                            <span>Prix final</span>
+                            <strong>
+                                {{
+                                    di?.final_price == null
+                                        ? "—"
+                                        : formatTnd3(di?.final_price)
+                                }}
+                            </strong>
+                        </div>
+                        <div
+                            class="di-info-tarif__row di-info-tarif__row--ecart"
+                        >
+                            <span>Écart</span>
+                            <strong
+                                [ngClass]="{
+                                    'di-info-ecart--up':
+                                        !ecart.absent && ecart.positive,
+                                    'di-info-ecart--down':
+                                        !ecart.absent && !ecart.positive,
+                                    'di-info-ecart--neutral': ecart.absent,
+                                }"
+                            >
+                                {{ ecart.label }}
+                            </strong>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ÉQUIPE -->
+                <section class="di-info-section">
+                    <h4 class="di-info-section__label">Équipe</h4>
+                    <div class="di-info-team">
+                        <div class="di-info-team__row">
+                            <span
+                                class="di-info-team__avatar di-info-team__avatar--creator"
+                            >
+                                {{ initials(di?.createdBy) }}
+                            </span>
+                            <div class="di-info-team__meta">
+                                <span class="di-info-team__role">
+                                    Créé par
+                                </span>
+                                <strong class="di-info-team__name">
+                                    {{ di?.createdBy || "—" }}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="di-info-team__row">
+                            <span
+                                class="di-info-team__avatar di-info-team__avatar--diag"
+                            >
+                                {{ initials(di?.techDiag) }}
+                            </span>
+                            <div class="di-info-team__meta">
+                                <span class="di-info-team__role">
+                                    Tech. diagnostic
+                                </span>
+                                <strong class="di-info-team__name">
+                                    {{ di?.techDiag || "—" }}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="di-info-team__row">
+                            <span
+                                class="di-info-team__avatar di-info-team__avatar--rep"
+                            >
+                                {{ initials(di?.techRep) }}
+                            </span>
+                            <div class="di-info-team__meta">
+                                <span class="di-info-team__role">
+                                    Tech. réparation
+                                </span>
+                                <strong class="di-info-team__name">
+                                    {{ di?.techRep || "—" }}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DÉTAILS -->
+                <section class="di-info-section">
+                    <h4 class="di-info-section__label">Détails</h4>
+                    <div class="di-info-details">
+                        <div class="di-info-details__row">
+                            <span>Client / Société</span>
+                            <strong>
+                                {{ di?.client_id || di?.company_id || "—" }}
+                            </strong>
+                        </div>
+                        <div class="di-info-details__row">
+                            <span>Emplacement</span>
+                            <strong>
+                                {{
+                                    di?.location_name ||
+                                        di?.location_id ||
+                                        "—"
+                                }}
+                            </strong>
+                        </div>
+                        <div class="di-info-details__row">
+                            <span>Date de création</span>
+                            <strong>{{ di?.createdAt || "—" }}</strong>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <!-- ── Footer ──────────────────────────────────── -->
+        <footer class="di-info-modal__footer">
+            <span class="di-info-modal__creator">
+                Créé par
+                <strong>{{ di?.createdBy || "—" }}</strong>
+            </span>
+            <div class="di-info-modal__actions">
+                <p-button
+                    label="Imprimer"
+                    icon="pi pi-print"
+                    severity="secondary"
+                    [outlined]="true"
+                    (onClick)="print()"
+                ></p-button>
+                <p-button
+                    label="Fermer"
+                    icon="pi pi-times"
+                    severity="primary"
+                    (onClick)="close()"
+                ></p-button>
+            </div>
+        </footer>
+    </div>
+</p-dialog>
