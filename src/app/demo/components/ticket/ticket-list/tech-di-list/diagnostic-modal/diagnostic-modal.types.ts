@@ -52,6 +52,8 @@ export interface DiagnosticDiSummary {
   readonly locationName: string;
   readonly technicianName: string;
   readonly remarqueManager: string;
+  /** Retour cycle # (0 / undefined = original flow). Drives the retour badge. */
+  readonly ignoreCount?: number;
 }
 
 export interface ComposantOption {

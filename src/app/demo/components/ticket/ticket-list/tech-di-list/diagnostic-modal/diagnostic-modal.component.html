@@ -21,6 +21,15 @@
             (minimize)="minimizeClicked.emit()"
         ></sav-diag-header>
 
+        <div *ngIf="ctx.ignoreCount > 0" class="sav-diag-retour-banner">
+            <span class="retour-flag">
+                <i class="pi pi-replay"></i> Retour #{{ ctx.ignoreCount }}
+            </span>
+            <span class="sav-diag-retour-banner__txt">
+                Cycle de retour — pas le flux d'origine.
+            </span>
+        </div>
+
         <sav-diag-info-strip
             [di]="ctx.di"
             [clientLine]="clientLine"

@@ -315,6 +315,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     filesSelected: any;
     isErrorFromFixtronix: any;
     ignoreCountPricing: number;
+    /** Retour cycle # for the price-final modal banner (0 = original flow);
+     *  set by every method that opens that modal so the badge is never stale. */
+    pricingModalIgnoreCount: number = 0;
     instantSelectedBc: string;
     instantSelectedDevis: string;
     ignoreCountN1: any;
@@ -1810,6 +1813,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.seletedRow = data;
         this.isErrorFromFixtronix = data.isErrorFromFixtronix;
         this.ignoreCountPricing = data.ignoreCount;
+        this.pricingModalIgnoreCount = data.ignoreCount ?? 0;
         this.ignoreCountN1 = data.ignoreCount - 1;
 
         this.tarif_Technicien = null;
@@ -2011,6 +2015,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
         this.seletedRow = data._id;
         this.ignoreCountNeg1 = data.ignoreCount;
+        this.pricingModalIgnoreCount = data.ignoreCount ?? 0;
         console.log('ignoreCountNeg1', this.ignoreCountNeg1);
         this._idDi = this.seletedRow;
         this.getDiByID(this._idDi);
@@ -2030,6 +2035,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.slectedRow = data._id;
         this._idDi = data._id;
         this.ignoreCountNeg1 = data.ignoreCount;
+        this.pricingModalIgnoreCount = data.ignoreCount ?? 0;
         this.negocite2Modal = true;
         this.getTotalComposant(data._id);
         this.getDiByID(this.slectedRow);

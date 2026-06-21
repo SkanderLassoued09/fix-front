@@ -536,6 +536,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 di?.techRep ??
                 di?.id_tech_rep?.username ??
                 '',
+            ignoreCount: Number(di?.ignoreCount ?? 0),
             remarqueManager: di?.remarqueManager ?? '',
         };
     }

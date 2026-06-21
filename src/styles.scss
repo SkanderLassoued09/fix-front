@@ -14,3 +14,25 @@ $gutter: 1rem; //for primeflex grid system
 @import "assets/demo/styles/code.scss";
 @import "primeng/resources/themes/lara-light-blue/theme.css";
 @import "primeng/resources/primeng.css";
+
+/* Retour-cycle indicator — shown on step modals when a DI is in a retour
+   cycle (ignoreCount > 0) so it's clear it's not the original flow. */
+.retour-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+
+    i {
+        font-size: 0.72rem;
+    }
+}

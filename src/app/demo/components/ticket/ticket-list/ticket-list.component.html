@@ -1406,7 +1406,18 @@
                 <i class="pi pi-wallet"></i>
             </div>
             <div class="pricing-modal__titles">
-                <h3 class="pricing-modal__title">Affectation du prix final</h3>
+                <h3 class="pricing-modal__title">
+                    Affectation du prix final
+                    <span
+                        *ngIf="pricingModalIgnoreCount > 0"
+                        class="retour-flag"
+                        title="Cycle de retour — pas le flux d'origine"
+                    >
+                        <i class="pi pi-replay"></i> Retour #{{
+                            pricingModalIgnoreCount
+                        }}
+                    </span>
+                </h3>
                 <p class="pricing-modal__subtitle">
                     {{ seletedRow?._idnum ?? "DI" }}
                     <span *ngIf="seletedRow?.title"> · {{ seletedRow.title }}</span>
