@@ -506,12 +506,36 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             description: di?.description ?? '',
             status: di?.status ?? '',
             statusLabel: this.formatHeaderStatus(di?.status, di?.statusLabel),
-            clientName: di?.clientName ?? di?.client?.name ?? '',
-            clientPhone: di?.clientPhone ?? di?.client?.phone ?? '',
-            companyName: di?.companyName ?? di?.company?.name ?? '',
-            locationName: di?.locationName ?? di?.location?.name ?? '',
+            // Handle both the nested tech-list shape (client { first_name,
+            // last_name }, company { name }) and any pre-flattened row
+            // (client_id/company_id as display strings).
+            clientName:
+                di?.clientName ??
+                [di?.client?.first_name, di?.client?.last_name]
+                    .filter(Boolean)
+                    .join(' ')
+                    .trim() ||
+                (typeof di?.client_id === 'string' ? di.client_id : '') ||
+                '',
+            clientPhone:
+                di?.clientPhone ?? di?.client?.phone ?? di?.clientPhone ?? '',
+            companyName:
+                di?.companyName ??
+                di?.company?.name ??
+                (typeof di?.company_id === 'string' ? di.company_id : '') ??
+                '',
+            locationName:
+                di?.locationName ??
+                di?.location_name ??
+                di?.location?.location_name ??
+                di?.location?.name ??
+                (typeof di?.location_id === 'string' ? di.location_id : '') ??
+                '',
             technicianName:
-                di?.technicianName ?? di?.id_tech_rep?.username ?? '',
+                di?.technicianName ??
+                di?.techRep ??
+                di?.id_tech_rep?.username ??
+                '',
             remarqueManager: di?.remarqueManager ?? '',
         };
     }
