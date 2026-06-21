@@ -65,11 +65,11 @@
                     <div class="sav-composant-item__index">{{ i + 1 }}</div>
                     <div class="sav-composant-item__info">
                         <span class="sav-composant-item__name">{{
-                            product.nameComposant
+                            product.nameComposant || "—"
                         }}</span>
                         <span class="sav-composant-item__qty">
                             <i class="pi pi-tag"></i> Qté :
-                            {{ product.quantity }}
+                            {{ product.quantity ?? 0 }}
                         </span>
                     </div>
                     <i
@@ -97,15 +97,15 @@
                     <div class="sav-detail-title-left">
                         <div class="sav-detail-avatar">
                             {{
-                                composantValues?.name?.charAt(0)?.toUpperCase()
+                                composantValues?.name?.charAt(0)?.toUpperCase() || "?"
                             }}
                         </div>
                         <div>
                             <h3 class="sav-detail-name">
-                                {{ composantValues?.name }}
+                                {{ composantValues?.name || "—" }}
                             </h3>
                             <span class="sav-detail-id"
-                                >ID : {{ composantValues?._id }}</span
+                                >ID : {{ composantValues?._id || "—" }}</span
                             >
                         </div>
                     </div>

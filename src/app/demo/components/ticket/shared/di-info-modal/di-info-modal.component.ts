@@ -65,6 +65,25 @@ export class DiInfoModalComponent {
         this.onVisibleChange(false);
     }
 
+    /** True when a value looks like a raw Mongo ObjectId (24 hex chars).
+     *  Such ids must never be shown to a user — we fall back to a placeholder. */
+    private isObjectId(value: any): boolean {
+        return typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value.trim());
+    }
+
+    /** Human-readable display for a field that may legitimately hold a name OR,
+     *  on legacy records, a raw ObjectId. Returns the first non-empty candidate
+     *  that is not an ObjectId, else the '—' placeholder. */
+    displayName(...candidates: any[]): string {
+        for (const c of candidates) {
+            if (c == null) continue;
+            const s = String(c).trim();
+            if (!s || this.isObjectId(s)) continue;
+            return s;
+        }
+        return '—';
+    }
+
     /** Two letters max, uppercase, derived from a display name. Falls back to
      *  '?' for empty/unknown so the avatar tiles are never blank. */
     initials(text: any): string {

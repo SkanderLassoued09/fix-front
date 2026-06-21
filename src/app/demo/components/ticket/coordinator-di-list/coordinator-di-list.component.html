@@ -38,7 +38,11 @@
             <div class="sav-info-item">
                 <i class="pi pi-map-marker"></i>
                 <span>Emplacement</span>
-                <strong>{{ ticketData?.data?.location_id || "—" }}</strong>
+                <strong>{{
+                    ticketData?.data?.location_name ||
+                        ticketData?.data?.locationName ||
+                        "—"
+                }}</strong>
             </div>
             <div class="sav-info-item">
                 <i class="pi pi-calendar"></i>
@@ -736,7 +740,7 @@
                             Coordination — Contrôle du Flow
                         </h3>
                         <span class="cf-modal__badge">
-                            {{ di?._idnum || di?._id || "DI" }}
+                            {{ di?._idnum || "DI" }}
                         </span>
                         <span
                             *ngIf="diRetourCount > 0"

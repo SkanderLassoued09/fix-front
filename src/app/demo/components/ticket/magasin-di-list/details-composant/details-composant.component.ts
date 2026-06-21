@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
@@ -27,7 +29,8 @@ export interface Composant {
     templateUrl: './details-composant.component.html',
     styleUrl: './details-composant.component.scss',
 })
-export class DetailsComposantComponent implements OnInit {
+export class DetailsComposantComponent implements OnInit, OnDestroy {
+    private readonly destroy$ = new Subject<void>();
     products;
     composants: any[];
     formUpdateComposant: FormGroup;
@@ -72,19 +75,26 @@ export class DetailsComposantComponent implements OnInit {
         this.productService
             .getProductsSmall()
             .then((cars) => (this.products = cars));
-        this.notificationService.notification$.subscribe((message: any) => {
-            console.log('🍻[message]:', message);
-            if (message) {
-                this.getDiByID(this._id);
-            }
-            if (
-                message &&
-                message.array_composants &&
-                message.array_composants.length > 0
-            ) {
-                this.componentsAreConfirmed = true;
-            }
-        });
+        this.notificationService.notification$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe((message: any) => {
+                console.log('🍻[message]:', message);
+                if (message) {
+                    this.getDiByID(this._id);
+                }
+                if (
+                    message &&
+                    message.array_composants &&
+                    message.array_composants.length > 0
+                ) {
+                    this.componentsAreConfirmed = true;
+                }
+            });
+    }
+
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
     }
 
     getCompsantInfo(selectedComposant: string) {

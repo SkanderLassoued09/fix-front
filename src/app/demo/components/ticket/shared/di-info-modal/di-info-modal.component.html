@@ -82,12 +82,12 @@
                                             class="di-info-dot"
                                             aria-hidden="true"
                                         ></span>
-                                        {{ c.nameComposant }}
+                                        {{ c.nameComposant || "—" }}
                                     </td>
                                     <td
                                         class="di-info-td di-info-td--right"
                                     >
-                                        {{ c.quantity }}
+                                        {{ c.quantity ?? 0 }}
                                     </td>
                                 </tr>
                             </ng-template>
@@ -268,7 +268,7 @@
                                     Créé par
                                 </span>
                                 <strong class="di-info-team__name">
-                                    {{ di?.createdBy || "—" }}
+                                    {{ displayName(di?.createdBy) }}
                                 </strong>
                             </div>
                         </div>
@@ -283,7 +283,7 @@
                                     Tech. diagnostic
                                 </span>
                                 <strong class="di-info-team__name">
-                                    {{ di?.techDiag || "—" }}
+                                    {{ displayName(di?.techDiag) }}
                                 </strong>
                             </div>
                         </div>
@@ -298,7 +298,7 @@
                                     Tech. réparation
                                 </span>
                                 <strong class="di-info-team__name">
-                                    {{ di?.techRep || "—" }}
+                                    {{ displayName(di?.techRep) }}
                                 </strong>
                             </div>
                         </div>
@@ -312,16 +312,27 @@
                         <div class="di-info-details__row">
                             <span>Client / Société</span>
                             <strong>
-                                {{ di?.client_id || di?.company_id || "—" }}
+                                {{
+                                    displayName(
+                                        di?.clientName,
+                                        di?.companyName,
+                                        di?.client_name,
+                                        di?.company_name,
+                                        di?.client_id,
+                                        di?.company_id
+                                    )
+                                }}
                             </strong>
                         </div>
                         <div class="di-info-details__row">
                             <span>Emplacement</span>
                             <strong>
                                 {{
-                                    di?.location_name ||
-                                        di?.location_id ||
-                                        "—"
+                                    displayName(
+                                        di?.location_name,
+                                        di?.locationName,
+                                        di?.location_id
+                                    )
                                 }}
                             </strong>
                         </div>
@@ -418,7 +429,7 @@
         <footer class="di-info-modal__footer">
             <span class="di-info-modal__creator">
                 Créé par
-                <strong>{{ di?.createdBy || "—" }}</strong>
+                <strong>{{ displayName(di?.createdBy) }}</strong>
             </span>
             <div class="di-info-modal__actions">
                 <p-button
