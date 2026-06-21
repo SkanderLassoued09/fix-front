@@ -757,14 +757,21 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return this.flowLogsDi[this.flowLogsDi.length - 1];
     }
 
-    /** Motif = `LogsDi.comment` field (already in getLogsDi selection). */
+    /** Motif = the reason captured on the DI at retour time (falls back to the
+     *  legacy `LogsDi.comment` snapshot field). */
     get diRetourMotif(): string {
-        return this.diLatestRetour?.comment || 'Motif non renseigné';
+        return (
+            this.di?.retourReason ||
+            this.diLatestRetour?.comment ||
+            'Motif non renseigné'
+        );
     }
 
-    /** Date du retour = `LogsDi.createdAt`. */
+    /** Date du retour = `DI.retourDate` (falls back to the latest LogsDi). */
     get diRetourDate(): string {
-        return this.formatDateTime(this.diLatestRetour?.createdAt);
+        return this.formatDateTime(
+            this.di?.retourDate ?? this.diLatestRetour?.createdAt,
+        );
     }
 
     /** Red-badge escalation: 1 → mild, 2 → strong, 3+ → critical. */

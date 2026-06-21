@@ -2381,6 +2381,51 @@
 ></app-di-info-modal>
 
 <!-- ═══════════════════════════════════════════════
+     MODAL — MOTIF DU RETOUR
+════════════════════════════════════════════════ -->
+<p-dialog
+    header="Motif du retour"
+    [(visible)]="retourDialogVisible"
+    [modal]="true"
+    [style]="{ width: '440px' }"
+    [draggable]="false"
+    styleClass="sav-dialog"
+>
+    <ng-template pTemplate="content">
+        <div class="sav-create-form">
+            <div class="sav-form-row">
+                <label class="sav-label" for="retour-motif"
+                    >Pourquoi cette DI revient-elle ?</label
+                >
+                <textarea
+                    id="retour-motif"
+                    rows="3"
+                    [(ngModel)]="retourMotifInput"
+                    pInputTextarea
+                    class="sav-textarea"
+                    placeholder="Décrivez le motif du retour..."
+                ></textarea>
+            </div>
+            <div class="sav-dialog-footer">
+                <p-button
+                    (click)="retourDialogVisible = false"
+                    label="Annuler"
+                    severity="danger"
+                    [outlined]="true"
+                    size="small"
+                ></p-button>
+                <p-button
+                    (click)="confirmRetour()"
+                    icon="pi pi-undo"
+                    label="Confirmer le retour"
+                    size="small"
+                ></p-button>
+            </div>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- ═══════════════════════════════════════════════
      MODAL — MODIFIER DI
 ════════════════════════════════════════════════ -->
 <p-dialog

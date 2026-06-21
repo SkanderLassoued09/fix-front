@@ -208,6 +208,8 @@ export class TicketService {
                         createdAt
                         updatedAt
                         comment
+                        retourReason
+                        retourDate
                              array_composants {
                             nameComposant
                             quantity
@@ -1299,24 +1301,27 @@ export class TicketService {
         `;
     }
 
-    changeStatusRetour1(_id: string) {
+    changeStatusRetour1(_id: string, reason?: string) {
+        const reasonArg = reason ? `, reason: ${JSON.stringify(reason)}` : '';
         return gql`
             mutation {
-                changeStatusRetour1(_id: "${_id}")
+                changeStatusRetour1(_id: "${_id}"${reasonArg})
             }
         `;
     }
-    changeStatusRetour2(_id: string) {
+    changeStatusRetour2(_id: string, reason?: string) {
+        const reasonArg = reason ? `, reason: ${JSON.stringify(reason)}` : '';
         return gql`
             mutation {
-                changeStatusRetour2(_id: "${_id}")
+                changeStatusRetour2(_id: "${_id}"${reasonArg})
             }
         `;
     }
-    changeStatusRetour3(_id: string) {
+    changeStatusRetour3(_id: string, reason?: string) {
+        const reasonArg = reason ? `, reason: ${JSON.stringify(reason)}` : '';
         return gql`
             mutation {
-                changeStatusRetour3(_id: "${_id}")
+                changeStatusRetour3(_id: "${_id}"${reasonArg})
             }
         `;
     }

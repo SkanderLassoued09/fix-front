@@ -588,6 +588,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
     retour3InfoFromLogs: any;
+    // Retour motif dialog (captures the reason before sending a DI back).
+    retourDialogVisible = false;
+    retourMotifInput = '';
+    retourTarget: any = null;
     totalDiCount: any;
     isLoading: boolean = true;
 
@@ -2418,26 +2422,26 @@ export class TicketListComponent implements OnInit, OnDestroy {
             .subscribe(() => {});
     }
 
-    changeStatusRetour1(_id) {
+    changeStatusRetour1(_id, reason?: string) {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.changeStatusRetour1(_id),
+                mutation: this.ticketSerice.changeStatusRetour1(_id, reason),
             })
             .subscribe(() => {});
     }
 
-    changeStatusRetour2(_id) {
+    changeStatusRetour2(_id, reason?: string) {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.changeStatusRetour2(_id),
+                mutation: this.ticketSerice.changeStatusRetour2(_id, reason),
             })
             .subscribe(() => {});
     }
 
-    changeStatusRetour3(_id) {
+    changeStatusRetour3(_id, reason?: string) {
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.changeStatusRetour3(_id),
+                mutation: this.ticketSerice.changeStatusRetour3(_id, reason),
             })
             .subscribe(() => {});
     }
@@ -2568,42 +2572,48 @@ export class TicketListComponent implements OnInit, OnDestroy {
         );
     }
 
+    /** Open the retour dialog so the user can enter a motif before returning. */
     ignore(_idticket) {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous continuer ?',
-            header: "Envoyer Demande d'intervention Retour",
-            icon: 'pi pi-question-circle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.ignore(_idticket._id),
-                    })
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
-                        if (data) {
-                            const updatedIgnoreCount =
-                                data.countIgnore.ignoreCount;
+        this.retourTarget = _idticket;
+        this.retourMotifInput = '';
+        this.retourDialogVisible = true;
+    }
 
-                            if (updatedIgnoreCount === 1) {
-                                this.changeStatusRetour1(_idticket._id);
-                            } else if (updatedIgnoreCount === 2) {
-                                this.changeStatusRetour2(_idticket._id);
-                            } else if (updatedIgnoreCount === 3) {
-                                this.changeStatusRetour3(_idticket._id);
-                            }
+    /** Confirm the retour: bump ignoreCount, then transition with the motif. */
+    confirmRetour() {
+        const _idticket = this.retourTarget;
+        if (!_idticket) return;
+        const reason = (this.retourMotifInput || '').trim();
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.ignore(_idticket._id),
+            })
+            .subscribe(({ data, loading }) => {
+                this.isLoading = loading;
+                if (data) {
+                    const updatedIgnoreCount = data.countIgnore.ignoreCount;
 
-                            const ticketIndex = this.diList.findIndex(
-                                (item) => item._id === _idticket._id,
-                            );
-                            if (ticketIndex !== -1) {
-                                this.diList[ticketIndex].ignoreCount =
-                                    updatedIgnoreCount;
-                            }
-                        }
-                        this.cdr.detectChanges();
-                    });
-            },
-        });
+                    if (updatedIgnoreCount === 1) {
+                        this.changeStatusRetour1(_idticket._id, reason);
+                    } else if (updatedIgnoreCount === 2) {
+                        this.changeStatusRetour2(_idticket._id, reason);
+                    } else if (updatedIgnoreCount === 3) {
+                        this.changeStatusRetour3(_idticket._id, reason);
+                    }
+
+                    const ticketIndex = this.diList.findIndex(
+                        (item) => item._id === _idticket._id,
+                    );
+                    if (ticketIndex !== -1) {
+                        this.diList[ticketIndex].ignoreCount =
+                            updatedIgnoreCount;
+                    }
+                }
+                this.retourDialogVisible = false;
+                this.retourTarget = null;
+                this.retourMotifInput = '';
+                this.cdr.detectChanges();
+            });
     }
 
     addCategoryDi() {
