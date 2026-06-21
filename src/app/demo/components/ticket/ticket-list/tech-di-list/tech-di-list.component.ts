@@ -3951,14 +3951,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     hint: hintFor('failure', hasFailure),
                 },
                 {
-                    key: 'components',
-                    label: 'Composants',
-                    hint: hintFor('components', hasComponentsDecision),
-                },
-                {
                     key: 'validation',
                     label: 'Validation',
                     hint: hintFor('validation', hasValidation),
+                },
+                {
+                    key: 'components',
+                    label: 'Composants',
+                    hint: hintFor('components', hasComponentsDecision),
                 },
                 {
                     key: 'summary',
