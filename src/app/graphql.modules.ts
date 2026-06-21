@@ -8,7 +8,9 @@ import { Observable, getMainDefinition } from '@apollo/client/utilities';
 import { NgModule } from '@angular/core';
 import { environment } from 'src/environments/environment';
 
-const uri = `${environment.apiUrl}graphql`; //changed apiUrl
+// Slash-safe join: works whether apiUrl ends with "/" (dev) or not (prod).
+const apiBase = environment.apiUrl.replace(/\/+$/, '');
+const uri = `${apiBase}/graphql`;
 
 export function createApollo(httpLink: HttpLink) {
     const basic = setContext(() => ({
@@ -42,11 +44,11 @@ export function createApollo(httpLink: HttpLink) {
             const context = operation.getContext();
             const { clientAwareness } = context;
 
-            const wsUrl = environment.apiUrl
+            const wsUrl = apiBase
                 .replace('http://', 'ws://')
                 .replace('https://', 'wss://');
 
-            const ws = new WebSocket(`${wsUrl}graphql`, 'graphql-ws');
+            const ws = new WebSocket(`${wsUrl}/graphql`, 'graphql-ws');
 
             ws.addEventListener('open', () => {
                 console.log('GraphQL WS connected');
