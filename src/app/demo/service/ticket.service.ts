@@ -622,14 +622,14 @@ export class TicketService {
         mutation {
             createDi(
                 createDiInput: {
-                    title: "${diInfo.title}"
-                    description: "${diInfo.description}"
+                    title: ${JSON.stringify(diInfo.title ?? '')}
+                    description: ${JSON.stringify(diInfo.description ?? '')}
                     typeClient: "${diInfo.typeClient}"
                     status: "${diInfo.status}"
                     client_id: "${diInfo.client_id}"
                     company_id: "${diInfo.company_id}"
-                    nSerie: "${diInfo.nSerie}"
-                    remarque_manager: "${diInfo.remarqueManager}"
+                    nSerie: ${JSON.stringify(diInfo.nSerie ?? '')}
+                    remarque_manager: ${JSON.stringify(diInfo.remarqueManager ?? '')}
                     image:"${diInfo.image ?? null}"
                     di_category_id:"${diInfo.di_category_id}"
                     location_id:"${diInfo.location}"

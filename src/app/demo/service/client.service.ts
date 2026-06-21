@@ -12,12 +12,12 @@ export class ClientService {
         mutation {
             createClient(
                 createClientInput: {
-                    first_name: "${clientInfo.first_name}"
-                    last_name: "${clientInfo.last_name}"
-                    region: "${clientInfo.region}"
-                    address: "${clientInfo.address}"
-                    email: "${clientInfo.email}"
-                    phone: "${clientInfo.phone}"
+                    first_name: ${JSON.stringify(clientInfo.first_name ?? '')}
+                    last_name: ${JSON.stringify(clientInfo.last_name ?? '')}
+                    region: ${JSON.stringify(clientInfo.region ?? '')}
+                    address: ${JSON.stringify(clientInfo.address ?? '')}
+                    email: ${JSON.stringify(clientInfo.email ?? '')}
+                    phone: ${JSON.stringify(clientInfo.phone ?? '')}
                 }
             ) {
                 _id
