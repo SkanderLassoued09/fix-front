@@ -510,7 +510,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             // last_name }, company { name }) and any pre-flattened row
             // (client_id/company_id as display strings).
             clientName:
-                di?.clientName ??
+                di?.clientName ||
                 [di?.client?.first_name, di?.client?.last_name]
                     .filter(Boolean)
                     .join(' ')

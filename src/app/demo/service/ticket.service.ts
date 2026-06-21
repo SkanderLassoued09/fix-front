@@ -498,6 +498,8 @@ export class TicketService {
                         id_tech_diag
                         ignoreCount
                         id_tech_rep
+                        techDiag
+                        techRep
                         diag_time
                         rep_time
                         repRunStartedAt
