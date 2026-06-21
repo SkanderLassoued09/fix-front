@@ -287,6 +287,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     facturationDiagnostique: number = 0;
     tarif_Technicien: number;
     payload: { file: string } = { file: '' };
+    /** File staged in the create-DI image drag & drop zone (controlled value). */
+    imageDropFile: File | null = null;
 
     facturePDF: { file: string };
     blPDF: { file: string };
@@ -2354,6 +2356,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
                                 this.creationDiForm.reset();
                                 this.payload.file = '';
+                                this.imageDropFile = null;
                                 this.openAddDiModal = false;
                                 this.loadData();
                                 this.getStatusCount();
@@ -2750,6 +2753,20 @@ export class TicketListComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Image chosen via the drag & drop zone → reuse the existing image upload
+     *  pipeline (`onUpload` → base64 → `payload.file` → createDi). */
+    onImageDropSelected(file: File) {
+        this.imageDropFile = file;
+        this.uploadFileLoading = true;
+        this.onUpload({ files: [file] }, 'image');
+    }
+
+    /** Drag & drop zone cleared → drop the staged image. */
+    onImageDropRemoved() {
+        this.imageDropFile = null;
+        this.payload = { file: '' };
+    }
+
     onUpload(event: any, type: string) {
         this.uploadFileLoading = true;
         if (type !== 'image') {
@@ -2951,6 +2968,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     annulerDi() {
         this.openAddDiModal = false;
         this.creationDiForm.reset();
+        this.payload = { file: '' };
+        this.imageDropFile = null;
     }
 
     openUploadFileFinished(dataselected: any) {

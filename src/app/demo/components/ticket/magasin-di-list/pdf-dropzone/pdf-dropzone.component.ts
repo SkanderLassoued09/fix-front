@@ -53,7 +53,7 @@ import {
 
             <!-- État « fichier sélectionné » -->
             <div class="dz__file" *ngIf="hasFile && !error">
-                <span class="dz__thumb"><i class="pi pi-file-pdf"></i></span>
+                <span class="dz__thumb"><i [class]="thumbIcon"></i></span>
                 <span class="dz__meta">
                     <span class="dz__name" [title]="fileName">{{
                         fileName
@@ -82,7 +82,7 @@ import {
             <!-- État repos / drag-over / erreur -->
             <div class="dz__prompt" *ngIf="!hasFile || error">
                 <span class="dz__icon"><i class="pi pi-upload"></i></span>
-                <span class="dz__title">Ajouter un PDF</span>
+                <span class="dz__title">{{ title }}</span>
                 <span class="dz__sub" *ngIf="!error">{{
                     dragOver
                         ? 'Déposez le fichier'
@@ -279,6 +279,13 @@ export class PdfDropzoneComponent {
     @Input() value: File | null = null;
     /** Accessible label for the zone. */
     @Input() ariaLabel = 'Ajouter une fiche technique PDF';
+    /** What kind of file to validate on drop/pick. Defaults to PDF so existing
+     *  hosts keep their behavior; set to 'image' for picture uploads. */
+    @Input() acceptKind: 'pdf' | 'image' | 'any' = 'pdf';
+    /** Prompt title shown in the idle state. */
+    @Input() title = 'Ajouter un PDF';
+    /** Icon for the selected-file thumbnail. */
+    @Input() thumbIcon = 'pi pi-file-pdf';
 
     /** Emits a validated PDF File. */
     @Output() fileSelected = new EventEmitter<File>();
@@ -358,10 +365,17 @@ export class PdfDropzoneComponent {
     /** Validate type + size, then emit or set an error. */
     private handle(file: File | null): void {
         if (!file) return;
-        const isPdf =
-            file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
-        if (!isPdf) {
-            this.error = 'PDF uniquement';
+        const typeOk =
+            this.acceptKind === 'any'
+                ? true
+                : this.acceptKind === 'image'
+                  ? /^image\//.test(file.type) ||
+                    /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(file.name)
+                  : file.type === 'application/pdf' ||
+                    /\.pdf$/i.test(file.name);
+        if (!typeOk) {
+            this.error =
+                this.acceptKind === 'image' ? 'Image uniquement' : 'PDF uniquement';
             return;
         }
         if (file.size > this.maxSizeMo * 1024 * 1024) {

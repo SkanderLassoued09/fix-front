@@ -973,23 +973,20 @@
         </div>
 
         <div class="sav-form-row">
-            <!-- customUpload: opt out of PrimeNG's HTTP POST (was hitting the
-                 PrimeFaces demo CDN and losing files). FileReader → base64
-                 happens in onUpload, persisted via the DI mutation. -->
-            <p-fileUpload
-                mode="basic"
-                chooseLabel="Ajouter une image"
-                chooseIcon="pi pi-upload"
-                name="diImage"
+            <!-- Drag & drop image zone (reuses the generic dropzone used by the
+                 facture/affectation flow). FileReader → base64 happens in
+                 onUpload, persisted via the DI mutation. -->
+            <app-pdf-dropzone
+                acceptKind="image"
                 accept="image/*"
-                maxFileSize="1000000"
-                [customUpload]="true"
-                [auto]="true"
-                (onSelect)="onImageSelect($event)"
-                (uploadHandler)="onUpload($event, 'image')"
-                (onError)="onImageUploadError()"
-                styleClass="sav-upload-btn"
-            ></p-fileUpload>
+                title="Ajouter une image"
+                thumbIcon="pi pi-image"
+                ariaLabel="Ajouter une image au DI"
+                [maxSizeMo]="5"
+                [value]="imageDropFile"
+                (fileSelected)="onImageDropSelected($event)"
+                (fileRemoved)="onImageDropRemoved()"
+            ></app-pdf-dropzone>
             <small *ngIf="uploadFileLoading" class="sav-uploading">
                 <i class="pi pi-spin pi-spinner"></i> Préparation de l'image...
             </small>
