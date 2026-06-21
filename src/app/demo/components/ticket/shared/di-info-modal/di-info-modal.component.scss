@@ -483,6 +483,52 @@ $red-soft: #fee2e2;
     }
 }
 
+// ── Historique des retours ──────────────────────────────
+.di-info-retours-section {
+    padding: 0 1.35rem 1rem;
+}
+.di-info-retours {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+}
+.di-info-retour-card {
+    border: 1px solid $border;
+    border-radius: 10px;
+    padding: 0.6rem 0.85rem;
+    background: $bg-surface;
+
+    &__head {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #b45309;
+        margin-bottom: 0.35rem;
+    }
+    &__docs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #2563eb;
+            text-decoration: none;
+            i {
+                color: #dc2626;
+            }
+        }
+    }
+    &__nodocs {
+        font-size: 0.78rem;
+        color: $text-secondary;
+        font-style: italic;
+    }
+}
+
 // ── Footer ──────────────────────────────────────────────
 .di-info-modal__footer {
     display: flex;

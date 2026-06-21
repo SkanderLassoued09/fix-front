@@ -334,6 +334,86 @@
             </aside>
         </div>
 
+        <!-- ── Historique des retours ──────────────────── -->
+        <section
+            *ngIf="retourEntries.length"
+            class="di-info-section di-info-retours-section"
+        >
+            <h4 class="di-info-section__label">
+                Historique des retours
+                <span class="di-info-count-pill">{{ retourEntries.length }}</span>
+            </h4>
+            <div class="di-info-retours">
+                <div
+                    class="di-info-retour-card"
+                    *ngFor="let r of retourEntries"
+                >
+                    <div class="di-info-retour-card__head">Retour #{{ r.n }}</div>
+                    <div class="di-info-details__row">
+                        <span>Prix</span>
+                        <strong>{{ formatTnd3(r.data?.price) }}</strong>
+                    </div>
+                    <div class="di-info-details__row">
+                        <span>Prix final</span>
+                        <strong>{{ formatTnd3(r.data?.final_price) }}</strong>
+                    </div>
+                    <div class="di-info-details__row">
+                        <span>Réparable</span>
+                        <strong>{{
+                            r.data?.can_be_repaired === undefined
+                                ? "—"
+                                : r.data?.can_be_repaired
+                                ? "Oui"
+                                : "Non"
+                        }}</strong>
+                    </div>
+                    <div
+                        class="di-info-details__row"
+                        *ngIf="r.data?.remarque_tech_diagnostic"
+                    >
+                        <span>Diagnostic</span>
+                        <strong>{{ r.data?.remarque_tech_diagnostic }}</strong>
+                    </div>
+                    <div class="di-info-retour-card__docs">
+                        <a
+                            *ngIf="r.data?.bon_de_commande"
+                            [href]="r.data?.bon_de_commande"
+                            target="_blank"
+                            ><i class="pi pi-file-pdf"></i> BC</a
+                        >
+                        <a
+                            *ngIf="r.data?.devis"
+                            [href]="r.data?.devis"
+                            target="_blank"
+                            ><i class="pi pi-file-pdf"></i> Devis</a
+                        >
+                        <a
+                            *ngIf="r.data?.bon_de_livraison"
+                            [href]="r.data?.bon_de_livraison"
+                            target="_blank"
+                            ><i class="pi pi-file-pdf"></i> BL</a
+                        >
+                        <a
+                            *ngIf="r.data?.facture"
+                            [href]="r.data?.facture"
+                            target="_blank"
+                            ><i class="pi pi-file-pdf"></i> Facture</a
+                        >
+                        <span
+                            *ngIf="
+                                !r.data?.bon_de_commande &&
+                                !r.data?.devis &&
+                                !r.data?.bon_de_livraison &&
+                                !r.data?.facture
+                            "
+                            class="di-info-retour-card__nodocs"
+                            >Aucun document</span
+                        >
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- ── Footer ──────────────────────────────────── -->
         <footer class="di-info-modal__footer">
             <span class="di-info-modal__creator">

@@ -41,7 +41,21 @@ export class DiInfoModalComponent {
     @Input() di: any = null;
     @Input() visible = false;
     @Input() context: 'coordinator' | 'interventions' = 'interventions';
+    // Per-cycle retour snapshots (LogsDi), passed by the host. retour1 = #1, etc.
+    @Input() retour1: any = null;
+    @Input() retour2: any = null;
+    @Input() retour3: any = null;
     @Output() visibleChange = new EventEmitter<boolean>();
+
+    /** Retour cycles to display, gated by the DI's ignoreCount. */
+    get retourEntries(): Array<{ n: number; data: any }> {
+        const count = Number(this.di?.ignoreCount ?? 0);
+        return [
+            { n: 1, data: this.retour1 },
+            { n: 2, data: this.retour2 },
+            { n: 3, data: this.retour3 },
+        ].filter((e) => e.n <= count);
+    }
 
     onVisibleChange(v: boolean) {
         this.visible = v;
