@@ -1003,15 +1003,14 @@
                         <label class="cf-card__label">
                             Technicien diagnostique
                         </label>
+                        <!-- Once a tech is assigned, show the name as plain text
+                             instead of the (now redundant) dropdown. -->
                         <p-dropdown
+                            *ngIf="getAssignedDiagnosticTech() === 'N/A'"
                             [options]="techList"
                             [(ngModel)]="selectedTechDiagModel"
                             optionLabel="firstName"
-                            [placeholder]="
-                                getAssignedDiagnosticTech() === 'N/A'
-                                    ? 'Sélectionner…'
-                                    : getAssignedDiagnosticTech()
-                            "
+                            placeholder="Sélectionner…"
                             [showClear]="false"
                             (onChange)="selectedTechDiag($event)"
                             [disabled]="diag_condition"
@@ -1026,6 +1025,13 @@
                                 </ng-container>
                             </ng-template>
                         </p-dropdown>
+                        <div
+                            *ngIf="getAssignedDiagnosticTech() !== 'N/A'"
+                            class="cf-card__assigned"
+                        >
+                            <i class="pi pi-user"></i>
+                            {{ getAssignedDiagnosticTech() }}
+                        </div>
                     </article>
 
                     <article class="cf-card">

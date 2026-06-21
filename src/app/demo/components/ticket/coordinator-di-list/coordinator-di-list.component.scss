@@ -2677,6 +2677,20 @@ $cf-surface: #f8fafc;
     color: $cf-text-secondary;
     line-height: 1.45;
 }
+.cf-card__assigned {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #1e293b;
+    padding: 6px 2px;
+
+    i {
+        color: #2563eb;
+        font-size: 0.95rem;
+    }
+}
 ::ng-deep .cf-card__dropdown {
     .p-dropdown {
         width: 100% !important;
