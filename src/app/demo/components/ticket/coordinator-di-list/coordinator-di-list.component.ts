@@ -708,8 +708,14 @@ export class CoordinatorDiListComponent implements OnDestroy {
         this.diDialog = true;
         this.getReperationCoordinatorCondition();
 
-        // condition to send to diag
-        di.status == STATUS_DI.PENDING1
+        // condition to send to diag — PENDING1 (first pass) OR any RETOUR cycle
+        // (a returned DI is re-affected to a tech for re-diagnosis).
+        [
+            STATUS_DI.PENDING1,
+            STATUS_DI.RETOUR1,
+            STATUS_DI.RETOUR2,
+            STATUS_DI.RETOUR3,
+        ].includes(di.status)
             ? (this.diag_condition = false)
             : (this.diag_condition = true);
         // condition to send to admin

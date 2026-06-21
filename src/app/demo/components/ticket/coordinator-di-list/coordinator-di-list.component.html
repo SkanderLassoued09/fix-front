@@ -1003,17 +1003,21 @@
                         <label class="cf-card__label">
                             Technicien diagnostique
                         </label>
-                        <!-- Once a tech is assigned, show the name as plain text
-                             instead of the (now redundant) dropdown. -->
+                        <!-- Dropdown while the diagnostic stage is open for
+                             (re)assignment — PENDING1 or any retour cycle.
+                             Otherwise show the assigned tech as plain text. -->
                         <p-dropdown
-                            *ngIf="getAssignedDiagnosticTech() === 'N/A'"
+                            *ngIf="!diag_condition"
                             [options]="techList"
                             [(ngModel)]="selectedTechDiagModel"
                             optionLabel="firstName"
-                            placeholder="Sélectionner…"
+                            [placeholder]="
+                                getAssignedDiagnosticTech() === 'N/A'
+                                    ? 'Sélectionner…'
+                                    : 'Réaffecter (' + getAssignedDiagnosticTech() + ')'
+                            "
                             [showClear]="false"
                             (onChange)="selectedTechDiag($event)"
-                            [disabled]="diag_condition"
                             styleClass="cf-card__dropdown"
                         >
                             <ng-template let-tech pTemplate="item">
@@ -1026,7 +1030,7 @@
                             </ng-template>
                         </p-dropdown>
                         <div
-                            *ngIf="getAssignedDiagnosticTech() !== 'N/A'"
+                            *ngIf="diag_condition && getAssignedDiagnosticTech() !== 'N/A'"
                             class="cf-card__assigned"
                         >
                             <i class="pi pi-user"></i>
@@ -1125,16 +1129,19 @@
                         <label class="cf-card__label">
                             Technicien réparation
                         </label>
-                        <!-- Once a repair tech is assigned, show the name as
-                             plain text instead of the dropdown. -->
+                        <!-- Dropdown while the repair stage is open for
+                             (re)assignment; otherwise the assigned tech as text. -->
                         <p-dropdown
-                            *ngIf="getAssignedRepairTech() === 'N/A'"
+                            *ngIf="!rep_condition"
                             [options]="techList"
-                            placeholder="Sélectionner…"
+                            [placeholder]="
+                                getAssignedRepairTech() === 'N/A'
+                                    ? 'Sélectionner…'
+                                    : 'Réaffecter (' + getAssignedRepairTech() + ')'
+                            "
                             optionLabel="firstName"
                             [showClear]="false"
                             (onChange)="selectedTechRep($event)"
-                            [disabled]="rep_condition"
                             styleClass="cf-card__dropdown"
                         >
                             <ng-template let-tech pTemplate="item">
@@ -1147,7 +1154,7 @@
                             </ng-template>
                         </p-dropdown>
                         <div
-                            *ngIf="getAssignedRepairTech() !== 'N/A'"
+                            *ngIf="rep_condition && getAssignedRepairTech() !== 'N/A'"
                             class="cf-card__assigned"
                         >
                             <i class="pi pi-user"></i>
