@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
 import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.interface';
+import { gqlStr } from './gql-escape.util';
 
 @Injectable({
     providedIn: 'root',
@@ -403,7 +404,7 @@ export class TicketService {
         return gql`
             mutation {
                 updateDi(
-                    UpdateDi: { _id: "${data._id}", title: "${data.title}", description: "${data.description}",remarque_manager: "${data.remarque_manager}" }
+                    UpdateDi: { _id: "${data._id}", title: ${gqlStr(data.title)}, description: ${gqlStr(data.description)},remarque_manager: ${gqlStr(data.remarque_manager)} }
                 ) {
                     _id
                 }
@@ -713,7 +714,7 @@ export class TicketService {
     createComposant(composantName: string) {
         return gql`
             mutation {
-                createComposant(createComposantInput: { name: "${composantName}" }) {
+                createComposant(createComposantInput: { name: ${gqlStr(composantName)} }) {
                     _id
                     name
                 }
@@ -731,10 +732,10 @@ export class TicketService {
             mutation {
                 createComposant(
                     createComposantInput: {
-                        name: "${composantName}"
-                        package: "${packageComposant}"
+                        name: ${gqlStr(composantName)}
+                        package: ${gqlStr(packageComposant)}
                         category_composant_id:"${category_composant_id}"
-                        link: "${link}"
+                        link: ${gqlStr(link)}
                         pdf: "${pdf ?? null}"
                     }
                 ) {
@@ -882,7 +883,7 @@ export class TicketService {
 
     finish(diagInfo) {
         const array = diagInfo.composant.map((el) => {
-            return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
+            return `{nameComposant: ${gqlStr(el.nameComposant)}, quantity: ${el.quantity}}`;
         });
 
         return gql`
@@ -890,7 +891,7 @@ export class TicketService {
             tech_startDiagnostic(
                 _id: "${diagInfo._idDi}"
                 diag: {
-                    remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
+                    remarque_tech_diagnostic: ${gqlStr(diagInfo.remarqueTech)}
                     contain_pdr: ${diagInfo.pdr}
                     can_be_repaired: ${diagInfo.reparable}
                     isErrorFromFixtronix: ${diagInfo.isErrorFromFixtronix}
@@ -934,7 +935,7 @@ export class TicketService {
 
     finishLogsDi(diagInfo) {
         const array = diagInfo.composant.map((el) => {
-            return `{nameComposant: "${el.nameComposant}", quantity: ${el.quantity}}`;
+            return `{nameComposant: ${gqlStr(el.nameComposant)}, quantity: ${el.quantity}}`;
         });
 
         return gql`
@@ -942,7 +943,7 @@ export class TicketService {
             tech_startDiagnostic(
                 _id: "${diagInfo._idDi}"
                 diag: {
-                    remarque_tech_diagnostic: "${diagInfo.remarqueTech}"
+                    remarque_tech_diagnostic: ${gqlStr(diagInfo.remarqueTech)}
                     contain_pdr: ${diagInfo.pdr}
                     can_be_repaired: ${diagInfo.reparable}
                     isErrorFromFixtronix: ${diagInfo.isErrorFromFixtronix}
@@ -1038,7 +1039,7 @@ export class TicketService {
             mutation {
                 createComposant_Category(
                     createComposant_CategoryInput: {
-                        category_composant: "${nameCategoryComponent}"
+                        category_composant: ${gqlStr(nameCategoryComponent)}
                     }
                 ) {
                     _id
@@ -1054,11 +1055,11 @@ export class TicketService {
       updateComposant(
         updateComposant: {
             _id: "${composantInfo._id}"
-          package: "${composantInfo.package}"
+          package: ${gqlStr(composantInfo.package)}
           prix_achat: ${composantInfo.prix_achat}
           prix_vente: ${composantInfo.prix_vente}
-          coming_date: "${composantInfo.coming_date}"
-          link: "${composantInfo.link}"
+          coming_date: ${gqlStr(composantInfo.coming_date)}
+          link: ${gqlStr(composantInfo.link)}
           quantity_stocked: ${composantInfo.quantity_stocked}
           pdf: "${composantInfo.pdf}"
           status_composant: "${composantInfo.status_composant}"
@@ -1580,7 +1581,7 @@ export class TicketService {
     addCatgoryDi(category: string) {
         return gql`
             mutation {
-                createDiCategory(category: "${category}") {
+                createDiCategory(category: ${gqlStr(category)}) {
                     _id
                     category
                 }
@@ -1616,8 +1617,8 @@ export class TicketService {
                 createLocation(
                     createLocationInput: 
                     { 
-                        _id: " ok", 
-                        location_name: "${location_name}",
+                        _id: " ok",
+                        location_name: ${gqlStr(location_name)},
                     }
                 ) {
                     _id
@@ -1713,7 +1714,7 @@ export class TicketService {
             mutation {
                 createComposant_Category(
                     createComposant_CategoryInput: {
-                        category_composant: "${name}"
+                        category_composant: ${gqlStr(name)}
                     }
                 ) {
                     _id
@@ -1822,12 +1823,12 @@ export class TicketService {
        mutation {
   createComposant(
     createComposantInput: {
-      name: "${composantData.name}"
-      package: "${composantData.packageComposant}"
+      name: ${gqlStr(composantData.name)}
+      package: ${gqlStr(composantData.packageComposant)}
       prix_achat: ${composantData.prix_achat}
       prix_vente: ${composantData.prix_vente}
-      coming_date: "${composantData.coming_date}"
-      link: "${composantData.link}"
+      coming_date: ${gqlStr(composantData.coming_date)}
+      link: ${gqlStr(composantData.link)}
       quantity_stocked: ${composantData.quantity_stocked}
       pdf: "${composantData.pdf}"
       status_composant: "${composantData.status}"

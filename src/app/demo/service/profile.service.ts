@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
+import { gqlStr } from './gql-escape.util';
 
 @Injectable()
 export class ProfileService {
@@ -18,7 +19,7 @@ export class ProfileService {
         return gql`
             mutation {
                 login(
-                    loginAuthInput: { username: "${username}", password: "${password}" }
+                    loginAuthInput: { username: ${gqlStr(username)}, password: ${gqlStr(password)} }
                 ) {
                     access_token
                      user{_id role email username}
@@ -32,13 +33,13 @@ export class ProfileService {
             mutation {
                 createProfile(
                     createProfileInput: {
-                        username: "${profileInfo.username}"
-                        firstName: "${profileInfo.firstName}"
-                        lastName: "${profileInfo.lastName}"
-                        phone: "${profileInfo.phone}"
-                        email: "${profileInfo.email}"
-                        role: "${profileInfo.role}"
-                        password: "${profileInfo.password}"
+                        username: ${gqlStr(profileInfo.username)}
+                        firstName: ${gqlStr(profileInfo.firstName)}
+                        lastName: ${gqlStr(profileInfo.lastName)}
+                        phone: ${gqlStr(profileInfo.phone)}
+                        email: ${gqlStr(profileInfo.email)}
+                        role: ${gqlStr(profileInfo.role)}
+                        password: ${gqlStr(profileInfo.password)}
                     }
                 ) {
                     _id
@@ -124,10 +125,10 @@ export class ProfileService {
                 updateProfile(
                     _id: "${profile._id}"
                     updateProfileInput: {
-                        firstName: "${profile.firstName}"
-                        lastName: "${profile.lastName}"
-                        phone: "${profile.phone}"
-                        email: "${profile.email}"
+                        firstName: ${gqlStr(profile.firstName)}
+                        lastName: ${gqlStr(profile.lastName)}
+                        phone: ${gqlStr(profile.phone)}
+                        email: ${gqlStr(profile.email)}
                     }
                 ) {
                     _id

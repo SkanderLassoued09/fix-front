@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
+import { gqlStr } from './gql-escape.util';
 
 @Injectable({
     providedIn: 'root',
@@ -81,12 +82,12 @@ export class ClientService {
                 updateClient(
                     updateClientInput: {
                         _id: "${clientData._id}"
-                        first_name: "${clientData.first_name}"
-                        last_name: "${clientData.last_name}"
-                        region: "${clientData.region}"
-                        address: "${clientData.address}"
-                        email: "${clientData.email}"
-                        phone: "${clientData.phone}"
+                        first_name: ${gqlStr(clientData.first_name)}
+                        last_name: ${gqlStr(clientData.last_name)}
+                        region: ${gqlStr(clientData.region)}
+                        address: ${gqlStr(clientData.address)}
+                        email: ${gqlStr(clientData.email)}
+                        phone: ${gqlStr(clientData.phone)}
                     }
                 ) {
                     _id
