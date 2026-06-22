@@ -96,10 +96,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private lastSearchKey = '';
     private hasAttemptedDialogRestore = false;
     private pendingRestoredDialogState: PersistedTechDialogState | null = null;
-    // Part 4 — lifecycle auto-pause. `autoPausedByLifecycle` tracks an in-memory
-    // pause we triggered on page-hide so we can auto-resume on return.
-    // `dialogAutoPaused` is the flag we persist so a refresh-restore also resumes.
-    private autoPausedByLifecycle = false;
+    // Wall-clock timer: the dialog is never auto-paused by the lifecycle, so
+    // this stays false (persisted for backward-compat with older saved states).
     private dialogAutoPaused = false;
     private diagnosticTimerId: any = null;
     private repairTimerId: any = null;
@@ -787,16 +785,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.subscribeToTechAssignmentNotifications();
         this.startDialogAutoSave();
 
-        // Part 4 — auto-pause an in-progress diag/rep when the tab is hidden /
-        // refreshed / closed, and auto-resume when it comes back. visibilitychange
-        // is the reliable "going away" signal (fires before unload, and on mobile
-        // where beforeunload doesn't); beforeunload is the desktop backup that
-        // guarantees the frozen snapshot is persisted before the page reloads.
+        // WALL-CLOCK timer: closing/hiding the screen does NOT pause the
+        // diagnostic/repair counter. The timer is server-anchored
+        // (elapsed = base + now − runStartedAtMs), so it keeps counting through a
+        // sleep and the display catches up the instant the screen returns. We
+        // listen to visibilitychange ONLY to force that catch-up render — never
+        // to pause. (Pausing is an explicit user action via the Pause button.)
         document.addEventListener(
             'visibilitychange',
             this.onDocumentVisibilityChange,
         );
-        window.addEventListener('beforeunload', this.onWindowBeforeUnload);
 
         // Initial load
         this.loadData();
@@ -810,7 +808,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             'visibilitychange',
             this.onDocumentVisibilityChange,
         );
-        window.removeEventListener('beforeunload', this.onWindowBeforeUnload);
         this.destroy$.next();
         this.destroy$.complete();
     }
@@ -1710,70 +1707,22 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     // ───────────────────────────────────────────────────────────────
-    // Part 4 — lifecycle auto-pause / resume (refresh, tab switch, close)
+    // Wall-clock timer — NO auto-pause on hide/close. Closing the screen keeps
+    // the diagnostic/repair counter running (server-anchored time keeps
+    // elapsing). On return we just force one render so the display jumps
+    // straight to the true elapsed instead of waiting for the next throttled
+    // 1 Hz tick. Pausing is ONLY an explicit user action (the Pause button).
     // ───────────────────────────────────────────────────────────────
     private readonly onDocumentVisibilityChange = (): void => {
-        if (document.visibilityState === 'hidden') {
-            this.freezeActiveDialogForLifecycle();
-        } else if (document.visibilityState === 'visible') {
-            this.resumeActiveDialogAfterLifecyclePause();
+        if (document.visibilityState !== 'visible') return;
+        // Instant catch-up for the diagnostic timer (host-owned). The repair
+        // timer lives in <app-tech-repair-list> and its own 1 Hz interval
+        // re-renders on resume; this nudge keeps the diag display in sync now.
+        if (this.isRunning) {
+            this.renderDiagnosticElapsed(this.computeLiveElapsedDiag());
         }
+        this.cdr.detectChanges();
     };
-
-    private readonly onWindowBeforeUnload = (): void => {
-        // Backup for the visibilitychange:hidden freeze above. Usually a no-op
-        // (hidden fires first and already flipped the DI to *_Pause), but if it
-        // didn't, this still freezes + persists so the reopen never counts the
-        // closed-tab idle.
-        this.freezeActiveDialogForLifecycle();
-    };
-
-    /**
-     * Freeze the active diag/rep on page-hide / refresh / close: reuse the
-     * tested pause toggle so the timer folds its run-leg into the accumulated
-     * base (no wall-clock idle is ever counted), the DI transitions to its
-     * *_Pause status server-side, and the snapshot is persisted with
-     * `autoPaused = true` so a refresh-restore knows to auto-resume.
-     */
-    private freezeActiveDialogForLifecycle(): void {
-        const mode = this.getActiveDialogMode();
-        if (!mode) return;
-        const status = this.di?.status ?? '';
-        // Already paused (manually or by a prior freeze) — don't double-pause.
-        if (status.endsWith('_Pause')) return;
-        const running =
-            mode === 'repair' ? !!this.repairRunStartedAtMs : this.isRunning;
-        if (!running) return;
-
-        this.autoPausedByLifecycle = true;
-        this.dialogAutoPaused = true; // picked up by persistActiveDialogState()
-        if (mode === 'repair') {
-            this.onRepairModalPause();
-        } else {
-            this.onDiagPause();
-        }
-    }
-
-    /**
-     * Resume a dialog we auto-paused on hide, when the tab becomes visible
-     * again (the modal is still mounted). The frozen base is preserved, so the
-     * counter continues from exactly where it stopped and the status returns to
-     * the active state (the M1 guard allows *_Pause → active).
-     */
-    private resumeActiveDialogAfterLifecyclePause(): void {
-        if (!this.autoPausedByLifecycle) return;
-        this.autoPausedByLifecycle = false;
-        this.dialogAutoPaused = false;
-        const mode = this.getActiveDialogMode();
-        if (!mode) return; // modal was closed while hidden
-        const status = this.di?.status ?? '';
-        if (!status.endsWith('_Pause')) return; // already resumed elsewhere
-        if (mode === 'repair') {
-            this.onRepairModalPause(); // status-driven toggle → resume
-        } else {
-            this.onDiagPause();
-        }
-    }
 
     private clearPersistedDialogState(mode?: TechDialogMode): void {
         const existing = this.readPersistedDialogState();
@@ -1927,23 +1876,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             wasRunning,
         });
 
-        // Capture BEFORE we clear the pending state below.
-        const shouldAutoResume = !!state.autoPaused;
-
         this.pendingRestoredDialogState = null;
         this.persistActiveDialogState();
-
-        if (shouldAutoResume) {
-            // Part 4 — this session was frozen by a refresh / close while running
-            // (status was flipped to *_Pause and the elapsed frozen above, so no
-            // closed-tab idle was counted). The modal has now reopened at that
-            // frozen value; resume it so the counter continues from where it
-            // stopped and the status returns to the active state (the M1 guard
-            // allows *_Pause → active). A MANUAL pause leaves autoPaused false,
-            // so it stays paused here.
-            this.autoPausedByLifecycle = true;
-            this.resumeActiveDialogAfterLifecyclePause();
-        }
+        // No auto-resume hook: with the wall-clock model there is no lifecycle
+        // freeze to undo. A still-running session restores running (it counted
+        // the closed-tab time); a MANUALLY paused one restores paused.
     }
 
     getCurrentPauseLog(pauseLogs) {
