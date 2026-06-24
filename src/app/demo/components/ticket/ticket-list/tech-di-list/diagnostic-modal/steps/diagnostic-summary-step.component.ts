@@ -105,14 +105,29 @@ import {
           Fin diagnostique retour
         </button>
         <button
-          *ngIf="!isRetour"
+          *ngIf="!isRetour && reparableLabel !== 'Non'"
           type="button"
           class="btn btn--primary"
-          [disabled]="primaryDisabled"
+          [disabled]="primaryDisabled || reparableLabel === 'Non'"
           (click)="finishDiag.emit()"
         >
           <i class="pi pi-check"></i>
           Finir le diagnostic
+        </button>
+        <!-- Non-réparable shortcut: when the tech marks the DI as not
+             repairable in step 4, the standard "Finir" button is hidden and
+             replaced by this orange action that routes straight to FINISHED
+             (no composant step, no magasin, no pricing). Backend guard M1
+             accepts DIAGNOSTIC(_Pause) → FINISHED. -->
+        <button
+          *ngIf="!isRetour && reparableLabel === 'Non'"
+          type="button"
+          class="btn btn--danger"
+          [disabled]="notReparableDisabled"
+          (click)="finishDiagNotReparable.emit()"
+        >
+          <i class="pi pi-times-circle"></i>
+          Terminer (non réparable)
         </button>
       </div>
     </div>
@@ -231,6 +246,12 @@ import {
         border-color: #e2e8f0;
       }
       .btn--outline:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+      .btn--danger {
+        background: #dc2626;
+        color: #ffffff;
+        border-color: #dc2626;
+      }
+      .btn--danger:hover:not(:disabled) { background: #b91c1c; border-color: #b91c1c; }
       .btn:disabled { opacity: 0.55; cursor: not-allowed; }
     `,
   ],
@@ -245,10 +266,17 @@ export class DiagnosticSummaryStepComponent {
   @Input() isRetour: boolean = false;
   @Input() primaryDisabled: boolean = false;
   @Input() retourSendDisabled: boolean = false;
+  /** Disabled state for the "Terminer (non réparable)" CTA — usually mirrors
+   *  the primaryDisabled but a host can choose to keep it always-enabled when
+   *  the form is partially filled (no composant required on this path). */
+  @Input() notReparableDisabled: boolean = false;
 
   @Output() finishDiag = new EventEmitter<void>();
   @Output() finishRetour = new EventEmitter<void>();
   @Output() sendToFinishRetour = new EventEmitter<void>();
+  /** Non-réparable shortcut → parent invokes the cascade with a
+   *  `changeFinishStatus` transition step (status goes straight to FINISHED). */
+  @Output() finishDiagNotReparable = new EventEmitter<void>();
 
   trackByName(_: number, c: ComposantEntry): string {
     return c.nameComposant;

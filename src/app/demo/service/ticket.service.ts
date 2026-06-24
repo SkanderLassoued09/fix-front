@@ -1469,6 +1469,39 @@ export class TicketService {
                             quantity
                         }
                         isErrorFromFixtronix
+                        # Pre-fill the diagnostic modal's step 1 + sidebar:
+                        # ticket title/status + admin remark + entity contacts
+                        # (3 service contacts for a company DI; phone for a
+                        # client DI). Without these the modal showed "N/A".
+                        title
+                        status
+                        remarque_manager
+                        client {
+                            _id
+                            first_name
+                            last_name
+                            phone
+                        }
+                        company {
+                            _id
+                            name
+                            raisonSociale
+                            serviceAchat {
+                                name
+                                email
+                                phone
+                            }
+                            serviceTechnique {
+                                name
+                                email
+                                phone
+                            }
+                            serviceFinancier {
+                                name
+                                email
+                                phone
+                            }
+                        }
                     }
                 }
             }

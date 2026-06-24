@@ -2043,7 +2043,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     this.diData = detailsDi;
                 }
 
-                this.di = { ...di };
+                // Merge the rich DI fields fetched by `getDiById` (title,
+                // status, description, remarque_manager, client, company with
+                // service contacts) INTO the row-shape `di` so `buildDiSummary`
+                // sees everything. The row-shape's `_id`/_idDi take precedence
+                // because they reference the Stat row the modal is anchored on.
+                this.di = { ...detailsDi, ...di };
                 this.selectedDi = di._id;
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
@@ -3331,44 +3336,64 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         });
     }
 
-    techFinishDiag() {
+    techFinishDiag(opts: { notReparable?: boolean } = {}) {
+        const isNotReparable = !!opts.notReparable;
         this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation Diagnostique',
-            icon: 'pi pi-exclamation-triangle',
+            message: isNotReparable
+                ? 'Marquer ce DI comme non réparable et clôturer ?'
+                : 'Voulez vous confirmer les changements',
+            header: isNotReparable
+                ? 'Clôture non réparable'
+                : 'Confirmation Diagnostique',
+            icon: isNotReparable
+                ? 'pi pi-times-circle'
+                : 'pi pi-exclamation-triangle',
             accept: async () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
                     pdr: this.diagFormTech.value.isPdr,
-                    reparable: this.diagFormTech.value.isReparable,
+                    // Force `reparable: false` on the non-réparable shortcut
+                    // so the backend snapshot is consistent with the FINISHED
+                    // transition (no PDR step required either).
+                    reparable: isNotReparable
+                        ? false
+                        : this.diagFormTech.value.isReparable,
                     remarqueTech: this.diagFormTech.value.remarqueTech,
                     di_category_id: this.diagFormTech.value.di_category_id,
                     isErrorFromFixtronix:
                         this.diagFormTech.value.isErrorFromFixtronix ?? false,
-                    composant: this.composantCombo,
+                    // No composant required for a non-réparable DI — skip the
+                    // PDR step's payload to avoid carrying stale rows.
+                    composant: isNotReparable ? [] : this.composantCombo,
                 };
 
                 // Snapshot the elapsed diag time BEFORE the chain (pure
                 // computation; `saveTimeDiag` sends `this.lapTime`).
                 this.lap();
 
-                // Branch preserved EXACTLY: pdr && reparable → MagasinEstimation,
-                // otherwise → Pending2. The transition is the LAST step so it
-                // only fires after the diagnostic is saved (and from the right
-                // source status, satisfying the M1 guard).
-                const transitionStep =
-                    dataDiag.pdr && dataDiag.reparable
-                        ? {
-                              mutation:
-                                  this.ticketSerice.changeStatusMagasinEstimation(
-                                      dataDiag._idDi,
-                                  ),
-                          }
-                        : {
-                              mutation: this.ticketSerice.changeStatusDiToPending2(
-                                  dataDiag._idDi,
-                              ),
-                          };
+                // Three-way branch:
+                //  - non-réparable shortcut → straight to FINISHED (M1 guard
+                //    now allows DIAGNOSTIC(_Pause) → FINISHED).
+                //  - pdr && reparable → MagasinEstimation
+                //  - reparable && !pdr → Pending2 (pricing pseudo).
+                const transitionStep = isNotReparable
+                    ? {
+                          mutation: this.ticketSerice.changeFinishStatus(
+                              dataDiag._idDi,
+                          ),
+                      }
+                    : dataDiag.pdr && dataDiag.reparable
+                      ? {
+                            mutation:
+                                this.ticketSerice.changeStatusMagasinEstimation(
+                                    dataDiag._idDi,
+                                ),
+                        }
+                      : {
+                            mutation: this.ticketSerice.changeStatusDiToPending2(
+                                dataDiag._idDi,
+                            ),
+                        };
 
                 try {
                     // Serialized: saveTimeDiag → finish → transition. A failure
@@ -3830,8 +3855,26 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .filter(Boolean)
             .join(' ')
             .trim();
-        const companyName = d.company?.name || '';
+        const companyName =
+            d.company?.raisonSociale || d.company?.name || '';
         const techName = d.techDiag || d.techRep || '';
+        // entityType drives the sidebar's contact block: company → 3 services,
+        // client → single phone, null → nothing rendered. Detection mirrors
+        // backend `isResolvableId` (treat the FE-sent string "null" as null).
+        const hasCompany =
+            d.company &&
+            typeof d.company === 'object' &&
+            (d.company.raisonSociale || d.company.name);
+        const hasClient = d.client && typeof d.client === 'object';
+        const entityType: 'company' | 'client' | null = hasCompany
+            ? 'company'
+            : hasClient
+              ? 'client'
+              : null;
+        const svc = (s: any) =>
+            s && typeof s === 'object'
+                ? { name: s.name, email: s.email, phone: s.phone }
+                : undefined;
         return {
             _id: d._id ?? '',
             _idnum: d._idnum ?? '',
@@ -3849,6 +3892,22 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 '',
             technicianName: typeof techName === 'string' ? techName : '',
             remarqueManager: d.remarque_manager ?? '',
+            ignoreCount: Number(d.ignoreCount ?? 0),
+            entityType,
+            serviceAchat:
+                entityType === 'company'
+                    ? svc(d.company?.serviceAchat)
+                    : undefined,
+            serviceTechnique:
+                entityType === 'company'
+                    ? svc(d.company?.serviceTechnique)
+                    : undefined,
+            serviceFinancier:
+                entityType === 'company'
+                    ? svc(d.company?.serviceFinancier)
+                    : undefined,
+            remarqueTechDiagnostic: d.remarque_tech_diagnostic ?? '',
+            remarqueTechReparation: d.remarque_tech_repair ?? '',
         };
     }
 
@@ -4220,5 +4279,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     onDiagSendToFinishRetour(): void {
         (this as any).retourEnvoyerVersFinir?.();
+    }
+
+    /** Non-réparable shortcut: same cascade as `techFinishDiag` but the
+     *  transition step is `changeFinishStatus` instead of the
+     *  MagasinEstimation / Pending2 branch. M1 guard now allows
+     *  DIAGNOSTIC(_Pause) → FINISHED. */
+    onDiagFinishNotReparable(): void {
+        this.techFinishDiag?.({ notReparable: true });
     }
 }

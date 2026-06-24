@@ -12,12 +12,13 @@ import {
 
 /**
  * Right sidebar — sticky summary panel:
- *   - Client info
- *   - Description
- *   - Progress ring + step counter
- *   - Décisions à venir (Pièce réparable / Contient PDR)
+ *   - Entity contacts (3 services for a company OR client phone)
+ *   - Description (frozen from DI creation)
+ *   - Useful tech context (previous-cycle remarks, location, ignoreCount)
  *
- * Pure dumb component — receives a normalized DI summary + progress object.
+ * Pure dumb component — receives a normalized DI summary. The progress ring
+ * + "Décisions à venir" + "Besoin d'aide" sections were removed per spec —
+ * the tech reads context, not progress.
  */
 @Component({
   selector: 'sav-diag-sidebar',
@@ -30,15 +31,72 @@ import {
         <h3>{{ title }}</h3>
       </header>
 
-      <section class="sav-diag-sidebar__block">
-        <div class="sav-diag-sidebar__sectionLabel">INFORMATIONS CLIENT</div>
+      <!-- Contacts: 3 service rows for a company-DI, or a single phone row
+           for a client-DI. Fallback when neither is resolvable. -->
+      <section
+        class="sav-diag-sidebar__block"
+        *ngIf="di.entityType === 'company'"
+      >
+        <div class="sav-diag-sidebar__sectionLabel">SOCIÉTÉ</div>
+        <div class="sav-diag-sidebar__row">
+          <i class="pi pi-building"></i>
+          <strong>{{ di.companyName || '—' }}</strong>
+        </div>
+        <div class="sav-diag-sidebar__contacts">
+          <div
+            class="sav-diag-sidebar__contact"
+            *ngFor="
+              let s of [
+                { key: 'achat', icon: 'pi-shopping-cart', label: 'Achat', svc: di.serviceAchat },
+                { key: 'tech', icon: 'pi-wrench', label: 'Technique', svc: di.serviceTechnique },
+                { key: 'fin', icon: 'pi-credit-card', label: 'Financier', svc: di.serviceFinancier },
+              ]; trackBy: trackByContactKey
+            "
+          >
+            <div class="sav-diag-sidebar__contact-head">
+              <i class="pi" [ngClass]="s.icon"></i>
+              <span>{{ s.label }}</span>
+            </div>
+            <div *ngIf="s.svc?.name" class="sav-diag-sidebar__contact-row">
+              <i class="pi pi-user"></i>{{ s.svc?.name }}
+            </div>
+            <a
+              *ngIf="s.svc?.phone"
+              class="sav-diag-sidebar__contact-row sav-diag-sidebar__contact-link"
+              [href]="'tel:' + s.svc?.phone"
+            ><i class="pi pi-phone"></i>{{ s.svc?.phone }}</a>
+            <a
+              *ngIf="s.svc?.email"
+              class="sav-diag-sidebar__contact-row sav-diag-sidebar__contact-link"
+              [href]="'mailto:' + s.svc?.email"
+            ><i class="pi pi-envelope"></i>{{ s.svc?.email }}</a>
+            <div
+              *ngIf="!s.svc?.name && !s.svc?.phone && !s.svc?.email"
+              class="sav-diag-sidebar__contact-row sav-diag-sidebar__faded"
+            >Non renseigné</div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="sav-diag-sidebar__block"
+        *ngIf="di.entityType === 'client'"
+      >
+        <div class="sav-diag-sidebar__sectionLabel">CLIENT</div>
         <div class="sav-diag-sidebar__row">
           <i class="pi pi-user"></i>
-          <strong>{{ di.clientName || 'N/A' }}</strong>
+          <strong>{{ di.clientName || '—' }}</strong>
         </div>
-        <div class="sav-diag-sidebar__row sav-diag-sidebar__row--muted">
-          Tél : {{ di.clientPhone || 'N/A' }}
-        </div>
+        <a
+          *ngIf="di.clientPhone; else noPhone"
+          class="sav-diag-sidebar__row sav-diag-sidebar__contact-link"
+          [href]="'tel:' + di.clientPhone"
+        ><i class="pi pi-phone"></i>{{ di.clientPhone }}</a>
+        <ng-template #noPhone>
+          <div class="sav-diag-sidebar__row sav-diag-sidebar__faded">
+            Tél non renseigné
+          </div>
+        </ng-template>
       </section>
 
       <section class="sav-diag-sidebar__block">
@@ -58,47 +116,51 @@ import {
         </ng-template>
       </section>
 
-      <section class="sav-diag-sidebar__block">
-        <div class="sav-diag-sidebar__sectionLabel">AVANCEMENT</div>
-        <div class="sav-diag-sidebar__progress">
-          <svg viewBox="0 0 80 80" class="sav-diag-sidebar__ring">
-            <circle cx="40" cy="40" r="34" stroke="#e2e8f0" stroke-width="8" fill="none"/>
-            <circle
-              cx="40" cy="40" r="34"
-              stroke="#22c55e" stroke-width="8" fill="none"
-              stroke-linecap="round"
-              stroke-dasharray="213.6"
-              [attr.stroke-dashoffset]="213.6 - (213.6 * progress.percent) / 100"
-              transform="rotate(-90 40 40)"
-            />
-            <text x="40" y="46" text-anchor="middle" class="sav-diag-sidebar__ring-text">
-              {{ progress.percent }}%
-            </text>
-          </svg>
-          <div class="sav-diag-sidebar__progress-text">
-            <strong>{{ progress.completedSteps }} / {{ progress.totalSteps }} étapes complétées</strong>
-            <div class="sav-diag-sidebar__progress-bar">
-              <span [style.width.%]="progress.percent"></span>
-            </div>
-          </div>
+      <!-- Useful tech context: previous remarks (retour) + location.
+           Hidden entirely when there's nothing to show. -->
+      <section
+        class="sav-diag-sidebar__block"
+        *ngIf="
+          di.remarqueManager ||
+          di.remarqueTechDiagnostic ||
+          di.remarqueTechReparation ||
+          di.locationName ||
+          (di.ignoreCount ?? 0) > 0
+        "
+      >
+        <div class="sav-diag-sidebar__sectionLabel">INFOS UTILES</div>
+        <div
+          class="sav-diag-sidebar__row sav-diag-sidebar__row--muted"
+          *ngIf="di.locationName"
+        >
+          <i class="pi pi-map-marker"></i>{{ di.locationName }}
         </div>
-      </section>
-
-      <section class="sav-diag-sidebar__block">
-        <div class="sav-diag-sidebar__sectionLabel">{{ decisionsLabel }}</div>
-        <div class="sav-diag-sidebar__decisions">
-          <div
-            class="sav-diag-sidebar__decision"
-            *ngFor="let d of resolvedDecisions; trackBy: trackByDecisionLabel"
-          >
-            <i class="pi" [ngClass]="d.icon"></i>
-            <div>
-              <small>{{ d.label }}</small>
-              <strong [class.sav-diag-sidebar__faded]="d.faded">
-                {{ d.value }}
-              </strong>
-            </div>
-          </div>
+        <div
+          class="sav-diag-sidebar__row sav-diag-sidebar__row--muted"
+          *ngIf="(di.ignoreCount ?? 0) > 0"
+        >
+          <i class="pi pi-refresh"></i>Retour #{{ di.ignoreCount }}
+        </div>
+        <div
+          *ngIf="di.remarqueManager"
+          class="sav-diag-sidebar__note sav-diag-sidebar__note--admin"
+        >
+          <small>Remarque administration</small>
+          <p>{{ di.remarqueManager }}</p>
+        </div>
+        <div
+          *ngIf="di.remarqueTechDiagnostic"
+          class="sav-diag-sidebar__note sav-diag-sidebar__note--diag"
+        >
+          <small>Remarque tech diagnostique</small>
+          <p>{{ di.remarqueTechDiagnostic }}</p>
+        </div>
+        <div
+          *ngIf="di.remarqueTechReparation"
+          class="sav-diag-sidebar__note sav-diag-sidebar__note--rep"
+        >
+          <small>Remarque tech réparation</small>
+          <p>{{ di.remarqueTechReparation }}</p>
         </div>
       </section>
 
@@ -199,81 +261,100 @@ import {
         transition: width 200ms ease;
       }
 
-      .sav-diag-sidebar__decisions {
+      .sav-diag-sidebar__contacts {
         display: grid;
         grid-template-columns: 1fr;
-        gap: 0.6rem;
+        gap: 0.55rem;
+        margin-top: 0.6rem;
       }
-      .sav-diag-sidebar__decision {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        padding: 0.85rem 0.9rem;
+      .sav-diag-sidebar__contact {
+        padding: 0.6rem 0.75rem;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-radius: 9px;
         background: #f8fafc;
       }
-      .sav-diag-sidebar__decision i { color: #64748b; font-size: 1rem; }
-      .sav-diag-sidebar__decision small {
-        display: block;
-        font-size: 0.8rem;
-        color: #64748b;
+      .sav-diag-sidebar__contact-head {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #1d4ed8;
+        margin-bottom: 0.35rem;
       }
-      .sav-diag-sidebar__decision strong {
+      .sav-diag-sidebar__contact-head i {
+        color: #2563eb;
+        font-size: 0.78rem;
+      }
+      .sav-diag-sidebar__contact-row {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.83rem;
+        color: #1e293b;
+        padding: 2px 0;
+      }
+      .sav-diag-sidebar__contact-row i {
+        color: #94a3b8;
+        font-size: 0.78rem;
+        width: 12px;
+      }
+      .sav-diag-sidebar__contact-link {
+        color: #2563eb;
+        text-decoration: none;
+      }
+      .sav-diag-sidebar__contact-link:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+      }
+      .sav-diag-sidebar__note {
+        margin-top: 0.6rem;
+        padding: 0.55rem 0.7rem;
+        border-left: 3px solid #2563eb;
+        background: #f8fafc;
+        border-radius: 0 8px 8px 0;
+      }
+      .sav-diag-sidebar__note--admin { border-left-color: #1d4ed8; }
+      .sav-diag-sidebar__note--diag { border-left-color: #3b82f6; }
+      .sav-diag-sidebar__note--rep { border-left-color: #b45309; }
+      .sav-diag-sidebar__note small {
         display: block;
-        font-size: 0.92rem;
-        font-weight: 650;
-        color: #0f172a;
-        margin-top: 0.15rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        margin-bottom: 0.2rem;
+      }
+      .sav-diag-sidebar__note p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #1e293b;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
       }
     `,
   ],
 })
 export class DiagnosticSidebarComponent {
   @Input({ required: true }) di!: DiagnosticDiSummary;
-  @Input({ required: true }) progress!: DiagnosticProgress;
 
   /** Sidebar headline — defaults to the diagnostic copy. */
   @Input() title: string = 'Résumé du diagnostic';
 
-  /** Section label for the bottom block. */
-  @Input() decisionsLabel: string = 'DÉCISIONS (À VENIR)';
+  // ── Legacy inputs (kept for backwards compatibility with the repair
+  //    modal that still passes them) — no longer consumed by the template.
+  //    Safe to drop once every call site is migrated.
+  @Input() progress?: DiagnosticProgress;
+  @Input() decisionsLabel?: string;
+  @Input() decisions?: readonly SidebarDecision[] | null;
+  @Input() reparableLabel?: string;
+  @Input() pdrLabel?: string;
 
-  /**
-   * Optional override for the bottom decision rows. When `null` (default),
-   * the component falls back to the legacy two-row layout built from the
-   * `reparableLabel` + `pdrLabel` inputs — that's what the existing
-   * diagnostic parent passes today, so behavior is unchanged.
-   *
-   * Pass an array to render any other set (used by the repair modal:
-   * "Sous garantie ?" / "Temps passé").
-   */
-  @Input() decisions: readonly SidebarDecision[] | null = null;
-
-  /** Legacy inputs — only consulted when `decisions` is null. */
-  @Input() reparableLabel: string = 'Non défini';
-  @Input() pdrLabel: string = 'Non défini';
-
-  /** Resolved row list — `decisions` if provided, else legacy pair. */
-  get resolvedDecisions(): readonly SidebarDecision[] {
-    if (this.decisions) return this.decisions;
-    return [
-      {
-        icon: 'pi-wrench',
-        label: 'Pièce réparable ?',
-        value: this.reparableLabel,
-        faded: this.reparableLabel === 'Non défini',
-      },
-      {
-        icon: 'pi-box',
-        label: 'Contient PDR ?',
-        value: this.pdrLabel,
-        faded: this.pdrLabel === 'Non défini',
-      },
-    ];
-  }
-
-  trackByDecisionLabel(_: number, d: SidebarDecision): string {
-    return d.label;
+  trackByContactKey(_: number, s: { key: string }): string {
+    return s.key;
   }
 }

@@ -86,6 +86,8 @@ export class DiagnosticModalComponent {
   @Output() finishDiag = new EventEmitter<void>();
   @Output() finishRetour = new EventEmitter<void>();
   @Output() sendToFinishRetour = new EventEmitter<void>();
+  /** Non-réparable shortcut → straight to FINISHED (skip composant/magasin). */
+  @Output() finishDiagNotReparable = new EventEmitter<void>();
 
   /** Visible<->parent two-way support — keeps the existing [(visible)] pattern compatible. */
   @Output() visibleChange = new EventEmitter<boolean>();

@@ -48,6 +48,27 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
           <label>Remarque administration</label>
           <div class="field__value field__value--multi">{{ di.remarqueManager }}</div>
         </div>
+        <!-- Previous-cycle remarks — only show on a retour so the tech sees
+             what the previous diag/repair noted. Hidden on the original
+             cycle to keep the step focused on creation context. -->
+        <div
+          class="field field--full"
+          *ngIf="di.remarqueTechDiagnostic"
+        >
+          <label>Remarque tech diagnostique (précédente)</label>
+          <div class="field__value field__value--multi">
+            {{ di.remarqueTechDiagnostic }}
+          </div>
+        </div>
+        <div
+          class="field field--full"
+          *ngIf="di.remarqueTechReparation"
+        >
+          <label>Remarque tech réparation (précédente)</label>
+          <div class="field__value field__value--multi">
+            {{ di.remarqueTechReparation }}
+          </div>
+        </div>
       </div>
     </div>
   `,

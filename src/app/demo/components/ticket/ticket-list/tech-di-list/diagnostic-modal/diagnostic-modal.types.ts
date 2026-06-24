@@ -38,6 +38,13 @@ export interface TimerDisplayState {
   readonly isRunning: boolean;
 }
 
+/** Per-service contact (Achat / Technique / Financier) on a company. */
+export interface CompanyServiceContact {
+  readonly name?: string;
+  readonly email?: string;
+  readonly phone?: string;
+}
+
 /** Lightweight DI summary surfaced into the modal chrome (info strip + sidebar). */
 export interface DiagnosticDiSummary {
   readonly _id: string;
@@ -54,6 +61,18 @@ export interface DiagnosticDiSummary {
   readonly remarqueManager: string;
   /** Retour cycle # (0 / undefined = original flow). Drives the retour badge. */
   readonly ignoreCount?: number;
+  /** 'company' when `company_id` is the resolvable entity, 'client' when
+   *  `client_id` is, null when neither — drives which contact block the
+   *  sidebar renders (3 service contacts vs. a single phone). */
+  readonly entityType?: 'company' | 'client' | null;
+  /** Company-side contacts — only populated when entityType === 'company'. */
+  readonly serviceAchat?: CompanyServiceContact;
+  readonly serviceTechnique?: CompanyServiceContact;
+  readonly serviceFinancier?: CompanyServiceContact;
+  /** Previous-cycle remarks — pre-fill the diagnostic remark fields on a
+   *  retour so the tech sees what the previous tech/coordinator wrote. */
+  readonly remarqueTechDiagnostic?: string;
+  readonly remarqueTechReparation?: string;
 }
 
 export interface ComposantOption {
