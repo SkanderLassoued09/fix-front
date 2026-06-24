@@ -3,8 +3,13 @@ import { CommonModule } from '@angular/common';
 import { DiagnosticDiSummary } from '../diagnostic-modal.types';
 
 /**
- * Horizontal info strip directly under the header: 5 cards
- *   Ticket · Client/Société · Emplacement · Statut actuel · Technicien
+ * Horizontal info strip directly under the header — the modal's single
+ * "identity glance" row: 4 cards
+ *   Client/Société · Emplacement · Statut actuel · Technicien
+ *
+ * Each datum lives here exactly once: the DI code is shown only in the header
+ * title ("Diagnostic — DI42"), so there's no "Ticket" card; the status is
+ * shown only here (removed from the header) — the "modal épuré" de-duplication.
  *
  * Read-only. Renders 'N/A' when a field is empty per the strict no-fake-data
  * rule established earlier in this codebase (coordinator modal uses the
@@ -18,16 +23,6 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
   template: `
     <section class="sav-info-strip">
       <div class="sav-info-strip__cell">
-        <span class="sav-info-strip__icon sav-info-strip__icon--blue">
-          <i class="pi pi-ticket"></i>
-        </span>
-        <div>
-          <small>Ticket</small>
-          <strong>{{ di._idnum || 'N/A' }}</strong>
-        </div>
-      </div>
-
-      <div class="sav-info-strip__cell">
         <span class="sav-info-strip__icon sav-info-strip__icon--cyan">
           <i class="pi pi-user"></i>
         </span>
@@ -38,7 +33,7 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
       </div>
 
       <div class="sav-info-strip__cell">
-        <span class="sav-info-strip__icon sav-info-strip__icon--purple">
+        <span class="sav-info-strip__icon sav-info-strip__icon--blue">
           <i class="pi pi-map-marker"></i>
         </span>
         <div>
@@ -73,7 +68,7 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
       :host { display: block; }
       .sav-info-strip {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.85rem;
         padding: 1.1rem 1.75rem;
         background: #f8fafc;
@@ -100,7 +95,6 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
       .sav-info-strip__icon i { font-size: 1.05rem; }
       .sav-info-strip__icon--blue { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
       .sav-info-strip__icon--cyan { background: rgba(6, 182, 212, 0.12); color: #0891b2; }
-      .sav-info-strip__icon--purple { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
       .sav-info-strip__icon--orange { background: rgba(249, 115, 22, 0.12); color: #ea580c; }
       .sav-info-strip__icon--green { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
       .sav-info-strip__cell > div { min-width: 0; }

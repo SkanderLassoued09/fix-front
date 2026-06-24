@@ -11,13 +11,18 @@ import {
 } from '../diagnostic-modal.types';
 
 /**
- * Right sidebar — sticky summary panel:
- *   - Entity contacts (3 services for a company OR client phone)
- *   - Description (frozen from DI creation)
- *   - Useful tech context (previous-cycle remarks, location, ignoreCount)
+ * Right sidebar — diagnostic-aid panel. Holds ONLY context the tech can't
+ * already read in the top info-strip / header, so nothing is duplicated:
+ *   - Entity CONTACTS — 3 service contacts for a company OR the client phone
+ *     (the company/client *name* is shown once, in the top "Client / Société"
+ *     card, so it is NOT repeated here).
+ *   - Description — the ticket title + the frozen creation description.
+ *   - Remarques — previous-step remarks (admin / diag / repair).
  *
- * Pure dumb component — receives a normalized DI summary. The progress ring
- * + "Décisions à venir" + "Besoin d'aide" sections were removed per spec —
+ * Deliberately absent (each lives elsewhere, exactly once): location →
+ * info-strip "Emplacement"; status → info-strip "Statut actuel"; DI code →
+ * header title; retour counter → the modal's retour banner. The progress ring
+ * + "Décisions à venir" + "Besoin d'aide" sections were removed earlier —
  * the tech reads context, not progress.
  */
 @Component({
@@ -37,11 +42,7 @@ import {
         class="sav-diag-sidebar__block"
         *ngIf="di.entityType === 'company'"
       >
-        <div class="sav-diag-sidebar__sectionLabel">SOCIÉTÉ</div>
-        <div class="sav-diag-sidebar__row">
-          <i class="pi pi-building"></i>
-          <strong>{{ di.companyName || '—' }}</strong>
-        </div>
+        <div class="sav-diag-sidebar__sectionLabel">CONTACTS SOCIÉTÉ</div>
         <div class="sav-diag-sidebar__contacts">
           <div
             class="sav-diag-sidebar__contact"
@@ -82,11 +83,7 @@ import {
         class="sav-diag-sidebar__block"
         *ngIf="di.entityType === 'client'"
       >
-        <div class="sav-diag-sidebar__sectionLabel">CLIENT</div>
-        <div class="sav-diag-sidebar__row">
-          <i class="pi pi-user"></i>
-          <strong>{{ di.clientName || '—' }}</strong>
-        </div>
+        <div class="sav-diag-sidebar__sectionLabel">CONTACT CLIENT</div>
         <a
           *ngIf="di.clientPhone; else noPhone"
           class="sav-diag-sidebar__row sav-diag-sidebar__contact-link"
@@ -116,31 +113,19 @@ import {
         </ng-template>
       </section>
 
-      <!-- Useful tech context: previous remarks (retour) + location.
-           Hidden entirely when there's nothing to show. -->
+      <!-- Previous-step remarks (admin / diag / repair) — pre-fill context a
+           tech reads before acting, especially on a retour cycle. Location and
+           the retour counter live elsewhere (top info-strip + retour banner),
+           so they are NOT repeated here. Hidden entirely when empty. -->
       <section
         class="sav-diag-sidebar__block"
         *ngIf="
           di.remarqueManager ||
           di.remarqueTechDiagnostic ||
-          di.remarqueTechReparation ||
-          di.locationName ||
-          (di.ignoreCount ?? 0) > 0
+          di.remarqueTechReparation
         "
       >
-        <div class="sav-diag-sidebar__sectionLabel">INFOS UTILES</div>
-        <div
-          class="sav-diag-sidebar__row sav-diag-sidebar__row--muted"
-          *ngIf="di.locationName"
-        >
-          <i class="pi pi-map-marker"></i>{{ di.locationName }}
-        </div>
-        <div
-          class="sav-diag-sidebar__row sav-diag-sidebar__row--muted"
-          *ngIf="(di.ignoreCount ?? 0) > 0"
-        >
-          <i class="pi pi-refresh"></i>Retour #{{ di.ignoreCount }}
-        </div>
+        <div class="sav-diag-sidebar__sectionLabel">REMARQUES</div>
         <div
           *ngIf="di.remarqueManager"
           class="sav-diag-sidebar__note sav-diag-sidebar__note--admin"
@@ -209,11 +194,6 @@ import {
       }
       .sav-diag-sidebar__row i { color: #64748b; font-size: 0.95rem; }
       .sav-diag-sidebar__row strong { font-weight: 650; }
-      .sav-diag-sidebar__row--muted {
-        margin-top: 0.4rem;
-        color: #64748b;
-        font-size: 0.88rem;
-      }
       .sav-diag-sidebar__desc {
         margin: 0.6rem 0 0;
         font-size: 0.88rem;
@@ -221,45 +201,6 @@ import {
         line-height: 1.5;
       }
       .sav-diag-sidebar__faded { color: #94a3b8 !important; font-style: italic; }
-
-      .sav-diag-sidebar__progress {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        padding: 0.15rem 0;
-      }
-      .sav-diag-sidebar__ring {
-        width: 80px;
-        height: 80px;
-        flex-shrink: 0;
-      }
-      .sav-diag-sidebar__ring-text {
-        font-size: 18px;
-        font-weight: 700;
-        fill: #0f172a;
-      }
-      .sav-diag-sidebar__progress-text { flex: 1; min-width: 0; }
-      .sav-diag-sidebar__progress-text strong {
-        display: block;
-        font-size: 0.92rem;
-        font-weight: 650;
-        color: #0f172a;
-        line-height: 1.3;
-      }
-      .sav-diag-sidebar__progress-bar {
-        margin-top: 0.6rem;
-        height: 8px;
-        border-radius: 999px;
-        background: #e2e8f0;
-        overflow: hidden;
-      }
-      .sav-diag-sidebar__progress-bar span {
-        display: block;
-        height: 100%;
-        background: #22c55e;
-        border-radius: inherit;
-        transition: width 200ms ease;
-      }
 
       .sav-diag-sidebar__contacts {
         display: grid;

@@ -648,6 +648,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     repairElapsedBaseMs: number = 0;
     repairRunStartedAtMs: number | null = null;
 
+    // Server anchor for the DIAGNOSTIC run leg — the diagnostic twin of
+    // `repairRunStartedAtMs`. Seeded from Stat.diagRunStartedAt (the DB is the
+    // single source of truth), it replaced the localStorage wall-clock anchor
+    // that drifted to 837:15:12 after long idle. elapsed = initialOffset (=
+    // Stat.diag_time) + (diagRunStartedAtMs ? now - diagRunStartedAtMs : 0).
+    // null ⇒ paused/stopped (frozen at initialOffset).
+    diagRunStartedAtMs: number | null = null;
+
     formGroupchips: any;
     chipsValues: string[] = [];
     submitted: boolean = false;
@@ -1879,7 +1887,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // resuming so we don't accidentally freeze a timer that was live.
 
         if (mode === 'diagnostic') {
-            this.stopDiagnosticTimer();
+            // The diagnostic timer base (Stat.diag_time) and run anchor
+            // (Stat.diagRunStartedAt) were ALREADY loaded from the server by
+            // getTimeSpent() — the authoritative single source of truth, with
+            // the stopwatch already started/frozen per the live status. We must
+            // NOT re-apply the localStorage `savedAccumulatedMs` here: it folded
+            // in a `now - savedAt` term that drifted to 837:15:12 once the app
+            // had been closed for a while. localStorage is now only a cache.
+            // Just reconcile the optimistic status and re-render the server value.
             if (state.status) {
                 this.diStatus = state.status;
                 if (this.di) {
@@ -1889,16 +1904,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     };
                 }
             }
-            this.initialOffset = savedAccumulatedMs;
-            this.startTime = 0;
-            this.isRunning = false;
-            // Render the saved value immediately while paused.
             this.renderDiagnosticElapsed(this.computeLiveElapsedDiag());
-            if (wasRunning) {
-                this.startStopwatch();
-            } else {
-                this.refreshDiagnosticVm();
-            }
+            this.refreshDiagnosticVm();
         } else {
             this.stopRepairTimer();
             this.initialOffset1 = savedAccumulatedMs;
@@ -2048,7 +2055,22 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 // service contacts) INTO the row-shape `di` so `buildDiSummary`
                 // sees everything. The row-shape's `_id`/_idDi take precedence
                 // because they reference the Stat row the modal is anchored on.
-                this.di = { ...detailsDi, ...di };
+                //
+                // BUT the tech-list row carries a STRIPPED entity — its query
+                // selects only `company { _id name fax }` / `client { … phone }`
+                // with NO service contacts. `getDiById` returns the FULLY
+                // populated company (serviceAchat/Technique/Financier) and
+                // client. Spreading `di` last clobbered the populated objects
+                // with the stripped ones, so the sidebar fell back to
+                // "Non renseigné". Pin the populated entities from `detailsDi`
+                // LAST so they always win; `detailsDi` is authoritative (the
+                // object is `null` when the DI has no company/client).
+                this.di = {
+                    ...detailsDi,
+                    ...di,
+                    company: detailsDi.company ?? null,
+                    client: detailsDi.client ?? null,
+                };
                 this.selectedDi = di._id;
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
@@ -2521,10 +2543,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     // total because runStartedAt is frozen the moment the timer stops.
 
     private computeLiveElapsedDiag(): number {
-        const running = this.isRunning && this.startTime > 0;
+        // Single source of truth: the run leg is anchored to the SERVER's
+        // Stat.diagRunStartedAt (mirrored into diagRunStartedAtMs), never a
+        // local startTime read back from localStorage — that drifted to
+        // 837:15:12 when the app sat closed for a long time. null anchor ⇒
+        // paused/stopped ⇒ frozen at the accumulated base.
         return (
             (this.initialOffset || 0) +
-            (running ? Math.max(0, Date.now() - this.startTime) : 0)
+            (this.diagRunStartedAtMs
+                ? Math.max(0, Date.now() - this.diagRunStartedAtMs)
+                : 0)
         );
     }
 
@@ -2558,10 +2586,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
     }
 
-    startStopwatch() {
+    startStopwatch(anchorMs?: number) {
         if (!this.isRunning) {
             this.isRunning = true;
-            this.startTime = Date.now();
+            // Prefer the authoritative server anchor (Stat.diagRunStartedAt,
+            // passed by getTimeSpent / resume) so elapsed survives refresh and
+            // never drifts. Fall back to "now" only for a fresh start the
+            // server is stamping in parallel.
+            this.startTime = anchorMs ?? Date.now();
+            this.diagRunStartedAtMs = this.startTime;
             console.debug({
                 event: 'tech.timer.started',
                 mode: 'diagnostic',
@@ -2657,13 +2690,17 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     lap() {
         if (this.isRunning) {
-            this.lapTime = ` ${this.minutes}:${this.seconds}:${this.milliseconds}`;
+            // NO leading space — this string is persisted as Stat.diag_time; a
+            // leading " " produced `" 00:15:02"` in DB, which the HH:MM:SS regex
+            // then rejected → the timer reset to 0 (data loss).
+            this.lapTime = `${this.minutes}:${this.seconds}:${this.milliseconds}`;
         }
     }
 
     lap1() {
         if (this.isRunning1) {
-            this.lapTime1 = ` ${this.minutes1}:${this.seconds1}:${this.milliseconds1}`;
+            // NO leading space (persisted as Stat.rep_time). See `lap()`.
+            this.lapTime1 = `${this.minutes1}:${this.seconds1}:${this.milliseconds1}`;
         }
     }
 
@@ -2673,6 +2710,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.seconds = '00';
         this.milliseconds = '00';
         this.startTime = 0;
+        this.diagRunStartedAtMs = null;
         this.initialOffset = 0;
         this.laps = [];
     }
@@ -2693,13 +2731,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.diagnosticTimerId = null;
         }
 
-        if (this.isRunning && this.startTime > 0) {
+        if (this.isRunning && this.diagRunStartedAtMs) {
             // Freeze the elapsed time of the current run leg into the
-            // accumulated offset. After this, any wall-clock time that
-            // passes while the modal is closed is *not* counted.
+            // accumulated offset, using the SERVER anchor. After this, any
+            // wall-clock time that passes while stopped is *not* counted.
             this.initialOffset =
                 (this.initialOffset || 0) +
-                Math.max(0, Date.now() - this.startTime);
+                Math.max(0, Date.now() - this.diagRunStartedAtMs);
             console.debug({
                 event: 'tech.timer.stopped',
                 mode: 'diagnostic',
@@ -2709,6 +2747,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
 
         this.startTime = 0;
+        this.diagRunStartedAtMs = null;
         this.isRunning = false;
     }
 
@@ -2739,11 +2778,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     private timeStringToMs(timeString: string): number {
-        if (!this.isValidTimeFormat(timeString)) {
+        // Defensive trim — tolerate any legacy DB value stored with a leading/
+        // trailing space (`" 00:15:02"`) so it parses instead of resetting to 0.
+        const s = (timeString ?? '').trim();
+        if (!this.isValidTimeFormat(s)) {
             return 0;
         }
 
-        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        const [hours, minutes, seconds] = s.split(':').map(Number);
         return hours * 60 * 60 * 1000 + minutes * 60 * 1000 + seconds * 1000;
     }
 
@@ -2757,21 +2799,25 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     setInitialTime(timeString: string) {
-        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        const s = (timeString ?? '').trim(); // tolerate legacy spaced values
+        const [hours, minutes, seconds] = s.split(':').map(Number);
         // Reset run-leg state — the offset is the new floor, no idle to fold.
+        // Drop any stale anchor; the caller re-anchors from the server next.
         this.startTime = 0;
+        this.diagRunStartedAtMs = null;
         this.isRunning = false;
-        this.initialOffset = this.timeStringToMs(timeString);
+        this.initialOffset = this.timeStringToMs(s);
         this.minutes = this.padZero(hours);
         this.seconds = this.padZero(minutes);
         this.milliseconds = this.padZero(seconds);
     }
 
     setInitialTime1(timeString: string) {
-        const [hours, minutes, seconds] = timeString.split(':').map(Number);
+        const s = (timeString ?? '').trim(); // tolerate legacy spaced values
+        const [hours, minutes, seconds] = s.split(':').map(Number);
         this.startTime1 = 0;
         this.isRunning1 = false;
-        this.initialOffset1 = this.timeStringToMs(timeString);
+        this.initialOffset1 = this.timeStringToMs(s);
         this.minutes1 = this.padZero(hours);
         this.seconds1 = this.padZero(minutes);
         this.milliseconds1 = this.padZero(seconds);
@@ -2849,7 +2895,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.stopDiagnosticTimer();
         this.renderDiagnosticElapsed(this.computeLiveElapsedDiag());
         this.markDiagnosticPausedFrontend();
-        this.lapTime = ` ${this.minutes}:${this.seconds}:${this.milliseconds}`;
+        // NO leading space (persisted as Stat.diag_time). See `lap()`.
+        this.lapTime = `${this.minutes}:${this.seconds}:${this.milliseconds}`;
         this.persistActiveDialogState('diagnostic');
         this.refreshDiagnosticVm();
 
@@ -3485,7 +3532,19 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     this.setInitialTime('00:00:00');
                 }
                 if (!isPaused) {
-                    this.startStopwatch();
+                    // Anchor the live run leg to the SERVER's Stat.diagRunStartedAt
+                    // (the single source of truth), NOT "now". This is what kills
+                    // the 837:15:12 drift on restore: elapsed = diag_time +
+                    // (now - diagRunStartedAt), independent of localStorage. Fall
+                    // back to now only when the server hasn't stamped an anchor
+                    // yet (legacy in-flight DI) — the next start/resume fixes it.
+                    const serverAnchor = this.di?.diagRunStartedAt
+                        ? new Date(this.di.diagRunStartedAt).getTime()
+                        : Date.now();
+                    this.startStopwatch(serverAnchor);
+                } else {
+                    // Paused: no live anchor — display the frozen base only.
+                    this.diagRunStartedAtMs = null;
                 }
                 this.applyPendingRestoredDialogState('diagnostic', _idStat);
             });
@@ -4175,10 +4234,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             // the status to INDIAGNOSTIC, then ask the list to reconcile
             // against server truth.
             this.diStatus = 'INDIAGNOSTIC';
+            // Anchor the resumed leg to "now" and mirror it onto the snapshot —
+            // `changeStatus` stamps Stat.diagRunStartedAt = now server-side, so
+            // a restore reads the same value instead of the pre-pause anchor
+            // (which would double-count). Matches onRepairModalPause's resume.
+            const resumeAnchor = Date.now();
             if (this.di) {
                 this.di = {
                     ...this.di,
                     status: 'INDIAGNOSTIC',
+                    diagRunStartedAt: new Date(resumeAnchor),
                 };
             }
             this.patchTechListRowStatus(this.di?._id, 'INDIAGNOSTIC');
@@ -4189,7 +4254,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.updatePauseLog(this.di._id, openLog._id);
             }
             this.changeStatus(this.selectedDi_id);
-            this.startStopwatch();
+            this.startStopwatch(resumeAnchor);
             this.persistActiveDialogState('diagnostic');
             this.requestTechListRefresh('action:diag-resume');
             return;
@@ -4197,9 +4262,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
         // Active -> Pause. The heavy `lapTimeForPauseAndGetBack()` already
         // fires the backend mutations; we layer optimistic UI + a refresh
-        // request on top so the list row + chip flip immediately.
+        // request on top so the list row + chip flip immediately. Drop the run
+        // anchor on the snapshot too (the server clears Stat.diagRunStartedAt in
+        // changeToDiagnosticInPause) so a paused restore stays frozen.
         if (this.di) {
-            this.di = { ...this.di, status: 'DIAGNOSTIC_Pause' };
+            this.di = {
+                ...this.di,
+                status: 'DIAGNOSTIC_Pause',
+                diagRunStartedAt: null,
+            };
         }
         this.patchTechListRowStatus(this.di?._id, 'DIAGNOSTIC_Pause');
         this.lapTimeForPauseAndGetBack();

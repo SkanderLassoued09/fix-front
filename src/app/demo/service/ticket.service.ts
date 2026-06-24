@@ -503,6 +503,7 @@ export class TicketService {
                         diag_time
                         rep_time
                         repRunStartedAt
+                        diagRunStartedAt
                         status
                         _idnum
                               client {

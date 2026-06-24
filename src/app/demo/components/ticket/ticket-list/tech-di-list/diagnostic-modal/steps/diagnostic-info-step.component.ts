@@ -30,11 +30,22 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
           <label>Statut actuel</label>
           <div class="field__value">{{ di.statusLabel || di.status || 'N/A' }}</div>
         </div>
-        <div class="field">
+        <!-- Show the relevant entity only: a company-DI has no client and a
+             client-DI has no company, so rendering both always left one as
+             "N/A". Mirror the sidebar's entityType rule — company → Société,
+             client → Client. (Fallback to the value when entityType is unset
+             so real data is never hidden.) -->
+        <div
+          class="field"
+          *ngIf="di.entityType === 'client' || (!di.entityType && di.clientName)"
+        >
           <label>Client</label>
           <div class="field__value">{{ di.clientName || 'N/A' }}</div>
         </div>
-        <div class="field">
+        <div
+          class="field"
+          *ngIf="di.entityType === 'company' || (!di.entityType && di.companyName)"
+        >
           <label>Société</label>
           <div class="field__value">{{ di.companyName || 'N/A' }}</div>
         </div>

@@ -62,14 +62,6 @@ import {
           </button>
         </li>
       </ol>
-
-      <footer class="sav-stepper__foot">
-        <i class="pi pi-question-circle"></i>
-        <div>
-          <strong>Besoin d'aide ?</strong>
-          <small>Consultez la documentation</small>
-        </div>
-      </footer>
     </aside>
   `,
   styles: [
@@ -180,31 +172,6 @@ import {
         line-height: 1.2;
       }
       .sav-stepper__done-icon { color: #22c55e; font-size: 1.1rem; }
-
-      .sav-stepper__foot {
-        margin-top: 1.25rem;
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
-        padding: 0.85rem 0.9rem;
-        border-radius: 10px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-      }
-      .sav-stepper__foot i { color: #64748b; font-size: 1.05rem; }
-      .sav-stepper__foot strong {
-        display: block;
-        font-size: 0.9rem;
-        font-weight: 650;
-        color: #0f172a;
-      }
-      .sav-stepper__foot small {
-        display: block;
-        margin-top: 0.15rem;
-        font-size: 0.8rem;
-        color: #3b82f6;
-        text-decoration: underline;
-      }
     `,
   ],
 })

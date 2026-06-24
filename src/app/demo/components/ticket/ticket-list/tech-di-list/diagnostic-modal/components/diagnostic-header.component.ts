@@ -10,7 +10,12 @@ import { DiagnosticTimerComponent } from './diagnostic-timer.component';
 import { TimerDisplayState } from '../diagnostic-modal.types';
 
 /**
- * Header bar:  Diagnostic — DI42   [EN COURS]      ⏱ 00:00:18  [⏸ Pause]  [Réduire]
+ * Header bar:  Diagnostic — DI42            ⏱ 00:00:18  [⏸ Pause]  [Réduire]
+ *
+ * The status is intentionally NOT shown here — it lives once, in the top
+ * info-strip ("Statut actuel" card). Repeating it next to the title was the
+ * duplication the "modal épuré" cleanup removed; `statusLabel`/`statusTone`
+ * are kept only because the (shared) repair modal still binds them.
  *
  * Pure dumb component — emits intent only. The parent decides what "pause"
  * actually triggers (lapTimeForPauseAndGetBack mutation + persistence).
@@ -27,13 +32,6 @@ import { TimerDisplayState } from '../diagnostic-modal.types';
           {{ title }} <span class="sav-diag-header__sep">—</span>
           <span class="sav-diag-header__id">{{ diIdnum }}</span>
         </h2>
-        <span
-          class="sav-diag-header__status"
-          [ngClass]="'sav-diag-header__status--' + statusTone"
-        >
-          <span class="sav-diag-header__status-dot"></span>
-          {{ statusLabel }}
-        </span>
       </div>
 
       <div class="sav-diag-header__actions">
@@ -92,40 +90,6 @@ import { TimerDisplayState } from '../diagnostic-modal.types';
       }
       .sav-diag-header__sep { color: #94a3b8; font-weight: 400; margin: 0 0.25rem; }
       .sav-diag-header__id { color: #0f172a; }
-
-      .sav-diag-header__status {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.38rem 0.85rem;
-        border-radius: 999px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-      .sav-diag-header__status-dot {
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: currentColor;
-      }
-      .sav-diag-header__status--running {
-        background: rgba(34, 197, 94, 0.14);
-        color: #15803d;
-      }
-      .sav-diag-header__status--paused {
-        background: rgba(239, 68, 68, 0.12);
-        color: #dc2626;
-      }
-      .sav-diag-header__status--info {
-        background: rgba(59, 130, 246, 0.14);
-        color: #1d4ed8;
-      }
-      .sav-diag-header__status--neutral {
-        background: #f1f5f9;
-        color: #475569;
-      }
 
       .sav-diag-header__actions {
         display: flex;
