@@ -133,8 +133,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         composantSelected: new FormControl(),
     });
 
-    /** Active step in the redesigned 5-step diagnostic wizard. */
-    activeDiagStep: DiagnosticStepKey = 'failure';
+    /** Active step in the redesigned 5-step diagnostic wizard.
+     *  Defaults to `'info'` (step 1) so a fresh diagModal open always lands
+     *  on "Informations générales" rather than skipping ahead to the failure
+     *  step. `diagModal` also explicitly resets this on every open so a
+     *  previously closed-mid-flow modal doesn't reopen on the last step. */
+    activeDiagStep: DiagnosticStepKey = 'info';
     diagModalVisibleVm = false;
     diagContextVm: DiagnosticContext | null = null;
     diagStepsVm: readonly DiagnosticStep[] = [];
@@ -2072,6 +2076,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     client: detailsDi.client ?? null,
                 };
                 this.selectedDi = di._id;
+                // Always open on step 1 (Informations générales). Without this
+                // the field is left to whatever it carried last time (e.g.
+                // 'validation' if the user closed mid-flow), and the persisted
+                // restore-on-init only sets it when the modal is restored, not
+                // when manually reopened.
+                this.activeDiagStep = 'info';
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
                 this.diStatus = di.status;
@@ -2132,8 +2142,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 _idDi: di._id,
                 diag_time: di.diag_time || detailsDi.diag_time || '',
                 remarqueTech:
-                    di.remarqueTech ||
-                    detailsDi.remarque_tech_diagnostic ||
+                    this.cleanStr(di.remarqueTech) ||
+                    this.cleanStr(detailsDi.remarque_tech_diagnostic) ||
                     '',
                 isPdr: di.isPdr || detailsDi.contain_pdr || true,
                 isReparable:
@@ -2191,8 +2201,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
                     this.remarque.patchValue({
                         remarqueRepair:
-                            di.remarque_tech_repair ||
-                            detailsDi.remarque_tech_repair ||
+                            this.cleanStr(di.remarque_tech_repair) ||
+                            this.cleanStr(detailsDi.remarque_tech_repair) ||
                             '',
                     });
                 }
@@ -3705,6 +3715,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             ?.valueChanges.pipe(takeUntil(this.destroy$))
             .subscribe((value) => {
                 this.hasPdr = value;
+                // The Composants step is hidden when isPdr=false (see diagSteps
+                // getter). If the tech is currently parked on it when they
+                // toggle to false, snap them to Résumé so they're not stranded
+                // on a step that no longer exists in the wizard.
+                if (value === false && this.activeDiagStep === 'components') {
+                    this.activeDiagStep = 'summary';
+                }
             });
     }
 
@@ -3906,67 +3923,89 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         RETOUR3: 'Retour 3',
     };
 
+    /**
+     * Strip nullish-as-string pollution: legacy rows literally store the STRING
+     * "undefined" / "null" instead of an actual nullish (typical pre-validation
+     * form submit). A naive `||` treats them as truthy and they leak to the UI.
+     * Used by every read path that loads DI fields into forms or summaries.
+     */
+    private cleanStr(v: any): string {
+        if (v == null) return '';
+        const s = String(v).trim();
+        if (!s || s === 'undefined' || s === 'null') return '';
+        return s;
+    }
+
     /** Normalize this.di → DiagnosticDiSummary (strict shape, never null). */
     private buildDiSummary(): DiagnosticDiSummary {
         const d: any = this.di ?? {};
-        const status: string = d.status ?? '';
-        const clientName = [d.client?.first_name, d.client?.last_name]
+        const clean = (v: any): string => this.cleanStr(v);
+        const cleanSvc = (s: any) =>
+            s && typeof s === 'object'
+                ? {
+                      name: clean(s.name) || undefined,
+                      email: clean(s.email) || undefined,
+                      phone: clean(s.phone) || undefined,
+                  }
+                : undefined;
+        const status: string = clean(d.status);
+        const clientName = [
+            clean(d.client?.first_name),
+            clean(d.client?.last_name),
+        ]
             .filter(Boolean)
             .join(' ')
             .trim();
         const companyName =
-            d.company?.raisonSociale || d.company?.name || '';
-        const techName = d.techDiag || d.techRep || '';
+            clean(d.company?.raisonSociale) || clean(d.company?.name) || '';
+        const techName = clean(d.techDiag) || clean(d.techRep) || '';
         // entityType drives the sidebar's contact block: company → 3 services,
         // client → single phone, null → nothing rendered. Detection mirrors
-        // backend `isResolvableId` (treat the FE-sent string "null" as null).
+        // backend `isResolvableId` (treat string "null"/"undefined" as null).
         const hasCompany =
             d.company &&
             typeof d.company === 'object' &&
-            (d.company.raisonSociale || d.company.name);
-        const hasClient = d.client && typeof d.client === 'object';
+            !!companyName;
+        const hasClient =
+            d.client && typeof d.client === 'object' && !!clientName;
         const entityType: 'company' | 'client' | null = hasCompany
             ? 'company'
             : hasClient
               ? 'client'
               : null;
-        const svc = (s: any) =>
-            s && typeof s === 'object'
-                ? { name: s.name, email: s.email, phone: s.phone }
-                : undefined;
         return {
-            _id: d._id ?? '',
-            _idnum: d._idnum ?? '',
-            title: d.title ?? '',
-            description: d.description ?? '',
+            _id: clean(d._id),
+            _idnum: clean(d._idnum),
+            title: clean(d.title),
+            description: clean(d.description),
             status,
             statusLabel:
                 TechDiListComponent.DIAG_STATUS_LABEL[status] ?? status,
             clientName,
-            clientPhone: d.client?.phone ?? '',
+            clientPhone: clean(d.client?.phone),
             companyName,
             locationName:
-                d.location_name ??
-                (typeof d.location_id === 'string' ? d.location_id : '') ??
+                clean(d.location_name) ||
+                clean(d.location_id) ||
                 '',
-            technicianName: typeof techName === 'string' ? techName : '',
-            remarqueManager: d.remarque_manager ?? '',
+            technicianName: techName,
+            remarqueManager: clean(d.remarque_manager),
             ignoreCount: Number(d.ignoreCount ?? 0),
             entityType,
             serviceAchat:
                 entityType === 'company'
-                    ? svc(d.company?.serviceAchat)
+                    ? cleanSvc(d.company?.serviceAchat)
                     : undefined,
             serviceTechnique:
                 entityType === 'company'
-                    ? svc(d.company?.serviceTechnique)
+                    ? cleanSvc(d.company?.serviceTechnique)
                     : undefined,
             serviceFinancier:
                 entityType === 'company'
-                    ? svc(d.company?.serviceFinancier)
+                    ? cleanSvc(d.company?.serviceFinancier)
                     : undefined,
-            remarqueTechDiagnostic: d.remarque_tech_diagnostic ?? '',
-            remarqueTechReparation: d.remarque_tech_repair ?? '',
+            remarqueTechDiagnostic: clean(d.remarque_tech_diagnostic),
+            remarqueTechReparation: clean(d.remarque_tech_repair),
         };
     }
 
@@ -4081,6 +4120,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return 'À faire';
         };
 
+        // Hide the Composants step entirely when the diagnostic is marked
+        // "pas de PDR" (isPdr === false). Composants list parts to order, so
+        // it's irrelevant on a no-PDR DI — keeping it in the wizard would
+        // force the tech through a meaningless step. Only `false` skips —
+        // `null` (not yet decided) keeps the step visible.
+        const skipComponents = form.get('isPdr')?.value === false;
         const order: { key: DiagnosticStepKey; label: string; hint: string }[] =
             [
                 {
@@ -4098,11 +4143,18 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     label: 'Validation',
                     hint: hintFor('validation', hasValidation),
                 },
-                {
-                    key: 'components',
-                    label: 'Composants',
-                    hint: hintFor('components', hasComponentsDecision),
-                },
+                ...(skipComponents
+                    ? []
+                    : [
+                          {
+                              key: 'components' as DiagnosticStepKey,
+                              label: 'Composants',
+                              hint: hintFor(
+                                  'components',
+                                  hasComponentsDecision,
+                              ),
+                          },
+                      ]),
                 {
                     key: 'summary',
                     label: 'Résumé',

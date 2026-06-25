@@ -98,11 +98,11 @@ import {
 
       <section class="sav-diag-sidebar__block">
         <div class="sav-diag-sidebar__sectionLabel">DESCRIPTION</div>
-        <div class="sav-diag-sidebar__row">
-          <i class="pi pi-file"></i>
-          <strong *ngIf="di.title">{{ di.title }}</strong>
-          <strong *ngIf="!di.title" class="sav-diag-sidebar__faded">—</strong>
-        </div>
+        <!-- Description-only — the title already lives in the modal header
+             and the Step 1 "Titre du ticket" field. Repeating it under a
+             "DESCRIPTION" label was the source of the "description shows
+             the title" confusion. The body falls back to a faded
+             placeholder when the field is genuinely empty. -->
         <p class="sav-diag-sidebar__desc" *ngIf="di.description; else noDesc">
           {{ di.description }}
         </p>

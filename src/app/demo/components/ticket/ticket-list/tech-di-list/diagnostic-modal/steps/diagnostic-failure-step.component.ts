@@ -9,7 +9,6 @@ import { CategoryOption } from '../diagnostic-modal.types';
  *   - Catégorie de diagnostic (required dropdown bound to form.di_category_id)
  *   - Description de la panne (required, with 0/1000 counter)
  *   - Remarque technicien (counter)
- *   - Tip box "Conseil: Soyez le plus précis possible…"
  *
  * Binds directly to the parent's existing `diagFormTech` FormGroup so the
  * mutations and validators in the legacy code path keep working untouched.
@@ -74,13 +73,6 @@ import { CategoryOption } from '../diagnostic-modal.types';
           <div class="counter">{{ (form.get('remarqueExtra')?.value?.length ?? 0) }} / 1000</div>
         </div>
 
-        <div class="tip">
-          <i class="pi pi-lightbulb"></i>
-          <div>
-            <strong>Conseil</strong>
-            <span>Soyez le plus précis possible dans la description pour faciliter le diagnostic et la réparation.</span>
-          </div>
-        </div>
       </div>
     </div>
   `,
@@ -153,27 +145,6 @@ import { CategoryOption } from '../diagnostic-modal.types';
         margin-top: 0.35rem;
         font-size: 0.82rem;
         color: #94a3b8;
-      }
-
-      .tip {
-        grid-column: 1 / -1;
-        display: flex;
-        align-items: flex-start;
-        gap: 0.85rem;
-        padding: 1rem 1.1rem;
-        background: rgba(59, 130, 246, 0.08);
-        border: 1px solid rgba(59, 130, 246, 0.2);
-        border-radius: 10px;
-        color: #1d4ed8;
-      }
-      .tip i { font-size: 1.2rem; margin-top: 0.1rem; }
-      .tip strong { display: block; font-size: 0.98rem; font-weight: 700; }
-      .tip span {
-        display: block;
-        margin-top: 0.25rem;
-        font-size: 0.9rem;
-        color: #334155;
-        line-height: 1.5;
       }
 
       :host ::ng-deep .sav-diag-dropdown {
