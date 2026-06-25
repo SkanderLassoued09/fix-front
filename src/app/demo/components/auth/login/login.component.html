@@ -34,6 +34,52 @@
                         >Sign in to continue</span
                     >
                 </div>
+                <!-- Single-session block banner — appears when the backend
+                     returned ACCOUNT_ALREADY_CONNECTED. Stays in place until
+                     the user retries (auto-hides on the next login attempt
+                     via component logic), so it's distinct from a toast. -->
+                <div
+                    *ngIf="alreadyConnected"
+                    class="mb-4 p-4 border-round"
+                    style="
+                        background: #fff7ed;
+                        border: 1px solid #fb923c;
+                        border-left: 6px solid #ea580c;
+                    "
+                    role="alert"
+                >
+                    <div class="flex align-items-start gap-3">
+                        <i
+                            class="pi pi-exclamation-triangle"
+                            style="
+                                font-size: 1.6rem;
+                                color: #ea580c;
+                                margin-top: 0.15rem;
+                            "
+                        ></i>
+                        <div style="color: #7c2d12">
+                            <div
+                                class="font-bold mb-2"
+                                style="font-size: 1.05rem"
+                            >
+                                Compte déjà connecté sur un autre appareil
+                            </div>
+                            <div
+                                style="line-height: 1.5; font-size: 0.92rem"
+                            >
+                                Le compte
+                                <strong *ngIf="blockedUsername"
+                                    >« {{ blockedUsername }} »</strong
+                                ><span *ngIf="!blockedUsername"
+                                    >que vous essayez d'utiliser</span
+                                >
+                                est déjà ouvert sur un autre appareil.
+                                Déconnectez-vous depuis cet autre appareil,
+                                puis réessayez ci-dessous.
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <form [formGroup]="loginForm">
                     <div>
                         <label

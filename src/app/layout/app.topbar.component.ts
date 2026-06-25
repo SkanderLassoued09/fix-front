@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import { NotificationService } from '../demo/service/notification.service';
 import { TicketService } from '../demo/service/ticket.service';
+import { SessionService } from '../demo/service/session.service';
 
 @Component({
     selector: 'app-topbar',
@@ -46,7 +47,8 @@ export class AppTopBarComponent implements OnInit {
         private notificationService: NotificationService,
         private ticketService: TicketService,
         private cdr: ChangeDetectorRef,
-        private readonly router: Router
+        private readonly router: Router,
+        private readonly sessionService: SessionService,
     ) {}
     ngOnInit(): void {
         // this.getNotificationFromDb();
@@ -119,9 +121,9 @@ export class AppTopBarComponent implements OnInit {
             });
     }
     yes() {
+        console.log('[Topbar.yes] Déconnexion button clicked');
         this.visible = false;
-        localStorage.clear();
-        this.router.navigate(['/auth/login']);
+        this.sessionService.logout();
     }
 
     markAsSeen(notificationId: string) {

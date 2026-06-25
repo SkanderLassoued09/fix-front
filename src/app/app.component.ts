@@ -1,6 +1,7 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MessageService, PrimeNGConfig } from 'primeng/api';
 import { ProfileService } from './demo/service/profile.service';
+import { SessionService } from './demo/service/session.service';
 import { Apollo } from 'apollo-angular';
 import { SwPush } from '@angular/service-worker';
 import { NotificationService } from './demo/service/notification.service';
@@ -31,11 +32,16 @@ export class AppComponent implements OnInit {
         private messageService: MessageService,
         @Inject(SwPush) private swPush: SwPush,
         private notificationService: NotificationService,
+        private readonly sessionService: SessionService,
     ) {
         this._idtech = localStorage.getItem('_id');
     }
 
     ngOnInit() {
+        // Best-effort tab-close cleanup so closing the browser also flips
+        // `isConnected` back to false on the backend (otherwise the
+        // account stays locked until the user clicks Déconnexion).
+        this.sessionService.installAutoLogout();
         this.notificationService.startWorker();
         this.primengConfig.ripple = true;
         this.notification();

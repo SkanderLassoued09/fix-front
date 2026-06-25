@@ -22,8 +22,22 @@ export class ProfileService {
                     loginAuthInput: { username: ${gqlStr(username)}, password: ${gqlStr(password)} }
                 ) {
                     access_token
-                     user{_id role email username}
+                    user{_id role email username}
                 }
+            }
+        `;
+    }
+
+    /**
+     * Logout — token is sent as an explicit GraphQL arg (not via the
+     * Bearer header) so the backend can decode it directly with
+     * JwtService, sidestepping the @CurrentUser decorator wiring that was
+     * returning undefined and leaving `isConnected:true` stuck.
+     */
+    logoutMutation(token: string) {
+        return gql`
+            mutation {
+                logout(token: ${gqlStr(token)})
             }
         `;
     }
