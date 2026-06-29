@@ -235,35 +235,69 @@
                     <div class="pv-eyebrow">PARTICIPANTS</div>
                     <div class="pv-field">
                         <label>Ajouter des participants</label>
-                        <div class="pv-select">
-                            <select
-                                class="pv-input pv-select__el pv-select--placeholder"
-                                (change)="onAddParticipant($event)"
-                            >
-                                <option value="">
-                                    Sélectionner les participants…
-                                </option>
-                                <option
-                                    *ngFor="let p of availableProfiles"
-                                    [value]="p._id"
-                                >
-                                    {{ p.label }}
-                                </option>
-                            </select>
-                            <svg class="pv-select__chevron" viewBox="0 0 24 24" fill="none" stroke="#8a93a3" stroke-width="2">
-                                <polyline points="6 9 12 15 18 9" />
-                            </svg>
+
+                        <!-- Options = TOUS les profils de la base (query getAllProfiles). -->
+                        <p-multiSelect
+                            formControlName="participants"
+                            [options]="profiles"
+                            optionLabel="label"
+                            optionValue="_id"
+                            display="chip"
+                            [filter]="true"
+                            filterBy="label"
+                            appendTo="body"
+                            styleClass="pv-multiselect"
+                            placeholder="Sélectionner les participants…"
+                            emptyMessage="Aucun profil en base"
+                            emptyFilterMessage="Aucun profil trouvé"
+                            [disabled]="profilesLoading || profilesError"
+                            (onChange)="onParticipantsChange($event.value)"
+                        ></p-multiSelect>
+
+                        <!-- États : chargement / erreur / liste vide -->
+                        <div class="pv-hint" *ngIf="profilesLoading">
+                            <span class="pv-spin pv-spin--blue" aria-hidden="true"></span>
+                            Chargement des profils…
+                        </div>
+                        <div class="pv-hint pv-hint--warn" *ngIf="profilesError">
+                            Impossible de charger les profils.
+                            <button type="button" class="pv-hint__retry" (click)="loadProfiles()">
+                                Réessayer
+                            </button>
+                        </div>
+                        <div
+                            class="pv-hint"
+                            *ngIf="!profilesLoading && !profilesError && !profiles.length"
+                        >
+                            Aucun profil en base.
                         </div>
                     </div>
-                    <div class="pv-chips" *ngIf="selectedParticipants.length">
-                        <span class="pv-chip" *ngFor="let id of selectedParticipants">
-                            {{ participantLabel(id) }}
-                            <span
-                                class="pv-chip__x"
+
+                    <!-- Participants sélectionnés : chacun marquable Présent / Excusé / Absent -->
+                    <div class="pv-parts" *ngIf="selectedParticipants.length">
+                        <div class="pv-part" *ngFor="let id of selectedParticipants">
+                            <span class="pv-part__name">{{ participantLabel(id) }}</span>
+                            <div class="pv-statut" role="group" aria-label="Statut">
+                                <button
+                                    type="button"
+                                    class="pv-statut__opt"
+                                    *ngFor="let o of participantStatutOptions"
+                                    [class.pv-statut__opt--on]="participantStatut(id) === o.value"
+                                    [style.--c]="o.color"
+                                    (click)="setParticipantStatut(id, o.value)"
+                                >
+                                    {{ o.label }}
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                class="pv-part__x"
+                                aria-label="Retirer"
                                 (click)="removeParticipant(id)"
-                                >✕</span
                             >
-                        </span>
+                                ✕
+                            </button>
+                        </div>
                     </div>
                 </section>
 

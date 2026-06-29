@@ -1,5 +1,6 @@
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     EventEmitter,
     Input,
@@ -23,6 +24,7 @@ import { filter, take } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { CalendarModule } from 'primeng/calendar';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { ReunionPvService } from 'src/app/demo/service/reunion-pv.service';
@@ -42,6 +44,9 @@ export type PvSection =
 
 /** 5M / Ishikawa family keys, in display order (mo, mt, mi, ma, me). */
 export type FamilyKey = 'mo' | 'mt' | 'mi' | 'ma' | 'me';
+
+/** Attendance status of a participant — mirrors backend `ParticipantStatut`. */
+export type ParticipantStatut = 'PRESENT' | 'ABSENT' | 'EXCUSE';
 
 interface FamilyMeta {
     key: FamilyKey;
@@ -156,7 +161,13 @@ const SEEDED_CAUSES: Record<FamilyKey, string[]> = {
 @Component({
     selector: 'app-reunion-pv-modal',
     standalone: true,
-    imports: [CommonModule, ReactiveFormsModule, DialogModule, CalendarModule],
+    imports: [
+        CommonModule,
+        ReactiveFormsModule,
+        DialogModule,
+        CalendarModule,
+        MultiSelectModule,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './reunion-pv-modal.component.html',
     styleUrls: ['./reunion-pv-modal.component.scss'],
@@ -184,6 +195,17 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         { label: 'Terminé', value: 'TERMINE' },
     ];
 
+    /** Présent / Excusé / Absent — colors per the design system (no red). */
+    readonly participantStatutOptions: ReadonlyArray<{
+        label: string;
+        value: ParticipantStatut;
+        color: string;
+    }> = [
+        { label: 'Présent', value: 'PRESENT', color: '#16a34a' },
+        { label: 'Excusé', value: 'EXCUSE', color: '#b45309' },
+        { label: 'Absent', value: 'ABSENT', color: '#64748b' },
+    ];
+
     readonly families = FAMILIES;
 
     /** Active rail section + the single open 5M family. */
@@ -191,6 +213,11 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
     openFamily: FamilyKey | null = 'mo';
 
     profiles: ProfileOption[] = [];
+    /** Loader UI state for the participants dropdown. */
+    profilesLoading = false;
+    profilesError = false;
+    /** Per-participant attendance status, keyed by Profile `_id`. */
+    participantStatuts: Record<string, ParticipantStatut> = {};
     saving = false;
 
     form!: FormGroup;
@@ -207,6 +234,7 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         private readonly toast: MessageService,
         private readonly profileService: ProfileService,
         private readonly reunionPvGql: ReunionPvService,
+        private readonly cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -303,7 +331,19 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
 
     // ── Profiles loader ──────────────────────────────────────────────
 
-    private loadProfiles(): void {
+    /**
+     * Loads ALL profiles from the DB (reuses the existing `getAllProfiles`
+     * query; `rows: 200` covers the whole staff table). Independent of the
+     * modal mode — runs once on init for both 'retour' and 'standalone'.
+     *
+     * NOTE: this component is OnPush, and the Apollo result lands outside any
+     * template event — so `markForCheck()` is required or the dropdown would
+     * stay empty even though the data arrived.
+     */
+    loadProfiles(): void {
+        this.profilesLoading = true;
+        this.profilesError = false;
+        this.cdr.markForCheck();
         this.apollo
             .query<any>({
                 query: this.profileService.getAllProfile(200, 0),
@@ -320,9 +360,20 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
                             p.username ||
                             p._id,
                     }));
+                    this.profilesLoading = false;
+                    this.cdr.markForCheck();
                 },
                 error: () => {
-                    /* silent — modal stays usable without the dropdown */
+                    // Non-blocking: the rest of the form stays usable.
+                    this.profilesLoading = false;
+                    this.profilesError = true;
+                    this.toast.add({
+                        severity: 'warn',
+                        summary: 'Profils indisponibles',
+                        detail:
+                            'La liste des participants n’a pas pu être chargée. Réessayez.',
+                    });
+                    this.cdr.markForCheck();
                 },
             });
     }
@@ -392,27 +443,30 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         return (this.form.get('participants')?.value as string[]) ?? [];
     }
 
-    /** Profiles not yet selected — the live options for the add-select. */
-    get availableProfiles(): ProfileOption[] {
-        const chosen = new Set(this.selectedParticipants);
-        return this.profiles.filter((p) => !chosen.has(p._id));
+    /**
+     * Sync the per-participant status map with the MultiSelect selection:
+     * default newly-added ones to PRESENT, drop the de-selected ones.
+     */
+    onParticipantsChange(ids: string[]): void {
+        const next: Record<string, ParticipantStatut> = {};
+        for (const id of ids ?? []) {
+            next[id] = this.participantStatuts[id] ?? 'PRESENT';
+        }
+        this.participantStatuts = next;
     }
 
-    onAddParticipant(event: Event): void {
-        const select = event.target as HTMLSelectElement;
-        const id = select.value;
-        if (id && !this.selectedParticipants.includes(id)) {
-            this.form
-                .get('participants')
-                ?.setValue([...this.selectedParticipants, id]);
-        }
-        select.value = ''; // reset back to placeholder
+    participantStatut(id: string): ParticipantStatut {
+        return this.participantStatuts[id] ?? 'PRESENT';
+    }
+
+    setParticipantStatut(id: string, statut: ParticipantStatut): void {
+        this.participantStatuts = { ...this.participantStatuts, [id]: statut };
     }
 
     removeParticipant(id: string): void {
-        this.form
-            .get('participants')
-            ?.setValue(this.selectedParticipants.filter((x) => x !== id));
+        const next = this.selectedParticipants.filter((x) => x !== id);
+        this.form.get('participants')?.setValue(next);
+        this.onParticipantsChange(next);
     }
 
     participantLabel(id: string): string {
@@ -521,7 +575,7 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
                     : null,
             participants: (v.participants || []).map((id: string) => ({
                 profile: id,
-                statut: 'PRESENT',
+                statut: this.participantStatut(id),
             })),
             ordreDuJour: (v.ordreDuJour || [])
                 .map((s: string) => (s || '').trim())
@@ -575,6 +629,7 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         this.visibleChange.emit(false);
         this.activeSection = 'infos';
         this.openFamily = 'mo';
+        this.participantStatuts = {};
         this.form?.reset({
             titre: '',
             objet: '',
