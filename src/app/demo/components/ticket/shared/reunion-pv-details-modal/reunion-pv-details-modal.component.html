@@ -1,0 +1,254 @@
+<p-dialog
+    [(visible)]="visible"
+    (visibleChange)="visibleChange.emit($event)"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [dismissableMask]="true"
+    styleClass="pvd-dialog"
+    [style]="{ width: '920px', maxWidth: 'calc(100vw - 2rem)' }"
+    [header]="''"
+>
+    <ng-template pTemplate="header">
+        <div class="pvd-head">
+            <div class="pvd-head__badge">📄</div>
+            <div class="pvd-head__text">
+                <div class="pvd-head__sup">PROCÈS-VERBAL DE RÉUNION</div>
+                <div class="pvd-head__ref">{{ pv?.reference || '—' }}</div>
+            </div>
+            <div class="pvd-head__spacer"></div>
+            <p-tag
+                *ngIf="pv?.statut as s"
+                [value]="statutLabel(s)"
+                [severity]="statutSeverity(s)"
+            ></p-tag>
+        </div>
+    </ng-template>
+
+    <div *ngIf="loading" class="pvd-skel">Chargement…</div>
+
+    <div *ngIf="!loading && pv" class="pvd-body">
+        <!-- Titre / objet -->
+        <header class="pvd-title-block">
+            <h1 class="pvd-title">{{ pv.titre }}</h1>
+            <p *ngIf="pv.objet" class="pvd-objet">{{ pv.objet }}</p>
+            <div *ngIf="pv.contexteRetour?.niveau as n" class="pvd-retour-pill"
+                [attr.data-niveau]="n">
+                Retour {{ n }}
+                <span *ngIf="pv.contexteRetour?.motif"
+                    >· {{ pv.contexteRetour.motif }}</span
+                >
+            </div>
+        </header>
+
+        <!-- Infos générales -->
+        <section class="pvd-section">
+            <div class="pvd-section__bar"></div>
+            <div class="pvd-section__title">INFORMATIONS GÉNÉRALES</div>
+            <div class="pvd-grid">
+                <div class="pvd-kv">
+                    <div class="pvd-kv__k">Date de la réunion</div>
+                    <div class="pvd-kv__v">
+                        {{ pv.dateReunion | date: 'dd/MM/yyyy HH:mm' }}
+                    </div>
+                </div>
+                <div class="pvd-kv">
+                    <div class="pvd-kv__k">Lieu</div>
+                    <div class="pvd-kv__v">{{ pv.lieu || '—' }}</div>
+                </div>
+                <div class="pvd-kv">
+                    <div class="pvd-kv__k">Modalité</div>
+                    <div class="pvd-kv__v">{{ modaliteLabel(pv.modalite) }}</div>
+                </div>
+                <div class="pvd-kv">
+                    <div class="pvd-kv__k">Créé par</div>
+                    <div class="pvd-kv__v">{{ nameOf(pv.createdBy) }}</div>
+                </div>
+                <div class="pvd-kv">
+                    <div class="pvd-kv__k">Prochaine réunion</div>
+                    <div class="pvd-kv__v">
+                        {{
+                            (pv.prochaineReunion | date: 'dd/MM/yyyy') || '—'
+                        }}
+                    </div>
+                </div>
+                <div class="pvd-kv">
+                    <div class="pvd-kv__k">DI liée</div>
+                    <div class="pvd-kv__v">
+                        <span *ngIf="pv.di; else noDi">{{ pv.di }}</span>
+                        <ng-template #noDi>—</ng-template>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Participants -->
+        <section
+            class="pvd-section"
+            *ngIf="(pv.participants || []).length"
+        >
+            <div class="pvd-section__bar"></div>
+            <div class="pvd-section__title">
+                PARTICIPANTS ({{ pv.participants.length }})
+            </div>
+            <p-table
+                [value]="pv.participants"
+                styleClass="p-datatable-sm pvd-table"
+                [tableStyle]="{ 'min-width': '100%' }"
+            >
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 50px">#</th>
+                        <th>Participant</th>
+                        <th style="width: 140px">Présence</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-p let-i="rowIndex">
+                    <tr>
+                        <td class="pvd-num">{{ i + 1 }}</td>
+                        <td>{{ nameOf(p.profile) }}</td>
+                        <td>{{ presenceLabel(p.statut) }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </section>
+
+        <!-- Ordre du jour -->
+        <section
+            class="pvd-section"
+            *ngIf="(pv.ordreDuJour || []).length"
+        >
+            <div class="pvd-section__bar"></div>
+            <div class="pvd-section__title">ORDRE DU JOUR</div>
+            <ol class="pvd-ol">
+                <li *ngFor="let line of pv.ordreDuJour">{{ line }}</li>
+            </ol>
+        </section>
+
+        <!-- Points discutés -->
+        <section
+            class="pvd-section"
+            *ngIf="(pv.pointsDiscutes || []).length"
+        >
+            <div class="pvd-section__bar"></div>
+            <div class="pvd-section__title">POINTS DISCUTÉS</div>
+            <article
+                class="pvd-point"
+                *ngFor="let p of pv.pointsDiscutes; let i = index"
+            >
+                <div class="pvd-point__title">{{ i + 1 }}. {{ p.titre }}</div>
+                <div *ngIf="p.contenu" class="pvd-point__body">
+                    {{ p.contenu }}
+                </div>
+            </article>
+        </section>
+
+        <!-- Décisions -->
+        <section
+            class="pvd-section"
+            *ngIf="(pv.decisions || []).length"
+        >
+            <div class="pvd-section__bar"></div>
+            <div class="pvd-section__title">DÉCISIONS</div>
+            <ul class="pvd-deci">
+                <li *ngFor="let d of pv.decisions">▸ {{ d }}</li>
+            </ul>
+        </section>
+
+        <!-- Plan d'actions -->
+        <section
+            class="pvd-section"
+            *ngIf="(pv.actions || []).length"
+        >
+            <div class="pvd-section__bar"></div>
+            <div class="pvd-section__title">PLAN D'ACTIONS</div>
+            <p-table
+                [value]="pv.actions"
+                styleClass="p-datatable-sm pvd-table"
+                [tableStyle]="{ 'min-width': '100%' }"
+            >
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 36px">#</th>
+                        <th>Action</th>
+                        <th style="width: 140px">Responsable</th>
+                        <th style="width: 90px">Échéance</th>
+                        <th style="width: 80px">Priorité</th>
+                        <th style="width: 100px">Statut</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-a let-i="rowIndex">
+                    <tr>
+                        <td class="pvd-num">{{ i + 1 }}</td>
+                        <td>
+                            <div class="pvd-action__title">
+                                {{ a.titre || '—' }}
+                            </div>
+                            <div
+                                *ngIf="a.description"
+                                class="pvd-action__desc"
+                            >
+                                {{ a.description }}
+                            </div>
+                        </td>
+                        <td>{{ nameOf(a.responsable) }}</td>
+                        <td>
+                            {{
+                                (a.echeance | date: 'dd/MM/yyyy') || '—'
+                            }}
+                        </td>
+                        <td>
+                            <p-tag
+                                [value]="priorityLabel(a.priorite)"
+                                [severity]="prioritySeverity(a.priorite)"
+                            ></p-tag>
+                        </td>
+                        <td>
+                            <p-tag
+                                [value]="actionStatutLabel(a.statut)"
+                                [severity]="actionStatutSeverity(a.statut)"
+                            ></p-tag>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </section>
+
+        <!-- Empty fallback -->
+        <section *ngIf="!(pv.participants?.length) && !(pv.ordreDuJour?.length) && !(pv.pointsDiscutes?.length) && !(pv.decisions?.length) && !(pv.actions?.length)" class="pvd-empty">
+            Ce PV n'a pas encore de contenu détaillé. Vous pouvez tout de
+            même télécharger l'en-tête.
+        </section>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="pvd-foot">
+            <span class="pvd-foot__hint" *ngIf="pv">
+                <i class="pi pi-clock"></i>
+                Créé le
+                {{ pv.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+            </span>
+            <div class="pvd-foot__spacer"></div>
+            <button
+                pButton
+                type="button"
+                label="Fermer"
+                class="pvd-btn pvd-btn--cancel"
+                (click)="close()"
+            ></button>
+            <button
+                pButton
+                type="button"
+                icon="pi pi-file-pdf"
+                label="Télécharger en PDF"
+                class="pvd-btn pvd-btn--pdf"
+                [loading]="downloading"
+                [disabled]="downloading || !pv"
+                (click)="downloadPdf()"
+                pTooltip="Génère un document PV imprimable"
+                tooltipPosition="top"
+            ></button>
+        </div>
+    </ng-template>
+</p-dialog>

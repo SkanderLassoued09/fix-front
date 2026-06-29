@@ -1,0 +1,339 @@
+<!-- Procès-Verbal de Réunion — reusable PrimeNG dialog.
+     Same template for retour + standalone; the entête (badge) and the
+     prefilled fields are the only mode-driven differences. -->
+<p-dialog
+    [(visible)]="visible"
+    (visibleChange)="visibleChange.emit($event)"
+    [modal]="true"
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [dismissableMask]="false"
+    styleClass="pv-dialog"
+    [style]="{ width: '880px', maxWidth: 'calc(100vw - 2rem)' }"
+    [header]="''"
+>
+    <ng-template pTemplate="header">
+        <div class="pv-head">
+            <div class="pv-head__icon">📄</div>
+            <div class="pv-head__text">
+                <div class="pv-head__title">Procès-Verbal de Réunion</div>
+                <div class="pv-head__subtitle">
+                    <ng-container *ngIf="mode === 'retour'; else standaloneHdr">
+                        Retour {{ retourNiveau }} —
+                        <strong>{{ diIdnum || 'DI' }}</strong>
+                        <span *ngIf="retourMotif" class="pv-head__motif">
+                            · Motif : {{ retourMotif }}
+                        </span>
+                    </ng-container>
+                    <ng-template #standaloneHdr>
+                        Nouvelle réunion (mode autonome)
+                    </ng-template>
+                </div>
+            </div>
+        </div>
+    </ng-template>
+
+    <form [formGroup]="form" class="pv-form" *ngIf="form">
+        <!-- Identité réunion -->
+        <section class="pv-section">
+            <div class="pv-section__label">INFORMATIONS GÉNÉRALES</div>
+            <div class="pv-grid pv-grid--2">
+                <div class="pv-field pv-field--full">
+                    <label>Titre <span class="pv-req">*</span></label>
+                    <input
+                        pInputText
+                        formControlName="titre"
+                        placeholder="Ex. Retour 1 — DI42"
+                    />
+                </div>
+                <div class="pv-field pv-field--full">
+                    <label>Objet</label>
+                    <textarea
+                        pInputTextarea
+                        rows="2"
+                        formControlName="objet"
+                        placeholder="Synthèse du sujet abordé"
+                    ></textarea>
+                </div>
+                <div class="pv-field">
+                    <label>Date de la réunion <span class="pv-req">*</span></label>
+                    <p-calendar
+                        formControlName="dateReunion"
+                        [showTime]="true"
+                        [showIcon]="true"
+                        dateFormat="dd/mm/yy"
+                        appendTo="body"
+                    ></p-calendar>
+                </div>
+                <div class="pv-field">
+                    <label>Lieu</label>
+                    <input
+                        pInputText
+                        formControlName="lieu"
+                        placeholder="Salle A / lien Visio"
+                    />
+                </div>
+                <div class="pv-field">
+                    <label>Modalité</label>
+                    <p-dropdown
+                        formControlName="modalite"
+                        [options]="modaliteOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                    ></p-dropdown>
+                </div>
+                <div class="pv-field">
+                    <label>Prochaine réunion</label>
+                    <p-calendar
+                        formControlName="prochaineReunion"
+                        [showIcon]="true"
+                        dateFormat="dd/mm/yy"
+                        appendTo="body"
+                    ></p-calendar>
+                </div>
+            </div>
+        </section>
+
+        <!-- Participants -->
+        <section class="pv-section">
+            <div class="pv-section__label">PARTICIPANTS</div>
+            <div class="pv-field">
+                <p-multiSelect
+                    formControlName="participants"
+                    [options]="profiles"
+                    optionLabel="label"
+                    optionValue="_id"
+                    placeholder="Sélectionner les participants…"
+                    [filter]="true"
+                    [showHeader]="true"
+                    [maxSelectedLabels]="4"
+                    appendTo="body"
+                ></p-multiSelect>
+            </div>
+        </section>
+
+        <!-- Ordre du jour -->
+        <section class="pv-section">
+            <div class="pv-section__head">
+                <span class="pv-section__label">ORDRE DU JOUR</span>
+                <button
+                    pButton
+                    type="button"
+                    icon="pi pi-plus"
+                    label="Ajouter"
+                    class="pv-btn pv-btn--ghost"
+                    (click)="addOrdreLine()"
+                ></button>
+            </div>
+            <div
+                class="pv-line"
+                *ngFor="let ctrl of ordreDuJour.controls; let i = index"
+            >
+                <input
+                    pInputText
+                    [formControl]="$any(ctrl)"
+                    placeholder="Point n°{{ i + 1 }}"
+                />
+                <button
+                    pButton
+                    type="button"
+                    icon="pi pi-times"
+                    class="pv-btn pv-btn--del"
+                    [disabled]="ordreDuJour.length <= 1"
+                    (click)="removeOrdreLine(i)"
+                ></button>
+            </div>
+        </section>
+
+        <!-- Points discutés -->
+        <section class="pv-section">
+            <div class="pv-section__head">
+                <span class="pv-section__label">POINTS DISCUTÉS</span>
+                <button
+                    pButton
+                    type="button"
+                    icon="pi pi-plus"
+                    label="Ajouter"
+                    class="pv-btn pv-btn--ghost"
+                    (click)="addPoint()"
+                ></button>
+            </div>
+            <div
+                class="pv-block"
+                *ngFor="let g of pointsDiscutes.controls; let i = index"
+                [formGroup]="$any(g)"
+            >
+                <div class="pv-block__head">
+                    <input
+                        pInputText
+                        formControlName="titre"
+                        placeholder="Titre du point"
+                    />
+                    <button
+                        pButton
+                        type="button"
+                        icon="pi pi-times"
+                        class="pv-btn pv-btn--del"
+                        [disabled]="pointsDiscutes.length <= 1"
+                        (click)="removePoint(i)"
+                    ></button>
+                </div>
+                <textarea
+                    pInputTextarea
+                    rows="2"
+                    formControlName="contenu"
+                    placeholder="Détail / verbatim"
+                ></textarea>
+            </div>
+        </section>
+
+        <!-- Décisions -->
+        <section class="pv-section">
+            <div class="pv-section__head">
+                <span class="pv-section__label">DÉCISIONS</span>
+                <button
+                    pButton
+                    type="button"
+                    icon="pi pi-plus"
+                    label="Ajouter"
+                    class="pv-btn pv-btn--ghost"
+                    (click)="addDecisionLine()"
+                ></button>
+            </div>
+            <div
+                class="pv-line"
+                *ngFor="let ctrl of decisions.controls; let i = index"
+            >
+                <input
+                    pInputText
+                    [formControl]="$any(ctrl)"
+                    placeholder="Décision n°{{ i + 1 }}"
+                />
+                <button
+                    pButton
+                    type="button"
+                    icon="pi pi-times"
+                    class="pv-btn pv-btn--del"
+                    [disabled]="decisions.length <= 1"
+                    (click)="removeDecisionLine(i)"
+                ></button>
+            </div>
+        </section>
+
+        <!-- Actions -->
+        <section class="pv-section">
+            <div class="pv-section__head">
+                <span class="pv-section__label">ACTIONS À MENER</span>
+                <button
+                    pButton
+                    type="button"
+                    icon="pi pi-plus"
+                    label="Ajouter"
+                    class="pv-btn pv-btn--ghost"
+                    (click)="addAction()"
+                ></button>
+            </div>
+            <div
+                class="pv-action"
+                *ngFor="let g of actions.controls; let i = index"
+                [formGroup]="$any(g)"
+            >
+                <div class="pv-grid pv-grid--2">
+                    <div class="pv-field pv-field--full">
+                        <label>Titre</label>
+                        <input
+                            pInputText
+                            formControlName="titre"
+                            placeholder="Action n°{{ i + 1 }}"
+                        />
+                    </div>
+                    <div class="pv-field pv-field--full">
+                        <label>Description</label>
+                        <textarea
+                            pInputTextarea
+                            rows="2"
+                            formControlName="description"
+                        ></textarea>
+                    </div>
+                    <div class="pv-field">
+                        <label>Responsable</label>
+                        <p-dropdown
+                            formControlName="responsable"
+                            [options]="profiles"
+                            optionLabel="label"
+                            optionValue="_id"
+                            placeholder="—"
+                            [filter]="true"
+                            appendTo="body"
+                        ></p-dropdown>
+                    </div>
+                    <div class="pv-field">
+                        <label>Échéance</label>
+                        <p-calendar
+                            formControlName="echeance"
+                            [showIcon]="true"
+                            dateFormat="dd/mm/yy"
+                            appendTo="body"
+                        ></p-calendar>
+                    </div>
+                    <div class="pv-field">
+                        <label>Priorité</label>
+                        <p-dropdown
+                            formControlName="priorite"
+                            [options]="priorityOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            appendTo="body"
+                        ></p-dropdown>
+                    </div>
+                    <div class="pv-field">
+                        <label>Statut</label>
+                        <p-dropdown
+                            formControlName="statut"
+                            [options]="statutActionOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            appendTo="body"
+                        ></p-dropdown>
+                    </div>
+                </div>
+                <div class="pv-action__footer">
+                    <button
+                        pButton
+                        type="button"
+                        icon="pi pi-trash"
+                        label="Retirer"
+                        class="pv-btn pv-btn--del-text"
+                        [disabled]="actions.length <= 1"
+                        (click)="removeAction(i)"
+                    ></button>
+                </div>
+            </div>
+        </section>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="pv-footer">
+            <button
+                pButton
+                type="button"
+                label="Annuler"
+                class="pv-btn pv-btn--cancel"
+                [disabled]="saving"
+                (click)="cancel()"
+            ></button>
+            <button
+                pButton
+                type="button"
+                label="Enregistrer le PV"
+                icon="pi pi-check"
+                class="pv-btn pv-btn--save"
+                [loading]="saving"
+                [disabled]="saving"
+                (click)="submit()"
+            ></button>
+        </div>
+    </ng-template>
+</p-dialog>

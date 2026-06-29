@@ -9,6 +9,14 @@ const routes: Routes = [
                 (m) => m.TicketListModule
             ),
     },
+    {
+        // Reusable standalone component → loaded directly, no module wrap.
+        path: 'reunions',
+        loadComponent: () =>
+            import('./reunion-list/reunion-list.component').then(
+                (m) => m.ReunionListComponent
+            ),
+    },
 ];
 
 @NgModule({

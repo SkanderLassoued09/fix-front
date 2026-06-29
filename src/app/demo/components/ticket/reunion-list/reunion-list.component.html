@@ -1,0 +1,132 @@
+<div class="reu-shell">
+    <header class="reu-header">
+        <div class="reu-header__text">
+            <h2 class="reu-title">Réunions</h2>
+            <p class="reu-subtitle">
+                Procès-verbaux de réunion enregistrés sur la plateforme.
+            </p>
+        </div>
+        <div class="reu-header__actions">
+            <span class="p-input-icon-left reu-search">
+                <i class="pi pi-search"></i>
+                <input
+                    pInputText
+                    type="text"
+                    [(ngModel)]="filter"
+                    placeholder="Rechercher (référence, titre, lieu…)"
+                />
+            </span>
+            <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                label="Nouvelle réunion"
+                class="reu-cta"
+                (click)="createOpen = true"
+            ></button>
+        </div>
+    </header>
+
+    <div class="reu-table">
+        <p-table
+            [value]="filteredRows"
+            [paginator]="true"
+            [rows]="15"
+            [rowsPerPageOptions]="[10, 15, 25, 50]"
+            [loading]="loading"
+            styleClass="p-datatable-sm"
+            [tableStyle]="{ 'min-width': '60rem' }"
+            responsiveLayout="scroll"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Référence</th>
+                    <th>Titre</th>
+                    <th>Date</th>
+                    <th>Lieu</th>
+                    <th>Modalité</th>
+                    <th>DI liée</th>
+                    <th>Retour</th>
+                    <th>Statut</th>
+                    <th style="width: 140px; text-align: right">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-r>
+                <tr>
+                    <td class="reu-ref">{{ r.reference }}</td>
+                    <td class="reu-titre">{{ r.titre }}</td>
+                    <td>{{ r.dateReunion | date: 'dd/MM/yyyy HH:mm' }}</td>
+                    <td>{{ r.lieu || '—' }}</td>
+                    <td>{{ r.modalite || '—' }}</td>
+                    <td>
+                        <span *ngIf="r.di; else noDi" class="reu-di-chip"
+                            >🔗 lié</span
+                        >
+                        <ng-template #noDi>—</ng-template>
+                    </td>
+                    <td>
+                        <span
+                            *ngIf="r.contexteRetour?.niveau as n"
+                            class="reu-retour-chip"
+                            [attr.data-niveau]="n"
+                            >R{{ n }}</span
+                        >
+                        <span *ngIf="!r.contexteRetour?.niveau">—</span>
+                    </td>
+                    <td>
+                        <p-tag
+                            [value]="badgeLabel(r.statut)"
+                            [severity]="badgeSeverity(r.statut)"
+                        ></p-tag>
+                    </td>
+                    <td class="reu-actions">
+                        <button
+                            pButton
+                            type="button"
+                            icon="pi pi-eye"
+                            class="reu-row-btn reu-row-btn--view"
+                            pTooltip="Voir le détail"
+                            tooltipPosition="top"
+                            (click)="openDetails(r)"
+                        ></button>
+                        <button
+                            pButton
+                            type="button"
+                            icon="pi pi-file-pdf"
+                            class="reu-row-btn reu-row-btn--pdf"
+                            pTooltip="Télécharger en PDF"
+                            tooltipPosition="top"
+                            [loading]="isDownloading(r._id)"
+                            [disabled]="isDownloading(r._id)"
+                            (click)="downloadPdf(r)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="9" class="reu-empty">
+                        Aucun PV de réunion pour l'instant. Cliquez sur «
+                        Nouvelle réunion » pour en créer un.
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Reusable modal in standalone mode — no DI binding, no contexte
+         retour. Same component as the one fired from confirmRetour(). -->
+    <app-reunion-pv-modal
+        [(visible)]="createOpen"
+        mode="standalone"
+        (created)="onCreated()"
+        (cancelled)="onCancelled()"
+    ></app-reunion-pv-modal>
+
+    <!-- Read-only details viewer (eye button) — same instance is reused
+         across rows; we just swap the bound id. -->
+    <app-reunion-pv-details-modal
+        [(visible)]="detailsOpen"
+        [pvId]="detailsPvId"
+    ></app-reunion-pv-details-modal>
+</div>

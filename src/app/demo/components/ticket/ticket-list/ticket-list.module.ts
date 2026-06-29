@@ -50,6 +50,7 @@ import { TechRepairListComponent } from './tech-repair-list/tech-repair-list.com
 import { RepairModalComponent } from './tech-repair-list/repair-modal/repair-modal.component';
 import { PdfDropzoneComponent } from '../magasin-di-list/pdf-dropzone/pdf-dropzone.component';
 import { DiInfoModalComponent } from '../shared/di-info-modal/di-info-modal.component';
+import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-modal.component';
 
 @NgModule({
     declarations: [
@@ -108,6 +109,7 @@ import { DiInfoModalComponent } from '../shared/di-info-modal/di-info-modal.comp
         RepairModalComponent,
         PdfDropzoneComponent,
         DiInfoModalComponent,
+        ReunionPvModalComponent,
     ],
     providers: [ConfirmationService, MessageService],
 })

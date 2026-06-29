@@ -595,6 +595,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
     retourDialogVisible = false;
     retourMotifInput = '';
     retourTarget: any = null;
+
+    // ── ReunionPV modal (opened additively after a Retour transition) ──
+    // The transition itself runs untouched in confirmRetour(); this modal
+    // is purely documentary so cancelling it leaves the DI exactly where
+    // changeStatusRetour{N} left it. Set when we know the level + motif so
+    // the modal can pre-fill the contexte retour.
+    reunionPvModalVisible = false;
+    reunionPvDiId: string | null = null;
+    reunionPvDiIdnum: string | null = null;
+    reunionPvNiveau: 1 | 2 | 3 | null = null;
+    reunionPvMotif = '';
     totalDiCount: any;
     isLoading: boolean = true;
 
@@ -2585,7 +2596,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.retourDialogVisible = true;
     }
 
-    /** Confirm the retour: bump ignoreCount, then transition with the motif. */
+    /** Confirm the retour: bump ignoreCount, then transition with the motif.
+     *  After the transition fires, the ReunionPV modal is opened so the
+     *  coordinator can immediately log the meeting that triggered the
+     *  escalation. The transition itself is NOT coupled to the PV — closing
+     *  the modal without saving leaves the DI exactly where the Retour
+     *  transition placed it (no rollback). */
     confirmRetour() {
         const _idticket = this.retourTarget;
         if (!_idticket) return;
@@ -2598,13 +2614,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 this.isLoading = loading;
                 if (data) {
                     const updatedIgnoreCount = data.countIgnore.ignoreCount;
+                    let openedLevel: 1 | 2 | 3 | null = null;
 
                     if (updatedIgnoreCount === 1) {
                         this.changeStatusRetour1(_idticket._id, reason);
+                        openedLevel = 1;
                     } else if (updatedIgnoreCount === 2) {
                         this.changeStatusRetour2(_idticket._id, reason);
+                        openedLevel = 2;
                     } else if (updatedIgnoreCount === 3) {
                         this.changeStatusRetour3(_idticket._id, reason);
+                        openedLevel = 3;
                     }
 
                     const ticketIndex = this.diList.findIndex(
@@ -2614,12 +2634,42 @@ export class TicketListComponent implements OnInit, OnDestroy {
                         this.diList[ticketIndex].ignoreCount =
                             updatedIgnoreCount;
                     }
+
+                    // Documentary PV — fired AFTER the transition. Closing
+                    // the modal without saving must NOT undo the retour.
+                    if (openedLevel) {
+                        this.openReunionPv(_idticket, openedLevel, reason);
+                    }
                 }
                 this.retourDialogVisible = false;
                 this.retourTarget = null;
                 this.retourMotifInput = '';
                 this.cdr.detectChanges();
             });
+    }
+
+    /** Open the PV modal pre-filled with the DI + retour context. */
+    openReunionPv(
+        ticket: any,
+        niveau: 1 | 2 | 3,
+        motif: string,
+    ): void {
+        this.reunionPvDiId = ticket?._id ?? null;
+        this.reunionPvDiIdnum = ticket?._idnum ?? null;
+        this.reunionPvNiveau = niveau;
+        this.reunionPvMotif = motif;
+        this.reunionPvModalVisible = true;
+    }
+
+    onReunionPvCreated(evt: { _id: string; reference: string }): void {
+        // PV persisted backend-side; the inverse link `Di.pvReunions` was
+        // also pushed. Refresh the list so the new PV count surfaces.
+        this.loadData?.();
+    }
+
+    onReunionPvCancelled(): void {
+        // Pure UX: the retour transition has already fired and stays.
+        this.reunionPvModalVisible = false;
     }
 
     addCategoryDi() {

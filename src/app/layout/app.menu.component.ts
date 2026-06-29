@@ -15,38 +15,45 @@ export class AppMenuComponent implements OnInit {
     }
 
     ngOnInit() {
+        // Menu copy reference (used across every role's model below):
+        //   Group labels: « Tableau de bord », « Personnel », « Clients »,
+        //                 « Demandes d'intervention »
+        //   Items       : « Tableau de bord », « Personnel », « Clients »,
+        //                 « Sociétés », « Toutes les DI », « Coordination »,
+        //                 « Magasin », « Atelier technique », « Réunions »
+        // Routes are unchanged — only the user-visible labels move.
         if (this.role === 'ADMIN_MANAGER' || this.role === 'ADMIN_TECH') {
             this.model = [
                 {
-                    label: 'Dashboard',
+                    label: 'Tableau de bord',
                     items: [
                         {
-                            label: 'Statistique',
+                            label: 'Tableau de bord',
                             icon: 'pi pi-fw pi-chart-bar',
                             routerLink: ['/'],
                         },
                     ],
                 },
                 {
-                    label: 'Gestion STAFF',
+                    label: 'Personnel',
                     items: [
                         {
-                            label: 'STAFF',
+                            label: 'Personnel',
                             icon: 'pi pi-fw pi-users',
                             routerLink: ['/profiles/profile/profile-list'],
                         },
                     ],
                 },
                 {
-                    label: 'Gestion client',
+                    label: 'Clients',
                     items: [
                         {
-                            label: 'Client',
+                            label: 'Clients',
                             icon: 'pi pi-fw pi-user',
                             routerLink: ['/clients/client/client-list'],
                         },
                         {
-                            label: 'Company',
+                            label: 'Sociétés',
                             icon: 'pi pi-fw pi-building',
                             routerLink: ['/companies/company/company-list'],
                         },
@@ -54,27 +61,32 @@ export class AppMenuComponent implements OnInit {
                 },
 
                 {
-                    label: `Demande d'intervention`,
+                    label: `Demandes d'intervention`,
                     items: [
                         {
-                            label: 'Tous les DI',
+                            label: 'Toutes les DI',
                             icon: 'pi pi-fw pi-file',
                             routerLink: ['/tickets/ticket/ticket-list'],
                         },
                         {
-                            label: 'Coordinator-list',
+                            label: 'Coordination',
                             icon: 'pi pi-fw pi-check-square',
                             routerLink: ['/tickets/ticket/coordinator-di-list'],
                         },
                         {
-                            label: 'Magasin list',
+                            label: 'Magasin',
                             icon: 'pi pi-fw pi-bookmark',
                             routerLink: ['/tickets/ticket/magasin-di-list'],
                         },
                         {
-                            label: 'Tech list',
+                            label: 'Atelier technique',
                             icon: 'pi pi-fw pi-exclamation-circle',
                             routerLink: ['/tickets/ticket/tech-di-list'],
+                        },
+                        {
+                            label: 'Réunions',
+                            icon: 'pi pi-fw pi-comments',
+                            routerLink: ['/tickets/reunions'],
                         },
                     ],
                 },
@@ -84,10 +96,10 @@ export class AppMenuComponent implements OnInit {
         if (this.role === 'TECH') {
             this.model = [
                 {
-                    label: 'Dashboard',
+                    label: 'Tableau de bord',
                     items: [
                         {
-                            label: 'Statistique',
+                            label: 'Tableau de bord',
                             icon: 'pi pi-fw pi-chart-bar',
                             // routerLink: ['/'],
                         },
@@ -95,12 +107,17 @@ export class AppMenuComponent implements OnInit {
                 },
 
                 {
-                    label: `Demande d'intervention`,
+                    label: `Demandes d'intervention`,
                     items: [
                         {
-                            label: 'Tech list',
+                            label: 'Atelier technique',
                             icon: 'pi pi-fw pi-exclamation-circle',
                             routerLink: ['/tickets/ticket/tech-di-list'],
+                        },
+                        {
+                            label: 'Réunions',
+                            icon: 'pi pi-fw pi-comments',
+                            routerLink: ['/tickets/reunions'],
                         },
                     ],
                 },
@@ -110,35 +127,35 @@ export class AppMenuComponent implements OnInit {
         if (this.role === 'MANAGER') {
             this.model = [
                 {
-                    label: 'Dashboard',
+                    label: 'Tableau de bord',
                     items: [
                         {
-                            label: 'Statistique',
+                            label: 'Tableau de bord',
                             icon: 'pi pi-fw pi-chart-bar',
                             // routerLink: ['/'],
                         },
                     ],
                 },
                 {
-                    label: 'Gestion STAFF',
+                    label: 'Personnel',
                     items: [
                         {
-                            label: 'STAFF',
+                            label: 'Personnel',
                             icon: 'pi pi-fw pi-users',
                             routerLink: ['/profiles/profile/profile-list'],
                         },
                     ],
                 },
                 {
-                    label: 'Gestion client',
+                    label: 'Clients',
                     items: [
                         {
-                            label: 'Client',
+                            label: 'Clients',
                             icon: 'pi pi-fw pi-building',
                             routerLink: ['/clients/client/client-list'],
                         },
                         {
-                            label: 'Company',
+                            label: 'Sociétés',
                             icon: 'pi pi-fw pi-user',
                             routerLink: ['/companies/company/company-list'],
                         },
@@ -146,12 +163,17 @@ export class AppMenuComponent implements OnInit {
                 },
 
                 {
-                    label: `Demande d'intervention`,
+                    label: `Demandes d'intervention`,
                     items: [
                         {
-                            label: 'Tous les DI',
+                            label: 'Toutes les DI',
                             icon: 'pi pi-fw pi-file',
                             routerLink: ['/tickets/ticket/ticket-list'],
+                        },
+                        {
+                            label: 'Réunions',
+                            icon: 'pi pi-fw pi-comments',
+                            routerLink: ['/tickets/reunions'],
                         },
                     ],
                 },
@@ -160,39 +182,18 @@ export class AppMenuComponent implements OnInit {
 
         if (this.role === 'COORDIANTOR') {
             this.model = [
-                // {
-                //     label: 'Dashboard',
-                //     items: [
-                //         {
-                //             label: 'Statistique',
-                //             icon: 'pi pi-fw pi-chart-bar',
-                //             // routerLink: ['/'],
-                //         },
-                //     ],
-                // },
-                // {
-                //     label: 'Gestion STAFF',
-                //     items: [
-                //         {
-                //             label: 'STAFF',
-                //             icon: 'pi pi-fw pi-users',
-                //             routerLink: ['/profiles/profile/profile-list'],
-                //         },
-                //     ],
-                // },
-
                 {
-                    label: `Demande d'intervention`,
+                    label: `Demandes d'intervention`,
                     items: [
-                        // {
-                        //     label: 'Tous les DI',
-                        //     icon: 'pi pi-fw pi-file',
-                        //     routerLink: ['/tickets/ticket/ticket-list'],
-                        // },
                         {
-                            label: 'Coordinator-list',
+                            label: 'Coordination',
                             icon: 'pi pi-fw pi-check-square',
                             routerLink: ['/tickets/ticket/coordinator-di-list'],
+                        },
+                        {
+                            label: 'Réunions',
+                            icon: 'pi pi-fw pi-comments',
+                            routerLink: ['/tickets/reunions'],
                         },
                     ],
                 },
@@ -201,53 +202,11 @@ export class AppMenuComponent implements OnInit {
 
         if (this.role === 'MAGASIN') {
             this.model = [
-                // {
-                //     label: 'Dashboard',
-                //     items: [
-                //         {
-                //             label: 'Statistique',
-                //             icon: 'pi pi-fw pi-chart-bar',
-                //             // routerLink: ['/'],
-                //         },
-                //     ],
-                // },
-                // {
-                //     label: 'Gestion STAFF',
-                //     items: [
-                //         {
-                //             label: 'STAFF',
-                //             icon: 'pi pi-fw pi-users',
-                //             routerLink: ['/profiles/profile/profile-list'],
-                //         },
-                //     ],
-                // },
-                // {
-                //     label: 'Gestion client',
-                //     items: [
-                //         {
-                //             label: 'Client',
-                //             icon: 'pi pi-fw pi-building',
-                //             routerLink: ['/clients/client/client-list'],
-                //         },
-                //         {
-                //             label: 'Company',
-                //             icon: 'pi pi-fw pi-user',
-                //             routerLink: ['/companies/company/company-list'],
-                //         },
-                //     ],
-                // },
-
                 {
-                    label: `Demande d'intervention`,
+                    label: `Demandes d'intervention`,
                     items: [
-                        // {
-                        //     label: 'Tous les DI',
-                        //     icon: 'pi pi-fw pi-file',
-                        //     routerLink: ['/tickets/ticket/ticket-list'],
-                        // },
-
                         {
-                            label: 'Magasin list',
+                            label: 'Magasin',
                             icon: 'pi pi-fw pi-bookmark',
                             routerLink: ['/tickets/ticket/magasin-di-list'],
                         },

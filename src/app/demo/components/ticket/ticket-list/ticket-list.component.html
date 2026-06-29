@@ -2345,6 +2345,20 @@
     context="interventions"
 ></app-di-info-modal>
 
+<!-- Procès-Verbal de Réunion — opened after a Retour transition fired
+     in confirmRetour(). The transition itself runs independently;
+     cancelling this modal does NOT roll the DI back. -->
+<app-reunion-pv-modal
+    [(visible)]="reunionPvModalVisible"
+    mode="retour"
+    [diId]="reunionPvDiId"
+    [diIdnum]="reunionPvDiIdnum"
+    [retourNiveau]="reunionPvNiveau"
+    [retourMotif]="reunionPvMotif"
+    (created)="onReunionPvCreated($event)"
+    (cancelled)="onReunionPvCancelled()"
+></app-reunion-pv-modal>
+
 <!-- ═══════════════════════════════════════════════
      MODAL — MOTIF DU RETOUR
 ════════════════════════════════════════════════ -->
