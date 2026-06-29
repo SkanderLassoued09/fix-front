@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
+    AbstractControl,
     FormArray,
     FormBuilder,
     FormGroup,
@@ -21,13 +22,7 @@ import { firstValueFrom } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
-import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputTextareaModule } from 'primeng/inputtextarea';
 import { CalendarModule } from 'primeng/calendar';
-import { DropdownModule } from 'primeng/dropdown';
-import { MultiSelectModule } from 'primeng/multiselect';
-import { TooltipModule } from 'primeng/tooltip';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { ReunionPvService } from 'src/app/demo/service/reunion-pv.service';
@@ -35,45 +30,133 @@ import { ReunionPvService } from 'src/app/demo/service/reunion-pv.service';
 /** Mode controls pre-fill + which fields are visible. */
 export type ReunionPvModalMode = 'retour' | 'standalone';
 
+/** Section-rail keys, in display order. */
+export type PvSection =
+    | 'infos'
+    | 'part'
+    | 'ordre'
+    | 'points'
+    | 'dec'
+    | 'actions'
+    | 'fivem';
+
+/** 5M / Ishikawa family keys, in display order (mo, mt, mi, ma, me). */
+export type FamilyKey = 'mo' | 'mt' | 'mi' | 'ma' | 'me';
+
+interface FamilyMeta {
+    key: FamilyKey;
+    label: string;
+    color: string;
+    tint: string;
+    desc: string;
+}
+
 interface ProfileOption {
     _id: string;
     label: string;
     role?: string;
 }
 
+/** Static 5M metadata — colors/tints/descriptions straight from the spec. */
+const FAMILIES: readonly FamilyMeta[] = [
+    {
+        key: 'mo',
+        label: "Main-d'œuvre",
+        color: '#2f6bff',
+        tint: '#eef3ff',
+        desc: 'Compétences, formation, motivation',
+    },
+    {
+        key: 'mt',
+        label: 'Matériel',
+        color: '#1f9d73',
+        tint: '#e7f6ef',
+        desc: 'Équipements, machines, logiciels',
+    },
+    {
+        key: 'mi',
+        label: 'Milieu',
+        color: '#d8567a',
+        tint: '#fcecf1',
+        desc: 'Environnement, conditions',
+    },
+    {
+        key: 'ma',
+        label: 'Matière',
+        color: '#7C6FE0',
+        tint: '#f3f0fd',
+        desc: 'Matières premières, composants',
+    },
+    {
+        key: 'me',
+        label: 'Méthode',
+        color: '#e8943a',
+        tint: '#fdf3e6',
+        desc: 'Processus, procédures',
+    },
+];
+
+/** Seeded candidate causes per family (the guided checklist). */
+const SEEDED_CAUSES: Record<FamilyKey, string[]> = {
+    mo: [
+        'Manque de formation',
+        'Surcharge de travail',
+        'Communication insuffisante',
+        'Compétences inadaptées',
+        'Turnover / absentéisme',
+    ],
+    mt: [
+        'Équipement défaillant',
+        'Maintenance insuffisante',
+        'Outils inadaptés',
+        'Logiciel obsolète',
+        'Capacité insuffisante',
+    ],
+    mi: [
+        'Espace de travail inadapté',
+        'Bruit / éclairage',
+        'Pression / délais',
+        'Conditions climatiques',
+        'Organisation des locaux',
+    ],
+    ma: [
+        'Qualité matière première',
+        'Rupture de stock',
+        'Composant non conforme',
+        'Variabilité fournisseur',
+        'Stockage inadapté',
+    ],
+    me: [
+        'Procédure non définie',
+        'Mode opératoire flou',
+        'Absence de contrôle',
+        'Processus inadapté',
+        'Documentation manquante',
+    ],
+};
+
 /**
- * Procès-Verbal de Réunion — reusable PrimeNG dialog.
+ * Procès-Verbal de Réunion — reusable PrimeNG dialog (high-fidelity redesign).
+ *
+ * Layout: a left **section rail** + **content pane**, so every input is one
+ * click away (no long scroll). Sections: Informations · Participants · Ordre du
+ * jour · Points discutés · Décisions · Actions · 5M·Ishikawa. The list sections
+ * show a live count badge in the rail.
  *
  *   - mode='retour' (current entry point): pre-fills the DI ref + retour
- *     level coming from the parent (ticket-list). The Retour transition
- *     ITSELF is NOT triggered here — it already fired before the modal
- *     opened. This PV is documentary; cancelling it leaves the Retour
- *     transition intact.
- *   - mode='standalone' (future Réunions menu): no DI, no contexte
- *     retour. Same form, same submit path.
+ *     level coming from the parent (ticket-list). The Retour transition ITSELF
+ *     is NOT triggered here — it already fired before the modal opened.
+ *   - mode='standalone' (Réunions menu): no DI, no contexte retour.
  *
- * On submit: runs `createReunionPV` through MutationRunner (anti
- * double-submit + serialized cascade pattern used across the app), then
- * emits `created` so the parent can refresh its list. On cancel: emits
- * `cancelled` and resets the form. The dialog itself never auto-closes
- * on submit failure — the toast surfaces the error and the user can
- * retry.
+ * On submit: runs `createReunionPV` through MutationRunner (anti double-submit
+ * + serialized cascade), then emits `created`. The 5M analysis persists only
+ * the *retained* (checked) causes per family — the seeded checklist is a UI
+ * affordance, not data. Lieu/Modalité were intentionally dropped from the form.
  */
 @Component({
     selector: 'app-reunion-pv-modal',
     standalone: true,
-    imports: [
-        CommonModule,
-        ReactiveFormsModule,
-        DialogModule,
-        ButtonModule,
-        InputTextModule,
-        InputTextareaModule,
-        CalendarModule,
-        DropdownModule,
-        MultiSelectModule,
-        TooltipModule,
-    ],
+    imports: [CommonModule, ReactiveFormsModule, DialogModule, CalendarModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './reunion-pv-modal.component.html',
     styleUrls: ['./reunion-pv-modal.component.scss'],
@@ -90,11 +173,6 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
     @Output() created = new EventEmitter<{ _id: string; reference: string }>();
     @Output() cancelled = new EventEmitter<void>();
 
-    readonly modaliteOptions = [
-        { label: 'Présentiel', value: 'PRESENTIEL' },
-        { label: 'Visio', value: 'VISIO' },
-        { label: 'Hybride', value: 'HYBRIDE' },
-    ];
     readonly priorityOptions = [
         { label: 'Basse', value: 'BASSE' },
         { label: 'Moyenne', value: 'MOYENNE' },
@@ -105,6 +183,12 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         { label: 'En cours', value: 'EN_COURS' },
         { label: 'Terminé', value: 'TERMINE' },
     ];
+
+    readonly families = FAMILIES;
+
+    /** Active rail section + the single open 5M family. */
+    activeSection: PvSection = 'infos';
+    openFamily: FamilyKey | null = 'mo';
 
     profiles: ProfileOption[] = [];
     saving = false;
@@ -132,8 +216,9 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['visible'] && this.visible && this.form) {
-            // Re-prefill every time the parent re-opens the modal (the DI
-            // and retour level may have changed between two opens).
+            // Re-prefill + reset navigation every time the parent re-opens.
+            this.activeSection = 'infos';
+            this.openFamily = 'mo';
             this.applyPrefill();
         }
     }
@@ -145,23 +230,21 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
             titre: ['', [Validators.required, Validators.maxLength(200)]],
             objet: [''],
             dateReunion: [new Date(), Validators.required],
-            lieu: [''],
-            modalite: ['PRESENTIEL'],
             participants: [[] as string[]],
             ordreDuJour: this.fb.array<any>([this.fb.control('')]),
             decisions: this.fb.array<any>([this.fb.control('')]),
             pointsDiscutes: this.fb.array<any>([this.makePointGroup()]),
             actions: this.fb.array<any>([this.makeActionGroup()]),
             prochaineReunion: [null as Date | null],
+            // 5M / Ishikawa
+            problemeAnalyse: [''],
+            ishikawa: this.buildIshikawaGroup(),
         });
         this.applyPrefill();
     }
 
     private makePointGroup(): FormGroup {
-        return this.fb.group({
-            titre: [''],
-            contenu: [''],
-        });
+        return this.fb.group({ titre: [''], contenu: [''] });
     }
 
     private makeActionGroup(): FormGroup {
@@ -175,6 +258,30 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         });
     }
 
+    private makeCauseGroup(
+        label: string,
+        checked = false,
+        custom = false,
+    ): FormGroup {
+        return this.fb.group({
+            label: [label],
+            checked: [checked],
+            detail: [''],
+            custom: [custom],
+        });
+    }
+
+    /** FormGroup<mo|mt|mi|ma|me: FormArray<causeGroup>> seeded from the spec. */
+    private buildIshikawaGroup(): FormGroup {
+        const group: Record<string, FormArray> = {};
+        for (const fam of FAMILIES) {
+            group[fam.key] = this.fb.array(
+                SEEDED_CAUSES[fam.key].map((label) => this.makeCauseGroup(label)),
+            );
+        }
+        return this.fb.group(group);
+    }
+
     private applyPrefill(): void {
         if (this.mode === 'retour' && this.retourNiveau) {
             const titre =
@@ -185,17 +292,18 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
                 (this.retourMotif
                     ? `Motif: ${this.retourMotif}`
                     : `Analyse du retour niveau ${this.retourNiveau}`);
-            this.form.patchValue({ titre, objet });
+            const probleme =
+                this.form.value.problemeAnalyse ||
+                (this.diIdnum
+                    ? `Cause racine du retour ${this.retourNiveau} — ${this.diIdnum}`
+                    : '');
+            this.form.patchValue({ titre, objet, problemeAnalyse: probleme });
         }
     }
 
     // ── Profiles loader ──────────────────────────────────────────────
 
     private loadProfiles(): void {
-        // Reuses the existing getAllProfile query. 200/1000 is enough to
-        // cover the whole staff table — there are typically < 100 active
-        // profiles. Failure here is non-blocking (the user can still type
-        // the participants list manually); we just log and continue.
         this.apollo
             .query<any>({
                 query: this.profileService.getAllProfile(200, 0),
@@ -207,7 +315,8 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
                     this.profiles = rows.map((p: any) => ({
                         _id: p._id,
                         role: p.role,
-                        label: `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() ||
+                        label:
+                            `${p.firstName ?? ''} ${p.lastName ?? ''}`.trim() ||
                             p.username ||
                             p._id,
                     }));
@@ -216,6 +325,25 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
                     /* silent — modal stays usable without the dropdown */
                 },
             });
+    }
+
+    // ── Section rail ────────────────────────────────────────────────
+
+    setSection(section: PvSection): void {
+        this.activeSection = section;
+    }
+
+    get nOrdre(): number {
+        return this.ordreDuJour.length;
+    }
+    get nPoints(): number {
+        return this.pointsDiscutes.length;
+    }
+    get nDec(): number {
+        return this.decisions.length;
+    }
+    get nActions(): number {
+        return this.actions.length;
     }
 
     // ── Dynamic list helpers ────────────────────────────────────────
@@ -258,11 +386,118 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         if (this.actions.length > 1) this.actions.removeAt(i);
     }
 
+    // ── Participants (select → chips) ───────────────────────────────
+
+    get selectedParticipants(): string[] {
+        return (this.form.get('participants')?.value as string[]) ?? [];
+    }
+
+    /** Profiles not yet selected — the live options for the add-select. */
+    get availableProfiles(): ProfileOption[] {
+        const chosen = new Set(this.selectedParticipants);
+        return this.profiles.filter((p) => !chosen.has(p._id));
+    }
+
+    onAddParticipant(event: Event): void {
+        const select = event.target as HTMLSelectElement;
+        const id = select.value;
+        if (id && !this.selectedParticipants.includes(id)) {
+            this.form
+                .get('participants')
+                ?.setValue([...this.selectedParticipants, id]);
+        }
+        select.value = ''; // reset back to placeholder
+    }
+
+    removeParticipant(id: string): void {
+        this.form
+            .get('participants')
+            ?.setValue(this.selectedParticipants.filter((x) => x !== id));
+    }
+
+    participantLabel(id: string): string {
+        return this.profiles.find((p) => p._id === id)?.label ?? id;
+    }
+
+    // ── 5M / Ishikawa ───────────────────────────────────────────────
+
+    private ishikawaGroup(): FormGroup {
+        return this.form.get('ishikawa') as FormGroup;
+    }
+
+    familyArray(key: FamilyKey): FormArray {
+        return this.ishikawaGroup().get(key) as FormArray;
+    }
+
+    familyCauses(key: FamilyKey): FormGroup[] {
+        return this.familyArray(key).controls as FormGroup[];
+    }
+
+    isFamilyOpen(key: FamilyKey): boolean {
+        return this.openFamily === key;
+    }
+
+    toggleFamily(key: FamilyKey): void {
+        this.openFamily = this.openFamily === key ? null : key;
+    }
+
+    isCauseChecked(group: AbstractControl): boolean {
+        return !!group.get('checked')?.value;
+    }
+
+    toggleCause(group: AbstractControl): void {
+        const ctrl = group.get('checked');
+        ctrl?.setValue(!ctrl.value);
+    }
+
+    addCause(key: FamilyKey): void {
+        // Custom cause starts checked so its detail input shows immediately.
+        this.familyArray(key).push(this.makeCauseGroup('', true, true));
+    }
+
+    removeCause(key: FamilyKey, index: number): void {
+        this.familyArray(key).removeAt(index);
+    }
+
+    familyCount(key: FamilyKey): number {
+        return this.familyCauses(key).filter((g) => this.isCauseChecked(g))
+            .length;
+    }
+
+    get totalCauses(): number {
+        return FAMILIES.reduce((n, f) => n + this.familyCount(f.key), 0);
+    }
+
+    /** Header tint when ≥1 cause retained, neutral otherwise. */
+    familyHeadBg(fam: FamilyMeta): string {
+        return this.familyCount(fam.key) ? fam.tint : '#fafbfd';
+    }
+
     // ── Submit / cancel ─────────────────────────────────────────────
+
+    private buildIshikawaPayload(): any | null {
+        const probleme = (this.form.value.problemeAnalyse || '').trim();
+        const familles = FAMILIES.map((fam) => {
+            const causes = this.familyCauses(fam.key)
+                .map((g) => g.value)
+                .filter((c) => c.checked && (c.label || '').trim().length)
+                .map((c) => ({
+                    label: (c.label || '').trim(),
+                    detail: (c.detail || '').trim(),
+                    custom: !!c.custom,
+                }));
+            return { key: fam.key, label: fam.label, causes };
+        }).filter((f) => f.causes.length);
+
+        if (!probleme && !familles.length) return null;
+        return { probleme, familles };
+    }
 
     async submit(): Promise<void> {
         if (this.form.invalid) {
             this.form.markAllAsTouched();
+            // Surface the validation error on the section that owns it.
+            this.activeSection = 'infos';
             return;
         }
         if (!this.currentUserId) {
@@ -278,16 +513,11 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
             titre: (v.titre || '').trim(),
             objet: (v.objet || '').trim(),
             dateReunion: v.dateReunion,
-            lieu: (v.lieu || '').trim(),
-            modalite: v.modalite,
             createdById: this.currentUserId,
             diId: this.mode === 'retour' ? this.diId : null,
             contexteRetour:
                 this.mode === 'retour' && this.retourNiveau
-                    ? {
-                          niveau: this.retourNiveau,
-                          motif: this.retourMotif || '',
-                      }
+                    ? { niveau: this.retourNiveau, motif: this.retourMotif || '' }
                     : null,
             participants: (v.participants || []).map((id: string) => ({
                 profile: id,
@@ -302,9 +532,10 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
             pointsDiscutes: (v.pointsDiscutes || []).filter(
                 (p: any) => (p.titre || '').trim().length,
             ),
-            actions: (v.actions || []).filter((a: any) =>
-                (a.titre || '').trim().length,
+            actions: (v.actions || []).filter(
+                (a: any) => (a.titre || '').trim().length,
             ),
+            ishikawa: this.buildIshikawaPayload(),
             prochaineReunion: v.prochaineReunion ?? null,
             statut: 'BROUILLON',
         };
@@ -342,14 +573,15 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
     private close(): void {
         this.visible = false;
         this.visibleChange.emit(false);
+        this.activeSection = 'infos';
+        this.openFamily = 'mo';
         this.form?.reset({
             titre: '',
             objet: '',
             dateReunion: new Date(),
-            lieu: '',
-            modalite: 'PRESENTIEL',
             participants: [],
             prochaineReunion: null,
+            problemeAnalyse: '',
         });
         // Rebuild dynamic arrays — `reset` keeps the existing controls.
         while (this.ordreDuJour.length > 1) this.ordreDuJour.removeAt(1);
@@ -367,6 +599,8 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
             priorite: 'MOYENNE',
             statut: 'A_FAIRE',
         });
+        // Rebuild the 5M group back to its seeded, unchecked baseline.
+        this.form.setControl('ishikawa', this.buildIshikawaGroup());
     }
 
     // Avoid leaking the apollo+rxjs symbols in unused-imports lint —

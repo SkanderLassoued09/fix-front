@@ -1,339 +1,696 @@
-<!-- Procès-Verbal de Réunion — reusable PrimeNG dialog.
-     Same template for retour + standalone; the entête (badge) and the
-     prefilled fields are the only mode-driven differences. -->
+<!-- Procès-Verbal de Réunion — high-fidelity redesign.
+     Shell = p-dialog (chrome hidden); inside: header · (rail + content) · footer.
+     Native styled inputs match the diagnostic-modal precedent; p-calendar is
+     kept for real date-picking. Dynamic 5M colors come from family metadata. -->
 <p-dialog
     [(visible)]="visible"
     (visibleChange)="visibleChange.emit($event)"
     [modal]="true"
-    [closable]="true"
+    [closable]="false"
     [draggable]="false"
     [resizable]="false"
     [dismissableMask]="false"
+    [showHeader]="false"
+    [contentStyle]="{ padding: '0' }"
     styleClass="pv-dialog"
-    [style]="{ width: '880px', maxWidth: 'calc(100vw - 2rem)' }"
-    [header]="''"
+    [style]="{ width: '1000px', maxWidth: 'calc(100vw - 2rem)' }"
 >
-    <ng-template pTemplate="header">
-        <div class="pv-head">
-            <div class="pv-head__icon">📄</div>
+    <div class="pv-modal" *ngIf="form">
+        <!-- ── HEADER ─────────────────────────────────────────────── -->
+        <header class="pv-head">
+            <span class="pv-head__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <path d="M14 2v6h6" />
+                    <path d="M8 13h8M8 17h6" />
+                </svg>
+            </span>
             <div class="pv-head__text">
                 <div class="pv-head__title">Procès-Verbal de Réunion</div>
                 <div class="pv-head__subtitle">
                     <ng-container *ngIf="mode === 'retour'; else standaloneHdr">
-                        Retour {{ retourNiveau }} —
+                        Retour {{ retourNiveau }} ·
                         <strong>{{ diIdnum || 'DI' }}</strong>
-                        <span *ngIf="retourMotif" class="pv-head__motif">
-                            · Motif : {{ retourMotif }}
-                        </span>
+                        <span *ngIf="retourMotif"> · Motif : {{ retourMotif }}</span>
                     </ng-container>
-                    <ng-template #standaloneHdr>
-                        Nouvelle réunion (mode autonome)
-                    </ng-template>
+                    <ng-template #standaloneHdr
+                        >Nouvelle réunion · mode autonome</ng-template
+                    >
                 </div>
             </div>
-        </div>
-    </ng-template>
-
-    <form [formGroup]="form" class="pv-form" *ngIf="form">
-        <!-- Identité réunion -->
-        <section class="pv-section">
-            <div class="pv-section__label">INFORMATIONS GÉNÉRALES</div>
-            <div class="pv-grid pv-grid--2">
-                <div class="pv-field pv-field--full">
-                    <label>Titre <span class="pv-req">*</span></label>
-                    <input
-                        pInputText
-                        formControlName="titre"
-                        placeholder="Ex. Retour 1 — DI42"
-                    />
-                </div>
-                <div class="pv-field pv-field--full">
-                    <label>Objet</label>
-                    <textarea
-                        pInputTextarea
-                        rows="2"
-                        formControlName="objet"
-                        placeholder="Synthèse du sujet abordé"
-                    ></textarea>
-                </div>
-                <div class="pv-field">
-                    <label>Date de la réunion <span class="pv-req">*</span></label>
-                    <p-calendar
-                        formControlName="dateReunion"
-                        [showTime]="true"
-                        [showIcon]="true"
-                        dateFormat="dd/mm/yy"
-                        appendTo="body"
-                    ></p-calendar>
-                </div>
-                <div class="pv-field">
-                    <label>Lieu</label>
-                    <input
-                        pInputText
-                        formControlName="lieu"
-                        placeholder="Salle A / lien Visio"
-                    />
-                </div>
-                <div class="pv-field">
-                    <label>Modalité</label>
-                    <p-dropdown
-                        formControlName="modalite"
-                        [options]="modaliteOptions"
-                        optionLabel="label"
-                        optionValue="value"
-                        appendTo="body"
-                    ></p-dropdown>
-                </div>
-                <div class="pv-field">
-                    <label>Prochaine réunion</label>
-                    <p-calendar
-                        formControlName="prochaineReunion"
-                        [showIcon]="true"
-                        dateFormat="dd/mm/yy"
-                        appendTo="body"
-                    ></p-calendar>
-                </div>
-            </div>
-        </section>
-
-        <!-- Participants -->
-        <section class="pv-section">
-            <div class="pv-section__label">PARTICIPANTS</div>
-            <div class="pv-field">
-                <p-multiSelect
-                    formControlName="participants"
-                    [options]="profiles"
-                    optionLabel="label"
-                    optionValue="_id"
-                    placeholder="Sélectionner les participants…"
-                    [filter]="true"
-                    [showHeader]="true"
-                    [maxSelectedLabels]="4"
-                    appendTo="body"
-                ></p-multiSelect>
-            </div>
-        </section>
-
-        <!-- Ordre du jour -->
-        <section class="pv-section">
-            <div class="pv-section__head">
-                <span class="pv-section__label">ORDRE DU JOUR</span>
-                <button
-                    pButton
-                    type="button"
-                    icon="pi pi-plus"
-                    label="Ajouter"
-                    class="pv-btn pv-btn--ghost"
-                    (click)="addOrdreLine()"
-                ></button>
-            </div>
-            <div
-                class="pv-line"
-                *ngFor="let ctrl of ordreDuJour.controls; let i = index"
+            <button
+                type="button"
+                class="pv-head__close"
+                aria-label="Fermer"
+                (click)="cancel()"
             >
-                <input
-                    pInputText
-                    [formControl]="$any(ctrl)"
-                    placeholder="Point n°{{ i + 1 }}"
-                />
-                <button
-                    pButton
-                    type="button"
-                    icon="pi pi-times"
-                    class="pv-btn pv-btn--del"
-                    [disabled]="ordreDuJour.length <= 1"
-                    (click)="removeOrdreLine(i)"
-                ></button>
-            </div>
-        </section>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+        </header>
 
-        <!-- Points discutés -->
-        <section class="pv-section">
-            <div class="pv-section__head">
-                <span class="pv-section__label">POINTS DISCUTÉS</span>
-                <button
-                    pButton
-                    type="button"
-                    icon="pi pi-plus"
-                    label="Ajouter"
-                    class="pv-btn pv-btn--ghost"
-                    (click)="addPoint()"
-                ></button>
-            </div>
-            <div
-                class="pv-block"
-                *ngFor="let g of pointsDiscutes.controls; let i = index"
-                [formGroup]="$any(g)"
-            >
-                <div class="pv-block__head">
-                    <input
-                        pInputText
-                        formControlName="titre"
-                        placeholder="Titre du point"
-                    />
-                    <button
-                        pButton
-                        type="button"
-                        icon="pi pi-times"
-                        class="pv-btn pv-btn--del"
-                        [disabled]="pointsDiscutes.length <= 1"
-                        (click)="removePoint(i)"
-                    ></button>
-                </div>
-                <textarea
-                    pInputTextarea
-                    rows="2"
-                    formControlName="contenu"
-                    placeholder="Détail / verbatim"
-                ></textarea>
-            </div>
-        </section>
+        <!-- ── BODY : rail + content ──────────────────────────────── -->
+        <div class="pv-body">
+            <!-- RAIL -->
+            <nav class="pv-rail">
+                <div class="pv-rail__eyebrow">SECTIONS</div>
 
-        <!-- Décisions -->
-        <section class="pv-section">
-            <div class="pv-section__head">
-                <span class="pv-section__label">DÉCISIONS</span>
                 <button
-                    pButton
                     type="button"
-                    icon="pi pi-plus"
-                    label="Ajouter"
-                    class="pv-btn pv-btn--ghost"
-                    (click)="addDecisionLine()"
-                ></button>
-            </div>
-            <div
-                class="pv-line"
-                *ngFor="let ctrl of decisions.controls; let i = index"
-            >
-                <input
-                    pInputText
-                    [formControl]="$any(ctrl)"
-                    placeholder="Décision n°{{ i + 1 }}"
-                />
-                <button
-                    pButton
-                    type="button"
-                    icon="pi pi-times"
-                    class="pv-btn pv-btn--del"
-                    [disabled]="decisions.length <= 1"
-                    (click)="removeDecisionLine(i)"
-                ></button>
-            </div>
-        </section>
+                    class="pv-rail__item"
+                    [class.pv-rail__item--active]="activeSection === 'infos'"
+                    (click)="setSection('infos')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12" y2="8" />
+                    </svg>
+                    <span class="pv-rail__label">Informations</span>
+                </button>
 
-        <!-- Actions -->
-        <section class="pv-section">
-            <div class="pv-section__head">
-                <span class="pv-section__label">ACTIONS À MENER</span>
                 <button
-                    pButton
                     type="button"
-                    icon="pi pi-plus"
-                    label="Ajouter"
-                    class="pv-btn pv-btn--ghost"
-                    (click)="addAction()"
-                ></button>
-            </div>
-            <div
-                class="pv-action"
-                *ngFor="let g of actions.controls; let i = index"
-                [formGroup]="$any(g)"
-            >
-                <div class="pv-grid pv-grid--2">
-                    <div class="pv-field pv-field--full">
-                        <label>Titre</label>
+                    class="pv-rail__item"
+                    [class.pv-rail__item--active]="activeSection === 'part'"
+                    (click)="setSection('part')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    </svg>
+                    <span class="pv-rail__label">Participants</span>
+                </button>
+
+                <button
+                    type="button"
+                    class="pv-rail__item"
+                    [class.pv-rail__item--active]="activeSection === 'ordre'"
+                    (click)="setSection('ordre')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <line x1="8" y1="6" x2="21" y2="6" />
+                        <line x1="8" y1="12" x2="21" y2="12" />
+                        <line x1="8" y1="18" x2="21" y2="18" />
+                        <line x1="3" y1="6" x2="3.01" y2="6" />
+                        <line x1="3" y1="12" x2="3.01" y2="12" />
+                        <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
+                    <span class="pv-rail__label">Ordre du jour</span>
+                    <span
+                        class="pv-rail__badge"
+                        [class.pv-rail__badge--active]="activeSection === 'ordre'"
+                        >{{ nOrdre }}</span
+                    >
+                </button>
+
+                <button
+                    type="button"
+                    class="pv-rail__item"
+                    [class.pv-rail__item--active]="activeSection === 'points'"
+                    (click)="setSection('points')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span class="pv-rail__label">Points discutés</span>
+                    <span
+                        class="pv-rail__badge"
+                        [class.pv-rail__badge--active]="activeSection === 'points'"
+                        >{{ nPoints }}</span
+                    >
+                </button>
+
+                <button
+                    type="button"
+                    class="pv-rail__item"
+                    [class.pv-rail__item--active]="activeSection === 'dec'"
+                    (click)="setSection('dec')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M9 11l3 3L22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                    </svg>
+                    <span class="pv-rail__label">Décisions</span>
+                    <span
+                        class="pv-rail__badge"
+                        [class.pv-rail__badge--active]="activeSection === 'dec'"
+                        >{{ nDec }}</span
+                    >
+                </button>
+
+                <button
+                    type="button"
+                    class="pv-rail__item"
+                    [class.pv-rail__item--active]="activeSection === 'actions'"
+                    (click)="setSection('actions')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
+                    <span class="pv-rail__label">Actions à mener</span>
+                    <span
+                        class="pv-rail__badge"
+                        [class.pv-rail__badge--active]="activeSection === 'actions'"
+                        >{{ nActions }}</span
+                    >
+                </button>
+
+                <button
+                    type="button"
+                    class="pv-rail__item"
+                    [class.pv-rail__item--active]="activeSection === 'fivem'"
+                    (click)="setSection('fivem')"
+                >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M2 12h7l2-3 3 6 2-3h6" />
+                        <circle cx="20" cy="12" r="1.6" fill="currentColor" stroke="none" />
+                    </svg>
+                    <span class="pv-rail__label">5M · Ishikawa</span>
+                </button>
+            </nav>
+
+            <!-- CONTENT -->
+            <div class="pv-content pv-scroll" [formGroup]="form">
+                <!-- ===== INFORMATIONS ===== -->
+                <section *ngIf="activeSection === 'infos'">
+                    <div class="pv-eyebrow">INFORMATIONS GÉNÉRALES</div>
+
+                    <div class="pv-field">
+                        <label
+                            >Titre <span class="pv-req">*</span></label
+                        >
                         <input
-                            pInputText
+                            class="pv-input"
+                            type="text"
                             formControlName="titre"
-                            placeholder="Action n°{{ i + 1 }}"
+                            placeholder="Ex. Retour 1 — DI42"
                         />
                     </div>
-                    <div class="pv-field pv-field--full">
-                        <label>Description</label>
+
+                    <div class="pv-field">
+                        <label>Objet</label>
                         <textarea
-                            pInputTextarea
+                            class="pv-input pv-textarea"
                             rows="2"
-                            formControlName="description"
+                            formControlName="objet"
+                            placeholder="Synthèse du sujet abordé"
                         ></textarea>
                     </div>
-                    <div class="pv-field">
-                        <label>Responsable</label>
-                        <p-dropdown
-                            formControlName="responsable"
-                            [options]="profiles"
-                            optionLabel="label"
-                            optionValue="_id"
-                            placeholder="—"
-                            [filter]="true"
-                            appendTo="body"
-                        ></p-dropdown>
-                    </div>
-                    <div class="pv-field">
-                        <label>Échéance</label>
-                        <p-calendar
-                            formControlName="echeance"
-                            [showIcon]="true"
-                            dateFormat="dd/mm/yy"
-                            appendTo="body"
-                        ></p-calendar>
-                    </div>
-                    <div class="pv-field">
-                        <label>Priorité</label>
-                        <p-dropdown
-                            formControlName="priorite"
-                            [options]="priorityOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            appendTo="body"
-                        ></p-dropdown>
-                    </div>
-                    <div class="pv-field">
-                        <label>Statut</label>
-                        <p-dropdown
-                            formControlName="statut"
-                            [options]="statutActionOptions"
-                            optionLabel="label"
-                            optionValue="value"
-                            appendTo="body"
-                        ></p-dropdown>
-                    </div>
-                </div>
-                <div class="pv-action__footer">
-                    <button
-                        pButton
-                        type="button"
-                        icon="pi pi-trash"
-                        label="Retirer"
-                        class="pv-btn pv-btn--del-text"
-                        [disabled]="actions.length <= 1"
-                        (click)="removeAction(i)"
-                    ></button>
-                </div>
-            </div>
-        </section>
-    </form>
 
-    <ng-template pTemplate="footer">
-        <div class="pv-footer">
+                    <div class="pv-grid-2">
+                        <div class="pv-field">
+                            <label
+                                >Date de la réunion
+                                <span class="pv-req">*</span></label
+                            >
+                            <p-calendar
+                                class="pv-cal"
+                                formControlName="dateReunion"
+                                [showTime]="true"
+                                [showIcon]="true"
+                                dateFormat="dd/mm/yy"
+                                appendTo="body"
+                            ></p-calendar>
+                        </div>
+                        <div class="pv-field">
+                            <label>Prochaine réunion</label>
+                            <p-calendar
+                                class="pv-cal"
+                                formControlName="prochaineReunion"
+                                [showIcon]="true"
+                                dateFormat="dd/mm/yy"
+                                placeholder="—"
+                                appendTo="body"
+                            ></p-calendar>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== PARTICIPANTS ===== -->
+                <section *ngIf="activeSection === 'part'">
+                    <div class="pv-eyebrow">PARTICIPANTS</div>
+                    <div class="pv-field">
+                        <label>Ajouter des participants</label>
+                        <div class="pv-select">
+                            <select
+                                class="pv-input pv-select__el pv-select--placeholder"
+                                (change)="onAddParticipant($event)"
+                            >
+                                <option value="">
+                                    Sélectionner les participants…
+                                </option>
+                                <option
+                                    *ngFor="let p of availableProfiles"
+                                    [value]="p._id"
+                                >
+                                    {{ p.label }}
+                                </option>
+                            </select>
+                            <svg class="pv-select__chevron" viewBox="0 0 24 24" fill="none" stroke="#8a93a3" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="pv-chips" *ngIf="selectedParticipants.length">
+                        <span class="pv-chip" *ngFor="let id of selectedParticipants">
+                            {{ participantLabel(id) }}
+                            <span
+                                class="pv-chip__x"
+                                (click)="removeParticipant(id)"
+                                >✕</span
+                            >
+                        </span>
+                    </div>
+                </section>
+
+                <!-- ===== ORDRE DU JOUR ===== -->
+                <section *ngIf="activeSection === 'ordre'">
+                    <div class="pv-section-head">
+                        <div class="pv-eyebrow">ORDRE DU JOUR</div>
+                        <button type="button" class="pv-add" (click)="addOrdreLine()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Ajouter
+                        </button>
+                    </div>
+                    <div class="pv-list">
+                        <div
+                            class="pv-line"
+                            *ngFor="let ctrl of ordreDuJour.controls; let i = index"
+                        >
+                            <input
+                                class="pv-input"
+                                type="text"
+                                [formControl]="$any(ctrl)"
+                                placeholder="Point n°{{ i + 1 }}"
+                            />
+                            <button
+                                type="button"
+                                class="pv-remove"
+                                [disabled]="ordreDuJour.length <= 1"
+                                (click)="removeOrdreLine(i)"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== POINTS DISCUTÉS ===== -->
+                <section *ngIf="activeSection === 'points'">
+                    <div class="pv-section-head">
+                        <div class="pv-eyebrow">POINTS DISCUTÉS</div>
+                        <button type="button" class="pv-add" (click)="addPoint()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Ajouter
+                        </button>
+                    </div>
+                    <div class="pv-list pv-list--cards">
+                        <div
+                            class="pv-card"
+                            *ngFor="let g of pointsDiscutes.controls; let i = index"
+                            [formGroup]="$any(g)"
+                        >
+                            <div class="pv-card__row">
+                                <input
+                                    class="pv-input pv-input--white"
+                                    type="text"
+                                    formControlName="titre"
+                                    placeholder="Titre du point"
+                                />
+                                <button
+                                    type="button"
+                                    class="pv-remove pv-remove--sm"
+                                    [disabled]="pointsDiscutes.length <= 1"
+                                    (click)="removePoint(i)"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18" />
+                                        <line x1="6" y1="6" x2="18" y2="18" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <textarea
+                                class="pv-input pv-input--white pv-textarea"
+                                rows="2"
+                                formControlName="contenu"
+                                placeholder="Détail / verbatim"
+                            ></textarea>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== DÉCISIONS ===== -->
+                <section *ngIf="activeSection === 'dec'">
+                    <div class="pv-section-head">
+                        <div class="pv-eyebrow">DÉCISIONS</div>
+                        <button type="button" class="pv-add" (click)="addDecisionLine()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Ajouter
+                        </button>
+                    </div>
+                    <div class="pv-list">
+                        <div
+                            class="pv-line"
+                            *ngFor="let ctrl of decisions.controls; let i = index"
+                        >
+                            <input
+                                class="pv-input"
+                                type="text"
+                                [formControl]="$any(ctrl)"
+                                placeholder="Décision n°{{ i + 1 }}"
+                            />
+                            <button
+                                type="button"
+                                class="pv-remove"
+                                [disabled]="decisions.length <= 1"
+                                (click)="removeDecisionLine(i)"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== ACTIONS À MENER ===== -->
+                <section *ngIf="activeSection === 'actions'">
+                    <div class="pv-section-head">
+                        <div class="pv-eyebrow">ACTIONS À MENER</div>
+                        <button type="button" class="pv-add" (click)="addAction()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            Ajouter
+                        </button>
+                    </div>
+                    <div class="pv-list pv-list--cards">
+                        <div
+                            class="pv-card"
+                            *ngFor="let g of actions.controls; let i = index"
+                            [formGroup]="$any(g)"
+                        >
+                            <div class="pv-grid-2">
+                                <div class="pv-field">
+                                    <label class="pv-label--sm">Titre</label>
+                                    <input
+                                        class="pv-input pv-input--white pv-input--sm"
+                                        type="text"
+                                        formControlName="titre"
+                                        placeholder="Action n°{{ i + 1 }}"
+                                    />
+                                </div>
+                                <div class="pv-field">
+                                    <label class="pv-label--sm">Responsable</label>
+                                    <div class="pv-select">
+                                        <select
+                                            class="pv-input pv-input--white pv-input--sm pv-select__el"
+                                            formControlName="responsable"
+                                        >
+                                            <option [ngValue]="null">—</option>
+                                            <option
+                                                *ngFor="let p of profiles"
+                                                [ngValue]="p._id"
+                                            >
+                                                {{ p.label }}
+                                            </option>
+                                        </select>
+                                        <svg class="pv-select__chevron pv-select__chevron--sm" viewBox="0 0 24 24" fill="none" stroke="#8a93a3" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pv-field pv-field--mt">
+                                <label class="pv-label--sm">Description</label>
+                                <textarea
+                                    class="pv-input pv-input--white pv-input--sm pv-textarea"
+                                    rows="2"
+                                    formControlName="description"
+                                    placeholder="Détail de l'action"
+                                ></textarea>
+                            </div>
+
+                            <div class="pv-grid-3 pv-field--mt">
+                                <div class="pv-field">
+                                    <label class="pv-label--sm">Échéance</label>
+                                    <p-calendar
+                                        class="pv-cal pv-cal--sm"
+                                        formControlName="echeance"
+                                        dateFormat="dd/mm/yy"
+                                        placeholder="jj/mm/aaaa"
+                                        appendTo="body"
+                                    ></p-calendar>
+                                </div>
+                                <div class="pv-field">
+                                    <label class="pv-label--sm">Priorité</label>
+                                    <div class="pv-select">
+                                        <select
+                                            class="pv-input pv-input--white pv-input--sm pv-select__el"
+                                            formControlName="priorite"
+                                        >
+                                            <option
+                                                *ngFor="let o of priorityOptions"
+                                                [value]="o.value"
+                                            >
+                                                {{ o.label }}
+                                            </option>
+                                        </select>
+                                        <svg class="pv-select__chevron pv-select__chevron--sm" viewBox="0 0 24 24" fill="none" stroke="#8a93a3" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="pv-field">
+                                    <label class="pv-label--sm">Statut</label>
+                                    <div class="pv-select">
+                                        <select
+                                            class="pv-input pv-input--white pv-input--sm pv-select__el"
+                                            formControlName="statut"
+                                        >
+                                            <option
+                                                *ngFor="let o of statutActionOptions"
+                                                [value]="o.value"
+                                            >
+                                                {{ o.label }}
+                                            </option>
+                                        </select>
+                                        <svg class="pv-select__chevron pv-select__chevron--sm" viewBox="0 0 24 24" fill="none" stroke="#8a93a3" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="pv-card__footer">
+                                <button
+                                    type="button"
+                                    class="pv-retirer"
+                                    [disabled]="actions.length <= 1"
+                                    (click)="removeAction(i)"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6" />
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                                    </svg>
+                                    Retirer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ===== 5M · ISHIKAWA ===== -->
+                <section *ngIf="activeSection === 'fivem'">
+                    <div class="pv-eyebrow pv-eyebrow--tight">
+                        5M · ISHIKAWA — CHECKLIST DES CAUSES
+                    </div>
+                    <p class="pv-intro">
+                        Cochez les causes probables dans chacune des cinq familles,
+                        puis précisez le détail. Le compteur suit les causes
+                        retenues.
+                    </p>
+
+                    <div class="pv-field">
+                        <label>Problème analysé</label>
+                        <input
+                            class="pv-input"
+                            type="text"
+                            formControlName="problemeAnalyse"
+                            placeholder="Ex. Retards de livraison récurrents sur DI42"
+                        />
+                    </div>
+
+                    <!-- Synthèse strip -->
+                    <div class="pv-synth">
+                        <span class="pv-synth__eyebrow">SYNTHÈSE</span>
+                        <span
+                            class="pv-synth__pill"
+                            *ngFor="let fam of families"
+                            [style.background]="fam.tint"
+                            [style.color]="fam.color"
+                        >
+                            {{ fam.label }}
+                            <span
+                                class="pv-synth__count"
+                                [style.background]="fam.color"
+                                >{{ familyCount(fam.key) }}</span
+                            >
+                        </span>
+                        <span class="pv-synth__total"
+                            >{{ totalCauses }} cause(s) retenue(s)</span
+                        >
+                    </div>
+
+                    <!-- Accordion (each cause re-roots via [formGroup]="cause") -->
+                    <div class="pv-acc">
+                        <div
+                            class="pv-panel"
+                            *ngFor="let fam of families"
+                            [style.borderLeftColor]="fam.color"
+                        >
+                            <button
+                                type="button"
+                                class="pv-panel__head"
+                                [style.background]="familyHeadBg(fam)"
+                                (click)="toggleFamily(fam.key)"
+                            >
+                                <span class="pv-panel__name">{{ fam.label }}</span>
+                                <span class="pv-panel__desc">{{ fam.desc }}</span>
+                                <span
+                                    class="pv-panel__count"
+                                    [style.background]="fam.color"
+                                    >{{ familyCount(fam.key) }}</span
+                                >
+                                <svg
+                                    class="pv-panel__chevron"
+                                    [class.pv-panel__chevron--open]="isFamilyOpen(fam.key)"
+                                    viewBox="0 0 24 24" fill="none" stroke="#9aa2b1" stroke-width="2"
+                                >
+                                    <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                            </button>
+
+                            <div class="pv-panel__body" *ngIf="isFamilyOpen(fam.key)">
+                                <div
+                                    class="pv-cause"
+                                    *ngFor="let cause of familyCauses(fam.key); let ci = index"
+                                    [formGroup]="cause"
+                                >
+                                    <button
+                                        type="button"
+                                        class="pv-cb"
+                                        [style.borderColor]="isCauseChecked(cause) ? fam.color : '#cdd3dd'"
+                                        [style.background]="isCauseChecked(cause) ? fam.color : '#fff'"
+                                        (click)="toggleCause(cause)"
+                                    >
+                                        <svg
+                                            viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5"
+                                            [style.opacity]="isCauseChecked(cause) ? 1 : 0"
+                                        >
+                                            <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                    </button>
+
+                                    <input
+                                        *ngIf="cause.get('custom')?.value; else staticLabel"
+                                        class="pv-cause__name-input"
+                                        type="text"
+                                        formControlName="label"
+                                        placeholder="Nommer la cause…"
+                                        [style.borderBottomColor]="fam.color"
+                                    />
+                                    <ng-template #staticLabel>
+                                        <span
+                                            class="pv-cause__label"
+                                            [style.color]="isCauseChecked(cause) ? '#2a3340' : '#5b6678'"
+                                            >{{ cause.get('label')?.value }}</span
+                                        >
+                                    </ng-template>
+
+                                    <input
+                                        *ngIf="isCauseChecked(cause)"
+                                        class="pv-cause__detail"
+                                        type="text"
+                                        formControlName="detail"
+                                        placeholder="Préciser le détail…"
+                                        [style.--fam]="fam.color"
+                                    />
+
+                                    <button
+                                        *ngIf="cause.get('custom')?.value"
+                                        type="button"
+                                        class="pv-cause__del"
+                                        title="Supprimer la cause"
+                                        (click)="removeCause(fam.key, ci)"
+                                    >
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                        </svg>
+                                    </button>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="pv-autre"
+                                    [style.color]="fam.color"
+                                    (click)="addCause(fam.key)"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
+                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                    </svg>
+                                    Autre cause
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ── FOOTER ─────────────────────────────────────────────── -->
+        <footer class="pv-footer">
             <button
-                pButton
                 type="button"
-                label="Annuler"
-                class="pv-btn pv-btn--cancel"
+                class="pv-btn-cancel"
                 [disabled]="saving"
                 (click)="cancel()"
-            ></button>
+            >
+                Annuler
+            </button>
             <button
-                pButton
                 type="button"
-                label="Enregistrer le PV"
-                icon="pi pi-check"
-                class="pv-btn pv-btn--save"
-                [loading]="saving"
+                class="pv-btn-save"
                 [disabled]="saving"
                 (click)="submit()"
-            ></button>
-        </div>
-    </ng-template>
+            >
+                <svg *ngIf="!saving" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <polyline points="20 6 9 17 4 12" />
+                </svg>
+                <span class="pv-spin" *ngIf="saving" aria-hidden="true"></span>
+                Enregistrer le PV
+            </button>
+        </footer>
+    </div>
 </p-dialog>
