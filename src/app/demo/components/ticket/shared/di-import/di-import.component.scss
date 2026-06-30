@@ -1,0 +1,276 @@
+:host {
+    --imp-blue: #3b82f6;
+    --imp-blue-strong: #2563eb;
+    --imp-green: #16a34a;
+    --imp-amber: #b45309;
+    --imp-red: #dc2626;
+    --imp-ink: #0f172a;
+    --imp-muted: #64748b;
+    --imp-border: #e2e8f0;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ── Trigger — mirrors the host's .sav-btn-new page-action buttons ──────── */
+.di-imp-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 1rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--imp-blue-strong);
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.2;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+    transition: background 0.15s ease;
+
+    i {
+        font-size: 0.85rem;
+    }
+    &:hover {
+        background: #1d4ed8;
+    }
+}
+
+/* ── Dialog chrome ─────────────────────────────────────────────────────── */
+:host ::ng-deep .di-imp-dialog {
+    .p-dialog-header,
+    .p-dialog-content,
+    .p-dialog-footer {
+        background: #fff;
+    }
+    .p-dialog-content {
+        padding-top: 0.5rem;
+    }
+}
+
+.di-imp-head {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+
+    > i {
+        font-size: 1.4rem;
+        color: var(--imp-blue-strong);
+        background: #eff6ff;
+        padding: 0.6rem;
+        border-radius: 12px;
+    }
+    h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--imp-ink);
+    }
+    p {
+        margin: 0.1rem 0 0;
+        font-size: 0.8rem;
+        color: var(--imp-muted);
+    }
+}
+
+/* ── Action bar (template-download link under the dropzone) ────────────── */
+.di-imp-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.6rem 0 1rem;
+    border-bottom: 1px solid var(--imp-border);
+    margin: 0.75rem 0 1rem;
+}
+
+.di-imp-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    color: var(--imp-blue-strong);
+    font-size: 0.83rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ── States ────────────────────────────────────────────────────────────── */
+.di-imp-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem 0;
+    color: var(--imp-muted);
+    font-size: 0.875rem;
+}
+
+.di-imp-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    background: #f8fafc;
+    border: 1px solid var(--imp-border);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    color: var(--imp-muted);
+
+    i {
+        color: var(--imp-blue);
+        margin-top: 0.1rem;
+    }
+    b {
+        color: var(--imp-ink);
+    }
+}
+
+.di-imp-reject {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.9rem 1rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #991b1b;
+    font-size: 0.85rem;
+
+    i {
+        font-size: 1.3rem;
+        color: var(--imp-red);
+    }
+}
+
+/* ── Counters ──────────────────────────────────────────────────────────── */
+.di-imp-counters {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+}
+
+.di-imp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+
+    b {
+        font-weight: 800;
+    }
+
+    &--total {
+        background: #f1f5f9;
+        color: var(--imp-ink);
+        border-color: var(--imp-border);
+    }
+    &--ok {
+        background: #f0fdf4;
+        color: var(--imp-green);
+        border-color: #bbf7d0;
+    }
+    &--warn {
+        background: #fffbeb;
+        color: var(--imp-amber);
+        border-color: #fde68a;
+    }
+    &--err {
+        background: #fef2f2;
+        color: var(--imp-red);
+        border-color: #fecaca;
+    }
+}
+
+.di-imp-entete {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--imp-muted);
+}
+
+/* ── Preview table ─────────────────────────────────────────────────────── */
+:host ::ng-deep .di-imp-table {
+    border: 1px solid var(--imp-border);
+    border-radius: 12px;
+    overflow: hidden;
+
+    th {
+        background: #f8fafc !important;
+        color: var(--imp-ink) !important;
+        font-size: 0.74rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+    td {
+        font-size: 0.82rem;
+        color: #1e293b;
+    }
+
+    .di-imp-row--valide td {
+        background: #f6fef9;
+    }
+    .di-imp-row--avertissement td {
+        background: #fffdf5;
+    }
+    .di-imp-row--erreur td {
+        background: #fef6f6;
+    }
+
+    .di-imp-line {
+        font-variant-numeric: tabular-nums;
+        color: var(--imp-muted);
+        font-weight: 600;
+    }
+    .di-imp-motifs {
+        font-size: 0.78rem;
+        color: var(--imp-muted);
+    }
+    .di-imp-empty {
+        text-align: center;
+        color: var(--imp-muted);
+        padding: 1.25rem;
+    }
+}
+
+/* ── Footer buttons ────────────────────────────────────────────────────── */
+.di-imp-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.15s ease;
+
+    &--ghost {
+        background: #fff;
+        border: 1px solid var(--imp-border);
+        color: var(--imp-muted);
+
+        &:hover {
+            background: #f8fafc;
+        }
+    }
+    &--primary {
+        background: linear-gradient(180deg, var(--imp-blue) 0%, var(--imp-blue-strong) 100%);
+        border: 1px solid var(--imp-blue-strong);
+        color: #fff;
+
+        &:hover:not(:disabled) {
+            filter: brightness(1.05);
+        }
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
