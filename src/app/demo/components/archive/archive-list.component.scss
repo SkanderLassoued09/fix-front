@@ -1,0 +1,115 @@
+:host {
+    --arch-blue-strong: #2563eb;
+    --arch-green: #16a34a;
+    --arch-amber: #b45309;
+    --arch-slate: #475569;
+    --arch-ink: #0f172a;
+    --arch-muted: #64748b;
+    --arch-border: #e2e8f0;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    display: block;
+}
+
+.arch-page {
+    padding: 1.25rem;
+}
+
+.arch-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+.arch-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    i {
+        font-size: 1.2rem;
+        color: var(--arch-blue-strong);
+    }
+    h2 {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+        color: var(--arch-ink);
+        letter-spacing: -0.01em;
+    }
+}
+.arch-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+.arch-count {
+    font-size: 0.8rem;
+    color: var(--arch-muted);
+    background: #f1f5f9;
+    border: 1px solid var(--arch-border);
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.arch-table-wrap {
+    background: #fff;
+    border: 1px solid var(--arch-border);
+    border-radius: 12px;
+    overflow-x: auto; /* many file columns → horizontal scroll */
+}
+
+:host ::ng-deep .arch-table {
+    th {
+        background: #f8fafc !important;
+        color: var(--arch-ink) !important;
+        font-size: 0.74rem !important;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+    td {
+        font-size: 0.84rem;
+        color: #1e293b;
+    }
+    .arch-ref {
+        font-variant-numeric: tabular-nums;
+        font-weight: 700;
+        color: var(--arch-blue-strong);
+    }
+    .arch-empty {
+        text-align: center;
+        color: var(--arch-muted);
+        padding: 1.5rem;
+    }
+    .arch-doc {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+    td,
+    th {
+        white-space: nowrap;
+    }
+}
+
+.arch-docs {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: #fffbeb;
+    color: var(--arch-amber);
+    border: 1px solid #fde68a;
+
+    &--full {
+        background: #f0fdf4;
+        color: var(--arch-green);
+        border-color: #bbf7d0;
+    }
+}
+
+.arch-actions {
+    text-align: right;
+}

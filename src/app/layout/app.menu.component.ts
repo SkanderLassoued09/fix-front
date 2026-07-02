@@ -69,6 +69,11 @@ export class AppMenuComponent implements OnInit {
                             routerLink: ['/tickets/ticket/ticket-list'],
                         },
                         {
+                            label: 'Archives DI',
+                            icon: 'pi pi-fw pi-folder-open',
+                            routerLink: ['/archives'],
+                        },
+                        {
                             label: 'Coordination',
                             icon: 'pi pi-fw pi-check-square',
                             routerLink: ['/tickets/ticket/coordinator-di-list'],
@@ -169,6 +174,11 @@ export class AppMenuComponent implements OnInit {
                             label: 'Toutes les DI',
                             icon: 'pi pi-fw pi-file',
                             routerLink: ['/tickets/ticket/ticket-list'],
+                        },
+                        {
+                            label: 'Archives DI',
+                            icon: 'pi pi-fw pi-folder-open',
+                            routerLink: ['/archives'],
                         },
                         {
                             label: 'Réunions',
