@@ -52,6 +52,7 @@ import { PdfDropzoneComponent } from '../magasin-di-list/pdf-dropzone/pdf-dropzo
 import { DiInfoModalComponent } from '../shared/di-info-modal/di-info-modal.component';
 import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-modal.component';
 import { DiImportComponent } from '../shared/di-import/di-import.component';
+import { DiArchiveDetailModalComponent } from '../shared/di-archive-detail-modal/di-archive-detail-modal.component';
 
 @NgModule({
     declarations: [
@@ -112,6 +113,7 @@ import { DiImportComponent } from '../shared/di-import/di-import.component';
         DiInfoModalComponent,
         ReunionPvModalComponent,
         DiImportComponent,
+        DiArchiveDetailModalComponent,
     ],
     providers: [ConfirmationService, MessageService],
 })

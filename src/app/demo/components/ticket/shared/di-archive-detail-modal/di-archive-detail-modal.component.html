@@ -1,0 +1,140 @@
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '760px', maxWidth: '95vw' }"
+    styleClass="da-dialog"
+    (onHide)="onHide()"
+>
+    <ng-template pTemplate="header">
+        <div class="da-head">
+            <div class="da-head__title">
+                <i class="pi pi-folder-open"></i>
+                <div>
+                    <h3>{{ archive?.title || "Archive DI" }}</h3>
+                    <p>
+                        {{ archive?.refOrigine ? "Réf " + archive?.refOrigine : "—" }}
+                        ·
+                        {{ archive?.clientNom || archive?.societeNom || "SANS_CLIENT" }}
+                    </p>
+                </div>
+            </div>
+            <span class="da-badge" [ngClass]="badge().cls">
+                <i class="pi" [ngClass]="badge().icon"></i> {{ badge().label }}
+            </span>
+        </div>
+    </ng-template>
+
+    <div class="da-slots">
+        <div
+            class="da-slot"
+            *ngFor="let slot of slots"
+            [ngClass]="isPresent(slot) ? 'da-slot--filled' : 'da-slot--empty'"
+        >
+            <div class="da-slot__head">
+                <span class="da-slot__label">{{ slot.label }}</span>
+                <span class="da-slot__state" *ngIf="isPresent(slot)">
+                    <i class="pi pi-check"></i> Présent
+                </span>
+            </div>
+
+            <!-- Text reference from the registry (e.g. « 072/24 ») -->
+            <div class="da-slot__ref" *ngIf="hasRef(slot)">
+                <i class="pi pi-hashtag"></i> Réf : <b>{{ archive[slot.refKey] }}</b>
+            </div>
+
+            <div class="da-slot__body">
+                <!-- Current document (when present): open in Drive -->
+                <a
+                    *ngIf="archive && archive[slot.key]"
+                    class="da-file"
+                    [href]="archive[slot.key].webViewLink"
+                    target="_blank"
+                    rel="noopener"
+                    pTooltip="Ouvrir dans Google Drive"
+                    tooltipPosition="top"
+                >
+                    <i class="pi pi-file-pdf"></i>
+                    <span class="da-file__name">{{ archive[slot.key].name }}</span>
+                    <i class="pi pi-external-link"></i>
+                </a>
+
+                <!-- Upload / replace zone — ALWAYS available (empty ⇒ Uploader,
+                     filled ⇒ Remplacer) — or the per-slot spinner while busy. -->
+                <div *ngIf="!busy[slot.docType]; else uploading" class="da-upload">
+                    <app-pdf-dropzone
+                        acceptKind="pdf"
+                        accept="application/pdf,.pdf"
+                        [maxSizeMo]="10"
+                        [title]="(archive && archive[slot.key] ? 'Remplacer le ' : 'Uploader le ') + slot.label"
+                        thumbIcon="pi pi-file-pdf"
+                        [ariaLabel]="'Uploader le document ' + slot.label"
+                        [value]="null"
+                        (fileSelected)="onUpload(slot, $event)"
+                    ></app-pdf-dropzone>
+                </div>
+                <ng-template #uploading>
+                    <div class="da-uploading">
+                        <p-progressSpinner
+                            strokeWidth="4"
+                            [style]="{ width: '34px', height: '34px' }"
+                        ></p-progressSpinner>
+                        <span>Upload en cours…</span>
+                    </div>
+                </ng-template>
+
+                <!-- Remove — only when a document is present -->
+                <button
+                    *ngIf="archive && archive[slot.key] && !busy[slot.docType]"
+                    type="button"
+                    class="da-btn da-btn--danger"
+                    (click)="onRemove(slot)"
+                >
+                    <i class="pi pi-trash"></i> Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <p class="da-hint">
+        <i class="pi pi-info-circle"></i>
+        La complétude passe à <b>Complet</b> quand les 4 documents sont présents ;
+        retirer un document la repasse à <b>Incomplet</b>. Une archive
+        <b>Clôturée</b> n'est jamais modifiée.
+    </p>
+
+    <ng-template pTemplate="footer">
+        <div class="da-footer">
+            <span class="da-footer__state" *ngIf="isCloture">
+                <i class="pi pi-lock"></i> Archive clôturée
+            </span>
+            <span
+                class="da-footer__state da-footer__state--wait"
+                *ngIf="!isCloture && archive?.statutCompletude !== 'COMPLET'"
+            >
+                <i class="pi pi-info-circle"></i>
+                Ajoutez les 4 documents pour pouvoir clôturer.
+            </span>
+            <span
+                class="da-footer__state da-footer__state--ready"
+                *ngIf="!isCloture && archive?.statutCompletude === 'COMPLET' && !isClotureRole"
+            >
+                <i class="pi pi-clock"></i>
+                Complet — en attente de clôture par un admin/manager.
+            </span>
+            <button
+                *ngIf="!isCloture && isClotureRole"
+                type="button"
+                class="da-btn da-btn--cloture"
+                [disabled]="!canCloture"
+                (click)="onCloture()"
+                pTooltip="Disponible quand les 4 documents sont présents"
+                tooltipPosition="top"
+            >
+                <i class="pi" [ngClass]="cloturing ? 'pi-spin pi-spinner' : 'pi-lock'"></i>
+                {{ cloturing ? "Clôture…" : "Clôturer la DI" }}
+            </button>
+        </div>
+    </ng-template>
+</p-dialog>

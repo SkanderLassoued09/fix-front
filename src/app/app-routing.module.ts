@@ -29,6 +29,13 @@ import { authGuard } from './demo/components/auth/auth-guard';
                                 ).then((m) => m.TicketModule),
                         },
                         {
+                            path: 'archives',
+                            loadComponent: () =>
+                                import(
+                                    './demo/components/archive/archive-list.component'
+                                ).then((m) => m.ArchiveListComponent),
+                        },
+                        {
                             path: 'clients',
 
                             loadChildren: () =>
