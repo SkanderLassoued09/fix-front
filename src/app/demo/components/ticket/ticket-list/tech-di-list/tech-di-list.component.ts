@@ -724,15 +724,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     selectedRep: any;
     statId: any;
     idTech: string;
-    /**
-     * ADMIN_TECH sees EVERY tech's DIs in this list (backend `getDiForTech`
-     * returns all rows for admin roles — stat.service.ts), so the per-row
-     * "assigned to me" gate would wrongly grey out the diag/rep buttons. We let
-     * ADMIN_TECH act like a technician here (drop the ownership gate; the status
-     * + "already finished" gates still apply). Regular TECH only sees its own
-     * rows, so nothing changes for it.
-     */
-    isAdminTech = false;
     diStatRepInfo: any;
     ignoreCount: number = 0;
     remarque_tech_repair: string;
@@ -764,8 +755,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         private readonly mutationRunner: MutationRunner,
     ) {
         this.idTech = localStorage.getItem('_id');
-        this.isAdminTech =
-            (localStorage.getItem('role') || '').toUpperCase() === 'ADMIN_TECH';
     }
 
     ngOnInit() {

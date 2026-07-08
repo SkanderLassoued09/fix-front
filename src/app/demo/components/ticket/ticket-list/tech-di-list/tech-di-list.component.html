@@ -110,8 +110,7 @@
                                         'DIAGNOSTIC_Pause',
                                     ].includes(rowData.status) ||
                                     isFinishedDiag[rowData._id] ||
-                                    (!isAdminTech &&
-                                        rowData.id_tech_diag !== idTech)
+                                    rowData.id_tech_diag !== idTech
                                 "
                                 (click)="diagModal(rowData)"
                             ></button>
@@ -128,8 +127,7 @@
                                         'REPARATION_Pause',
                                     ].includes(rowData.status) ||
                                     isFinishedRep[rowData._id] ||
-                                    (!isAdminTech &&
-                                        rowData.id_tech_rep !== idTech)
+                                    rowData.id_tech_rep !== idTech
                                 "
                                 (click)="repModal(rowData)"
                             ></button>
