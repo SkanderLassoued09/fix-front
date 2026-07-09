@@ -99,36 +99,20 @@
                         <div class="sav-actions-row">
                             <button
                                 pButton
-                                pTooltip="Diagnostic"
+                                [pTooltip]="diagTooltip(rowData)"
                                 tooltipPosition="top"
                                 icon="pi pi-search"
                                 class="sav-icon-btn"
-                                [disabled]="
-                                    ![
-                                        'DIAGNOSTIC',
-                                        'INDIAGNOSTIC',
-                                        'DIAGNOSTIC_Pause',
-                                    ].includes(rowData.status) ||
-                                    isFinishedDiag[rowData._id] ||
-                                    rowData.id_tech_diag !== idTech
-                                "
+                                [disabled]="!canDiagnose(rowData)"
                                 (click)="diagModal(rowData)"
                             ></button>
                             <button
                                 pButton
-                                pTooltip="Réparation"
+                                [pTooltip]="repTooltip(rowData)"
                                 tooltipPosition="top"
                                 icon="pi pi-wrench"
                                 class="sav-icon-btn"
-                                [disabled]="
-                                    ![
-                                        'REPARATION',
-                                        'INREPARATION',
-                                        'REPARATION_Pause',
-                                    ].includes(rowData.status) ||
-                                    isFinishedRep[rowData._id] ||
-                                    rowData.id_tech_rep !== idTech
-                                "
+                                [disabled]="!canRepair(rowData)"
                                 (click)="repModal(rowData)"
                             ></button>
                         </div>
