@@ -29,6 +29,10 @@ import {
     trackByColumn,
 } from '../../table-display.utils';
 import {
+    isDiAssignedToMe,
+    TechAssignmentKind,
+} from './tech-ownership.util';
+import {
     AutosaveHint,
     CategoryOption,
     ComposantOption,
@@ -755,6 +759,69 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         private readonly mutationRunner: MutationRunner,
     ) {
         this.idTech = localStorage.getItem('_id');
+    }
+
+    // ── Technician-ownership gating for the Diagnostic / Réparation buttons ──
+    // A DI is "mine" only if I am the assigned diag/rep technician. An
+    // ADMIN_TECH sees every DI (server returns all for admin roles) but must
+    // only ACT on their own — others stay greyed. Read the identity fresh from
+    // storage (not the constructor snapshot, which can be empty on a restored
+    // session) and match on _id OR username via the shared pure util, so a DI
+    // stored under either identity token still resolves to its owner.
+
+    private currentUserTokens(): Array<string | null> {
+        return [
+            localStorage.getItem('_id'),
+            localStorage.getItem('username'),
+        ];
+    }
+
+    isDiAssignedToMe(row: any, kind: TechAssignmentKind): boolean {
+        return isDiAssignedToMe(row, kind, this.currentUserTokens());
+    }
+
+    private isDiagStatusActive(row: any): boolean {
+        return ['DIAGNOSTIC', 'INDIAGNOSTIC', 'DIAGNOSTIC_Pause'].includes(
+            row?.status,
+        );
+    }
+
+    private isRepStatusActive(row: any): boolean {
+        return ['REPARATION', 'INREPARATION', 'REPARATION_Pause'].includes(
+            row?.status,
+        );
+    }
+
+    /** Enable rule for the Diagnostic action button on a row. */
+    canDiagnose(row: any): boolean {
+        return (
+            this.isDiagStatusActive(row) &&
+            !this.isFinishedDiag[row?._id] &&
+            this.isDiAssignedToMe(row, 'diag')
+        );
+    }
+
+    /** Enable rule for the Réparation action button on a row. */
+    canRepair(row: any): boolean {
+        return (
+            this.isRepStatusActive(row) &&
+            !this.isFinishedRep[row?._id] &&
+            this.isDiAssignedToMe(row, 'rep')
+        );
+    }
+
+    /** Tooltip that explains a greyed button (another tech's DI). */
+    diagTooltip(row: any): string {
+        return this.isDiagStatusActive(row) &&
+            !this.isDiAssignedToMe(row, 'diag')
+            ? "DI d'un autre technicien"
+            : 'Diagnostic';
+    }
+
+    repTooltip(row: any): string {
+        return this.isRepStatusActive(row) && !this.isDiAssignedToMe(row, 'rep')
+            ? "DI d'un autre technicien"
+            : 'Réparation';
     }
 
     ngOnInit() {
