@@ -2677,6 +2677,22 @@ $cf-surface: #f8fafc;
     color: $cf-text-secondary;
     line-height: 1.45;
 }
+// Manager-gate hint shown under the (disabled) diagnostic reassignment dropdown
+// while the DI is in a Retour cycle.
+.cf-card__lock-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0.4rem 0 0;
+    font-size: 0.76rem;
+    line-height: 1.4;
+    color: $cf-text-secondary;
+    i {
+        font-size: 0.8rem;
+        margin-top: 1px;
+        color: #b45309; // amber-700 — "locked / awaiting action" cue (no purple)
+    }
+}
 .cf-card__assigned {
     display: inline-flex;
     align-items: center;

@@ -42,6 +42,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
     diag_condition: boolean = true; // enable when status = pending1
     admin_condition: boolean = true; //enable when status = pending2
     rep_condition: boolean = true; // enable when status = pending3
+    // Manager gate: while the DI is in a Retour cycle, diagnostic (re)assignment
+    // stays VISIBLE but locked. It unlocks only once the manager relaunches the
+    // DI into the flow (status → PENDING1). Set in `<the flow-modal opener>`.
+    diagReassignLockedByRetour: boolean = false;
     rangeDates: Date[] | undefined;
 
     selectedTech: any; // Variable to store the selected tech data
@@ -718,6 +722,14 @@ export class CoordinatorDiListComponent implements OnDestroy {
         ].includes(di.status)
             ? (this.diag_condition = false)
             : (this.diag_condition = true);
+        // Manager gate: diagnostic (re)assignment is LOCKED during any Retour
+        // cycle and only unlocks at PENDING1 (after the manager relaunches the
+        // DI). The dropdown stays visible so the gate is discoverable.
+        this.diagReassignLockedByRetour = [
+            STATUS_DI.RETOUR1,
+            STATUS_DI.RETOUR2,
+            STATUS_DI.RETOUR3,
+        ].includes(di.status);
         // condition to send to admin
         di.status == STATUS_DI.PENDING2
             ? (this.admin_condition = false)
@@ -833,8 +845,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
         label: string;
         state: 'done' | 'current' | 'pending';
         badgeLabel: string;
-        subStatus: string;
-        subStatusList: string[];
         actor: string;
         timestamp: string | null;
     }> {
@@ -847,14 +857,14 @@ export class CoordinatorDiListComponent implements OnDestroy {
 
         return this.BASE_PHASES.map((phase) => {
             const state = this.computePhaseState(phase, status);
-            const sub = state === 'pending' ? '' : status;
+            // Raw enum `subStatus`/`subStatusList` intentionally NOT returned:
+            // the timeline shows only the human label + French badge + the
+            // transition timestamp — never internal status codes.
             return {
                 key: phase.key,
                 label: phase.label,
                 state,
                 badgeLabel: this.computePhaseBadgeLabel(phase, status, state),
-                subStatus: sub,
-                subStatusList: phase.statuses,
                 actor: this.computePhaseActor(
                     phase.key,
                     state,
@@ -1263,11 +1273,30 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return 'En attente';
     }
 
+    /** Date a phase was ENTERED, read from the SINGLE source of truth
+     *  (`di.statusHistory`): the first history entry whose status belongs to the
+     *  phase. Covers EVERY phase — including Diagnostic/Réparation, which had no
+     *  dedicated date field before. Null when the DI has no matching history
+     *  entry (legacy DIs that transited before statusHistory existed). */
+    private phaseDateFromHistory(phaseKey: string): string | null {
+        const phase = this.BASE_PHASES.find((p) => p.key === phaseKey);
+        const hist: any[] = this.di?.statusHistory ?? [];
+        if (!phase || !hist.length) return null;
+        const entry = hist.find((h) => phase.statuses.includes(h?.status));
+        return entry?.at ? this.formatDateTime(entry.at) : null;
+    }
+
     private computePhaseTimestamp(
         phaseKey: string,
         state: 'done' | 'current' | 'pending',
     ): string | null {
         if (state === 'pending') return null;
+        // Primary: the single-source transition history (every phase covered).
+        const fromHistory = this.phaseDateFromHistory(phaseKey);
+        if (fromHistory) return fromHistory;
+        // Fallback for LEGACY DIs that transited before statusHistory existed
+        // (no retroactive backfill possible — expected). The old ad-hoc fields
+        // still cover admin/magasin/closure for those historical rows.
         if (phaseKey === 'admin' && this.adminSentAt) {
             return this.formatDateTime(this.adminSentAt);
         }
@@ -1281,7 +1310,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
         ) {
             return this.formatDateTime(this.di.statusUpdatedAt);
         }
-        // No real per-step DB timestamp → hide
         return null;
     }
 

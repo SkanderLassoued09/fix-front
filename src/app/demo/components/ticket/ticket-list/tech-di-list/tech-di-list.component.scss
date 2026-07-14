@@ -907,3 +907,133 @@ $red: #dc2626;
 .sav-location-dot--empty {
     background: var(--red-300);
 }
+
+// ══════════════════════════════════════════════════════════════════
+// « Composants requis » (étape 3 diagnostic) — ligne alignée + steppers
+// quantité INTÉGRÉS dans le champ. Design system : Inter, bleu #2563eb.
+// ══════════════════════════════════════════════════════════════════
+.sav-composant-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.sav-composant-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+
+    &--grow {
+        flex: 1 1 220px;
+    }
+    &--qty {
+        flex: 0 0 auto;
+        width: 132px;
+    }
+}
+
+// Quantité — steppers ↑/↓ empilés À L'INTÉRIEUR d'un champ unique bordé
+// (plus de bloc bleu détaché).
+::ng-deep .sav-qty-input.p-inputnumber {
+    display: inline-flex;
+    width: 100%;
+    height: 38px;
+    border: 1px solid $border;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #ffffff;
+
+    .p-inputnumber-input {
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
+        border: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        text-align: center;
+        padding: 0 0.4rem !important;
+        font-size: 0.85rem !important;
+    }
+    .p-inputnumber-button-group {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        width: 1.75rem;
+        border-left: 1px solid $border;
+    }
+    .p-inputnumber-button {
+        flex: 1 1 50%;
+        width: 1.75rem !important;
+        min-height: 0 !important;
+        background: #eff6ff !important;
+        color: $accent-blue !important;
+        border: 0 !important;
+        border-radius: 0 !important;
+
+        &:hover {
+            background: #dbeafe !important;
+        }
+        .p-button-icon {
+            font-size: 0.7rem;
+        }
+    }
+    .p-inputnumber-button-down {
+        border-top: 1px solid $border !important;
+    }
+
+    &:focus-within {
+        border-color: $accent-blue;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+}
+
+// « Ajouter composant » — primaire bleu, aligné au bas de la ligne, hauteur égale.
+::ng-deep .sav-composant-add.p-button {
+    height: 38px;
+    align-self: flex-end;
+    background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border: 0 !important;
+    border-radius: 6px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    padding: 0 0.9rem !important;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2) !important;
+}
+
+// « Créer un nouveau composant » — secondaire outline, espacement vertical propre.
+.sav-composant-create {
+    margin: 0.85rem 0;
+}
+::ng-deep .sav-composant-create-btn.p-button {
+    background: #ffffff !important;
+    color: $accent-blue !important;
+    border: 1px solid #bfdbfe !important;
+    border-radius: 6px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    padding: 0.45rem 0.9rem !important;
+
+    &:hover {
+        background: #eff6ff !important;
+    }
+}
+
+// Zone vide « Aucun composant ajouté » — centrée, espacement cohérent.
+.sav-composant-empty {
+    text-align: center;
+    color: $text-secondary;
+    font-size: 0.85rem;
+    padding: 1.25rem 0.5rem !important;
+}
+
+@media (max-width: 560px) {
+    .sav-composant-field--grow {
+        flex: 1 1 100%;
+    }
+    ::ng-deep .sav-composant-add.p-button {
+        width: 100%;
+    }
+}

@@ -1,128 +1,123 @@
-<div
-    class="surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden"
->
-    <div class="flex flex-column align-items-center justify-content-center">
-        <img
-            src="assets/layout/images/{{
-                layoutService.config().colorScheme === 'light'
-                    ? 'logo-dark'
-                    : 'logo-white'
-            }}.svg"
-            alt="Sakai logo"
-            class="mb-5 w-6rem flex-shrink-0"
-        />
-        <div
-            style="
-                border-radius: 56px;
-                padding: 0.3rem;
-                background: linear-gradient(
-                    180deg,
-                    var(--primary-color) 10%,
-                    rgba(33, 150, 243, 0) 30%
-                );
-            "
-        >
-            <div
-                class="w-full surface-card py-8 px-5 sm:px-8"
-                style="border-radius: 53px"
-            >
-                <div class="text-center mb-5">
-                    <div class="text-900 text-3xl font-medium mb-3">
-                        Welcome,to Fixtronix ticketing system
-                    </div>
-                    <span class="text-600 font-medium"
-                        >Sign in to continue</span
-                    >
-                </div>
-                <!-- Single-session block banner — appears when the backend
-                     returned ACCOUNT_ALREADY_CONNECTED. Stays in place until
-                     the user retries (auto-hides on the next login attempt
-                     via component logic), so it's distinct from a toast. -->
-                <div
-                    *ngIf="alreadyConnected"
-                    class="mb-4 p-4 border-round"
-                    style="
-                        background: #fff7ed;
-                        border: 1px solid #fb923c;
-                        border-left: 6px solid #ea580c;
-                    "
-                    role="alert"
-                >
-                    <div class="flex align-items-start gap-3">
-                        <i
-                            class="pi pi-exclamation-triangle"
-                            style="
-                                font-size: 1.6rem;
-                                color: #ea580c;
-                                margin-top: 0.15rem;
-                            "
-                        ></i>
-                        <div style="color: #7c2d12">
-                            <div
-                                class="font-bold mb-2"
-                                style="font-size: 1.05rem"
-                            >
-                                Compte déjà connecté sur un autre appareil
-                            </div>
-                            <div
-                                style="line-height: 1.5; font-size: 0.92rem"
-                            >
-                                Le compte
-                                <strong *ngIf="blockedUsername"
-                                    >« {{ blockedUsername }} »</strong
-                                ><span *ngIf="!blockedUsername"
-                                    >que vous essayez d'utiliser</span
-                                >
-                                est déjà ouvert sur un autre appareil.
-                                Déconnectez-vous depuis cet autre appareil,
-                                puis réessayez ci-dessous.
-                            </div>
+<div class="fx-login">
+    <div class="fx-login__wrap">
+        <!-- Card -->
+        <div class="fx-login__card">
+            <!-- Logo header -->
+            <div class="fx-login__head">
+                <img
+                    src="assets/layout/images/Fixtronix-logo.png"
+                    alt="Fixtronix"
+                    class="fx-login__logo"
+                />
+                <div class="fx-login__tag">Connectez-vous pour continuer</div>
+            </div>
+
+            <!-- Body -->
+            <div class="fx-login__body">
+                <!-- Single-session conflict — shown when the backend returned
+                     ACCOUNT_ALREADY_CONNECTED. Dismissable; auto-clears on the
+                     next login attempt. -->
+                <div *ngIf="alreadyConnected" class="fx-alert" role="alert">
+                    <i
+                        class="pi pi-exclamation-triangle fx-alert__ico"
+                        aria-hidden="true"
+                    ></i>
+                    <div class="fx-alert__body">
+                        <div class="fx-alert__title">Déjà connecté ailleurs</div>
+                        <div class="fx-alert__text">
+                            Déconnectez
+                            <strong *ngIf="blockedUsername"
+                                >« {{ blockedUsername }} »</strong
+                            ><span *ngIf="!blockedUsername">ce compte</span>
+                            de l'autre appareil, ou patientez ~90 s, puis
+                            réessayez.
                         </div>
                     </div>
+                    <button
+                        type="button"
+                        class="fx-alert__close"
+                        (click)="dismissConflict()"
+                        aria-label="Fermer"
+                    >
+                        <i class="pi pi-times"></i>
+                    </button>
                 </div>
-                <form [formGroup]="loginForm">
-                    <div>
-                        <label
-                            for="username"
-                            class="block text-900 text-xl font-medium mb-2"
-                            >Nom d'utilisateur</label
-                        >
+
+                <!-- Form -->
+                <form
+                    [formGroup]="loginForm"
+                    class="fx-form"
+                    (ngSubmit)="login()"
+                >
+                    <div class="fx-field">
+                        <label for="username" class="fx-label">
+                            Nom d'utilisateur
+                        </label>
                         <input
                             id="username"
                             formControlName="username"
                             type="text"
-                            placeholder="Username"
-                            pInputText
-                            class="w-full md:w-30rem mb-5"
-                            style="padding: 1rem"
+                            placeholder="Votre identifiant"
+                            autocomplete="username"
+                            class="fx-input"
                         />
-
-                        <label
-                            for="password"
-                            class="block text-900 font-medium text-xl mb-2"
-                            >Mot de passe</label
-                        >
-                        <p-password
-                            id="password"
-                            [(ngModel)]="password"
-                            placeholder="Password"
-                            [toggleMask]="false"
-                            formControlName="password"
-                            styleClass="mb-5"
-                            [feedback]="false"
-                            inputStyleClass="w-full p-3 md:w-30rem"
-                        ></p-password>
-
-                        <button
-                            pButton
-                            pRipple
-                            label="Sign In"
-                            class="w-full p-3 text-xl"
-                            (click)="login()"
-                        ></button>
                     </div>
+
+                    <div class="fx-field">
+                        <label for="password" class="fx-label">
+                            Mot de passe
+                        </label>
+                        <div class="fx-pw">
+                            <input
+                                id="password"
+                                formControlName="password"
+                                [type]="showPassword ? 'text' : 'password'"
+                                placeholder="••••••••"
+                                autocomplete="current-password"
+                                class="fx-pw__input"
+                                [class.fx-pw__input--masked]="!showPassword"
+                            />
+                            <button
+                                type="button"
+                                class="fx-pw__toggle"
+                                (click)="togglePassword()"
+                                [attr.aria-label]="
+                                    showPassword
+                                        ? 'Masquer le mot de passe'
+                                        : 'Afficher le mot de passe'
+                                "
+                            >
+                                <i
+                                    class="pi"
+                                    [ngClass]="
+                                        showPassword ? 'pi-eye' : 'pi-eye-slash'
+                                    "
+                                ></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="fx-submit"
+                        [disabled]="loading"
+                        [class.fx-submit--loading]="loading"
+                    >
+                        <span
+                            *ngIf="loading"
+                            class="fx-spinner"
+                            aria-hidden="true"
+                        ></span>
+                        <span *ngIf="!loading">Se connecter</span>
+                    </button>
                 </form>
             </div>
+        </div>
+
+        <!-- Support -->
+        <div class="fx-help">
+            Besoin d'aide ?
+            <span class="fx-help__link">Contacter le support</span>
         </div>
     </div>
 </div>

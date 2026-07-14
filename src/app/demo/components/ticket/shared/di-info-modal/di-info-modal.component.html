@@ -2,35 +2,53 @@
     [visible]="visible"
     (visibleChange)="onVisibleChange($event)"
     [modal]="true"
-    [style]="{ width: '960px', maxWidth: '95vw' }"
+    [style]="{ width: '1040px', maxWidth: '96vw' }"
     [draggable]="false"
     [resizable]="false"
     [closable]="false"
     [showHeader]="false"
     styleClass="di-info-dialog"
 >
-    <div class="di-info-modal">
-        <!-- ── Header ──────────────────────────────────── -->
-        <header class="di-info-modal__head">
-            <div class="di-info-modal__tile" aria-hidden="true">
+    <div class="di-card">
+        <!-- ── Print letterhead (print only) ───────────────── -->
+        <div class="di-print-head print-only">
+            <img
+                src="assets/layout/images/Fixtronix-logo.png"
+                alt="Fixtronix"
+                class="di-print-head__logo"
+            />
+            <div class="di-print-head__meta">
+                <div class="di-print-head__title">Dossier d'intervention</div>
+                <div class="di-print-head__code">{{ di?._idnum || "DI" }}</div>
+            </div>
+        </div>
+
+        <!-- ── Header ──────────────────────────────────────── -->
+        <header class="di-head">
+            <div class="di-head__tile" aria-hidden="true">
                 {{ initials(di?.title) }}
             </div>
-            <div class="di-info-modal__titles">
-                <div class="di-info-modal__title-row">
-                    <h3 class="di-info-modal__title">
-                        {{ di?.title || "—" }}
-                    </h3>
-                    <span class="di-info-modal__badge">
-                        {{ di?._idnum || "DI" }}
+            <div class="di-head__titles">
+                <div class="di-head__row">
+                    <span class="di-head__title">{{ di?.title || "—" }}</span>
+                    <span class="di-head__code">{{ di?._idnum || "DI" }}</span>
+                    <span
+                        *ngIf="di?.status"
+                        class="di-status-pill"
+                        [attr.data-tone]="statusTone(di?.status)"
+                    >
+                        {{ statusLabel(di?.status) }}
                     </span>
                 </div>
-                <p class="di-info-modal__subtitle">
-                    Information demande d'intervention · lecture seule
-                </p>
+                <div class="di-head__sub">
+                    Dossier d'intervention · lecture seule · créé par
+                    <strong>{{ displayName(di?.createdBy) }}</strong> ·
+                    {{ di?.createdAt || "—" }}
+                </div>
             </div>
             <button
                 type="button"
-                class="di-info-modal__close"
+                class="di-head__close no-print"
                 aria-label="Fermer"
                 (click)="close()"
             >
@@ -38,406 +56,421 @@
             </button>
         </header>
 
-        <!-- ── Body 2-col grid ─────────────────────────── -->
-        <div class="di-info-grid">
-            <!-- ─── LEFT ──────────────────────────────── -->
-            <div class="di-info-col di-info-col--main">
-                <!-- DESCRIPTION -->
-                <section class="di-info-section">
-                    <h4 class="di-info-section__label">Description</h4>
-                    <div class="di-info-card">
-                        {{ di?.description || "—" }}
-                    </div>
-                </section>
-
-                <!-- COMPOSANTS -->
-                <section class="di-info-section">
-                    <h4 class="di-info-section__label">
-                        Composants
-                        <span class="di-info-count-pill">
-                            {{ di?.array_composants?.length ?? 0 }}
-                        </span>
-                    </h4>
-                    <div class="di-info-table-card">
-                        <p-table
-                            [value]="di?.array_composants || []"
-                            [paginator]="
-                                (di?.array_composants?.length || 0) > 4
-                            "
-                            [rows]="4"
-                            styleClass="di-info-table"
-                        >
-                            <ng-template pTemplate="header">
-                                <tr>
-                                    <th class="di-info-th">Composant</th>
-                                    <th class="di-info-th di-info-th--right">
-                                        Qté
-                                    </th>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="body" let-c>
-                                <tr class="di-info-tr">
-                                    <td class="di-info-td">
-                                        <span
-                                            class="di-info-dot"
-                                            aria-hidden="true"
-                                        ></span>
-                                        {{ c.nameComposant || "—" }}
-                                    </td>
-                                    <td
-                                        class="di-info-td di-info-td--right"
-                                    >
-                                        {{ c.quantity ?? 0 }}
-                                    </td>
-                                </tr>
-                            </ng-template>
-                            <ng-template pTemplate="emptymessage">
-                                <tr>
-                                    <td
-                                        colspan="2"
-                                        class="di-info-td di-info-td--muted"
-                                    >
-                                        Aucun composant.
-                                    </td>
-                                </tr>
-                            </ng-template>
-                        </p-table>
-                    </div>
-                </section>
-
-                <!-- REMARQUES -->
-                <section class="di-info-section">
-                    <h4 class="di-info-section__label">Remarques</h4>
-                    <div class="di-remark di-remark--admin">
-                        <div class="di-remark__head">
-                            <span
-                                class="di-remark__dot"
-                                aria-hidden="true"
-                            ></span>
-                            <span class="di-remark__label">
-                                Remarque administration
-                            </span>
-                        </div>
-                        <p class="di-remark__body">
-                            {{
-                                di?.remarque_manager ||
-                                    di?.remarque_admin_manager ||
-                                    "Aucune remarque"
-                            }}
-                        </p>
-                    </div>
-                    <div class="di-remark di-remark--diag">
-                        <div class="di-remark__head">
-                            <span
-                                class="di-remark__dot"
-                                aria-hidden="true"
-                            ></span>
-                            <span class="di-remark__label">
-                                Remarque tech diagnostique
-                            </span>
-                        </div>
-                        <p class="di-remark__body">
-                            {{
-                                di?.remarque_tech_diagnostic ||
-                                    "Aucune remarque"
-                            }}
-                        </p>
-                    </div>
-                    <div class="di-remark di-remark--rep">
-                        <div class="di-remark__head">
-                            <span
-                                class="di-remark__dot"
-                                aria-hidden="true"
-                            ></span>
-                            <span class="di-remark__label">
-                                Remarque tech réparation
-                            </span>
-                        </div>
-                        <p class="di-remark__body">
-                            {{
-                                di?.remarque_tech_repair || "Aucune remarque"
-                            }}
-                        </p>
-                    </div>
-                </section>
-            </div>
-
-            <!-- ─── RIGHT (sidebar) ───────────────────── -->
-            <aside class="di-info-col di-info-col--side">
-                <!-- ÉTAT -->
-                <section class="di-info-section">
-                    <h4 class="di-info-section__label">État</h4>
-                    <div class="di-info-state">
-                        <span
-                            class="di-info-chip"
-                            [ngClass]="
-                                di?.can_be_repaired === true
-                                    ? 'di-info-chip--ok'
-                                    : di?.can_be_repaired === false
-                                      ? 'di-info-chip--ko'
-                                      : 'di-info-chip--muted'
-                            "
-                        >
-                            <i
-                                [class]="
-                                    di?.can_be_repaired === true
-                                        ? 'pi pi-check'
-                                        : di?.can_be_repaired === false
-                                          ? 'pi pi-times'
-                                          : 'pi pi-minus'
-                                "
-                            ></i>
-                            {{
-                                di?.can_be_repaired === true
-                                    ? "Réparable"
-                                    : di?.can_be_repaired === false
-                                      ? "Non réparable"
-                                      : "Réparable ?"
-                            }}
-                        </span>
-                        <span
-                            class="di-info-chip"
-                            [ngClass]="
-                                di?.contain_pdr
-                                    ? 'di-info-chip--accent'
-                                    : 'di-info-chip--muted'
-                            "
-                        >
-                            {{ di?.contain_pdr ? "PDR dispo" : "Sans PDR" }}
-                        </span>
-                    </div>
-                </section>
-
-                <!-- TARIFICATION -->
-                <section class="di-info-section">
-                    <h4 class="di-info-section__label">Tarification</h4>
-                    <div class="di-info-tarif">
-                        <div class="di-info-tarif__row">
-                            <span>Prix initial</span>
-                            <strong>
-                                {{
-                                    di?.price == null
-                                        ? "—"
-                                        : formatTnd3(di?.price)
-                                }}
-                            </strong>
-                        </div>
-                        <div
-                            class="di-info-tarif__row di-info-tarif__row--accent"
-                        >
-                            <span>Prix final</span>
-                            <strong>
-                                {{
-                                    di?.final_price == null
-                                        ? "—"
-                                        : formatTnd3(di?.final_price)
-                                }}
-                            </strong>
-                        </div>
-                        <div
-                            class="di-info-tarif__row di-info-tarif__row--ecart"
-                        >
-                            <span>Écart</span>
-                            <strong
-                                [ngClass]="{
-                                    'di-info-ecart--up':
-                                        !ecart.absent && ecart.positive,
-                                    'di-info-ecart--down':
-                                        !ecart.absent && !ecart.positive,
-                                    'di-info-ecart--neutral': ecart.absent,
-                                }"
-                            >
-                                {{ ecart.label }}
-                            </strong>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ÉQUIPE -->
-                <section class="di-info-section">
-                    <h4 class="di-info-section__label">Équipe</h4>
-                    <div class="di-info-team">
-                        <div class="di-info-team__row">
-                            <span
-                                class="di-info-team__avatar di-info-team__avatar--creator"
-                            >
-                                {{ initials(di?.createdBy) }}
-                            </span>
-                            <div class="di-info-team__meta">
-                                <span class="di-info-team__role">
-                                    Créé par
-                                </span>
-                                <strong class="di-info-team__name">
-                                    {{ displayName(di?.createdBy) }}
-                                </strong>
-                            </div>
-                        </div>
-                        <div class="di-info-team__row">
-                            <span
-                                class="di-info-team__avatar di-info-team__avatar--diag"
-                            >
-                                {{ initials(di?.techDiag) }}
-                            </span>
-                            <div class="di-info-team__meta">
-                                <span class="di-info-team__role">
-                                    Tech. diagnostic
-                                </span>
-                                <strong class="di-info-team__name">
-                                    {{ displayName(di?.techDiag) }}
-                                </strong>
-                            </div>
-                        </div>
-                        <div class="di-info-team__row">
-                            <span
-                                class="di-info-team__avatar di-info-team__avatar--rep"
-                            >
-                                {{ initials(di?.techRep) }}
-                            </span>
-                            <div class="di-info-team__meta">
-                                <span class="di-info-team__role">
-                                    Tech. réparation
-                                </span>
-                                <strong class="di-info-team__name">
-                                    {{ displayName(di?.techRep) }}
-                                </strong>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- DÉTAILS -->
-                <section class="di-info-section">
-                    <h4 class="di-info-section__label">Détails</h4>
-                    <div class="di-info-details">
-                        <div class="di-info-details__row">
-                            <span>Client / Société</span>
-                            <strong>
-                                {{
-                                    displayName(
-                                        di?.clientName,
-                                        di?.companyName,
-                                        di?.client_name,
-                                        di?.company_name,
-                                        di?.client_id,
-                                        di?.company_id
-                                    )
-                                }}
-                            </strong>
-                        </div>
-                        <div class="di-info-details__row">
-                            <span>Emplacement</span>
-                            <strong>
-                                {{
-                                    displayName(
-                                        di?.location_name,
-                                        di?.locationName,
-                                        di?.location_id
-                                    )
-                                }}
-                            </strong>
-                        </div>
-                        <div class="di-info-details__row">
-                            <span>Date de création</span>
-                            <strong>{{ di?.createdAt || "—" }}</strong>
-                        </div>
-                    </div>
-                </section>
-            </aside>
-        </div>
-
-        <!-- ── Historique des retours ──────────────────── -->
-        <section
-            *ngIf="retourEntries.length"
-            class="di-info-section di-info-retours-section"
-        >
-            <h4 class="di-info-section__label">
-                Historique des retours
-                <span class="di-info-count-pill">{{ retourEntries.length }}</span>
-            </h4>
-            <div class="di-info-retours">
-                <div
-                    class="di-info-retour-card"
-                    *ngFor="let r of retourEntries"
-                >
-                    <div class="di-info-retour-card__head">Retour #{{ r.n }}</div>
-                    <div class="di-info-details__row">
-                        <span>Prix</span>
-                        <strong>{{ formatTnd3(r.data?.price) }}</strong>
-                    </div>
-                    <div class="di-info-details__row">
-                        <span>Prix final</span>
-                        <strong>{{ formatTnd3(r.data?.final_price) }}</strong>
-                    </div>
-                    <div class="di-info-details__row">
-                        <span>Réparable</span>
-                        <strong>{{
-                            r.data?.can_be_repaired === undefined
-                                ? "—"
-                                : r.data?.can_be_repaired
-                                ? "Oui"
-                                : "Non"
-                        }}</strong>
-                    </div>
-                    <div
-                        class="di-info-details__row"
-                        *ngIf="r.data?.remarque_tech_diagnostic"
-                    >
-                        <span>Diagnostic</span>
-                        <strong>{{ r.data?.remarque_tech_diagnostic }}</strong>
-                    </div>
-                    <div class="di-info-retour-card__docs">
-                        <a
-                            *ngIf="r.data?.bon_de_commande"
-                            [href]="r.data?.bon_de_commande"
-                            target="_blank"
-                            ><i class="pi pi-file-pdf"></i> BC</a
-                        >
-                        <a
-                            *ngIf="r.data?.devis"
-                            [href]="r.data?.devis"
-                            target="_blank"
-                            ><i class="pi pi-file-pdf"></i> Devis</a
-                        >
-                        <a
-                            *ngIf="r.data?.bon_de_livraison"
-                            [href]="r.data?.bon_de_livraison"
-                            target="_blank"
-                            ><i class="pi pi-file-pdf"></i> BL</a
-                        >
-                        <a
-                            *ngIf="r.data?.facture"
-                            [href]="r.data?.facture"
-                            target="_blank"
-                            ><i class="pi pi-file-pdf"></i> Facture</a
-                        >
-                        <span
-                            *ngIf="
-                                !r.data?.bon_de_commande &&
-                                !r.data?.devis &&
-                                !r.data?.bon_de_livraison &&
-                                !r.data?.facture
-                            "
-                            class="di-info-retour-card__nodocs"
-                            >Aucun document</span
-                        >
-                    </div>
+        <!-- ── KPI strip ───────────────────────────────────── -->
+        <div class="di-kpi">
+            <div class="di-kpi__cell">
+                <div class="di-kpi__label">Prix initial</div>
+                <div class="di-kpi__val">
+                    {{ di?.price == null ? "—" : formatTnd3(di?.price) }}
                 </div>
             </div>
-        </section>
+            <div class="di-kpi__cell">
+                <div class="di-kpi__label">Prix final</div>
+                <div class="di-kpi__val di-kpi__val--accent">
+                    {{
+                        di?.final_price == null
+                            ? "—"
+                            : formatTnd3(di?.final_price)
+                    }}
+                </div>
+            </div>
+            <div class="di-kpi__cell">
+                <div class="di-kpi__label">Écart</div>
+                <div
+                    class="di-kpi__val"
+                    [ngClass]="{
+                        'di-kpi__val--up': !ecart.absent && ecart.positive,
+                        'di-kpi__val--down': !ecart.absent && !ecart.positive,
+                        'di-kpi__val--muted': ecart.absent,
+                    }"
+                >
+                    {{ ecart.label }}
+                </div>
+            </div>
+            <div class="di-kpi__cell">
+                <div class="di-kpi__label">Retours</div>
+                <div class="di-kpi__val di-kpi__val--cyan">
+                    {{ retourEntries.length }}
+                    <span class="di-kpi__unit">enregistré(s)</span>
+                </div>
+            </div>
+        </div>
 
-        <!-- ── Footer ──────────────────────────────────── -->
-        <footer class="di-info-modal__footer">
-            <span class="di-info-modal__creator">
-                Créé par
-                <strong>{{ displayName(di?.createdBy) }}</strong>
+        <!-- ── Body (scroll) ───────────────────────────────── -->
+        <div class="di-body di-scroll">
+            <div class="di-body__grid">
+                <!-- ── MAIN ────────────────────────────────── -->
+                <div class="di-main">
+                    <!-- Description -->
+                    <section class="avoid-break">
+                        <div class="di-label">Description</div>
+                        <div class="di-desc">{{ di?.description || "—" }}</div>
+                    </section>
+
+                    <!-- Composants -->
+                    <section class="avoid-break">
+                        <div class="di-label di-label--inline">
+                            Composants
+                            <span class="di-pill">
+                                {{ di?.array_composants?.length ?? 0 }}
+                            </span>
+                        </div>
+                        <div class="di-comp">
+                            <div class="di-comp__head">
+                                <span>Composant</span>
+                                <span class="di-comp__qty">Qté</span>
+                            </div>
+                            <div
+                                class="di-comp__row"
+                                *ngFor="let c of di?.array_composants || []"
+                            >
+                                <span class="di-comp__name">
+                                    <span class="di-comp__ico">
+                                        <i class="pi pi-box"></i>
+                                    </span>
+                                    {{ c.nameComposant || "—" }}
+                                </span>
+                                <span class="di-comp__qty">
+                                    {{ c.quantity ?? 0 }}
+                                </span>
+                            </div>
+                            <div
+                                class="di-comp__empty"
+                                *ngIf="!(di?.array_composants?.length)"
+                            >
+                                Aucun composant.
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Remarques -->
+                    <section class="avoid-break">
+                        <div class="di-label">Remarques</div>
+                        <div class="di-remarks">
+                            <div class="di-remark di-remark--admin">
+                                <div class="di-remark__head">
+                                    <span class="di-remark__dot"></span>
+                                    Remarque administration
+                                </div>
+                                <div class="di-remark__body">
+                                    {{
+                                        di?.remarque_manager ||
+                                            di?.remarque_admin_manager ||
+                                            "Aucune remarque"
+                                    }}
+                                </div>
+                            </div>
+                            <div class="di-remark di-remark--diag">
+                                <div class="di-remark__head">
+                                    <span class="di-remark__dot"></span>
+                                    Remarque tech diagnostique
+                                </div>
+                                <div class="di-remark__body">
+                                    {{
+                                        di?.remarque_tech_diagnostic ||
+                                            "Aucune remarque"
+                                    }}
+                                </div>
+                            </div>
+                            <div class="di-remark di-remark--rep">
+                                <div class="di-remark__head">
+                                    <span class="di-remark__dot"></span>
+                                    Remarque tech réparation
+                                </div>
+                                <div class="di-remark__body">
+                                    {{
+                                        di?.remarque_tech_repair ||
+                                            "Aucune remarque"
+                                    }}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- ── SIDEBAR ─────────────────────────────── -->
+                <aside class="di-side">
+                    <!-- État -->
+                    <div class="avoid-break">
+                        <div class="di-label di-label--sm">État</div>
+                        <div class="di-state">
+                            <span
+                                class="di-state__chip"
+                                [attr.data-kind]="
+                                    di?.can_be_repaired === true
+                                        ? 'ok'
+                                        : di?.can_be_repaired === false
+                                          ? 'ko'
+                                          : 'muted'
+                                "
+                            >
+                                <i
+                                    [class]="
+                                        di?.can_be_repaired === true
+                                            ? 'pi pi-check'
+                                            : di?.can_be_repaired === false
+                                              ? 'pi pi-times'
+                                              : 'pi pi-minus'
+                                    "
+                                ></i>
+                                {{
+                                    di?.can_be_repaired === true
+                                        ? "Réparable"
+                                        : di?.can_be_repaired === false
+                                          ? "Non réparable"
+                                          : "Réparable ?"
+                                }}
+                            </span>
+                            <span
+                                class="di-state__chip"
+                                [attr.data-kind]="
+                                    di?.contain_pdr ? 'accent' : 'muted'
+                                "
+                            >
+                                {{ di?.contain_pdr ? "PDR dispo" : "Sans PDR" }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="di-side__sep"></div>
+
+                    <!-- Équipe -->
+                    <div class="avoid-break">
+                        <div class="di-label di-label--sm">Équipe</div>
+                        <div class="di-team">
+                            <div class="di-team__row">
+                                <span class="di-team__avatar di-team__avatar--creator">
+                                    {{ initials(di?.createdBy) }}
+                                </span>
+                                <div class="di-team__meta">
+                                    <span class="di-team__role">Créé par</span>
+                                    <span class="di-team__name">
+                                        {{ displayName(di?.createdBy) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="di-team__row">
+                                <span class="di-team__avatar di-team__avatar--diag">
+                                    {{ initials(di?.techDiag) }}
+                                </span>
+                                <div class="di-team__meta">
+                                    <span class="di-team__role">
+                                        Tech. diagnostic
+                                    </span>
+                                    <span class="di-team__name">
+                                        {{ displayName(di?.techDiag) }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="di-team__row">
+                                <span class="di-team__avatar di-team__avatar--rep">
+                                    {{ initials(di?.techRep) }}
+                                </span>
+                                <div class="di-team__meta">
+                                    <span class="di-team__role">
+                                        Tech. réparation
+                                    </span>
+                                    <span class="di-team__name">
+                                        {{ displayName(di?.techRep) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="di-side__sep"></div>
+
+                    <!-- Détails -->
+                    <div class="avoid-break">
+                        <div class="di-label di-label--sm">Détails</div>
+                        <div class="di-details">
+                            <div class="di-details__row">
+                                <span>Client / Société</span>
+                                <strong>
+                                    {{
+                                        displayName(
+                                            di?.clientName,
+                                            di?.companyName,
+                                            di?.client_name,
+                                            di?.company_name,
+                                            di?.client_id,
+                                            di?.company_id
+                                        )
+                                    }}
+                                </strong>
+                            </div>
+                            <div class="di-details__row">
+                                <span>Emplacement</span>
+                                <strong>
+                                    {{
+                                        displayName(
+                                            di?.location_name,
+                                            di?.locationName,
+                                            di?.location_id
+                                        )
+                                    }}
+                                </strong>
+                            </div>
+                            <div class="di-details__row">
+                                <span>N° de série</span>
+                                <strong>{{ di?.nSerie || "—" }}</strong>
+                            </div>
+                            <div class="di-details__row">
+                                <span>Date de création</span>
+                                <strong class="di-mono">
+                                    {{ di?.createdAt || "—" }}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="di-side__sep"></div>
+
+                    <!-- Documents -->
+                    <div class="avoid-break">
+                        <div class="di-label di-label--sm">Documents</div>
+                        <div class="di-docs">
+                            <a
+                                *ngFor="let doc of docLinks"
+                                [href]="doc.href"
+                                target="_blank"
+                                rel="noopener"
+                                class="di-doc"
+                                [title]="doc.label"
+                            >
+                                <span class="di-doc__ico">
+                                    <i class="pi pi-file-pdf"></i>
+                                </span>
+                                <span class="di-doc__name">{{ doc.label }}</span>
+                            </a>
+                            <span *ngIf="!hasAnyDoc" class="di-doc__none">
+                                Aucun document
+                            </span>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- ── Historique des retours (timeline) ───────── -->
+            <section
+                *ngIf="retourEntries.length"
+                class="di-retours avoid-break"
+            >
+                <div class="di-retours__head">
+                    <span class="di-retours__ico">
+                        <i class="pi pi-history"></i>
+                    </span>
+                    <span class="di-retours__title">Historique des retours</span>
+                    <span class="di-retours__count">
+                        {{ retourEntries.length }}
+                    </span>
+                </div>
+
+                <div class="di-timeline">
+                    <div
+                        class="di-tl-item avoid-break"
+                        *ngFor="let r of retoursNewestFirst"
+                    >
+                        <div class="di-tl-rail">
+                            <div class="di-tl-node">{{ r.n }}</div>
+                            <div
+                                class="di-tl-line"
+                                [class.di-tl-line--hidden]="r.last"
+                            ></div>
+                        </div>
+
+                        <div class="di-tl-card">
+                            <div class="di-tl-card__head">
+                                <span class="di-tl-card__title">
+                                    Retour #{{ r.n }}
+                                </span>
+                                <span
+                                    class="di-tl-card__date di-mono"
+                                    *ngIf="r.data?.createdAt || r.data?.retourDate"
+                                >
+                                    {{ r.data?.createdAt || r.data?.retourDate }}
+                                </span>
+                                <span
+                                    class="di-rep-pill"
+                                    [attr.data-kind]="
+                                        r.data?.can_be_repaired === false
+                                            ? 'ko'
+                                            : 'ok'
+                                    "
+                                >
+                                    {{
+                                        r.data?.can_be_repaired === false
+                                            ? "Non réparable"
+                                            : "Réparable"
+                                    }}
+                                </span>
+                            </div>
+
+                            <div class="di-tl-card__grid">
+                                <div class="di-tl-kv">
+                                    <span>Prix</span>
+                                    <strong class="di-mono">
+                                        {{ formatTnd3(r.data?.price) }}
+                                    </strong>
+                                </div>
+                                <div class="di-tl-kv">
+                                    <span>Prix final</span>
+                                    <strong class="di-mono di-tl-kv--accent">
+                                        {{ formatTnd3(r.data?.final_price) }}
+                                    </strong>
+                                </div>
+                            </div>
+
+                            <div
+                                class="di-tl-diag"
+                                *ngIf="r.data?.remarque_tech_diagnostic"
+                            >
+                                <span class="di-tl-diag__label">Diagnostic</span>
+                                {{ r.data?.remarque_tech_diagnostic }}
+                            </div>
+
+                            <div class="di-tl-docs">
+                                <span class="di-tl-docs__label">Documents</span>
+                                <a
+                                    *ngFor="let rd of retourDocs(r.data)"
+                                    [href]="rd.href"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="di-tl-doc"
+                                    [title]="rd.label"
+                                >
+                                    <i class="pi pi-file-pdf"></i>
+                                    <span class="di-tl-doc__name">
+                                        {{ rd.label }}
+                                    </span>
+                                </a>
+                                <span
+                                    *ngIf="!retourDocs(r.data).length"
+                                    class="di-tl-docs__none"
+                                >
+                                    Aucun document
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ── Footer ──────────────────────────────────────── -->
+        <footer class="di-foot no-print">
+            <span class="di-foot__creator">
+                Créé par <strong>{{ displayName(di?.createdBy) }}</strong>
             </span>
-            <div class="di-info-modal__actions">
+            <div class="di-foot__actions">
                 <p-button
-                    label="Imprimer"
-                    icon="pi pi-print"
+                    label="Exporter PDF"
+                    icon="pi pi-file-pdf"
                     severity="secondary"
                     [outlined]="true"
-                    (onClick)="print()"
+                    [loading]="downloading"
+                    [disabled]="downloading || !di"
+                    (onClick)="exportPdf()"
                 ></p-button>
                 <p-button
                     label="Fermer"

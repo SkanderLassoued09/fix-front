@@ -1928,6 +1928,22 @@
             </div>
         </div>
 
+        <!-- Remarque du technicien (diagnostic) — l'admin relit le verdict
+             (notamment un « non réparable ») avant de tarifer ou de renvoyer la
+             DI au diagnostic. -->
+        <div
+            class="pricing-diag-note"
+            *ngIf="seletedRow?.remarque_tech_diagnostic"
+        >
+            <div class="pricing-diag-note__head">
+                <i class="pi pi-comment"></i>
+                Remarque du technicien (diagnostic)
+            </div>
+            <p class="pricing-diag-note__body">
+                {{ seletedRow.remarque_tech_diagnostic }}
+            </p>
+        </div>
+
         <!-- History block: kept for retours (legacy data); rendered only when relevant -->
         <div *ngIf="ignoreCountPricing > 0" class="pricing-history">
             <div class="pricing-history__item">
@@ -2001,17 +2017,25 @@
             </button>
         </div>
 
-        <div class="pricing-note">
-            <i class="pi pi-info-circle"></i>
-            Ce prix sert de base à la négociation avec le client. Il pourra être ajusté ensuite.
-        </div>
-
         <footer class="pricing-modal__footer">
             <p-button
                 label="Annuler"
                 severity="secondary"
                 [outlined]="true"
                 (click)="pricingModal = false"
+            ></p-button>
+            <!-- Porte de sortie — UNIQUEMENT si la DI est arrivée en tarification
+                 via le chemin NON RÉPARABLE (l'admin relit le verdict et peut le
+                 contester). Une DI réparable (flux normal) n'a aucune raison
+                 d'être renvoyée au diagnostic → bouton masqué. -->
+            <p-button
+                *ngIf="seletedRow?.can_be_repaired === false"
+                label="Renvoyer au diagnostic"
+                icon="pi pi-replay"
+                severity="secondary"
+                [outlined]="true"
+                [disabled]="isLoading"
+                (click)="sendBackToDiagnostic()"
             ></p-button>
             <p-button
                 label="Affecter le prix"
@@ -2045,13 +2069,15 @@
         <!-- ── Header ──────────────────────────────────── -->
         <header class="af-modal__head">
             <span class="af-modal__tile" aria-hidden="true">
-                <i class="pi pi-folder"></i>
+                <i class="pi pi-folder-open"></i>
             </span>
             <div class="af-modal__titles">
                 <h3 class="af-modal__title">Affectation des Fichiers</h3>
                 <p class="af-modal__subtitle">
-                    {{ finishedData?._idnum || filesSelected?._idnum || "DI" }}
-                    <span> · documents joints au dossier</span>
+                    <span class="af-modal__code">
+                        {{ finishedData?._idnum || filesSelected?._idnum || "DI" }}
+                    </span>
+                    · documents joints au dossier
                 </p>
             </div>
             <button
@@ -2064,244 +2090,327 @@
             </button>
         </header>
 
-        <!-- ── FICHIERS PRINCIPAUX ─────────────────────── -->
-        <section class="af-section">
-            <h4 class="af-section__label">
-                Fichiers principaux
-                <span class="af-count-pill">{{ affectationAvailableCount }}</span>
-            </h4>
-            <div class="af-status-grid">
-                <div
-                    *ngFor="let t of affectationDocTypes"
-                    class="af-status-card"
-                    [class.af-status-card--missing]="!filesSelected?.[t.field]"
-                >
-                    <span class="af-status-card__icon" aria-hidden="true">
-                        <i class="pi pi-file"></i>
+        <!-- ── Body (scroll) ───────────────────────────── -->
+        <div class="af-modal__body af-scroll">
+            <!-- FICHIERS PRINCIPAUX -->
+            <section class="af-block">
+                <div class="af-block__head">
+                    <span class="af-block__label">Fichiers principaux</span>
+                    <span class="af-count-pill">
+                        {{ affectationAvailableCount }}
                     </span>
-                    <span
-                        class="af-status-card__dot"
-                        [class.af-status-card__dot--ok]="!!filesSelected?.[t.field]"
-                    ></span>
-                    <strong class="af-status-card__type">{{ t.key }}</strong>
-                    <span class="af-status-card__state">
-                        {{ filesSelected?.[t.field] ? "Disponible" : "Manquant" }}
-                    </span>
-                    <a
-                        *ngIf="filesSelected?.[t.field]"
-                        [href]="docHref(filesSelected?.[t.field])"
-                        target="_blank"
-                        class="af-status-card__link"
-                        title="Voir le document"
-                    >
-                        <i class="pi pi-eye"></i>
-                    </a>
                 </div>
-            </div>
-        </section>
-
-        <!-- ── Retours (kept legacy retour history, flattened) ── -->
-        <section
-            class="af-section af-retours"
-            *ngIf="finishedData?.logs?.length"
-        >
-            <h4 class="af-section__label">Historique des retours</h4>
-            <div
-                *ngFor="let files of finishedData?.logs; let i = index"
-                class="af-retour-row"
-            >
-                <strong>Retour N°{{ i + 1 }}</strong>
-                <div class="af-retour-row__links">
-                    <a
-                        *ngIf="files?.bon_de_commande"
-                        [href]="docHref(files.bon_de_commande)"
-                        target="_blank"
-                    >
-                        <i class="pi pi-file-pdf"></i> BC
-                    </a>
-                    <a
-                        *ngIf="files?.bon_de_livraison"
-                        [href]="docHref(files.bon_de_livraison)"
-                        target="_blank"
-                    >
-                        <i class="pi pi-file-pdf"></i> BL
-                    </a>
-                    <a
-                        *ngIf="files?.facture"
-                        [href]="docHref(files.facture)"
-                        target="_blank"
-                    >
-                        <i class="pi pi-file-pdf"></i> Facture
-                    </a>
-                    <a
-                        *ngIf="files?.devis"
-                        [href]="docHref(files.devis)"
-                        target="_blank"
-                    >
-                        <i class="pi pi-file-pdf"></i> Devis
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── AFFECTER & TÉLÉVERSER (BL + Facture) ────── -->
-        <section class="af-section">
-            <h4 class="af-section__label">Affecter &amp; téléverser</h4>
-            <div class="af-upload-grid">
-                <!-- BL slot -->
-                <div class="af-upload-cell">
-                    <div class="af-upload-cell__head">
-                        <span class="af-tag">BL</span>
-                        <span class="af-upload-cell__label">Bon de livraison</span>
-                    </div>
-
-                    <div *ngIf="selectedBL; else blDrop" class="af-file-card">
-                        <span class="af-file-card__icon" aria-hidden="true">
-                            <i class="pi pi-file-pdf"></i>
-                        </span>
-                        <div class="af-file-card__meta">
-                            <span class="af-file-card__name">
-                                Bon de livraison sélectionné
-                            </span>
-                            <span class="af-file-card__size">
-                                <i class="pi pi-check"></i>
-                                Prêt à enregistrer
-                            </span>
-                        </div>
-                        <a
-                            [href]="selectedBL"
-                            target="_blank"
-                            class="af-file-card__view"
-                            title="Voir l'aperçu"
-                        >
-                            <i class="pi pi-eye"></i>
-                        </a>
-                    </div>
-
-                    <ng-template #blDrop>
-                        <label
-                            class="af-dropzone"
-                            [class.af-dropzone--active]="afDragActive['BL']"
-                            [class.af-dropzone--disabled]="
-                                blBtnDisabled || blLoading
-                            "
-                            (dragover)="onAfDragOver($event, 'BL')"
-                            (dragleave)="onAfDragLeave($event, 'BL')"
-                            (drop)="onAfDrop($event, 'BL')"
-                        >
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                hidden
-                                [disabled]="blBtnDisabled || blLoading"
-                                (change)="onAfPicker($event, 'BL')"
-                            />
-                            <span class="af-dropzone__icon" aria-hidden="true">
-                                <i
-                                    [class]="
-                                        blLoading
-                                            ? 'pi pi-spinner pi-spin'
-                                            : 'pi pi-upload'
-                                    "
-                                ></i>
-                            </span>
-                            <span class="af-dropzone__title">
-                                {{
-                                    blLoading
-                                        ? "Chargement…"
-                                        : filesSelected?.bon_de_livraison
-                                          ? "Remplacer le PDF"
-                                          : "Ajouter un PDF"
-                                }}
-                            </span>
-                            <span class="af-dropzone__hint">
-                                Glissez le fichier ici ou cliquez · max 10 Mo
-                            </span>
-                        </label>
-                    </ng-template>
-
-                </div>
-
-                <!-- Facture slot -->
-                <div class="af-upload-cell">
-                    <div class="af-upload-cell__head">
-                        <span class="af-tag">FAC</span>
-                        <span class="af-upload-cell__label">Facture</span>
-                    </div>
-
+                <div class="af-status-grid">
                     <div
-                        *ngIf="selectedFacture; else factureDrop"
-                        class="af-file-card"
+                        *ngFor="let c of affectationMainCards"
+                        class="af-status-card"
+                        [class.af-status-card--missing]="!c.present"
                     >
-                        <span class="af-file-card__icon" aria-hidden="true">
-                            <i class="pi pi-file-pdf"></i>
-                        </span>
-                        <div class="af-file-card__meta">
-                            <span class="af-file-card__name">
-                                Facture sélectionnée
+                        <div class="af-status-card__top">
+                            <span class="af-status-card__icon" aria-hidden="true">
+                                <i class="pi pi-file"></i>
                             </span>
-                            <span class="af-file-card__size">
-                                <i class="pi pi-check"></i>
-                                Prêt à enregistrer
+                            <span class="af-status-card__tag">{{ c.tag }}</span>
+                            <span
+                                class="af-status-card__dot"
+                                [class.af-status-card__dot--ok]="c.present"
+                            ></span>
+                        </div>
+                        <div class="af-status-card__title" [title]="c.title">
+                            {{ c.title }}
+                        </div>
+                        <div class="af-status-card__foot">
+                            <span class="af-status-card__state">
+                                {{ c.statusLabel }}
+                            </span>
+                            <a
+                                *ngIf="c.present && c.href"
+                                [href]="docHref(c.href)"
+                                target="_blank"
+                                class="af-status-card__link"
+                                title="Voir le document"
+                            >
+                                <i class="pi pi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HISTORIQUE DES RETOURS (timeline) -->
+            <section class="af-block" *ngIf="affectationRetours.length">
+                <div class="af-block__head">
+                    <span class="af-block__ico af-block__ico--cyan">
+                        <i class="pi pi-history"></i>
+                    </span>
+                    <span class="af-block__label">Historique des retours</span>
+                    <span class="af-count-pill af-count-pill--cyan">
+                        {{ affectationRetours.length }}
+                    </span>
+                </div>
+                <div class="af-timeline">
+                    <div
+                        class="af-tl-item"
+                        *ngFor="let r of affectationRetours; let last = last"
+                    >
+                        <div class="af-tl-rail">
+                            <div class="af-tl-node">{{ r.num }}</div>
+                            <div
+                                class="af-tl-line"
+                                [class.af-tl-line--hidden]="last"
+                            ></div>
+                        </div>
+                        <div class="af-tl-card">
+                            <div class="af-tl-card__head">
+                                <span class="af-tl-card__title">
+                                    Retour N°{{ r.num }}
+                                </span>
+                                <span class="af-tl-card__date" *ngIf="r.date">
+                                    {{ r.date }}
+                                </span>
+                            </div>
+                            <div class="af-tl-docs">
+                                <span class="af-tl-docs__label">Documents</span>
+                                <a
+                                    *ngFor="let d of r.docs"
+                                    [href]="docHref(d.href)"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="af-tl-doc"
+                                    [title]="d.name"
+                                >
+                                    <i class="pi pi-file-pdf"></i>
+                                    <span class="af-tl-doc__name">
+                                        {{ d.name }}
+                                    </span>
+                                </a>
+                                <span
+                                    *ngIf="!r.docs.length"
+                                    class="af-tl-docs__none"
+                                >
+                                    Aucun document
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AFFECTER & TÉLÉVERSER (BL + Facture) -->
+            <section class="af-block">
+                <div class="af-block__head">
+                    <span class="af-block__label">Affecter &amp; téléverser</span>
+                </div>
+                <div class="af-upload-grid">
+                    <!-- BL slot -->
+                    <div class="af-upload-cell">
+                        <div class="af-upload-cell__head">
+                            <span class="af-tag">BL</span>
+                            <span class="af-upload-cell__label">
+                                Bon de livraison
                             </span>
                         </div>
-                        <a
-                            [href]="selectedFacture"
-                            target="_blank"
-                            class="af-file-card__view"
-                            title="Voir l'aperçu"
-                        >
-                            <i class="pi pi-eye"></i>
-                        </a>
+
+                        <div *ngIf="selectedBL; else blDrop" class="af-file-card">
+                            <span class="af-file-card__icon" aria-hidden="true">
+                                <i class="pi pi-file-pdf"></i>
+                            </span>
+                            <div class="af-file-card__meta">
+                                <span
+                                    class="af-file-card__name"
+                                    [title]="
+                                        afSelectedMeta['BL']?.name ||
+                                        'Bon de livraison'
+                                    "
+                                >
+                                    {{
+                                        afSelectedMeta["BL"]?.name ||
+                                            "Bon de livraison sélectionné"
+                                    }}
+                                </span>
+                                <span class="af-file-card__size">
+                                    <i class="pi pi-check"></i>
+                                    {{
+                                        afSelectedMeta["BL"]?.size
+                                            ? formatFileSize(
+                                                  afSelectedMeta["BL"].size
+                                              )
+                                            : "Prêt à enregistrer"
+                                    }}
+                                </span>
+                            </div>
+                            <a
+                                [href]="selectedBL"
+                                target="_blank"
+                                class="af-file-card__view"
+                                title="Voir l'aperçu"
+                            >
+                                <i class="pi pi-eye"></i>
+                            </a>
+                            <button
+                                type="button"
+                                class="af-file-card__remove"
+                                title="Retirer le fichier"
+                                (click)="clearAffectationSlot('BL')"
+                            >
+                                <i class="pi pi-trash"></i>
+                            </button>
+                        </div>
+
+                        <ng-template #blDrop>
+                            <label
+                                class="af-dropzone"
+                                [class.af-dropzone--active]="afDragActive['BL']"
+                                [class.af-dropzone--disabled]="
+                                    blBtnDisabled || blLoading
+                                "
+                                (dragover)="onAfDragOver($event, 'BL')"
+                                (dragleave)="onAfDragLeave($event, 'BL')"
+                                (drop)="onAfDrop($event, 'BL')"
+                            >
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    hidden
+                                    [disabled]="blBtnDisabled || blLoading"
+                                    (change)="onAfPicker($event, 'BL')"
+                                />
+                                <span
+                                    class="af-dropzone__icon"
+                                    aria-hidden="true"
+                                >
+                                    <i
+                                        [class]="
+                                            blLoading
+                                                ? 'pi pi-spinner pi-spin'
+                                                : 'pi pi-upload'
+                                        "
+                                    ></i>
+                                </span>
+                                <span class="af-dropzone__title">
+                                    {{
+                                        blLoading
+                                            ? "Chargement…"
+                                            : filesSelected?.bon_de_livraison
+                                              ? "Remplacer le PDF"
+                                              : "Ajouter un PDF"
+                                    }}
+                                </span>
+                                <span class="af-dropzone__hint">
+                                    Glissez le fichier ici ou cliquez · max 10 Mo
+                                </span>
+                            </label>
+                        </ng-template>
                     </div>
 
-                    <ng-template #factureDrop>
-                        <label
-                            class="af-dropzone"
-                            [class.af-dropzone--active]="afDragActive['Facture']"
-                            [class.af-dropzone--disabled]="
-                                factureBtnDisabled || factureLoading
-                            "
-                            (dragover)="onAfDragOver($event, 'Facture')"
-                            (dragleave)="onAfDragLeave($event, 'Facture')"
-                            (drop)="onAfDrop($event, 'Facture')"
+                    <!-- Facture slot -->
+                    <div class="af-upload-cell">
+                        <div class="af-upload-cell__head">
+                            <span class="af-tag">FAC</span>
+                            <span class="af-upload-cell__label">Facture</span>
+                        </div>
+
+                        <div
+                            *ngIf="selectedFacture; else factureDrop"
+                            class="af-file-card"
                         >
-                            <input
-                                type="file"
-                                accept="application/pdf"
-                                hidden
-                                [disabled]="
+                            <span class="af-file-card__icon" aria-hidden="true">
+                                <i class="pi pi-file-pdf"></i>
+                            </span>
+                            <div class="af-file-card__meta">
+                                <span
+                                    class="af-file-card__name"
+                                    [title]="
+                                        afSelectedMeta['Facture']?.name ||
+                                        'Facture'
+                                    "
+                                >
+                                    {{
+                                        afSelectedMeta["Facture"]?.name ||
+                                            "Facture sélectionnée"
+                                    }}
+                                </span>
+                                <span class="af-file-card__size">
+                                    <i class="pi pi-check"></i>
+                                    {{
+                                        afSelectedMeta["Facture"]?.size
+                                            ? formatFileSize(
+                                                  afSelectedMeta["Facture"].size
+                                              )
+                                            : "Prêt à enregistrer"
+                                    }}
+                                </span>
+                            </div>
+                            <a
+                                [href]="selectedFacture"
+                                target="_blank"
+                                class="af-file-card__view"
+                                title="Voir l'aperçu"
+                            >
+                                <i class="pi pi-eye"></i>
+                            </a>
+                            <button
+                                type="button"
+                                class="af-file-card__remove"
+                                title="Retirer le fichier"
+                                (click)="clearAffectationSlot('Facture')"
+                            >
+                                <i class="pi pi-trash"></i>
+                            </button>
+                        </div>
+
+                        <ng-template #factureDrop>
+                            <label
+                                class="af-dropzone"
+                                [class.af-dropzone--active]="
+                                    afDragActive['Facture']
+                                "
+                                [class.af-dropzone--disabled]="
                                     factureBtnDisabled || factureLoading
                                 "
-                                (change)="onAfPicker($event, 'Facture')"
-                            />
-                            <span class="af-dropzone__icon" aria-hidden="true">
-                                <i
-                                    [class]="
-                                        factureLoading
-                                            ? 'pi pi-spinner pi-spin'
-                                            : 'pi pi-upload'
+                                (dragover)="onAfDragOver($event, 'Facture')"
+                                (dragleave)="onAfDragLeave($event, 'Facture')"
+                                (drop)="onAfDrop($event, 'Facture')"
+                            >
+                                <input
+                                    type="file"
+                                    accept="application/pdf"
+                                    hidden
+                                    [disabled]="
+                                        factureBtnDisabled || factureLoading
                                     "
-                                ></i>
-                            </span>
-                            <span class="af-dropzone__title">
-                                {{
-                                    factureLoading
-                                        ? "Chargement…"
-                                        : filesSelected?.facture
-                                          ? "Remplacer le PDF"
-                                          : "Ajouter un PDF"
-                                }}
-                            </span>
-                            <span class="af-dropzone__hint">
-                                Glissez le fichier ici ou cliquez · max 10 Mo
-                            </span>
-                        </label>
-                    </ng-template>
-
+                                    (change)="onAfPicker($event, 'Facture')"
+                                />
+                                <span
+                                    class="af-dropzone__icon"
+                                    aria-hidden="true"
+                                >
+                                    <i
+                                        [class]="
+                                            factureLoading
+                                                ? 'pi pi-spinner pi-spin'
+                                                : 'pi pi-upload'
+                                        "
+                                    ></i>
+                                </span>
+                                <span class="af-dropzone__title">
+                                    {{
+                                        factureLoading
+                                            ? "Chargement…"
+                                            : filesSelected?.facture
+                                              ? "Remplacer le PDF"
+                                              : "Ajouter un PDF"
+                                    }}
+                                </span>
+                                <span class="af-dropzone__hint">
+                                    Glissez le fichier ici ou cliquez · max 10 Mo
+                                </span>
+                            </label>
+                        </ng-template>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
 
         <!-- ── Footer ──────────────────────────────────── -->
         <footer class="af-modal__footer">
@@ -2311,21 +2420,18 @@
                     fichier{{ affectationPendingCount > 1 ? "s" : "" }}
                     prêt{{ affectationPendingCount > 1 ? "s" : "" }} à enregistrer
                 </ng-container>
-                <ng-template #nothing>
-                    Aucun fichier en attente.
-                </ng-template>
+                <ng-template #nothing>Aucun nouveau fichier</ng-template>
             </span>
             <div class="af-modal__actions">
                 <p-button
                     label="Annuler"
-                    severity="secondary"
-                    [outlined]="true"
+                    styleClass="af-btn af-btn--cancel"
                     (onClick)="filsFinished = false"
                 ></p-button>
                 <p-button
                     label="Enregistrer"
                     icon="pi pi-save"
-                    severity="primary"
+                    styleClass="af-btn af-btn--save"
                     [disabled]="affectationPendingCount === 0 || isLoading"
                     (onClick)="saveAffectationFichiers()"
                 ></p-button>

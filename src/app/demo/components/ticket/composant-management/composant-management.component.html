@@ -1,110 +1,192 @@
-<div class="card">
-    <p-table [value]="listComposants" [tableStyle]="{ 'min-width': '50rem' }">
-        <ng-template pTemplate="header">
-            <tr>
-                <th>_id</th>
-                <th>Package</th>
-                <th>Prix Achat</th>
-                <th>Prix Vente</th>
-                <th>Coming Date</th>
-                <th>Quantity Stocked</th>
-                <th>Status Composant</th>
-                <th>Action</th>
-            </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-composant>
-            <tr>
-                <td>{{ formatValue(composant._id) }}</td>
-                <td>{{ formatValue(composant.package) }}</td>
-                <td>{{ formatValue(composant.prix_achat) }}</td>
-                <td>{{ formatValue(composant.prix_vente) }}</td>
-                <td>
-                    {{ getFormattedDate(composant.coming_date) }}
-                </td>
-                <td>{{ formatValue(composant.quantity_stocked) }}</td>
-                <td>{{ formatValue(composant.status_composant) }}</td>
-                <td class="flex gap-1">
-                    <p-button
-                        pRipple
-                        label="Edit"
-                        class="button-success"
-                        severity="success"
-                        (click)="updateComposant(composant)"
-                    />
-                    <p-button
-                        pRipple
-                        label="delete"
-                        class="button-success"
-                        severity="danger"
-                        (click)="deleteComposant(composant._id)"
-                    />
-                </td>
-            </tr>
-        </ng-template>
-    </p-table>
+<div class="cm-shell">
+    <header class="cm-header">
+        <div class="cm-header__text">
+            <h2 class="cm-title">Gestion des composants</h2>
+            <p class="cm-subtitle">
+                Catalogue des composants et pièces détachées.
+            </p>
+        </div>
+        <div class="cm-header__actions">
+            <span class="p-input-icon-left cm-search">
+                <i class="pi pi-search"></i>
+                <input
+                    pInputText
+                    type="text"
+                    placeholder="Rechercher un composant…"
+                    (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                />
+            </span>
+        </div>
+    </header>
+
+    <div class="cm-table">
+        <p-table
+            #dt
+            [value]="listComposants"
+            styleClass="p-datatable-sm"
+            [paginator]="true"
+            [rows]="15"
+            [rowsPerPageOptions]="[10, 15, 25, 50]"
+            responsiveLayout="scroll"
+            [tableStyle]="{ 'min-width': '60rem' }"
+            [globalFilterFields]="[
+                '_id',
+                'package',
+                'prix_achat',
+                'prix_vente',
+                'status_composant'
+            ]"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Réf.</th>
+                    <th>Package</th>
+                    <th>Prix achat</th>
+                    <th>Prix vente</th>
+                    <th>Date d'arrivée</th>
+                    <th>Stock</th>
+                    <th>Statut</th>
+                    <th style="width: 120px; text-align: right">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-composant>
+                <tr>
+                    <td class="cm-ref">{{ formatValue(composant._id) }}</td>
+                    <td>{{ formatValue(composant.package) }}</td>
+                    <td>{{ formatValue(composant.prix_achat) }}</td>
+                    <td>{{ formatValue(composant.prix_vente) }}</td>
+                    <td>{{ getFormattedDate(composant.coming_date) }}</td>
+                    <td>{{ formatValue(composant.quantity_stocked) }}</td>
+                    <td>
+                        <span class="cm-status">{{
+                            formatValue(composant.status_composant)
+                        }}</span>
+                    </td>
+                    <td class="cm-actions">
+                        <button
+                            pButton
+                            pRipple
+                            type="button"
+                            icon="pi pi-pencil"
+                            title="Modifier"
+                            class="cm-row-btn cm-row-btn--edit"
+                            (click)="updateComposant(composant)"
+                        ></button>
+                        <button
+                            pButton
+                            pRipple
+                            type="button"
+                            icon="pi pi-trash"
+                            title="Supprimer"
+                            class="cm-row-btn cm-row-btn--del"
+                            (click)="deleteComposant(composant._id)"
+                        ></button>
+                    </td>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="8" class="cm-empty">Aucun composant.</td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
     <p-dialog
         [(visible)]="openModalEdit"
-        header="Update Composant"
+        header="Modifier le composant"
         [modal]="true"
-        styleClass="p-fluid"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="cu-dialog"
+        [style]="{ width: '560px', maxWidth: 'calc(100vw - 2rem)' }"
     >
-        <form [formGroup]="updateComposantForm">
-            <div class="field">
-                <label>Package</label>
-                <input pInputText formControlName="package" />
-            </div>
+        <form [formGroup]="updateComposantForm" class="cu-form">
+            <div class="cu-grid">
+                <div class="cu-field cu-field--full">
+                    <label class="cu-label">Package</label>
+                    <input
+                        pInputText
+                        formControlName="package"
+                        class="cu-input"
+                    />
+                </div>
 
-            <div class="field">
-                <label>Prix Achat</label>
-                <p-inputNumber formControlName="prix_achat"></p-inputNumber>
-            </div>
+                <div class="cu-field">
+                    <label class="cu-label">Prix d'achat</label>
+                    <p-inputNumber
+                        formControlName="prix_achat"
+                        mode="currency"
+                        currency="TND"
+                        styleClass="cu-number"
+                    ></p-inputNumber>
+                </div>
 
-            <div class="field">
-                <label>Prix Vente</label>
-                <p-inputNumber formControlName="prix_vente"></p-inputNumber>
-            </div>
+                <div class="cu-field">
+                    <label class="cu-label">Prix de vente</label>
+                    <p-inputNumber
+                        formControlName="prix_vente"
+                        mode="currency"
+                        currency="TND"
+                        styleClass="cu-number"
+                    ></p-inputNumber>
+                </div>
 
-            <div class="field">
-                <label>Coming Date</label>
-                <p-calendar
-                    formControlName="coming_date"
-                    dateFormat="yy-mm-dd"
-                    showIcon="true"
-                ></p-calendar>
-            </div>
+                <div class="cu-field">
+                    <label class="cu-label">Quantité en stock</label>
+                    <p-inputNumber
+                        formControlName="quantity_stocked"
+                        mode="decimal"
+                        styleClass="cu-number"
+                    ></p-inputNumber>
+                </div>
 
-            <div class="field">
-                <label>Quantity Stocked</label>
-                <p-inputNumber
-                    formControlName="quantity_stocked"
-                ></p-inputNumber>
-            </div>
+                <div class="cu-field">
+                    <label class="cu-label">Date d'arrivée</label>
+                    <p-calendar
+                        formControlName="coming_date"
+                        dateFormat="yy-mm-dd"
+                        [showIcon]="true"
+                        styleClass="cu-calendar"
+                        [style]="{ width: '100%' }"
+                    ></p-calendar>
+                </div>
 
-            <div class="field">
-                <label>Status</label>
-                <p-dropdown
-                    formControlName="status_composant"
-                    [options]="statusComposant"
-                    optionLabel="name"
-                    optionValue="value"
-                ></p-dropdown>
+                <div class="cu-field cu-field--full">
+                    <label class="cu-label">Statut</label>
+                    <p-dropdown
+                        formControlName="status_composant"
+                        [options]="statusComposant"
+                        optionLabel="name"
+                        optionValue="value"
+                        placeholder="Choisir un statut"
+                        styleClass="cu-dropdown"
+                        [style]="{ width: '100%' }"
+                    ></p-dropdown>
+                </div>
             </div>
         </form>
 
         <ng-template pTemplate="footer">
-            <p-button
-                label="Cancel"
-                icon="pi pi-times"
-                [text]="true"
-                (onClick)="openModalEdit = false"
-            />
-            <p-button
-                label="Update"
-                icon="pi pi-check"
-                severity="success"
-                [disabled]="updateComposantForm.invalid"
-                (onClick)="saveComposant()"
-            />
+            <div class="cu-footer">
+                <button
+                    pButton
+                    type="button"
+                    label="Annuler"
+                    icon="pi pi-times"
+                    class="cu-btn cu-btn--ghost"
+                    (click)="openModalEdit = false"
+                ></button>
+                <button
+                    pButton
+                    type="button"
+                    label="Enregistrer"
+                    icon="pi pi-check"
+                    class="cu-btn cu-btn--primary"
+                    [disabled]="updateComposantForm.invalid"
+                    (click)="saveComposant()"
+                ></button>
+            </div>
         </ng-template>
     </p-dialog>
 </div>

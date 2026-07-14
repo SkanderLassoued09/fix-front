@@ -127,6 +127,9 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
       }
       .switch:checked { background: #22c55e; }
       .switch:checked::after { transform: translateX(16px); }
+      /* Disabled (e.g. PDR when the DI is non-réparable) — greyed + locked. */
+      .switch:disabled { opacity: 0.45; cursor: not-allowed; background: #cbd5e1; }
+      .switch:disabled::after { box-shadow: none; }
     `,
   ],
 })

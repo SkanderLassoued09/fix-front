@@ -1,321 +1,461 @@
 // ═══════════════════════════════════════════════════════
-//  DI INFO MODAL (read-only) — shared between Coordinator
-//  and Interventions. Palette: existing design system —
-//  blue / green / amber / slate ONLY (no purple).
+//  DOSSIER D'INTERVENTION — read-only DI dossier modal.
+//  Shared between Coordinator and Interventions pages.
+//  Implements the "Dossier Intervention" Claude Design.
 // ═══════════════════════════════════════════════════════
 
-// ── DS tokens reused from sav-* pages ───────────────────
-$bg-card: #ffffff;
-$bg-surface: #f8fafc;
-$border: #e2e8f0;
-$text-primary: #0f172a; // slate-900 (a touch darker for read-only emphasis)
-$text-body: #1e293b; // slate-800
-$text-secondary: #64748b; // slate-500
-$text-muted: #94a3b8; // slate-400
-$accent-blue: #2563eb; // blue-600 — primary accent
-$accent-blue-soft: #eff6ff; // blue-50
-$accent-blue-border: #bfdbfe; // blue-200
-$accent-blue-dark: #1d4ed8; // blue-700
-$blue-500: #3b82f6;
-$green: #16a34a;
-$green-soft: #dcfce7;
-$green-border: #a7f3d0;
-$green-dark: #14532d;
-$amber: #b45309; // amber-700
-$amber-soft: #fef3c7; // amber-100
-$red: #dc2626;
-$red-soft: #fee2e2;
+// ── Palette (from the design) ───────────────────────────
+$accent: #2f6bff;
+$accent-tint: #eef3ff;
+$accent-dark: #1f57e6;
+$accent-shadow: rgba(47, 107, 255, 0.32);
 
+$card: #ffffff;
+$surface: #fafbfc;
+$side-bg: #fafbfd;
+
+$border: #eceef3;
+$border-2: #e7eaef;
+$border-3: #e2e8ec;
+
+$ink: #1f2733; // base
+$ink-body: #3a4453; // body copy
+$ink-strong: #2b3440; // strong values
+$ink-sub: #5b6678; // sub-strong
+
+$muted: #8a93a3;
+$muted-2: #9aa2b1;
+$muted-3: #7b8497;
+$label: #8b93a3;
+
+$cyan: #0e9bc4;
+$cyan-tint: #e2f6fb;
+$cyan-border: #bfeaf3;
+$cyan-line: #d8e6ea;
+
+$purple: #7c6fe0;
+$purple-tint: #f3f0fd;
+
+$amber: #d97706;
+$amber-tint: #fff3e0;
+$status-amber: #c47a1e;
+$status-amber-bg: #fff5e9;
+
+$green: #3fa971;
+$green-tint: #eafaf0;
+
+$rose: #d65a7a;
+$rose-tint: #fdeef0;
+
+$pdf: #d65a5a;
+$pdf-tint: #fdecec;
+
+$diag-bg: #eef4ff;
+$diag-fg: #2563eb;
+
+$mono: "JetBrains Mono", ui-monospace, monospace;
+
+// ── Dialog shell ────────────────────────────────────────
 ::ng-deep .di-info-dialog .p-dialog-content {
     padding: 0 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
 }
+::ng-deep .di-info-dialog.p-dialog,
 ::ng-deep .di-info-dialog .p-dialog {
-    border-radius: 12px !important;
-    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 30px 80px rgba(20, 28, 45, 0.26) !important;
 }
 
-.di-info-modal {
+.print-only {
+    display: none;
+}
+
+.di-card {
     display: flex;
     flex-direction: column;
+    background: $card;
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    color: $text-body;
-    background: $bg-card;
-    border-radius: 12px;
-    overflow: hidden;
+    color: $ink;
+    -webkit-font-smoothing: antialiased;
+}
+
+// ── Print letterhead ────────────────────────────────────
+.di-print-head {
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 16px;
+    border-bottom: 2px solid $ink-strong;
+    margin: 0 26px 4px;
+    &__logo {
+        height: 34px;
+    }
+    &__meta {
+        text-align: right;
+    }
+    &__title {
+        font-size: 13px;
+        font-weight: 700;
+        color: $ink-strong;
+    }
+    &__code {
+        font-size: 11px;
+        color: $muted;
+        font-family: $mono;
+    }
 }
 
 // ── Header ──────────────────────────────────────────────
-.di-info-modal__head {
+.di-head {
     display: flex;
     align-items: flex-start;
-    gap: 0.9rem;
-    padding: 1.1rem 1.35rem;
+    gap: 15px;
+    padding: 20px 26px 16px;
     border-bottom: 1px solid $border;
-    background: $bg-surface;
+    flex: none;
 }
-
-.di-info-modal__tile {
-    flex: 0 0 52px;
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    background: $accent-blue-soft;
-    border: 1px solid $accent-blue-border;
-    color: $accent-blue-dark;
+.di-head__tile {
+    width: 50px;
+    height: 50px;
+    flex: none;
+    border-radius: 13px;
+    background: linear-gradient(135deg, #eaf1ff, #dbe6ff);
+    color: $accent;
+    font-size: 19px;
+    font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 1.3rem;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.5px;
 }
-
-.di-info-modal__titles {
-    flex: 1 1 auto;
+.di-head__titles {
+    flex: 1;
     min-width: 0;
 }
-
-.di-info-modal__title-row {
+.di-head__row {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    gap: 10px;
     flex-wrap: wrap;
 }
-
-.di-info-modal__title {
-    margin: 0;
-    font-size: 1.0625rem; // ~17px
+.di-head__title {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: $ink;
+}
+.di-head__code {
+    font-family: $mono;
+    font-size: 12px;
     font-weight: 700;
-    color: $text-primary;
-    text-transform: uppercase;
-    letter-spacing: 0.01em;
-    line-height: 1.2;
-}
-
-.di-info-modal__badge {
-    display: inline-flex;
-    align-items: center;
+    color: $accent;
+    background: $accent-tint;
     padding: 3px 9px;
-    border-radius: 6px;
-    background: $accent-blue-soft;
-    color: $accent-blue-dark;
-    font-size: 0.75rem; // ~12px
-    font-weight: 600;
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    letter-spacing: 0.04em;
+    border-radius: 7px;
+    white-space: nowrap;
 }
-
-.di-info-modal__subtitle {
-    margin: 0.3rem 0 0;
-    font-size: 0.8rem; // ~12.8px
-    color: $text-secondary;
+.di-head__sub {
+    font-size: 12.5px;
+    color: $muted;
+    margin-top: 5px;
+    strong {
+        color: $ink-sub;
+        font-weight: 600;
+    }
 }
-
-.di-info-modal__close {
-    flex: 0 0 36px;
+.di-head__close {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
-    background: $bg-card;
+    flex: none;
+    border-radius: 9px;
     border: 1px solid $border;
-    color: $text-secondary;
+    background: $surface;
+    color: $ink-sub;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition: background 0.15s;
     .pi {
         font-size: 0.9rem;
     }
     &:hover {
-        background: $bg-surface;
-        color: $text-body;
-        border-color: #cbd5e1;
+        background: #f1f2f4;
     }
 }
 
-// ── Body grid ───────────────────────────────────────────
-.di-info-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-    gap: 1.35rem;
-    padding: 1.35rem;
+// ── Status pill (header) ────────────────────────────────
+.di-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    background: $status-amber-bg;
+    color: $status-amber;
+    &[data-tone="ok"] {
+        background: $green-tint;
+        color: $green;
+    }
+    &[data-tone="ko"] {
+        background: $rose-tint;
+        color: $rose;
+    }
+    &[data-tone="info"] {
+        background: $cyan-tint;
+        color: $cyan;
+    }
 }
 
-.di-info-col {
+// ── KPI strip ───────────────────────────────────────────
+.di-kpi {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: $border;
+    border-bottom: 1px solid $border;
+    flex: none;
+}
+.di-kpi__cell {
+    background: $card;
+    padding: 14px 22px;
+}
+.di-kpi__label {
+    font-size: 10.5px;
+    letter-spacing: 0.7px;
+    font-weight: 700;
+    color: $muted-2;
+    text-transform: uppercase;
+}
+.di-kpi__val {
+    font-size: 19px;
+    font-weight: 700;
+    font-family: $mono;
+    margin-top: 5px;
+    color: $ink-body;
+    font-variant-numeric: tabular-nums;
+    &--accent {
+        color: $accent;
+    }
+    &--cyan {
+        color: $cyan;
+    }
+    &--up {
+        color: $amber;
+    }
+    &--down {
+        color: $green;
+    }
+    &--muted {
+        color: $muted-2;
+        font-size: 15px;
+    }
+}
+.di-kpi__unit {
+    font-size: 12px;
+    font-weight: 500;
+    color: $muted-2;
+    font-family: "Inter", sans-serif;
+}
+
+// ── Body ────────────────────────────────────────────────
+//  The middle region scrolls internally so the header, KPI strip and footer
+//  stay pinned. Capped to the viewport (minus the fixed chrome) so the whole
+//  dialog always fits without the p-dialog content itself needing to scroll.
+.di-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100vh - 16rem);
+    overflow-y: auto;
+}
+.di-scroll {
+    &::-webkit-scrollbar {
+        width: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #d6dae2;
+        border-radius: 9px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+.di-body__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+}
+
+// ── Main column ─────────────────────────────────────────
+.di-main {
+    padding: 22px 26px;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 24px;
+    border-right: 1px solid $border;
     min-width: 0;
 }
 
-.di-info-col--side {
-    border-left: 1px solid $border;
-    padding-left: 1.25rem;
-}
-
-// ── Sections ────────────────────────────────────────────
-.di-info-section {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-}
-
-.di-info-section__label {
-    margin: 0;
-    font-size: 0.72rem; // ~11.5px
+// Section labels
+.di-label {
+    font-size: 11px;
+    letter-spacing: 1px;
     font-weight: 700;
-    color: $text-secondary;
+    color: $label;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    margin-bottom: 10px;
+    &--inline {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+    &--sm {
+        font-size: 10.5px;
+        letter-spacing: 0.8px;
+        color: $muted-2;
+        margin-bottom: 10px;
+    }
 }
-
-.di-info-count-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.di-pill {
     min-width: 22px;
     height: 22px;
     padding: 0 7px;
     border-radius: 999px;
-    background: $accent-blue-soft;
-    color: $accent-blue-dark;
-    font-size: 0.75rem;
+    background: $accent-tint;
+    color: $accent;
+    font-size: 11px;
     font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     letter-spacing: 0;
 }
 
-// ── Description card ────────────────────────────────────
-.di-info-card {
-    background: $bg-surface;
-    border: 1px solid $border;
-    border-radius: 9px;
-    padding: 0.75rem 0.9rem;
-    font-size: 0.9rem; // ~14.4px
-    color: $text-body;
-    line-height: 1.5;
+.di-desc {
+    border: 1px solid $border-2;
+    border-radius: 11px;
+    padding: 13px 15px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: $ink-body;
+    background: $surface;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
-// ── Composants table card ──────────────────────────────
-.di-info-table-card {
-    border: 1px solid $border;
-    border-radius: 10px;
+// Composants
+.di-comp {
+    border: 1px solid $border-2;
+    border-radius: 12px;
     overflow: hidden;
-}
-::ng-deep .di-info-table {
-    .p-datatable-thead > tr > th {
-        background: $bg-surface !important;
-        color: $text-secondary !important;
-        font-size: 0.72rem !important;
-        font-weight: 700 !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.08em !important;
-        padding: 0.7rem 0.95rem !important;
-        border-bottom: 1px solid $border !important;
+    &__head {
+        display: grid;
+        grid-template-columns: 1fr 90px;
+        padding: 10px 16px;
+        background: #fafbfd;
+        border-bottom: 1px solid #eef0f3;
+        font-size: 10.5px;
+        letter-spacing: 0.6px;
+        font-weight: 700;
+        color: $muted-2;
+        text-transform: uppercase;
     }
-    .p-datatable-tbody > tr > td {
-        padding: 0.7rem 0.95rem !important;
-        border-bottom: 1px solid $border !important;
-        font-size: 0.875rem !important; // ~14px
-        color: $text-body !important;
+    &__row {
+        display: grid;
+        grid-template-columns: 1fr 90px;
+        padding: 11px 16px;
+        border-bottom: 1px solid #f4f5f8;
+        align-items: center;
+        &:last-child {
+            border-bottom: 0;
+        }
     }
-    .p-datatable-tbody > tr:last-child > td {
-        border-bottom: 0 !important;
+    &__name {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 13.5px;
+        font-weight: 500;
+        color: $ink;
     }
-    .p-paginator {
-        background: $bg-surface !important;
-        border-top: 1px solid $border !important;
-        padding: 0.5rem 0.5rem !important;
-        font-size: 0.82rem !important;
+    &__ico {
+        width: 27px;
+        height: 27px;
+        flex: none;
+        border-radius: 8px;
+        background: #f1f2f4;
+        color: $muted-3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .pi {
+            font-size: 0.8rem;
+        }
     }
-    // Active page → accent blue (no purple).
-    .p-paginator .p-paginator-page.p-highlight {
-        background: $accent-blue !important;
-        color: #fff !important;
-        border-color: $accent-blue !important;
+    &__qty {
+        text-align: right;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: $mono;
+        color: $ink;
     }
-    .p-paginator .p-paginator-page,
-    .p-paginator .p-paginator-prev,
-    .p-paginator .p-paginator-next {
-        min-width: 28px !important;
-        height: 28px !important;
-        font-size: 0.85rem !important;
+    &__empty {
+        padding: 14px 16px;
+        font-size: 13px;
+        color: $muted-2;
+        font-style: italic;
+        text-align: center;
     }
-}
-.di-info-th--right,
-.di-info-td--right {
-    text-align: right !important;
-    font-variant-numeric: tabular-nums;
-}
-.di-info-td--muted {
-    color: $text-muted !important;
-    font-style: italic;
-    text-align: center;
-}
-.di-info-dot {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    border: 1.5px solid #cbd5e1;
-    background: $bg-card;
-    margin-right: 0.6rem;
-    vertical-align: middle;
 }
 
-// ── Remarques cards ─────────────────────────────────────
-//  Three remark types, accented via left border. Charte colours: blue for
-//  admin (primary accent), lighter blue for tech diag, amber for tech rep.
-.di-remark {
-    background: $bg-card;
-    border: 1px solid $border;
-    border-radius: 9px;
-    border-left-width: 4px;
-    padding: 0.7rem 0.9rem;
+// Remarques
+.di-remarks {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
-
+    gap: 11px;
+}
+.di-remark {
+    border: 1px solid $border-2;
+    border-left: 3px solid $accent;
+    border-radius: 10px;
+    padding: 12px 15px;
+    background: $surface;
     &__head {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 7px;
+        margin-bottom: 6px;
+        font-size: 10.5px;
+        letter-spacing: 0.6px;
+        font-weight: 700;
+        color: $muted-3;
+        text-transform: uppercase;
     }
     &__dot {
-        width: 8px;
-        height: 8px;
+        width: 7px;
+        height: 7px;
         border-radius: 50%;
-        flex: 0 0 8px;
-    }
-    &__label {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: $text-secondary;
+        flex: none;
+        background: $accent;
     }
     &__body {
-        margin: 0;
-        font-size: 0.9rem; // ~14.4px
-        color: $text-body;
+        font-size: 13px;
+        line-height: 1.5;
+        color: $ink-body;
         white-space: pre-wrap;
         word-break: break-word;
-        line-height: 1.45;
     }
-
     &--admin {
-        border-left-color: $accent-blue-dark;
+        border-left-color: $purple;
         .di-remark__dot {
-            background: $accent-blue-dark;
+            background: $purple;
         }
     }
     &--diag {
-        border-left-color: $blue-500;
+        border-left-color: $accent;
         .di-remark__dot {
-            background: $blue-500;
+            background: $accent;
         }
     }
     &--rep {
@@ -326,252 +466,447 @@ $red-soft: #fee2e2;
     }
 }
 
-// ── ÉTAT chips ──────────────────────────────────────────
-.di-info-state {
+// ── Sidebar ─────────────────────────────────────────────
+.di-side {
+    background: $side-bg;
+    padding: 22px 20px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.45rem;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+    &__sep {
+        height: 1px;
+        background: $border-2;
+    }
 }
-.di-info-chip {
+
+// État chips
+.di-state {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.di-state__chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    padding: 4px 11px;
-    border-radius: 999px;
-    font-size: 0.82rem; // ~13px
+    gap: 6px;
+    padding: 7px 12px;
+    border-radius: 9px;
+    font-size: 12px;
     font-weight: 600;
-    border: 1px solid transparent;
+    background: #f1f2f4;
+    color: $muted-3;
     .pi {
         font-size: 0.72rem;
     }
-    &--ok {
-        background: $green-soft;
-        color: $green-dark;
-        border-color: $green-border;
+    &[data-kind="ok"] {
+        background: $green-tint;
+        color: $green;
     }
-    &--ko {
-        background: $red-soft;
-        color: #991b1b;
-        border-color: #fecaca;
+    &[data-kind="ko"] {
+        background: $rose-tint;
+        color: $rose;
     }
-    &--accent {
-        background: $accent-blue-soft;
-        color: $accent-blue-dark;
-        border-color: $accent-blue-border;
-    }
-    &--muted {
-        background: $bg-surface;
-        color: $text-secondary;
-        border-color: $border;
+    &[data-kind="accent"] {
+        background: $accent-tint;
+        color: $accent;
     }
 }
 
-// ── Tarification ────────────────────────────────────────
-.di-info-tarif {
+// Équipe
+.di-team {
     display: flex;
     flex-direction: column;
-    gap: 0.1rem;
+    gap: 13px;
     &__row {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 0.5rem 0;
-        font-size: 0.9rem; // ~14.4px
-        color: $text-secondary;
-        strong {
-            color: $text-primary;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-        }
-        &--accent strong {
-            color: $accent-blue-dark;
-        }
-        &--ecart {
-            border-top: 1px dashed $border;
-            margin-top: 0.25rem;
-            padding-top: 0.6rem;
-        }
-    }
-}
-.di-info-ecart--up {
-    color: $amber !important;
-}
-.di-info-ecart--down {
-    color: $green !important;
-}
-.di-info-ecart--neutral {
-    color: $text-muted !important;
-    font-weight: 500 !important;
-}
-
-// ── Équipe ──────────────────────────────────────────────
-.di-info-team {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    &__row {
-        display: flex;
-        align-items: center;
-        gap: 0.7rem;
+        gap: 11px;
     }
     &__avatar {
-        flex: 0 0 36px;
-        width: 36px;
-        height: 36px;
+        width: 32px;
+        height: 32px;
+        flex: none;
         border-radius: 9px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.82rem;
+        font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.02em;
         &--creator {
-            background: $accent-blue-soft;
-            color: $accent-blue-dark;
+            background: $purple-tint;
+            color: $purple;
         }
         &--diag {
-            background: #cffafe;
-            color: #155e75;
+            background: $diag-bg;
+            color: $diag-fg;
         }
         &--rep {
-            background: $amber-soft;
+            background: $amber-tint;
             color: $amber;
         }
     }
     &__meta {
+        flex: 1;
+        min-width: 0;
         display: flex;
         flex-direction: column;
-        line-height: 1.2;
-        min-width: 0;
     }
     &__role {
-        font-size: 0.68rem;
-        font-weight: 700;
+        font-size: 10px;
+        letter-spacing: 0.4px;
+        font-weight: 600;
+        color: $muted-2;
         text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: $text-secondary;
     }
     &__name {
-        font-size: 0.9rem; // ~14.4px
-        color: $text-primary;
-        font-weight: 700;
+        font-size: 13px;
+        font-weight: 600;
+        color: $ink;
+        margin-top: 1px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 }
 
-// ── Détails ─────────────────────────────────────────────
-.di-info-details {
+// Détails
+.di-details {
     display: flex;
     flex-direction: column;
+    gap: 11px;
     &__row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0.5rem 0;
-        font-size: 0.875rem; // ~14px
-        color: $text-secondary;
-        border-bottom: 1px dashed $border;
+        gap: 12px;
+        span {
+            font-size: 12.5px;
+            color: $muted-3;
+        }
         strong {
-            color: $text-primary;
+            font-size: 13px;
             font-weight: 700;
-        }
-        &:last-child {
-            border-bottom: none;
+            color: $ink-strong;
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 }
+.di-mono {
+    font-family: $mono;
+    font-variant-numeric: tabular-nums;
+}
 
-// ── Historique des retours ──────────────────────────────
-.di-info-retours-section {
-    padding: 0 1.35rem 1rem;
+// Documents
+.di-docs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
-.di-info-retours {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 0.75rem;
-}
-.di-info-retour-card {
-    border: 1px solid $border;
+.di-doc {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid $border-2;
     border-radius: 10px;
-    padding: 0.6rem 0.85rem;
-    background: $bg-surface;
-
-    &__head {
-        font-weight: 700;
-        font-size: 0.85rem;
-        color: #b45309;
-        margin-bottom: 0.35rem;
-    }
-    &__docs {
+    padding: 10px 12px;
+    background: $card;
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+    &__ico {
+        width: 26px;
+        height: 26px;
+        flex: none;
+        border-radius: 7px;
+        background: $pdf-tint;
+        color: $pdf;
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-top: 0.5rem;
-        a {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 0.78rem;
-            font-weight: 600;
-            color: #2563eb;
-            text-decoration: none;
-            i {
-                color: #dc2626;
-            }
+        align-items: center;
+        justify-content: center;
+        .pi {
+            font-size: 0.8rem;
         }
     }
-    &__nodocs {
-        font-size: 0.78rem;
-        color: $text-secondary;
+    &__name {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: $ink-body;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    &:hover {
+        border-color: $accent;
+        background: $accent-tint;
+    }
+    &__none {
+        font-size: 12.5px;
+        color: $muted-2;
         font-style: italic;
     }
 }
 
-// ── Footer ──────────────────────────────────────────────
-.di-info-modal__footer {
+// ── Historique des retours (timeline) ───────────────────
+.di-retours {
+    border-top: 1px solid $border;
+    padding: 24px 26px;
+    background: linear-gradient(#fbfeff, #f6fbfd);
+    &__head {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 18px;
+    }
+    &__ico {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: $cyan-tint;
+        color: $cyan;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        .pi {
+            font-size: 0.85rem;
+        }
+    }
+    &__title {
+        font-size: 12.5px;
+        letter-spacing: 0.5px;
+        font-weight: 800;
+        color: $ink-strong;
+        text-transform: uppercase;
+    }
+    &__count {
+        min-width: 22px;
+        height: 22px;
+        padding: 0 7px;
+        border-radius: 999px;
+        background: $cyan;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+.di-timeline {
+    display: flex;
+    flex-direction: column;
+    padding-left: 6px;
+}
+.di-tl-item {
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    gap: 14px;
+}
+.di-tl-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.di-tl-node {
+    width: 34px;
+    height: 34px;
+    flex: none;
+    border-radius: 10px;
+    background: $cyan-tint;
+    color: $cyan;
+    border: 2px solid $cyan-border;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    font-family: $mono;
+    z-index: 1;
+}
+.di-tl-line {
+    flex: 1;
+    width: 2px;
+    background: $cyan-line;
+    margin-top: 4px;
+    &--hidden {
+        background: transparent;
+    }
+}
+.di-tl-card {
+    border: 1px solid $border-3;
+    border-radius: 13px;
+    background: $card;
+    padding: 15px 17px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(20, 28, 45, 0.05);
+    &__head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 13px;
+    }
+    &__title {
+        font-size: 14px;
+        font-weight: 700;
+        color: $ink-strong;
+        white-space: nowrap;
+    }
+    &__date {
+        font-size: 11.5px;
+        color: $muted-2;
+    }
+    &__grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 22px;
+        margin-bottom: 12px;
+    }
+}
+.di-rep-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: auto;
+    background: $green-tint;
+    color: $green;
+    &[data-kind="ko"] {
+        background: $rose-tint;
+        color: $rose;
+    }
+}
+.di-tl-kv {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.8rem;
-    padding: 0.9rem 1.35rem;
-    border-top: 1px solid $border;
-    background: $bg-surface;
-    ::ng-deep .p-button {
-        font-size: 0.875rem !important; // readable on the footer
+    border-bottom: 1px dashed #edeff3;
+    padding-bottom: 7px;
+    span {
+        font-size: 12px;
+        color: $muted-3;
     }
-    ::ng-deep .p-button[severity="primary"] {
-        background: $accent-blue !important;
-        border-color: $accent-blue !important;
-        &:hover {
-            background: $accent-blue-dark !important;
-            border-color: $accent-blue-dark !important;
-        }
-    }
-}
-.di-info-modal__creator {
-    font-size: 0.82rem;
-    color: $text-secondary;
     strong {
-        color: $text-primary;
+        font-size: 13.5px;
         font-weight: 700;
     }
+    &--accent {
+        color: $cyan;
+    }
 }
-.di-info-modal__actions {
+.di-tl-diag {
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: $ink-body;
+    margin-bottom: 12px;
+    &__label {
+        display: block;
+        font-size: 10.5px;
+        letter-spacing: 0.4px;
+        font-weight: 700;
+        color: $muted-2;
+        text-transform: uppercase;
+        margin-bottom: 3px;
+    }
+}
+.di-tl-docs {
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    &__label {
+        font-size: 11px;
+        letter-spacing: 0.4px;
+        font-weight: 700;
+        color: $muted-2;
+        text-transform: uppercase;
+    }
+    &__none {
+        font-size: 12px;
+        color: #aab1bf;
+        font-style: italic;
+    }
+}
+.di-tl-doc {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    border: 1px solid $border-2;
+    border-radius: 8px;
+    padding: 5px 10px;
+    background: $card;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    color: $ink-body;
+    .pi {
+        flex: none;
+        color: $pdf;
+        font-size: 0.72rem;
+    }
+    &__name {
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    &:hover {
+        border-color: $cyan;
+    }
+}
+
+// ── Footer ──────────────────────────────────────────────
+.di-foot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    border-top: 1px solid $border;
+    background: #fbfcfd;
+    flex: none;
+    &__creator {
+        font-size: 11.5px;
+        color: $muted-2;
+        strong {
+            font-weight: 600;
+            color: $ink-sub;
+        }
+    }
+    &__actions {
+        margin-left: auto;
+        display: flex;
+        gap: 10px;
+    }
+    ::ng-deep .p-button {
+        font-size: 0.85rem !important;
+    }
+    ::ng-deep .p-button.p-button-primary {
+        background: $accent !important;
+        border-color: $accent !important;
+        box-shadow: 0 4px 14px $accent-shadow !important;
+        &:hover {
+            background: $accent-dark !important;
+            border-color: $accent-dark !important;
+        }
+    }
 }
 
 // ═══════════════════════════════════════════════════════
-//  PRINT — only the modal subtree (triggered by body class
-//  `di-info-printing` set in print())
+//  PRINT — only the dossier subtree (body.di-info-printing
+//  set by print(); the footer Exporter PDF calls the jsPDF
+//  export, this @media block backs the browser Print path).
 // ═══════════════════════════════════════════════════════
 @media print {
-    :host-context(body.di-info-printing) {
-        :host {
-            display: block;
-        }
+    .print-only {
+        display: flex !important;
+    }
+    .no-print {
+        display: none !important;
     }
 }
 ::ng-deep body.di-info-printing {
@@ -591,19 +926,14 @@ $red-soft: #fee2e2;
         width: 100% !important;
         max-width: 100% !important;
     }
-    .di-info-modal {
+    .di-card {
         border-radius: 0 !important;
-        box-shadow: none !important;
     }
-    .di-info-modal__close,
-    .di-info-modal__actions,
-    .p-paginator {
-        display: none !important;
+    .di-body {
+        max-height: none !important;
+        overflow: visible !important;
     }
-    .di-info-section,
-    .di-remark,
-    .di-info-team__row,
-    .di-info-tarif__row {
-        page-break-inside: avoid;
+    .avoid-break {
+        break-inside: avoid;
     }
 }

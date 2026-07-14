@@ -93,14 +93,6 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
             </span>
           </label>
         </div>
-
-        <div class="tip">
-          <i class="pi pi-lightbulb"></i>
-          <div>
-            <strong>Conseil</strong>
-            <span>La clôture ne sera possible qu'une fois les deux validations renseignées.</span>
-          </div>
-        </div>
       </div>
     </div>
   `,

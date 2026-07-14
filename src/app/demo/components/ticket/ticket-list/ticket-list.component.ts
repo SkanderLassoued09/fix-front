@@ -388,6 +388,91 @@ export class TicketListComponent implements OnInit, OnDestroy {
      *  Populated by `onUpload` once FileReader resolves the data-URL. */
     affectationBase64: Record<string, string> = {};
 
+    /** Real file name + size of the pending selection per slot ('BL'/'Facture'),
+     *  captured from the picked File so the upload card shows the actual file
+     *  (name + human size) instead of a generic label. */
+    afSelectedMeta: Record<string, { name: string; size: number }> = {};
+
+    /** "Fichiers principaux" cards — the 4 doc types resolved against the
+     *  current row's `documents` (real Drive file names + link) with a scalar
+     *  presence fallback. `title` shows the REAL file name when available, else
+     *  the generic type label. */
+    get affectationMainCards(): Array<{
+        tag: string;
+        present: boolean;
+        title: string;
+        statusLabel: string;
+        href: string | null;
+    }> {
+        const byType = new Map<string, any>();
+        for (const d of this.filesSelected?.documents ?? []) {
+            if (d?.type) byType.set(String(d.type), d);
+        }
+        return this.affectationDocTypes.map((t) => {
+            const doc = byType.get(t.key);
+            const scalar = this.filesSelected?.[t.field];
+            const href = doc?.webViewLink || scalar || null;
+            const present = !!href;
+            const name = (doc?.name && String(doc.name).trim()) || '';
+            return {
+                tag: t.tag,
+                present,
+                title: present ? name || t.label : t.label,
+                statusLabel: present ? 'Disponible' : 'Manquant',
+                href,
+            };
+        });
+    }
+
+    /** Retour history for the timeline (LogsDi snapshots). Doc chips show the
+     *  REAL file name (resolved from the row's `documents` by URL), falling back
+     *  to the type label. */
+    get affectationRetours(): Array<{
+        num: number;
+        date: string;
+        docs: Array<{ name: string; href: string }>;
+    }> {
+        const logs = this.finishedData?.logs ?? [];
+        return logs.map((log: any, i: number) => ({
+            num: Number(log?.idIgnore ?? i + 1),
+            date: log?.createdAt
+                ? new Date(log.createdAt).toLocaleDateString('fr-FR')
+                : '',
+            docs: this.affectationRetourDocs(log),
+        }));
+    }
+
+    /** Per-retour document chips (scalar URLs on the LogsDi log). Resolve the
+     *  REAL file name from the row's `documents`: exact URL match first (the
+     *  precise file), then by document TYPE (the current file of that type —
+     *  BC/Devis are rarely replaced across cycles), and only fall back to the
+     *  generic type label when the DI has no document of that type at all. */
+    affectationRetourDocs(log: any): Array<{ name: string; href: string }> {
+        const nameByLink = new Map<string, string>();
+        const nameByType = new Map<string, string>();
+        for (const d of this.filesSelected?.documents ?? []) {
+            const nm = String(d?.name ?? '').trim();
+            if (!nm) continue;
+            const link = String(d?.webViewLink ?? '').trim();
+            if (link) nameByLink.set(link, nm);
+            if (d?.type) nameByType.set(String(d.type), nm);
+        }
+        const out: Array<{ name: string; href: string }> = [];
+        const push = (href: any, type: string, label: string) => {
+            const h = String(href ?? '').trim();
+            if (!h) return;
+            out.push({
+                name: nameByLink.get(h) || nameByType.get(type) || label,
+                href: h,
+            });
+        };
+        push(log?.bon_de_commande, 'BC', 'BC');
+        push(log?.devis, 'Devis', 'Devis');
+        push(log?.bon_de_livraison, 'BL', 'BL');
+        push(log?.facture, 'Facture', 'Facture');
+        return out;
+    }
+
     /** Drag-and-drop or picker → reuse the existing `onUpload(event, key)`
      *  flow (FileReader → base64 → mutation). The event shape is exactly what
      *  PrimeNG's customUpload provides: `{ files: File[] }` — `onUpload`
@@ -470,6 +555,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     this.selectedBL = '';
                     this.selectedFacture = '';
                     this.affectationBase64 = {};
+                    this.afSelectedMeta = {};
                     this.enregistrerBlBtncondition = true;
                     this.enregistrerFactureBtncondition = true;
                     this.blBtnDisabled = false;
@@ -483,6 +569,28 @@ export class TicketListComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Remove ONE pending slot (BL or Facture) without touching the other:
+     *  clears its preview + cached base64 so the dropzone comes back and the
+     *  slot can be re-picked (replace). The footer counter updates on its own
+     *  via `affectationPendingCount`. */
+    clearAffectationSlot(type: 'BL' | 'Facture') {
+        const next = { ...this.affectationBase64 };
+        delete next[type];
+        this.affectationBase64 = next;
+        const meta = { ...this.afSelectedMeta };
+        delete meta[type];
+        this.afSelectedMeta = meta;
+        if (type === 'BL') {
+            this.selectedBL = '';
+            this.blLoading = false;
+            this.enregistrerBlBtncondition = true;
+        } else {
+            this.selectedFacture = '';
+            this.factureLoading = false;
+            this.enregistrerFactureBtncondition = true;
+        }
+    }
+
     /** Pretty file size: `n o` / `n Ko` / `n,nn Mo`. */
     formatFileSize(bytes: number | undefined): string {
         if (!Number.isFinite(bytes) || (bytes ?? 0) <= 0) return '0 o';
@@ -494,11 +602,13 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     // Pricing-modal chips: label + multiplier vs the cost base (1.0 = Coût).
     // Order matters: rendered as a row.
+    // Margin presets — capped at +25 %. No preset above +25 % (removed the old
+    // +30 % / +50 %).
     readonly pricingChips: Array<{ label: string; mult: number }> = [
         { label: 'Coût', mult: 1 },
+        { label: '+10 %', mult: 1.1 },
         { label: '+20 %', mult: 1.2 },
-        { label: '+30 %', mult: 1.3 },
-        { label: '+50 %', mult: 1.5 },
+        { label: '+25 %', mult: 1.25 },
     ];
     activePricingChip: number | null = null;
 
@@ -2197,6 +2307,48 @@ export class TicketListComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** « Renvoyer au diagnostic » — from the pricing step (status PRICING), the
+     *  admin bounces the DI back to the coordinator (PRICING → PENDING1) so a
+     *  technician is re-assigned for a fresh diagnostic. Backend guard enforces
+     *  the transition; anti double-submit + single toast via the runner. */
+    sendBackToDiagnostic(): void {
+        const id = this.current_id;
+        if (!id) return;
+        this.confirmationService.confirm({
+            message:
+                'Renvoyer cette DI au diagnostic ? Elle repartira au coordinateur pour réaffectation à un technicien.',
+            header: 'Renvoyer au diagnostic',
+            icon: 'pi pi-replay',
+            accept: async () => {
+                try {
+                    await this.mutationRunner.runChain({
+                        key: `backToDiag:${id}`,
+                        steps: [
+                            {
+                                mutation:
+                                    this.ticketSerice.sendDiBackToDiagnostic(id),
+                            },
+                        ],
+                        successToast: {
+                            summary: 'Renvoyée au diagnostic',
+                            detail: 'La DI est repartie au coordinateur pour réaffectation.',
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Échec du renvoi au diagnostic. Réessayez.',
+                        },
+                        onLoading: (v) => (this.isLoading = v),
+                    });
+                    this.loadData();
+                    this.pricingModal = false;
+                    this.activePricingChip = null;
+                } catch {
+                    /* toasted; modal stays open */
+                }
+            },
+        });
+    }
+
     deleteDi(rowData) {
         this.confirmationService.confirm({
             message: 'Voulez vous supprimer ce DI',
@@ -2915,6 +3067,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
         else if (type === 'Facture') this.factureLoading = true;
 
         for (let file of event.files) {
+            // Capture the real file name + size so the upload card shows the
+            // actual selection (BL/Facture slots only).
+            if (type === 'BL' || type === 'Facture') {
+                this.afSelectedMeta = {
+                    ...this.afSelectedMeta,
+                    [type]: { name: file.name, size: file.size },
+                };
+            }
             const reader = new FileReader();
             reader.readAsArrayBuffer(file);
             const readerForBase64 = new FileReader();
@@ -2940,11 +3100,13 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     this.enregistrerDevisBtncondition = false;
                     this.devisLoading = false; // STOP spinner
                 } else if (type == 'BL') {
+                    // Each slot is independent: selecting BL must NOT lock the
+                    // Facture zone (and vice-versa). The single footer
+                    // "Enregistrer" persists every pending file together, so
+                    // both zones stay active until save.
                     this.selectedBL = blobUrl;
-                    this.factureBtnDisabled = true;
                 } else if (type == 'Facture') {
                     this.selectedFacture = blobUrl;
-                    this.blBtnDisabled = true;
                 }
 
                 if (type !== 'image') {

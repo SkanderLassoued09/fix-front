@@ -121,6 +121,11 @@ export class TicketService {
             location_name
             di_category_id
             di_category_name
+            documents {
+                type
+                name
+                webViewLink
+            }
             logs {
                 idIgnore
                 facture
@@ -175,6 +180,25 @@ export class TicketService {
           pricingRequestSentBy
           componentsConfirmedAt
           componentsConfirmedBy
+          # Fields needed by the shared di-info-modal (were missing → the
+          # detail modal showed empty/N-A after a search).
+          description
+          contain_pdr
+          can_be_repaired
+          createdBy
+          ignoreCount
+          remarque_manager
+          remarque_tech_diagnostic
+          remarque_tech_repair
+          array_composants {
+            nameComposant
+            quantity
+          }
+          documents {
+            type
+            name
+            webViewLink
+          }
           logs {
             idIgnore
             isSentToCoordinator
@@ -232,6 +256,15 @@ export class TicketService {
                         pricingRequestSentBy
                         componentsConfirmedAt
                         componentsConfirmedBy
+                        statusHistory {
+                            status
+                            at
+                        }
+                        documents {
+                            type
+                            name
+                            webViewLink
+                        }
                         logs{idIgnore isSentToCoordinator isConfirmedComponentFromCoordinator handleSendingNotificationBetweenCoordinatorAndMagasin}
                         location_id
                         di_category_id
@@ -252,6 +285,18 @@ export class TicketService {
             _id
         }
         }
+        `;
+    }
+
+    // « Renvoyer au diagnostic » — PRICING → PENDING1 (coordinator re-assigns).
+    sendDiBackToDiagnostic(_id: string) {
+        return gql`
+            mutation {
+                sendDiBackToDiagnostic(_id: "${_id}") {
+                    _id
+                    status
+                }
+            }
         `;
     }
 
@@ -1460,6 +1505,8 @@ export class TicketService {
                         can_be_repaired
                         devis
                         bon_de_commande
+                        bon_de_livraison
+                        facture
                         contain_pdr
                         image
                         nSerie

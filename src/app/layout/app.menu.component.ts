@@ -119,11 +119,9 @@ export class AppMenuComponent implements OnInit {
                             icon: 'pi pi-fw pi-exclamation-circle',
                             routerLink: ['/tickets/ticket/tech-di-list'],
                         },
-                        {
-                            label: 'Réunions',
-                            icon: 'pi pi-fw pi-comments',
-                            routerLink: ['/tickets/reunions'],
-                        },
+                        // « Réunions » is intentionally NOT shown to a plain
+                        // TECH — only ADMIN_TECH, ADMIN_MANAGER, MANAGER and
+                        // COORDINATOR see it.
                     ],
                 },
             ];

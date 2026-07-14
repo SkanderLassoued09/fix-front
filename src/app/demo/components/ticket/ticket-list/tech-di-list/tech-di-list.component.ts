@@ -506,8 +506,28 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
     }
 
+    /** Creation-photo URLs for the modal image block.
+     *  - imageUrl: backend proxy that streams the (private Drive) file so it can
+     *    be shown inline; empty when the DI has no image reference.
+     *  - imageViewUrl: raw Drive viewer link for the "open in new tab" fallback
+     *    (used if the proxy can't serve, e.g. legacy filename-only rows). */
+    private resolveDiImage(di: any): {
+        imageUrl: string;
+        imageViewUrl: string;
+    } {
+        const raw = (di?.image ?? '').toString().trim();
+        const id = di?._id ?? di?._idDi ?? '';
+        if (!raw || !id) return { imageUrl: '', imageViewUrl: '' };
+        const base = (this.baseUrl ?? '').replace(/\/$/, '');
+        return {
+            imageUrl: `${base}/di/${id}/image`,
+            imageViewUrl: /^https?:\/\//i.test(raw) ? raw : '',
+        };
+    }
+
     private mapDiToRepairSummary(di: any): DiagnosticDiSummary {
         return {
+            ...this.resolveDiImage(di),
             _id: di?._id ?? '',
             _idnum: di?._idnum ?? '',
             title: di?.title ?? '',
@@ -1903,19 +1923,19 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return;
         }
 
+        // Keep the persisted snapshot available so that IF the tech re-opens
+        // the same DI's Diagnostic/Réparation modal manually, their in-progress
+        // form + timer are restored (applyPendingRestoredDialogState, called
+        // from diagModal()/repModal()). We deliberately DO NOT auto-open the
+        // modal here: it must only ever open on an explicit Diagnostic /
+        // Réparation click — never by itself on page load / refresh.
         this.pendingRestoredDialogState = state;
         console.debug({
-            event: 'tech.dialog.restore_requested',
+            event: 'tech.dialog.restore_ready',
             mode: state.mode,
             statId: state.statId,
             diId: state.diId,
         });
-
-        if (state.mode === 'diagnostic') {
-            this.diagModal(state.statSnapshot);
-        } else {
-            this.repModal(state.statSnapshot);
-        }
     }
 
     private applyPendingRestoredDialogState(
@@ -3475,7 +3495,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             accept: async () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
-                    pdr: this.diagFormTech.value.isPdr,
+                    // getRawValue: the PDR control is DISABLED when the DI is
+                    // non-réparable, and disabled controls are dropped from
+                    // `.value` — read the raw (forced-false) value instead.
+                    pdr: this.diagFormTech.getRawValue().isPdr,
                     // Force `reparable: false` on the non-réparable shortcut
                     // so the backend snapshot is consistent with the FINISHED
                     // transition (no PDR step required either).
@@ -3496,8 +3519,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.lap();
 
                 // Three-way branch:
-                //  - non-réparable shortcut → straight to FINISHED (M1 guard
-                //    now allows DIAGNOSTIC(_Pause) → FINISHED).
+                //  - non-réparable shortcut → changeFinishStatus. The backend
+                //    (changeStatusTofinsh) skips Magasin and, on the ORIGINAL
+                //    flow, bills the diagnostic → PENDING2 (tarification); a
+                //    RETOUR non-réparable closes to FINISHED instead.
                 //  - pdr && reparable → MagasinEstimation
                 //  - reparable && !pdr → Pending2 (pricing pseudo).
                 const transitionStep = isNotReparable
@@ -3798,6 +3823,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             ?.valueChanges.pipe(takeUntil(this.destroy$))
             .subscribe((value) => {
                 this.isReperable = value;
+                // Non réparable → aucun PDR à demander : forcer le toggle PDR à
+                // false et le désactiver (grisé). Réactivé dès que « réparable »
+                // repasse à vrai.
+                const pdr = this.diagFormTech.get('isPdr');
+                if (!value) {
+                    pdr?.setValue(false, { emitEvent: false });
+                    pdr?.disable({ emitEvent: false });
+                } else {
+                    pdr?.enable({ emitEvent: false });
+                }
             });
     }
 
@@ -4041,6 +4076,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
               ? 'client'
               : null;
         return {
+            ...this.resolveDiImage(d),
             _id: clean(d._id),
             _idnum: clean(d._idnum),
             title: clean(d.title),

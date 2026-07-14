@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -91,11 +92,31 @@ export class ReunionListComponent implements OnInit {
         private readonly pdf: ReunionPvPdfService,
         private readonly toast: MessageService,
         private readonly cdr: ChangeDetectorRef,
+        private readonly route: ActivatedRoute,
     ) {}
 
     ngOnInit(): void {
         this.load();
         this.loadProfileNames();
+
+        // Deep-link support: the ~5-min Discord reminder links to
+        // `/tickets/reunions?open=<pvId>` → open the detail modal directly so
+        // the user can document the meeting. `queryParams` (not snapshot) so a
+        // second reminder click while already on the page still re-opens it.
+        this.route.queryParams.subscribe((params) => {
+            const openId = params['open'];
+            if (openId) {
+                this.detailsPvId = openId;
+                this.detailsOpen = true;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
+    /** The detail modal saved (documented/finalised) → refresh the list so the
+     *  statut chip and content reflect the change. */
+    onDetailsSaved(): void {
+        this.load();
     }
 
     /** Cache staff names so the row download path doesn't need a second

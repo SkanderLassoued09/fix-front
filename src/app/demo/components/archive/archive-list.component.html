@@ -7,7 +7,6 @@
             <h2>Archives DI</h2>
         </div>
         <div class="arch-header__actions">
-            <span class="arch-count">{{ rows.length }} archive(s)</span>
             <button
                 pButton
                 type="button"
@@ -19,30 +18,187 @@
         </div>
     </div>
 
+    <!-- Filter bar: « documents manquants » (AND) + result counter + reset. -->
+    <div class="arch-filters">
+        <div class="arch-filters__field arch-filters__field--missing">
+            <label>
+                <i class="pi pi-exclamation-triangle"></i>
+                Documents manquants
+            </label>
+            <p-multiSelect
+                [options]="missingDocOptions"
+                optionLabel="label"
+                optionValue="value"
+                [(ngModel)]="missingDocs"
+                (onChange)="onFilterChange()"
+                placeholder="Tous les documents"
+                display="chip"
+                styleClass="arch-ms arch-ms--missing"
+                [showToggleAll]="false"
+            ></p-multiSelect>
+            <small class="arch-filters__hint"
+                >Cumulatif (ET) — ex. Facture + BL = manquent les deux.</small
+            >
+        </div>
+
+        <div class="arch-filters__spacer"></div>
+
+        <div class="arch-filters__result" [class.arch-filters__result--filtered]="hasActiveFilters()">
+            <i class="pi" [ngClass]="hasActiveFilters() ? 'pi-filter-fill' : 'pi-list'"></i>
+            <span class="arch-filters__count">{{ totalRecords }}</span>
+            <span class="arch-filters__count-label">
+                {{ hasActiveFilters() ? 'DI correspondent' : 'archive(s)' }}
+            </span>
+        </div>
+
+        <button
+            pButton
+            type="button"
+            icon="pi pi-filter-slash"
+            label="Réinitialiser les filtres"
+            class="p-button-sm p-button-outlined arch-reset"
+            [disabled]="!hasActiveFilters()"
+            (click)="resetFilters()"
+        ></button>
+    </div>
+
     <div class="arch-table-wrap">
         <p-table
             [value]="rows"
             [loading]="loading"
-            styleClass="p-datatable-sm arch-table"
-            [paginator]="rows.length > 12"
-            [rows]="12"
+            [lazy]="true"
+            (onLazyLoad)="onLazyLoad($event)"
+            [paginator]="true"
+            [rows]="limit"
+            [first]="first"
+            [totalRecords]="totalRecords"
             [rowsPerPageOptions]="[12, 24, 50]"
+            [showCurrentPageReport]="true"
+            currentPageReportTemplate="{first}–{last} sur {totalRecords}"
+            styleClass="p-datatable-sm arch-table"
         >
             <ng-template pTemplate="header">
                 <tr>
-                    <th style="width: 7rem">N° DI</th>
-                    <th style="min-width: 12rem">Désignation</th>
-                    <th style="min-width: 9rem">N° Série</th>
-                    <th style="min-width: 10rem">Client / Société</th>
-                    <th style="min-width: 8rem">Statut</th>
+                    <th style="width: 7rem" pSortableColumn="refOrigine">
+                        N° DI <p-sortIcon field="refOrigine"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 12rem" pSortableColumn="title">
+                        Désignation <p-sortIcon field="title"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 9rem" pSortableColumn="numSerie">
+                        N° Série <p-sortIcon field="numSerie"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 10rem" pSortableColumn="clientNom">
+                        Client / Société <p-sortIcon field="clientNom"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 8rem" pSortableColumn="statutHistorique">
+                        Statut <p-sortIcon field="statutHistorique"></p-sortIcon>
+                    </th>
                     <th style="min-width: 7rem">Devis</th>
                     <th style="min-width: 7rem">BC</th>
                     <th style="min-width: 7rem">BL</th>
                     <th style="min-width: 7rem">Valid. Cl.</th>
                     <th style="min-width: 7rem">Facture</th>
-                    <th style="min-width: 6rem">Rangement</th>
-                    <th style="min-width: 9rem">Complétude</th>
+                    <th style="min-width: 6rem" pSortableColumn="arrangement">
+                        Rangement <p-sortIcon field="arrangement"></p-sortIcon>
+                    </th>
+                    <th style="min-width: 9rem" pSortableColumn="statutCompletude">
+                        Complétude <p-sortIcon field="statutCompletude"></p-sortIcon>
+                    </th>
                     <th style="min-width: 8rem"></th>
+                </tr>
+                <!-- Per-column filter row (server-side; combinable with everything). -->
+                <tr class="arch-filter-row">
+                    <th>
+                        <input
+                            pInputText
+                            type="text"
+                            [(ngModel)]="text.refOrigine"
+                            (input)="onTextInput()"
+                            placeholder="Rech…"
+                            class="arch-colfilter"
+                        />
+                    </th>
+                    <th>
+                        <input
+                            pInputText
+                            type="text"
+                            [(ngModel)]="text.title"
+                            (input)="onTextInput()"
+                            placeholder="Rech…"
+                            class="arch-colfilter"
+                        />
+                    </th>
+                    <th>
+                        <input
+                            pInputText
+                            type="text"
+                            [(ngModel)]="text.numSerie"
+                            (input)="onTextInput()"
+                            placeholder="Rech…"
+                            class="arch-colfilter"
+                        />
+                    </th>
+                    <th>
+                        <input
+                            pInputText
+                            type="text"
+                            [(ngModel)]="text.client"
+                            (input)="onTextInput()"
+                            placeholder="Rech…"
+                            class="arch-colfilter"
+                        />
+                    </th>
+                    <th>
+                        <p-multiSelect
+                            [options]="statutOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            [(ngModel)]="statutHistorique"
+                            (onChange)="onFilterChange()"
+                            placeholder="Tous"
+                            styleClass="arch-ms arch-colfilter-ms"
+                            [showToggleAll]="false"
+                            [emptyMessage]="'Aucun statut'"
+                        ></p-multiSelect>
+                    </th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th>
+                        <input
+                            pInputText
+                            type="text"
+                            [(ngModel)]="text.validClient"
+                            (input)="onTextInput()"
+                            placeholder="Rech…"
+                            class="arch-colfilter"
+                        />
+                    </th>
+                    <th></th>
+                    <th>
+                        <input
+                            pInputText
+                            type="text"
+                            [(ngModel)]="text.arrangement"
+                            (input)="onTextInput()"
+                            placeholder="Rech…"
+                            class="arch-colfilter"
+                        />
+                    </th>
+                    <th>
+                        <p-multiSelect
+                            [options]="completudeOptions"
+                            optionLabel="label"
+                            optionValue="value"
+                            [(ngModel)]="statutCompletude"
+                            (onChange)="onFilterChange()"
+                            placeholder="Toutes"
+                            styleClass="arch-ms arch-colfilter-ms"
+                            [showToggleAll]="false"
+                        ></p-multiSelect>
+                    </th>
+                    <th></th>
                 </tr>
             </ng-template>
             <ng-template pTemplate="body" let-row>
@@ -79,8 +235,20 @@
             <ng-template pTemplate="emptymessage">
                 <tr>
                     <td colspan="13" class="arch-empty">
-                        Aucune archive DI pour l'instant. Cliquez sur
-                        « Importer des archives » pour charger un registre (.xlsx).
+                        <ng-container *ngIf="hasActiveFilters(); else noData">
+                            Aucune archive ne correspond aux filtres.
+                            <button
+                                pButton
+                                type="button"
+                                label="Réinitialiser"
+                                class="p-button-text p-button-sm"
+                                (click)="resetFilters()"
+                            ></button>
+                        </ng-container>
+                        <ng-template #noData>
+                            Aucune archive DI pour l'instant. Cliquez sur
+                            « Importer des archives » pour charger un registre (.xlsx).
+                        </ng-template>
                     </td>
                 </tr>
             </ng-template>
@@ -95,5 +263,5 @@
 ></app-di-archive-detail-modal>
 
 <!-- Import modal — opened by the header button (imp.open()); on success it
-     emits (imported) → load() re-queries the DB so the list shows the saved rows. -->
-<app-di-archive-import #imp (imported)="load()"></app-di-archive-import>
+     emits (imported) → reload() re-queries the current page. -->
+<app-di-archive-import #imp (imported)="reload()"></app-di-archive-import>

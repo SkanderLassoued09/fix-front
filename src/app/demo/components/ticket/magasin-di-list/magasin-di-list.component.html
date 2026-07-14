@@ -719,212 +719,209 @@
         [modal]="true"
         [draggable]="false"
         [resizable]="false"
-        styleClass="sav-dialog"
-        [style]="{ width: '620px' }"
+        styleClass="sav-dialog cc-dialog"
+        [style]="{ width: '680px', maxWidth: 'calc(100vw - 2rem)' }"
     >
-        <form [formGroup]="composantMagasin" class="sav-create-form">
-            <div class="sav-form-row">
-                <label class="sav-label">Choisir un composant</label>
-                <p-dropdown
-                    [options]="composantList"
-                    optionLabel="name"
-                    optionValue="name"
-                    [filter]="true"
-                    filterBy="name"
-                    [showClear]="true"
-                    placeholder="Choisir composant"
-                    (onFilter)="onComposantFilter($event)"
-                    (onChange)="selectedDropDownComposant($event)"
-                    (onClear)="clearDropDown()"
-                    styleClass="sav-dropdown"
-                    [style]="{ width: '100%' }"
-                ></p-dropdown>
-            </div>
-
-            <div class="sav-form-row">
-                <label class="sav-label">Identifiant</label>
-                <strong style="font-size: 0.9rem">{{
-                    composantMagasin.get("_id")?.value || "—"
-                }}</strong>
-            </div>
-
-            <div class="sav-form-row" style="flex-direction: row; gap: 1rem">
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Nom du composant</label>
-                    <input
-                        pInputText
-                        formControlName="name"
-                        class="sav-textarea"
-                    />
+        <form [formGroup]="composantMagasin" class="cc-form">
+            <!-- ── Identification ──────────────────────────────────── -->
+            <section class="cc-section">
+                <div class="cc-section__head">
+                    <span class="cc-section__dot"></span>
+                    <h4 class="cc-section__title">Identification</h4>
                 </div>
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Catégorie</label>
-                    <p-dropdown
-                        [options]="composantCategory"
-                        optionLabel="name"
-                        optionValue="name"
-                        placeholder="Choisir catégorie"
-                        formControlName="category_composant_id"
-                        styleClass="sav-dropdown"
-                        [style]="{ width: '100%' }"
-                    >
-                        <ng-template let-option pTemplate="item">
-                            <p-tag
-                                [value]="getStatusLabel(rowData.status)"
-                                styleClass="status-pill status-{{
-                                    rowData.status
-                                }}"
-                            ></p-tag>
-                        </ng-template>
-                    </p-dropdown>
-                </div>
-            </div>
+                <div class="cc-grid">
+                    <div class="cc-field cc-field--full">
+                        <label class="cc-label">Choisir un composant</label>
+                        <p-dropdown
+                            [options]="composantList"
+                            optionLabel="name"
+                            optionValue="name"
+                            [filter]="true"
+                            filterBy="name"
+                            [showClear]="true"
+                            placeholder="Choisir composant"
+                            (onFilter)="onComposantFilter($event)"
+                            (onChange)="selectedDropDownComposant($event)"
+                            (onClear)="clearDropDown()"
+                            styleClass="cc-dropdown"
+                            [style]="{ width: '100%' }"
+                        ></p-dropdown>
+                    </div>
 
-            <div class="sav-form-row" style="flex-direction: row; gap: 1rem">
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Package</label>
-                    <input
-                        pInputText
-                        formControlName="packageComposant"
-                        class="sav-textarea"
-                    />
-                </div>
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Lien</label>
-                    <input
-                        pInputText
-                        formControlName="link"
-                        class="sav-textarea"
-                    />
-                </div>
-            </div>
+                    <div class="cc-field">
+                        <label class="cc-label">Identifiant</label>
+                        <div class="cc-readonly">
+                            {{ composantMagasin.get("_id")?.value || "—" }}
+                        </div>
+                    </div>
 
-            <div class="sav-form-row">
-                <label class="sav-label">Fiche technique (PDF)</label>
-                <!-- customUpload: opt out of PrimeNG's HTTP POST. Files are
-                     read locally (onUpload handler → base64) and persisted via
-                     the existing TicketService.updateComposant mutation when
-                     the user clicks Enregistrer. -->
-                <p-fileUpload
-                    mode="basic"
-                    chooseLabel="Ajouter PDF"
-                    chooseIcon="pi pi-upload"
-                    name="ficheTechnique"
-                    accept="application/pdf"
-                    maxFileSize="1000000"
-                    [customUpload]="true"
-                    [auto]="true"
-                    (uploadHandler)="onUpload($event, 'addComposant')"
-                ></p-fileUpload>
-            </div>
-            <div *ngIf="composantMagasin.value.pdf" class="sav-form-row">
-                <p-image
-                    [src]="baseUrl + composantMagasin.value.pdf"
-                    width="60"
-                    [preview]="true"
-                    styleClass="sav-thumb"
-                ></p-image>
-            </div>
+                    <div class="cc-field">
+                        <label class="cc-label">Nom du composant</label>
+                        <input pInputText formControlName="name" class="cc-input" />
+                    </div>
 
-            <div
-                class="sav-form-row"
-                style="flex-direction: row; gap: 1rem; flex-wrap: wrap"
-            >
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Prix d'achat</label>
-                    <p-inputNumber
-                        [showButtons]="true"
-                        formControlName="prix_achat"
-                        mode="currency"
-                        currency="TND"
-                        [step]="0.25"
-                        styleClass="sav-inputnumber"
-                    ></p-inputNumber>
-                </div>
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Date d'arrivage</label>
-                    <p-calendar
-                        dateFormat="dd.mm.yy"
-                        formControlName="coming_date"
-                        styleClass="sav-calendar"
-                    ></p-calendar>
-                </div>
-            </div>
+                    <div class="cc-field">
+                        <label class="cc-label">Catégorie</label>
+                        <p-dropdown
+                            [options]="composantCategory"
+                            optionLabel="name"
+                            optionValue="name"
+                            placeholder="Choisir catégorie"
+                            formControlName="category_composant_id"
+                            styleClass="cc-dropdown"
+                            [style]="{ width: '100%' }"
+                        >
+                            <ng-template let-option pTemplate="item">
+                                <p-tag
+                                    [value]="getStatusLabel(rowData.status)"
+                                    styleClass="status-pill status-{{
+                                        rowData.status
+                                    }}"
+                                ></p-tag>
+                            </ng-template>
+                        </p-dropdown>
+                    </div>
 
-            <div
-                class="sav-form-row"
-                style="flex-direction: row; gap: 1rem; flex-wrap: wrap"
-            >
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Prix de vente</label>
-                    <p-inputNumber
-                        [showButtons]="true"
-                        formControlName="prix_vente"
-                        mode="currency"
-                        currency="TND"
-                        [step]="0.25"
-                        styleClass="sav-inputnumber"
-                    ></p-inputNumber>
+                    <div class="cc-field">
+                        <label class="cc-label">Package</label>
+                        <input
+                            pInputText
+                            formControlName="packageComposant"
+                            class="cc-input"
+                        />
+                    </div>
                 </div>
-                <div class="sav-form-row" style="flex: 1">
-                    <label class="sav-label">Statut</label>
-                    <p-dropdown
-                        [options]="statusComposant"
-                        formControlName="status"
-                        optionLabel="name"
-                        optionValue="value"
-                        placeholder="Choisir état"
-                        styleClass="sav-dropdown"
-                        [style]="{ width: '100%' }"
-                    >
-                        <ng-template let-option pTemplate="item">
-                            <p-tag
-                                [value]="option.name"
-                                [severity]="getSeverity(option.name)"
-                            ></p-tag>
-                        </ng-template>
-                    </p-dropdown>
+            </section>
+
+            <!-- ── Prix & stock ────────────────────────────────────── -->
+            <section class="cc-section">
+                <div class="cc-section__head">
+                    <span class="cc-section__dot cc-section__dot--green"></span>
+                    <h4 class="cc-section__title">Prix &amp; stock</h4>
                 </div>
-            </div>
+                <div class="cc-grid">
+                    <div class="cc-field">
+                        <label class="cc-label">Prix d'achat</label>
+                        <p-inputNumber
+                            formControlName="prix_achat"
+                            mode="currency"
+                            currency="TND"
+                            styleClass="cc-number"
+                        ></p-inputNumber>
+                    </div>
+                    <div class="cc-field">
+                        <label class="cc-label">Prix de vente</label>
+                        <p-inputNumber
+                            formControlName="prix_vente"
+                            mode="currency"
+                            currency="TND"
+                            styleClass="cc-number"
+                        ></p-inputNumber>
+                    </div>
+                    <div class="cc-field">
+                        <label class="cc-label">Quantité en stock</label>
+                        <p-inputNumber
+                            mode="decimal"
+                            formControlName="quantity_stocked"
+                            styleClass="cc-number"
+                        ></p-inputNumber>
+                    </div>
+                    <div class="cc-field">
+                        <label class="cc-label">Statut</label>
+                        <p-dropdown
+                            [options]="statusComposant"
+                            formControlName="status"
+                            optionLabel="name"
+                            optionValue="value"
+                            placeholder="Choisir état"
+                            styleClass="cc-dropdown"
+                            [style]="{ width: '100%' }"
+                        >
+                            <ng-template let-option pTemplate="item">
+                                <p-tag
+                                    [value]="option.name"
+                                    [severity]="getSeverity(option.name)"
+                                ></p-tag>
+                            </ng-template>
+                        </p-dropdown>
+                    </div>
+                    <div class="cc-field">
+                        <label class="cc-label">Date d'arrivage</label>
+                        <p-calendar
+                            dateFormat="dd.mm.yy"
+                            formControlName="coming_date"
+                            styleClass="cc-calendar"
+                            [style]="{ width: '100%' }"
+                        ></p-calendar>
+                    </div>
+                </div>
+            </section>
 
-            <div class="sav-form-row">
-                <label class="sav-label">Quantité en stock</label>
-                <p-inputNumber
-                    mode="decimal"
-                    [showButtons]="true"
-                    buttonLayout="vertical"
-                    spinnerMode="vertical"
-                    formControlName="quantity_stocked"
-                    styleClass="sav-inputnumber"
-                ></p-inputNumber>
-            </div>
+            <!-- ── Documents & liens ───────────────────────────────── -->
+            <section class="cc-section">
+                <div class="cc-section__head">
+                    <span class="cc-section__dot cc-section__dot--amber"></span>
+                    <h4 class="cc-section__title">Documents &amp; liens</h4>
+                </div>
+                <div class="cc-grid">
+                    <div class="cc-field cc-field--full">
+                        <label class="cc-label">Lien</label>
+                        <input pInputText formControlName="link" class="cc-input" />
+                    </div>
+                    <div class="cc-field cc-field--full">
+                        <label class="cc-label">Fiche technique (PDF)</label>
+                        <p-fileUpload
+                            mode="basic"
+                            chooseLabel="Ajouter PDF"
+                            chooseIcon="pi pi-upload"
+                            name="ficheTechnique"
+                            accept="application/pdf"
+                            maxFileSize="1000000"
+                            [customUpload]="true"
+                            [auto]="true"
+                            (uploadHandler)="onUpload($event, 'addComposant')"
+                        ></p-fileUpload>
+                        <div *ngIf="composantMagasin.value.pdf" class="cc-pdf">
+                            <p-image
+                                [src]="baseUrl + composantMagasin.value.pdf"
+                                width="60"
+                                [preview]="true"
+                                styleClass="sav-thumb"
+                            ></p-image>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-            <div
-                class="sav-dialog-footer"
-                style="justify-content: space-between"
-            >
+            <!-- ── Actions ─────────────────────────────────────────── -->
+            <footer class="cc-footer">
                 <button
                     pButton
+                    type="button"
                     label="Annuler"
                     icon="pi pi-times"
-                    class="p-button-text"
+                    class="cc-btn cc-btn--ghost"
                     (click)="annulerMagasinEstimation()"
                 ></button>
-                <button
-                    pButton
-                    label="Supprimer"
-                    icon="pi pi-trash"
-                    class="p-button-danger p-button-text"
-                    (click)="deletComposant()"
-                ></button>
-                <button
-                    pButton
-                    [label]="isToUpdate ? 'Mettre à jour' : 'Ajouter'"
-                    icon="pi pi-plus"
-                    class="p-button-success"
-                    (click)="addComposant()"
-                ></button>
-            </div>
+                <div class="cc-footer__right">
+                    <button
+                        pButton
+                        type="button"
+                        label="Supprimer"
+                        icon="pi pi-trash"
+                        class="cc-btn cc-btn--danger"
+                        (click)="deletComposant()"
+                    ></button>
+                    <button
+                        pButton
+                        type="button"
+                        [label]="isToUpdate ? 'Mettre à jour' : 'Ajouter'"
+                        icon="pi pi-plus"
+                        class="cc-btn cc-btn--primary"
+                        (click)="addComposant()"
+                    ></button>
+                </div>
+            </footer>
         </form>
     </p-dialog>
 </div>

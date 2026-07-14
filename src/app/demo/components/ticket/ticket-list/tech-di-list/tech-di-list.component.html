@@ -465,11 +465,10 @@
 
                         <!-- COMPOSANTS -->
                         <ng-container *ngIf="hasPdr && isReperable">
-                            <div
-                                class="sav-upload-pair"
-                                style="align-items: flex-end"
-                            >
-                                <div class="sav-form-row" style="flex: 1">
+                            <div class="sav-composant-row">
+                                <div
+                                    class="sav-composant-field sav-composant-field--grow"
+                                >
                                     <label class="sav-label"
                                         >Choisir un composant</label
                                     >
@@ -484,42 +483,38 @@
                                     ></p-dropdown>
                                 </div>
                                 <div
-                                    class="sav-form-row"
+                                    class="sav-composant-field sav-composant-field--qty"
                                     *ngIf="composantSelected"
-                                    style="flex: 1"
                                 >
                                     <label class="sav-label">Quantité</label>
                                     <p-inputNumber
                                         formControlName="quantity"
                                         [min]="1"
-                                        styleClass="sav-number-input"
+                                        [showButtons]="true"
+                                        buttonLayout="stacked"
+                                        styleClass="sav-qty-input"
                                     ></p-inputNumber>
                                 </div>
-                                <p-button
+                                <button
                                     *ngIf="composantSelected"
-                                    label="Ajouter"
+                                    pButton
+                                    type="button"
+                                    label="Ajouter composant"
                                     icon="pi pi-plus"
-                                    severity="success"
-                                    size="small"
+                                    class="sav-composant-add"
                                     (click)="comboComposantandQuantity()"
-                                ></p-button>
+                                ></button>
                             </div>
 
-                            <div
-                                class="sav-dialog-footer"
-                                style="
-                                    justify-content: flex-start;
-                                    border: none;
-                                    padding-top: 0;
-                                "
-                            >
-                                <p-button
-                                    label="Créer composant"
-                                    icon="pi pi-save"
-                                    severity="success"
-                                    size="small"
+                            <div class="sav-composant-create">
+                                <button
+                                    pButton
+                                    type="button"
+                                    label="Créer un nouveau composant"
+                                    icon="pi pi-plus-circle"
+                                    class="sav-composant-create-btn"
                                     (click)="openNew()"
-                                ></p-button>
+                                ></button>
                             </div>
 
                             <p-table
@@ -572,6 +567,16 @@
                                                 class="sav-icon-btn sav-icon-btn--danger"
                                                 (click)="onRowClick(composant)"
                                             ></button>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="emptymessage">
+                                    <tr>
+                                        <td
+                                            colspan="4"
+                                            class="sav-composant-empty"
+                                        >
+                                            Aucun composant ajouté
                                         </td>
                                     </tr>
                                 </ng-template>
