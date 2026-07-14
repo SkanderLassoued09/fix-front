@@ -2,232 +2,502 @@
     [(visible)]="visible"
     (visibleChange)="visibleChange.emit($event)"
     [modal]="true"
-    [closable]="true"
+    [closable]="false"
     [draggable]="false"
     [resizable]="false"
     [dismissableMask]="true"
+    [showHeader]="false"
     styleClass="pvd-dialog"
     [style]="{ width: '920px', maxWidth: 'calc(100vw - 2rem)' }"
-    [header]="''"
 >
-    <ng-template pTemplate="header">
-        <div class="pvd-head">
-            <div class="pvd-head__badge">📄</div>
-            <div class="pvd-head__text">
-                <div class="pvd-head__sup">PROCÈS-VERBAL DE RÉUNION</div>
-                <div class="pvd-head__ref">{{ pv?.reference || '—' }}</div>
+    <div class="pvd-card">
+        <!-- ── Print letterhead (print only) ───────────────── -->
+        <div class="pvd-letterhead print-only">
+            <img
+                src="assets/layout/images/Fixtronix-logo.png"
+                alt="Fixtronix"
+                class="pvd-letterhead__logo"
+            />
+            <div class="pvd-letterhead__meta">
+                <div class="pvd-letterhead__title">
+                    Procès-verbal de réunion
+                </div>
+                <div class="pvd-letterhead__code">
+                    {{ pv?.reference || "—" }}
+                </div>
             </div>
-            <div class="pvd-head__spacer"></div>
-            <p-tag
-                *ngIf="pv?.statut as s"
-                [value]="statutLabel(s)"
-                [severity]="statutSeverity(s)"
-            ></p-tag>
         </div>
-    </ng-template>
 
-    <div *ngIf="loading" class="pvd-skel">Chargement…</div>
-
-    <div *ngIf="!loading && pv" class="pvd-body">
-        <!-- Titre / objet -->
-        <header class="pvd-title-block">
-            <h1 class="pvd-title">{{ pv.titre }}</h1>
-            <p *ngIf="pv.objet" class="pvd-objet">{{ pv.objet }}</p>
-            <div *ngIf="pv.contexteRetour?.niveau as n" class="pvd-retour-pill"
-                [attr.data-niveau]="n">
-                Retour {{ n }}
-                <span *ngIf="pv.contexteRetour?.motif"
-                    >· {{ pv.contexteRetour.motif }}</span
-                >
+        <!-- ── Header ──────────────────────────────────────── -->
+        <header class="pvd-head">
+            <span class="pvd-head__tile" aria-hidden="true">
+                <i class="pi pi-file"></i>
+            </span>
+            <div class="pvd-head__titles">
+                <div class="pvd-head__sup">Procès-verbal de réunion</div>
+                <div class="pvd-head__row">
+                    <span class="pvd-head__code">
+                        {{ pv?.reference || "—" }}
+                    </span>
+                    <span
+                        *ngIf="pv?.statut as s"
+                        class="pvd-status"
+                        [attr.data-statut]="s"
+                    >
+                        <span class="pvd-status__dot"></span>
+                        {{ statutLabel(s) }}
+                    </span>
+                </div>
             </div>
+            <button
+                type="button"
+                class="pvd-head__close no-print"
+                aria-label="Fermer"
+                (click)="close()"
+            >
+                <i class="pi pi-times"></i>
+            </button>
         </header>
 
-        <!-- Infos générales -->
-        <section class="pvd-section">
-            <div class="pvd-section__bar"></div>
-            <div class="pvd-section__title">INFORMATIONS GÉNÉRALES</div>
-            <div class="pvd-grid">
-                <div class="pvd-kv">
-                    <div class="pvd-kv__k">Date de la réunion</div>
-                    <div class="pvd-kv__v">
-                        {{ pv.dateReunion | date: 'dd/MM/yyyy HH:mm' }}
+        <!-- ── Loading ─────────────────────────────────────── -->
+        <div *ngIf="loading" class="pvd-skel">Chargement…</div>
+
+        <!-- ── Body (scroll) ───────────────────────────────── -->
+        <div *ngIf="!loading && pv" class="pvd-body pv-scroll">
+            <!-- Title + motif + Jira note -->
+            <div class="pvd-titleblock avoid-break">
+                <h1 class="pvd-title">{{ pv.titre }}</h1>
+                <div class="pvd-motif" *ngIf="motifText">
+                    Motif : <span>{{ motifText }}</span>
+                </div>
+
+                <div class="pvd-note" *ngIf="editable">
+                    <i class="pi pi-info-circle pvd-note__ico"></i>
+                    <div class="pvd-note__body">
+                        <div class="pvd-note__text">
+                            Documentez la réunion ci-dessous, puis enregistrez.
+                            Chaque action est poussée dans <strong>Jira</strong>.
+                        </div>
+                        <span
+                            *ngIf="pv.contexteRetour?.niveau as n"
+                            class="pvd-retour-tag"
+                        >
+                            <i class="pi pi-replay"></i>
+                            Retour {{ n }}
+                            <ng-container *ngIf="pv.contexteRetour?.motif">
+                                · {{ pv.contexteRetour.motif }}
+                            </ng-container>
+                        </span>
                     </div>
                 </div>
-                <div class="pvd-kv">
-                    <div class="pvd-kv__k">Lieu</div>
-                    <div class="pvd-kv__v">{{ pv.lieu || '—' }}</div>
-                </div>
-                <div class="pvd-kv">
-                    <div class="pvd-kv__k">Modalité</div>
-                    <div class="pvd-kv__v">{{ modaliteLabel(pv.modalite) }}</div>
-                </div>
-                <div class="pvd-kv">
-                    <div class="pvd-kv__k">Créé par</div>
-                    <div class="pvd-kv__v">{{ nameOf(pv.createdBy) }}</div>
-                </div>
-                <div class="pvd-kv">
-                    <div class="pvd-kv__k">Prochaine réunion</div>
-                    <div class="pvd-kv__v">
-                        {{
-                            (pv.prochaineReunion | date: 'dd/MM/yyyy') || '—'
-                        }}
-                    </div>
-                </div>
-                <div class="pvd-kv">
-                    <div class="pvd-kv__k">DI liée</div>
-                    <div class="pvd-kv__v">
-                        <span *ngIf="pv.di; else noDi">{{ pv.di }}</span>
-                        <ng-template #noDi>—</ng-template>
-                    </div>
-                </div>
+
+                <span
+                    *ngIf="!editable && pv.contexteRetour?.niveau as n"
+                    class="pvd-retour-tag pvd-retour-tag--solo"
+                >
+                    <i class="pi pi-replay"></i>
+                    Retour {{ n }}
+                    <ng-container *ngIf="pv.contexteRetour?.motif">
+                        · {{ pv.contexteRetour.motif }}
+                    </ng-container>
+                </span>
             </div>
-        </section>
 
-        <!-- Participants -->
-        <section
-            class="pvd-section"
-            *ngIf="(pv.participants || []).length"
-        >
-            <div class="pvd-section__bar"></div>
-            <div class="pvd-section__title">
-                PARTICIPANTS ({{ pv.participants.length }})
-            </div>
-            <p-table
-                [value]="pv.participants"
-                styleClass="p-datatable-sm pvd-table"
-                [tableStyle]="{ 'min-width': '100%' }"
-            >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 50px">#</th>
-                        <th>Participant</th>
-                        <th style="width: 140px">Présence</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-p let-i="rowIndex">
-                    <tr>
-                        <td class="pvd-num">{{ i + 1 }}</td>
-                        <td>{{ nameOf(p.profile) }}</td>
-                        <td>{{ presenceLabel(p.statut) }}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </section>
-
-        <!-- Ordre du jour -->
-        <section
-            class="pvd-section"
-            *ngIf="(pv.ordreDuJour || []).length"
-        >
-            <div class="pvd-section__bar"></div>
-            <div class="pvd-section__title">ORDRE DU JOUR</div>
-            <ol class="pvd-ol">
-                <li *ngFor="let line of pv.ordreDuJour">{{ line }}</li>
-            </ol>
-        </section>
-
-        <!-- Points discutés -->
-        <section
-            class="pvd-section"
-            *ngIf="(pv.pointsDiscutes || []).length"
-        >
-            <div class="pvd-section__bar"></div>
-            <div class="pvd-section__title">POINTS DISCUTÉS</div>
-            <article
-                class="pvd-point"
-                *ngFor="let p of pv.pointsDiscutes; let i = index"
-            >
-                <div class="pvd-point__title">{{ i + 1 }}. {{ p.titre }}</div>
-                <div *ngIf="p.contenu" class="pvd-point__body">
-                    {{ p.contenu }}
-                </div>
-            </article>
-        </section>
-
-        <!-- Décisions -->
-        <section
-            class="pvd-section"
-            *ngIf="(pv.decisions || []).length"
-        >
-            <div class="pvd-section__bar"></div>
-            <div class="pvd-section__title">DÉCISIONS</div>
-            <ul class="pvd-deci">
-                <li *ngFor="let d of pv.decisions">▸ {{ d }}</li>
-            </ul>
-        </section>
-
-        <!-- Plan d'actions -->
-        <section
-            class="pvd-section"
-            *ngIf="(pv.actions || []).length"
-        >
-            <div class="pvd-section__bar"></div>
-            <div class="pvd-section__title">PLAN D'ACTIONS</div>
-            <p-table
-                [value]="pv.actions"
-                styleClass="p-datatable-sm pvd-table"
-                [tableStyle]="{ 'min-width': '100%' }"
-            >
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th style="width: 36px">#</th>
-                        <th>Action</th>
-                        <th style="width: 140px">Responsable</th>
-                        <th style="width: 90px">Échéance</th>
-                        <th style="width: 80px">Priorité</th>
-                        <th style="width: 100px">Statut</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-a let-i="rowIndex">
-                    <tr>
-                        <td class="pvd-num">{{ i + 1 }}</td>
-                        <td>
-                            <div class="pvd-action__title">
-                                {{ a.titre || '—' }}
-                            </div>
-                            <div
-                                *ngIf="a.description"
-                                class="pvd-action__desc"
-                            >
-                                {{ a.description }}
-                            </div>
-                        </td>
-                        <td>{{ nameOf(a.responsable) }}</td>
-                        <td>
+            <!-- Informations générales -->
+            <section class="pvd-block avoid-break">
+                <div class="pvd-block__label">Informations générales</div>
+                <div class="pvd-infos">
+                    <div class="pvd-info">
+                        <div class="pvd-info__k">Date de la réunion</div>
+                        <div class="pvd-info__v pvd-mono">
+                            {{ pv.dateReunion | date: "dd/MM/yyyy HH:mm" }}
+                        </div>
+                    </div>
+                    <div class="pvd-info">
+                        <div class="pvd-info__k">Créé par</div>
+                        <div class="pvd-info__creator">
+                            <span class="pvd-info__avatar">
+                                {{ initials(nameOf(pv.createdBy)) }}
+                            </span>
+                            <span class="pvd-info__name">
+                                {{ nameOf(pv.createdBy) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="pvd-info">
+                        <div class="pvd-info__k">Prochaine réunion</div>
+                        <div class="pvd-info__v pvd-info__v--muted">
                             {{
-                                (a.echeance | date: 'dd/MM/yyyy') || '—'
+                                (pv.prochaineReunion
+                                    | date: "dd/MM/yyyy HH:mm") || "—"
                             }}
-                        </td>
-                        <td>
-                            <p-tag
-                                [value]="priorityLabel(a.priorite)"
-                                [severity]="prioritySeverity(a.priorite)"
-                            ></p-tag>
-                        </td>
-                        <td>
-                            <p-tag
-                                [value]="actionStatutLabel(a.statut)"
-                                [severity]="actionStatutSeverity(a.statut)"
-                            ></p-tag>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </section>
+                        </div>
+                    </div>
+                    <div class="pvd-info">
+                        <div class="pvd-info__k">DI liée</div>
+                        <div class="pvd-info__v">
+                            <span *ngIf="pv.di; else noDi" class="pvd-di-pill">
+                                <i class="pi pi-link"></i> {{ pv.di }}
+                            </span>
+                            <ng-template #noDi>—</ng-template>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-        <!-- Empty fallback -->
-        <section *ngIf="!(pv.participants?.length) && !(pv.ordreDuJour?.length) && !(pv.pointsDiscutes?.length) && !(pv.decisions?.length) && !(pv.actions?.length)" class="pvd-empty">
-            Ce PV n'a pas encore de contenu détaillé. Vous pouvez tout de
-            même télécharger l'en-tête.
-        </section>
-    </div>
+            <!-- Participants -->
+            <section
+                class="pvd-block pvd-block--flush avoid-break"
+                *ngIf="(pv.participants || []).length"
+            >
+                <div class="pvd-block__head">
+                    <span class="pvd-block__label">Participants</span>
+                    <span class="pvd-pill pvd-pill--on">
+                        {{ pv.participants.length }}
+                    </span>
+                </div>
+                <div class="pvd-part">
+                    <div class="pvd-part__head">
+                        <span>#</span>
+                        <span>Participant</span>
+                        <span class="pvd-part__pres">Présence</span>
+                    </div>
+                    <div
+                        class="pvd-part__row"
+                        *ngFor="let p of pv.participants; let i = index"
+                    >
+                        <span class="pvd-part__num">{{ i + 1 }}</span>
+                        <span class="pvd-part__name">
+                            <span
+                                class="pvd-part__avatar"
+                                [ngClass]="'pvd-av--' + (i % 4)"
+                            >
+                                {{ initials(nameOf(p.profile)) }}
+                            </span>
+                            {{ nameOf(p.profile) }}
+                        </span>
+                        <span class="pvd-part__pres">
+                            <span
+                                class="pvd-pres"
+                                [attr.data-pres]="p.statut"
+                            >
+                                {{ presenceLabel(p.statut) }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+            </section>
 
-    <ng-template pTemplate="footer">
-        <div class="pvd-foot">
+            <!-- ── EDITABLE DETAIL SECTIONS ─────────────────── -->
+            <div [formGroup]="form" class="pvd-sections">
+                <!-- Ordre du jour -->
+                <section class="pvd-block avoid-break">
+                    <div class="pvd-block__head">
+                        <span class="pvd-block__label">Ordre du jour</span>
+                        <span
+                            class="pvd-pill"
+                            [class.pvd-pill--on]="ordreDuJour.length > 0"
+                        >
+                            {{ ordreDuJour.length }}
+                        </span>
+                        <button
+                            *ngIf="editable"
+                            type="button"
+                            class="pvd-add no-print"
+                            (click)="addOrdreLine()"
+                        >
+                            <i class="pi pi-plus"></i> Ajouter
+                        </button>
+                    </div>
+                    <div
+                        *ngIf="!ordreDuJour.length"
+                        class="pvd-empty"
+                    >
+                        Aucun point à l'ordre du jour.
+                    </div>
+                    <div formArrayName="ordreDuJour" class="pvd-lines">
+                        <div
+                            class="pvd-line"
+                            *ngFor="let c of ordreDuJour.controls; let i = index"
+                        >
+                            <span class="pvd-line__num">{{ i + 1 }}</span>
+                            <input
+                                class="pvd-input"
+                                [formControlName]="i"
+                                placeholder="Point n°…"
+                            />
+                            <button
+                                *ngIf="editable"
+                                type="button"
+                                class="pvd-x no-print"
+                                (click)="removeOrdreLine(i)"
+                                aria-label="Retirer"
+                            >
+                                <i class="pi pi-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Points discutés -->
+                <section class="pvd-block avoid-break">
+                    <div class="pvd-block__head">
+                        <span class="pvd-block__label">Points discutés</span>
+                        <span
+                            class="pvd-pill"
+                            [class.pvd-pill--on]="pointsDiscutes.length > 0"
+                        >
+                            {{ pointsDiscutes.length }}
+                        </span>
+                        <button
+                            *ngIf="editable"
+                            type="button"
+                            class="pvd-add no-print"
+                            (click)="addPoint()"
+                        >
+                            <i class="pi pi-plus"></i> Ajouter un point
+                        </button>
+                    </div>
+                    <div
+                        *ngIf="!pointsDiscutes.length"
+                        class="pvd-empty"
+                    >
+                        Aucun point discuté pour le moment.
+                    </div>
+                    <div formArrayName="pointsDiscutes" class="pvd-lines">
+                        <div
+                            class="pvd-line pvd-line--stack"
+                            *ngFor="
+                                let p of pointsDiscutes.controls;
+                                let i = index
+                            "
+                            [formGroupName]="i"
+                        >
+                            <span class="pvd-line__num">{{ i + 1 }}</span>
+                            <div class="pvd-line__stack">
+                                <input
+                                    class="pvd-input"
+                                    formControlName="titre"
+                                    placeholder="Titre du point"
+                                />
+                                <textarea
+                                    class="pvd-input pvd-textarea"
+                                    rows="2"
+                                    formControlName="contenu"
+                                    placeholder="Contenu"
+                                ></textarea>
+                            </div>
+                            <button
+                                *ngIf="editable"
+                                type="button"
+                                class="pvd-x no-print"
+                                (click)="removePoint(i)"
+                                aria-label="Retirer"
+                            >
+                                <i class="pi pi-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Décisions -->
+                <section class="pvd-block avoid-break">
+                    <div class="pvd-block__head">
+                        <span class="pvd-block__label">Décisions</span>
+                        <span
+                            class="pvd-pill"
+                            [class.pvd-pill--on]="decisions.length > 0"
+                        >
+                            {{ decisions.length }}
+                        </span>
+                        <button
+                            *ngIf="editable"
+                            type="button"
+                            class="pvd-add no-print"
+                            (click)="addDecisionLine()"
+                        >
+                            <i class="pi pi-plus"></i> Ajouter
+                        </button>
+                    </div>
+                    <div *ngIf="!decisions.length" class="pvd-empty">
+                        Aucune décision enregistrée.
+                    </div>
+                    <div formArrayName="decisions" class="pvd-lines">
+                        <div
+                            class="pvd-line"
+                            *ngFor="let c of decisions.controls; let i = index"
+                        >
+                            <span class="pvd-line__num">{{ i + 1 }}</span>
+                            <input
+                                class="pvd-input"
+                                [formControlName]="i"
+                                placeholder="Décision prise…"
+                            />
+                            <button
+                                *ngIf="editable"
+                                type="button"
+                                class="pvd-x no-print"
+                                (click)="removeDecisionLine(i)"
+                                aria-label="Retirer"
+                            >
+                                <i class="pi pi-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Actions à mener → Jira -->
+                <section class="pvd-block avoid-break">
+                    <div class="pvd-block__head">
+                        <span class="pvd-block__label">Actions à mener</span>
+                        <span
+                            class="pvd-pill"
+                            [class.pvd-pill--on]="actions.length > 0"
+                        >
+                            {{ actions.length }}
+                        </span>
+                        <button
+                            *ngIf="editable"
+                            type="button"
+                            class="pvd-add no-print"
+                            (click)="addAction()"
+                        >
+                            <i class="pi pi-plus"></i> Ajouter une action
+                        </button>
+                    </div>
+                    <div *ngIf="!actions.length" class="pvd-empty">
+                        Aucune action définie — chaque action ajoutée est
+                        poussée dans Jira.
+                    </div>
+                    <div formArrayName="actions" class="pvd-lines">
+                        <div
+                            class="pvd-action"
+                            *ngFor="let a of actions.controls; let i = index"
+                            [formGroupName]="i"
+                        >
+                            <span class="pvd-action__num">{{ i + 1 }}</span>
+                            <div class="pvd-action__body">
+                                <input
+                                    class="pvd-input"
+                                    formControlName="titre"
+                                    placeholder="Titre de l'action *"
+                                />
+                                <div class="pvd-action__grid">
+                                    <p-dropdown
+                                        formControlName="responsable"
+                                        [options]="profileOptions"
+                                        optionLabel="label"
+                                        optionValue="_id"
+                                        appendTo="body"
+                                        placeholder="Responsable"
+                                        [filter]="true"
+                                        filterBy="label"
+                                        styleClass="pvd-dd"
+                                    ></p-dropdown>
+                                    <p-calendar
+                                        formControlName="echeance"
+                                        dateFormat="dd/mm/yy"
+                                        appendTo="body"
+                                        placeholder="Échéance"
+                                        styleClass="pvd-cal"
+                                    ></p-calendar>
+                                    <p-dropdown
+                                        formControlName="priorite"
+                                        [options]="priorityOptions"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        appendTo="body"
+                                        styleClass="pvd-dd"
+                                    ></p-dropdown>
+                                    <p-dropdown
+                                        formControlName="statut"
+                                        [options]="statutActionOptions"
+                                        optionLabel="label"
+                                        optionValue="value"
+                                        appendTo="body"
+                                        styleClass="pvd-dd"
+                                    ></p-dropdown>
+                                </div>
+                                <textarea
+                                    class="pvd-input pvd-textarea"
+                                    rows="1"
+                                    formControlName="description"
+                                    placeholder="Description (optionnelle)"
+                                ></textarea>
+                                <div class="pvd-jira" *ngIf="actionJira(i) as j">
+                                    <a
+                                        *ngIf="j.issueKey"
+                                        class="pvd-jira__key"
+                                        [href]="j.url"
+                                        target="_blank"
+                                        rel="noopener"
+                                    >
+                                        <i class="pi pi-link"></i>
+                                        {{ j.issueKey }}
+                                    </a>
+                                    <span
+                                        *ngIf="j.assignFailed"
+                                        class="pvd-jira__warn"
+                                        pTooltip="Email non-Jira — tâche créée non assignée"
+                                    >
+                                        <i class="pi pi-exclamation-triangle"></i>
+                                        non assignée
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                *ngIf="editable"
+                                type="button"
+                                class="pvd-x no-print"
+                                (click)="removeAction(i)"
+                                aria-label="Retirer"
+                            >
+                                <i class="pi pi-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5M · Ishikawa (Retour meetings only) -->
+                <section class="pvd-block avoid-break" *ngIf="showFivem">
+                    <div class="pvd-block__label pvd-block__label--mb">
+                        5M · Ishikawa
+                    </div>
+                    <div class="pvd-field">
+                        <label>Problème analysé</label>
+                        <input
+                            class="pvd-input"
+                            formControlName="probleme"
+                            placeholder="Énoncé du problème"
+                        />
+                    </div>
+                    <div formGroupName="fivem" class="pvd-fivem">
+                        <div
+                            class="pvd-fam"
+                            [ngClass]="'pvd-fam--' + f.key"
+                            *ngFor="let f of families"
+                        >
+                            <div class="pvd-fam__label">
+                                <span class="pvd-fam__dot"></span>
+                                {{ f.label }}
+                            </div>
+                            <textarea
+                                class="pvd-input pvd-fam__area"
+                                rows="2"
+                                [formControlName]="f.key"
+                                placeholder="Une cause par ligne"
+                            ></textarea>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ── Footer ──────────────────────────────────────── -->
+        <footer class="pvd-foot no-print">
             <span class="pvd-foot__hint" *ngIf="pv">
                 <i class="pi pi-clock"></i>
-                Créé le
-                {{ pv.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                Créé le {{ pv.createdAt | date: "dd/MM/yyyy HH:mm" }}
             </span>
             <div class="pvd-foot__spacer"></div>
             <button
@@ -241,7 +511,7 @@
                 pButton
                 type="button"
                 icon="pi pi-file-pdf"
-                label="Télécharger en PDF"
+                label="PDF"
                 class="pvd-btn pvd-btn--pdf"
                 [loading]="downloading"
                 [disabled]="downloading || !pv"
@@ -249,6 +519,29 @@
                 pTooltip="Génère un document PV imprimable"
                 tooltipPosition="top"
             ></button>
-        </div>
-    </ng-template>
+            <button
+                *ngIf="editable && pv"
+                pButton
+                type="button"
+                icon="pi pi-save"
+                label="Enregistrer"
+                class="pvd-btn pvd-btn--save"
+                [loading]="saving"
+                [disabled]="saving"
+                (click)="save(false)"
+            ></button>
+            <button
+                *ngIf="editable && pv"
+                pButton
+                type="button"
+                icon="pi pi-check"
+                label="Finaliser"
+                class="pvd-btn pvd-btn--finalize"
+                [disabled]="saving"
+                (click)="save(true)"
+                pTooltip="Enregistre puis verrouille le PV"
+                tooltipPosition="top"
+            ></button>
+        </footer>
+    </div>
 </p-dialog>

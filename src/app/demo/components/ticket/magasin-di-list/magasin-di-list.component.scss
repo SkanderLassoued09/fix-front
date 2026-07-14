@@ -1664,3 +1664,187 @@ $white: #ffffff;
         max-height: 38vh;
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   « Création nouveau composant » modal — sectioned, responsive redesign.
+   Design system: Inter · blue #3b82f6/#2563eb · green #16a34a ·
+   amber #b45309 · red #dc2626 · slate text. No purple.
+   ══════════════════════════════════════════════════════════════════ */
+.cc-form {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    color: #0f172a;
+}
+
+.cc-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+    background: #ffffff;
+
+    &__head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.9rem;
+    }
+    &__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: #2563eb;
+        flex: none;
+        &--green {
+            background: #16a34a;
+        }
+        &--amber {
+            background: #b45309;
+        }
+    }
+    &__title {
+        margin: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #475569;
+    }
+}
+
+.cc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+}
+@media (max-width: 560px) {
+    .cc-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cc-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    &--full {
+        grid-column: 1 / -1;
+    }
+}
+
+.cc-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.cc-readonly {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #0f172a;
+    background: #f8fafc;
+    border: 1px dashed #e2e8f0;
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    word-break: break-all;
+}
+
+.cc-pdf {
+    margin-top: 0.5rem;
+}
+
+/* PrimeNG inputs — consistent full width, slate border, blue focus ring. */
+.cc-form {
+    /* Flex inputnumber/calendar so the inner <input> shrinks and the currency
+       text / calendar icon never overlap or overflow the column (no horizontal
+       scroll). box-sizing keeps padding inside the declared width. */
+    :host ::ng-deep .p-inputnumber,
+    :host ::ng-deep .p-calendar {
+        display: flex;
+        width: 100%;
+    }
+    :host ::ng-deep .cc-input,
+    :host ::ng-deep .p-dropdown {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
+    :host ::ng-deep .p-calendar .p-inputtext {
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+    :host ::ng-deep .p-calendar .p-datepicker-trigger {
+        flex: 0 0 auto;
+    }
+
+    :host ::ng-deep .cc-input,
+    :host ::ng-deep .p-dropdown,
+    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
+    :host ::ng-deep .p-calendar .p-inputtext {
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        font-size: 0.9rem;
+    }
+    :host ::ng-deep .cc-input:focus,
+    :host ::ng-deep .p-inputnumber-input:focus,
+    :host ::ng-deep .p-calendar .p-inputtext:focus,
+    :host ::ng-deep .p-dropdown.p-focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+}
+
+/* Footer — Annuler (ghost) left; Supprimer (danger) + Ajouter (primary) right. */
+.cc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    margin-top: 0.25rem;
+    border-top: 1px solid #f1f5f9;
+
+    &__right {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+}
+
+.cc-btn {
+    :host ::ng-deep & {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        padding: 0.55rem 1rem !important;
+    }
+    :host ::ng-deep &--ghost {
+        background: transparent !important;
+        color: #64748b !important;
+        border: 1px solid #e2e8f0 !important;
+        &:hover {
+            background: #f8fafc !important;
+        }
+    }
+    :host ::ng-deep &--danger {
+        background: #fef2f2 !important;
+        color: #dc2626 !important;
+        border: 1px solid #fecaca !important;
+        &:hover {
+            background: #fee2e2 !important;
+        }
+    }
+    :host ::ng-deep &--primary {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        border: 0 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+    }
+}

@@ -1,0 +1,277 @@
+/* Composant management — aligned with the app's other list tables
+   (design system: Inter, blue #3b82f6 / #2563eb, red #dc2626. No purple). */
+
+.cm-shell {
+    font-family: 'Inter', sans-serif;
+    padding: 1.5rem;
+    background: #f8fafc;
+    min-height: calc(100vh - 4rem);
+    color: #0f172a;
+}
+
+.cm-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+
+    &__text {
+        flex: 1 1 auto;
+        min-width: 220px;
+    }
+
+    &__actions {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        flex-shrink: 0;
+    }
+}
+
+.cm-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.cm-subtitle {
+    margin: 0.2rem 0 0;
+    font-size: 0.88rem;
+    color: #64748b;
+}
+
+.cm-search {
+    :host ::ng-deep input.p-inputtext {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.55rem 0.75rem 0.55rem 2.1rem;
+        font-size: 0.9rem;
+        min-width: 22rem;
+
+        &:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+    }
+    :host ::ng-deep .pi-search {
+        color: #94a3b8;
+    }
+}
+
+.cm-table {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+
+    :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.75rem 0.85rem;
+    }
+    :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
+        padding: 0.7rem 0.85rem;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: #0f172a;
+    }
+    :host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
+        background: #f8fafc;
+    }
+    :host ::ng-deep .p-paginator {
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        padding: 0.5rem;
+    }
+}
+
+/* Long uuid reference — muted, monospace, truncated so it doesn't blow up the row. */
+.cm-ref {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.78rem;
+    color: #94a3b8;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cm-status {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #2563eb;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+}
+
+.cm-empty {
+    padding: 1.5rem;
+    color: #64748b;
+    text-align: center;
+    font-size: 0.92rem;
+}
+
+.cm-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.cm-row-btn {
+    :host ::ng-deep & {
+        padding: 0.4rem !important;
+        width: 34px !important;
+        height: 34px !important;
+        border-radius: 8px !important;
+        margin-left: 0.35rem !important;
+    }
+    :host ::ng-deep &--edit {
+        background: #eff6ff !important;
+        color: #2563eb !important;
+        border: 1px solid #bfdbfe !important;
+
+        &:hover {
+            background: #dbeafe !important;
+        }
+    }
+    :host ::ng-deep &--del {
+        background: #fef2f2 !important;
+        color: #dc2626 !important;
+        border: 1px solid #fecaca !important;
+
+        &:hover {
+            background: #fee2e2 !important;
+        }
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   « Modifier le composant » modal — same design system as the create
+   modal (Inter · blue #3b82f6/#2563eb · slate · no purple).
+   ══════════════════════════════════════════════════════════════════ */
+.cu-form {
+    font-family: 'Inter', sans-serif;
+    color: #0f172a;
+    padding-top: 0.25rem;
+}
+
+.cu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+}
+@media (max-width: 520px) {
+    .cu-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cu-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    &--full {
+        grid-column: 1 / -1;
+    }
+}
+
+.cu-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.cu-form {
+    /* Every control fills its column. inputnumber/calendar become flex rows so
+       their inner <input> SHRINKS (flex:1 + width:1% + min-width:0) and the
+       currency text / calendar icon never overlap or overflow (that overflow
+       was the source of the horizontal scrollbar). box-sizing keeps padding
+       inside the declared width. */
+    :host ::ng-deep .p-inputnumber,
+    :host ::ng-deep .p-calendar {
+        display: flex;
+        width: 100%;
+    }
+    :host ::ng-deep .cu-input,
+    :host ::ng-deep .p-dropdown {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
+    :host ::ng-deep .p-calendar .p-inputtext {
+        flex: 1 1 auto;
+        width: 1%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+    :host ::ng-deep .p-calendar .p-datepicker-trigger {
+        flex: 0 0 auto;
+    }
+
+    /* Borders / radius / focus — design system. */
+    :host ::ng-deep .cu-input,
+    :host ::ng-deep .p-dropdown,
+    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
+    :host ::ng-deep .p-calendar .p-inputtext {
+        border-radius: 8px !important;
+        border: 1px solid #e2e8f0 !important;
+        font-size: 0.9rem;
+    }
+    :host ::ng-deep .cu-input:focus,
+    :host ::ng-deep .p-inputnumber-input:focus,
+    :host ::ng-deep .p-calendar .p-inputtext:focus,
+    :host ::ng-deep .p-dropdown.p-focus {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+}
+
+.cu-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    width: 100%;
+}
+
+.cu-btn {
+    :host ::ng-deep & {
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        padding: 0.55rem 1.1rem !important;
+    }
+    :host ::ng-deep &--ghost {
+        background: transparent !important;
+        color: #64748b !important;
+        border: 1px solid #e2e8f0 !important;
+        &:hover {
+            background: #f8fafc !important;
+        }
+    }
+    :host ::ng-deep &--primary {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        border: 0 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+    }
+    :host ::ng-deep &--primary.p-disabled,
+    :host ::ng-deep &--primary:disabled {
+        opacity: 0.55 !important;
+        box-shadow: none !important;
+    }
+}

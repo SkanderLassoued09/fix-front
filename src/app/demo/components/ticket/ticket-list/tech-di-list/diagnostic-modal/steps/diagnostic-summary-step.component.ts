@@ -116,9 +116,11 @@ import {
         </button>
         <!-- Non-réparable shortcut: when the tech marks the DI as not
              repairable in step 4, the standard "Finir" button is hidden and
-             replaced by this orange action that routes straight to FINISHED
-             (no composant step, no magasin, no pricing). Backend guard M1
-             accepts DIAGNOSTIC(_Pause) → FINISHED. -->
+             replaced by this action. It skips the Composants + Magasin steps
+             and routes to tarification: the backend bills the diagnostic
+             (DIAGNOSTIC → PENDING2) so the admin can price it and, if needed,
+             use « Renvoyer au diagnostic ». (A non-repairable RETOUR closes
+             directly to FINISHED instead — handled server-side.) -->
         <button
           *ngIf="!isRetour && reparableLabel === 'Non'"
           type="button"

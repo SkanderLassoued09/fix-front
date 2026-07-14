@@ -62,12 +62,13 @@ import {
             <p-inputNumber
               formControlName="quantity"
               [showButtons]="true"
+              buttonLayout="stacked"
               [min]="1"
               inputStyleClass="sav-diag-qty"
+              styleClass="sav-diag-qty-wrap"
             ></p-inputNumber>
           </div>
           <div class="field field--actions">
-            <span class="action-spacer" aria-hidden="true"></span>
             <button type="button" class="btn btn--primary" (click)="add.emit()">
               <i class="pi pi-plus"></i> Ajouter composant
             </button>
@@ -136,31 +137,29 @@ import {
       .step__head p { margin: 0.15rem 0 0; font-size: 0.82rem; color: #64748b; }
 
       .picker {
-        margin-bottom: 1.15rem;
-        padding: 1rem;
+        margin-bottom: 1.25rem;
+        padding: 1.25rem;
         border: 1px solid #e2e8f0;
-        border-radius: 10px;
+        border-radius: 12px;
         background: #f8fafc;
       }
       .picker__row {
         display: grid;
-        grid-template-columns: minmax(260px, 1fr) 150px minmax(170px, auto);
-        gap: 0.9rem;
-        align-items: stretch;
+        grid-template-columns: minmax(240px, 1fr) 150px auto;
+        gap: 0.75rem 1rem;
+        align-items: end;
       }
       .field { display: flex; flex-direction: column; min-width: 0; }
       .field--narrow { min-width: 0; }
-      .field--actions { display: flex; align-self: stretch; }
-      .action-spacer {
-        display: block;
-        height: 1.33rem;
-        flex: 0 0 auto;
-      }
+      /* No label above the button → bottom-align it with the inputs. */
+      .field--actions { align-self: end; }
+      .field--actions .btn { width: 100%; }
       .field label {
         font-size: 0.72rem;
         font-weight: 650;
         color: #334155;
-        margin-bottom: 0.38rem;
+        margin-bottom: 0.4rem;
+        line-height: 1.1;
       }
 
       .btn {
@@ -255,13 +254,45 @@ import {
         display: flex;
         align-items: center;
       }
-      :host ::ng-deep .sav-diag-qty {
-        height: 42px;
-        width: 100%;
-      }
+      /* Quantity: a single integrated 42px field — the stepper buttons sit
+         flush inside the same rounded box as the number input. */
       :host ::ng-deep p-inputnumber,
-      :host ::ng-deep .p-inputnumber {
+      :host ::ng-deep .sav-diag-qty-wrap.p-inputnumber {
         width: 100%;
+        height: 42px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #ffffff;
+        overflow: hidden;
+        transition: border-color 0.15s, box-shadow 0.15s;
+      }
+      :host ::ng-deep .sav-diag-qty-wrap.p-inputwrapper-focus,
+      :host ::ng-deep .sav-diag-qty-wrap:focus-within {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+      }
+      :host ::ng-deep .sav-diag-qty {
+        height: 40px;
+        width: 100%;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+      :host ::ng-deep .sav-diag-qty-wrap .p-inputnumber-button {
+        width: 2.1rem;
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+      }
+      :host ::ng-deep .sav-diag-qty-wrap .p-inputnumber-button:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+      }
+      :host ::ng-deep .sav-diag-qty-wrap .p-inputnumber-button:focus {
+        box-shadow: none;
+      }
+      :host ::ng-deep .sav-diag-qty-wrap .p-inputnumber-button-up {
+        border-bottom: 1px solid #e2e8f0;
       }
 
       @media (max-width: 860px) {

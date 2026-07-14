@@ -27,6 +27,57 @@ export class ReunionPvService {
         `;
     }
 
+    /**
+     * Phase-2 "document the meeting" write: fills the detailed sections from the
+     * detail modal (ordre du jour, points, décisions, actions, 5M) and pushes
+     * each action to Jira on the backend. `actions[]._id` is echoed for existing
+     * actions so Jira updates the same issue instead of duplicating.
+     */
+    updateReunionPVDetails() {
+        return gql`
+            mutation UpdateReunionPVDetails($input: UpdateReunionPVDetailsInput!) {
+                updateReunionPVDetails(input: $input) {
+                    _id
+                    reference
+                    statut
+                    ordreDuJour
+                    decisions
+                    pointsDiscutes {
+                        titre
+                        contenu
+                    }
+                    actions {
+                        _id
+                        titre
+                        description
+                        responsable
+                        echeance
+                        priorite
+                        statut
+                        jira {
+                            synced
+                            issueKey
+                            url
+                            assignFailed
+                        }
+                    }
+                    ishikawa {
+                        probleme
+                        familles {
+                            key
+                            label
+                            causes {
+                                label
+                                detail
+                                custom
+                            }
+                        }
+                    }
+                }
+            }
+        `;
+    }
+
     /** List PVs attached to a DI (used by the future Réunions menu). */
     reunionPVsByDi() {
         return gql`
@@ -98,12 +149,31 @@ export class ReunionPvService {
                         contenu
                     }
                     actions {
+                        _id
                         titre
                         description
                         responsable
                         echeance
                         priorite
                         statut
+                        jira {
+                            synced
+                            issueKey
+                            url
+                            assignFailed
+                        }
+                    }
+                    ishikawa {
+                        probleme
+                        familles {
+                            key
+                            label
+                            causes {
+                                label
+                                detail
+                                custom
+                            }
+                        }
                     }
                     prochaineReunion
                     statut

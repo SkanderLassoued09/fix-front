@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DiagnosticDiSummary } from '../diagnostic-modal.types';
+import { DiImageComponent } from 'src/app/demo/components/ticket/shared/di-image/di-image.component';
 
 /**
  * Step 1 · Informations générales — read-only DI context.
@@ -9,7 +10,7 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
 @Component({
   selector: 'sav-diag-info-step',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DiImageComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="step">
@@ -22,6 +23,14 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
       </header>
 
       <div class="step__grid">
+        <!-- Problem photo first: the tech should see what's wrong before
+             reading the ticket metadata. Full-width, at the very top. -->
+        <div class="field field--full" *ngIf="di.imageUrl || di.imageViewUrl">
+          <app-di-image
+            [imageUrl]="di.imageUrl || ''"
+            [viewUrl]="di.imageViewUrl || ''"
+          ></app-di-image>
+        </div>
         <div class="field">
           <label>Titre du ticket</label>
           <div class="field__value">{{ di.title || 'N/A' }}</div>

@@ -36,47 +36,24 @@ import {
         <h3>{{ title }}</h3>
       </header>
 
-      <!-- Contacts: 3 service rows for a company-DI, or a single phone row
-           for a client-DI. Fallback when neither is resolvable. -->
+      <!-- Company-DI: only the TECHNIQUE service phone number is shown (the
+           diagnostic tech only needs to reach the technical contact). Client-DI
+           keeps its single client phone row below. -->
       <section
         class="sav-diag-sidebar__block"
         *ngIf="di.entityType === 'company'"
       >
-        <div class="sav-diag-sidebar__sectionLabel">CONTACTS SOCIÉTÉ</div>
-        <div class="sav-diag-sidebar__contacts">
-          <div
-            class="sav-diag-sidebar__contact"
-            *ngFor="
-              let s of [
-                { key: 'achat', icon: 'pi-shopping-cart', label: 'Achat', svc: di.serviceAchat },
-                { key: 'tech', icon: 'pi-wrench', label: 'Technique', svc: di.serviceTechnique },
-                { key: 'fin', icon: 'pi-credit-card', label: 'Financier', svc: di.serviceFinancier },
-              ]; trackBy: trackByContactKey
-            "
-          >
-            <div class="sav-diag-sidebar__contact-head">
-              <i class="pi" [ngClass]="s.icon"></i>
-              <span>{{ s.label }}</span>
-            </div>
-            <div *ngIf="s.svc?.name" class="sav-diag-sidebar__contact-row">
-              <i class="pi pi-user"></i>{{ s.svc?.name }}
-            </div>
-            <a
-              *ngIf="s.svc?.phone"
-              class="sav-diag-sidebar__contact-row sav-diag-sidebar__contact-link"
-              [href]="'tel:' + s.svc?.phone"
-            ><i class="pi pi-phone"></i>{{ s.svc?.phone }}</a>
-            <a
-              *ngIf="s.svc?.email"
-              class="sav-diag-sidebar__contact-row sav-diag-sidebar__contact-link"
-              [href]="'mailto:' + s.svc?.email"
-            ><i class="pi pi-envelope"></i>{{ s.svc?.email }}</a>
-            <div
-              *ngIf="!s.svc?.name && !s.svc?.phone && !s.svc?.email"
-              class="sav-diag-sidebar__contact-row sav-diag-sidebar__faded"
-            >Non renseigné</div>
+        <div class="sav-diag-sidebar__sectionLabel">CONTACT TECHNIQUE</div>
+        <a
+          *ngIf="di.serviceTechnique?.phone; else noTechPhone"
+          class="sav-diag-sidebar__row sav-diag-sidebar__contact-link"
+          [href]="'tel:' + di.serviceTechnique?.phone"
+        ><i class="pi pi-phone"></i>{{ di.serviceTechnique?.phone }}</a>
+        <ng-template #noTechPhone>
+          <div class="sav-diag-sidebar__row sav-diag-sidebar__faded">
+            Tél non renseigné
           </div>
-        </div>
+        </ng-template>
       </section>
 
       <section
@@ -294,8 +271,4 @@ export class DiagnosticSidebarComponent {
   @Input() decisions?: readonly SidebarDecision[] | null;
   @Input() reparableLabel?: string;
   @Input() pdrLabel?: string;
-
-  trackByContactKey(_: number, s: { key: string }): string {
-    return s.key;
-  }
 }

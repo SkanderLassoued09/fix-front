@@ -73,6 +73,11 @@ export interface DiagnosticDiSummary {
    *  retour so the tech sees what the previous tech/coordinator wrote. */
   readonly remarqueTechDiagnostic?: string;
   readonly remarqueTechReparation?: string;
+  /** Creation photo. `imageUrl` = the backend proxy that streams the Drive file
+   *  (embeddable in <img>); empty when the DI has no image. `imageViewUrl` = the
+   *  Drive viewer link (fallback "open in new tab" if the proxy can't serve). */
+  readonly imageUrl?: string;
+  readonly imageViewUrl?: string;
 }
 
 export interface ComposantOption {

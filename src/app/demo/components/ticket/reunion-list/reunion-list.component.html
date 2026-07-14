@@ -123,10 +123,12 @@
         (cancelled)="onCancelled()"
     ></app-reunion-pv-modal>
 
-    <!-- Read-only details viewer (eye button) — same instance is reused
-         across rows; we just swap the bound id. -->
+    <!-- Detail modal (eye button + Discord reminder deep-link). Editable while
+         BROUILLON (document the meeting → push actions to Jira), read-only once
+         FINALISE. `saved` refreshes the list. Same instance reused across rows. -->
     <app-reunion-pv-details-modal
         [(visible)]="detailsOpen"
         [pvId]="detailsPvId"
+        (saved)="onDetailsSaved()"
     ></app-reunion-pv-details-modal>
 </div>

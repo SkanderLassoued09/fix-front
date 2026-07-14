@@ -1,276 +1,900 @@
-/* PV de Réunion — details viewer. Design system: Inter, blue
-   #3b82f6/#2563eb, amber #b45309, green #16a34a, red #dc2626. No purple. */
+// ═══════════════════════════════════════════════════════
+//  PV DE RÉUNION — détail (Phase 2 « documenter »).
+//  Implements the "PV Réunion Détail" Claude Design.
+//  Inter + JetBrains Mono. Accent blue #2f6bff.
+// ═══════════════════════════════════════════════════════
 
-:host ::ng-deep .pvd-dialog .p-dialog-header {
-    padding: 1.1rem 1.25rem 0.65rem;
-    border-bottom: 1px solid #e2e8f0;
-    background: #ffffff;
-}
+$accent: #2f6bff;
+$accent-tint: #eef3ff;
+$accent-dark: #1f57e6;
+
+$card: #ffffff;
+$body-bg: #f7f8fb;
+$surface: #fafbfc;
+
+$border: #eceef3;
+$border-2: #e7eaef;
+$border-in: #e3e7ee;
+
+$ink: #1f2733;
+$ink-body: #3a4453;
+$ink-strong: #2b3440;
+$ink-sub: #5b6678;
+
+$muted: #8a93a3;
+$muted-2: #9aa2b1;
+$muted-3: #7b8497;
+$label: #8b93a3;
+$faint: #aab1bf;
+
+$cyan: #0e9bc4;
+$green: #1f9d73;
+$green-pill: #3fa971;
+$green-tint: #eafaf0;
+$purple: #7c6fe0;
+$purple-tint: #f3f0fd;
+$amber: #e8943a;
+$amber-strong: #c47a1e;
+$amber-tint: #fff5e9;
+$rose: #d65a7a;
+$rose-tint: #fdeef0;
+$del: #d65a5a;
+$del-bd: #f2d5d5;
+$del-bg: #fdf4f4;
+
+$mono: "JetBrains Mono", ui-monospace, monospace;
+
+// ── Dialog shell ────────────────────────────────────────
 :host ::ng-deep .pvd-dialog .p-dialog-content {
-    padding: 0;
-    background: #f8fafc;
+    padding: 0 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
 }
-:host ::ng-deep .pvd-dialog .p-dialog-footer {
-    padding: 0.85rem 1.25rem;
-    border-top: 1px solid #e2e8f0;
-    background: #ffffff;
+:host ::ng-deep .pvd-dialog.p-dialog,
+:host ::ng-deep .pvd-dialog .p-dialog {
+    border-radius: 16px !important;
+    box-shadow: 0 30px 80px rgba(20, 28, 45, 0.26) !important;
 }
 
+.print-only {
+    display: none;
+}
+
+.pvd-card {
+    display: flex;
+    flex-direction: column;
+    background: $card;
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color: $ink;
+    -webkit-font-smoothing: antialiased;
+}
+
+// ── Print letterhead ────────────────────────────────────
+.pvd-letterhead {
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 16px;
+    border-bottom: 2px solid $ink-strong;
+    margin: 0 26px 4px;
+    &__logo {
+        height: 34px;
+    }
+    &__meta {
+        text-align: right;
+    }
+    &__title {
+        font-size: 13px;
+        font-weight: 700;
+        color: $ink-strong;
+    }
+    &__code {
+        font-size: 11px;
+        color: $muted;
+        font-family: $mono;
+    }
+}
+
+// ── Header ──────────────────────────────────────────────
 .pvd-head {
     display: flex;
     align-items: center;
-    gap: 0.85rem;
-    width: 100%;
-    font-family: 'Inter', sans-serif;
-
-    &__badge {
-        width: 40px;
-        height: 40px;
-        background: #eff6ff;
-        color: #2563eb;
-        border-radius: 10px;
-        display: grid;
-        place-items: center;
-        font-size: 1.25rem;
-        flex-shrink: 0;
+    gap: 15px;
+    padding: 18px 26px;
+    border-bottom: 1px solid $border;
+    flex: none;
+}
+.pvd-head__tile {
+    width: 46px;
+    height: 46px;
+    flex: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #eaf1ff, #dbe6ff);
+    color: $accent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .pi {
+        font-size: 1.15rem;
     }
-    &__sup {
-        font-size: 0.72rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        color: #64748b;
+}
+.pvd-head__titles {
+    flex: 1;
+    min-width: 0;
+}
+.pvd-head__sup {
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    font-weight: 700;
+    color: $muted-2;
+    text-transform: uppercase;
+}
+.pvd-head__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 3px;
+}
+.pvd-head__code {
+    font-family: $mono;
+    font-size: 16px;
+    font-weight: 700;
+    color: $ink-strong;
+    letter-spacing: -0.2px;
+}
+.pvd-head__close {
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: 9px;
+    border: 1px solid $border;
+    background: $surface;
+    color: $ink-sub;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    &:hover {
+        background: #f1f2f4;
     }
-    &__ref {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        font-size: 1rem;
-        font-weight: 700;
-        color: #2563eb;
-    }
-    &__spacer {
-        flex: 1;
+    .pi {
+        font-size: 0.9rem;
     }
 }
 
+// ── Status pill ─────────────────────────────────────────
+.pvd-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 11px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: $amber-tint;
+    color: $amber-strong;
+    &__dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: $amber;
+    }
+    &[data-statut="FINALISE"] {
+        background: $green-tint;
+        color: $green-pill;
+        .pvd-status__dot {
+            background: $green-pill;
+        }
+    }
+}
+
+// ── Body ────────────────────────────────────────────────
 .pvd-body {
-    font-family: 'Inter', sans-serif;
-    padding: 1.1rem 1.25rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(100vh - 15rem);
+    overflow-y: auto;
+    padding: 22px 26px;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    color: #0f172a;
+    gap: 18px;
+    background: $body-bg;
 }
-
+.pv-scroll {
+    &::-webkit-scrollbar {
+        width: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #d6dae2;
+        border-radius: 9px;
+    }
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
 .pvd-skel {
-    padding: 2rem;
+    padding: 3rem;
     text-align: center;
-    color: #64748b;
-    font-family: 'Inter', sans-serif;
+    color: $muted;
+    font-family: "Inter", sans-serif;
+    background: $body-bg;
 }
 
-.pvd-title-block {
-    background: #ffffff;
-    padding: 1rem 1.1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-}
+// ── Title block ─────────────────────────────────────────
 .pvd-title {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: #0f172a;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: $ink-strong;
 }
-.pvd-objet {
-    margin: 0.25rem 0 0;
-    font-size: 0.9rem;
-    color: #475569;
-    line-height: 1.5;
-}
-.pvd-retour-pill {
-    display: inline-block;
-    margin-top: 0.65rem;
-    padding: 0.25rem 0.65rem;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: #b45309;
-    background: #fef3c7;
-    border: 1px solid #fde68a;
-
-    &[data-niveau='3'] {
-        color: #dc2626;
-        background: #fee2e2;
-        border-color: #fecaca;
-    }
-}
-
-.pvd-section {
-    position: relative;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 0.85rem 1.1rem 1rem 1.35rem;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
-
-    &__bar {
-        position: absolute;
-        left: 0;
-        top: 0.85rem;
-        bottom: 0.85rem;
-        width: 3px;
-        background: #2563eb;
-        border-radius: 0 3px 3px 0;
-    }
-    &__title {
-        font-size: 0.75rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        color: #2563eb;
-        margin-bottom: 0.65rem;
-    }
-}
-
-.pvd-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 0.6rem 1rem;
-}
-.pvd-kv {
-    &__k {
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        color: #64748b;
-        letter-spacing: 0.06em;
+.pvd-motif {
+    font-size: 13px;
+    color: $muted-3;
+    margin-top: 4px;
+    span {
         font-weight: 600;
-        margin-bottom: 0.15rem;
-    }
-    &__v {
-        font-size: 0.95rem;
-        color: #0f172a;
+        color: $ink-sub;
     }
 }
-
-.pvd-ol,
-.pvd-deci {
-    margin: 0;
-    padding: 0 0 0 1.1rem;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    color: #0f172a;
-}
-.pvd-deci {
-    list-style: none;
-    padding-left: 0;
-}
-.pvd-deci li {
-    padding-left: 0.1rem;
-}
-
-.pvd-point {
-    padding: 0.55rem 0 0.6rem;
-    border-top: 1px solid #f1f5f9;
-
-    &:first-of-type {
-        border-top: 0;
-        padding-top: 0;
-    }
-
-    &__title {
-        font-weight: 700;
-        font-size: 0.95rem;
-        color: #2563eb;
-        margin-bottom: 0.25rem;
+.pvd-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin-top: 14px;
+    border: 1px solid #d7e6ff;
+    background: #f4f8ff;
+    border-radius: 12px;
+    padding: 12px 15px;
+    &__ico {
+        color: $accent;
+        font-size: 1.05rem;
+        margin-top: 1px;
+        flex: none;
     }
     &__body {
-        font-size: 0.9rem;
-        color: #0f172a;
-        line-height: 1.55;
-        white-space: pre-wrap;
+        flex: 1;
+        min-width: 0;
+    }
+    &__text {
+        font-size: 13px;
+        line-height: 1.5;
+        color: $ink-body;
+        strong {
+            color: $accent;
+            font-weight: 700;
+        }
+    }
+}
+.pvd-retour-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background: $accent-tint;
+    color: $accent;
+    font-size: 11.5px;
+    font-weight: 600;
+    .pi {
+        font-size: 0.7rem;
+    }
+    &--solo {
+        margin-top: 12px;
     }
 }
 
-.pvd-action {
-    &__title {
-        font-weight: 600;
-        color: #0f172a;
+// ── Generic block/card ──────────────────────────────────
+.pvd-block {
+    border: 1px solid $border-2;
+    border-radius: 14px;
+    background: $card;
+    padding: 16px 18px;
+    &--flush {
+        padding: 0;
+        overflow: hidden;
     }
-    &__desc {
-        margin-top: 0.15rem;
-        font-size: 0.8rem;
-        color: #64748b;
-        line-height: 1.4;
+    &__head {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 12px;
+    }
+    &--flush .pvd-block__head {
+        padding: 14px 18px 12px;
+        margin-bottom: 0;
+    }
+    &__label {
+        font-size: 11px;
+        letter-spacing: 1px;
+        font-weight: 700;
+        color: $label;
+        text-transform: uppercase;
+        white-space: nowrap;
+        &--mb {
+            margin-bottom: 14px;
+        }
     }
 }
-
-.pvd-num {
-    color: #64748b;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    text-align: center;
-}
-
-.pvd-empty {
-    padding: 1.2rem;
-    text-align: center;
-    color: #64748b;
-    background: #ffffff;
-    border: 1px dashed #e2e8f0;
-    border-radius: 12px;
-}
-
-:host ::ng-deep .pvd-table .p-datatable-thead > tr > th {
-    background: #f8fafc;
-    color: #475569;
+.pvd-pill {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 7px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
     font-weight: 700;
-    font-size: 0.75rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    border-bottom: 1px solid #e2e8f0;
-    padding: 0.55rem 0.7rem;
+    background: $border;
+    color: $muted-2;
+    &--on {
+        background: $accent-tint;
+        color: $accent;
+    }
 }
-:host ::ng-deep .pvd-table .p-datatable-tbody > tr > td {
-    padding: 0.55rem 0.7rem;
-    font-size: 0.88rem;
-    border-bottom: 1px solid #f1f5f9;
-}
-:host ::ng-deep .pvd-table {
-    border: 1px solid #e2e8f0;
+.pvd-add {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #cfdcff;
+    background: #f4f7ff;
+    color: $accent;
+    font-weight: 600;
+    font-size: 12.5px;
+    padding: 7px 12px;
     border-radius: 8px;
-    overflow: hidden;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+    .pi {
+        font-size: 0.7rem;
+    }
+    &:hover {
+        background: #e9f0ff;
+    }
 }
 
+// ── Informations générales ──────────────────────────────
+.pvd-infos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+.pvd-info {
+    min-width: 0;
+    &__k {
+        font-size: 10.5px;
+        letter-spacing: 0.4px;
+        font-weight: 700;
+        color: $muted-2;
+        text-transform: uppercase;
+    }
+    &__v {
+        font-size: 13.5px;
+        font-weight: 700;
+        margin-top: 5px;
+        color: $ink-strong;
+        &--muted {
+            font-weight: 600;
+            color: $faint;
+        }
+    }
+    &__creator {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        margin-top: 5px;
+        min-width: 0;
+    }
+    &__avatar {
+        width: 22px;
+        height: 22px;
+        flex: none;
+        border-radius: 6px;
+        background: $purple-tint;
+        color: $purple;
+        font-size: 10px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    &__name {
+        font-size: 12px;
+        color: $ink-sub;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+.pvd-mono {
+    font-family: $mono;
+    font-variant-numeric: tabular-nums;
+}
+.pvd-di-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    background: $accent-tint;
+    color: $accent;
+    font-size: 12.5px;
+    font-weight: 700;
+    .pi {
+        font-size: 0.7rem;
+    }
+}
+
+// ── Participants ────────────────────────────────────────
+.pvd-part {
+    &__head {
+        display: grid;
+        grid-template-columns: 40px 1fr 120px;
+        padding: 9px 18px;
+        background: #fafbfd;
+        border-top: 1px solid #eef0f3;
+        border-bottom: 1px solid #eef0f3;
+        font-size: 10.5px;
+        letter-spacing: 0.6px;
+        font-weight: 700;
+        color: $muted-2;
+        text-transform: uppercase;
+    }
+    &__row {
+        display: grid;
+        grid-template-columns: 40px 1fr 120px;
+        padding: 11px 18px;
+        border-bottom: 1px solid #f4f5f8;
+        align-items: center;
+        &:last-child {
+            border-bottom: 0;
+        }
+    }
+    &__num {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: $faint;
+        font-family: $mono;
+    }
+    &__name {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: $ink;
+        min-width: 0;
+    }
+    &__avatar {
+        width: 30px;
+        height: 30px;
+        flex: none;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+    }
+    &__pres {
+        text-align: right;
+    }
+}
+.pvd-av--0 {
+    background: $purple-tint;
+    color: $purple;
+}
+.pvd-av--1 {
+    background: #eef4ff;
+    color: #2563eb;
+}
+.pvd-av--2 {
+    background: $green-tint;
+    color: $green-pill;
+}
+.pvd-av--3 {
+    background: #fff3e0;
+    color: #d97706;
+}
+.pvd-pres {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: $border;
+    color: $muted-2;
+    &[data-pres="PRESENT"] {
+        background: $green-tint;
+        color: $green-pill;
+    }
+    &[data-pres="ABSENT"] {
+        background: $rose-tint;
+        color: $rose;
+    }
+    &[data-pres="EXCUSE"] {
+        background: $amber-tint;
+        color: $amber-strong;
+    }
+}
+
+// ── Editable list sections ──────────────────────────────
+.pvd-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.pvd-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.pvd-line {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    &--stack {
+        align-items: flex-start;
+    }
+    &__num {
+        width: 26px;
+        flex: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: $faint;
+        font-family: $mono;
+        align-self: center;
+    }
+    &--stack .pvd-line__num {
+        align-self: flex-start;
+        padding-top: 10px;
+    }
+    &__stack {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+.pvd-input {
+    flex: 1;
+    width: 100%;
+    border: 1px solid $border-in;
+    border-radius: 9px;
+    padding: 10px 13px;
+    font-size: 13.5px;
+    font-family: inherit;
+    color: $ink;
+    background: #f8f9fb;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    &::placeholder {
+        color: $faint;
+    }
+    &:focus {
+        border-color: $accent;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.12);
+    }
+    &:disabled {
+        background: #f1f3f6;
+        color: $muted-3;
+        cursor: default;
+    }
+}
+.pvd-textarea {
+    resize: vertical;
+    line-height: 1.5;
+}
+.pvd-x {
+    width: 42px;
+    flex: none;
+    align-self: stretch;
+    min-height: 40px;
+    border: 1px solid $del-bd;
+    background: $del-bg;
+    color: $del;
+    border-radius: 9px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    &:hover {
+        background: #fbeaea;
+    }
+    .pi {
+        font-size: 0.85rem;
+    }
+}
+.pvd-empty {
+    border: 1px dashed #d8dde5;
+    border-radius: 11px;
+    padding: 18px;
+    text-align: center;
+    color: $faint;
+    font-size: 12.5px;
+    background: $surface;
+}
+
+// ── Action rows ─────────────────────────────────────────
+.pvd-action {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 12px;
+    border: 1px solid $border-2;
+    border-radius: 11px;
+    background: $surface;
+    &__num {
+        width: 26px;
+        flex: none;
+        display: flex;
+        justify-content: center;
+        padding-top: 10px;
+        font-size: 12px;
+        font-weight: 700;
+        color: $faint;
+        font-family: $mono;
+    }
+    &__body {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    &__grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+}
+.pvd-jira {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    &__key {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12px;
+        font-weight: 700;
+        color: $accent;
+        text-decoration: none;
+        .pi {
+            font-size: 0.7rem;
+        }
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+    &__warn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: $amber-strong;
+        .pi {
+            font-size: 0.7rem;
+        }
+    }
+}
+
+// PrimeNG controls inside actions
+:host ::ng-deep .pvd-dd.p-dropdown,
+:host ::ng-deep .pvd-cal .p-inputtext {
+    width: 100% !important;
+    border-radius: 9px !important;
+    border-color: $border-in !important;
+    background: #f8f9fb !important;
+    font-size: 13px !important;
+}
+:host ::ng-deep .pvd-cal {
+    width: 100% !important;
+}
+:host ::ng-deep .pvd-dd .p-dropdown-label {
+    font-size: 13px !important;
+    padding: 0.55rem 0.7rem !important;
+}
+
+// ── 5M · Ishikawa ───────────────────────────────────────
+.pvd-field {
+    margin-bottom: 16px;
+    label {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: $ink-body;
+        margin-bottom: 6px;
+        display: block;
+    }
+}
+.pvd-fivem {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.pvd-fam {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 14px;
+    align-items: start;
+    &__label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-top: 9px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #2a3340;
+    }
+    &__dot {
+        width: 9px;
+        height: 9px;
+        flex: none;
+        border-radius: 50%;
+        background: $accent;
+    }
+    &__area {
+        border-left-width: 3px;
+        background: $surface;
+    }
+    // Family colours (mo/mt/mi/ma/me)
+    &--mo {
+        .pvd-fam__dot {
+            background: #2f6bff;
+        }
+        .pvd-fam__area {
+            border-left-color: #2f6bff;
+        }
+    }
+    &--mt {
+        .pvd-fam__dot {
+            background: #1f9d73;
+        }
+        .pvd-fam__area {
+            border-left-color: #1f9d73;
+        }
+    }
+    &--mi {
+        .pvd-fam__dot {
+            background: #d8567a;
+        }
+        .pvd-fam__area {
+            border-left-color: #d8567a;
+        }
+    }
+    &--ma {
+        .pvd-fam__dot {
+            background: #7c6fe0;
+        }
+        .pvd-fam__area {
+            border-left-color: #7c6fe0;
+        }
+    }
+    &--me {
+        .pvd-fam__dot {
+            background: #e8943a;
+        }
+        .pvd-fam__area {
+            border-left-color: #e8943a;
+        }
+    }
+}
+
+// ── Footer ──────────────────────────────────────────────
 .pvd-foot {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    width: 100%;
-
+    gap: 10px;
+    padding: 14px 24px;
+    border-top: 1px solid $border;
+    background: $card;
+    flex: none;
     &__hint {
-        font-size: 0.8rem;
-        color: #64748b;
+        font-size: 11.5px;
+        color: $muted-2;
         display: inline-flex;
         align-items: center;
-        gap: 0.3rem;
+        gap: 6px;
     }
     &__spacer {
         flex: 1;
     }
 }
-
 .pvd-btn {
-    font-family: 'Inter', sans-serif;
-
+    font-family: "Inter", sans-serif;
+    font-weight: 600 !important;
+    font-size: 13.5px !important;
+    border-radius: 10px !important;
     &--cancel {
-        background: #f1f5f9 !important;
-        color: #475569 !important;
-        border: 1px solid #e2e8f0 !important;
-        font-weight: 600 !important;
+        background: $card !important;
+        color: $ink-body !important;
+        border: 1px solid #d9dde4 !important;
+        &:hover {
+            background: #f4f5f7 !important;
+        }
     }
     &--pdf {
-        background: linear-gradient(90deg, #16a34a 0%, #15803d 100%) !important;
-        color: #ffffff !important;
+        background: $green !important;
+        color: #fff !important;
         border: 0 !important;
-        font-weight: 700 !important;
-        box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25) !important;
+        box-shadow: 0 4px 14px rgba(31, 157, 115, 0.28) !important;
+        &:hover {
+            filter: brightness(1.05);
+        }
+    }
+    &--save {
+        background: #f4f7ff !important;
+        color: $accent !important;
+        border: 1px solid #cfdcff !important;
+        &:hover {
+            background: #e9f0ff !important;
+        }
+    }
+    &--finalize {
+        background: $ink-strong !important;
+        color: #fff !important;
+        border: 0 !important;
+        box-shadow: 0 4px 14px rgba(43, 52, 64, 0.3) !important;
+        &:hover {
+            background: #1c232d !important;
+        }
+    }
+}
+
+// ── Responsive ──────────────────────────────────────────
+@media (max-width: 720px) {
+    .pvd-infos {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .pvd-action__grid {
+        grid-template-columns: 1fr;
+    }
+    .pvd-fam {
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
+    .pvd-fam__label {
+        padding-top: 0;
+    }
+}
+
+// ═══════════════════════════════════════════════════════
+//  PRINT
+// ═══════════════════════════════════════════════════════
+@media print {
+    .print-only {
+        display: flex !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
+:host ::ng-deep body.pvd-printing {
+    background: #fff !important;
+}
+@media print {
+    .pvd-card {
+        border-radius: 0 !important;
+    }
+    .pvd-body {
+        max-height: none !important;
+        overflow: visible !important;
+        background: #fff !important;
+    }
+    .avoid-break {
+        break-inside: avoid;
     }
 }

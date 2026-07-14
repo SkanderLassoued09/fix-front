@@ -35,11 +35,31 @@ export class DiArchiveService {
     `;
   }
 
-  /** Full archive list for the « Archives DI » page. */
+  /**
+   * Server-side paginated + filtered archive list for the « Archives DI » page.
+   * `$filter` carries the « documents manquants » + column criteria (all AND);
+   * `$page` carries pagination/sort. Returns the page rows + the total matching
+   * the filter (for the « X DI correspondent » counter + the paginator).
+   */
   diArchivesQuery() {
     return gql`
-      query DiArchives {
-        diArchives { ${this.DOC_FIELDS} }
+      query DiArchives(
+        $filter: DiArchivesFilterInput
+        $page: DiArchivesPageInput
+      ) {
+        diArchives(filter: $filter, page: $page) {
+          totalCount
+          rows { ${this.DOC_FIELDS} }
+        }
+      }
+    `;
+  }
+
+  /** Distinct historical-status values → options for the « Statut » dropdown. */
+  diArchiveStatutsQuery() {
+    return gql`
+      query DiArchiveStatuts {
+        diArchiveStatuts
       }
     `;
   }
