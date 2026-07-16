@@ -19,6 +19,7 @@ import { ProfileService } from 'src/app/demo/service/profile.service';
 import { MessageService } from 'primeng/api';
 import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-modal.component';
 import { ReunionPvDetailsModalComponent } from '../shared/reunion-pv-details-modal/reunion-pv-details-modal.component';
+import { canAccessReunion } from 'src/app/shared/reunion-access';
 
 interface ReunionRow {
     _id: string;
@@ -71,6 +72,10 @@ export class ReunionListComponent implements OnInit {
     filter = '';
     loading = false;
     createOpen = false;
+
+    /** Seuls admin / manager / coordinateur peuvent créer une réunion. La
+     *  mutation est aussi gardée côté serveur — ceci masque juste le bouton. */
+    canCreate = canAccessReunion(localStorage.getItem('role'));
 
     // Details modal state — opened by the row "Voir" button.
     detailsOpen = false;

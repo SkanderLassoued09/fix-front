@@ -4,6 +4,22 @@
 ════════════════════════════════════════════════════ -->
 
 <div class="sav-dashboard">
+    <!-- État « non défini » : le tableau de bord est masqué temporairement.
+         Réactivation en repassant DASHBOARD_ENABLED à true (dashboard.component.ts). -->
+    <div class="dash-undefined" *ngIf="!dashboardEnabled">
+        <div class="dash-undefined__card">
+            <span class="dash-undefined__icon">
+                <i class="pi pi-chart-bar"></i>
+            </span>
+            <h2 class="dash-undefined__title">Tableau de bord non défini</h2>
+            <p class="dash-undefined__text">
+                Les indicateurs sont temporairement indisponibles.
+            </p>
+        </div>
+    </div>
+
+    <!-- Contenu réel du dashboard — restauré via DASHBOARD_ENABLED. -->
+    <ng-container *ngIf="dashboardEnabled">
     <!-- ── HEADER ───────────────────────────────────── -->
     <div class="dash-header">
         <div class="dash-header__left">
@@ -680,4 +696,5 @@
             </div>
         </p-card>
     </div>
+    </ng-container>
 </div>
