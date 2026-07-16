@@ -63,12 +63,26 @@ interface TechWorkflowCard {
   stats: Array<{ label: string; value: number; icon: string }>;
 }
 
+/**
+ * ⚙️ INTERRUPTEUR TEMPORAIRE DU TABLEAU DE BORD.
+ *
+ * `false` → tout le dashboard est masqué et un état « non défini » s'affiche à
+ * la place ; AUCUNE query back ni abonnement temps réel n'est déclenché (voir
+ * `ngOnInit`). Le code des widgets reste intact.
+ *
+ * ▶️ POUR RÉACTIVER : repasser cette constante à `true` (une seule ligne).
+ */
+const DASHBOARD_ENABLED = false;
+
 @Component({
   selector: 'app-sav-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
+  /** Exposé au template pour basculer contenu réel ↔ placeholder. */
+  readonly dashboardEnabled = DASHBOARD_ENABLED;
+
   private destroy$ = new Subject<void>();
   private isTechWorkflowRequestInFlight = false;
   private hasPendingTechWorkflowRefresh = false;
@@ -170,6 +184,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Masquage temporaire : on ne construit rien et on ne déclenche NI query NI
+    // abonnement temps réel — le template affiche l'état « non défini ».
+    // Réactivation via la constante DASHBOARD_ENABLED (voir en haut du fichier).
+    if (!this.dashboardEnabled) {
+      return;
+    }
+
     this.buildTechWorkflowCards({});
     this.initEmptyFinanceTiles();
     this.initRhPlaceholders();

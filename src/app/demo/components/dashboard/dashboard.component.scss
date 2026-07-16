@@ -696,3 +696,48 @@ $white: #ffffff;
 ::ng-deep .p-blockui-overlay {
     background: rgba(255, 255, 255, 0.55);
 }
+
+/* ── État « non défini » (masquage temporaire du dashboard) ─────────────────
+   Placeholder centré, sobre, cohérent avec la palette de l'app (bleu #2563eb,
+   pas de violet). Retiré automatiquement quand DASHBOARD_ENABLED repasse à true. */
+.dash-undefined {
+    min-height: calc(100vh - 4rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+.dash-undefined__card {
+    text-align: center;
+    max-width: 420px;
+    padding: 2.5rem 2rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.dash-undefined__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 1.5rem;
+    margin-bottom: 1.1rem;
+}
+.dash-undefined__title {
+    margin: 0 0 0.4rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+.dash-undefined__text {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #64748b;
+}

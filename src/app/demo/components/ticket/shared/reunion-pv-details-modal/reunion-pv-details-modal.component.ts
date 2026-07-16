@@ -26,6 +26,7 @@ import { MessageService } from 'primeng/api';
 import { ReunionPvService } from 'src/app/demo/service/reunion-pv.service';
 import { ReunionPvPdfService } from 'src/app/demo/service/reunion-pv-pdf.service';
 import { ProfileService } from 'src/app/demo/service/profile.service';
+import { SearchableDropdownDirective } from 'src/app/shared/searchable-dropdown.directive';
 
 interface ProfileOption {
     _id: string;
@@ -52,6 +53,7 @@ const FAMILIES: ReadonlyArray<{ key: string; label: string }> = [
     selector: 'app-reunion-pv-details-modal',
     standalone: true,
     imports: [
+        SearchableDropdownDirective,
         CommonModule,
         ReactiveFormsModule,
         DialogModule,

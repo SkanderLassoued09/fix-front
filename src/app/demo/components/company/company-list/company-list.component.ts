@@ -168,6 +168,9 @@ export class CompanyListComponent {
         { field: 'region', header: 'Région', searchKey: 'region' },
         { field: 'address', header: 'Adresse', searchKey: 'address' },
         { field: 'email', header: 'E-mail', searchKey: 'email' },
+        // Même ordre que le formulaire (E-mail · Téléphone · Fax). Le champ
+        // était saisi et persisté mais n'apparaissait dans aucune colonne.
+        { field: 'phone', header: 'Téléphone', searchKey: 'phone' },
         {
             field: 'raisonSociale',
             header: 'Raison sociale',
@@ -553,6 +556,11 @@ export class CompanyListComponent {
             region: regionOption,
             address: row?.address ?? '',
             email: row?.email ?? '',
+            // Le téléphone était absent de ce patch (alors qu'il est bien
+            // persisté) : après le reset() ci-dessus le champ restait vide à
+            // l'ouverture en édition, laissant croire qu'il n'avait pas été
+            // sauvegardé — et un ré-enregistrement ne le renvoyait pas.
+            phone: row?.phone ?? '',
             fax: row?.fax ?? '',
             Exoneration: row?.Exoneration ?? '',
             website: row?.webSiteLink ?? '',
