@@ -53,6 +53,7 @@ import { DiInfoModalComponent } from '../shared/di-info-modal/di-info-modal.comp
 import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-modal.component';
 import { DiImportComponent } from '../shared/di-import/di-import.component';
 import { DiArchiveDetailModalComponent } from '../shared/di-archive-detail-modal/di-archive-detail-modal.component';
+import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
 
 @NgModule({
     declarations: [
@@ -65,6 +66,7 @@ import { DiArchiveDetailModalComponent } from '../shared/di-archive-detail-modal
         ComposantManagementComponent,
     ],
     imports: [
+        SearchableDropdownDirective,
         CommonModule,
         PdfViewerModule,
         TicketListRoutingModule,

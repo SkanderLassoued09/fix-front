@@ -3196,11 +3196,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
         const isErrorFromFixtronixTech =
             this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
-        const isArrComposantEmpty =
-            this.composantCombo.length === 0 ? true : false;
 
-        this.disabledDiagnostiqueValue =
-            isReperable && isPdr && isArrComposantEmpty;
+        // « Finir diag » n'est JAMAIS gaté par la sélection PDR : conclure un
+        // diagnostic sans aucune pièce est un cas valide, donc décocher la
+        // dernière PDR ne doit plus rien bloquer (l'ancienne règle
+        // `isReperable && isPdr && listeVide` désactivait le bouton, et le
+        // faisait même dès l'ouverture puisque `isPdr` vaut true par défaut).
+        // La cohérence est assurée côté routage : `techFinishDiag` dérive `pdr`
+        // de la liste RÉELLE, donc 0 pièce part en tarification au lieu du
+        // Magasin (qui recevrait une demande de pièces vide).
+        this.disabledDiagnostiqueValue = false;
 
         this.techRetourSendFinished = !(
             (isPdr === false && isErrorFromFixtronixTech === true) ||
@@ -3498,7 +3503,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     // getRawValue: the PDR control is DISABLED when the DI is
                     // non-réparable, and disabled controls are dropped from
                     // `.value` — read the raw (forced-false) value instead.
-                    pdr: this.diagFormTech.getRawValue().isPdr,
+                    //
+                    // Dérivé de la liste RÉELLE : 0 pièce ⇒ pas de PDR, quel que
+                    // soit le toggle. Sans ça, un diag terminé avec le toggle ON
+                    // mais aucune pièce partirait au Magasin avec une demande
+                    // vide — c'est ce que l'ancienne garde du bouton empêchait.
+                    pdr:
+                        !!this.diagFormTech.getRawValue().isPdr &&
+                        this.composantCombo.length > 0,
                     // Force `reparable: false` on the non-réparable shortcut
                     // so the backend snapshot is consistent with the FINISHED
                     // transition (no PDR step required either).

@@ -5,10 +5,12 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { CoordinatorDiListRoutingModule } from './coordinator-di-list-routing.module';
 import { ImageModule } from 'primeng/image';
 import { PaginatorModule } from 'primeng/paginator';
+import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
 
 @NgModule({
     declarations: [],
     imports: [
+        SearchableDropdownDirective,
         CommonModule,
         CoordinatorDiListRoutingModule,
         ImageModule,

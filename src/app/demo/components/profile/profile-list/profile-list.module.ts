@@ -19,9 +19,11 @@ import { ButtonModule } from 'primeng/button';
 import { ProfileListComponent } from './profile-list.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
 @NgModule({
     declarations: [ProfileListComponent],
     imports: [
+        SearchableDropdownDirective,
         CommonModule,
         ProfileListRoutingModule,
         DialogModule,

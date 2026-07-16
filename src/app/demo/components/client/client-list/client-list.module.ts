@@ -14,10 +14,12 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
+import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
 
 @NgModule({
     declarations: [ClientListComponent],
     imports: [
+        SearchableDropdownDirective,
         CommonModule,
         ClientListRoutingModule,
         DialogModule,

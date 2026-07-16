@@ -16,9 +16,11 @@ import { PaginatorModule } from 'primeng/paginator';
 import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
+import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
 @NgModule({
     declarations: [CompanyListComponent],
     imports: [
+        SearchableDropdownDirective,
         CommonModule,
         CompanyListRoutingModule,
         DialogModule,

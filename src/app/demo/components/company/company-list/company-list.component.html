@@ -749,6 +749,19 @@
                     </small>
                 </div>
 
+                <!-- Téléphone : persisté depuis toujours mais jamais affiché
+                     ici (seul le Fax l'était) → l'utilisateur le croyait perdu. -->
+                <div class="sav-form-row">
+                    <label class="sav-label" for="editPhone">Téléphone</label>
+                    <input
+                        type="text"
+                        pInputText
+                        id="editPhone"
+                        [(ngModel)]="companySelected.phone"
+                        class="sav-input"
+                    />
+                </div>
+
                 <div class="sav-form-row">
                     <label class="sav-label" for="editFax">Fax</label>
                     <input
