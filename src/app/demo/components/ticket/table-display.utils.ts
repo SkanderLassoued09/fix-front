@@ -32,15 +32,34 @@ export function formatTableValue(row: any, field: string): string {
     );
 }
 
-export function rowHasLoadedComposants(row: any): boolean {
-    const candidates = [
-        row?.array_composants,
-        row?.composants,
-        row?.composantCombo,
-        row?.allComposants,
-    ];
+/**
+ * Valeurs qui signifient « aucun emplacement réel ». Le back renvoie
+ * littéralement `'N/A'` quand le populate de `location_id` ne résout rien
+ * (di.service : `location_name: (di.location_id)?.location_name ?? 'N/A'`), et
+ * `formatTableValue` rend `'—'` pour null/''. On couvre aussi `_` / `Sans`,
+ * mêmes sentinelles que la logique « manquant » des archives DI (isDocMissing).
+ */
+const EMPLACEMENT_VIDE = new Set([
+    '',
+    'n/a',
+    'na',
+    TABLE_EMPTY_VALUE.toLowerCase(), // '—'
+    '_',
+    'sans',
+    'null',
+    'undefined',
+]);
 
-    return candidates.some((value) => Array.isArray(value) && value.length > 0);
+/**
+ * L'emplacement AFFICHÉ de la ligne est-il vide ? Pilote la couleur du point de
+ * la colonne LOCATION : vide → VERT, renseigné → ROUGE.
+ *
+ * On évalue la valeur RENDUE (`formatTableValue`) et non le champ brut : c'est
+ * exactement ce que l'utilisateur voit, et ça couvre d'un coup null/''/'—'/'N/A'.
+ */
+export function isEmplacementVide(row: any, field: string): boolean {
+    const shown = formatTableValue(row, field).trim().toLowerCase();
+    return EMPLACEMENT_VIDE.has(shown);
 }
 
 export function isLocationColumn(field: string): boolean {

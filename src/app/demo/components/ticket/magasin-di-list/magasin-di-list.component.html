@@ -22,24 +22,32 @@
             <h2>Magasin / Composants</h2>
         </div>
         <div class="sav-header-actions">
-            <p-button
-                (click)="showDialogcomposantCreation()"
-                icon="pi pi-briefcase"
-                severity="success"
+            <!-- Même style que le bouton « + Nouveau » (création DI) de l'app :
+                 action principale pleine, actions secondaires en outline. -->
+            <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
                 label="Créer un composant"
-            ></p-button>
-            <p-button
-                (click)="showDialogCategoryComposant()"
+                class="sav-btn-new"
+                (click)="showDialogcomposantCreation()"
+            ></button>
+            <button
+                pButton
+                type="button"
                 icon="pi pi-book"
-                severity="secondary"
                 label="Nouvelle catégorie"
-            ></p-button>
-            <p-button
-                (click)="directToComposantManagement()"
+                class="sav-btn-new sav-btn-new--outline"
+                (click)="showDialogCategoryComposant()"
+            ></button>
+            <button
+                pButton
+                type="button"
                 icon="pi pi-cog"
-                severity="secondary"
                 label="Management composants"
-            ></p-button>
+                class="sav-btn-new sav-btn-new--outline"
+                (click)="directToComposantManagement()"
+            ></button>
         </div>
     </div>
 
@@ -105,12 +113,11 @@
                             >
                                 <span
                                     class="sav-location-dot"
-                                    [ngClass]="{
-                                        'sav-location-dot--filled':
-                                            hasLoadedComposants(rowData),
-                                        'sav-location-dot--empty':
-                                            !hasLoadedComposants(rowData),
-                                    }"
+                                    [ngClass]="
+                                        isEmplacementVide(rowData, col.field)
+                                            ? 'sav-location-dot--vide'
+                                            : 'sav-location-dot--renseigne'
+                                    "
                                 ></span>
                                 {{ formatCell(rowData, col.field) }}
                             </span>

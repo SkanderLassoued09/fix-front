@@ -99,18 +99,8 @@ export class AppMenuComponent implements OnInit {
         }
 
         if (this.role === 'TECH') {
+            // « Tableau de bord » réservé à ADMIN_MANAGER / ADMIN_TECH → non listé ici.
             this.model = [
-                {
-                    label: 'Tableau de bord',
-                    items: [
-                        {
-                            label: 'Tableau de bord',
-                            icon: 'pi pi-fw pi-chart-bar',
-                            // routerLink: ['/'],
-                        },
-                    ],
-                },
-
                 {
                     label: `Demandes d'intervention`,
                     items: [
@@ -128,17 +118,8 @@ export class AppMenuComponent implements OnInit {
         }
 
         if (this.role === 'MANAGER') {
+            // « Tableau de bord » réservé à ADMIN_MANAGER / ADMIN_TECH → non listé ici.
             this.model = [
-                {
-                    label: 'Tableau de bord',
-                    items: [
-                        {
-                            label: 'Tableau de bord',
-                            icon: 'pi pi-fw pi-chart-bar',
-                            // routerLink: ['/'],
-                        },
-                    ],
-                },
                 {
                     label: 'Personnel',
                     items: [

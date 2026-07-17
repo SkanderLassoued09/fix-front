@@ -18,7 +18,7 @@ import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.servic
 import {
     formatTableValue,
     isLocationColumn,
-    rowHasLoadedComposants,
+    isEmplacementVide as isEmplacementVideUtil,
     trackByColumn,
 } from '../table-display.utils';
 
@@ -513,8 +513,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return isLocationColumn(field);
     }
 
-    hasLoadedComposants(row: any): boolean {
-        return rowHasLoadedComposants(row);
+    /** Point LOCATION : emplacement vide → vert, renseigné → rouge. */
+    isEmplacementVide(row: any, field: string): boolean {
+        return isEmplacementVideUtil(row, field);
     }
 
     trackByColumn = trackByColumn;

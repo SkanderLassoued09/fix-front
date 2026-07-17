@@ -101,12 +101,11 @@
                             >
                                 <span
                                     class="sav-location-dot"
-                                    [ngClass]="{
-                                        'sav-location-dot--filled':
-                                            hasLoadedComposants(rowData),
-                                        'sav-location-dot--empty':
-                                            !hasLoadedComposants(rowData),
-                                    }"
+                                    [ngClass]="
+                                        isEmplacementVide(rowData, col.field)
+                                            ? 'sav-location-dot--vide'
+                                            : 'sav-location-dot--renseigne'
+                                    "
                                 ></span>
                                 {{ formatCell(rowData, col.field) }}
                             </span>

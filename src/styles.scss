@@ -36,3 +36,15 @@ $gutter: 1rem; //for primeflex grid system
         font-size: 0.72rem;
     }
 }
+
+/* ── Cellules de tableau à texte long ────────────────────────────────────────
+   Posée UNIQUEMENT par `TableCellTruncateDirective` sur les cellules dont le
+   contenu est du texte pur (jamais sur les cellules d'actions/pastilles).
+   Le texte long est tronqué en « … » sur 1 ligne ; la valeur complète s'affiche
+   au survol (tooltip PrimeNG), comme la colonne Adresse des Sociétés. */
+td.trc-cell {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

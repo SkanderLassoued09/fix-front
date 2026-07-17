@@ -25,7 +25,7 @@ import { ProfileService } from 'src/app/demo/service/profile.service';
 import {
     formatTableValue,
     isLocationColumn,
-    rowHasLoadedComposants,
+    isEmplacementVide as isEmplacementVideUtil,
     trackByColumn,
 } from '../../table-display.utils';
 import {
@@ -1422,8 +1422,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         return isLocationColumn(field);
     }
 
-    hasLoadedComposants(row: any): boolean {
-        return rowHasLoadedComposants(row);
+    /** Point LOCATION : emplacement vide → vert, renseigné → rouge. */
+    isEmplacementVide(row: any, field: string): boolean {
+        return isEmplacementVideUtil(row, field);
     }
 
     getModalTitle(mode: TechDialogMode): string {

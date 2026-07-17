@@ -50,6 +50,36 @@ $white: #ffffff;
     gap: 0.5rem;
 }
 
+/* Bouton d'action « app-standard » (identique à « + Nouveau » de la liste DI).
+   Action principale = plein bleu ; secondaires = outline bleu. Design system :
+   bleu #2563eb / hover #1d4ed8, pas de violet. */
+:host ::ng-deep .sav-btn-new {
+    background: #2563eb !important;
+    border: 1px solid #2563eb !important;
+    color: #ffffff !important;
+    font-size: 0.82rem !important;
+    padding: 0.45rem 1rem !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3) !important;
+
+    &:hover {
+        background: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
+    }
+}
+/* Variante outline pour les actions secondaires (spécificité doublée pour
+   battre le fond plein de .sav-btn-new). */
+:host ::ng-deep .sav-btn-new.sav-btn-new--outline {
+    background: #ffffff !important;
+    color: #2563eb !important;
+    box-shadow: none !important;
+
+    &:hover {
+        background: #eff6ff !important;
+    }
+}
+
 .sav-table-wrapper {
     background: $bg-card;
     border-radius: 10px;
@@ -837,12 +867,14 @@ $white: #ffffff;
     flex: 0 0 auto;
 }
 
-.sav-location-dot--filled {
-    background: var(--green-500);
+/* Emplacement VIDE → vert : rien à ranger, la DI n'occupe pas de place. */
+.sav-location-dot--vide {
+    background: #16a34a;
 }
 
-.sav-location-dot--empty {
-    background: var(--red-300);
+/* Emplacement RENSEIGNÉ → rouge : une place du magasin est occupée. */
+.sav-location-dot--renseigne {
+    background: #dc2626;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
