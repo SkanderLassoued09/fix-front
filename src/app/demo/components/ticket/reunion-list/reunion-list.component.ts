@@ -20,6 +20,7 @@ import { MessageService } from 'primeng/api';
 import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-modal.component';
 import { ReunionPvDetailsModalComponent } from '../shared/reunion-pv-details-modal/reunion-pv-details-modal.component';
 import { canAccessReunion } from 'src/app/shared/reunion-access';
+import { TableCellTruncateDirective } from '../../../../shared/table-cell-truncate.directive';
 
 interface ReunionRow {
     _id: string;
@@ -52,6 +53,7 @@ interface ReunionRow {
     selector: 'app-reunion-list',
     standalone: true,
     imports: [
+        TableCellTruncateDirective,
         CommonModule,
         FormsModule,
         TableModule,

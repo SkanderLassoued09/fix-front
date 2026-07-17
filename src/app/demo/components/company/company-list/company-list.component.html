@@ -11,6 +11,18 @@
         </div>
         <div class="sav-page-actions">
             <p-button
+                (click)="companyImport.exportAll()"
+                icon="pi pi-file-excel"
+                label="Exporter"
+                styleClass="sav-btn-new"
+            ></p-button>
+            <p-button
+                (click)="importModal.open()"
+                icon="pi pi-file-import"
+                label="Importer"
+                styleClass="sav-btn-new"
+            ></p-button>
+            <p-button
                 (click)="showDialog()"
                 icon="pi pi-plus"
                 label="Ajouter une société"
@@ -19,12 +31,23 @@
         </div>
     </div>
 
+    <!-- Modal d'import (aperçu → confirmation → écriture). -->
+    <app-company-import
+        #importModal
+        (imported)="loadData()"
+    ></app-company-import>
+
     <div class="sav-table-wrapper">
+        <!-- table-layout: fixed → les colonnes SANS largeur déclarée se partagent
+             l'espace restant à parts ÉGALES ; seule « Actions » garde sa largeur
+             fixe (132px). La table tient donc à 100% du conteneur, sans scroll
+             horizontal, et chaque cellule est bornée par sa colonne → la
+             directive de troncature met « … » uniquement au dépassement. -->
         <p-table
             [columns]="cols"
             [value]="companiesList"
             styleClass="p-datatable-sm sav-main-table"
-            [tableStyle]="{ 'min-width': '100%' }"
+            [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
         >
             <ng-template pTemplate="header" let-columns>
                 <tr class="sav-thead-row">
@@ -55,23 +78,41 @@
             <ng-template pTemplate="body" let-rowData let-columns="columns">
                 <tr class="sav-row">
                     <td *ngFor="let col of columns" class="sav-td">
-                        <ng-container
-                            *ngIf="col.field !== 'Exoneration'; else exonColumn"
-                        >
-                            {{ rowData[col.field] || "—" }}
-                        </ng-container>
-                        <ng-template #exonColumn>
+                        <ng-container [ngSwitch]="col.field">
+                            <!-- Exonération : pastille (ignorée par la directive) -->
                             <p-tag
-                                [value]="rowData.Exoneration || '—'"
+                                *ngSwitchCase="'Exoneration'"
+                                [value]="display(rowData.Exoneration)"
                                 styleClass="status-pill {{
-                                    rowData.Exoneration
+                                    isExonere(rowData.Exoneration)
                                         ? 'company-EXONERATED'
                                         : 'company-NORMAL'
                                 }}"
                             ></p-tag>
-                        </ng-template>
+                            <!-- Toutes les colonnes texte (Adresse incluse) : la
+                                 directive `td` tronque en « … » UNIQUEMENT si le
+                                 contenu déborde de sa colonne, et expose la valeur
+                                 complète au survol. Court = affiché en entier. -->
+                            <ng-container *ngSwitchDefault>
+                                {{ display(rowData[col.field]) }}
+                            </ng-container>
+                        </ng-container>
                     </td>
                     <td class="sav-td sav-actions-cell">
+                        <button
+                            pButton
+                            pTooltip="Détails"
+                            tooltipPosition="top"
+                            icon="pi pi-eye"
+                            class="sav-icon-btn sav-icon-btn--info"
+                            [attr.aria-label]="
+                                'Détails de ' +
+                                (rowData?.raisonSociale ||
+                                    rowData?.name ||
+                                    'la société')
+                            "
+                            (click)="openCompanyDetails(rowData)"
+                        ></button>
                         <button
                             pButton
                             pTooltip="Modifier"
@@ -86,20 +127,8 @@
                             "
                             (click)="openEditCompany(rowData)"
                         ></button>
-                        <button
-                            pButton
-                            pTooltip="Services"
-                            tooltipPosition="top"
-                            icon="pi pi-user-edit"
-                            class="sav-icon-btn sav-icon-btn--help"
-                            [attr.aria-label]="
-                                'Services de ' +
-                                (rowData?.raisonSociale ||
-                                    rowData?.name ||
-                                    'la société')
-                            "
-                            (click)="modalServices(rowData)"
-                        ></button>
+                        <!-- Bouton « Services » retiré : les contacts par service
+                             s'éditent désormais directement dans « Modifier ». -->
                         <button
                             pButton
                             pTooltip="Supprimer"
@@ -370,7 +399,10 @@
                     </div>
                 </section>
 
-                <!-- Contacts par service -->
+                <!-- Contacts par service — ÉDITION INLINE COMPLÈTE.
+                     Fusion de l'ancien modal « Services de la société » : UN SEUL
+                     contact par service (schéma + données), édité ici, persisté par
+                     le même « Enregistrer ». Plus de chips ni de modal séparé. -->
                 <section class="co-section">
                     <span class="co-section__legend co-section__legend--users">
                         <i class="pi pi-users"></i> Contacts par service
@@ -381,100 +413,27 @@
                             class="co-service"
                             *ngFor="let svc of serviceCards"
                             [attr.data-svc]="svc.key"
+                            [formGroupName]="svc.key"
                         >
                             <div class="co-service__head">
-                                <span class="co-service__icon"
-                                    ><i class="pi" [ngClass]="svc.icon"></i
-                                ></span>
-                                <span class="co-service__name">{{
-                                    svc.label
-                                }}</span>
+                                <span class="co-service__icon">
+                                    <i class="pi" [ngClass]="svc.icon"></i>
+                                </span>
+                                <span class="co-service__name">{{ svc.label }}</span>
                             </div>
-                            <div class="co-service__state">
-                                <ng-container
-                                    *ngIf="
-                                        serviceContactName(svc.key) as cname;
-                                        else noContact
-                                    "
-                                >
-                                    <span class="co-chip">
-                                        <span
-                                            class="co-chip__name"
-                                            [title]="cname"
-                                            >{{ cname }}</span
-                                        >
-                                        <button
-                                            type="button"
-                                            class="co-chip__x"
-                                            (click)="
-                                                removeServiceContact(svc.key)
-                                            "
-                                            aria-label="Retirer le contact"
-                                        >
-                                            <i class="pi pi-times"></i>
-                                        </button>
-                                    </span>
-                                </ng-container>
-                                <ng-template #noContact>
-                                    <span class="co-service__empty"
-                                        >Aucun contact</span
-                                    >
-                                </ng-template>
-                            </div>
-                            <button
-                                type="button"
-                                class="co-service__add"
-                                (click)="toggleService(svc.key)"
-                            >
-                                <i
-                                    class="pi"
-                                    [ngClass]="
-                                        isServiceOpen(svc.key)
-                                            ? 'pi-minus'
-                                            : 'pi-plus'
-                                    "
-                                ></i>
-                                <span
-                                    *ngIf="
-                                        !isServiceOpen(svc.key) &&
-                                        !serviceContactName(svc.key)
-                                    "
-                                    >Ajouter</span
-                                >
-                            </button>
-                        </div>
-                    </div>
 
-                    <!-- Éditeurs inline (sous-formulaires existants) -->
-                    <div
-                        class="co-editor"
-                        formGroupName="achat"
-                        *ngIf="toHideAchat"
-                    >
-                        <div class="co-editor__title">Responsable achat</div>
-                        <div class="co-grid co-grid--3">
                             <div class="co-field">
                                 <label class="co-label">Nom</label>
                                 <input
                                     pInputText
                                     formControlName="fullName"
                                     class="co-input"
-                                    [class.co-input--err]="!!fieldError('achat.fullName')"
+                                    [class.co-input--err]="!!fieldError(svc.key + '.fullName')"
                                     placeholder="Nom du contact"
                                 />
-                                <small class="co-err" *ngIf="fieldError('achat.fullName') as e">{{ e }}</small>
+                                <small class="co-err" *ngIf="fieldError(svc.key + '.fullName') as e">{{ e }}</small>
                             </div>
-                            <div class="co-field">
-                                <label class="co-label">Téléphone</label>
-                                <input
-                                    pInputText
-                                    formControlName="phone"
-                                    class="co-input"
-                                    [class.co-input--err]="!!fieldError('achat.phone')"
-                                    placeholder="+216 …"
-                                />
-                                <small class="co-err" *ngIf="fieldError('achat.phone') as e">{{ e }}</small>
-                            </div>
+
                             <div class="co-field">
                                 <label class="co-label">E-mail</label>
                                 <input
@@ -482,98 +441,22 @@
                                     type="email"
                                     formControlName="email"
                                     class="co-input"
-                                    [class.co-input--err]="!!fieldError('achat.email')"
+                                    [class.co-input--err]="!!fieldError(svc.key + '.email')"
                                     placeholder="contact@societe.tn"
                                 />
-                                <small class="co-err" *ngIf="fieldError('achat.email') as e">{{ e }}</small>
+                                <small class="co-err" *ngIf="fieldError(svc.key + '.email') as e">{{ e }}</small>
                             </div>
-                        </div>
-                    </div>
 
-                    <div
-                        class="co-editor"
-                        formGroupName="technique"
-                        *ngIf="toHideTechnique"
-                    >
-                        <div class="co-editor__title">Responsable technique</div>
-                        <div class="co-grid co-grid--3">
-                            <div class="co-field">
-                                <label class="co-label">Nom</label>
-                                <input
-                                    pInputText
-                                    formControlName="fullName"
-                                    class="co-input"
-                                    [class.co-input--err]="!!fieldError('technique.fullName')"
-                                    placeholder="Nom du contact"
-                                />
-                                <small class="co-err" *ngIf="fieldError('technique.fullName') as e">{{ e }}</small>
-                            </div>
                             <div class="co-field">
                                 <label class="co-label">Téléphone</label>
                                 <input
                                     pInputText
                                     formControlName="phone"
                                     class="co-input"
-                                    [class.co-input--err]="!!fieldError('technique.phone')"
+                                    [class.co-input--err]="!!fieldError(svc.key + '.phone')"
                                     placeholder="+216 …"
                                 />
-                                <small class="co-err" *ngIf="fieldError('technique.phone') as e">{{ e }}</small>
-                            </div>
-                            <div class="co-field">
-                                <label class="co-label">E-mail</label>
-                                <input
-                                    pInputText
-                                    type="email"
-                                    formControlName="email"
-                                    class="co-input"
-                                    [class.co-input--err]="!!fieldError('technique.email')"
-                                    placeholder="contact@societe.tn"
-                                />
-                                <small class="co-err" *ngIf="fieldError('technique.email') as e">{{ e }}</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="co-editor"
-                        formGroupName="financier"
-                        *ngIf="toHideFinancier"
-                    >
-                        <div class="co-editor__title">Responsable financier</div>
-                        <div class="co-grid co-grid--3">
-                            <div class="co-field">
-                                <label class="co-label">Nom</label>
-                                <input
-                                    pInputText
-                                    formControlName="fullName"
-                                    class="co-input"
-                                    [class.co-input--err]="!!fieldError('financier.fullName')"
-                                    placeholder="Nom du contact"
-                                />
-                                <small class="co-err" *ngIf="fieldError('financier.fullName') as e">{{ e }}</small>
-                            </div>
-                            <div class="co-field">
-                                <label class="co-label">Téléphone</label>
-                                <input
-                                    pInputText
-                                    formControlName="phone"
-                                    class="co-input"
-                                    [class.co-input--err]="!!fieldError('financier.phone')"
-                                    placeholder="+216 …"
-                                />
-                                <small class="co-err" *ngIf="fieldError('financier.phone') as e">{{ e }}</small>
-                            </div>
-                            <div class="co-field">
-                                <label class="co-label">E-mail</label>
-                                <input
-                                    pInputText
-                                    type="email"
-                                    formControlName="email"
-                                    class="co-input"
-                                    [class.co-input--err]="!!fieldError('financier.email')"
-                                    placeholder="contact@societe.tn"
-                                />
-                                <small class="co-err" *ngIf="fieldError('financier.email') as e">{{ e }}</small>
+                                <small class="co-err" *ngIf="fieldError(svc.key + '.phone') as e">{{ e }}</small>
                             </div>
                         </div>
                     </div>
@@ -839,130 +722,102 @@
     </ng-template>
 </p-dialog>
 
+<!-- Détails société — LECTURE SEULE, tous les champs, groupés. -->
 <p-dialog
-    [(visible)]="detailsView"
-    [style]="{ width: '680px' }"
-    header="Services de la société"
+    [(visible)]="detailsReadOnlyVisible"
+    [style]="{ width: '760px' }"
+    [header]="
+        'Détails — ' +
+        display(detailsCompany?.raisonSociale || detailsCompany?.name)
+    "
     [modal]="true"
     [draggable]="false"
     [resizable]="false"
     styleClass="sav-dialog"
 >
     <ng-template pTemplate="content">
-        <div class="sav-service-stack" *ngIf="companySelected">
-            <fieldset class="sav-fieldset sav-service-card service-achat">
-                <legend>Service achat</legend>
-                <div class="sav-three-col">
+        <div class="sav-details" *ngIf="detailsCompany">
+            <fieldset class="sav-fieldset">
+                <legend>Informations générales</legend>
+                <div class="sav-two-col">
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceAchatName">Nom</label>
-                        <input
-                            type="text"
-                            pInputText
-                            id="serviceAchatName"
-                            [(ngModel)]="companySelected.serviceAchat.name"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">Nom</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.name) }}</span>
                     </div>
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceAchatEmail">E-mail</label>
-                        <input
-                            type="email"
-                            pInputText
-                            id="serviceAchatEmail"
-                            [(ngModel)]="companySelected.serviceAchat.email"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">Raison sociale</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.raisonSociale) }}</span>
                     </div>
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceAchatPhone">Téléphone</label>
-                        <input
-                            type="text"
-                            pInputText
-                            id="serviceAchatPhone"
-                            [(ngModel)]="companySelected.serviceAchat.phone"
-                            class="sav-input"
-                            required
-                        />
-                    </div>
-                </div>
-            </fieldset>
-
-            <fieldset class="sav-fieldset sav-service-card service-financier">
-                <legend>Service financier</legend>
-                <div class="sav-three-col">
-                    <div class="sav-form-row">
-                        <label class="sav-label" for="serviceFinancierName">Nom</label>
-                        <input
-                            type="text"
-                            pInputText
-                            id="serviceFinancierName"
-                            [(ngModel)]="companySelected.serviceFinancier.name"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">Région</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.region) }}</span>
                     </div>
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceFinancierEmail">E-mail</label>
-                        <input
-                            type="email"
-                            pInputText
-                            id="serviceFinancierEmail"
-                            [(ngModel)]="companySelected.serviceFinancier.email"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">Adresse</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.address) }}</span>
                     </div>
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceFinancierPhone">Téléphone</label>
-                        <input
-                            type="text"
-                            pInputText
-                            id="serviceFinancierPhone"
-                            [(ngModel)]="companySelected.serviceFinancier.phone"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">E-mail</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.email) }}</span>
+                    </div>
+                    <div class="sav-form-row">
+                        <span class="sav-label">Téléphone</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.phone) }}</span>
+                    </div>
+                    <div class="sav-form-row">
+                        <span class="sav-label">Fax</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.fax) }}</span>
+                    </div>
+                    <div class="sav-form-row">
+                        <span class="sav-label">Site web</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.webSiteLink) }}</span>
+                    </div>
+                    <div class="sav-form-row">
+                        <span class="sav-label">Activité principale</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.activitePrincipale) }}</span>
+                    </div>
+                    <div class="sav-form-row">
+                        <span class="sav-label">Activité secondaire</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.activiteSecondaire) }}</span>
                     </div>
                 </div>
             </fieldset>
 
-            <fieldset class="sav-fieldset sav-service-card service-technique">
-                <legend>Service technique</legend>
+            <fieldset class="sav-fieldset">
+                <legend>Fiscal</legend>
                 <div class="sav-three-col">
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceTechniqueName">Nom</label>
-                        <input
-                            type="text"
-                            pInputText
-                            id="serviceTechniqueName"
-                            [(ngModel)]="companySelected.serviceTechnique.name"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">Matricule fiscale</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.mf) }}</span>
                     </div>
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceTechniqueEmail">E-mail</label>
-                        <input
-                            type="email"
-                            pInputText
-                            id="serviceTechniqueEmail"
-                            [(ngModel)]="companySelected.serviceTechnique.email"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">RNE</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.rne) }}</span>
                     </div>
                     <div class="sav-form-row">
-                        <label class="sav-label" for="serviceTechniquePhone">Téléphone</label>
-                        <input
-                            type="text"
-                            pInputText
-                            id="serviceTechniquePhone"
-                            [(ngModel)]="companySelected.serviceTechnique.phone"
-                            class="sav-input"
-                            required
-                        />
+                        <span class="sav-label">Exonération</span>
+                        <span class="sav-detail-value">{{ display(detailsCompany.Exoneration) }}</span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="sav-fieldset">
+                <legend>Contacts par service</legend>
+                <div class="sav-detail-service" *ngFor="let s of detailServices">
+                    <div class="sav-detail-service__title">{{ s.label }}</div>
+                    <div class="sav-three-col">
+                        <div class="sav-form-row">
+                            <span class="sav-label">Nom</span>
+                            <span class="sav-detail-value">{{ display(detailsCompany[s.key]?.name) }}</span>
+                        </div>
+                        <div class="sav-form-row">
+                            <span class="sav-label">E-mail</span>
+                            <span class="sav-detail-value">{{ display(detailsCompany[s.key]?.email) }}</span>
+                        </div>
+                        <div class="sav-form-row">
+                            <span class="sav-label">Téléphone</span>
+                            <span class="sav-detail-value">{{ display(detailsCompany[s.key]?.phone) }}</span>
+                        </div>
                     </div>
                 </div>
             </fieldset>
@@ -972,18 +827,27 @@
     <ng-template pTemplate="footer">
         <div class="sav-dialog-footer">
             <p-button
-                (click)="annulerService()"
+                (click)="detailsReadOnlyVisible = false"
                 icon="pi pi-times"
-                label="Annuler"
+                label="Fermer"
                 severity="secondary"
                 [text]="true"
             ></p-button>
             <p-button
-                (click)="saveUpdateServiceCompany(companySelected)"
-                icon="pi pi-check"
+                *ngIf="detailsCompany?._id"
+                (click)="companyImport.exportOne(detailsCompany._id, detailsCompany.raisonSociale || detailsCompany.name)"
+                icon="pi pi-file-excel"
+                label="Exporter"
+                severity="success"
+                [outlined]="true"
+            ></p-button>
+            <p-button
+                (click)="editFromDetails()"
+                icon="pi pi-pencil"
                 label="Modifier"
                 severity="success"
             ></p-button>
         </div>
     </ng-template>
 </p-dialog>
+

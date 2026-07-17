@@ -6,10 +6,12 @@ import { CoordinatorDiListRoutingModule } from './coordinator-di-list-routing.mo
 import { ImageModule } from 'primeng/image';
 import { PaginatorModule } from 'primeng/paginator';
 import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
+import { TableCellTruncateDirective } from '../../../../shared/table-cell-truncate.directive';
 
 @NgModule({
     declarations: [],
     imports: [
+        TableCellTruncateDirective,
         SearchableDropdownDirective,
         CommonModule,
         CoordinatorDiListRoutingModule,

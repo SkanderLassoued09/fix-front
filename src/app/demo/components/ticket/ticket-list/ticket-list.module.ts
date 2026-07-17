@@ -54,6 +54,7 @@ import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-m
 import { DiImportComponent } from '../shared/di-import/di-import.component';
 import { DiArchiveDetailModalComponent } from '../shared/di-archive-detail-modal/di-archive-detail-modal.component';
 import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
+import { TableCellTruncateDirective } from '../../../../shared/table-cell-truncate.directive';
 
 @NgModule({
     declarations: [
@@ -66,6 +67,7 @@ import { SearchableDropdownDirective } from '../../../../shared/searchable-dropd
         ComposantManagementComponent,
     ],
     imports: [
+        TableCellTruncateDirective,
         SearchableDropdownDirective,
         CommonModule,
         PdfViewerModule,

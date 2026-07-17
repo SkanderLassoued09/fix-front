@@ -900,12 +900,14 @@ $red: #dc2626;
     flex: 0 0 auto;
 }
 
-.sav-location-dot--filled {
-    background: var(--green-500);
+/* Emplacement VIDE → vert : rien à ranger, la DI n'occupe pas de place. */
+.sav-location-dot--vide {
+    background: #16a34a;
 }
 
-.sav-location-dot--empty {
-    background: var(--red-300);
+/* Emplacement RENSEIGNÉ → rouge : une place du magasin est occupée. */
+.sav-location-dot--renseigne {
+    background: #dc2626;
 }
 
 // ══════════════════════════════════════════════════════════════════

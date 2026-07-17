@@ -17,7 +17,7 @@ import { debounceTime, finalize, takeUntil } from 'rxjs/operators';
 import {
     formatTableValue,
     isLocationColumn,
-    rowHasLoadedComposants,
+    isEmplacementVide as isEmplacementVideUtil,
     trackByColumn,
 } from '../table-display.utils';
 
@@ -347,8 +347,9 @@ export class MagasinDiListComponent implements OnDestroy {
         return isLocationColumn(field);
     }
 
-    hasLoadedComposants(row: any): boolean {
-        return rowHasLoadedComposants(row);
+    /** Point LOCATION : emplacement vide → vert, renseigné → rouge. */
+    isEmplacementVide(row: any, field: string): boolean {
+        return isEmplacementVideUtil(row, field);
     }
 
     trackByColumn = trackByColumn;

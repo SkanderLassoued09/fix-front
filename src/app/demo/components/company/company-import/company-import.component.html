@@ -1,0 +1,149 @@
+<!-- Modal — ouvert par l'hôte via un template ref (#imp) → imp.open() -->
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '1040px', maxWidth: '96vw' }"
+    styleClass="di-imp-dialog"
+    (onHide)="onHide()"
+>
+    <ng-template pTemplate="header">
+        <div class="di-imp-head">
+            <i class="pi pi-file-import"></i>
+            <div>
+                <h3>Importer des sociétés</h3>
+                <p>Aperçu avant enregistrement — vérifiez « à créer » / « à mettre à jour » / erreurs.</p>
+            </div>
+        </div>
+    </ng-template>
+
+    <app-pdf-dropzone
+        acceptKind="any"
+        accept=".xlsx"
+        title="Importer un fichier Excel (.xlsx)"
+        thumbIcon="pi pi-file-excel"
+        ariaLabel="Importer des sociétés depuis un fichier Excel"
+        [maxSizeMo]="5"
+        [value]="file"
+        (fileSelected)="onFileSelected($event)"
+        (fileRemoved)="onFileRemoved()"
+    ></app-pdf-dropzone>
+
+    <div class="di-imp-actions">
+        <button type="button" class="di-imp-link" (click)="downloadTemplate()">
+            <i class="pi pi-download"></i> Télécharger le modèle
+        </button>
+    </div>
+
+    <div class="di-imp-loading" *ngIf="loading">
+        <p-progressSpinner strokeWidth="4" [style]="{ width: '38px', height: '38px' }"></p-progressSpinner>
+        <span>Analyse du fichier…</span>
+    </div>
+
+    <div class="di-imp-hint" *ngIf="!loading && !report">
+        <i class="pi pi-info-circle"></i>
+        Colonne obligatoire : <b>Raison sociale</b>. Le fichier suit exactement les
+        colonnes de l'export. Correspondance (mise à jour) par <b>Matricule fiscale</b>,
+        sinon par <b>Raison sociale</b> ; sinon création. L'en-tête est détecté
+        automatiquement.
+    </div>
+
+    <ng-container *ngIf="!loading && report">
+        <div class="di-imp-reject" *ngIf="report.enTeteInvalide">
+            <i class="pi pi-times-circle"></i>
+            <div>
+                <b>Fichier rejeté.</b>
+                {{ report.erreurs?.[0]?.motifs?.[0] }}
+            </div>
+        </div>
+
+        <ng-container *ngIf="!report.enTeteInvalide">
+            <div class="di-imp-counters">
+                <span class="di-imp-chip di-imp-chip--total">
+                    <b>{{ report.total }}</b> lignes
+                </span>
+                <span class="di-imp-chip di-imp-chip--ok">
+                    <i class="pi pi-plus-circle"></i> <b>{{ report.aCreer }}</b> à créer
+                </span>
+                <span class="di-imp-chip di-imp-chip--upd">
+                    <i class="pi pi-sync"></i> <b>{{ report.aMettreAJour }}</b> à mettre à jour
+                </span>
+                <span class="di-imp-chip di-imp-chip--warn">
+                    <i class="pi pi-exclamation-triangle"></i> <b>{{ warningsCount }}</b> avertissements
+                </span>
+                <span class="di-imp-chip di-imp-chip--err">
+                    <i class="pi pi-times-circle"></i> <b>{{ report.erreurs.length }}</b> erreurs
+                </span>
+                <span class="di-imp-entete" *ngIf="report.ligneEnTete">
+                    En-tête : ligne {{ report.ligneEnTete }}
+                </span>
+            </div>
+
+            <p-table
+                [value]="report.lignes"
+                styleClass="p-datatable-sm di-imp-table"
+                [scrollable]="true"
+                scrollHeight="340px"
+                [paginator]="report.lignes.length > 10"
+                [rows]="10"
+            >
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 4.5rem">Ligne</th>
+                        <th style="width: 5.5rem">Action</th>
+                        <th *ngFor="let c of cols">{{ c.header }}</th>
+                        <th style="width: 6rem">Statut</th>
+                        <th>Motifs</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-l>
+                    <tr [ngClass]="rowClass(l)">
+                        <td class="di-imp-line">{{ l.ligne }}</td>
+                        <td>
+                            <p-tag
+                                [severity]="actionSeverity(l.action)"
+                                [value]="actionLabel(l.action)"
+                            ></p-tag>
+                        </td>
+                        <td *ngFor="let c of cols">{{ l.valeurs[c.key] || "—" }}</td>
+                        <td>
+                            <p-tag
+                                [severity]="statutSeverity(l.statut)"
+                                [value]="statutLabel(l.statut)"
+                            ></p-tag>
+                        </td>
+                        <td class="di-imp-motifs">
+                            <span *ngIf="l.motifs?.length; else dash">
+                                {{ l.motifs.join(" · ") }}
+                            </span>
+                            <ng-template #dash>—</ng-template>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td [attr.colspan]="cols.length + 4" class="di-imp-empty">
+                            Aucune ligne de données détectée.
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </ng-container>
+    </ng-container>
+
+    <ng-template pTemplate="footer">
+        <button type="button" class="di-imp-btn di-imp-btn--ghost" (click)="visible = false">
+            Annuler
+        </button>
+        <button
+            type="button"
+            class="di-imp-btn di-imp-btn--primary"
+            [disabled]="!canImport"
+            (click)="confirmImport()"
+        >
+            <i class="pi" [ngClass]="importing ? 'pi-spin pi-spinner' : 'pi-check'"></i>
+            {{ importing ? "Enregistrement…" : "Importer " + (report?.valides || 0) + " société(s)" }}
+        </button>
+    </ng-template>
+</p-dialog>

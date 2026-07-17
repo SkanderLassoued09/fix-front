@@ -17,10 +17,14 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
+import { CompanyImportComponent } from '../company-import/company-import.component';
+import { TableCellTruncateDirective } from '../../../../shared/table-cell-truncate.directive';
 @NgModule({
     declarations: [CompanyListComponent],
     imports: [
+        TableCellTruncateDirective,
         SearchableDropdownDirective,
+        CompanyImportComponent,
         CommonModule,
         CompanyListRoutingModule,
         DialogModule,

@@ -13,6 +13,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { DiArchiveService } from 'src/app/demo/service/di-archive.service';
 import { DiArchiveDetailModalComponent } from '../ticket/shared/di-archive-detail-modal/di-archive-detail-modal.component';
 import { DiArchiveImportComponent } from '../ticket/shared/di-archive-import/di-archive-import.component';
+import { TableCellTruncateDirective } from '../../../shared/table-cell-truncate.directive';
 
 /** The 4 « document manquant » choices (value = backend DiArchiveDocType). */
 interface Option {
@@ -32,6 +33,7 @@ interface Option {
   selector: 'app-archive-list',
   standalone: true,
   imports: [
+        TableCellTruncateDirective,
     CommonModule,
     FormsModule,
     TableModule,

@@ -9,6 +9,7 @@ import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { CompanyService } from 'src/app/demo/service/company.service';
+import { CompanyImportService } from 'src/app/demo/service/company-import.service';
 import { REGION } from '../../client/constant/region-constant';
 import { debounceTime, finalize, Subject, take } from 'rxjs';
 
@@ -134,9 +135,6 @@ export class CompanyListComponent {
     products!: Product[];
     loading: boolean = false;
 
-    toHideAchat: boolean;
-    toHideFinancier: boolean;
-    toHideTechnique: boolean;
     companiesList: any;
 
     /** Oui/Non options for the Exonération select (sent as a string, matching
@@ -203,6 +201,7 @@ export class CompanyListComponent {
         private companyService: CompanyService,
         private messageService: MessageService,
         private confirmationService: ConfirmationService,
+        public companyImport: CompanyImportService,
     ) {
         this.region = REGION;
     }
@@ -391,14 +390,10 @@ export class CompanyListComponent {
         this.focusFirstError(firstPath ?? conflictPath);
     }
 
-    /** Open the relevant contact editor (if the error is nested) and
-     *  focus/scroll to the first errored field. */
+    /** Focus/scroll to the first errored field. (Les éditeurs de contact sont
+     *  désormais toujours visibles — plus rien à déplier au préalable.) */
     private focusFirstError(formPath: string | null): void {
         if (!formPath) return;
-        const top = formPath.split('.')[0];
-        if (top === 'achat') this.toHideAchat = true;
-        else if (top === 'technique') this.toHideTechnique = true;
-        else if (top === 'financier') this.toHideFinancier = true;
         setTimeout(() => {
             const el =
                 (document.getElementById(formPath) as HTMLElement | null) ||
@@ -484,48 +479,9 @@ export class CompanyListComponent {
         }, 2000);
     }
 
-    hideShowFormAchat() {
-        this.toHideAchat = !this.toHideAchat;
-    }
-
-    hideShowFormFinancier() {
-        this.toHideFinancier = !this.toHideFinancier;
-    }
-
-    hideShowFormTechnique() {
-        this.toHideTechnique = !this.toHideTechnique;
-    }
-
-    /** Toggle the inline contact editor for a service card. */
-    toggleService(key: string): void {
-        if (key === 'achat') this.toHideAchat = !this.toHideAchat;
-        else if (key === 'technique')
-            this.toHideTechnique = !this.toHideTechnique;
-        else if (key === 'financier')
-            this.toHideFinancier = !this.toHideFinancier;
-    }
-
-    /** Whether a service's inline editor is currently open. */
-    isServiceOpen(key: string): boolean {
-        if (key === 'achat') return !!this.toHideAchat;
-        if (key === 'technique') return !!this.toHideTechnique;
-        return !!this.toHideFinancier;
-    }
-
-    /** Contact name entered for a service (drives the chip / filled state). */
-    serviceContactName(key: string): string {
-        return this.companyForm.get(key + '.fullName')?.value || '';
-    }
-
-    /** Remove a service's contact: clear its sub-group + close the editor. */
-    removeServiceContact(key: string): void {
-        this.companyForm
-            .get(key)
-            ?.reset({ fullName: '', email: '', phone: '' });
-        if (key === 'achat') this.toHideAchat = false;
-        else if (key === 'technique') this.toHideTechnique = false;
-        else if (key === 'financier') this.toHideFinancier = false;
-    }
+    // Les bascules d'affichage des éditeurs de contact (chips + « + ») ont été
+    // retirées : les 3 cartes Achat/Technique/Financier éditent désormais leurs
+    // champs Nom/E-mail/Téléphone directement dans « Modifier la société ».
 
     showDialog() {
         this.isEditMode = false;
@@ -535,14 +491,12 @@ export class CompanyListComponent {
 
     /**
      * Open the SAME modal in edit mode, prefilled from the row. Controls are
-     * reused as-is; service contacts surface as chips via `serviceContactName`.
+     * reused as-is ; les contacts par service s'éditent inline dans les 3 cartes
+     * (Achat/Technique/Financier) — un seul « Enregistrer » persiste le tout.
      */
     openEditCompany(row: any): void {
         this.isEditMode = true;
         this.editCompanyRow = { ...row };
-        this.toHideAchat = false;
-        this.toHideTechnique = false;
-        this.toHideFinancier = false;
 
         // Region is bound as an object (optionLabel="name") — reuse the actual
         // option reference so the dropdown shows it selected.
@@ -551,41 +505,112 @@ export class CompanyListComponent {
             null;
 
         this.companyForm.reset();
+        // cleanInput : les valeurs legacy "undefined"/"null" deviennent '' → les
+        // inputs restent vides et affichent leur placeholder (au lieu du texte
+        // « undefined »).
         this.companyForm.patchValue({
-            companyName: row?.name ?? '',
+            companyName: this.cleanInput(row?.name),
             region: regionOption,
-            address: row?.address ?? '',
-            email: row?.email ?? '',
+            address: this.cleanInput(row?.address),
+            email: this.cleanInput(row?.email),
             // Le téléphone était absent de ce patch (alors qu'il est bien
             // persisté) : après le reset() ci-dessus le champ restait vide à
             // l'ouverture en édition, laissant croire qu'il n'avait pas été
             // sauvegardé — et un ré-enregistrement ne le renvoyait pas.
-            phone: row?.phone ?? '',
-            fax: row?.fax ?? '',
-            Exoneration: row?.Exoneration ?? '',
-            website: row?.webSiteLink ?? '',
-            rne: row?.rne ?? '',
-            mf: row?.mf ?? '',
-            activitePrincipale: row?.activitePrincipale ?? '',
-            activiteSecondaire: row?.activiteSecondaire ?? '',
+            phone: this.cleanInput(row?.phone),
+            fax: this.cleanInput(row?.fax),
+            Exoneration: this.cleanInput(row?.Exoneration),
+            website: this.cleanInput(row?.webSiteLink),
+            rne: this.cleanInput(row?.rne),
+            mf: this.cleanInput(row?.mf),
+            activitePrincipale: this.cleanInput(row?.activitePrincipale),
+            activiteSecondaire: this.cleanInput(row?.activiteSecondaire),
             achat: {
-                fullName: row?.serviceAchat?.name ?? '',
-                email: row?.serviceAchat?.email ?? '',
-                phone: row?.serviceAchat?.phone ?? '',
+                fullName: this.cleanInput(row?.serviceAchat?.name),
+                email: this.cleanInput(row?.serviceAchat?.email),
+                phone: this.cleanInput(row?.serviceAchat?.phone),
             },
             technique: {
-                fullName: row?.serviceTechnique?.name ?? '',
-                email: row?.serviceTechnique?.email ?? '',
-                phone: row?.serviceTechnique?.phone ?? '',
+                fullName: this.cleanInput(row?.serviceTechnique?.name),
+                email: this.cleanInput(row?.serviceTechnique?.email),
+                phone: this.cleanInput(row?.serviceTechnique?.phone),
             },
             financier: {
-                fullName: row?.serviceFinancier?.name ?? '',
-                email: row?.serviceFinancier?.email ?? '',
-                phone: row?.serviceFinancier?.phone ?? '',
+                fullName: this.cleanInput(row?.serviceFinancier?.name),
+                email: this.cleanInput(row?.serviceFinancier?.email),
+                phone: this.cleanInput(row?.serviceFinancier?.phone),
             },
         });
         this.companyForm.markAsPristine();
         this.creationCompanyModalCondition = true;
+    }
+
+    // ── Vue Détails (lecture seule, tous les champs) ──────────────────────
+    detailsReadOnlyVisible = false;
+    detailsCompany: any = null;
+    /** Contacts par service affichés dans la vue Détails. */
+    readonly detailServices = [
+        { key: 'serviceAchat', label: 'Service achat' },
+        { key: 'serviceTechnique', label: 'Service technique' },
+        { key: 'serviceFinancier', label: 'Service financier' },
+    ];
+
+    /** Ouvre la vue Détails read-only (tous les champs, groupés). */
+    openCompanyDetails(row: any): void {
+        this.detailsCompany = { ...row };
+        this.detailsReadOnlyVisible = true;
+    }
+
+    /** Passe de Détails à l'édition — réutilise le formulaire existant. */
+    editFromDetails(): void {
+        const row = this.detailsCompany;
+        this.detailsReadOnlyVisible = false;
+        if (row) this.openEditCompany(row);
+    }
+
+    /**
+     * Affichage propre : vide / null / littéral « undefined »/« null » → « — ».
+     * ⚠️ 37 `raisonSociale` et 55 `Exoneration` valent la CHAÎNE "undefined" en
+     * base (données legacy, même classe que le bug téléphone). Ce helper les
+     * masque à l'affichage SANS toucher la base.
+     */
+    display(v: any): string {
+        const s = (v ?? '').toString().trim();
+        if (!s || s.toLowerCase() === 'undefined' || s.toLowerCase() === 'null') {
+            return '—';
+        }
+        return s;
+    }
+
+    /** Vrai uniquement pour une exonération explicitement « Oui ». */
+    isExonere(v: any): boolean {
+        return (v ?? '').toString().trim().toLowerCase() === 'oui';
+    }
+
+    /**
+     * Valeur destinée à un INPUT d'édition : mappe null / undefined / vide et la
+     * CHAÎNE legacy "undefined"/"null" vers `''`, pour que le champ soit vide et
+     * affiche son PLACEHOLDER au lieu du texte « undefined ». (Ne rogne pas les
+     * vraies valeurs — pas de trim destructif.)
+     */
+    cleanInput(v: any): string {
+        if (v === null || v === undefined) return '';
+        const s = v.toString();
+        const t = s.trim().toLowerCase();
+        return t === '' || t === 'undefined' || t === 'null' ? '' : s;
+    }
+
+    /** Nettoie un contact de service {name,email,phone} pour l'édition. */
+    private cleanService(c: any): {
+        name: string;
+        email: string;
+        phone: string;
+    } {
+        return {
+            name: this.cleanInput(c?.name),
+            email: this.cleanInput(c?.email),
+            phone: this.cleanInput(c?.phone),
+        };
     }
 
     /**
@@ -643,9 +668,6 @@ export class CompanyListComponent {
         this.companyForm.reset();
         this.isEditMode = false;
         this.editCompanyRow = null;
-        this.toHideAchat = false;
-        this.toHideTechnique = false;
-        this.toHideFinancier = false;
     }
 
     // ── Suppression (dialog destructif) ───────────────────────────────────
@@ -1028,26 +1050,4 @@ export class CompanyListComponent {
         return index;
     }
 
-    modalServices(data) {
-        this.companySelected = {
-            _id: data._id,
-            name: data.name,
-            serviceAchat: data.serviceAchat || {
-                name: '',
-                email: '',
-                phone: '',
-            },
-            serviceFinancier: data.serviceFinancier || {
-                name: '',
-                email: '',
-                phone: '',
-            },
-            serviceTechnique: data.serviceTechnique || {
-                name: '',
-                email: '',
-                phone: '',
-            },
-        };
-        this.detailsView = true;
-    }
 }

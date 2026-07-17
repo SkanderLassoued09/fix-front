@@ -15,10 +15,12 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
 import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
+import { TableCellTruncateDirective } from '../../../../shared/table-cell-truncate.directive';
 
 @NgModule({
     declarations: [ClientListComponent],
     imports: [
+        TableCellTruncateDirective,
         SearchableDropdownDirective,
         CommonModule,
         ClientListRoutingModule,

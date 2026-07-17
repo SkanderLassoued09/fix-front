@@ -20,9 +20,11 @@ import { ProfileListComponent } from './profile-list.component';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
 import { SearchableDropdownDirective } from '../../../../shared/searchable-dropdown.directive';
+import { TableCellTruncateDirective } from '../../../../shared/table-cell-truncate.directive';
 @NgModule({
     declarations: [ProfileListComponent],
     imports: [
+        TableCellTruncateDirective,
         SearchableDropdownDirective,
         CommonModule,
         ProfileListRoutingModule,

@@ -17,7 +17,9 @@ $accent-blue-hover: #1d4ed8;
 $white: #ffffff;
 $green: #16a34a;
 $red: #dc2626;
-$purple: #7c3aed;
+// Ambre du design system — accent du service Technique (remplace l'ancien
+// violet #7c3aed, hors palette).
+$amber: #b45309;
 
 .sav-page {
     background: $bg-page;
@@ -145,9 +147,19 @@ $purple: #7c3aed;
     }
 }
 
+/* Colonnes de données à largeur ÉGALE : avec `table-layout: fixed` (posé sur la
+   table), toutes les colonnes sans largeur déclarée se partagent équitablement
+   l'espace restant — seule « Actions » est fixée ci-dessous. */
 .sav-th-actions {
     width: 132px;
     text-align: center !important;
+}
+
+/* La largeur de la CELLULE est déjà bornée par sa colonne (layout fixe) : on
+   neutralise le plafond global de 240px de `.trc-cell` (utile seulement sur les
+   tables en layout auto), sinon les colonnes larges seraient tronquées trop tôt. */
+::ng-deep .sav-main-table td.trc-cell {
+    max-width: none;
 }
 
 .sav-actions-cell {
@@ -197,17 +209,43 @@ $purple: #7c3aed;
         background: #f0fdf4 !important;
     }
 
-    &--help:hover {
-        border-color: rgba(124, 58, 237, 0.35) !important;
-        color: $purple !important;
-        background: #f5f3ff !important;
-    }
-
     &--danger:hover {
         border-color: rgba(220, 38, 38, 0.35) !important;
         color: $red !important;
         background: #fef2f2 !important;
     }
+
+    &--info:hover {
+        border-color: rgba(37, 99, 235, 0.35) !important;
+        color: $accent-blue !important;
+        background: #eff6ff !important;
+    }
+}
+
+/* ── Vue Détails (lecture seule) ──────────────────────────────────────── */
+.sav-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.sav-detail-value {
+    font-size: 0.86rem;
+    color: $text-primary;
+    word-break: break-word;
+    padding: 0.15rem 0;
+}
+.sav-detail-service {
+    & + & {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px dashed $border;
+    }
+}
+.sav-detail-service__title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: $accent-blue;
+    margin-bottom: 0.4rem;
 }
 
 ::ng-deep .p-tag.status-pill {
@@ -391,7 +429,7 @@ $purple: #7c3aed;
 }
 
 .service-technique {
-    border-left-color: $purple;
+    border-left-color: $amber;
 }
 
 .sav-two-col {
@@ -643,7 +681,7 @@ $purple: #7c3aed;
         color: #2563eb;
     }
     .co-section__legend--users i {
-        color: #7c3aed;
+        color: #2563eb;
     }
 
     /* ── Grille + champs ── */
@@ -737,8 +775,8 @@ $purple: #7c3aed;
         color: #16a34a;
     }
     .co-service[data-svc='technique'] .co-service__icon {
-        background: #f5f3ff;
-        color: #7c3aed;
+        background: #fffbeb;
+        color: #b45309;
     }
     .co-service[data-svc='financier'] .co-service__icon {
         background: #eff6ff;
