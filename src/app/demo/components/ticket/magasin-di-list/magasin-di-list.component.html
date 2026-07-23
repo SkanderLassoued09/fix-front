@@ -388,12 +388,16 @@
                                                     >*</span
                                                 ></label
                                             >
+                                            <!-- optionValue = "value" (_id de la
+                                                 catégorie) : envoyer le libellé
+                                                 polluait category_composant_id. -->
                                             <p-dropdown
                                                 formControlName="category_composant_id"
                                                 [options]="composantCategory"
                                                 optionLabel="name"
-                                                optionValue="name"
+                                                optionValue="value"
                                                 placeholder="Choisir catégorie"
+                                                emptyMessage="Aucune catégorie — créez-en une via « Nouvelle catégorie »."
                                                 appendTo="body"
                                                 styleClass="cmp-dd"
                                                 [style]="{ width: '100%' }"
@@ -769,22 +773,23 @@
 
                     <div class="cc-field">
                         <label class="cc-label">Catégorie</label>
+                        <!-- optionValue = "value" (_id de la catégorie), pas le
+                             libellé. L'ancien template d'item référençait
+                             `rowData` (inexistant hors de la table) → le panneau
+                             plantait au rendu : impossible de choisir une
+                             catégorie dans ce modal. -->
                         <p-dropdown
                             [options]="composantCategory"
                             optionLabel="name"
-                            optionValue="name"
+                            optionValue="value"
                             placeholder="Choisir catégorie"
+                            emptyMessage="Aucune catégorie — créez-en une via « Nouvelle catégorie »."
                             formControlName="category_composant_id"
                             styleClass="cc-dropdown"
                             [style]="{ width: '100%' }"
                         >
                             <ng-template let-option pTemplate="item">
-                                <p-tag
-                                    [value]="getStatusLabel(rowData.status)"
-                                    styleClass="status-pill status-{{
-                                        rowData.status
-                                    }}"
-                                ></p-tag>
+                                <p-tag [value]="option.name"></p-tag>
                             </ng-template>
                         </p-dropdown>
                     </div>

@@ -1901,21 +1901,30 @@ export class TicketService {
     }
 
     addComposantMagasin(composantData: any) {
-        console.log('🍖[composantData]:', composantData);
+        // Littéraux sûrs (mêmes garanties que `updateComposant`) : un nombre
+        // absent → null (et non le littéral invalide `undefined`, qui rendait
+        // le document GraphQL imparsable → échec silencieux), une chaîne avec
+        // guillemets/retours ligne ne casse plus le document.
+        const s = (v: unknown) =>
+            JSON.stringify(v === null || v === undefined ? '' : String(v));
+        const n = (v: unknown) => {
+            const x = Number(v);
+            return Number.isFinite(x) ? x : null;
+        };
         return gql`
        mutation {
   createComposant(
     createComposantInput: {
-      name: ${gqlStr(composantData.name)}
-      package: ${gqlStr(composantData.packageComposant)}
-      prix_achat: ${composantData.prix_achat}
-      prix_vente: ${composantData.prix_vente}
-      coming_date: ${gqlStr(composantData.coming_date)}
-      link: ${gqlStr(composantData.link)}
-      quantity_stocked: ${composantData.quantity_stocked}
-      pdf: "${composantData.pdf}"
-      status_composant: "${composantData.status}"
-      category_composant_id: "${composantData.category_composant_id}"
+      name: ${s(composantData.name)}
+      package: ${s(composantData.packageComposant)}
+      prix_achat: ${n(composantData.prix_achat)}
+      prix_vente: ${n(composantData.prix_vente)}
+      coming_date: ${s(composantData.coming_date)}
+      link: ${s(composantData.link)}
+      quantity_stocked: ${n(composantData.quantity_stocked)}
+      pdf: ${s(composantData.pdf)}
+      status_composant: ${s(composantData.status)}
+      category_composant_id: ${s(composantData.category_composant_id)}
     }
   ) {
     _id
