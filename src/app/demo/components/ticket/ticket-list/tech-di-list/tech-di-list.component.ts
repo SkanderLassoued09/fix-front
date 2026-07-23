@@ -1814,8 +1814,24 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     // ───────────────────────────────────────────────────────────────
     private readonly onDocumentVisibilityChange = (): void => {
         if (document.visibilityState === 'hidden') {
-            this.freezeActiveDialogForLifecycle();
+            // Ne PAS auto-pauser sur un simple changement d'onglet/fenêtre :
+            // c'était la cause du « compteur qui s'arrête / perd du temps »
+            // (pause serveur à chaque masquage + reprise fragile au retour).
+            // L'écoulé est dérivé d'ancres serveur — l'arrière-plan ne fausse
+            // rien. On persiste seulement le snapshot. L'auto-pause reste sur
+            // beforeunload (refresh/fermeture), où laisser courir le chrono
+            // facturerait l'absence.
+            this.persistActiveDialogState();
         } else if (document.visibilityState === 'visible') {
+            // Retour d'onglet : re-render IMMÉDIAT depuis les ancres (le tick
+            // de rendu était throttlé en arrière-plan — sans ceci l'affichage
+            // resterait en retard jusqu'au prochain tick). Aucun temps n'est
+            // « compté » ici.
+            this.renderDiagnosticElapsed(this.computeLiveElapsedDiag());
+            this.renderRepairElapsed(this.computeLiveElapsedRep());
+            this.refreshDiagnosticVm();
+            // Toujours pertinent pour un freeze beforeunload non suivi d'un
+            // unload réel (annulation, bfcache) : reprend la pause lifecycle.
             this.resumeActiveDialogAfterLifecyclePause();
         }
     };
@@ -2355,9 +2371,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                                 reference: c.package ?? '',
                             }),
                         );
+                        // `composantCategory` fournit désormais name=libellé /
+                        // value=_id — l'ancien `_id: c.name` compensait le
+                        // mapping inversé d'avant (double inversion annulée).
                         this.repairCategories = (
                             this.composantCategory || []
-                        ).map((c: any) => ({ _id: c.name, category: c.value }));
+                        ).map((c: any) => ({ _id: c.value, category: c.name }));
                     }
 
                     this.diagFormTech.patchValue({
@@ -2769,16 +2788,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
 
         const tick = () => {
-            const elapsedTime = this.computeLiveElapsedRep();
-            this.minutes1 = this.padZero(
-                Math.floor(elapsedTime / (1000 * 60 * 60)),
-            );
-            this.seconds1 = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60)),
-            );
-            this.milliseconds1 = this.padZero(
-                Math.floor((elapsedTime % (1000 * 60)) / 1000),
-            );
+            this.renderRepairElapsed(this.computeLiveElapsedRep());
             this.persistActiveDialogState();
         };
 
@@ -2786,20 +2796,34 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.repairTimerId = window.setInterval(tick, 1000);
     }
 
+    private renderRepairElapsed(elapsedTime: number): void {
+        this.minutes1 = this.padZero(
+            Math.floor(elapsedTime / (1000 * 60 * 60)),
+        );
+        this.seconds1 = this.padZero(
+            Math.floor((elapsedTime % (1000 * 60 * 60)) / (1000 * 60)),
+        );
+        this.milliseconds1 = this.padZero(
+            Math.floor((elapsedTime % (1000 * 60)) / 1000),
+        );
+    }
+
+
     lap() {
-        if (this.isRunning) {
-            // NO leading space — this string is persisted as Stat.diag_time; a
-            // leading " " produced `" 00:15:02"` in DB, which the HH:MM:SS regex
-            // then rejected → the timer reset to 0 (data loss).
-            this.lapTime = `${this.minutes}:${this.seconds}:${this.milliseconds}`;
-        }
+        // Dérivé des ANCRES, jamais des chaînes AFFICHÉES : le navigateur
+        // throttle le tick de rendu en arrière-plan, donc l'affichage peut
+        // être gelé au moment d'une clôture — c'était la perte de temps
+        // persistée. Valide aussi timer arrêté (ancre nulle → base cumulée).
+        // NB : depuis le cumul serveur (closeDiagLeg), cette valeur n'est
+        // plus autoritaire pour diag_time — cohérence UI seulement.
+        this.lapTime = this.msToTimeString(this.computeLiveElapsedDiag());
     }
 
     lap1() {
-        if (this.isRunning1) {
-            // NO leading space (persisted as Stat.rep_time). See `lap()`.
-            this.lapTime1 = `${this.minutes1}:${this.seconds1}:${this.milliseconds1}`;
-        }
+        // Même principe que lap() — ancres, pas chaînes de rendu. Là où les
+        // appelants pré-figent l'état (pause réparation), initialOffset1 est
+        // déjà la base gelée → même valeur qu'avant, sans dépendre du tick.
+        this.lapTime1 = this.msToTimeString(this.computeLiveElapsedRep());
     }
 
     reset() {
@@ -2948,12 +2972,17 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             })
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
-                if (data) {
+                if (data?.findAllComposant_Category) {
+                    // name = libellé AFFICHÉ, value = _id ENVOYÉ (même contrat
+                    // que magasin-di-list). L'ancien mapping était inversé : le
+                    // dropdown affichait l'_id brut (« C_Composant3 ») comme
+                    // libellé. `repairCategories` (plus bas) est retourné en
+                    // conséquence.
                     this.composantCategory = data.findAllComposant_Category.map(
                         (el) => {
                             return {
-                                name: el._id,
-                                value: el.category_composant,
+                                name: el.category_composant,
+                                value: el._id,
                             };
                         },
                     );
@@ -2993,8 +3022,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.stopDiagnosticTimer();
         this.renderDiagnosticElapsed(this.computeLiveElapsedDiag());
         this.markDiagnosticPausedFrontend();
-        // NO leading space (persisted as Stat.diag_time). See `lap()`.
-        this.lapTime = `${this.minutes}:${this.seconds}:${this.milliseconds}`;
+        // Ancre-dérivé (voir lap()) — plus jamais depuis les chaînes de rendu.
+        this.lap();
         this.persistActiveDialogState('diagnostic');
         this.refreshDiagnosticVm();
 

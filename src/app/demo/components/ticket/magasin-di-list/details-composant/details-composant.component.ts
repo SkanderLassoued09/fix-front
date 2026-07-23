@@ -103,26 +103,47 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
             .query<any>({
                 query: this.ticketSerice.composantByName(selectedComposant),
             })
-            .subscribe(({ data }) => {
-                this.composantValues = data.findOneComposant;
-
-                if (data) {
-                    // Initialize form fields with loaded data
-                    // TODO Change response from the server to object of data not boolean
+            .subscribe({
+                // errorPolicy 'all' (queries) : une erreur GraphQL arrive ici
+                // avec `data: null` — garde obligatoire (même TypeError que
+                // magasin-di-list ligne 1126 sinon).
+                next: ({ data, errors }) => {
+                    const composant = data?.findOneComposant;
+                    if (!composant) {
+                        this.messageservice.add({
+                            severity: 'warn',
+                            summary: 'Composant introuvable',
+                            detail:
+                                errors?.[0]?.message ||
+                                `Le composant « ${selectedComposant} » n'existe pas dans le catalogue.`,
+                        });
+                        return;
+                    }
+                    this.composantValues = composant;
                     this.formUpdateComposant.patchValue({
-                        name: this.composantValues.name,
-                        package: this.composantValues.package,
-                        category_composant_id:
-                            this.composantValues.category_composant_id,
-                        prix_achat: this.composantValues.prix_achat,
-                        prix_vente: this.composantValues.prix_vente,
-                        coming_date: new Date(this.composantValues.coming_date),
-                        link: this.composantValues.link,
-                        quantity_stocked: this.composantValues.quantity_stocked,
-                        pdf: this.composantValues.pdf,
-                        status: this.composantValues.status,
+                        name: composant.name,
+                        package: composant.package,
+                        category_composant_id: composant.category_composant_id,
+                        prix_achat: composant.prix_achat,
+                        prix_vente: composant.prix_vente,
+                        coming_date: new Date(composant.coming_date),
+                        link: composant.link,
+                        quantity_stocked: composant.quantity_stocked,
+                        pdf: composant.pdf,
+                        // Nom réel du champ dans le schéma : `status_composant`
+                        // (`status` n'existait pas → statut jamais pré-rempli).
+                        status: composant.status_composant,
                     });
-                }
+                },
+                error: (error) => {
+                    this.messageservice.add({
+                        severity: 'error',
+                        summary: 'Erreur de chargement',
+                        detail:
+                            error?.message ||
+                            'Impossible de charger le composant.',
+                    });
+                },
             });
     }
     select(data) {
@@ -135,9 +156,10 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                 query: this.ticketSerice.getDiById(_id),
             })
             .subscribe(({ data }) => {
-                console.log('🍤[data]:', data);
+                // Garde null : `data` est null quand la query échoue
+                // (errorPolicy 'all') — l'accès direct crashait.
+                if (!data?.getDiById?.di) return;
                 this.ignoreCount = data.getDiById.di.ignoreCount;
-                console.log('ignore count value is ', this.ignoreCount);
 
                 if (data) {
                     if (data.getDiById.logsDi) {

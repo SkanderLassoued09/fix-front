@@ -269,8 +269,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
     data_discount: DiQueryResult;
     dataById: any;
     finalPrice: any;
-    allComposants = [];
-    number_total_composant: number = this.allComposants.length;
+    // `allComposants` / `number_total_composant` / `composantQuantity` :
+    // pipeline mort supprimé (2026-07-22) — N requêtes findOneComposant par
+    // ouverture du modal pricing pour des valeurs jamais lues (ni .ts ni
+    // template), avec en prime une course (length lu avant les réponses).
     name_composant: any;
     ArrayofcomposantDATA: DiQueryResult;
     oneComposant_QueryValue: DiQueryResult;
@@ -278,7 +280,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
     current_id: any;
     timeDiagnostique: string;
     ignoreCount: any;
-    composantQuantity: number;
     tarif_Tech: number;
     allCategoryDiArray: any;
     locationDropDown: any[];
@@ -1946,8 +1947,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.priceRemiseAffichage = null;
         this.pricesLogs = [];
         this.totalComposant = null;
-        this.composantQuantity = 0;
-        this.allComposants = [];
         this.price = null;
         this.activePricingChip = null;
 
@@ -2073,12 +2072,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
             }
         });
 
-        for (let oneComposant of data.array_composants) {
-            this.getcomposantByName(oneComposant.nameComposant);
-        }
-
-        this.composantQuantity = this.allComposants.length;
-
         this.pricingModal = true;
 
         this.changeStatusPricing(data._id);
@@ -2165,20 +2158,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     onSizeSelect() {}
 
-    async getcomposantByName(name_composant: string) {
-        await this.apollo
-            .watchQuery<DiQueryResult>({
-                query: this.ticketSerice.composantByName_forAdmin(
-                    name_composant,
-                ),
-            })
-            .valueChanges.subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                    this.allComposants.push(data);
-                }
-            });
-    }
+    // `getcomposantByName()` supprimé : il alimentait `allComposants`, dont
+    // seul le `.length` était copié dans `composantQuantity` — jamais lu.
+    // (`composantByName_forAdmin` reste dans TicketService, désormais orphelin.)
 
     getLatestLogFacture(logs: any[]): any {
         if (!logs || logs.length === 0) {

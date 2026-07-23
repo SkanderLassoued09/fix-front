@@ -180,11 +180,59 @@ export class MagasinDiListComponent implements OnDestroy {
             prix_achat: new FormControl(null, Validators.required),
             prix_vente: new FormControl(null, Validators.required),
             coming_date: new FormControl(null, Validators.required),
-            link: new FormControl(null, Validators.required),
+            // OPTIONNEL : forcer un lien poussait les utilisateurs à coller
+            // n'importe quelle URL (ex. celle de la page) pour passer la
+            // validation — valeur absurde ensuite persistée en base.
+            link: new FormControl(null),
             quantity_stocked: new FormControl(null, Validators.required),
             pdf: new FormControl(null),
             status: new FormControl(null, Validators.required),
         });
+    }
+
+    /**
+     * Message d'erreur réel d'une réponse GraphQL, pour les toasts.
+     * Accepte les deux formes rencontrées ici : le tableau `errors` livré
+     * dans `next` (queries — errorPolicy 'all') et l'ApolloError du callback
+     * `error` (mutations / erreurs réseau).
+     */
+    private errorDetail(source: any, fallback: string): string {
+        if (Array.isArray(source)) {
+            return source[0]?.message || fallback;
+        }
+        return (
+            source?.graphQLErrors?.[0]?.message ||
+            source?.networkError?.message ||
+            source?.message ||
+            fallback
+        );
+    }
+
+    /** Toast d'erreur unique + déblocage de l'overlay, pour tous les flux. */
+    private failWithToast(summary: string, source: any, fallback: string) {
+        this.isLoading = false;
+        this.messageservice.add({
+            severity: 'error',
+            summary,
+            detail: this.errorDetail(source, fallback),
+        });
+    }
+
+    /**
+     * Les anciennes sauvegardes stockaient le LIBELLÉ de la catégorie dans
+     * `category_composant_id` (bug `optionValue` — voir dropdowns Catégorie).
+     * Traduit un libellé hérité vers l'_id attendu ; laisse passer les _id
+     * valides ; null si la valeur ne correspond à rien (catégorie supprimée)
+     * pour forcer un re-choix explicite plutôt qu'une re-sauvegarde polluée.
+     */
+    private normalizeCategoryId(stored: string | null): string | null {
+        if (!stored) return null;
+        const options: Array<{ name: string; value: string }> =
+            this.composantCategory || [];
+        if (!options.length) return stored; // liste pas encore chargée
+        if (options.some((o) => o.value === stored)) return stored;
+        const byLabel = options.find((o) => o.name === stored);
+        return byLabel ? byLabel.value : null;
     }
 
     ngOnInit() {
@@ -281,11 +329,21 @@ export class MagasinDiListComponent implements OnDestroy {
                     fetchPolicy: 'no-cache',
                 })
                 .pipe(finalize(() => (this.isLoading = false)))
-                .subscribe(({ data }) => {
-                    if (data && data.searchDiForMagasin) {
-                        this.diList = data.searchDiForMagasin.di;
-                        this.diListCount = data.searchDiForMagasin.totalDiCount;
-                    }
+                .subscribe({
+                    next: ({ data }) => {
+                        if (data && data.searchDiForMagasin) {
+                            this.diList = data.searchDiForMagasin.di;
+                            this.diListCount =
+                                data.searchDiForMagasin.totalDiCount;
+                        }
+                    },
+                    error: (error) => {
+                        this.failWithToast(
+                            'Erreur de recherche',
+                            error,
+                            'La recherche a échoué. Réessayez.',
+                        );
+                    },
                 });
         } else {
             // Regular data fetch
@@ -298,11 +356,21 @@ export class MagasinDiListComponent implements OnDestroy {
                     fetchPolicy: 'no-cache',
                 })
                 .pipe(finalize(() => (this.isLoading = false)))
-                .subscribe(({ data }) => {
-                    if (data) {
-                        this.diList = data.getDiForMagasin.di;
-                        this.diListCount = data.getDiForMagasin.totalDiCount;
-                    }
+                .subscribe({
+                    next: ({ data }) => {
+                        if (data?.getDiForMagasin) {
+                            this.diList = data.getDiForMagasin.di;
+                            this.diListCount =
+                                data.getDiForMagasin.totalDiCount;
+                        }
+                    },
+                    error: (error) => {
+                        this.failWithToast(
+                            'Erreur de chargement',
+                            error,
+                            'Impossible de charger la liste des DI.',
+                        );
+                    },
                 });
         }
     }
@@ -392,9 +460,13 @@ export class MagasinDiListComponent implements OnDestroy {
             .query<any>({
                 query: this.ticketSerice.getStatusCount(),
             })
-            .subscribe(({ data, loading }) => {
+            .subscribe(({ data, loading, errors }) => {
                 this.isLoading = loading;
-                if (data) {
+                if (errors?.length) {
+                    console.error('getStatusCount errors:', errors);
+                    return;
+                }
+                if (data?.getStatusCount) {
                     this.statusCount = data.getStatusCount;
                     this.basicData = {
                         labels: this.statusCount.map((el) => el.status),
@@ -453,6 +525,8 @@ export class MagasinDiListComponent implements OnDestroy {
                     };
                 }
             });
+        // NB : erreurs réseau non toastées ici (le graphe est décoratif) ;
+        // le spinner est déjà relâché par les autres flux de la page.
     }
 
     annulerMagasinEstimation() {
@@ -502,114 +576,153 @@ export class MagasinDiListComponent implements OnDestroy {
         }
     }
 
-    showDialogCategoryComposant() {
-        this.openCreationCategoryComposantModal = true;
+    /**
+     * Recharge les catégories partout où elles sont affichées : la table du
+     * dialog de gestion (`composantCatgorieList`) ET les options des dropdowns
+     * (`composantCategory`, via `findAllComposant_Category`). Avant, une
+     * catégorie créée n'apparaissait pas dans les dropdowns tant que le modal
+     * n'était pas rouvert.
+     */
+    private refreshCategoryLists() {
         this.apollo
             .query<any>({
                 query: this.ticketSerice.findAllComposant_Category(),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                console.log(data, 'data all category');
-                this.composantCatgorieList = data.findAllComposant_Category;
-                console.log(
-                    this.composantCatgorieList,
-                    'composantCatgorieList',
-                );
+            .subscribe({
+                next: ({ data, loading }) => {
+                    this.isLoading = loading;
+                    const categories = data?.findAllComposant_Category;
+                    if (!categories) return;
+                    // Table du dialog de gestion (lignes brutes).
+                    this.composantCatgorieList = categories;
+                    // Options des dropdowns : value = _id, name = libellé
+                    // (même contrat que `findAllComposant_Category()`).
+                    this.composantCategory = categories.map((el) => ({
+                        name: el.category_composant,
+                        value: el._id,
+                    }));
+                },
+                error: (error) => {
+                    this.failWithToast(
+                        'Erreur de chargement',
+                        error,
+                        'Impossible de recharger les catégories.',
+                    );
+                },
             });
     }
 
+    showDialogCategoryComposant() {
+        this.openCreationCategoryComposantModal = true;
+        this.refreshCategoryLists();
+    }
+
     deletComposant() {
-        console.log('delete not working', this.loadedDataComposant._id);
+        if (!this.loadedDataComposant?._id) {
+            this.messageservice.add({
+                severity: 'warn',
+                summary: 'Aucun composant',
+                detail: 'Sélectionnez d’abord un composant à supprimer.',
+            });
+            return;
+        }
 
         this.confirmationService.confirm({
             message: 'Voulez-vous Supprimer ce composant ?',
             header: 'Confirmation Suppression',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
+            accept: async () => {
+                try {
+                    await this.mutationRunner.run({
+                        key: `removeComposant:${this.loadedDataComposant._id}`,
                         mutation: this.ticketSerice.removeComposant(
                             this.loadedDataComposant._id,
                         ),
-                    })
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
-                        console.log('🥨[data]:', data);
-                        if (data) {
-                            this.apollo
-                                .query<any>({
-                                    query: this.ticketSerice.getAllComposant(),
-                                })
-                                .subscribe(({ data }) => {
-                                    this.composantCatgorieList =
-                                        data.findAllComposant_Category;
-                                    this.composantList = data.findAllComposant;
-                                });
-                        }
+                        successToast: {
+                            summary: 'Composant supprimé',
+                            detail: this.loadedDataComposant.name || '',
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Suppression impossible. Réessayez.',
+                        },
+                        onLoading: (v) => (this.isLoading = v),
                     });
+                    // L'ancien code relançait getAllComposant mais lisait
+                    // `data.findAllComposant_Category` (inexistant sur cette
+                    // query) — refresh explicite des deux listes à la place.
+                    this.getAllComposant();
+                    this.refreshCategoryLists();
+                } catch {
+                    /* toast déjà affiché par le runner */
+                }
             },
         });
     }
 
     deleteCategorycomposant(rowData) {
-        console.log(rowData._id, 'rowdata here');
-
         this.confirmationService.confirm({
             message: 'Voulez-vous Supprimer cette categorie ?',
             header: 'Confirmation Suppression',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
+            accept: async () => {
+                try {
+                    await this.mutationRunner.run({
+                        key: `removeComposantCategory:${rowData._id}`,
                         mutation: this.ticketSerice.removeComposant_Category(
                             rowData._id,
                         ),
-                    })
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
-                        if (data) {
-                            this.apollo
-                                .query<any>({
-                                    query: this.ticketSerice.findAllComposant_Category(),
-                                })
-                                .subscribe(({ data }) => {
-                                    this.composantCatgorieList =
-                                        data.findAllComposant_Category;
-                                });
-                        }
+                        successToast: {
+                            summary: 'Catégorie supprimée',
+                            detail: rowData.category_composant || '',
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Suppression impossible. Réessayez.',
+                        },
+                        onLoading: (v) => (this.isLoading = v),
                     });
+                    this.refreshCategoryLists();
+                } catch {
+                    /* toast déjà affiché par le runner */
+                }
             },
         });
     }
 
     addNewCategoryComposant() {
+        const categoryName = this.addCategoryCompsant.value.categoryName;
+        if (!categoryName?.trim()) {
+            this.addCategoryCompsant.markAllAsTouched();
+            return;
+        }
         this.confirmationService.confirm({
             message: 'Voulez-vous créer cette categorie ?',
             header: 'Confirmation Creation',
             icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.addNewCategoryComposant(
-                            this.addCategoryCompsant.value.categoryName,
-                        ),
-                    })
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
-                        if (data) {
-                            this.addCategoryCompsant.reset();
-                            this.apollo
-                                .query<any>({
-                                    query: this.ticketSerice.findAllComposant_Category(),
-                                })
-                                .subscribe(({ data, loading }) => {
-                                    this.isLoading = loading;
-                                    this.composantCatgorieList =
-                                        data.findAllComposant_Category;
-                                });
-                        }
+            accept: async () => {
+                try {
+                    await this.mutationRunner.run({
+                        key: 'addComposantCategory',
+                        mutation:
+                            this.ticketSerice.addNewCategoryComposant(
+                                categoryName,
+                            ),
+                        successToast: {
+                            summary: 'Catégorie créée',
+                            detail: categoryName,
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Création impossible. Réessayez.',
+                        },
+                        onLoading: (v) => (this.isLoading = v),
                     });
+                    this.addCategoryCompsant.reset();
+                    this.refreshCategoryLists();
+                } catch {
+                    /* toast déjà affiché par le runner */
+                }
             },
         });
     }
@@ -725,33 +838,49 @@ export class MagasinDiListComponent implements OnDestroy {
                         selectedItem.value,
                     ),
                 })
-                .subscribe(({ data, loading }) => {
-                    this.loadedDataComposant = data.findOneComposant;
-                    this.isLoading = loading;
-                    console.log(
-                        '🍷[ this.loadedDataComposant]:',
-                        this.loadedDataComposant,
-                    );
-
-                    if (data) {
+                .subscribe({
+                    // errorPolicy 'all' : erreurs GraphQL livrées dans `next`
+                    // avec `data: null` — garde obligatoire.
+                    next: ({ data, errors, loading }) => {
+                        this.isLoading = loading;
+                        const composant = data?.findOneComposant;
+                        if (!composant) {
+                            this.loadedDataComposant = null;
+                            this.composantMagasin.reset();
+                            this.messageservice.add({
+                                severity: 'warn',
+                                summary: 'Composant introuvable',
+                                detail: this.errorDetail(
+                                    errors,
+                                    `Le composant « ${selectedItem.value} » n'existe pas dans le catalogue de cette base.`,
+                                ),
+                            });
+                            return;
+                        }
+                        this.loadedDataComposant = composant;
                         this.composantMagasin.patchValue({
-                            _id: this.loadedDataComposant._id,
-                            name: this.loadedDataComposant.name,
-                            packageComposant: this.loadedDataComposant.package,
-                            category_composant_id:
-                                this.loadedDataComposant.category_composant_id,
-                            prix_achat: this.loadedDataComposant.prix_achat,
-                            prix_vente: this.loadedDataComposant.prix_vente,
-                            coming_date: new Date(
-                                this.loadedDataComposant.coming_date,
+                            _id: composant._id,
+                            name: composant.name,
+                            packageComposant: composant.package,
+                            category_composant_id: this.normalizeCategoryId(
+                                composant.category_composant_id,
                             ),
-                            link: this.loadedDataComposant.link,
-                            quantity_stocked:
-                                this.loadedDataComposant.quantity_stocked,
-                            pdf: this.loadedDataComposant.pdf,
-                            status: this.loadedDataComposant.status_composant,
+                            prix_achat: composant.prix_achat,
+                            prix_vente: composant.prix_vente,
+                            coming_date: new Date(composant.coming_date),
+                            link: composant.link,
+                            quantity_stocked: composant.quantity_stocked,
+                            pdf: composant.pdf,
+                            status: composant.status_composant,
                         });
-                    }
+                    },
+                    error: (error) => {
+                        this.failWithToast(
+                            'Erreur de chargement',
+                            error,
+                            'Impossible de charger le composant. Réessayez.',
+                        );
+                    },
                 });
         }
 
@@ -793,13 +922,23 @@ export class MagasinDiListComponent implements OnDestroy {
                         item._id,
                     ),
                 })
-                .subscribe(({ data, loading }) => {
-                    this.isLoading = loading;
-                    const logsDi = data?.getLigsById;
-                    this.arrayComposant = (logsDi?.array_composants || []).map(
-                        mapLine,
-                    );
-                    this.afterLinesLoaded();
+                .subscribe({
+                    next: ({ data, loading }) => {
+                        this.isLoading = loading;
+                        const logsDi = data?.getLigsById;
+                        this.arrayComposant = (
+                            logsDi?.array_composants || []
+                        ).map(mapLine);
+                        this.afterLinesLoaded();
+                    },
+                    error: (error) => {
+                        this.arrayComposant = [];
+                        this.failWithToast(
+                            'Erreur de chargement',
+                            error,
+                            'Impossible de charger les composants demandés.',
+                        );
+                    },
                 });
         } else {
             this.arrayComposant = (item.array_composants || []).map(mapLine);
@@ -1059,11 +1198,20 @@ export class MagasinDiListComponent implements OnDestroy {
             .query<any>({
                 query: this.ticketSerice.getAllComposant(),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                    this.composantList = data.findAllComposant;
-                }
+            .subscribe({
+                next: ({ data, loading }) => {
+                    this.isLoading = loading;
+                    if (data?.findAllComposant) {
+                        this.composantList = data.findAllComposant;
+                    }
+                },
+                error: (error) => {
+                    this.failWithToast(
+                        'Erreur de chargement',
+                        error,
+                        'Impossible de charger le catalogue des composants.',
+                    );
+                },
             });
     }
 
@@ -1072,18 +1220,27 @@ export class MagasinDiListComponent implements OnDestroy {
             .query<any>({
                 query: this.ticketSerice.findAllComposant_Category(),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                    this.composantCategory = data.findAllComposant_Category.map(
-                        (el) => {
-                            return {
+            .subscribe({
+                next: ({ data, loading }) => {
+                    this.isLoading = loading;
+                    if (data?.findAllComposant_Category) {
+                        // `value` = _id (ce que le back référence dans
+                        // `category_composant_id`), `name` = libellé affiché.
+                        // Envoyer le libellé (ancien mapping) polluait la base.
+                        this.composantCategory =
+                            data.findAllComposant_Category.map((el) => ({
                                 name: el.category_composant,
-                                value: el.category_composant,
-                            };
-                        },
+                                value: el._id,
+                            }));
+                    }
+                },
+                error: (error) => {
+                    this.failWithToast(
+                        'Erreur de chargement',
+                        error,
+                        'Impossible de charger les catégories de composants.',
                     );
-                }
+                },
             });
     }
 
@@ -1120,131 +1277,85 @@ export class MagasinDiListComponent implements OnDestroy {
                         selectedItem.value,
                     ),
                 })
-                .subscribe(({ data, loading }) => {
-                    this.isLoading = loading;
-
-                    this.loadedDataComposant = data.findOneComposant;
-                    console.log(
-                        '🍪[this.loadedDataComposant]:',
-                        this.loadedDataComposant,
-                    );
-
-                    if (data) {
-                        console.log(
-                            'this.loadedDataComposant.pdf',
-                            this.loadedDataComposant.pdf,
-                        );
+                .subscribe({
+                    // errorPolicy 'all' (queries) : les erreurs GraphQL
+                    // arrivent ICI avec `data: null`, pas dans `error` —
+                    // d'où l'ancien TypeError sur `data.findOneComposant`.
+                    next: ({ data, errors, loading }) => {
+                        this.isLoading = loading;
+                        const composant = data?.findOneComposant;
+                        if (!composant) {
+                            this.loadedDataComposant = null;
+                            this.formUpdateComposant.reset();
+                            // Garder le nom visible pour situer la ligne DI.
+                            this.formUpdateComposant.patchValue({
+                                name: selectedItem.value,
+                            });
+                            this.messageservice.add({
+                                severity: 'warn',
+                                summary: 'Composant introuvable',
+                                detail:
+                                    this.errorDetail(
+                                        errors,
+                                        `Le composant « ${selectedItem.value} » n'existe pas dans le catalogue de cette base.`,
+                                    ) +
+                                    ' Créez-le d’abord via « Créer un composant ».',
+                            });
+                            return;
+                        }
+                        this.loadedDataComposant = composant;
                         this.formUpdateComposant.patchValue({
-                            _id: this.loadedDataComposant._id,
-                            name: this.loadedDataComposant.name,
-                            package: this.loadedDataComposant.package,
-                            category_composant_id:
-                                this.loadedDataComposant.category_composant_id,
-                            prix_achat: this.loadedDataComposant.prix_achat,
-                            prix_vente: this.loadedDataComposant.prix_vente,
-                            coming_date: new Date(
-                                this.loadedDataComposant.coming_date,
+                            _id: composant._id,
+                            name: composant.name,
+                            package: composant.package,
+                            category_composant_id: this.normalizeCategoryId(
+                                composant.category_composant_id,
                             ),
-                            link: this.loadedDataComposant.link,
-                            quantity_stocked:
-                                this.loadedDataComposant.quantity_stocked,
-                            pdf: this.loadedDataComposant.pdf,
+                            prix_achat: composant.prix_achat,
+                            prix_vente: composant.prix_vente,
+                            coming_date: new Date(composant.coming_date),
+                            link: composant.link,
+                            quantity_stocked: composant.quantity_stocked,
+                            pdf: composant.pdf,
                             status:
                                 this.selectedstatusComposant ||
-                                this.loadedDataComposant.status_composant,
+                                composant.status_composant,
                         });
-                    }
+                    },
+                    error: (error) => {
+                        this.failWithToast(
+                            'Erreur de chargement',
+                            error,
+                            'Impossible de charger le composant. Réessayez.',
+                        );
+                    },
                 });
         } else {
             this.formUpdateComposant.reset();
         }
     }
 
-    changeStatusDiToPending2(_id: string) {
-        this.apollo
-            .watchQuery<any>({
-                query: this.ticketSerice.changeStatusDiToPending2(_id),
-            })
-            .valueChanges.subscribe(({ loading }) => {
-                this.isLoading = loading;
-            });
-    }
-
-    updateComposantIncreation() {
-        console.log('updateComposantIncreation');
-        this.confirmationService.confirm({
-            message: 'Voulez-vous confirmer les changements ?',
-            header: 'Confirmation Diagnostique',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.updateComposant({
-                            ...this.composantMagasin.value,
-                            pdf: this.payload.file,
-                        }),
-                        useMutationLoading: true,
-                    })
-                    .subscribe(
-                        ({ data, loading }) => {
-                            this.isLoading = loading;
-                            if (data) {
-                            }
-                        },
-                        (error) => {
-                            console.error('Error updating composant: ', error);
-                        },
-                    );
+    /**
+     * Transition INMAGASIN/MagasinEstimation → PENDING2. C'est une MUTATION :
+     * l'ancien code la faisait passer par `watchQuery` (errorPolicy 'ignore')
+     * → tout échec était invisible. Résout à la fin pour que l'appelant
+     * n'enchaîne (fermeture modal, refresh) qu'après confirmation serveur.
+     */
+    changeStatusDiToPending2(_id: string): Promise<any> {
+        return this.mutationRunner.run({
+            key: `changeStatusDiToPending2:${_id}`,
+            mutation: this.ticketSerice.changeStatusDiToPending2(_id),
+            errorToast: {
+                summary: 'Erreur',
+                detail: 'Le changement de statut a échoué. Réessayez.',
             },
+            onLoading: (v) => (this.isLoading = v),
         });
     }
 
-    setComposantAsUpdate() {
-        this.confirmationService.confirm({
-            message:
-                'Attention : Une fois validé, vous ne pourrez plus modifier ce composant !',
-            header: 'Validation composant',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                console.log('inside function valider');
-                console.log(
-                    ' this.nameComposananrSelected',
-                    this.nameComposananrSelected,
-                );
-                console.log(' this.selectedDi_id', this.selectedDi_id);
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.setComposantAsUpdated(
-                            this.selectedDi_id,
-                            this.nameComposananrSelected,
-                        ),
-                    })
-                    .subscribe(({ data }) => {
-                        if (data) {
-                            const index = this.arrayComposant.findIndex(
-                                (composant) =>
-                                    composant.nameComposant ===
-                                    this.nameComposananrSelected,
-                            );
-
-                            if (index !== -1) {
-                                this.arrayComposant.splice(index, 1);
-                            }
-
-                            this.nameComposananrSelected = null;
-                            this.selectedItem = null;
-                            console.log(
-                                'this.arrayComposant',
-                                this.arrayComposant.length,
-                            );
-                            this.arrayComposant.length == 0
-                                ? (this.validatorFinirListeComposant = false)
-                                : (this.validatorFinirListeComposant = true);
-                        }
-                    });
-            },
-        });
-    }
+    // `updateComposantIncreation()` et `setComposantAsUpdate()` (morts, non
+    // référencés par le template, erreurs GraphQL avalées) ont été supprimés —
+    // les flux vivants sont `updateComposant()` et `validateCurrentComponent()`.
 
     /**
      * « Enregistrer » — persist the edited fields of the CURRENT component
@@ -1322,14 +1433,15 @@ export class MagasinDiListComponent implements OnDestroy {
                             this.loadData();
                         },
                         error: (error) => {
-                            // Never freeze the UI: drop the overlay + one toast.
-                            this.isLoading = false;
+                            // Never freeze the UI: drop the overlay + one toast
+                            // carrying the REAL server message (e.g.
+                            // « Composant 'X' introuvable. »).
                             console.error('Error updating composant: ', error);
-                            this.messageservice.add({
-                                severity: 'error',
-                                summary: 'Erreur',
-                                detail: 'Sauvegarde impossible. Réessayez.',
-                            });
+                            this.failWithToast(
+                                'Erreur',
+                                error,
+                                'Sauvegarde impossible. Réessayez.',
+                            );
                         },
                     });
             },
@@ -1341,11 +1453,18 @@ export class MagasinDiListComponent implements OnDestroy {
             message: 'Voulez-vous confirmer les changements',
             header: 'Confirmation Magasin Estimation',
             icon: 'pi pi-question-circle',
-            accept: () => {
-                this.changeStatusDiToPending2(this.selectedDi_id);
-                this.loadData();
-                this.magasinDiDialog = false;
-                this.formUpdateComposant.reset();
+            accept: async () => {
+                try {
+                    // Attendre la confirmation serveur AVANT de fermer le
+                    // modal / recharger (l'ancien code enchaînait aveuglément,
+                    // même si la transition échouait).
+                    await this.changeStatusDiToPending2(this.selectedDi_id);
+                    this.magasinDiDialog = false;
+                    this.formUpdateComposant.reset();
+                    this.loadData();
+                } catch {
+                    /* toast déjà affiché ; le modal reste ouvert */
+                }
             },
         });
     }
@@ -1382,76 +1501,83 @@ export class MagasinDiListComponent implements OnDestroy {
             message: 'Voulez-vous Ajouter ce composant ?',
             header: 'Confirmation Ajout',
 
-            accept: () => {
+            accept: async () => {
+                // Création d'un NOUVEAU composant du catalogue.
                 if (!this.isToUpdate) {
-                    const composantDataForm = this.composantMagasin.value;
-
                     const composantDataTosend = {
-                        ...composantDataForm,
+                        ...this.composantMagasin.value,
                         pdf: this.payload?.file || null,
                     };
-                    console.log('composantDataTosend', composantDataTosend);
-                    this.apollo
-                        .mutate<any>({
+                    try {
+                        // L'ancien subscribe n'avait AUCUN callback d'erreur :
+                        // un échec (doublon de nom, catégorie manquante…)
+                        // laissait le modal ouvert sans aucun retour.
+                        await this.mutationRunner.run({
+                            key: 'addComposantMagasin',
                             mutation:
                                 this.ticketSerice.addComposantMagasin(
                                     composantDataTosend,
                                 ),
-                        })
-                        .subscribe(({ data, loading }) => {
-                            this.isLoading = loading;
-                            if (data) {
-                                console.log('data inside function', data);
-                                this.messageservice.add({
-                                    severity: 'success',
-                                    summary: 'Success',
-                                    detail: 'Le composant a été créer',
-                                });
-                                this.getAllComposant();
-                                this.composantMagasin.reset();
-                            }
+                            successToast: {
+                                summary: 'Composant créé',
+                                detail: composantDataTosend.name || '',
+                            },
+                            errorToast: {
+                                summary: 'Erreur',
+                                detail: 'Création impossible. Réessayez.',
+                            },
+                            onLoading: (v) => (this.isLoading = v),
                         });
+                        this.getAllComposant();
+                        this.composantMagasin.reset();
+                        this.openCreationComposantModal = false;
+                    } catch {
+                        /* toast déjà affiché ; le modal reste ouvert */
+                    }
+                    return;
                 }
 
-                if (this.isToUpdate) {
-                    const formattedComposantInfo = {
-                        name: this.composantMagasin.value.name,
-                        package: this.composantMagasin.value.packageComposant,
-                        category_composant_id:
-                            this.composantMagasin.value.category_composant_id,
-                        prix_achat: this.composantMagasin.value.prix_achat,
-                        prix_vente: this.composantMagasin.value.prix_vente,
-                        coming_date: new Date(
-                            this.composantMagasin.value.coming_date,
-                        ).toISOString(),
-                        link: this.composantMagasin.value.link,
-                        quantity_stocked:
-                            this.composantMagasin.value.quantity_stocked,
-                        pdf: this.payload?.file || null,
-                        status_composant: this.composantMagasin.value.status,
-                    };
-
-                    console.log(
-                        'formattedComposantInfo update',
-                        formattedComposantInfo,
-                    );
-
-                    this.apollo
-                        .mutate<any>({
-                            mutation: this.ticketSerice.updateComposant(
-                                formattedComposantInfo,
-                            ),
-                            useMutationLoading: true,
-                        })
-                        .subscribe(({ data, loading }) => {
-                            this.isLoading = loading;
-                            if (data) {
-                                this.composantMagasin.reset();
-                            }
-                        });
+                // Mise à jour d'un composant EXISTANT (sélectionné en haut).
+                const formattedComposantInfo = {
+                    _id: this.composantMagasin.value._id,
+                    name: this.composantMagasin.value.name,
+                    package: this.composantMagasin.value.packageComposant,
+                    category_composant_id:
+                        this.composantMagasin.value.category_composant_id,
+                    prix_achat: this.composantMagasin.value.prix_achat,
+                    prix_vente: this.composantMagasin.value.prix_vente,
+                    coming_date: this.composantMagasin.value.coming_date,
+                    link: this.composantMagasin.value.link,
+                    quantity_stocked:
+                        this.composantMagasin.value.quantity_stocked,
+                    pdf: this.payload?.file || null,
+                    status_composant: this.composantMagasin.value.status,
+                };
+                try {
+                    await this.mutationRunner.run({
+                        key: `updateComposantFromCreation:${
+                            formattedComposantInfo._id ||
+                            formattedComposantInfo.name
+                        }`,
+                        mutation: this.ticketSerice.updateComposant(
+                            formattedComposantInfo,
+                        ),
+                        successToast: {
+                            summary: 'Composant mis à jour',
+                            detail: formattedComposantInfo.name || '',
+                        },
+                        errorToast: {
+                            summary: 'Erreur',
+                            detail: 'Mise à jour impossible. Réessayez.',
+                        },
+                        onLoading: (v) => (this.isLoading = v),
+                    });
+                    this.getAllComposant();
+                    this.composantMagasin.reset();
+                    this.openCreationComposantModal = false;
+                } catch {
+                    /* toast déjà affiché ; le modal reste ouvert */
                 }
-
-                this.openCreationComposantModal = false;
             },
         });
     }

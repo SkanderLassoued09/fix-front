@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { ConfirmationService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 
 @Component({
@@ -33,18 +33,59 @@ export class ComposantManagementComponent {
     constructor(
         private readonly ticketService: TicketService,
         private readonly apollo: Apollo,
-        private readonly confirmationService: ConfirmationService
+        private readonly confirmationService: ConfirmationService,
+        private readonly messageService: MessageService
     ) {}
     ngOnInit() {
         this.getAllComposants();
     }
 
+    /** Message serveur réel (tableau `errors` d'errorPolicy 'all', ApolloError
+     *  ou erreur réseau), sinon le fallback. Même contrat que magasin-di-list. */
+    private errorDetail(source: any, fallback: string): string {
+        if (Array.isArray(source)) {
+            return source[0]?.message || fallback;
+        }
+        return (
+            source?.graphQLErrors?.[0]?.message ||
+            source?.networkError?.message ||
+            source?.message ||
+            fallback
+        );
+    }
+
     getAllComposants() {
         this.apollo
             .query<any>({ query: this.ticketService.getAllComposant() })
-            .subscribe(({ data }) => {
-                console.log('data composants', data);
-                this.listComposants = data.findAllComposant;
+            .subscribe({
+                // errorPolicy 'all' (queries) : une erreur GraphQL arrive ici
+                // avec `data: null` — l'accès direct crashait (TypeError).
+                next: ({ data, errors }) => {
+                    if (errors?.length) {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Erreur de chargement',
+                            detail: this.errorDetail(
+                                errors,
+                                'Impossible de charger les composants.',
+                            ),
+                        });
+                        return;
+                    }
+                    if (data?.findAllComposant) {
+                        this.listComposants = data.findAllComposant;
+                    }
+                },
+                error: (error) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Erreur de chargement',
+                        detail: this.errorDetail(
+                            error,
+                            'Impossible de charger les composants.',
+                        ),
+                    });
+                },
             });
     }
     deleteComposant(_id: string) {
@@ -57,11 +98,22 @@ export class ComposantManagementComponent {
                     .mutate<any>({
                         mutation: this.ticketService.removeComposant(_id),
                     })
-                    .subscribe(({ data }) => {
-                        console.log('🥨[data]:', data);
-                        if (data) {
-                            this.getAllComposants();
-                        }
+                    .subscribe({
+                        next: ({ data }) => {
+                            if (data) {
+                                this.getAllComposants();
+                            }
+                        },
+                        error: (error) => {
+                            this.messageService.add({
+                                severity: 'error',
+                                summary: 'Erreur',
+                                detail: this.errorDetail(
+                                    error,
+                                    'Suppression impossible. Réessayez.',
+                                ),
+                            });
+                        },
                     });
             },
         });
@@ -101,18 +153,29 @@ export class ComposantManagementComponent {
                         }),
                         useMutationLoading: true,
                     })
-                    .subscribe(
-                        ({ data }) => {
+                    .subscribe({
+                        next: ({ data }) => {
                             if (data) {
-                                console.log('helo');
+                                this.messageService.add({
+                                    severity: 'success',
+                                    summary: 'Enregistré',
+                                    detail: 'Composant mis à jour.',
+                                });
                                 this.getAllComposants();
                             }
                         },
-                        (error) => {
+                        error: (error) => {
                             console.error('Error updating composant: ', error);
-                            // Add error handling logic here if needed
-                        }
-                    );
+                            this.messageService.add({
+                                severity: 'error',
+                                summary: 'Erreur',
+                                detail: this.errorDetail(
+                                    error,
+                                    'Sauvegarde impossible. Réessayez.',
+                                ),
+                            });
+                        },
+                    });
             },
         });
     }

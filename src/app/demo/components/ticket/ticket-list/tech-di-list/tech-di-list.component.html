@@ -660,11 +660,14 @@
         <form [formGroup]="composantTechnicien" class="sav-create-form">
             <div class="sav-form-row">
                 <label class="sav-label">Catégorie composant</label>
+                <!-- optionValue = "value" (_id de la catégorie) ; affiche le
+                     libellé. Avant : affichait ET envoyait l'_id brut. -->
                 <p-dropdown
                     [options]="composantCategory"
                     optionLabel="name"
-                    optionValue="name"
+                    optionValue="value"
                     placeholder="Choisir catégorie"
+                    emptyMessage="Aucune catégorie — créez-en une d'abord."
                     formControlName="category_composant_id"
                     styleClass="sav-dropdown"
                     [style]="{ width: '100%' }"

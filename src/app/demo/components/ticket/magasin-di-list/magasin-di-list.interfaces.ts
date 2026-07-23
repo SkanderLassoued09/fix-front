@@ -38,7 +38,9 @@ export interface ComposantByNameQueryResponse {
         link: string;
         quantity_stocked: number;
         pdf: string;
-        status: string;
+        // Nom RÉEL du champ côté schéma GraphQL (l'interface disait `status`,
+        // masqué tant que le composant lisait la réponse en `any`).
+        status_composant: string;
     };
 }
 
