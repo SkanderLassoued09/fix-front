@@ -8,7 +8,10 @@ import {
     GetAllTechQueryResponse,
     TechStartDiagnosticMutationResponse,
 } from './coordinator-di-list.interfaces';
-import { STATUS_DI } from 'src/app/layout/api/status-di';
+import {
+    APPROVAL_DOC_STATUS_VALUES,
+    STATUS_DI,
+} from 'src/app/layout/api/status-di';
 import { environment } from 'src/environments/environment';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
@@ -83,6 +86,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
     di: any;
     techList: any;
     selectedDi: any;
+    /** Statut de la DI sélectionnée — pilote le bouton coordinateur
+     *  « Confirmer les composants » (v2). Legacy CONFIRMATION_COMPOSANTS toléré. */
+    selectedDiStatus: string;
     pricingDoalog: boolean = false;
     reperationCondition: boolean;
     remarque_manager: string;
@@ -168,28 +174,11 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  timeline so every node always shows the REAL underlying DB status,
      *  never a generic "En attente / Terminé" placeholder when the system
      *  knows more. */
-    private readonly STATUS_LABEL_FR: Record<string, string> = {
-        CREATED: 'Créé',
-        PENDING1: 'En attente diagnostic',
-        DIAGNOSTIC: 'Diagnostic assigné',
-        DIAGNOSTIC_Pause: 'Diagnostic en pause',
-        INDIAGNOSTIC: 'En diagnostic',
-        MagasinEstimation: 'Estimation magasin',
-        INMAGASIN: 'En magasin',
-        PENDING2: 'En attente prix',
-        PRICING: 'En tarification',
-        NEGOTIATION1: 'Négociation 1',
-        NEGOTIATION2: 'Négociation 2',
-        PENDING3: 'En attente réparation',
-        REPARATION: 'Réparation assignée',
-        REPARATION_Pause: 'Réparation en pause',
-        INREPARATION: 'En réparation',
-        FINISHED: 'Terminé',
-        ANNULER: 'Annulé',
-        RETOUR1: 'Retour 1',
-        RETOUR2: 'Retour 2',
-        RETOUR3: 'Retour 3',
-    };
+    /** Affichage BRUT du statut en MAJUSCULES (décision produit — plus de
+     *  libellés « jolis » ; la valeur DB est montrée telle quelle). */
+    private statusRaw(s: string | null | undefined): string {
+        return (s ?? '').toString().toUpperCase() || '—';
+    }
 
     /** Canonical status ordering — used to decide if a phase is `done`
      *  (current status comes AFTER the phase's last status) vs `pending`. */
@@ -200,54 +189,71 @@ export class CoordinatorDiListComponent implements OnDestroy {
         'DIAGNOSTIC_Pause',
         'INDIAGNOSTIC',
         'MagasinEstimation',
-        'INMAGASIN',
+        // Étape préparation magasin — legacy 'PROCESSING' avant la valeur
+        // canonique 'CONFIRMATION' (rename 009), tolérée pour le statusHistory.
+        'PROCESSING',
+        'CONFIRMATION',
+        'CONFIRMATION_COMPOSANTS',
+        'ATTENTE_CONFIRMATION_COORDINATION',
+        'MAGASIN_FINALISATION',
         'PENDING2',
         'PRICING',
+        'PRICING_DIAG',
+        // Phase Approval documentaire (SPLIT). Legacy AVANT les nouveaux pour que
+        // le DERNIER sous-statut réel (WAITING_BC) porte l'index le PLUS élevé de
+        // la phase (ancre done/sautée/en attente).
         'NEGOTIATION1',
+        'ATTENTE_BC_DEVIS',
+        'WAITING_DEVIS',
+        'WAITING_BC',
         'NEGOTIATION2',
         'PENDING3',
         'REPARATION',
         'REPARATION_Pause',
         'INREPARATION',
+        // Phase de clôture documentaire (SPLIT). Legacy avant les nouveaux ;
+        // WAITING_FACTURE = dernier sous-statut (ancre juste avant FINISHED).
+        'ATTENTE_BL_FACTURE',
+        'CLOSING',
+        'WAITING_BL',
+        'WAITING_FACTURE',
         'FINISHED',
         'RETOUR1',
         'RETOUR2',
         'RETOUR3',
     ];
 
-    /** Base phases — always rendered. Retour 1/2/3 are appended dynamically
-     *  by getFlowPhases() ONLY when the DI is in or past that retour cycle. */
+    /** Timeline « Contrôle du Flow » — UN statut PAR étape (plus de regroupement
+     *  en 5 phases). Ordre canonique du flux ; Retour 1/2/3 ajoutés dynamiquement
+     *  par getFlowPhases(). Par étape :
+     *   - `key`      : valeur de statut canonique (clé unique — pilote les lookups
+     *                  date/écart/valeur brute) ;
+     *   - `group`    : famille pour l'acteur (createdBy / tech / magasin / admin) ;
+     *   - `label`    : libellé FR lisible ;
+     *   - `statuses` : jeu d'appariement, valeurs LEGACY incluses (DI pré-migration)
+     *                  + variantes `_Pause` ; ORDONNÉ pour que le DERNIER élément
+     *                  ait l'index le PLUS ÉLEVÉ dans ALL_STATUS_ORDER (ancre du
+     *                  seuil done/pending). */
     private readonly BASE_PHASES = [
-        {
-            key: 'diagnostic' as const,
-            label: 'Diagnostic',
-            icon: 'pi pi-clipboard',
-            statuses: ['PENDING1', 'DIAGNOSTIC', 'DIAGNOSTIC_Pause', 'INDIAGNOSTIC'],
-        },
-        {
-            key: 'magasin' as const,
-            label: 'Magasin',
-            icon: 'pi pi-box',
-            statuses: ['MagasinEstimation', 'INMAGASIN'],
-        },
-        {
-            key: 'admin' as const,
-            label: 'Administration',
-            icon: 'pi pi-file',
-            statuses: ['PENDING2', 'PRICING', 'NEGOTIATION1', 'NEGOTIATION2'],
-        },
-        {
-            key: 'repair' as const,
-            label: 'Réparation',
-            icon: 'pi pi-wrench',
-            statuses: ['PENDING3', 'REPARATION', 'REPARATION_Pause', 'INREPARATION'],
-        },
-        {
-            key: 'closed' as const,
-            label: 'Clôture',
-            icon: 'pi pi-check-circle',
-            statuses: ['FINISHED'],
-        },
+        { key: 'CREATED', group: 'created', label: 'Créé', icon: 'pi pi-plus-circle', statuses: ['CREATED'] },
+        { key: 'PENDING1', group: 'diagnostic', label: 'En attente diagnostic', icon: 'pi pi-clipboard', statuses: ['PENDING1'] },
+        { key: 'DIAGNOSTIC', group: 'diagnostic', label: 'Diagnostic assigné', icon: 'pi pi-clipboard', statuses: ['DIAGNOSTIC'] },
+        { key: 'DIAGNOSTIC_Pause', group: 'diagnostic', label: 'Diagnostic en pause', icon: 'pi pi-pause-circle', statuses: ['DIAGNOSTIC_Pause'] },
+        { key: 'INDIAGNOSTIC', group: 'diagnostic', label: 'En diagnostic', icon: 'pi pi-clipboard', statuses: ['INDIAGNOSTIC'] },
+        { key: 'MagasinEstimation', group: 'magasin', label: 'Estimation magasin', icon: 'pi pi-box', statuses: ['MagasinEstimation'] },
+        { key: 'CONFIRMATION', group: 'magasin', label: 'CONFIRMATION', icon: 'pi pi-box', statuses: ['PROCESSING', 'CONFIRMATION'] },
+        { key: 'ATTENTE_CONFIRMATION_COORDINATION', group: 'magasin', label: 'En attente confirmation Coordination', icon: 'pi pi-box', statuses: ['CONFIRMATION_COMPOSANTS', 'ATTENTE_CONFIRMATION_COORDINATION'] },
+        { key: 'MAGASIN_FINALISATION', group: 'magasin', label: 'Finalisation magasin', icon: 'pi pi-box', statuses: ['MAGASIN_FINALISATION'] },
+        { key: 'PENDING2', group: 'admin', label: 'En attente prix', icon: 'pi pi-file', statuses: ['PENDING2'] },
+        { key: 'PRICING_DIAG', group: 'admin', label: 'Pricing', icon: 'pi pi-file', statuses: ['PRICING', 'PRICING_DIAG'] },
+        { key: 'WAITING_DEVIS', group: 'admin', label: 'Approval (devis/BC)', icon: 'pi pi-file', statuses: ['NEGOTIATION1', 'ATTENTE_BC_DEVIS', 'WAITING_DEVIS', 'WAITING_BC'] },
+        { key: 'NEGOTIATION2', group: 'admin', label: 'Négociation 2', icon: 'pi pi-file', statuses: ['NEGOTIATION2'] },
+        { key: 'PENDING3', group: 'repair', label: 'En attente réparation', icon: 'pi pi-wrench', statuses: ['PENDING3'] },
+        { key: 'REPARATION', group: 'repair', label: 'Réparation assignée', icon: 'pi pi-wrench', statuses: ['REPARATION'] },
+        { key: 'REPARATION_Pause', group: 'repair', label: 'Réparation en pause', icon: 'pi pi-pause-circle', statuses: ['REPARATION_Pause'] },
+        { key: 'INREPARATION', group: 'repair', label: 'En réparation', icon: 'pi pi-wrench', statuses: ['INREPARATION'] },
+        { key: 'WAITING_BL', group: 'closed', label: 'Clôture (BL/facture)', icon: 'pi pi-check-circle', statuses: ['ATTENTE_BL_FACTURE', 'CLOSING', 'WAITING_BL', 'WAITING_FACTURE'] },
+        { key: 'FINISHED', group: 'closed', label: 'Terminé', icon: 'pi pi-check-circle', statuses: ['FINISHED'] },
     ];
     ticketData: { data: any; pauseLogs: any; logsDi: any };
     retour1InfoFromLogs: any;
@@ -406,27 +412,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     getStatusLabel(status: string): string {
-        const map = {
-            CREATED: 'CREATED',
-            PENDING1: 'PENDING1',
-            PENDING2: 'PENDING2',
-            PENDING3: 'PENDING3',
-            DIAGNOSTIC: 'DIAGNOSTIC',
-            INDIAGNOSTIC: 'INDIAGNOSTIC',
-            INMAGASIN: 'INMAGASIN',
-            PRICING: 'PRICING',
-            NEGOTIATION1: 'NEGOTIATION1',
-            NEGOTIATION2: 'NEGOTIATION2',
-            REPARATION: 'REPARATION',
-            INREPARATION: 'INREPARATION',
-            FINISHED: 'FINISHED',
-            ANNULER: 'ANNULER',
-            RETOUR1: 'RETOUR1',
-            RETOUR2: 'RETOUR2',
-            RETOUR3: 'RETOUR3',
-        };
-
-        return map[status] || status;
+        // Affichage BRUT de la valeur DB en MAJUSCULES.
+        return (status ?? '').toString().toUpperCase() || '—';
     }
 
     /**
@@ -443,7 +430,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
         // Count status occurrences
         this.diList.forEach((di) => {
             switch (di.status) {
-                case 'INMAGASIN':
+                case 'CONFIRMATION':
+                case 'PROCESSING':
                 case 'MagasinEstimation':
                     this.counterInMagasin++;
                     break;
@@ -662,6 +650,21 @@ export class CoordinatorDiListComponent implements OnDestroy {
         }, 2000);
     }
 
+    /**
+     * True when the opened DI SKIPS the component-confirmation phase: it has no
+     * components (`contain_pdr` false OR an empty `array_composants`). Such a DI
+     * goes straight from negotiation to PENDING3, so « Confirmer la réception
+     * des composants » never applies — the card shows « Étape sautée » instead
+     * of a dead confirm button. Mirrors the backend routing/guard criterion.
+     */
+    get componentStepSkipped(): boolean {
+        const di = this.di;
+        if (!di) return false;
+        const hasComponents =
+            !!di.contain_pdr && (di.array_composants?.length ?? 0) > 0;
+        return !hasComponents;
+    }
+
     openModalConfig(di) {
         console.log('🍷[di]:', di);
         this.di = { ...di };
@@ -708,6 +711,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
         this.remarque_coordinator = di.remarque_coordinator;
         this.remarqueTech = di.remarqueTech;
         this.selectedDi = di._id;
+        this.selectedDiStatus = di.status;
         this.selectedDiLocation = di.location_id;
         this.ignoreCount = di.ignoreCount;
         this.diDialog = true;
@@ -844,10 +848,12 @@ export class CoordinatorDiListComponent implements OnDestroy {
     getSegmentStages(): Array<{
         key: string;
         label: string;
-        state: 'done' | 'current' | 'pending';
+        state: 'done' | 'current' | 'pending' | 'skipped';
         badgeLabel: string;
+        rawStatus: string | null;
         actor: string;
         timestamp: string | null;
+        duration: { text: string; ongoing: boolean } | null;
     }> {
         const segIdx = this.selectedFlowSegment;
         const isActive = segIdx === this.diRetourCount;
@@ -857,17 +863,33 @@ export class CoordinatorDiListComponent implements OnDestroy {
             : this.flowLogsDi.find((l) => l.idIgnore === segIdx);
 
         return this.BASE_PHASES.map((phase) => {
-            const state = this.computePhaseState(phase, status);
+            const state = this.computePhaseState(phase, status, isActive);
             // Raw enum `subStatus`/`subStatusList` intentionally NOT returned:
             // the timeline shows only the human label + French badge + the
             // transition timestamp — never internal status codes.
             return {
                 key: phase.key,
-                label: phase.label,
+                label: this.statusRaw(phase.key),
                 state,
                 badgeLabel: this.computePhaseBadgeLabel(phase, status, state),
+                // Valeur brute EXACTE de `di.status` stockée en base (legacy
+                // affiché tel quel → repère les DI pré-migration). Phase EN COURS
+                // → statut courant (aligné sur le libellé, montre la valeur
+                // legacy éventuelle) ; phase FRANCHIE → statut d'ENTRÉE depuis
+                // `statusHistory` (apparié à la date affichée) ; sinon rien.
+                // Segments d'historique (retours) : pas d'historique par phase.
+                // current → statut courant stocké (legacy visible) ; done → valeur
+                // réelle depuis `statusHistory`, sinon la valeur CANONIQUE (`key`,
+                // pas la variante `_Pause` qui sert d'ancre) ; pending → canonique.
+                rawStatus: !isActive
+                    ? null
+                    : state === 'current'
+                      ? status || null
+                      : state === 'done'
+                        ? this.phaseEntry(phase.key)?.status ?? phase.key
+                        : phase.key,
                 actor: this.computePhaseActor(
-                    phase.key,
+                    phase.group,
                     state,
                     isActive,
                     log,
@@ -875,6 +897,12 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 timestamp: isActive
                     ? this.computePhaseTimestamp(phase.key, state)
                     : this.formatDateTime(log?.createdAt) || null,
+                // Écart (durée dans la phase) : uniquement pour le segment ACTIF,
+                // dérivé des `at` de `statusHistory`. Les segments d'historique
+                // (retours, depuis logsDi) n'ont pas d'historique par phase → null.
+                duration: isActive
+                    ? this.computePhaseDuration(phase.key, state)
+                    : null,
             };
         });
     }
@@ -883,55 +911,47 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  (live) or the snapshot's workers (history) ; Magasin =
      *  `componentsConfirmedBy` ; Admin = `pricingRequestSentBy`. Fallbacks
      *  keep the UI from rendering raw nulls. */
+    /** Acteur affiché — UNIQUEMENT le TECHNICIEN, sur les étapes diagnostic /
+     *  réparation. Les autres familles (création, magasin, admin, clôture)
+     *  n'affichent aucun acteur. Chaîne vide → la ligne acteur est masquée. */
     private computePhaseActor(
-        phaseKey: string,
-        state: 'done' | 'current' | 'pending',
+        group: string,
+        state: 'done' | 'current' | 'pending' | 'skipped',
         isActive: boolean,
         log: any | null,
     ): string {
-        if (state === 'pending') return '—';
-        if (phaseKey === 'diagnostic') {
-            if (isActive)
-                return this.formatTableValueFallback(this.di?.techDiag);
-            return (
-                this.formatTableValueFallback(
-                    log?.current_workers_ids?.[0],
-                ) ||
-                this.formatTableValueFallback(this.di?.techDiag)
-            );
+        // 'skipped' (étape jamais atteinte) → aucun acteur : c'est la CAUSE de
+        // l'anomalie « DIAGNOSTIC_Pause : auteur sans date » — l'ancien état,
+        // déduit de l'ordre, marquait l'étape 'done' et affichait `techDiag`
+        // alors qu'AUCUNE entrée `statusHistory` (donc aucune date) n'existait.
+        if (state === 'pending' || state === 'skipped') return '';
+        let tech: string | undefined;
+        if (group === 'diagnostic') {
+            tech = isActive
+                ? this.formatTableValueFallback(this.di?.techDiag)
+                : this.formatTableValueFallback(
+                      log?.current_workers_ids?.[0],
+                  ) || this.formatTableValueFallback(this.di?.techDiag);
+        } else if (group === 'repair') {
+            tech = this.formatTableValueFallback(this.di?.techRep);
+        } else {
+            return '';
         }
-        if (phaseKey === 'magasin') {
-            return (
-                this.formatTableValueFallback(
-                    this.di?.componentsConfirmedBy,
-                ) || 'Équipe Magasin'
-            );
-        }
-        if (phaseKey === 'admin') {
-            return (
-                this.formatTableValueFallback(
-                    this.di?.pricingRequestSentBy,
-                ) || 'Équipe Admin'
-            );
-        }
-        if (phaseKey === 'repair') {
-            const t = this.formatTableValueFallback(this.di?.techRep);
-            return t === 'N/A' ? 'Non assigné' : t;
-        }
-        if (phaseKey === 'closed') {
-            return state === 'done' || state === 'current'
-                ? this.formatTableValueFallback(this.di?.createdBy) || '—'
-                : '—';
-        }
-        return '—';
+        // Pas de tech réel (null → 'N/A') → aucune ligne acteur.
+        return tech && tech !== 'N/A' ? tech : '';
     }
 
-    /** Progression `done / 5 étapes` — `done + 0.5×current` for a smooth fill. */
+    /** Progression `franchies / N`. On NE compte QUE les étapes réellement
+     *  franchies (state 'done'). N = étapes du CHEMIN RÉEL = total MOINS les
+     *  'skipped' (étapes sautées, jamais atteintes) : une étape sautée ne doit
+     *  ni gonfler le numérateur ni le dénominateur. `+ 0.5×current` = remplissage
+     *  fluide de la barre pour l'étape en cours. */
     get flowProgress(): { done: number; total: number; pct: number } {
         const stages = this.getSegmentStages();
-        const total = stages.length || 5;
-        const done = stages.filter((s) => s.state === 'done').length;
-        const current = stages.filter((s) => s.state === 'current').length;
+        const realPath = stages.filter((s) => s.state !== 'skipped');
+        const total = realPath.length || 5;
+        const done = realPath.filter((s) => s.state === 'done').length;
+        const current = realPath.filter((s) => s.state === 'current').length;
         const effective = done + (current > 0 ? 0.5 : 0);
         return {
             done,
@@ -948,7 +968,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
 
     /** Status pill for the top banner — French label via the existing map. */
     get diCurrentStatusLabel(): string {
-        return this.STATUS_LABEL_FR[this.di?.status] ?? (this.di?.status || '—');
+        return this.statusRaw(this.di?.status);
     }
 
     formatDateTime(value: any): string {
@@ -991,7 +1011,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
         const afterDiagnostic = [
             STATUS_DI.PENDING2,
             STATUS_DI.PRICING,
-            STATUS_DI.NEGOTIATION1,
+            // Phase Approval documentaire (WAITING_DEVIS/WAITING_BC + legacy
+            // ATTENTE_BC_DEVIS/NEGOTIATION1, base non migrée).
+            ...APPROVAL_DOC_STATUS_VALUES,
             STATUS_DI.NEGOTIATION2,
             STATUS_DI.PENDING3,
             STATUS_DI.REPARATION,
@@ -1199,7 +1221,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
         label: string;
         number: number;
         icon: string;
-        state: 'done' | 'current' | 'pending';
+        state: 'done' | 'current' | 'pending' | 'skipped';
         badgeLabel: string;
         timestamp: string | null;
     }> {
@@ -1213,7 +1235,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
             const state = this.computePhaseState(phase, status);
             out.push({
                 key: phase.key,
-                label: phase.label,
+                label: this.statusRaw(phase.key),
                 number: idx + 1,
                 icon: phase.icon,
                 state,
@@ -1240,7 +1262,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 number: this.BASE_PHASES.length + i + 1,
                 icon: 'pi pi-refresh',
                 state: isCurrent ? 'current' : 'done',
-                badgeLabel: this.STATUS_LABEL_FR[retourStatus] ?? retourStatus,
+                badgeLabel: this.statusRaw(retourStatus),
                 timestamp: null,
             });
         }
@@ -1248,29 +1270,54 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return out;
     }
 
+    /** État d'une étape. L'état « franchie » (done) se déduit de la PRÉSENCE
+     *  RÉELLE d'une entrée `statusHistory` (segment actif), PAS de la position
+     *  dans l'ordre : le flux a des SAUTS légitimes (ex. aucun composant → saute
+     *  le magasin), donc « avant dans l'ordre » ≠ « passée par là ».
+     *   - current : statut courant ∈ étape ;
+     *   - done    : une entrée d'historique existe pour cette étape ;
+     *   - skipped : AUCUNE entrée mais l'étape est DERRIÈRE le statut courant
+     *               (jamais atteinte — sautée) ;
+     *   - pending : AUCUNE entrée et l'étape est DEVANT.
+     *  Segment d'HISTORIQUE (retour, sans `statusHistory` par phase) : on retombe
+     *  sur l'ordre (best-effort, pas de distinction « sautée »). */
     private computePhaseState(
         phase: { key: string; statuses: string[] },
         status: string,
-    ): 'done' | 'current' | 'pending' {
+        isActive: boolean = true,
+    ): 'done' | 'current' | 'pending' | 'skipped' {
         if (!status) return 'pending';
         if (phase.statuses.includes(status)) return 'current';
-        const lastPhaseStatus = phase.statuses[phase.statuses.length - 1];
-        const lastIdx = this.ALL_STATUS_ORDER.indexOf(lastPhaseStatus);
-        const currentIdx = this.ALL_STATUS_ORDER.indexOf(status);
-        // Closed phase: only 'done' if we're in a retour AFTER finishing
-        if (phase.key === 'closed') {
-            return currentIdx > lastIdx ? 'done' : 'pending';
+        const behind = this.isPhaseBehindCurrent(phase, status);
+        if (isActive) {
+            if (this.phaseEntry(phase.key)) return 'done'; // entrée réelle
+            return behind ? 'skipped' : 'pending';
         }
-        return currentIdx > lastIdx ? 'done' : 'pending';
+        // Segment d'historique : pas d'entrée par phase → ordre seul.
+        return behind ? 'done' : 'pending';
+    }
+
+    /** Le DERNIER statut de l'étape est-il AVANT le statut courant dans l'ordre
+     *  canonique (donc l'étape est « derrière » le curseur) ? */
+    private isPhaseBehindCurrent(
+        phase: { statuses: string[] },
+        status: string,
+    ): boolean {
+        const lastIdx = this.ALL_STATUS_ORDER.indexOf(
+            phase.statuses[phase.statuses.length - 1],
+        );
+        const currentIdx = this.ALL_STATUS_ORDER.indexOf(status);
+        return currentIdx > lastIdx;
     }
 
     private computePhaseBadgeLabel(
         _phase: { statuses: string[] },
         status: string,
-        state: 'done' | 'current' | 'pending',
+        state: 'done' | 'current' | 'pending' | 'skipped',
     ): string {
-        if (state === 'current') return this.STATUS_LABEL_FR[status] ?? status;
+        if (state === 'current') return this.statusRaw(status);
         if (state === 'done') return 'Terminé';
+        if (state === 'skipped') return 'Sautée'; // jamais atteinte
         return 'En attente';
     }
 
@@ -1289,9 +1336,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
 
     private computePhaseTimestamp(
         phaseKey: string,
-        state: 'done' | 'current' | 'pending',
+        state: 'done' | 'current' | 'pending' | 'skipped',
     ): string | null {
-        if (state === 'pending') return null;
+        // 'skipped' = jamais atteinte → aucune date (pas d'entrée statusHistory).
+        if (state === 'pending' || state === 'skipped') return null;
         // Primary: the single-source transition history (every phase covered).
         const fromHistory = this.phaseDateFromHistory(phaseKey);
         if (fromHistory) return fromHistory;
@@ -1312,6 +1360,84 @@ export class CoordinatorDiListComponent implements OnDestroy {
             return this.formatDateTime(this.di.statusUpdatedAt);
         }
         return null;
+    }
+
+    /** `statusHistory` nettoyé + ordonné chronologiquement. Ignore les entrées
+     *  malformées (statut non-string — ex. héritage du bug `:1493`) et les dates
+     *  invalides, pour ne jamais planter le calcul d'écart. */
+    private sanitizedHistory(): Array<{ status: string; at: Date }> {
+        const raw: any[] = this.di?.statusHistory ?? [];
+        return raw
+            .filter((h) => h && typeof h.status === 'string' && h.at != null)
+            .map((h) => ({ status: h.status as string, at: new Date(h.at) }))
+            .filter((h) => !Number.isNaN(h.at.getTime()))
+            .sort((a, b) => a.at.getTime() - b.at.getTime());
+    }
+
+    /** Entrée d'historique d'ENTRÉE dans une phase = 1re entrée `statusHistory`
+     *  dont le statut appartient à la phase. Source COMMUNE de la date ET de la
+     *  valeur brute affichées (la MÊME entrée réellement stockée — aucun
+     *  recalcul ; les valeurs legacy comme `NEGOTIATION1` sortent telles quelles). */
+    private phaseEntry(phaseKey: string): { status: string; at: Date } | null {
+        const phase = this.BASE_PHASES.find((p) => p.key === phaseKey);
+        if (!phase) return null;
+        return (
+            this.sanitizedHistory().find((h) =>
+                phase.statuses.includes(h.status),
+            ) ?? null
+        );
+    }
+
+    /** Date brute d'ENTRÉE dans une phase = `at` de l'entrée d'historique. */
+    private phaseEntryRawDate(phaseKey: string): Date | null {
+        return this.phaseEntry(phaseKey)?.at ?? null;
+    }
+
+    /** Durée passée dans une phase, purement dérivée des `at` de `statusHistory`.
+     *  - phase `done`    → jusqu'à l'entrée de la phase suivante atteinte (figé) ;
+     *  - phase `current` → depuis l'entrée jusqu'à MAINTENANT (« en cours ») ;
+     *  - `pending` / entrée absente / pas de borne → null (affiché « — »). */
+    private computePhaseDuration(
+        phaseKey: string,
+        state: 'done' | 'current' | 'pending' | 'skipped',
+    ): { text: string; ongoing: boolean } | null {
+        if (state === 'pending' || state === 'skipped') return null;
+        const start = this.phaseEntryRawDate(phaseKey);
+        if (!start) return null;
+        if (state === 'current') {
+            return {
+                text: this.formatDuration(Date.now() - start.getTime()),
+                ongoing: true,
+            };
+        }
+        // done → borne = entrée de la 1re phase suivante (ordre canonique) ayant
+        // une entrée postérieure. Absente (vieilles DI partielles) → null → « — ».
+        const order: string[] = this.BASE_PHASES.map((p) => p.key);
+        for (let j = order.indexOf(phaseKey) + 1; j < order.length; j++) {
+            const next = this.phaseEntryRawDate(order[j]);
+            if (next && next.getTime() > start.getTime()) {
+                return {
+                    text: this.formatDuration(next.getTime() - start.getTime()),
+                    ongoing: false,
+                };
+            }
+        }
+        return null;
+    }
+
+    /** Millisecondes → durée humaine FR compacte : « 2 j 4 h », « 3 h 15 min »,
+     *  « 12 min », « moins d'1 min ». La durée est un DELTA → indépendante du
+     *  fuseau (l'instant courant = heure locale de la machine). */
+    formatDuration(ms: number): string {
+        if (!Number.isFinite(ms) || ms < 0) return '—';
+        const totalMin = Math.floor(ms / 60000);
+        if (totalMin < 1) return "moins d'1 min";
+        const days = Math.floor(totalMin / 1440);
+        const hours = Math.floor((totalMin % 1440) / 60);
+        const mins = totalMin % 60;
+        if (days > 0) return hours > 0 ? `${days} j ${hours} h` : `${days} j`;
+        if (hours > 0) return mins > 0 ? `${hours} h ${mins} min` : `${hours} h`;
+        return `${mins} min`;
     }
 
     /** Footer card: human-readable current phase label. */
@@ -1448,12 +1574,17 @@ export class CoordinatorDiListComponent implements OnDestroy {
             case 'DIAGNOSTIC':
             case 'INDIAGNOSTIC':
                 return 'info';
-            case 'INMAGASIN':
+            case 'CONFIRMATION':
+            case 'PROCESSING':
             case 'MagasinEstimation':
                 return 'warning';
             case 'PRICING':
+            case 'PRICING_DIAG':
                 return 'warning';
+            case 'WAITING_DEVIS':
+            case 'WAITING_BC':
             case 'NEGOTIATION1':
+            case 'ATTENTE_BC_DEVIS':
             case 'NEGOTIATION2':
                 return 'warning';
             case 'REPARATION':
@@ -1671,20 +1802,40 @@ export class CoordinatorDiListComponent implements OnDestroy {
                     .pipe(
                         finalize(() => (this.componentsConfirmInFlight = false)),
                     )
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
+                    .subscribe({
+                        next: ({ data, loading }) => {
+                            this.isLoading = loading;
 
-                        if (data?.confirmDiComponents) {
-                            console.log('🌯[data]:', data);
-                            const updated = data.confirmDiComponents;
-                            this.componentConfirmedFromCoordinator =
-                                updated.handleSendingNotificationBetweenCoordinatorAndMagasin;
-                            this.magasinConfirmedAt =
-                                updated.componentsConfirmedAt;
-                            this.di = { ...this.di, ...updated };
-                            this.loadData();
-                            this.reperationCondition = true;
-                        }
+                            if (data?.confirmDiComponents) {
+                                const updated = data.confirmDiComponents;
+                                this.componentConfirmedFromCoordinator =
+                                    updated.handleSendingNotificationBetweenCoordinatorAndMagasin;
+                                this.magasinConfirmedAt =
+                                    updated.componentsConfirmedAt;
+                                this.di = { ...this.di, ...updated };
+                                this.loadData();
+                                this.reperationCondition = true;
+                                this.messageservice.add({
+                                    severity: 'success',
+                                    summary: 'Composants confirmés',
+                                    detail:
+                                        'La réception des composants a été confirmée.',
+                                });
+                            }
+                        },
+                        // Plus d'échec silencieux : toute erreur de la mutation
+                        // (garde back, transition refusée…) remonte un toast avec
+                        // le message serveur au lieu de ne rien faire.
+                        error: (err) => {
+                            this.isLoading = false;
+                            this.messageservice.add({
+                                severity: 'error',
+                                summary: 'Échec de la confirmation',
+                                detail:
+                                    err?.message ??
+                                    'La confirmation des composants a échoué.',
+                            });
+                        },
                     });
             },
         });

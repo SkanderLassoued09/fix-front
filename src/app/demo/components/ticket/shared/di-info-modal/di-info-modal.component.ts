@@ -1,14 +1,19 @@
 import { CommonModule } from '@angular/common';
 import {
     ChangeDetectionStrategy,
+    ChangeDetectorRef,
     Component,
     EventEmitter,
     Input,
+    OnChanges,
     Output,
+    SimpleChanges,
 } from '@angular/core';
+import { Apollo } from 'apollo-angular';
 import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DiPdfService } from 'src/app/demo/service/di-pdf.service';
+import { TicketService } from 'src/app/demo/service/ticket.service';
 
 /**
  * Shared read-only "Information demande d'intervention" modal.
@@ -37,7 +42,7 @@ import { DiPdfService } from 'src/app/demo/service/di-pdf.service';
     styleUrls: ['./di-info-modal.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DiInfoModalComponent {
+export class DiInfoModalComponent implements OnChanges {
     @Input() di: any = null;
     @Input() visible = false;
     @Input() context: 'coordinator' | 'interventions' = 'interventions';
@@ -110,7 +115,123 @@ export class DiInfoModalComponent {
     /** Set while the PDF is being generated (one-time lazy jsPDF import). */
     downloading = false;
 
-    constructor(private readonly diPdf: DiPdfService) {}
+    // ── Décomposition coût Diagnostic / Réparation (lecture seule) ──────────
+    // Le modal est majoritairement présentationnel ; ces 3 lectures (temps
+    // persistés du ledger Stat + taux Tarif + coût composants) alimentent les
+    // blocs « Diagnostic » et « Réparation ». Aucune capture, aucune mutation.
+    costLoading = false;
+    private _costsForId: string | null = null;
+    diagSeconds = 0;
+    repSeconds = 0;
+    tarif = 0;
+    composantCost = 0;
+
+    constructor(
+        private readonly diPdf: DiPdfService,
+        private readonly apollo: Apollo,
+        private readonly ticket: TicketService,
+        private readonly cdr: ChangeDetectorRef,
+    ) {}
+
+    ngOnChanges(_changes: SimpleChanges): void {
+        const id = this.di?._id;
+        if (id && this.visible && id !== this._costsForId) {
+            this.fetchCosts(id);
+        }
+    }
+
+    /** HH:MM:SS persisté → secondes (0 si absent/malformé). */
+    private hhmmssToSeconds(s: any): number {
+        if (typeof s !== 'string') return 0;
+        const p = s.split(':').map(Number);
+        if (p.length !== 3 || p.some((n) => !Number.isFinite(n))) return 0;
+        return p[0] * 3600 + p[1] * 60 + p[2];
+    }
+
+    /** Charge temps diag/répa (ledger Stat), taux (Tarif), coût composants. */
+    private fetchCosts(diId: string): void {
+        this._costsForId = diId;
+        this.costLoading = true;
+        this.diagSeconds = this.repSeconds = 0;
+        this.tarif = this.composantCost = 0;
+
+        this.apollo
+            .query<any>({ query: this.ticket.getTechTarif() })
+            .subscribe(({ data }) => {
+                if (this._costsForId !== diId) return;
+                this.tarif = Number(data?.getTarif?.tarif) || 0;
+                this.cdr.markForCheck();
+            });
+        this.apollo
+            .query<any>({ query: this.ticket.getStatByDI_ID(diId) })
+            .subscribe(({ data }) => {
+                if (this._costsForId !== diId) return;
+                const s = data?.getInfoStatByIdDi;
+                this.diagSeconds = this.hhmmssToSeconds(s?.diag_time);
+                this.repSeconds = this.hhmmssToSeconds(s?.rep_time);
+                this.cdr.markForCheck();
+            });
+        this.apollo
+            .query<any>({ query: this.ticket.totalComposant(diId) })
+            .subscribe(({ data }) => {
+                if (this._costsForId !== diId) return;
+                this.composantCost =
+                    Number(data?.calculateTicketComposantPrice) || 0;
+                this.costLoading = false;
+                this.cdr.markForCheck();
+            });
+    }
+
+    /** Coût calculé DIAGNOSTIC = main-d'œuvre (temps diag × taux). Composants
+     *  rattachés à la RÉPARATION (décision produit) → 0 ici. */
+    get coutDiag(): number {
+        return (
+            Math.round(((this.diagSeconds * this.tarif) / 3600) * 1000) / 1000
+        );
+    }
+    /** Coût calculé RÉPARATION = main-d'œuvre (temps répa × taux) + pièces. */
+    get coutRepair(): number {
+        const labor = (this.repSeconds * this.tarif) / 3600;
+        return Math.round((labor + this.composantCost) * 1000) / 1000;
+    }
+    /** Prix facturé DIAGNOSTIC = `di.price` (saisi dans « Fixer le prix »). */
+    get factureDiag(): number {
+        return Number(this.di?.price);
+    }
+    /** Écart diagnostic (facturé − calculé) — même formule/format que l'écart du
+     *  modal de tarification (montant + %, vert marge / rouge sous-facturation). */
+    get ecartDiag(): {
+        absent: boolean;
+        montant: number;
+        percent: number;
+        tone: 'pos' | 'neg' | 'neutral';
+    } {
+        return this.computeEcart(this.factureDiag, this.coutDiag);
+    }
+
+    /** Logique d'écart partagée (identique au modal « Fixer le prix »). */
+    private computeEcart(
+        facture: number,
+        cout: number,
+    ): {
+        absent: boolean;
+        montant: number;
+        percent: number;
+        tone: 'pos' | 'neg' | 'neutral';
+    } {
+        if (!Number.isFinite(facture) || facture <= 0) {
+            return { absent: true, montant: 0, percent: 0, tone: 'neutral' };
+        }
+        const montant = Math.round((facture - cout) * 1000) / 1000;
+        const percent = cout > 0 ? (montant / cout) * 100 : 0;
+        const tone: 'pos' | 'neg' | 'neutral' =
+            Math.abs(montant) < 0.5 && Math.abs(percent) < 1
+                ? 'neutral'
+                : montant > 0
+                  ? 'pos'
+                  : 'neg';
+        return { absent: false, montant, percent, tone };
+    }
 
     onVisibleChange(v: boolean) {
         this.visible = v;
@@ -134,30 +255,8 @@ export class DiInfoModalComponent {
 
     /** Raw workflow status → French label (mirrors the app's UI labels). */
     statusLabel(status: any): string {
-        const map: Record<string, string> = {
-            CREATED: 'Créée',
-            PENDING1: 'En attente diagnostic',
-            DIAGNOSTIC: 'Diagnostic affecté',
-            DIAGNOSTIC_Pause: 'Diagnostic en pause',
-            INDIAGNOSTIC: 'En diagnostic',
-            MagasinEstimation: 'Estimation magasin',
-            INMAGASIN: 'En magasin',
-            PENDING2: 'En attente de facturation',
-            PRICING: 'Facturation en cours',
-            NEGOTIATION1: 'Négociation 1',
-            NEGOTIATION2: 'Négociation 2',
-            ANNULER: 'Annulée',
-            PENDING3: 'En attente réparation',
-            REPARATION: 'Réparation affectée',
-            REPARATION_Pause: 'Réparation en pause',
-            INREPARATION: 'En réparation',
-            FINISHED: 'Terminée',
-            RETOUR1: 'Retour 1',
-            RETOUR2: 'Retour 2',
-            RETOUR3: 'Retour 3',
-        };
-        const s = (status ?? '').toString().trim();
-        return map[s] || s || '—';
+        // Affichage BRUT de la valeur DB en MAJUSCULES.
+        return (status ?? '').toString().trim().toUpperCase() || '—';
     }
 
     /** Document types shown in the Documents section, in display order.
@@ -241,27 +340,6 @@ export class DiInfoModalComponent {
                 maximumFractionDigits: 3,
             }) + ' TND'
         );
-    }
-
-    /** Difference price_final − price_initial.
-     *  - absent → both equal → label "Aucun écart" (neutral grey)
-     *  - positive (final > initial) → ambre (gain pour Fixtronix)
-     *  - negative (final < initial) → vert (remise pour le client) */
-    get ecart(): { absent: boolean; positive: boolean; label: string } {
-        const initial = Number(this.di?.price);
-        const final = Number(this.di?.final_price);
-        if (!Number.isFinite(initial) || !Number.isFinite(final)) {
-            return { absent: true, positive: true, label: '—' };
-        }
-        const delta = final - initial;
-        if (delta === 0)
-            return { absent: true, positive: true, label: 'Aucun écart' };
-        const sign = delta > 0 ? '+' : '−';
-        return {
-            absent: false,
-            positive: delta > 0,
-            label: `${sign}${this.formatTnd3(Math.abs(delta))}`,
-        };
     }
 
     /** Print the open modal. The `@media print` block in the SCSS hides

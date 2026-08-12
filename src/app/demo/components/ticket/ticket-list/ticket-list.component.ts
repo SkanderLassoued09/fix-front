@@ -137,14 +137,19 @@ export class TicketListComponent implements OnInit, OnDestroy {
         { label: 'Pending1', value: 'PENDING1' },
         { label: 'Diagnostic', value: 'DIAGNOSTIC' },
         { label: 'Indiagnostic', value: 'INDIAGNOSTIC' },
-        { label: 'Inmagasin', value: 'INMAGASIN' },
+        { label: 'CONFIRMATION', value: 'CONFIRMATION' },
         { label: 'Pending2', value: 'PENDING2' },
-        { label: 'Pricing', value: 'PRICING' },
-        { label: 'Negotiation1', value: 'NEGOTIATION1' },
+        { label: 'Pricing', value: 'PRICING_DIAG' },
+        // Approval split en deux gates documentaires (recherche back par regex).
+        { label: 'Approval — attente devis', value: 'WAITING_DEVIS' },
+        { label: 'Approval — attente BC', value: 'WAITING_BC' },
         { label: 'Negotiation2', value: 'NEGOTIATION2' },
         { label: 'Pending3', value: 'PENDING3' },
         { label: 'Reparation', value: 'REPARATION' },
         { label: 'Inreparation', value: 'INREPARATION' },
+        // Clôture split en deux gates documentaires.
+        { label: 'Clôture — attente BL', value: 'WAITING_BL' },
+        { label: 'Clôture — attente facture', value: 'WAITING_FACTURE' },
         { label: 'Finished', value: 'FINISHED' },
         { label: 'Annuler', value: 'ANNULER' },
         { label: 'Retour1', value: 'RETOUR1' },
@@ -255,6 +260,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
     array_composants: any;
     _idDi: any;
     price: number;
+    /** « Estimation réparation » saisie dans le modal de tarification
+     *  diagnostic. Champ dédié (persisté via setRepairEstimate), optionnel —
+     *  sert à comparer l'estimé au prix réel de réparation plus tard. */
+    repairEstimate: number;
     seletedRow: any;
     discountedPriceNeg: number = 0;
     slideEnd: any;
@@ -376,6 +385,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
         return (
             (this.selectedBL ? 1 : 0) + (this.selectedFacture ? 1 : 0)
         );
+    }
+
+    /** Séquence documentaire de clôture : la Facture ne peut être téléversée
+     *  qu'APRÈS le BL. Tant que la DI est en `WAITING_BL` (BL absent), le slot
+     *  Facture est VERROUILLÉ ; l'upload du BL fait passer la DI en
+     *  `WAITING_FACTURE` (transition auto back) → au ré-affichage le slot
+     *  s'ouvre. Les DI legacy (`CLOSING`/`ATTENTE_BL_FACTURE`) et `FINISHED`
+     *  ne sont PAS verrouillées (ancien flux BL+Facture ensemble / gestion
+     *  a posteriori). */
+    get factureSlotLocked(): boolean {
+        return this.filesSelected?.status === 'WAITING_BL';
     }
 
     /** Per-slot drag-over highlight (key = `'BL'` / `'Facture'`). Visual only —
@@ -623,19 +643,29 @@ export class TicketListComponent implements OnInit, OnDestroy {
         return f + c;
     }
 
-    /** Marge live vs the cost base: positive=green, negative=red (price below
-     *  cost). Returned as both TND delta and % so the pill can show both. */
-    get pricingMarge(): {
-        tnd: number;
+    /** Écart TEMPS RÉEL entre le PRIX que l'admin saisit et le COÛT THÉORIQUE
+     *  (main-d'œuvre = temps×taux + pièces). Recalculé à chaque frappe (getter lu
+     *  au change-detection). Positif = marge (vert) ; négatif = sous-facturation
+     *  (rouge — on perd sur le temps passé) ; ~0 = au coût (neutre). `null` tant
+     *  qu'aucun prix n'est saisi. */
+    get pricingEcart(): {
+        montant: number;
         percent: number;
-        positive: boolean;
+        tone: 'pos' | 'neg' | 'neutral';
     } | null {
-        const base = this.pricingCoutTotal;
+        const theo = this.pricingCoutTotal;
         const p = Number(this.price);
-        if (!base || !Number.isFinite(p)) return null;
-        const tnd = p - base;
-        const percent = (tnd / base) * 100;
-        return { tnd, percent, positive: tnd >= 0 };
+        if (!Number.isFinite(p) || p <= 0) return null;
+        const montant = Math.round((p - theo) * 1000) / 1000;
+        const percent = theo > 0 ? (montant / theo) * 100 : 0;
+        // Zone neutre : écart négligeable en montant ET en %.
+        const tone: 'pos' | 'neg' | 'neutral' =
+            Math.abs(montant) < 0.5 && Math.abs(percent) < 1
+                ? 'neutral'
+                : montant > 0
+                  ? 'pos'
+                  : 'neg';
+        return { montant, percent, tone };
     }
 
     /** Gating for "Confirmer le prix final": both BC and Devis must be present
@@ -668,6 +698,109 @@ export class TicketListComponent implements OnInit, OnDestroy {
         );
     }
 
+    /** Comme `formatTnd3` mais sans le suffixe « TND » — pour les mini-tuiles
+     *  (Temps / Facturé / Pièces) de la bande d'info du modal de tarification. */
+    formatNum3(value: any): string {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return '—';
+        return n.toLocaleString('fr-TN', {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3,
+        });
+    }
+
+    // ── Tarification diagnostic (redesign « Tarification diagnostic.dc.html ») ──
+    // Deux questions gardées : coût RÉEL du diagnostic (borné 150–500 TND) et
+    // estimation de la réparation (désormais OBLIGATOIRE, > 0). Les getters
+    // ci-dessous pilotent l'état visuel (badge/bordure/aide) de chaque étape et
+    // la ligne de statut du footer — miroir du `renderVals()` de la maquette.
+    get reelValid(): boolean {
+        const p = Number(this.price);
+        return Number.isFinite(p) && p >= 150 && p <= 500;
+    }
+    get reelState(): 'idle' | 'ok' | 'err' {
+        const p = Number(this.price);
+        if (!Number.isFinite(p) || p <= 0) return 'idle';
+        return this.reelValid ? 'ok' : 'err';
+    }
+    get repValid(): boolean {
+        const r = Number(this.repairEstimate);
+        return Number.isFinite(r) && r > 0;
+    }
+    get repState(): 'idle' | 'ok' | 'err' {
+        const r = Number(this.repairEstimate);
+        if (!Number.isFinite(r) || r <= 0) return 'idle';
+        return 'ok';
+    }
+    /** Aide contextuelle sous l'étape 1 (coût réel). */
+    get reelHelp(): { text: string; char: string; tone: string } {
+        const st = this.reelState;
+        if (st === 'err')
+            return {
+                text: 'Choisissez un montant entre 150 et 500 TND',
+                char: '!',
+                tone: 'err',
+            };
+        if (st === 'ok')
+            return { text: 'Montant valide', char: '✓', tone: 'ok' };
+        return {
+            text: 'Un montant entre 150 et 500 TND',
+            char: 'i',
+            tone: 'idle',
+        };
+    }
+    /** Aide contextuelle sous l'étape 2 (estimation réparation). */
+    get repHelp(): { text: string; char: string; tone: string } {
+        return this.repState === 'ok'
+            ? { text: 'Estimation enregistrée', char: '✓', tone: 'ok' }
+            : {
+                  text: 'Entrez le montant estimé (obligatoire)',
+                  char: 'i',
+                  tone: 'idle',
+              };
+    }
+    /** Ligne de statut du footer — combine la validité des deux étapes. `tone`
+     *  colore le texte, `iconTone` la pastille (le cas « estimation manquante »
+     *  affiche un texte ambre mais une pastille neutre, comme la maquette). */
+    get pricingStatus(): {
+        text: string;
+        char: string;
+        tone: string;
+        iconTone: string;
+    } {
+        if (!this.reelValid && !this.repValid)
+            return {
+                text: 'Remplissez les 2 montants',
+                char: '•',
+                tone: 'idle',
+                iconTone: 'idle',
+            };
+        if (!this.reelValid)
+            return {
+                text: 'Vérifiez le coût du diagnostic',
+                char: '!',
+                tone: 'err',
+                iconTone: 'err',
+            };
+        if (!this.repValid)
+            return {
+                text: "Ajoutez l'estimation de réparation",
+                char: '•',
+                tone: 'warn',
+                iconTone: 'idle',
+            };
+        return {
+            text: 'Tout est prêt',
+            char: '✓',
+            tone: 'ok',
+            iconTone: 'ok',
+        };
+    }
+    /** « Valider le prix » : les deux montants valides + aucune requête en vol. */
+    get pricingSubmitDisabled(): boolean {
+        return !this.reelValid || !this.repValid || this.isLoading;
+    }
+
     /** Click on a pricing chip → fill price with cost × multiplier (rounded to
      *  3 dp to match the display format). Stores the active chip index for the
      *  pressed-state highlight. */
@@ -676,8 +809,20 @@ export class TicketListComponent implements OnInit, OnDestroy {
         if (!chip) return;
         const base = this.pricingCoutTotal;
         if (!base) return;
-        this.price = Math.round(base * chip.mult * 1000) / 1000;
+        const raw = Math.round(base * chip.mult * 1000) / 1000;
+        // Le coût réel diagnostic ne peut jamais sortir de la borne 150–500 TND.
+        this.price = Math.min(500, Math.max(150, raw));
         this.activePricingChip = index;
+    }
+
+    /** Verrouille le coût réel diagnostic dans la borne 150–500 TND au blur :
+     *  une saisie < 150 est ramenée à 150, une saisie > 500 à 500. Un champ
+     *  laissé vide reste vide (pas de clamp). */
+    clampDiagCost(): void {
+        if (this.price == null) return;
+        const p = Number(this.price);
+        if (!Number.isFinite(p)) return;
+        this.price = Math.min(500, Math.max(150, p));
     }
 
     /** Recompute the final price live as the user moves the slider / types in
@@ -857,7 +1002,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
         this.diList.forEach((di) => {
             switch (di.status) {
-                case 'INMAGASIN':
+                case 'CONFIRMATION':
+                case 'PROCESSING':
                 case 'MagasinEstimation':
                     this.counterInMagasin++;
                     break;
@@ -1680,19 +1826,25 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 const r1 = this.selectedRowInNegociate1;
                 const r2 = this.selectedRowInNegociate2;
 
-                // Branch conditions preserved from the original, made MUTUALLY
-                // EXCLUSIVE (priority) so the serialized cascade runs exactly
-                // ONE transition. Non-repairable wins: the original fired BOTH
-                // Pending3 and Finished for (!pdr && !repairable) — a race; the
-                // intent is FINISHED (can't repair → done).
+                // Branch conditions — MUTUALLY EXCLUSIVE (priority order) so the
+                // serialized cascade runs exactly ONE transition.
+                //  1. Non-repairable wins → FINISHED (can't repair → done).
+                //  2. Repairable but NO components → skip the confirmation phase,
+                //     straight to PENDING3.
+                //  3. Repairable WITH components → INMAGASIN, then the dedicated
+                //     CONFIRMATION_COMPOSANTS phase before PENDING3.
+                // "Has components" = `contain_pdr === true` AND a non-empty
+                // `array_composants` — BOTH must agree (the toggle alone lies:
+                // some diagnostic-finish paths set contain_pdr with an empty
+                // list, which would strand a component-less DI in confirmation).
+                const hasComponents = (r: any): boolean =>
+                    !!r?.contain_pdr && (r?.array_composants?.length ?? 0) > 0;
+
                 const notRepairable =
                     r1?.can_be_repaired === false ||
                     r2?.can_be_repaired === false;
-                const notContainPdr =
-                    !r1?.contain_pdr || (!!r2 && !r2?.contain_pdr);
-                const containPdrAndRepairable =
-                    (r1?.contain_pdr && r1?.can_be_repaired) ||
-                    (r2?.contain_pdr && r2?.can_be_repaired);
+                const anyHasComponents =
+                    hasComponents(r1) || hasComponents(r2);
 
                 let transitionStep:
                     | { mutation: any; variables?: any }
@@ -1703,13 +1855,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
                             this._idDi,
                         ),
                     };
-                } else if (notContainPdr) {
+                } else if (!anyHasComponents) {
+                    // Repairable, no components → skip confirmation → PENDING3.
                     transitionStep = {
                         mutation: this.ticketSerice.changeStatusPending3(
                             this._idDi,
                         ),
                     };
-                } else if (containPdrAndRepairable) {
+                } else {
+                    // Repairable WITH components → magasin sources them, then the
+                    // CONFIRMATION_COMPOSANTS phase (magasin ↔ coordinatrice).
                     transitionStep = {
                         mutation: this.ticketSerice.changeStatusDiToInMagasin(
                             this._idDi,
@@ -1934,6 +2089,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         const requestedRowId = MyID;
 
         this.seletedRow = data;
+        this.repairEstimate = data?.repairEstimate ?? null;
         this.isErrorFromFixtronix = data.isErrorFromFixtronix;
         this.ignoreCountPricing = data.ignoreCount;
         this.pricingModalIgnoreCount = data.ignoreCount ?? 0;
@@ -2059,16 +2215,22 @@ export class TicketListComponent implements OnInit, OnDestroy {
         Promise.all([tarifQuery, statQuery]).then(() => {
             if (isStale()) return;
             if (this.timepart && this.tarif_Technicien) {
-                this.facturationDiagnostique = parseFloat(
-                    (
-                        this.timepart.hours * this.tarif_Technicien +
-                        this.timepart.minutes *
-                            parseFloat(
-                                (this.tarif_Technicien / 60).toFixed(2),
-                            ) +
-                        parseFloat((this.tarif_Technicien / 60).toFixed(2))
-                    ).toFixed(2),
-                );
+                // Coût théorique de la MAIN-D'ŒUVRE = temps RÉEL de diagnostic ×
+                // taux horaire. Basé sur les SECONDES.
+                //   labor = totalSeconds × tarif / 3600
+                // L'ancien calcul était triplement faux : il ignorait les
+                // secondes (h+m seulement → 0 pour 21 s), ajoutait une minute
+                // parasite (+ tarif/60), puis BORNAIT à [150,500] → 150 DT pour
+                // 21 s. Ici : coût RÉEL, NON borné (la borne 150–500 reste sur le
+                // PRIX saisi, pas sur le coût). Ex. 21 s @ 77 DT/h → 0,449 DT.
+                const totalSeconds =
+                    (Number(this.timepart.hours) || 0) * 3600 +
+                    (Number(this.timepart.minutes) || 0) * 60 +
+                    (Number(this.timepart.seconds) || 0);
+                this.facturationDiagnostique =
+                    Math.round(
+                        ((totalSeconds * this.tarif_Technicien) / 3600) * 1000,
+                    ) / 1000;
             }
         });
 
@@ -2263,13 +2425,28 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 const priceStep = {
                     mutation: this.ticketSerice.pricing(id, this.price),
                 };
+                // Persist the repair estimate (dedicated field, no status
+                // change) between the price save and the transition — only when
+                // the admin entered one. Backend clears it on a non-finite value.
+                const estimateSteps =
+                    Number.isFinite(this.repairEstimate) &&
+                    this.repairEstimate != null
+                        ? [
+                              {
+                                  mutation: this.ticketSerice.setRepairEstimate(
+                                      id,
+                                      this.repairEstimate,
+                                  ),
+                              },
+                          ]
+                        : [];
                 const transitionStep = {
                     mutation: this.ticketSerice.changeStatusNegociate1(id),
                 };
                 try {
                     await this.mutationRunner.runChain({
                         key: `pricing:${id}`,
-                        steps: [priceStep, transitionStep],
+                        steps: [priceStep, ...estimateSteps, transitionStep],
                         successToast: {
                             summary: 'Prix initial affecté',
                             detail: 'DI transmise à la négociation.',
@@ -2418,12 +2595,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
             case 'DIAGNOSTIC':
             case 'INDIAGNOSTIC':
                 return 'info';
-            case 'INMAGASIN':
+            case 'CONFIRMATION':
+            case 'PROCESSING':
             case 'MagasinEstimation':
                 return 'warning';
             case 'PRICING':
+            case 'PRICING_DIAG':
                 return 'warning';
+            case 'WAITING_DEVIS':
+            case 'WAITING_BC':
             case 'NEGOTIATION1':
+            case 'ATTENTE_BC_DEVIS':
             case 'NEGOTIATION2':
                 return 'warning';
             case 'REPARATION':
@@ -3399,27 +3581,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
             .pipe(map(({ data }) => data?.getStatByIdlogs || []));
     }
 
+    /** Affichage BRUT de la valeur DB en MAJUSCULES (décision produit : plus de
+     *  libellés « jolis » ; on montre le statut tel qu'il est stocké). */
     getStatusLabel(status: string): string {
-        const map = {
-            CREATED: 'CREATED',
-            PENDING1: 'PENDING1',
-            PENDING2: 'PENDING2',
-            PENDING3: 'PENDING3',
-            DIAGNOSTIC: 'DIAGNOSTIC',
-            INDIAGNOSTIC: 'INDIAGNOSTIC',
-            INMAGASIN: 'INMAGASIN',
-            PRICING: 'PRICING',
-            NEGOTIATION1: 'NEGOTIATION1',
-            NEGOTIATION2: 'NEGOTIATION2',
-            REPARATION: 'REPARATION',
-            INREPARATION: 'INREPARATION',
-            FINISHED: 'FINISHED',
-            ANNULER: 'ANNULER',
-            RETOUR1: 'RETOUR1',
-            RETOUR2: 'RETOUR2',
-            RETOUR3: 'RETOUR3',
-        };
-
-        return map[status] || status;
+        return (status ?? '').toString().toUpperCase() || '—';
     }
 }

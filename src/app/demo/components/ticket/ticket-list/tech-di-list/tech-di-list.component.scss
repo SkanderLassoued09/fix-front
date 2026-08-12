@@ -270,7 +270,8 @@ $red: #dc2626;
 }
 
 // Pricing
-::ng-deep .status-PRICING {
+::ng-deep .status-PRICING,
+::ng-deep .status-PRICING_DIAG {
     background: #fef9c3 !important;
     color: #713f12 !important;
     &::before {

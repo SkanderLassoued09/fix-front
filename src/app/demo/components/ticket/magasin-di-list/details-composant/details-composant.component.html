@@ -1,249 +1,297 @@
-<p-toast></p-toast>
-<p-confirmDialog />
+<!-- En mode EMBARQUÉ (modal magasin), l'hôte fournit déjà <p-toast> et
+     <p-confirmDialog> liés au MÊME service racine. En rendre une 2e copie ici
+     faisait apparaître le dialog de confirmation (et les toasts) EN DOUBLE.
+     On ne les rend donc que sur la page routée autonome (!embedded). -->
+<p-toast *ngIf="!embedded"></p-toast>
+<p-confirmDialog *ngIf="!embedded" />
 
-<div class="sav-page">
-    <!-- ═══════════════════════════════════════════════
-         PAGE HEADER
-    ════════════════════════════════════════════════ -->
-    <div class="sav-page-header">
-        <div class="sav-page-title">
-            <i class="pi pi-box"></i>
-            <h2>Gestion des composants</h2>
+<!-- ═══════════════════════════════════════════════════════════
+     AFFECTATION FINALE  (redesign « Affectation finale.dc.html »)
+     Master-detail : préparer chaque pièce (réf/prix/stock) → confirmer
+     avec la coordination → clôturer la liste. Câblé au modèle réel :
+     `composants` (array_composants), `formUpdateComposant`, updateComposant(),
+     sentComponentToCoordinatorToConfirm(), changeStatusPending3().
+════════════════════════════════════════════════════════════ -->
+<div class="af-fin">
+    <!-- ── Header ─────────────────────────────────────────── -->
+    <header class="af-fin__head">
+        <span class="af-fin__tile" aria-hidden="true">
+            <i class="pi pi-folder-open"></i>
+        </span>
+        <div class="af-fin__titles">
+            <h2 class="af-fin__title">
+                {{ embedded ? "Affectation finale" : "Gestion des composants" }}
+            </h2>
+            <p class="af-fin__subtitle">
+                Préparez les pièces de la réparation, puis clôturez la liste.
+            </p>
         </div>
-        <div class="sav-page-actions">
-            <p-button
-                severity="help"
-                [disabled]="isSentToCoordinator !== 'IN_COORDINATOR'"
-                label="Confirmer les composants"
-                icon="pi pi-send"
-                size="small"
-                (click)="sentComponentToCoordinatorToConfirm()"
-            ></p-button>
-            <p-button
-                [label]="
-                    'Sauvegarder' +
-                    (composantValues?.name ? ' — ' + composantValues?.name : '')
-                "
-                icon="pi pi-save"
-                severity="secondary"
-                size="small"
-                (click)="updateComposant()"
-            ></p-button>
-            <p-button
-                [disabled]="!componentsAreConfirmed"
-                label="Fin liste composants"
-                icon="pi pi-check-circle"
-                severity="success"
-                size="small"
-                (click)="changeStatusPending3()"
-            ></p-button>
-        </div>
-    </div>
+        <span class="af-fin__tag" *ngIf="diCode">
+            {{ diCode }}<ng-container *ngIf="diTitle"> · {{ diTitle }}</ng-container>
+        </span>
+        <button
+            *ngIf="embedded"
+            type="button"
+            class="af-fin__close"
+            aria-label="Fermer"
+            (click)="closeModal()"
+        >
+            <i class="pi pi-times"></i>
+        </button>
+    </header>
 
-    <!-- ═══════════════════════════════════════════════
-         MAIN SPLIT LAYOUT
-    ════════════════════════════════════════════════ -->
-    <div class="sav-composant-layout">
-        <!-- ── LEFT: COMPONENT LIST ─────────────────── -->
-        <aside class="sav-composant-sidebar">
-            <div class="sav-sidebar-header">
-                <i class="pi pi-list"></i>
-                <span>Liste des composants</span>
-                <span class="sav-sidebar-count">{{
-                    composants?.length || 0
-                }}</span>
+    <!-- ── Master-detail ──────────────────────────────────── -->
+    <div class="af-fin__body">
+        <!-- LEFT : liste = check-list -->
+        <aside class="af-list">
+            <div class="af-list__head">
+                <span class="af-list__label">Composants</span>
+                <span class="af-list__count">{{ totalCount }}</span>
             </div>
-            <div class="sav-composant-list">
-                <div
+
+            <div class="af-list__scroll">
+                <button
                     *ngFor="let product of composants; let i = index"
-                    class="sav-composant-item"
-                    [class.sav-composant-item--active]="
-                        composantValues?._id === product._id
-                    "
+                    type="button"
+                    class="af-row"
+                    [class.af-row--active]="selectedName === product.nameComposant"
                     (click)="select(product)"
                 >
-                    <div class="sav-composant-item__index">{{ i + 1 }}</div>
-                    <div class="sav-composant-item__info">
-                        <span class="sav-composant-item__name">{{
+                    <span
+                        class="af-row__mark"
+                        [class.af-row__mark--active]="
+                            selectedName === product.nameComposant
+                        "
+                        >{{ i + 1 }}</span
+                    >
+                    <span class="af-row__info">
+                        <span class="af-row__name">{{
                             product.nameComposant || "—"
                         }}</span>
-                        <span class="sav-composant-item__qty">
-                            <i class="pi pi-tag"></i> Qté :
-                            {{ product.quantity ?? 0 }}
+                        <span class="af-row__meta">
+                            <span class="af-row__qty">Qté {{ product.quantity ?? 0 }}</span>
                         </span>
-                    </div>
-                    <i
-                        class="pi pi-chevron-right sav-composant-item__arrow"
-                    ></i>
-                </div>
-                <div *ngIf="!composants?.length" class="sav-composant-empty">
+                    </span>
+                    <i class="pi pi-chevron-right af-row__arrow"></i>
+                </button>
+
+                <div *ngIf="!composants?.length" class="af-list__empty">
                     <i class="pi pi-inbox"></i>
                     <span>Aucun composant</span>
                 </div>
             </div>
         </aside>
 
-        <!-- ── RIGHT: COMPONENT DETAILS ─────────────── -->
-        <section class="sav-composant-detail">
-            <!-- Empty state when nothing selected -->
-            <div *ngIf="!composantValues" class="sav-detail-empty">
-                <i class="pi pi-mouse-pointer"></i>
-                <p>Sélectionnez un composant dans la liste</p>
-            </div>
-
-            <ng-container *ngIf="composantValues">
-                <!-- Detail header -->
-                <div class="sav-detail-titlebar">
-                    <div class="sav-detail-title-left">
-                        <div class="sav-detail-avatar">
-                            {{
-                                composantValues?.name?.charAt(0)?.toUpperCase() || "?"
-                            }}
+        <!-- RIGHT : détail -->
+        <section class="af-detail">
+            <div class="af-detail__scroll">
+                <!-- Empty state -->
+                <div *ngIf="!composantValues" class="af-detail__empty">
+                    <span class="af-detail__empty-icon" aria-hidden="true">
+                        <i class="pi pi-send"></i>
+                    </span>
+                    <div>
+                        <div class="af-detail__empty-title">
+                            Choisissez une pièce à préparer
                         </div>
-                        <div>
-                            <h3 class="sav-detail-name">
-                                {{ composantValues?.name || "—" }}
-                            </h3>
-                            <span class="sav-detail-id"
-                                >ID : {{ composantValues?._id || "—" }}</span
-                            >
+                        <div class="af-detail__empty-sub">
+                            Sélectionnez un composant à gauche pour renseigner
+                            ses informations.
                         </div>
                     </div>
                 </div>
 
-                <!-- Form -->
-                <form [formGroup]="formUpdateComposant" class="sav-detail-form">
-                    <fieldset class="sav-fieldset">
-                        <legend>Informations générales</legend>
-
-                        <div class="sav-two-col">
-                            <div class="sav-form-row">
-                                <label class="sav-label">Package</label>
-                                <p-inplace
-                                    closable="closable"
-                                    [active]="isActive"
-                                >
-                                    <ng-template pTemplate="display">
-                                        <span class="sav-inplace-display">
-                                            {{
-                                                composantValues?.package || "—"
-                                            }}
-                                            <i
-                                                class="pi pi-pencil sav-inplace-icon"
-                                            ></i>
-                                        </span>
-                                    </ng-template>
-                                    <ng-template pTemplate="content">
-                                        <input
-                                            type="text"
-                                            pInputText
-                                            formControlName="package"
-                                            class="sav-input"
-                                        />
-                                    </ng-template>
-                                </p-inplace>
+                <form
+                    *ngIf="composantValues"
+                    [formGroup]="formUpdateComposant"
+                    class="af-detail__form"
+                >
+                    <!-- Detail header -->
+                    <div class="af-detail__titlebar">
+                        <span class="af-detail__avatar" aria-hidden="true">
+                            {{
+                                composantValues?.name?.charAt(0)?.toUpperCase() ||
+                                    "?"
+                            }}
+                        </span>
+                        <div class="af-detail__id-block">
+                            <div class="af-detail__name">
+                                {{ composantValues?.name || "—" }}
                             </div>
-                            <div class="sav-form-row">
-                                <label class="sav-label">Date d'arrivage</label>
-                                <p-calendar
-                                    dateFormat="dd.mm.yy"
-                                    formControlName="coming_date"
-                                    [showButtonBar]="true"
-                                    appendTo="body"
-                                    styleClass="sav-calendar"
-                                    [style]="{ width: '100%' }"
-                                ></p-calendar>
+                            <div class="af-detail__id">
+                                ID : {{ composantValues?._id || "—" }}
                             </div>
                         </div>
-                    </fieldset>
+                    </div>
 
-                    <fieldset class="sav-fieldset">
-                        <legend>Tarification</legend>
+                    <!-- Référence & arrivage -->
+                    <div class="af-section-label">Référence &amp; arrivage</div>
+                    <div class="af-grid-2">
+                        <div class="af-field">
+                            <label class="af-field__label">Package</label>
+                            <div class="af-input">
+                                <i
+                                    class="pi pi-box af-input__icon"
+                                    aria-hidden="true"
+                                ></i>
+                                <input
+                                    type="text"
+                                    pInputText
+                                    formControlName="package"
+                                    placeholder="ex. cms"
+                                    class="af-input__control"
+                                />
+                            </div>
+                        </div>
+                        <div class="af-field">
+                            <label class="af-field__label">Date d'arrivage</label>
+                            <p-calendar
+                                dateFormat="dd.mm.yy"
+                                formControlName="coming_date"
+                                [showButtonBar]="true"
+                                appendTo="body"
+                                placeholder="JJ.MM.AAAA"
+                                styleClass="af-calendar"
+                                [style]="{ width: '100%' }"
+                            ></p-calendar>
+                        </div>
+                    </div>
 
-                        <div class="sav-two-col">
-                            <div class="sav-form-row">
-                                <label class="sav-label"
-                                    >Prix d'achat (TND)</label
-                                >
+                    <!-- Prix -->
+                    <div class="af-section-label">Prix</div>
+                    <div class="af-grid-price">
+                        <div class="af-field">
+                            <label class="af-field__label">Prix d'achat</label>
+                            <div class="af-input">
                                 <p-inputNumber
-                                    [showButtons]="true"
                                     formControlName="prix_achat"
-                                    buttonLayout="horizontal"
-                                    spinnerMode="horizontal"
-                                    decrementButtonClass="p-button-outlined p-button-secondary"
-                                    incrementButtonClass="p-button-outlined p-button-secondary"
-                                    incrementButtonIcon="pi pi-plus"
-                                    decrementButtonIcon="pi pi-minus"
-                                    [step]="0.25"
-                                    mode="currency"
-                                    currency="TND"
-                                    styleClass="sav-number-input"
+                                    mode="decimal"
+                                    [min]="0"
+                                    [minFractionDigits]="0"
+                                    [maxFractionDigits]="3"
+                                    locale="fr-TN"
+                                    styleClass="af-num"
                                 ></p-inputNumber>
-                            </div>
-                            <div class="sav-form-row">
-                                <label class="sav-label"
-                                    >Prix de vente (TND)</label
-                                >
-                                <p-inputNumber
-                                    [showButtons]="true"
-                                    formControlName="prix_vente"
-                                    buttonLayout="horizontal"
-                                    spinnerMode="horizontal"
-                                    decrementButtonClass="p-button-outlined p-button-secondary"
-                                    incrementButtonClass="p-button-outlined p-button-secondary"
-                                    incrementButtonIcon="pi pi-plus"
-                                    decrementButtonIcon="pi pi-minus"
-                                    [step]="0.25"
-                                    mode="currency"
-                                    currency="TND"
-                                    styleClass="sav-number-input"
-                                ></p-inputNumber>
+                                <span class="af-input__suffix">TND</span>
                             </div>
                         </div>
-                    </fieldset>
-
-                    <fieldset class="sav-fieldset">
-                        <legend>Stock</legend>
-
-                        <div class="sav-stock-row">
-                            <div class="sav-form-row" style="flex: 1">
-                                <label class="sav-label"
-                                    >Quantité en stock</label
-                                >
+                        <div class="af-field">
+                            <label class="af-field__label">Prix de vente</label>
+                            <div class="af-input">
                                 <p-inputNumber
+                                    formControlName="prix_vente"
                                     mode="decimal"
-                                    [showButtons]="true"
-                                    buttonLayout="horizontal"
-                                    spinnerMode="horizontal"
-                                    decrementButtonClass="p-button-outlined p-button-secondary"
-                                    incrementButtonClass="p-button-outlined p-button-secondary"
-                                    incrementButtonIcon="pi pi-plus"
-                                    decrementButtonIcon="pi pi-minus"
-                                    formControlName="quantity_stocked"
-                                    styleClass="sav-number-input"
+                                    [min]="0"
+                                    [minFractionDigits]="0"
+                                    [maxFractionDigits]="3"
+                                    locale="fr-TN"
+                                    styleClass="af-num"
                                 ></p-inputNumber>
+                                <span class="af-input__suffix">TND</span>
                             </div>
-                            <div
-                                class="sav-stock-badge"
-                                *ngIf="
-                                    formUpdateComposant.get('quantity_stocked')
-                                        ?.value >= 0
+                        </div>
+                        <div class="af-marge">
+                            <span class="af-marge__label">Marge</span>
+                            <span
+                                class="af-marge__value"
+                                [ngClass]="
+                                    selMarge.good
+                                        ? 'af-marge__value--good'
+                                        : 'af-marge__value--bad'
                                 "
                             >
-                                <i class="pi pi-database"></i>
-                                <span
-                                    >{{
-                                        formUpdateComposant.get(
-                                            "quantity_stocked"
-                                        )?.value ?? "—"
-                                    }}
-                                    unités</span
-                                >
-                            </div>
+                                {{ selMarge.label }}
+                            </span>
                         </div>
-                    </fieldset>
+                    </div>
+
+                    <!-- Stock -->
+                    <div class="af-section-label">Stock</div>
+                    <div class="af-stock">
+                        <div class="af-field af-stock__field">
+                            <label class="af-field__label">Quantité en stock</label>
+                            <p-inputNumber
+                                mode="decimal"
+                                [showButtons]="true"
+                                buttonLayout="horizontal"
+                                spinnerMode="horizontal"
+                                decrementButtonClass="p-button-secondary"
+                                incrementButtonClass="p-button-secondary"
+                                incrementButtonIcon="pi pi-plus"
+                                decrementButtonIcon="pi pi-minus"
+                                [min]="0"
+                                formControlName="quantity_stocked"
+                                styleClass="af-stock-input"
+                            ></p-inputNumber>
+                        </div>
+                        <div class="af-stock__state">
+                            <span class="af-stock__state-label">État</span>
+                            <span
+                                class="af-badge"
+                                [ngClass]="'af-badge--' + selStockInfo.cls"
+                            >
+                                {{ selStockInfo.label }}
+                            </span>
+                        </div>
+                    </div>
                 </form>
-            </ng-container>
+            </div>
+
+            <!-- Detail-level save (contextuel) -->
+            <div *ngIf="composantValues" class="af-savebar">
+                <span class="af-savebar__text">
+                    La mise à jour des composants est facultative.
+                </span>
+                <button
+                    type="button"
+                    class="af-btn af-btn--save"
+                    [disabled]="!formDirty"
+                    (click)="updateComposant()"
+                >
+                    <i class="pi pi-save"></i> Enregistrer ce composant
+                </button>
+            </div>
         </section>
     </div>
+
+    <!-- ── Batch footer ───────────────────────────────────── -->
+    <footer class="af-fin__foot">
+        <span
+            class="af-status-icon"
+            [ngClass]="'af-status-icon--' + batchStatus.tone"
+            aria-hidden="true"
+            >{{ batchStatus.char }}</span
+        >
+        <span
+            class="af-status-text"
+            [ngClass]="'af-status-text--' + batchStatus.tone"
+        >
+            {{ batchStatus.text }}
+        </span>
+        <!-- Handshake v2 — un SEUL bouton à la fois, piloté par le STATUT de la
+             DI (jamais les deux ; aucun pendant l'attente de la coordination).
+             Garde back miroir sur chaque transition (assertDiTransition). -->
+        <button
+            *ngIf="isPreparation"
+            type="button"
+            class="af-btn af-btn--confirm"
+            title="Envoyer la liste des composants au coordinateur pour confirmation"
+            [disabled]="isSending"
+            (click)="sentComponentToCoordinatorToConfirm()"
+        >
+            <i
+                [class]="isSending ? 'pi pi-spin pi-spinner' : 'pi pi-send'"
+            ></i>
+            Envoyer au coordinateur
+        </button>
+        <button
+            *ngIf="isFinalisation"
+            type="button"
+            class="af-btn af-btn--finish"
+            title="Terminer la liste et transmettre la DI à la réparation"
+            (click)="changeStatusPending3()"
+        >
+            <i class="pi pi-check"></i> Terminer les composants
+        </button>
+    </footer>
 </div>

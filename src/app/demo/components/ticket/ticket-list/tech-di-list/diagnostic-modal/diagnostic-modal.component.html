@@ -100,10 +100,22 @@
                         <i class="pi pi-chevron-left"></i>
                         Précédent
                     </button>
+                    <!-- Message de blocage (toujours visible, pas un simple
+                         tooltip : un tooltip sur bouton désactivé ne s'affiche
+                         pas de façon fiable). Cas : PDR activé sans composant. -->
+                    <span
+                        *ngIf="!isLastStep && nextBlockedReason"
+                        class="sav-diag-modal__nav-hint"
+                    >
+                        <i class="pi pi-exclamation-triangle"></i>
+                        {{ nextBlockedReason }}
+                    </span>
                     <button
                         *ngIf="!isLastStep"
                         type="button"
                         class="sav-diag-modal__nav-btn sav-diag-modal__nav-btn--primary"
+                        [disabled]="!!nextBlockedReason"
+                        [attr.title]="nextBlockedReason"
                         (click)="goNext()"
                     >
                         Suivant

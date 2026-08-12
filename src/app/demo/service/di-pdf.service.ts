@@ -279,29 +279,7 @@ export class DiPdfService {
 
     /** Raw workflow status → French label (mirrors the app's UI labels). */
     private statusLabel(status: any): string {
-        const map: Record<string, string> = {
-            CREATED: 'Créée',
-            PENDING1: 'En attente diagnostic',
-            DIAGNOSTIC: 'Diagnostic affecté',
-            DIAGNOSTIC_Pause: 'Diagnostic en pause',
-            INDIAGNOSTIC: 'En diagnostic',
-            MagasinEstimation: 'Estimation magasin',
-            INMAGASIN: 'En magasin',
-            PENDING2: 'En attente de facturation',
-            PRICING: 'Facturation en cours',
-            NEGOTIATION1: 'Négociation 1',
-            NEGOTIATION2: 'Négociation 2',
-            ANNULER: 'Annulée',
-            PENDING3: 'En attente réparation',
-            REPARATION: 'Réparation affectée',
-            REPARATION_Pause: 'Réparation en pause',
-            INREPARATION: 'En réparation',
-            FINISHED: 'Terminée',
-            RETOUR1: 'Retour 1',
-            RETOUR2: 'Retour 2',
-            RETOUR3: 'Retour 3',
-        };
-        const s = this.raw(status);
-        return map[s] || s || '—';
+        // Affichage BRUT de la valeur DB en MAJUSCULES.
+        return (status ?? '').toString().trim().toUpperCase() || '—';
     }
 }

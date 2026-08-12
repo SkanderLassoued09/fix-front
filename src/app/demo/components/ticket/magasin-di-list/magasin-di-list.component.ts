@@ -52,6 +52,9 @@ export class MagasinDiListComponent implements OnDestroy {
     ];
     formUpdateComposant: FormGroup;
     magasinDiDialog: boolean = false;
+    /** « Affectation finale » modal (ex-route details/:id) + the targeted DI. */
+    detailsComposantModal: boolean = false;
+    selectedDetailsDiId: string = '';
     selectedComposant;
     cols = [
         { field: '_idnum', header: 'ID', searchKey: '_id' },
@@ -552,12 +555,17 @@ export class MagasinDiListComponent implements OnDestroy {
             case 'DIAGNOSTIC':
             case 'INDIAGNOSTIC':
                 return 'info';
-            case 'INMAGASIN':
+            case 'CONFIRMATION':
+            case 'PROCESSING':
             case 'MagasinEstimation':
                 return 'warning';
             case 'PRICING':
+            case 'PRICING_DIAG':
                 return 'warning';
+            case 'WAITING_DEVIS':
+            case 'WAITING_BC':
             case 'NEGOTIATION1':
+            case 'ATTENTE_BC_DEVIS':
             case 'NEGOTIATION2':
                 return 'warning';
             case 'REPARATION':
@@ -1189,8 +1197,23 @@ export class MagasinDiListComponent implements OnDestroy {
     Magasin_Condition() {}
 
     takeMetoDetailsComponent(dataRowselected) {
-        const _id = dataRowselected._id;
-        this.router.navigate(['tickets/ticket/details', _id]);
+        // Ouvre « Affectation finale » (liste des composants + édition d'un
+        // composant) DANS UN MODAL au lieu de router vers une page dédiée.
+        this.selectedDetailsDiId = dataRowselected._id;
+        this.detailsComposantModal = true;
+    }
+
+    /** Le dossier « Affectation finale » (modal composants) est ouvrable
+     *  pendant TOUTE la phase magasin du handshake v2 — legacy INMAGASIN /
+     *  CONFIRMATION_COMPOSANTS tolérés (DI pré-migration). */
+    isComposantPhase(status: string): boolean {
+        return [
+            'CONFIRMATION',
+            'PROCESSING',
+            'ATTENTE_CONFIRMATION_COORDINATION',
+            'MAGASIN_FINALISATION',
+            'CONFIRMATION_COMPOSANTS',
+        ].includes(status);
     }
 
     getAllComposant() {
@@ -1586,26 +1609,7 @@ export class MagasinDiListComponent implements OnDestroy {
         this.router.navigate(['tickets/ticket/composant-management']);
     }
     getStatusLabel(status: string): string {
-        const map = {
-            CREATED: 'CREATED',
-            PENDING1: 'PENDING1',
-            PENDING2: 'PENDING2',
-            PENDING3: 'PENDING3',
-            DIAGNOSTIC: 'DIAGNOSTIC',
-            INDIAGNOSTIC: 'INDIAGNOSTIC',
-            INMAGASIN: 'INMAGASIN',
-            PRICING: 'PRICING',
-            NEGOTIATION1: 'NEGOTIATION1',
-            NEGOTIATION2: 'NEGOTIATION2',
-            REPARATION: 'REPARATION',
-            INREPARATION: 'INREPARATION',
-            FINISHED: 'FINISHED',
-            ANNULER: 'ANNULER',
-            RETOUR1: 'RETOUR1',
-            RETOUR2: 'RETOUR2',
-            RETOUR3: 'RETOUR3',
-        };
-
-        return map[status] || status;
+        // Affichage BRUT de la valeur DB en MAJUSCULES.
+        return (status ?? '').toString().toUpperCase() || '—';
     }
 }
