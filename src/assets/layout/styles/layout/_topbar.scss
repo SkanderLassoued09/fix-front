@@ -234,3 +234,116 @@
         }
     }
 }
+
+/* ── Cloche notifications ERP ──────────────────────────────────────────── */
+.topbar-bell {
+    position: relative;
+    margin-right: 0.25rem;
+
+    &__btn {
+        position: relative;
+    }
+
+    &__badge {
+        // Surclasse la règle `.layout-topbar-button span { display:none }`.
+        display: inline-block !important;
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        min-width: 1.05rem;
+        height: 1.05rem;
+        padding: 0 0.28rem;
+        border-radius: 999px;
+        background: #ef4444;
+        color: #fff;
+        font-size: 0.7rem !important;
+        font-weight: 700;
+        line-height: 1.05rem;
+        text-align: center;
+        font-family: 'Inter', sans-serif;
+    }
+
+    &__panel {
+        position: absolute;
+        top: 3.4rem;
+        right: 0;
+        width: 22rem;
+        max-width: 90vw;
+        background: var(--surface-overlay);
+        border: 1px solid var(--surface-border);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        z-index: 1000;
+        overflow: hidden;
+        font-family: 'Inter', sans-serif;
+    }
+
+    &__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.7rem 0.9rem;
+        border-bottom: 1px solid var(--surface-border);
+
+        strong {
+            color: var(--text-color);
+        }
+    }
+
+    &__head-actions {
+        display: inline-flex;
+        gap: 0.35rem;
+
+        .p-link {
+            color: #2563eb;
+        }
+    }
+
+    &__list {
+        max-height: 22rem;
+        overflow-y: auto;
+    }
+
+    &__empty {
+        padding: 1.2rem;
+        text-align: center;
+        color: var(--text-color-secondary);
+    }
+
+    &__item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        width: 100%;
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: transparent;
+        border: none;
+        border-bottom: 1px solid var(--surface-border);
+        cursor: pointer;
+        color: var(--text-color);
+
+        &:hover {
+            background: rgba(59, 130, 246, 0.06);
+        }
+
+        &--unread {
+            background: rgba(59, 130, 246, 0.05);
+            font-weight: 600;
+        }
+    }
+
+    &__dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        margin-top: 0.4rem;
+        border-radius: 50%;
+        background: #3b82f6;
+        flex: 0 0 auto;
+    }
+
+    &__msg {
+        font-size: 0.9rem;
+        line-height: 1.35;
+    }
+}

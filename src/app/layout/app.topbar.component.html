@@ -41,11 +41,73 @@
             Your connection is slow. Performance may be affected.
         </div>
 
-        <!-- <p-button
-            (click)="notification('top')"
-            label="Reminder Fixtronix"
-            [badge]="nbNotification"
-        /> -->
+        <!-- ── Cloche notifications ERP (compteur non-lus + panneau) ───────── -->
+        <div class="topbar-bell">
+            <button
+                type="button"
+                class="p-link layout-topbar-button topbar-bell__btn"
+                (click)="toggleBell()"
+                aria-label="Notifications"
+            >
+                <i class="pi pi-bell"></i>
+                <span *ngIf="erpUnread > 0" class="topbar-bell__badge">{{
+                    erpUnread > 99 ? "99+" : erpUnread
+                }}</span>
+            </button>
+
+            <div class="topbar-bell__panel" *ngIf="bellOpen">
+                <div class="topbar-bell__head">
+                    <strong>Notifications</strong>
+                    <span class="topbar-bell__head-actions">
+                        <button
+                            type="button"
+                            class="p-link"
+                            (click)="toggleErpSound()"
+                            [title]="
+                                erpSoundOn ? 'Couper le son' : 'Activer le son'
+                            "
+                        >
+                            <i
+                                class="pi"
+                                [ngClass]="
+                                    erpSoundOn ? 'pi-volume-up' : 'pi-volume-off'
+                                "
+                            ></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="p-link"
+                            (click)="markAllErpRead()"
+                            title="Tout marquer comme lu"
+                        >
+                            <i class="pi pi-check"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="topbar-bell__list">
+                    <div
+                        *ngIf="erpNotifications.length === 0"
+                        class="topbar-bell__empty"
+                    >
+                        Aucune notification
+                    </div>
+                    <button
+                        type="button"
+                        *ngFor="let n of erpNotifications"
+                        class="topbar-bell__item"
+                        [class.topbar-bell__item--unread]="!n.readAt"
+                        (click)="onErpNotifClick(n)"
+                    >
+                        <span
+                            class="topbar-bell__dot"
+                            *ngIf="!n.readAt"
+                        ></span>
+                        <span class="topbar-bell__msg">{{ n.message }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Utilisateur connecté : initiales + nom + rôle → menu (Se déconnecter) -->
         <div class="topbar-user">
             <button

@@ -12,6 +12,11 @@ import { Apollo } from 'apollo-angular';
 import { NotificationService } from '../demo/service/notification.service';
 import { TicketService } from '../demo/service/ticket.service';
 import { SessionService } from '../demo/service/session.service';
+import {
+    NotificationCenterService,
+    ErpNotification,
+} from '../demo/service/notification-center.service';
+import { landingRouteForRole } from '../shared/landing-route';
 
 @Component({
     selector: 'app-topbar',
@@ -42,6 +47,12 @@ export class AppTopBarComponent implements OnInit {
     isOnline: boolean = true;
     isSlowConnection: boolean = false;
 
+    // ── Cloche notifications ERP ─────────────────────────────────────────────
+    bellOpen = false;
+    erpUnread = 0;
+    erpNotifications: ErpNotification[] = [];
+    erpSoundOn = true;
+
     // ── Utilisateur connecté (affiché en haut à droite) ──────────────────────
     userName = '';
     roleLabel = '';
@@ -67,6 +78,7 @@ export class AppTopBarComponent implements OnInit {
         private cdr: ChangeDetectorRef,
         private readonly router: Router,
         private readonly sessionService: SessionService,
+        private readonly notificationCenter: NotificationCenterService,
     ) {}
     ngOnInit(): void {
         // this.getNotificationFromDb();
@@ -94,6 +106,46 @@ export class AppTopBarComponent implements OnInit {
                 command: () => this.logout('top-right'),
             },
         ];
+
+        // Cloche ERP : au démarrage on ne charge QUE le compteur (count indexé)
+        // + on ouvre le socket authentifié. La liste ne se charge qu'à l'ouverture.
+        this.notificationCenter.start();
+        this.notificationCenter.unreadCount$.subscribe((n) => {
+            this.erpUnread = n;
+            this.cdr.markForCheck?.();
+        });
+        this.notificationCenter.notifications$.subscribe((list) => {
+            this.erpNotifications = list;
+        });
+        this.notificationCenter.soundEnabled$.subscribe(
+            (on) => (this.erpSoundOn = on),
+        );
+    }
+
+    /** Ouvre/ferme le panneau cloche ; charge la liste À l'ouverture seulement. */
+    toggleBell(): void {
+        this.bellOpen = !this.bellOpen;
+        if (this.bellOpen) this.notificationCenter.loadList();
+    }
+
+    /** Clic sur une notification : marquée lue + deep-link vers la DI concernée. */
+    onErpNotifClick(n: ErpNotification): void {
+        if (!n?.readAt) this.notificationCenter.markRead(n._id);
+        this.bellOpen = false;
+        if (n?.diId) {
+            const role = (localStorage.getItem('role') ?? '').trim();
+            this.router.navigate([landingRouteForRole(role)], {
+                queryParams: { di: n.diId },
+            });
+        }
+    }
+
+    markAllErpRead(): void {
+        this.notificationCenter.markAllRead();
+    }
+
+    toggleErpSound(): void {
+        this.notificationCenter.setSound(!this.erpSoundOn);
     }
 
     /** Renseigne nom + rôle + initiales depuis le `localStorage` (posé au login). */
