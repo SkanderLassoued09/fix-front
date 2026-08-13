@@ -21,6 +21,8 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { MessagesModule } from 'primeng/messages';
 import { CardModule } from 'primeng/card';
+import { MenuModule } from 'primeng/menu';
+import { AvatarModule } from 'primeng/avatar';
 
 @NgModule({
     declarations: [
@@ -48,6 +50,8 @@ import { CardModule } from 'primeng/card';
         DialogModule,
         MessagesModule,
         CardModule,
+        MenuModule,
+        AvatarModule,
     ],
     exports: [AppLayoutComponent],
 })

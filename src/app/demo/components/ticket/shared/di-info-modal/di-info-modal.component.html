@@ -127,6 +127,30 @@
             </div>
         </div>
 
+        <!-- ── Bandeau d'annulation ─────────────────────────── -->
+        <div
+            *ngIf="di?.status === 'ANNULER' || di?.annulationMotif"
+            class="di-cancel-banner"
+        >
+            <strong><i class="pi pi-ban"></i> DI annulée</strong>
+            <span *ngIf="di?.annuleLe">
+                le {{ di?.annuleLe | date: "dd/MM/yyyy HH:mm" }}</span
+            >
+            <span *ngIf="di?.annulePar"> par {{ di?.annulePar }}</span>
+            <span *ngIf="di?.annulationMotif">
+                — motif : {{ di?.annulationMotif }}</span
+            >
+            <div *ngIf="di?.annulationParClient" class="di-cancel-banner__sub">
+                À la demande du client.
+            </div>
+            <div
+                *ngIf="di?.annulationCommentaire"
+                class="di-cancel-banner__sub"
+            >
+                « {{ di?.annulationCommentaire }} »
+            </div>
+        </div>
+
         <!-- ── Body (scroll) ───────────────────────────────── -->
         <div class="di-body di-scroll">
             <div class="di-body__grid">

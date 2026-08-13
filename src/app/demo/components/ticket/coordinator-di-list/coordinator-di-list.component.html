@@ -699,8 +699,16 @@
 
             <!-- ── Footer ────────────────────────────────────── -->
             <footer class="cf-modal__footer">
+                <!-- Annulation de la DI : confirmée par mot de passe + motif.
+                     Distincte du bouton « Fermer » ci-dessous. -->
                 <p-button
-                    label="Annuler"
+                    label="Annuler la DI"
+                    icon="pi pi-ban"
+                    severity="danger"
+                    (onClick)="openCancelDialog()"
+                ></p-button>
+                <p-button
+                    label="Fermer"
                     severity="secondary"
                     [outlined]="true"
                     (onClick)="hideDialog()"
@@ -713,6 +721,114 @@
                 ></p-button>
             </footer>
         </div>
+    </p-dialog>
+
+    <!-- ══ Annulation d'une DI — motif + confirmation par mot de passe ══════ -->
+    <p-dialog
+        header="Annuler la DI"
+        [(visible)]="cancelDialog"
+        [modal]="true"
+        [style]="{ width: '480px' }"
+        [draggable]="false"
+        [resizable]="false"
+    >
+        <div class="di-cancel-form" style="display:flex;flex-direction:column;gap:1rem;">
+            <!-- À la demande du client ? -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Annulation à la demande du client&nbsp;?
+                </label>
+                <p-selectButton
+                    [options]="[
+                        { label: 'Oui', value: true },
+                        { label: 'Non', value: false }
+                    ]"
+                    [(ngModel)]="cancelForm.parClient"
+                    optionLabel="label"
+                    optionValue="value"
+                ></p-selectButton>
+            </div>
+
+            <!-- Motif (liste métier) -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Motif <span style="color:var(--red-500);">*</span>
+                </label>
+                <p-dropdown
+                    [options]="cancelMotifs"
+                    [(ngModel)]="cancelForm.motif"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Choisir un motif…"
+                    [style]="{ width: '100%' }"
+                    appendTo="body"
+                ></p-dropdown>
+            </div>
+
+            <!-- Texte libre OBLIGATOIRE si « Autre » -->
+            <div *ngIf="cancelForm.motif === 'AUTRE'">
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Préciser le motif <span style="color:var(--red-500);">*</span>
+                </label>
+                <input
+                    type="text"
+                    pInputText
+                    [(ngModel)]="cancelForm.motifAutre"
+                    placeholder="Motif précis…"
+                    style="width:100%;"
+                />
+            </div>
+
+            <!-- Commentaire optionnel -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Commentaire (optionnel)
+                </label>
+                <textarea
+                    pInputTextarea
+                    [(ngModel)]="cancelForm.commentaire"
+                    rows="2"
+                    style="width:100%;"
+                ></textarea>
+            </div>
+
+            <!-- Confirmation par mot de passe (vérifié côté serveur) -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Votre mot de passe <span style="color:var(--red-500);">*</span>
+                </label>
+                <input
+                    type="password"
+                    pInputText
+                    [(ngModel)]="cancelForm.password"
+                    placeholder="Confirmez avec votre mot de passe"
+                    autocomplete="current-password"
+                    (keydown.enter)="submitCancelDi()"
+                    style="width:100%;"
+                />
+                <small style="color:var(--text-color-secondary);">
+                    Vérifié côté serveur — l'annulation est refusée si le mot de
+                    passe est incorrect.
+                </small>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <p-button
+                label="Fermer"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="cancelDialog = false"
+            ></p-button>
+            <p-button
+                label="Confirmer l'annulation"
+                icon="pi pi-ban"
+                severity="danger"
+                [disabled]="cancelSubmitDisabled"
+                [loading]="cancelBusy"
+                (onClick)="submitCancelDi()"
+            ></p-button>
+        </ng-template>
     </p-dialog>
 
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>

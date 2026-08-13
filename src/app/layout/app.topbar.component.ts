@@ -41,6 +41,24 @@ export class AppTopBarComponent implements OnInit {
     _idNotification: any;
     isOnline: boolean = true;
     isSlowConnection: boolean = false;
+
+    // ── Utilisateur connecté (affiché en haut à droite) ──────────────────────
+    userName = '';
+    roleLabel = '';
+    initials = '';
+    userMenuItems: MenuItem[] = [];
+
+    /** Libellés FR des rôles (la valeur brute vient de `localStorage('role')`).
+     *  NB : le rôle coordinateur est stocké « COORDIANTOR » (typo historique). */
+    private readonly ROLE_LABELS: Record<string, string> = {
+        TECH: 'Technicien',
+        COORDIANTOR: 'Coordinateur',
+        MAGASIN: 'Magasin',
+        MANAGER: 'Manager',
+        ADMIN_MANAGER: 'Admin Manager',
+        ADMIN_TECH: 'Admin Technique',
+    };
+
     constructor(
         public layoutService: LayoutService,
         private apollo: Apollo,
@@ -67,8 +85,40 @@ export class AppTopBarComponent implements OnInit {
         this.notificationService.slowConnection$.subscribe((isSlow) => {
             this.isSlowConnection = isSlow;
         });
+
+        this.initUser();
+        this.userMenuItems = [
+            {
+                label: 'Se déconnecter',
+                icon: 'pi pi-sign-out',
+                command: () => this.logout('top-right'),
+            },
+        ];
     }
 
+    /** Renseigne nom + rôle + initiales depuis le `localStorage` (posé au login). */
+    private initUser(): void {
+        const username = (localStorage.getItem('username') ?? '').trim();
+        const role = (localStorage.getItem('role') ?? '').trim();
+        this.userName = username || 'Utilisateur';
+        this.roleLabel =
+            this.ROLE_LABELS[role.toUpperCase()] ?? this.prettifyRole(role);
+        this.initials = this.computeInitials(this.userName);
+    }
+
+    private prettifyRole(role: string): string {
+        if (!role) return '—';
+        return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+    }
+
+    private computeInitials(name: string): string {
+        const parts = name.split(/[\s._-]+/).filter(Boolean);
+        if (parts.length === 0) return '?';
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+
+    /** Ouvre la confirmation de déconnexion (déclenchée par le menu utilisateur). */
     logout(position: string) {
         this.position = position;
         this.visible = true;
@@ -121,7 +171,6 @@ export class AppTopBarComponent implements OnInit {
             });
     }
     yes() {
-        console.log('[Topbar.yes] Déconnexion button clicked');
         this.visible = false;
         this.sessionService.logout();
     }

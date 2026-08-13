@@ -727,6 +727,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
         const r = Number(this.repairEstimate);
         return Number.isFinite(r) && r > 0;
     }
+    /** DI marquée irréparable au diagnostic : l'estimation de réparation est
+     *  masquée ET non requise (rien ne sera réparé). Piège évité : ne jamais
+     *  bloquer la soumission sur un champ caché. */
+    get isIrreparable(): boolean {
+        return this.seletedRow?.can_be_repaired === false;
+    }
     get repState(): 'idle' | 'ok' | 'err' {
         const r = Number(this.repairEstimate);
         if (!Number.isFinite(r) || r <= 0) return 'idle';
@@ -768,7 +774,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
         tone: string;
         iconTone: string;
     } {
-        if (!this.reelValid && !this.repValid)
+        // DI irréparable : l'estimation est masquée → on ne l'exige pas et on ne
+        // l'affiche pas comme manquante ; seul le coût du diagnostic compte.
+        const repRequired = !this.isIrreparable;
+        if (!this.reelValid && repRequired && !this.repValid)
             return {
                 text: 'Remplissez les 2 montants',
                 char: '•',
@@ -782,7 +791,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 tone: 'err',
                 iconTone: 'err',
             };
-        if (!this.repValid)
+        if (repRequired && !this.repValid)
             return {
                 text: "Ajoutez l'estimation de réparation",
                 char: '•',
@@ -796,9 +805,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
             iconTone: 'ok',
         };
     }
-    /** « Valider le prix » : les deux montants valides + aucune requête en vol. */
+    /** « Valider le prix » : coût diagnostic valide, estimation valide SAUF si la
+     *  DI est irréparable (champ masqué → non requis), + aucune requête en vol. */
     get pricingSubmitDisabled(): boolean {
-        return !this.reelValid || !this.repValid || this.isLoading;
+        const repOk = this.isIrreparable || this.repValid;
+        return !this.reelValid || !repOk || this.isLoading;
     }
 
     /** Click on a pricing chip → fill price with cost × multiplier (rounded to

@@ -32,6 +32,11 @@ const COORDINATOR_DI_FIELDS = `
     comment
     retourReason
     retourDate
+    annulationParClient
+    annulationMotif
+    annulationCommentaire
+    annulePar
+    annuleLe
     array_composants {
         nameComposant
         quantity
@@ -110,6 +115,11 @@ export class TicketService {
             _id
             _idnum
             final_price
+            annulationParClient
+            annulationMotif
+            annulationCommentaire
+            annulePar
+            annuleLe
             price
             title
             description
@@ -164,6 +174,11 @@ export class TicketService {
             _id
             _idnum
             final_price
+            annulationParClient
+            annulationMotif
+            annulationCommentaire
+            annulePar
+            annuleLe
             price
             title
             description
@@ -1319,6 +1334,27 @@ export class TicketService {
         return gql`
             mutation {
                 setRepairEstimate(_id: "${_id}", estimate: ${estimate})
+            }
+        `;
+    }
+
+    /** Annulation d'une DI (bouton coordinateur), confirmée par mot de passe.
+     *  Utilise des VARIABLES GraphQL : le mot de passe et les textes libres
+     *  (motif « Autre », commentaire) ne doivent JAMAIS être interpolés dans la
+     *  requête (injection + guillemets qui casseraient le document). Le back
+     *  vérifie le mot de passe contre le hash de l'utilisateur courant. */
+    annulerDi() {
+        return gql`
+            mutation AnnulerDi($input: AnnulerDiInput!) {
+                annulerDi(AnnulerDiInput: $input) {
+                    _id
+                    status
+                    annulationMotif
+                    annulationParClient
+                    annulationCommentaire
+                    annulePar
+                    annuleLe
+                }
             }
         `;
     }

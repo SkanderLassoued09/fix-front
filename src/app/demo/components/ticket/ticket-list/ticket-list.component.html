@@ -2071,8 +2071,16 @@
                 </div>
             </div>
 
-            <!-- Étape 2 — estimation de la réparation (OBLIGATOIRE, > 0) -->
-            <div class="pricing-step" [ngClass]="'pricing-step--' + repState">
+            <!-- Étape 2 — estimation de la réparation (OBLIGATOIRE, > 0).
+                 Masquée si la DI est irréparable : rien ne sera réparé, et un
+                 champ caché ne doit jamais bloquer la soumission (cf.
+                 `pricingSubmitDisabled` / `pricingStatus` qui n'exigent plus
+                 l'estimation quand `isIrreparable`). -->
+            <div
+                *ngIf="!isIrreparable"
+                class="pricing-step"
+                [ngClass]="'pricing-step--' + repState"
+            >
                 <div class="pricing-step__head">
                     <span
                         class="pricing-step__badge"
