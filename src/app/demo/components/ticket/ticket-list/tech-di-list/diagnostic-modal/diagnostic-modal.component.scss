@@ -91,6 +91,25 @@
     }
 }
 
+// Message de blocage « Suivant » — ambre discret, aligné à droite près du bouton.
+.sav-diag-modal__nav-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-left: auto;
+    margin-right: 0.85rem;
+    align-self: center;
+    color: #b45309;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.25;
+    max-width: 24rem;
+
+    .pi {
+        font-size: 0.85rem;
+    }
+}
+
 @media (max-width: 1280px) {
     .sav-diag-modal__body {
         grid-template-columns: 240px minmax(0, 1fr) 300px;

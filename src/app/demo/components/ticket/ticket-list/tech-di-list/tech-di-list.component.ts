@@ -163,6 +163,53 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         'neutral';
     diagCanMinimizeVm = false;
 
+    /** Motif de blocage du bouton « Suivant » du modal diagnostic (null = pas de
+     *  blocage). Gate GÉNÉRIQUE par étape : on ne quitte l'étape courante que si
+     *  ses champs REQUIS sont renseignés (mêmes définitions que `diagSteps`). Le
+     *  message est SPÉCIFIQUE à l'étape :
+     *   - Panne       : catégorie + remarque du diagnostic obligatoires ;
+     *   - Validation  : décisions réparable / PDR prises (défaut déjà renseigné) ;
+     *   - Composants  : si PDR activé, au moins un composant — sinon désactiver
+     *                   PDR. Le blocage s'affiche ICI (étape « Composants requis »),
+     *                   PAS à l'étape « Validation ».
+     *   - Info / Résumé : aucun gate (lecture seule / bouton « Terminer »).
+     *  Garde miroir autoritaire côté back (`changeStatusMagasinEstimation`) contre
+     *  tout contournement (saut d'étape via le stepper, appel API direct). */
+    get diagNextBlockedReason(): string | null {
+        const form = this.diagFormTech;
+        switch (this.activeDiagStep) {
+            case 'failure': {
+                const hasCategory = !!form.get('di_category_id')?.value;
+                const hasRemark = !!(form.get('remarqueTech')?.value ?? '')
+                    .toString()
+                    .trim();
+                return hasCategory && hasRemark
+                    ? null
+                    : 'Renseignez la catégorie de panne et la remarque du diagnostic.';
+            }
+            case 'validation': {
+                const decided =
+                    form.get('isPdr')?.value !== null &&
+                    form.get('isReparable')?.value !== null;
+                return decided
+                    ? null
+                    : 'Indiquez si la pièce est réparable et si le DI contient des PDR.';
+            }
+            case 'components': {
+                // L'étape « Composants requis » n'est visible que si PDR ≠ false :
+                // il faut donc au moins un composant, sinon revenir désactiver PDR.
+                const hasComponentDecision =
+                    form.get('isPdr')?.value === false ||
+                    (this.composantCombo ?? []).length > 0;
+                return hasComponentDecision
+                    ? null
+                    : 'Ajoutez au moins un composant ou désactivez PDR';
+            }
+            default:
+                return null;
+        }
+    }
+
     /**
      * Feature flag for the legacy single-screen diagnostic dialog. Set to
      * false now that the redesigned wizard (<app-diagnostic-modal>) is the
@@ -3157,27 +3204,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     getStatusLabel(status: string): string {
-        const map = {
-            CREATED: 'CREATED',
-            PENDING1: 'PENDING1',
-            PENDING2: 'PENDING2',
-            PENDING3: 'PENDING3',
-            DIAGNOSTIC: 'DIAGNOSTIC',
-            INDIAGNOSTIC: 'INDIAGNOSTIC',
-            INMAGASIN: 'INMAGASIN',
-            PRICING: 'PRICING',
-            NEGOTIATION1: 'NEGOTIATION1',
-            NEGOTIATION2: 'NEGOTIATION2',
-            REPARATION: 'REPARATION',
-            INREPARATION: 'INREPARATION',
-            FINISHED: 'FINISHED',
-            ANNULER: 'ANNULER',
-            RETOUR1: 'RETOUR1',
-            RETOUR2: 'RETOUR2',
-            RETOUR3: 'RETOUR3',
-        };
-
-        return map[status] || status;
+        // Affichage BRUT de la valeur DB en MAJUSCULES.
+        return (status ?? '').toString().toUpperCase() || '—';
     }
 
     getSeverity(status: string) {
@@ -3195,10 +3223,22 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             INREPARATION: 'info',
 
             // 🟡 WARNING (waiting / business steps)
-            INMAGASIN: 'warning',
+            CONFIRMATION: 'warning',
+            PROCESSING: 'warning',
+            MAGASIN_FINALISATION: 'warning',
             MagasinEstimation: 'warning',
             PRICING: 'warning',
+            PRICING_DIAG: 'warning',
+            WAITING_DEVIS: 'warning',
+            WAITING_BC: 'warning',
             NEGOTIATION1: 'warning',
+            ATTENTE_BC_DEVIS: 'warning',
+            CONFIRMATION_COMPOSANTS: 'warning',
+            ATTENTE_CONFIRMATION_COORDINATION: 'warning',
+            WAITING_BL: 'warning',
+            WAITING_FACTURE: 'warning',
+            ATTENTE_BL_FACTURE: 'warning',
+            CLOSING: 'warning',
             NEGOTIATION2: 'warning',
 
             // ⚫ NEUTRAL (pending)
@@ -4051,15 +4091,28 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         DIAGNOSTIC_Pause: 'En pause',
         INDIAGNOSTIC: 'En cours',
         MagasinEstimation: 'Estimation magasin',
-        INMAGASIN: 'En magasin',
+        CONFIRMATION: 'CONFIRMATION',
+        PROCESSING: 'PROCESSING',
+        MAGASIN_FINALISATION: 'Finalisation magasin',
+        CONFIRMATION_COMPOSANTS: 'En attente confirmation Coordination',
+        ATTENTE_CONFIRMATION_COORDINATION:
+            'En attente confirmation Coordination',
         PENDING2: 'En attente prix',
-        PRICING: 'En tarification',
-        NEGOTIATION1: 'Négociation 1',
+        PRICING: 'Pricing',
+        PRICING_DIAG: 'Pricing',
+        WAITING_DEVIS: 'Approval — attente devis',
+        WAITING_BC: 'Approval — attente BC',
+        NEGOTIATION1: 'Approval',
+        ATTENTE_BC_DEVIS: 'Approval',
         NEGOTIATION2: 'Négociation 2',
         PENDING3: 'En attente réparation',
         REPARATION: 'Réparation assignée',
         REPARATION_Pause: 'Réparation en pause',
         INREPARATION: 'En réparation',
+        WAITING_BL: 'Clôture — attente BL',
+        WAITING_FACTURE: 'Clôture — attente facture',
+        ATTENTE_BL_FACTURE: 'CLOSING',
+        CLOSING: 'CLOSING',
         FINISHED: 'Terminé',
         ANNULER: 'Annulé',
         RETOUR1: 'Retour 1',

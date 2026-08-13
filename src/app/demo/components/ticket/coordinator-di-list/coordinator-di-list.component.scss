@@ -251,7 +251,8 @@ $red: #dc2626;
         background: #22c55e;
     }
 }
-::ng-deep .status-PRICING {
+::ng-deep .status-PRICING,
+::ng-deep .status-PRICING_DIAG {
     background: #fef9c3 !important;
     color: #713f12 !important;
     &::before {
@@ -2498,6 +2499,23 @@ $cf-surface: #f8fafc;
     background: #fff;
     border-color: $cf-text-muted;
 }
+// « Sautée » : étape JAMAIS atteinte (aucune entrée statusHistory) mais dépassée
+// par le curseur. Neutre/grise, VISUELLEMENT distincte de « Terminé » (vert) et
+// « En attente » (ambre) — pastille en pointillés + ligne barrée = « on n'est
+// pas passé par là ». Non comptée dans la progression.
+.cf-stage--skipped {
+    opacity: 0.72;
+}
+.cf-stage--skipped .cf-stage__bullet {
+    background: $cf-surface;
+    border-style: dashed;
+    border-color: $cf-text-muted;
+}
+.cf-stage--skipped .cf-stage__name {
+    color: $cf-text-muted;
+    text-decoration: line-through;
+    text-decoration-color: $cf-border;
+}
 
 .cf-stage__body {
     display: flex;
@@ -2538,6 +2556,25 @@ $cf-surface: #f8fafc;
         background: $cf-amber-soft;
         color: $cf-amber;
     }
+    &--skipped {
+        background: $cf-surface;
+        color: $cf-text-muted;
+    }
+}
+// Valeur brute `di.status` (technique, discrète) à côté du libellé lisible.
+.cf-stage__code {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: $cf-surface;
+    border: 1px solid $cf-border;
+    color: $cf-text-secondary;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
 }
 .cf-substatus {
     display: inline-flex;
@@ -2588,6 +2625,24 @@ $cf-surface: #f8fafc;
     }
     &--muted {
         color: $cf-text-muted;
+    }
+}
+// Écart (temps passé dans l'étape) — ligne discrète sous la date.
+.cf-stage__duration {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    margin-top: 0.15rem;
+    font-size: 0.74rem;
+    color: $cf-text-muted;
+    font-variant-numeric: tabular-nums;
+    .pi {
+        font-size: 0.68rem;
+    }
+    &--ongoing {
+        color: $cf-blue;
+        font-weight: 600;
     }
 }
 

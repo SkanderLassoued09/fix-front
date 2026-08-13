@@ -75,6 +75,11 @@ export class DiagnosticModalComponent {
   @Input() categoryLabel: string = '';
   @Input() headerStatusTone: 'running' | 'paused' | 'info' | 'neutral' = 'info';
   @Input() canMinimize: boolean = false;
+  /** Motif de blocage du bouton « Suivant » (null = pas de blocage). Calculé par
+   *  le parent (qui détient le form + la liste de composants). Non-null → bouton
+   *  désactivé + message affiché. Cas actuel : étape Validation, « contient des
+   *  PDR » activé mais AUCUN composant sélectionné. */
+  @Input() nextBlockedReason: string | null = null;
 
   // intents — the parent maps these to existing mutations / persistence calls
   @Output() pauseClicked = new EventEmitter<void>();
@@ -102,6 +107,9 @@ export class DiagnosticModalComponent {
     if (idx > 0) this.stepChanged.emit(this.steps[idx - 1].key);
   }
   goNext(): void {
+    // Garde UI : ne jamais avancer tant que « Suivant » est bloqué (défense en
+    // profondeur — le bouton est déjà [disabled]).
+    if (this.nextBlockedReason) return;
     const idx = this.steps.findIndex((s) => s.key === this.activeStep);
     if (idx >= 0 && idx < this.steps.length - 1) {
       this.stepChanged.emit(this.steps[idx + 1].key);

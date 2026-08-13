@@ -56,43 +56,98 @@
             </button>
         </header>
 
-        <!-- ── KPI strip ───────────────────────────────────── -->
-        <div class="di-kpi">
-            <div class="di-kpi__cell">
-                <div class="di-kpi__label">Prix initial</div>
-                <div class="di-kpi__val">
-                    {{ di?.price == null ? "—" : formatTnd3(di?.price) }}
+        <!-- ── Décomposition coût / facturé / écart par phase ──────
+             Coût calculé = temps RÉEL de la phase × taux horaire (+ pièces pour
+             la réparation). Facturé = montant facturé au client. Écart = facturé
+             − calculé (vert marge / rouge sous-facturation). -->
+        <div class="di-cost">
+            <!-- DIAGNOSTIC -->
+            <div class="di-cost__block">
+                <div class="di-cost__title">
+                    <i class="pi pi-search"></i> Diagnostic
                 </div>
-            </div>
-            <div class="di-kpi__cell">
-                <div class="di-kpi__label">Prix final</div>
-                <div class="di-kpi__val di-kpi__val--accent">
-                    {{
-                        di?.final_price == null
-                            ? "—"
-                            : formatTnd3(di?.final_price)
-                    }}
+                <div class="di-cost__row">
+                    <span>Coût calculé</span>
+                    <strong>{{ formatTnd3(coutDiag) }}</strong>
                 </div>
-            </div>
-            <div class="di-kpi__cell">
-                <div class="di-kpi__label">Écart</div>
+                <div class="di-cost__row">
+                    <span>Prix facturé</span>
+                    <strong>{{
+                        di?.price == null ? "—" : formatTnd3(di?.price)
+                    }}</strong>
+                </div>
                 <div
-                    class="di-kpi__val"
-                    [ngClass]="{
-                        'di-kpi__val--up': !ecart.absent && ecart.positive,
-                        'di-kpi__val--down': !ecart.absent && !ecart.positive,
-                        'di-kpi__val--muted': ecart.absent,
-                    }"
+                    class="di-cost__row di-cost__row--ecart"
+                    [ngClass]="'di-cost__row--' + ecartDiag.tone"
                 >
-                    {{ ecart.label }}
+                    <span>Écart</span>
+                    <strong *ngIf="!ecartDiag.absent; else diagEcartNa">
+                        {{ ecartDiag.montant >= 0 ? "+" : ""
+                        }}{{ formatTnd3(ecartDiag.montant) }}
+                        <span class="di-cost__pct"
+                            >({{ ecartDiag.montant >= 0 ? "+" : ""
+                            }}{{ ecartDiag.percent | number: "1.0-1" }} %)</span
+                        >
+                    </strong>
+                    <ng-template #diagEcartNa
+                        ><strong class="di-cost__na">—</strong></ng-template
+                    >
                 </div>
             </div>
-            <div class="di-kpi__cell">
-                <div class="di-kpi__label">Retours</div>
-                <div class="di-kpi__val di-kpi__val--cyan">
-                    {{ retourEntries.length }}
-                    <span class="di-kpi__unit">enregistré(s)</span>
+
+            <!-- RÉPARATION -->
+            <div class="di-cost__block">
+                <div class="di-cost__title">
+                    <i class="pi pi-wrench"></i> Réparation
                 </div>
+                <div class="di-cost__row">
+                    <span>Coût calculé</span>
+                    <strong>{{ formatTnd3(coutRepair) }}</strong>
+                </div>
+                <div class="di-cost__row">
+                    <span>Prix facturé</span>
+                    <strong class="di-cost__na">—</strong>
+                </div>
+                <div class="di-cost__row">
+                    <span>Écart</span>
+                    <strong class="di-cost__na">—</strong>
+                </div>
+                <div class="di-cost__note">
+                    Réparation non facturée séparément — seule une estimation
+                    existe, pas de prix réparation en base.
+                </div>
+            </div>
+
+            <!-- Retours (conservé) -->
+            <div class="di-cost__retours">
+                <span class="di-cost__retours-label">Retours</span>
+                <span class="di-cost__retours-val"
+                    >{{ retourEntries.length }} enregistré(s)</span
+                >
+            </div>
+        </div>
+
+        <!-- ── Bandeau d'annulation ─────────────────────────── -->
+        <div
+            *ngIf="di?.status === 'ANNULER' || di?.annulationMotif"
+            class="di-cancel-banner"
+        >
+            <strong><i class="pi pi-ban"></i> DI annulée</strong>
+            <span *ngIf="di?.annuleLe">
+                le {{ di?.annuleLe | date: "dd/MM/yyyy HH:mm" }}</span
+            >
+            <span *ngIf="di?.annulePar"> par {{ di?.annulePar }}</span>
+            <span *ngIf="di?.annulationMotif">
+                — motif : {{ di?.annulationMotif }}</span
+            >
+            <div *ngIf="di?.annulationParClient" class="di-cancel-banner__sub">
+                À la demande du client.
+            </div>
+            <div
+                *ngIf="di?.annulationCommentaire"
+                class="di-cancel-banner__sub"
+            >
+                « {{ di?.annulationCommentaire }} »
             </div>
         </div>
 

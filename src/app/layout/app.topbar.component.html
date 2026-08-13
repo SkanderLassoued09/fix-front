@@ -46,32 +46,57 @@
             label="Reminder Fixtronix"
             [badge]="nbNotification"
         /> -->
-        <button
-            (click)="logout('top-right')"
-            class="p-link layout-topbar-button"
-        >
-            <i class="pi pi-user"></i>
-            <span>Profile</span>
-        </button>
+        <!-- Utilisateur connecté : initiales + nom + rôle → menu (Se déconnecter) -->
+        <div class="topbar-user">
+            <button
+                type="button"
+                class="topbar-user__trigger"
+                (click)="userMenu.toggle($event)"
+                aria-haspopup="true"
+                aria-label="Menu utilisateur"
+            >
+                <p-avatar
+                    [label]="initials"
+                    shape="circle"
+                    styleClass="topbar-user__avatar"
+                ></p-avatar>
+                <span class="topbar-user__meta">
+                    <span class="topbar-user__name">{{ userName }}</span>
+                    <span class="topbar-user__role">{{ roleLabel }}</span>
+                </span>
+                <i class="pi pi-angle-down topbar-user__caret"></i>
+            </button>
+            <p-menu
+                #userMenu
+                [model]="userMenuItems"
+                [popup]="true"
+                appendTo="body"
+                styleClass="topbar-user__menu"
+            ></p-menu>
+        </div>
     </div>
     <p-dialog
-        header="Alert"
+        header="Déconnexion"
         [modal]="true"
         [(visible)]="visible"
         [position]="position"
         [style]="{ width: '25rem' }"
     >
         <span class="p-text-secondary block mb-5">
-            Voulez-vous deconnecter ?.
+            Voulez-vous vous déconnecter&nbsp;?
         </span>
 
         <div class="flex justify-content-end gap-2">
             <p-button
-                label="Ignorer"
+                label="Annuler"
                 severity="secondary"
                 (onClick)="visible = false"
             />
-            <p-button label="Déconnexion" (onClick)="yes()" />
+            <p-button
+                label="Se déconnecter"
+                icon="pi pi-sign-out"
+                (onClick)="yes()"
+            />
         </div>
     </p-dialog>
     <p-dialog

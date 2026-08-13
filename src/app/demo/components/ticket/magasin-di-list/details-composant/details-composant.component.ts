@@ -1,4 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+    Component,
+    OnInit,
+    OnDestroy,
+    Input,
+    Output,
+    EventEmitter,
+    HostBinding,
+} from '@angular/core';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { FormControl, FormGroup } from '@angular/forms';
@@ -9,6 +17,7 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { NotificationService } from 'src/app/demo/service/notification.service';
+import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 
 // TODO check type of these fields
 export interface Composant {
@@ -31,6 +40,16 @@ export interface Composant {
 })
 export class DetailsComposantComponent implements OnInit, OnDestroy {
     private readonly destroy$ = new Subject<void>();
+    /** Hosted-in-modal support (magasin « Affectation finale »): `diId` feeds
+     *  the DI id in place of the :id route param; `embedded` hides the page
+     *  chrome and turns the finish-navigation into a `closed` emit so the host
+     *  can close the dialog + refresh its list. */
+    @Input() diId?: string;
+    @Input() embedded = false;
+    @Output() closed = new EventEmitter<void>();
+    /** Envoi au coordinateur en cours (désactive le bouton — anti double-submit
+     *  côté UI ; `MutationRunner` verrouille aussi côté service via la clé). */
+    isSending = false;
     products;
     composants: any[];
     formUpdateComposant: FormGroup;
@@ -42,8 +61,26 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
     isSentToCoordinator: string;
     componentInfo: any;
     componentsAreConfirmed: boolean;
+    /** Statut RÉEL de la DI — source de vérité du handshake v2 (pilote les
+     *  boutons). Legacy `INMAGASIN`/`CONFIRMATION_COMPOSANTS` tolérés. */
+    diStatus: string;
     dateArrivage: string;
     ignoreCount: any;
+
+    // ── Redesign « Affectation finale.dc.html » ──────────────────────────
+    /** T-code + intitulé de la DI, pour l'étiquette d'en-tête du modal. */
+    diCode: string;
+    diTitle: string;
+    /** Nom du composant sélectionné (la liste sélectionne par `nameComposant`)
+     *  — pilote la surbrillance de la ligne active. */
+    selectedName: string | null = null;
+
+    /** Classe portée par l'hôte quand le composant est rendu EN MODAL (magasin)
+     *  — permet au SCSS de borner la hauteur au lieu de forcer 100vh (page routée). */
+    @HostBinding('class.af-embedded') get _embeddedHost(): boolean {
+        return this.embedded;
+    }
+
     constructor(
         private ticketSerice: TicketService,
         private productService: ProductService,
@@ -52,7 +89,8 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
         private readonly notificationService: NotificationService,
         private readonly messageservice: MessageService,
         private readonly router: Router,
-        private confirmationService: ConfirmationService
+        private confirmationService: ConfirmationService,
+        private readonly mutationRunner: MutationRunner,
     ) {
         this._id = this.route.snapshot.paramMap.get('id');
 
@@ -71,6 +109,10 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        // Modal mode: the DI id arrives via @Input, not the :id route param.
+        if (this.diId) {
+            this._id = this.diId;
+        }
         this.getDiByID(this._id);
         this.productService
             .getProductsSmall()
@@ -134,6 +176,9 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                         // (`status` n'existait pas → statut jamais pré-rempli).
                         status: composant.status_composant,
                     });
+                    // Le chargement ne doit pas compter comme une modification :
+                    // remet le formulaire à pristine pour piloter la barre de save.
+                    this.formUpdateComposant.markAsPristine();
                 },
                 error: (error) => {
                     this.messageservice.add({
@@ -147,6 +192,7 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
             });
     }
     select(data) {
+        this.selectedName = data?.nameComposant ?? null;
         this.getCompsantInfo(data.nameComposant);
     }
 
@@ -159,7 +205,11 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                 // Garde null : `data` est null quand la query échoue
                 // (errorPolicy 'all') — l'accès direct crashait.
                 if (!data?.getDiById?.di) return;
+                this.diStatus = data.getDiById.di.status;
                 this.ignoreCount = data.getDiById.di.ignoreCount;
+                // Étiquette d'en-tête (T-code · intitulé) de la maquette.
+                this.diCode = data.getDiById.di._idnum;
+                this.diTitle = data.getDiById.di.title;
 
                 if (data) {
                     if (data.getDiById.logsDi) {
@@ -186,29 +236,52 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
     }
 
     sentComponentToCoordinatorToConfirm() {
-        console.log('🥘');
+        const id = this._id;
         this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les Composants avec coordinator',
-            header: 'Confirmation Composants',
-            icon: 'pi pi-exclamation-triangle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
+            message:
+                'Envoyer les composants au coordinateur pour confirmation ?',
+            header: 'Envoyer au coordinateur',
+            icon: 'pi pi-send',
+            accept: async () => {
+                try {
+                    // Via MutationRunner : anti double-submit (clé), gestion
+                    // succès/erreur, loading. `errorToast: null` → on affiche
+                    // NOUS-MÊME le message serveur réel dans le catch.
+                    await this.mutationRunner.run({
+                        key: `sendToCoordinator:${id}`,
                         mutation:
                             this.ticketSerice.sentComponentToCoordinatorToConfirm(
-                                this._id
+                                id,
                             ),
-                    })
-                    .subscribe(({ data }) => {
-                        if (data) {
-                            console.log(
-                                '🍿[sentComponentToCoordinatorToConfirm]:',
-                                data
-                            );
-                            this.isSentToCoordinator =
-                                data.sendComponentToConMagasinForConfirmation.handleSendingNotificationBetweenCoordinatorAndMagasin;
-                        }
+                        successToast: {
+                            summary: 'Envoyé au coordinateur',
+                            detail: 'Les composants ont été transmis pour confirmation.',
+                        },
+                        errorToast: null,
+                        onLoading: (v) => (this.isSending = v),
                     });
+                    // SUCCÈS uniquement → fermer le modal ; l'hôte rafraîchit la
+                    // liste (statut → « En attente confirmation Coordination »).
+                    if (this.embedded) {
+                        this.closed.emit();
+                    } else {
+                        this.router.navigate([
+                            '/tickets/ticket/magasin-di-list',
+                        ]);
+                    }
+                } catch (err: any) {
+                    // Double-clic verrouillé par la clé → ignore silencieusement.
+                    if (err?.message === 'mutation-in-flight') return;
+                    // ÉCHEC → toast avec le message serveur réel ; le modal RESTE
+                    // ouvert (pas de fermeture aveugle).
+                    this.messageservice.add({
+                        severity: 'error',
+                        summary: 'Erreur',
+                        detail:
+                            err?.message ||
+                            "Échec de l'envoi au coordinateur. Réessayez.",
+                    });
+                }
             },
         });
     }
@@ -247,6 +320,9 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                     );
                     // this.changeStatusDiToPending2(this.selectedDi_id);
                     this.isActive = false;
+                    // Repasse le formulaire à pristine → barre de save au repos
+                    // (la mise à jour des composants reste facultative).
+                    this.formUpdateComposant.markAsPristine();
                 }
             });
     }
@@ -265,14 +341,113 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                     })
                     .subscribe(({ data }) => {
                         if (data) {
-                            this.router.navigate([
-                                '/tickets/ticket/magasin-di-list',
-                            ]);
+                            // Embedded in the magasin modal → close it (host
+                            // refreshes the list). Routed page → navigate back.
+                            if (this.embedded) {
+                                this.closed.emit();
+                            } else {
+                                this.router.navigate([
+                                    '/tickets/ticket/magasin-di-list',
+                                ]);
+                            }
                         }
                     });
             },
         });
     }
+
+    /** Ferme le modal (X d'en-tête, mode embarqué). L'hôte fait
+     *  `detailsComposantModal = false; loadData()`. */
+    closeModal(): void {
+        this.closed.emit();
+    }
+
+    // ── Dérivés d'affichage (« Affectation finale ») ──────────────────────
+    /** Nombre de composants de la liste. */
+    get totalCount(): number {
+        return this.composants?.length || 0;
+    }
+    /** Le formulaire porte des modifications non enregistrées (save FACULTATIF). */
+    get formDirty(): boolean {
+        return this.formUpdateComposant.dirty;
+    }
+
+    /** Marge = (vente − achat) / vente, en %. Négatif = vente sous le coût. */
+    get selMarge(): { label: string; good: boolean } {
+        const achat =
+            Number(this.formUpdateComposant.get('prix_achat')?.value) || 0;
+        const vente =
+            Number(this.formUpdateComposant.get('prix_vente')?.value) || 0;
+        const marge = vente > 0 ? Math.round(((vente - achat) / vente) * 100) : 0;
+        return { label: (marge >= 0 ? '+' : '') + marge + ' %', good: marge >= 0 };
+    }
+
+    /** État de stock : Rupture (≤0) / Faible (≤5) / En stock. */
+    stockInfo(qty: any): { label: string; cls: 'danger' | 'warn' | 'ok' } {
+        const q = Number(qty) || 0;
+        if (q <= 0) return { label: 'Rupture', cls: 'danger' };
+        if (q <= 5) return { label: 'Faible', cls: 'warn' };
+        return { label: 'En stock', cls: 'ok' };
+    }
+    get selStockInfo(): { label: string; cls: 'danger' | 'warn' | 'ok' } {
+        return this.stockInfo(
+            this.formUpdateComposant.get('quantity_stocked')?.value,
+        );
+    }
+
+    // ── Handshake v2 : boutons pilotés par le STATUT (source de vérité) ──
+    // Legacy INMAGASIN/CONFIRMATION_COMPOSANTS tolérés (DI pré-migration). Le
+    // flag `componentsAreConfirmed` sert de FILET pour les DI en RETOUR
+    // (ignoreCount > 0) : le back y avance les flags du logsDi et NON `di.status`
+    // (cohabitation), donc le statut ne passe jamais à MAGASIN_FINALISATION —
+    // sans ce filet, « Terminer » n'apparaîtrait jamais sur une DI renvoyée.
+    /** Étape 1 — magasin prépare la liste → bouton « Envoyer au coordinateur ».
+     *  Masqué dès que la coordination a confirmé (évite les deux boutons à la
+     *  fois sur une DI en retour dont le statut reste en préparation). */
+    get isPreparation(): boolean {
+        const prep =
+            this.diStatus === 'CONFIRMATION' || this.diStatus === 'PROCESSING';
+        return prep && !this.componentsAreConfirmed;
+    }
+    /** Étape 2 — envoyé, en attente de la confirmation de la coordination. */
+    get isAwaitingCoordination(): boolean {
+        if (this.componentsAreConfirmed) return false;
+        return (
+            this.diStatus === 'ATTENTE_CONFIRMATION_COORDINATION' ||
+            this.diStatus === 'CONFIRMATION_COMPOSANTS'
+        );
+    }
+    /** Étape 3 — coordination a confirmé → retour magasin. C'est ICI que
+     *  « Terminer les composants » redevient cliquable. Statut MAGASIN_FINALISATION
+     *  (flux normal) OU flag `componentsAreConfirmed` (filet DI en retour). */
+    get isFinalisation(): boolean {
+        return (
+            this.diStatus === 'MAGASIN_FINALISATION' ||
+            this.componentsAreConfirmed === true
+        );
+    }
+
+    /** Ligne de statut du footer — dérivée du STATUT réel de la DI. */
+    get batchStatus(): { text: string; tone: 'ok' | 'info' | 'idle'; char: string } {
+        if (this.isFinalisation)
+            return {
+                text: 'Composants confirmés — vous pouvez terminer la liste.',
+                tone: 'ok',
+                char: '✓',
+            };
+        if (this.isAwaitingCoordination)
+            return {
+                text: 'Envoyé — en attente de la confirmation de la coordination.',
+                tone: 'info',
+                char: '!',
+            };
+        return {
+            text: 'Préparez la liste, puis envoyez-la au coordinateur.',
+            tone: 'idle',
+            char: 'i',
+        };
+    }
+
     // map over the array of composant existed in tickets data
     // get composant data by id to update them
     //*******THESE APIs ARE ALREADY IMPLMENNTED IN TICKET COMPONENT YOU JUES NEED TO CHANGE THE PLACE */

@@ -39,6 +39,17 @@ import {
         </div>
       </header>
 
+      <!-- Blocage PDR sans composant — affiché ICI (étape Composants), pas à
+           Validation. Visible tant que PDR est activé et qu'aucun composant n'a
+           été ajouté ; il faut ajouter un composant OU désactiver PDR. -->
+      <div
+        class="req-warning"
+        *ngIf="form.get('isPdr')?.value !== false && !composants.length"
+      >
+        <i class="pi pi-exclamation-triangle"></i>
+        Ajoutez au moins un composant ou désactivez PDR (étape Validation).
+      </div>
+
       <div class="picker">
         <div class="picker__row">
           <div class="field">
@@ -135,6 +146,21 @@ import {
       }
       .step__head h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
       .step__head p { margin: 0.15rem 0 0; font-size: 0.82rem; color: #64748b; }
+
+      .req-warning {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        padding: 0.65rem 0.85rem;
+        border: 1px solid #fcd34d;
+        border-radius: 8px;
+        background: #fffbeb;
+        color: #b45309;
+        font-size: 0.82rem;
+        font-weight: 600;
+      }
+      .req-warning .pi { font-size: 0.9rem; }
 
       .picker {
         margin-bottom: 1.25rem;

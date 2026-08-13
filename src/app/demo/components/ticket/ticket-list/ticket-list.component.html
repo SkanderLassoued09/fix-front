@@ -1246,9 +1246,17 @@
                             (click)="openTicketDetails(rowData)"
                         ></button>
 
-                        <!-- Fichiers (FINISHED) -->
+                        <!-- Fichiers : en ATTENTE_BL_FACTURE (upload BL+Facture →
+                             clôture auto) ET sur les DI déjà FINISHED (gestion
+                             des fichiers a posteriori / rétro-compat). -->
                         <button
-                            *ngIf="rowData.status === 'FINISHED'"
+                            *ngIf="
+                                rowData.status === 'WAITING_BL' ||
+                                rowData.status === 'WAITING_FACTURE' ||
+                                rowData.status === 'CLOSING' ||
+                                rowData.status === 'ATTENTE_BL_FACTURE' ||
+                                rowData.status === 'FINISHED'
+                            "
                             pButton
                             pTooltip="Fichiers"
                             tooltipPosition="top"
@@ -1283,7 +1291,7 @@
 
                         <!-- Prix initial (PRICING) -->
                         <button
-                            *ngIf="rowData.status === 'PRICING'"
+                            *ngIf="rowData.status === 'PRICING' || rowData.status === 'PRICING_DIAG'"
                             pButton
                             pTooltip="Affecter prix"
                             tooltipPosition="top"
@@ -1292,9 +1300,15 @@
                             (click)="showDialogForPricing(rowData)"
                         ></button>
 
-                        <!-- Négociation 1 -->
+                        <!-- Approval (devis/BC) — split WAITING_DEVIS/WAITING_BC
+                             (+ legacy NEGOTIATION1/ATTENTE_BC_DEVIS non migrés). -->
                         <button
-                            *ngIf="rowData.status === 'NEGOTIATION1'"
+                            *ngIf="
+                                rowData.status === 'WAITING_DEVIS' ||
+                                rowData.status === 'WAITING_BC' ||
+                                rowData.status === 'NEGOTIATION1' ||
+                                rowData.status === 'ATTENTE_BC_DEVIS'
+                            "
                             pButton
                             pTooltip="Négociation"
                             tooltipPosition="top"
@@ -1862,20 +1876,21 @@
 <p-dialog
     [(visible)]="pricingModal"
     [modal]="true"
-    [style]="{ width: '496px' }"
+    [style]="{ width: '720px', maxWidth: '95vw' }"
     [draggable]="false"
     [resizable]="false"
     [closable]="false"
     [showHeader]="false"
     styleClass="sav-dialog pricing-dialog"
 >
-    <div class="pricing-modal">
+    <div class="pricing-modal pricing-modal--tarif">
+        <!-- ── Header ─────────────────────────────────────── -->
         <header class="pricing-modal__head">
             <div class="pricing-modal__tile" aria-hidden="true">
                 <i class="pi pi-tag"></i>
             </div>
             <div class="pricing-modal__titles">
-                <h3 class="pricing-modal__title">Affectation du prix initial</h3>
+                <h3 class="pricing-modal__title">Fixer le prix du diagnostic</h3>
                 <p class="pricing-modal__subtitle">
                     {{ seletedRow?._idnum ?? "DI" }}
                     <span *ngIf="seletedRow?.title"> · {{ seletedRow.title }}</span>
@@ -1891,39 +1906,36 @@
             </button>
         </header>
 
-        <p class="pricing-modal__section-label">Détail des coûts</p>
-        <div class="pricing-cost-card">
-            <div class="pricing-cost-row">
-                <span class="pricing-cost-row__label">
-                    <i class="pi pi-clock"></i>Temps diagnostic
-                </span>
-                <strong class="pricing-cost-row__value">
-                    {{ timeDiagnostique || "—" }}
-                </strong>
-            </div>
-            <div class="pricing-cost-row">
-                <span class="pricing-cost-row__label">
-                    <i class="pi pi-dollar"></i>Facturation diagnostic
-                </span>
-                <strong class="pricing-cost-row__value">
-                    {{ formatTnd3(facturationDiagnostique) }}
-                </strong>
-            </div>
-            <div class="pricing-cost-row">
-                <span class="pricing-cost-row__label">
-                    <i class="pi pi-wrench"></i>Total composants
-                </span>
-                <strong class="pricing-cost-row__value">
-                    {{ formatTnd3(totalComposant) }}
-                </strong>
-            </div>
-            <div class="pricing-cost-total">
-                <span class="pricing-cost-total__label">
-                    <i class="pi pi-check-circle"></i>Coût total
-                </span>
-                <strong class="pricing-cost-total__value">
+        <!-- ── Bande d'info : ce qu'a coûté le diagnostic ───── -->
+        <div class="pricing-hero">
+            <span class="pricing-hero__icon" aria-hidden="true">
+                <i class="pi pi-check"></i>
+            </span>
+            <div class="pricing-hero__main">
+                <span class="pricing-hero__label">Le diagnostic a coûté</span>
+                <strong class="pricing-hero__amount">
                     {{ formatTnd3(pricingCoutTotal) }}
                 </strong>
+            </div>
+            <div class="pricing-hero__stats">
+                <div class="pricing-hero__stat">
+                    <span class="pricing-hero__stat-label">Temps</span>
+                    <span class="pricing-hero__stat-value">
+                        {{ timeDiagnostique || "—" }}
+                    </span>
+                </div>
+                <div class="pricing-hero__stat">
+                    <span class="pricing-hero__stat-label">Main-d'œuvre</span>
+                    <span class="pricing-hero__stat-value">
+                        {{ formatNum3(facturationDiagnostique) }}
+                    </span>
+                </div>
+                <div class="pricing-hero__stat">
+                    <span class="pricing-hero__stat-label">Pièces</span>
+                    <span class="pricing-hero__stat-value">
+                        {{ formatNum3(totalComposant) }}
+                    </span>
+                </div>
             </div>
         </div>
 
@@ -1931,16 +1943,14 @@
              (notamment un « non réparable ») avant de tarifer ou de renvoyer la
              DI au diagnostic. -->
         <div
-            class="pricing-diag-note"
+            class="pricing-tech-note"
             *ngIf="seletedRow?.remarque_tech_diagnostic"
         >
-            <div class="pricing-diag-note__head">
-                <i class="pi pi-comment"></i>
-                Remarque du technicien (diagnostic)
-            </div>
-            <p class="pricing-diag-note__body">
+            <i class="pi pi-comment" aria-hidden="true"></i>
+            <span class="pricing-tech-note__tag">Note du technicien</span>
+            <span class="pricing-tech-note__text">
                 {{ seletedRow.remarque_tech_diagnostic }}
-            </p>
+            </span>
         </div>
 
         <!-- History block: kept for retours (legacy data); rendered only when relevant -->
@@ -1970,53 +1980,149 @@
             </div>
         </div>
 
-        <label class="pricing-modal__field-label" for="pricing-init-input">
-            Prix initial à affecter
-        </label>
-        <div class="pricing-input-row">
-            <p-inputNumber
-                inputId="pricing-init-input"
-                [(ngModel)]="price"
-                [min]="0"
-                [maxFractionDigits]="3"
-                [minFractionDigits]="3"
-                locale="fr-TN"
-                placeholder="0,000"
-                styleClass="pricing-input"
-            ></p-inputNumber>
-            <span class="pricing-input-suffix">TND</span>
-        </div>
+        <!-- ── Les deux questions ───────────────────────────── -->
+        <div class="pricing-steps">
+            <!-- Étape 1 — coût RÉEL du diagnostic (borné 150–500 TND) -->
+            <div class="pricing-step" [ngClass]="'pricing-step--' + reelState">
+                <div class="pricing-step__head">
+                    <span
+                        class="pricing-step__badge"
+                        [class.pricing-step__badge--ok]="reelState === 'ok'"
+                    >
+                        <i *ngIf="reelState === 'ok'" class="pi pi-check"></i>
+                        <ng-container *ngIf="reelState !== 'ok'">1</ng-container>
+                    </span>
+                    <label for="pricing-init-input" class="pricing-step__label">
+                        Prix du diagnostic à facturer&nbsp;?
+                    </label>
+                </div>
+                <div class="pricing-step__field">
+                    <p-inputNumber
+                        inputId="pricing-init-input"
+                        [(ngModel)]="price"
+                        [min]="150"
+                        [max]="500"
+                        [maxFractionDigits]="3"
+                        [minFractionDigits]="0"
+                        locale="fr-TN"
+                        placeholder="0"
+                        styleClass="pricing-step__input"
+                        (onBlur)="clampDiagCost()"
+                    ></p-inputNumber>
+                    <span class="pricing-step__suffix">TND</span>
+                </div>
+                <div
+                    class="pricing-chips"
+                    role="group"
+                    aria-label="Suggestions de prix"
+                >
+                    <button
+                        *ngFor="let chip of pricingChips; let i = index"
+                        type="button"
+                        class="pricing-chip"
+                        [class.pricing-chip--active]="activePricingChip === i"
+                        [disabled]="!pricingCoutTotal"
+                        (click)="applyPricingChip(i)"
+                    >
+                        <ng-container *ngIf="i === 0; else markupChip">
+                            Coût total ({{ formatTnd3(pricingCoutTotal) }})
+                        </ng-container>
+                        <ng-template #markupChip>{{ chip.label }}</ng-template>
+                    </button>
+                </div>
+                <!-- Écart TEMPS RÉEL prix saisi vs coût théorique (main-d'œuvre +
+                     pièces) — marge (vert) / sous-facturation (rouge) / au coût. -->
+                <div
+                    *ngIf="pricingEcart as ec"
+                    class="pricing-ecart"
+                    [ngClass]="'pricing-ecart--' + ec.tone"
+                >
+                    <span class="pricing-ecart__head" [ngSwitch]="ec.tone">
+                        <i
+                            class="pi"
+                            [ngClass]="
+                                ec.tone === 'pos'
+                                    ? 'pi-arrow-up-right'
+                                    : ec.tone === 'neg'
+                                      ? 'pi-exclamation-triangle'
+                                      : 'pi-minus'
+                            "
+                        ></i>
+                        <span *ngSwitchCase="'pos'">Marge sur le coût théorique</span>
+                        <span *ngSwitchCase="'neg'"
+                            >Sous-facturation — sous le coût réel</span
+                        >
+                        <span *ngSwitchDefault>Au coût théorique</span>
+                    </span>
+                    <span class="pricing-ecart__value">
+                        {{ ec.montant >= 0 ? "+" : "" }}{{ formatTnd3(ec.montant) }}
+                        <span class="pricing-ecart__pct">
+                            ({{ ec.montant >= 0 ? "+" : ""
+                            }}{{ ec.percent | number: "1.0-1" }} %)
+                        </span>
+                    </span>
+                </div>
+                <div
+                    class="pricing-step__help"
+                    [ngClass]="'pricing-step__help--' + reelHelp.tone"
+                >
+                    <span class="pricing-step__help-icon">{{ reelHelp.char }}</span>
+                    <span>{{ reelHelp.text }}</span>
+                </div>
+            </div>
 
-        <div class="pricing-marge" *ngIf="pricingMarge as m">
-            <span
-                class="pricing-marge__pill"
-                [ngClass]="m.positive ? 'pricing-marge__pill--up' : 'pricing-marge__pill--down'"
+            <!-- Étape 2 — estimation de la réparation (OBLIGATOIRE, > 0).
+                 Masquée si la DI est irréparable : rien ne sera réparé, et un
+                 champ caché ne doit jamais bloquer la soumission (cf.
+                 `pricingSubmitDisabled` / `pricingStatus` qui n'exigent plus
+                 l'estimation quand `isIrreparable`). -->
+            <div
+                *ngIf="!isIrreparable"
+                class="pricing-step"
+                [ngClass]="'pricing-step--' + repState"
             >
-                <i [class]="m.positive ? 'pi pi-arrow-up-right' : 'pi pi-arrow-down-right'"></i>
-                {{ m.positive ? "+" : "" }}{{ formatTnd3(m.tnd) }}
-            </span>
-            <span class="pricing-marge__text">
-                de marge sur le coût · {{ m.positive ? "+" : "" }}{{ m.percent | number: "1.1-1" }} %
-            </span>
+                <div class="pricing-step__head">
+                    <span
+                        class="pricing-step__badge"
+                        [class.pricing-step__badge--ok]="repState === 'ok'"
+                    >
+                        <i *ngIf="repState === 'ok'" class="pi pi-check"></i>
+                        <ng-container *ngIf="repState !== 'ok'">2</ng-container>
+                    </span>
+                    <label for="pricing-repair-estimate" class="pricing-step__label">
+                        Combien coûtera la réparation&nbsp;?
+                        <span class="pricing-step__req">*</span>
+                    </label>
+                </div>
+                <div class="pricing-step__field">
+                    <p-inputNumber
+                        inputId="pricing-repair-estimate"
+                        [(ngModel)]="repairEstimate"
+                        [min]="0"
+                        [maxFractionDigits]="3"
+                        [minFractionDigits]="0"
+                        locale="fr-TN"
+                        placeholder="0"
+                        styleClass="pricing-step__input"
+                    ></p-inputNumber>
+                    <span class="pricing-step__suffix">TND</span>
+                </div>
+                <p class="pricing-step__hint">
+                    C'est une estimation. Le prix exact sera confirmé après la
+                    réparation.
+                </p>
+                <div
+                    class="pricing-step__help"
+                    [ngClass]="'pricing-step__help--' + repHelp.tone"
+                >
+                    <span class="pricing-step__help-icon">{{ repHelp.char }}</span>
+                    <span>{{ repHelp.text }}</span>
+                </div>
+            </div>
         </div>
 
-        <div class="pricing-chips" role="group" aria-label="Suggestions de prix">
-            <button
-                *ngFor="let chip of pricingChips; let i = index"
-                type="button"
-                class="pricing-chip"
-                [class.pricing-chip--active]="activePricingChip === i"
-                [disabled]="!pricingCoutTotal"
-                (click)="applyPricingChip(i)"
-            >
-                <ng-container *ngIf="i === 0; else markupChip">
-                    Coût ({{ formatTnd3(pricingCoutTotal) }})
-                </ng-container>
-                <ng-template #markupChip>{{ chip.label }}</ng-template>
-            </button>
-        </div>
-
-        <footer class="pricing-modal__footer">
+        <!-- ── Footer ───────────────────────────────────────── -->
+        <footer class="pricing-modal__footer pricing-modal__footer--tarif">
             <p-button
                 label="Annuler"
                 severity="secondary"
@@ -2031,16 +2137,27 @@
                 *ngIf="seletedRow?.can_be_repaired === false"
                 label="Renvoyer au diagnostic"
                 icon="pi pi-replay"
-                severity="secondary"
+                severity="warning"
                 [outlined]="true"
                 [disabled]="isLoading"
                 (click)="sendBackToDiagnostic()"
             ></p-button>
+            <div
+                class="pricing-status"
+                [ngClass]="'pricing-status--' + pricingStatus.tone"
+            >
+                <span
+                    class="pricing-status__badge"
+                    [ngClass]="'pricing-status__badge--' + pricingStatus.iconTone"
+                    >{{ pricingStatus.char }}</span
+                >
+                <span>{{ pricingStatus.text }}</span>
+            </div>
             <p-button
-                label="Affecter le prix"
+                label="Valider le prix"
                 icon="pi pi-check"
-                severity="success"
-                [disabled]="!(price > 0) || isLoading"
+                styleClass="pricing-submit"
+                [disabled]="pricingSubmitDisabled"
                 (click)="pricing()"
             ></p-button>
         </footer>
@@ -2359,6 +2476,21 @@
                         </div>
 
                         <ng-template #factureDrop>
+                            <!-- Séquence : Facture verrouillée tant que le BL
+                                 n'est pas téléversé (DI en WAITING_BL). -->
+                            <div
+                                *ngIf="factureSlotLocked; else factureUploader"
+                                class="af-dropzone af-dropzone--disabled af-dropzone--locked"
+                            >
+                                <span class="af-dropzone__icon" aria-hidden="true">
+                                    <i class="pi pi-lock"></i>
+                                </span>
+                                <span class="af-dropzone__title">Verrouillé</span>
+                                <span class="af-dropzone__hint">
+                                    Téléversez d'abord le Bon de livraison (BL).
+                                </span>
+                            </div>
+                            <ng-template #factureUploader>
                             <label
                                 class="af-dropzone"
                                 [class.af-dropzone--active]="
@@ -2405,6 +2537,7 @@
                                     Glissez le fichier ici ou cliquez · max 10 Mo
                                 </span>
                             </label>
+                            </ng-template>
                         </ng-template>
                     </div>
                 </div>

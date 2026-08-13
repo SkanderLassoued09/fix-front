@@ -145,30 +145,44 @@ export class ProfileListComponent {
     }
 
     addSTAFF() {
+        this.loading = true;
         this.apollo
             .mutate<ProfileAddMutationResponse>({
                 mutation: this.profileService.addProfile(this.staffForm.value),
                 useMutationLoading: true,
             })
-            .subscribe(({ data, errors, loading }) => {
-                this.loading = loading;
-                if (data) {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'Le profil ajouté avec succés',
-                    });
-                    this.loadData(); // Reload data after adding
-                    this.staffForm.reset();
-                    this.visible = false;
-                }
-                if (errors) {
+            // `finalize` garantit que le bouton arrête de tourner — succès OU
+            // échec. Avant, une erreur réseau/GraphQL passait par `error()`,
+            // donc `next()` ne remettait jamais `loading` à false → le bouton
+            // « Ajouter » restait bloqué en spinner (« loading for nothing »).
+            .pipe(finalize(() => (this.loading = false)))
+            .subscribe({
+                next: ({ data, errors }) => {
+                    if (data) {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Le profil ajouté avec succés',
+                        });
+                        this.loadData(); // Reload data after adding
+                        this.staffForm.reset();
+                        this.visible = false;
+                    }
+                    if (errors) {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Error',
+                            detail: "Erreur lors de l'ajout du profil",
+                        });
+                    }
+                },
+                error: () => {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
                         detail: "Erreur lors de l'ajout du profil",
                     });
-                }
+                },
             });
     }
 

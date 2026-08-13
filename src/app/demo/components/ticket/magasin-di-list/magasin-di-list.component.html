@@ -142,7 +142,7 @@
                             tooltipPosition="top"
                             icon="pi pi-folder"
                             class="sav-icon-btn"
-                            [disabled]="rowData.status !== 'INMAGASIN'"
+                            [disabled]="!isComposantPhase(rowData.status)"
                             (click)="takeMetoDetailsComponent(rowData)"
                         ></button>
                         <button
@@ -935,5 +935,27 @@
                 </div>
             </footer>
         </form>
+    </p-dialog>
+
+    <!-- « Affectation finale » — la page « Gestion des composants »
+         (ex-route details/:id) rendue EN MODAL. Même composant, même
+         comportement ; l'id de la DI passe par [diId] au lieu du param de
+         route. À la clôture (« fin liste » → PENDING3) : fermeture + refresh. -->
+    <p-dialog
+        [(visible)]="detailsComposantModal"
+        [modal]="true"
+        [draggable]="false"
+        [dismissableMask]="true"
+        [showHeader]="false"
+        [contentStyle]="{ padding: '0', 'border-radius': '18px', overflow: 'hidden' }"
+        [style]="{ width: '92vw', maxWidth: '1040px' }"
+        [breakpoints]="{ '960px': '96vw' }"
+    >
+        <app-details-composant
+            *ngIf="detailsComposantModal"
+            [diId]="selectedDetailsDiId"
+            [embedded]="true"
+            (closed)="detailsComposantModal = false; loadData()"
+        ></app-details-composant>
     </p-dialog>
 </div>

@@ -6,6 +6,7 @@ import { MessageService } from 'primeng/api';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { SessionService } from 'src/app/demo/service/session.service';
 import { LayoutService } from 'src/app/layout/service/app.layout.service';
+import { landingRouteForRole } from 'src/app/shared/landing-route';
 
 interface LoginMutationResponse {
     login: {
@@ -348,7 +349,11 @@ export class LoginComponent {
                         // Register the tab-close fallback so a tab kill
                         // also frees `isConnected` (best-effort).
                         this.sessionService.installAutoLogout();
-                        this.router.navigateByUrl('/');
+                        // Land each profile on its own page (tech → atelier,
+                        // coordinateur/magasin → their lists, else ticket list).
+                        this.router.navigateByUrl(
+                            landingRouteForRole(data.login.user.role),
+                        );
                         return;
                     }
                     this.handleError(result?.errors, username);

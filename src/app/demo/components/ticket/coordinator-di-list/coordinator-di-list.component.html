@@ -396,21 +396,21 @@
                                     <strong class="cf-stage__name">
                                         {{ stage.label }}
                                     </strong>
-                                    <span
-                                        class="cf-stage__badge"
-                                        [ngClass]="
-                                            'cf-stage__badge--' + stage.state
+                                    <!-- Valeur brute `di.status` telle qu'en base
+                                         (depuis statusHistory) — technique, discrète,
+                                         legacy affiché exactement. Étapes non
+                                         atteintes : absente. -->
+                                    <code
+                                        *ngIf="stage.rawStatus"
+                                        class="cf-stage__code"
+                                        [pTooltip]="
+                                            'Valeur du statut enregistrée en base'
                                         "
+                                        tooltipPosition="top"
+                                        >{{ stage.rawStatus }}</code
                                     >
-                                        {{ stage.badgeLabel }}
-                                    </span>
-                                    <!-- Raw status enum codes (PENDING1 /
-                                         DIAGNOSTIC / DIAGNOSTIC_Pause /
-                                         INDIAGNOSTIC …) removed — only the human
-                                         label + badge + transition timestamp
-                                         (cf-stage__when) are shown now. -->
                                 </div>
-                                <div class="cf-stage__meta">
+                                <div class="cf-stage__meta" *ngIf="stage.actor">
                                     <span class="cf-stage__actor">
                                         <i class="pi pi-user"></i>
                                         {{ stage.actor }}
@@ -435,6 +435,27 @@
                                         —
                                     </span>
                                 </ng-template>
+                                <!-- Écart : temps passé dans l'étape, dérivé des
+                                     `at` de statusHistory (aucune capture). -->
+                                <span
+                                    *ngIf="stage.duration"
+                                    class="cf-stage__duration"
+                                    [class.cf-stage__duration--ongoing]="
+                                        stage.duration.ongoing
+                                    "
+                                >
+                                    <i class="pi pi-clock"></i>
+                                    <ng-container
+                                        *ngIf="
+                                            stage.duration.ongoing;
+                                            else doneDuration
+                                        "
+                                        >depuis {{ stage.duration.text }}</ng-container
+                                    >
+                                    <ng-template #doneDuration
+                                        >Durée : {{ stage.duration.text }}</ng-template
+                                    >
+                                </span>
                             </div>
                         </li>
                     </ol>
@@ -515,34 +536,51 @@
                         <p class="cf-card__hint">
                             Confirmer la réception des composants
                         </p>
+                        <!-- DI sans composant : la phase de confirmation est
+                             sautée (négociation → PENDING3 direct). On l'affiche
+                             explicitement au lieu d'un bouton mort. -->
                         <div
-                            *ngIf="magasinConfirmedAt; else magasinAction"
-                            class="cf-card__state cf-card__state--ok"
+                            *ngIf="componentStepSkipped"
+                            class="cf-card__state"
                         >
-                            <i class="pi pi-check-circle"></i>
+                            <i class="pi pi-minus-circle"></i>
                             <div>
-                                <strong>Composants confirmés</strong>
-                                <small>
-                                    {{ formatDateTime(magasinConfirmedAt) }}
-                                </small>
+                                <strong>Étape sautée</strong>
+                                <small>Aucun composant</small>
                             </div>
                         </div>
-                        <ng-template #magasinAction>
-                            <p-button
-                                [disabled]="
-                                    componentConfirmedFromCoordinator !==
-                                        'IN_MAGASIN' ||
-                                    magasinConfirmedAt ||
-                                    componentsConfirmInFlight
-                                "
-                                label="Confirmer les composants"
-                                icon="pi pi-check"
-                                severity="success"
-                                size="small"
-                                styleClass="cf-card__action"
-                                (onClick)="gotcomposantfromMagasin()"
-                            ></p-button>
-                        </ng-template>
+                        <ng-container *ngIf="!componentStepSkipped">
+                            <div
+                                *ngIf="magasinConfirmedAt; else magasinAction"
+                                class="cf-card__state cf-card__state--ok"
+                            >
+                                <i class="pi pi-check-circle"></i>
+                                <div>
+                                    <strong>Composants confirmés</strong>
+                                    <small>
+                                        {{ formatDateTime(magasinConfirmedAt) }}
+                                    </small>
+                                </div>
+                            </div>
+                            <ng-template #magasinAction>
+                                <p-button
+                                    [disabled]="
+                                        (selectedDiStatus !==
+                                            'ATTENTE_CONFIRMATION_COORDINATION' &&
+                                            selectedDiStatus !==
+                                                'CONFIRMATION_COMPOSANTS') ||
+                                        magasinConfirmedAt ||
+                                        componentsConfirmInFlight
+                                    "
+                                    label="Confirmer les composants"
+                                    icon="pi pi-check"
+                                    severity="success"
+                                    size="small"
+                                    styleClass="cf-card__action"
+                                    (onClick)="gotcomposantfromMagasin()"
+                                ></p-button>
+                            </ng-template>
+                        </ng-container>
                     </article>
 
                     <article class="cf-card">
@@ -661,8 +699,16 @@
 
             <!-- ── Footer ────────────────────────────────────── -->
             <footer class="cf-modal__footer">
+                <!-- Annulation de la DI : confirmée par mot de passe + motif.
+                     Distincte du bouton « Fermer » ci-dessous. -->
                 <p-button
-                    label="Annuler"
+                    label="Annuler la DI"
+                    icon="pi pi-ban"
+                    severity="danger"
+                    (onClick)="openCancelDialog()"
+                ></p-button>
+                <p-button
+                    label="Fermer"
                     severity="secondary"
                     [outlined]="true"
                     (onClick)="hideDialog()"
@@ -675,6 +721,114 @@
                 ></p-button>
             </footer>
         </div>
+    </p-dialog>
+
+    <!-- ══ Annulation d'une DI — motif + confirmation par mot de passe ══════ -->
+    <p-dialog
+        header="Annuler la DI"
+        [(visible)]="cancelDialog"
+        [modal]="true"
+        [style]="{ width: '480px' }"
+        [draggable]="false"
+        [resizable]="false"
+    >
+        <div class="di-cancel-form" style="display:flex;flex-direction:column;gap:1rem;">
+            <!-- À la demande du client ? -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Annulation à la demande du client&nbsp;?
+                </label>
+                <p-selectButton
+                    [options]="[
+                        { label: 'Oui', value: true },
+                        { label: 'Non', value: false }
+                    ]"
+                    [(ngModel)]="cancelForm.parClient"
+                    optionLabel="label"
+                    optionValue="value"
+                ></p-selectButton>
+            </div>
+
+            <!-- Motif (liste métier) -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Motif <span style="color:var(--red-500);">*</span>
+                </label>
+                <p-dropdown
+                    [options]="cancelMotifs"
+                    [(ngModel)]="cancelForm.motif"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Choisir un motif…"
+                    [style]="{ width: '100%' }"
+                    appendTo="body"
+                ></p-dropdown>
+            </div>
+
+            <!-- Texte libre OBLIGATOIRE si « Autre » -->
+            <div *ngIf="cancelForm.motif === 'AUTRE'">
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Préciser le motif <span style="color:var(--red-500);">*</span>
+                </label>
+                <input
+                    type="text"
+                    pInputText
+                    [(ngModel)]="cancelForm.motifAutre"
+                    placeholder="Motif précis…"
+                    style="width:100%;"
+                />
+            </div>
+
+            <!-- Commentaire optionnel -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Commentaire (optionnel)
+                </label>
+                <textarea
+                    pInputTextarea
+                    [(ngModel)]="cancelForm.commentaire"
+                    rows="2"
+                    style="width:100%;"
+                ></textarea>
+            </div>
+
+            <!-- Confirmation par mot de passe (vérifié côté serveur) -->
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Votre mot de passe <span style="color:var(--red-500);">*</span>
+                </label>
+                <input
+                    type="password"
+                    pInputText
+                    [(ngModel)]="cancelForm.password"
+                    placeholder="Confirmez avec votre mot de passe"
+                    autocomplete="current-password"
+                    (keydown.enter)="submitCancelDi()"
+                    style="width:100%;"
+                />
+                <small style="color:var(--text-color-secondary);">
+                    Vérifié côté serveur — l'annulation est refusée si le mot de
+                    passe est incorrect.
+                </small>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <p-button
+                label="Fermer"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="cancelDialog = false"
+            ></p-button>
+            <p-button
+                label="Confirmer l'annulation"
+                icon="pi pi-ban"
+                severity="danger"
+                [disabled]="cancelSubmitDisabled"
+                [loading]="cancelBusy"
+                (onClick)="submitCancelDi()"
+            ></p-button>
+        </ng-template>
     </p-dialog>
 
     <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>

@@ -3,6 +3,81 @@ import { gql } from 'apollo-angular';
 import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.interface';
 import { gqlStr } from './gql-escape.util';
 
+/**
+ * SÉLECTION UNIQUE des champs d'une DI pour les vues coordinatrice (liste
+ * paginée `get_coordinatorDI` ET recherche `searchCoordinatorDI`). Les deux
+ * DOIVENT sélectionner exactement les mêmes champs : une DI atteinte par
+ * recherche avec une projection réduite perdait `contain_pdr`/`array_composants`
+ * (→ bouton « Confirmer les composants » masqué) et `statusHistory` (→ timeline
+ * cassée). Partager ce bloc empêche toute future divergence. Le back renvoie ces
+ * mêmes champs via son mapper partagé `mapCoordinatorDiRow`.
+ */
+const COORDINATOR_DI_FIELDS = `
+    _id
+    _idnum
+    price
+    final_price
+    title
+    description
+    ignoreCount
+    can_be_repaired
+    bon_de_commande
+    bon_de_livraison
+    contain_pdr
+    status
+    techRep
+    techDiag
+    createdAt
+    updatedAt
+    comment
+    retourReason
+    retourDate
+    annulationParClient
+    annulationMotif
+    annulationCommentaire
+    annulePar
+    annuleLe
+    array_composants {
+        nameComposant
+        quantity
+        isUpdated
+    }
+    company_id
+    client_id
+    remarque_manager
+    remarque_admin_manager
+    remarque_admin_tech
+    remarque_tech_diagnostic
+    remarque_tech_repair
+    remarque_magasin
+    remarque_coordinator
+    createdBy
+    handleSendingNotificationBetweenCoordinatorAndMagasin
+    pricingRequestSentAt
+    pricingRequestSentBy
+    componentsConfirmedAt
+    componentsConfirmedBy
+    statusHistory {
+        status
+        at
+    }
+    documents {
+        type
+        name
+        webViewLink
+    }
+    logs {
+        idIgnore
+        isSentToCoordinator
+        isConfirmedComponentFromCoordinator
+        handleSendingNotificationBetweenCoordinatorAndMagasin
+    }
+    location_id
+    di_category_id
+    isSentToCoordinator
+    isConfirmedComponentFromCoordinator
+`;
+
 @Injectable({
     providedIn: 'root',
 })
@@ -40,6 +115,11 @@ export class TicketService {
             _id
             _idnum
             final_price
+            annulationParClient
+            annulationMotif
+            annulationCommentaire
+            annulePar
+            annuleLe
             price
             title
             description
@@ -94,6 +174,11 @@ export class TicketService {
             _id
             _idnum
             final_price
+            annulationParClient
+            annulationMotif
+            annulationCommentaire
+            annulePar
+            annuleLe
             price
             title
             description
@@ -164,46 +249,7 @@ export class TicketService {
         search: { field: "${field}", value: "${value}" }
       ) {
         di {
-          _id
-          _idnum
-          title
-          status
-          price
-          final_price
-          createdAt
-          techDiag
-          techRep
-          company_id
-          client_id
-          location_id
-          pricingRequestSentAt
-          pricingRequestSentBy
-          componentsConfirmedAt
-          componentsConfirmedBy
-          # Fields needed by the shared di-info-modal (were missing → the
-          # detail modal showed empty/N-A after a search).
-          description
-          contain_pdr
-          can_be_repaired
-          createdBy
-          ignoreCount
-          remarque_manager
-          remarque_tech_diagnostic
-          remarque_tech_repair
-          array_composants {
-            nameComposant
-            quantity
-          }
-          documents {
-            type
-            name
-            webViewLink
-          }
-          logs {
-            idIgnore
-            isSentToCoordinator
-            isConfirmedComponentFromCoordinator
-          }
+          ${COORDINATOR_DI_FIELDS}
         }
         totalDiCount
       }
@@ -216,60 +262,7 @@ export class TicketService {
             {
                 get_coordinatorDI(paginationConfig: { first: ${first}, rows: ${rows} }) {
                     di {
-                        _id
-                        _idnum
-                        price
-                        final_price
-                        title
-                        description
-                        ignoreCount
-                        can_be_repaired
-                        bon_de_commande
-                        bon_de_livraison
-                        contain_pdr
-                        status
-                        techRep
-                        techDiag
-                        createdAt
-                        updatedAt
-                        comment
-                        retourReason
-                        retourDate
-                             array_composants {
-                            nameComposant
-                            quantity
-                            isUpdated 
-                        }
-                        company_id
-                        client_id
-                        remarque_manager
-                        remarque_admin_manager
-                        remarque_admin_tech
-                        remarque_tech_diagnostic
-                        remarque_tech_repair
-                        remarque_magasin
-                        remarque_coordinator
-                        ignoreCount
-                        createdBy
-                        handleSendingNotificationBetweenCoordinatorAndMagasin
-                        pricingRequestSentAt
-                        pricingRequestSentBy
-                        componentsConfirmedAt
-                        componentsConfirmedBy
-                        statusHistory {
-                            status
-                            at
-                        }
-                        documents {
-                            type
-                            name
-                            webViewLink
-                        }
-                        logs{idIgnore isSentToCoordinator isConfirmedComponentFromCoordinator handleSendingNotificationBetweenCoordinatorAndMagasin}
-                        location_id
-                        di_category_id
-                        isSentToCoordinator
-                        isConfirmedComponentFromCoordinator
+                        ${COORDINATOR_DI_FIELDS}
                     }
                     totalDiCount
                 }
@@ -1335,6 +1328,37 @@ export class TicketService {
         `;
     }
 
+    /** Persist the « Estimation réparation » from the tarification-diagnostic
+     *  modal (dedicated field, distinct from price/final_price). */
+    setRepairEstimate(_id: string, estimate: number) {
+        return gql`
+            mutation {
+                setRepairEstimate(_id: "${_id}", estimate: ${estimate})
+            }
+        `;
+    }
+
+    /** Annulation d'une DI (bouton coordinateur), confirmée par mot de passe.
+     *  Utilise des VARIABLES GraphQL : le mot de passe et les textes libres
+     *  (motif « Autre », commentaire) ne doivent JAMAIS être interpolés dans la
+     *  requête (injection + guillemets qui casseraient le document). Le back
+     *  vérifie le mot de passe contre le hash de l'utilisateur courant. */
+    annulerDi() {
+        return gql`
+            mutation AnnulerDi($input: AnnulerDiInput!) {
+                annulerDi(AnnulerDiInput: $input) {
+                    _id
+                    status
+                    annulationMotif
+                    annulationParClient
+                    annulationCommentaire
+                    annulePar
+                    annuleLe
+                }
+            }
+        `;
+    }
+
     changeStatusRepaire(_id: string) {
         return gql`
             mutation {
@@ -1491,6 +1515,7 @@ export class TicketService {
                     }
                     di {
                         _id
+                        status
                         _idnum
                         ignoreCount
                         di_category_id
