@@ -489,7 +489,7 @@
                              Otherwise show the assigned tech as plain text. -->
                         <p-dropdown
                             *ngIf="!diag_condition"
-                            [options]="techList"
+                            [options]="availableDiagTechs"
                             [(ngModel)]="selectedTechDiagModel"
                             optionLabel="firstName"
                             [disabled]="diagReassignLockedByRetour"

@@ -151,6 +151,44 @@
             </div>
         </div>
 
+        <!-- ── Historique d'affectation diagnostic (abandon → réaffectation) ── -->
+        <div *ngIf="hasDiagHistory" class="di-diag-history">
+            <div class="di-diag-history__title">
+                <i class="pi pi-users"></i> Historique d'affectation (diagnostic)
+            </div>
+            <ol class="di-diag-history__list">
+                <li
+                    *ngFor="let a of di?.diagAssignments"
+                    class="di-diag-history__item"
+                    [class.di-diag-history__item--current]="!a.abandonedAt"
+                >
+                    <span class="di-diag-history__tech">{{ a.tech || "—" }}</span>
+                    <span class="di-diag-history__meta">
+                        <ng-container *ngIf="a.assignedAt"
+                            >affecté le
+                            {{ a.assignedAt | date: "dd/MM/yyyy HH:mm" }}</ng-container
+                        >
+                        <ng-container *ngIf="a.abandonedAt">
+                            → abandonné le
+                            {{ a.abandonedAt | date: "dd/MM/yyyy HH:mm" }}
+                            <ng-container *ngIf="a.motif"
+                                >(motif&nbsp;: {{ a.motif }})</ng-container
+                            >
+                            <ng-container *ngIf="a.abandonedBy">
+                                par {{ a.abandonedBy }}</ng-container
+                            >
+                            <ng-container *ngIf="a.diagTime">
+                                — {{ a.diagTime }}</ng-container
+                            >
+                        </ng-container>
+                        <span *ngIf="!a.abandonedAt" class="di-diag-history__now">
+                            → en cours</span
+                        >
+                    </span>
+                </li>
+            </ol>
+        </div>
+
         <!-- ── Body (scroll) ───────────────────────────────── -->
         <div class="di-body di-scroll">
             <div class="di-body__grid">

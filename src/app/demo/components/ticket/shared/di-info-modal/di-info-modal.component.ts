@@ -52,6 +52,12 @@ export class DiInfoModalComponent implements OnChanges {
     @Input() retour3: any = null;
     @Output() visibleChange = new EventEmitter<boolean>();
 
+    /** Historique d'affectation diagnostic à afficher : uniquement si au moins un
+     *  ABANDON a eu lieu (une simple affectation en cours n'est pas un historique). */
+    get hasDiagHistory(): boolean {
+        return (this.di?.diagAssignments ?? []).some((a: any) => !!a.abandonedAt);
+    }
+
     /** Retour cycles to display, gated by the DI's ignoreCount. */
     get retourEntries(): Array<{ n: number; data: any }> {
         const count = Number(this.di?.ignoreCount ?? 0);
