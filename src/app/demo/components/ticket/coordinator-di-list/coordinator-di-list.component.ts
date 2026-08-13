@@ -18,6 +18,7 @@ import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
 import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
+import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import {
     formatTableValue,
     isLocationColumn,
@@ -273,6 +274,29 @@ export class CoordinatorDiListComponent implements OnDestroy {
             : this.baseUrl + value;
     }
 
+    // ── Annulation d'une DI (bouton coordinateur, confirmée par mot de passe) ─
+    cancelDialog = false;
+    cancelForm: {
+        parClient: boolean;
+        motif: string | null;
+        motifAutre: string;
+        commentaire: string;
+        password: string;
+    } = { parClient: false, motif: null, motifAutre: '', commentaire: '', password: '' };
+    readonly CANCEL_KEY = 'annuler-di';
+    /** Motifs métier (atelier réparation industrielle). Les CODES doivent
+     *  correspondre à la liste blanche serveur (`DiService.ANNUL_MOTIFS`). */
+    readonly cancelMotifs = [
+        { label: 'Prix trop élevé', value: 'PRIX_TROP_ELEVE' },
+        { label: 'Délai trop long', value: 'DELAI_TROP_LONG' },
+        { label: 'Pièce introuvable / non disponible', value: 'PIECE_INTROUVABLE' },
+        { label: 'Équipement irréparable', value: 'IRREPARABLE' },
+        { label: 'Client a renoncé', value: 'CLIENT_RENONCE' },
+        { label: 'Réparé ailleurs', value: 'REPARE_AILLEURS' },
+        { label: 'Doublon / erreur de saisie', value: 'DOUBLON_ERREUR' },
+        { label: 'Autre', value: 'AUTRE' },
+    ];
+
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -280,7 +304,70 @@ export class CoordinatorDiListComponent implements OnDestroy {
         private confirmationService: ConfirmationService,
         private notificationService: NotificationService,
         private ticketRefreshService: TicketRefreshService,
+        private mutationRunner: MutationRunner,
     ) {}
+
+    /** Ouvre le modal d'annulation (repart d'un formulaire vierge). */
+    openCancelDialog() {
+        this.cancelForm = {
+            parClient: false,
+            motif: null,
+            motifAutre: '',
+            commentaire: '',
+            password: '',
+        };
+        this.cancelDialog = true;
+    }
+
+    /** Anti double-submit exposé au template (le champ runner est privé). */
+    get cancelBusy(): boolean {
+        return this.mutationRunner.isBusy(this.CANCEL_KEY);
+    }
+
+    /** Validation front (le back re-valide) : motif + mot de passe requis,
+     *  texte libre obligatoire si « Autre », et anti double-submit. */
+    get cancelSubmitDisabled(): boolean {
+        const f = this.cancelForm;
+        if (!f.motif || !f.password) return true;
+        if (f.motif === 'AUTRE' && !f.motifAutre.trim()) return true;
+        return this.mutationRunner.isBusy(this.CANCEL_KEY);
+    }
+
+    /** Envoie l'annulation. Ferme + rafraîchit UNIQUEMENT en cas de succès ;
+     *  un échec (ex. mot de passe faux) est toasté et laisse le modal ouvert —
+     *  la DI reste inchangée. */
+    async submitCancelDi() {
+        if (this.cancelSubmitDisabled) return;
+        const f = this.cancelForm;
+        try {
+            await this.mutationRunner.run({
+                key: this.CANCEL_KEY,
+                mutation: this.ticketSerice.annulerDi(),
+                variables: {
+                    input: {
+                        diId: this.selectedDi,
+                        parClient: !!f.parClient,
+                        motif: f.motif,
+                        motifAutre:
+                            f.motif === 'AUTRE' ? f.motifAutre.trim() : null,
+                        commentaire: f.commentaire?.trim() || null,
+                        password: f.password,
+                    },
+                },
+                successToast: {
+                    summary: 'DI annulée',
+                    detail: 'La DI a été annulée et le motif enregistré.',
+                },
+                onLoading: (l) => (this.isLoading = l),
+            });
+            this.cancelDialog = false;
+            this.diDialog = false;
+            this.loadData();
+        } catch {
+            // Échec déjà toasté par MutationRunner. Modal laissé ouvert pour
+            // correction ; aucune modification de la DI côté serveur.
+        }
+    }
 
     ngOnInit() {
         // Initial load

@@ -85,42 +85,26 @@ export class SessionService {
      * and routes to /auth/login regardless of the network outcome.
      */
     logout(): void {
-        console.log('[SessionService.logout] called');
         const token = localStorage.getItem('token');
-        console.log('[SessionService.logout] token present =', !!token);
+        // Nettoyage local + redirection. `replaceUrl: true` retire la page
+        // authentifiée courante de l'historique → conjugué à l'`authGuard`
+        // (qui bloque déjà toute route protégée sans token), le retour arrière
+        // ne peut pas ramener sur une page authentifiée.
         const cleanup = () => {
-            console.log('[SessionService.logout] cleanup running');
             localStorage.removeItem('token');
             localStorage.removeItem('_id');
             localStorage.removeItem('role');
             localStorage.removeItem('username');
-            this.router.navigateByUrl('/auth/login');
+            this.router.navigateByUrl('/auth/login', { replaceUrl: true });
         };
         if (!token) {
-            console.log('[SessionService.logout] no token → cleanup only');
             cleanup();
             return;
         }
-        console.log('[SessionService.logout] sending mutation { logout(token) }');
+        // Libère le verrou single-session côté serveur (isConnected → false),
+        // PUIS nettoie — quel que soit le résultat réseau (best-effort).
         this.apollo
             .mutate({ mutation: this.profileService.logoutMutation(token) })
-            .subscribe({
-                next: (result: any) => {
-                    console.log(
-                        '[SessionService.logout] response =',
-                        JSON.stringify(result),
-                    );
-                    cleanup();
-                },
-                error: (err: any) => {
-                    console.error(
-                        '[SessionService.logout] error =',
-                        err?.message ?? err,
-                        err?.graphQLErrors,
-                        err?.networkError,
-                    );
-                    cleanup();
-                },
-            });
+            .subscribe({ next: () => cleanup(), error: () => cleanup() });
     }
 }

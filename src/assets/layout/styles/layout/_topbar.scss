@@ -79,10 +79,97 @@
         padding: 0;
         list-style: none;
         display: flex;
+        align-items: center;
 
         .layout-topbar-button {
             margin-left: 1rem;
         }
+    }
+
+    // ── Utilisateur connecté (chip + menu) ───────────────────────────────
+    // Design system : Inter, bleu #3b82f6 → #2563eb (aucun violet), responsive.
+    .topbar-user {
+        margin-left: 1rem;
+
+        &__trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            padding: 0.35rem 0.6rem;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 999px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: background-color $transitionDuration,
+                border-color $transitionDuration;
+
+            &:hover {
+                background-color: var(--surface-hover);
+            }
+
+            &:focus-visible {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+            }
+        }
+
+        &__avatar {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            width: 2.4rem;
+            height: 2.4rem;
+            font-size: 0.9rem;
+        }
+
+        &__meta {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+            text-align: left;
+        }
+
+        &__name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+
+        &__role {
+            font-size: 0.78rem;
+            color: var(--text-color-secondary);
+        }
+
+        &__caret {
+            font-size: 0.85rem;
+            color: var(--text-color-secondary);
+        }
+    }
+}
+
+// Le p-menu est `appendTo="body"` → styles GLOBAUX (hors .layout-topbar).
+.p-menu.topbar-user__menu {
+    font-family: 'Inter', sans-serif;
+    min-width: 12rem;
+
+    .p-menuitem-link {
+        &:hover {
+            background-color: rgba(59, 130, 246, 0.08);
+        }
+        .p-menuitem-icon {
+            color: #2563eb;
+        }
+    }
+}
+
+// Sous 640px : on masque le nom/rôle, on garde l'avatar (compact).
+@media (max-width: 640px) {
+    .layout-topbar .topbar-user__meta,
+    .layout-topbar .topbar-user__caret {
+        display: none;
     }
 }
 
