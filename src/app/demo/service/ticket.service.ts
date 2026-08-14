@@ -37,6 +37,15 @@ const COORDINATOR_DI_FIELDS = `
     annulationCommentaire
     annulePar
     annuleLe
+    diagAssignments {
+        tech
+        techId
+        assignedAt
+        abandonedAt
+        motif
+        abandonedBy
+        diagTime
+    }
     array_composants {
         nameComposant
         quantity
@@ -120,6 +129,15 @@ export class TicketService {
             annulationCommentaire
             annulePar
             annuleLe
+            diagAssignments {
+                tech
+                techId
+                assignedAt
+                abandonedAt
+                motif
+                abandonedBy
+                diagTime
+            }
             price
             title
             description
@@ -179,6 +197,15 @@ export class TicketService {
             annulationCommentaire
             annulePar
             annuleLe
+            diagAssignments {
+                tech
+                techId
+                assignedAt
+                abandonedAt
+                motif
+                abandonedBy
+                diagTime
+            }
             price
             title
             description
@@ -1366,6 +1393,20 @@ export class TicketService {
                     annulationCommentaire
                     annulePar
                     annuleLe
+                }
+            }
+        `;
+    }
+
+    /** Abandon du diagnostic par un technicien : la DI retourne en PENDING1.
+     *  Variables GraphQL (texte libre du motif jamais interpolé). Le back trace
+     *  l'abandon (motif/qui/quand) et bloque la réaffectation du même tech. */
+    abandonDi() {
+        return gql`
+            mutation AbandonDi($input: AbandonDiInput!) {
+                abandonDi(AbandonDiInput: $input) {
+                    _id
+                    status
                 }
             }
         `;

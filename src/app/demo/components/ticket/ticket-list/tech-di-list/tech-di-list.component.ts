@@ -864,6 +864,80 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         );
     }
 
+    // ── Abandon du diagnostic (le tech ne parvient pas à diagnostiquer) ──────
+    abandonDialog = false;
+    abandonRow: any = null;
+    abandonForm: { motif: string | null; motifAutre: string } = {
+        motif: null,
+        motifAutre: '',
+    };
+    readonly ABANDON_KEY = 'abandon-di';
+    /** Motifs d'abandon — CODES alignés sur la liste blanche serveur
+     *  (`DiService.ABANDON_MOTIFS`). */
+    readonly abandonMotifs = [
+        { label: 'Panne non identifiable', value: 'PANNE_NON_IDENTIFIABLE' },
+        { label: 'Compétence / spécialité inadaptée', value: 'COMPETENCE_INADAPTEE' },
+        { label: 'Équipement / outillage manquant', value: 'OUTILLAGE_MANQUANT' },
+        { label: 'Documentation indisponible', value: 'DOC_INDISPONIBLE' },
+        { label: 'Autre', value: 'AUTRE' },
+    ];
+
+    /** Bouton « Abandonner » actif : DI en diagnostic ET affectée au tech courant. */
+    canAbandon(row: any): boolean {
+        return this.isDiagStatusActive(row) && this.isDiAssignedToMe(row, 'diag');
+    }
+
+    openAbandonDialog(row: any): void {
+        this.abandonRow = row;
+        this.abandonForm = { motif: null, motifAutre: '' };
+        this.abandonDialog = true;
+    }
+
+    get abandonBusy(): boolean {
+        return this.mutationRunner.isBusy(this.ABANDON_KEY);
+    }
+
+    get abandonSubmitDisabled(): boolean {
+        const f = this.abandonForm;
+        if (!f.motif) return true;
+        if (f.motif === 'AUTRE' && !f.motifAutre.trim()) return true;
+        return this.abandonBusy;
+    }
+
+    /** Envoie l'abandon (motif obligatoire, texte libre si « Autre »). Ferme +
+     *  rafraîchit UNIQUEMENT au succès ; un échec est toasté, DI inchangée. */
+    async submitAbandon(): Promise<void> {
+        if (this.abandonSubmitDisabled) return;
+        const row = this.abandonRow;
+        const diId = row?._idDi ?? row?._id;
+        const f = this.abandonForm;
+        try {
+            await this.mutationRunner.run({
+                key: this.ABANDON_KEY,
+                mutation: this.ticketSerice.abandonDi(),
+                variables: {
+                    input: {
+                        diId,
+                        motif: f.motif,
+                        motifAutre:
+                            f.motif === 'AUTRE' ? f.motifAutre.trim() : null,
+                    },
+                },
+                successToast: {
+                    summary: 'Diagnostic abandonné',
+                    detail: 'DI renvoyée à la coordination pour réaffectation.',
+                },
+            });
+            this.abandonDialog = false;
+            this.abandonRow = null;
+            this.ticketRefreshService.requestRefresh('tech-list', {
+                source: 'abandon',
+            });
+        } catch {
+            // Échec déjà toasté par MutationRunner ; modal laissé ouvert.
+        }
+    }
+
     /** Enable rule for the Réparation action button on a row. */
     canRepair(row: any): boolean {
         return (

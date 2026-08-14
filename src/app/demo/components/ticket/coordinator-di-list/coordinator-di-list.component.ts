@@ -775,6 +775,20 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return !hasComponents;
     }
 
+    /**
+     * Techniciens sélectionnables pour la (ré)affectation DIAGNOSTIC : on MASQUE
+     * ceux ayant abandonné cette DI sur le cycle courant (le serveur re-bloque
+     * de toute façon dans `createStat`). Match par id (`diagAssignments.techId`).
+     */
+    get availableDiagTechs(): any[] {
+        const abandoned = new Set(
+            (this.di?.diagAssignments ?? [])
+                .filter((a: any) => !!a.abandonedAt)
+                .map((a: any) => a.techId),
+        );
+        return (this.techList ?? []).filter((t: any) => !abandoned.has(t?._id));
+    }
+
     openModalConfig(di) {
         console.log('🍷[di]:', di);
         this.di = { ...di };

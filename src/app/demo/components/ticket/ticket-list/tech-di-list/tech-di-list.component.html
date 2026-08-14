@@ -114,6 +114,16 @@
                                 [disabled]="!canRepair(rowData)"
                                 (click)="repModal(rowData)"
                             ></button>
+                            <!-- Abandonner : rendre la DI à la coordination -->
+                            <button
+                                *ngIf="canAbandon(rowData)"
+                                pButton
+                                pTooltip="Abandonner le diagnostic (retour coordination)"
+                                tooltipPosition="top"
+                                icon="pi pi-ban"
+                                class="sav-icon-btn p-button-danger"
+                                (click)="openAbandonDialog(rowData)"
+                            ></button>
                         </div>
                     </td>
                 </tr>
@@ -1008,6 +1018,65 @@
                     ></p-button>
                 </div>
             </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- ══ Abandon du diagnostic — motif obligatoire ═══════════════════════ -->
+    <p-dialog
+        header="Abandonner le diagnostic"
+        [(visible)]="abandonDialog"
+        [modal]="true"
+        [style]="{ width: '460px' }"
+        [draggable]="false"
+        [resizable]="false"
+    >
+        <div style="display:flex;flex-direction:column;gap:1rem;">
+            <p style="margin:0;color:var(--text-color-secondary);">
+                La DI retournera à la coordination (PENDING1) pour être réaffectée
+                à un autre technicien. Indiquez le motif.
+            </p>
+            <div>
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Motif <span style="color:var(--red-500);">*</span>
+                </label>
+                <p-dropdown
+                    [options]="abandonMotifs"
+                    [(ngModel)]="abandonForm.motif"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Choisir un motif…"
+                    [style]="{ width: '100%' }"
+                    appendTo="body"
+                ></p-dropdown>
+            </div>
+            <div *ngIf="abandonForm.motif === 'AUTRE'">
+                <label style="display:block;margin-bottom:.35rem;font-weight:600;">
+                    Préciser <span style="color:var(--red-500);">*</span>
+                </label>
+                <input
+                    type="text"
+                    pInputText
+                    [(ngModel)]="abandonForm.motifAutre"
+                    placeholder="Motif précis…"
+                    style="width:100%;"
+                />
+            </div>
+        </div>
+        <ng-template pTemplate="footer">
+            <p-button
+                label="Annuler"
+                severity="secondary"
+                [outlined]="true"
+                (onClick)="abandonDialog = false"
+            ></p-button>
+            <p-button
+                label="Confirmer l'abandon"
+                icon="pi pi-ban"
+                severity="danger"
+                [disabled]="abandonSubmitDisabled"
+                [loading]="abandonBusy"
+                (onClick)="submitAbandon()"
+            ></p-button>
         </ng-template>
     </p-dialog>
 </div>
