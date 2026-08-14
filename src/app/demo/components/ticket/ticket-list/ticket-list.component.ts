@@ -36,6 +36,9 @@ import {
 } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DiDetailService } from 'src/app/demo/service/di-detail.service';
+import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
 import {
     formatTableValue,
     isLocationColumn,
@@ -561,10 +564,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     await this.mutationRunner.runChain({
                         key: `affectationFichiers:${id}`,
                         steps,
-                        successToast: {
-                            summary: 'Fichiers enregistrés',
-                            detail: `${count} fichier${count > 1 ? 's' : ''} ajouté${count > 1 ? 's' : ''} au dossier Drive.`,
-                        },
+                        // Toast de succès « Fichiers enregistrés » retiré (bruit :
+                        // les cartes passent déjà à « Disponible »). On garde le
+                        // toast d'ERREUR pour signaler un échec d'enregistrement.
                         errorToast: {
                             summary: 'Erreur',
                             detail: "Échec de l'enregistrement. Réessayez.",
@@ -676,6 +678,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
     get devisReady(): boolean {
         return !!(this.selectedDevis || this.instantSelectedDevis);
+    }
+    /** Séquence Approval documentaire : le BC ne peut être chargé qu'APRÈS le
+     *  devis. Le grisage ci-dessous n'est QUE du confort — la vraie garde est
+     *  côté back (`addBCPDF` refuse sans devis, même en appel API direct).
+     *  Verrouillé tant que le devis (persisté OU chargé dans la session) est
+     *  absent — même notion que `devisReady`. */
+    get bcUploadLocked(): boolean {
+        return !this.devisReady;
     }
     get prixFinalCanConfirm(): boolean {
         return (
@@ -876,6 +886,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     totalDiCount: any;
     isLoading: boolean = true;
 
+    /** Deep-link notification → ouverture des modales pricing / négociation 2. */
+    private deepLinkConsumer?: DeepLinkConsumer;
+
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -886,6 +899,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
         private confirmationService: ConfirmationService,
         private ticketRefreshService: TicketRefreshService,
         private readonly mutationRunner: MutationRunner,
+        private route: ActivatedRoute,
+        private router: Router,
+        private diDetail: DiDetailService,
     ) {}
 
     ngOnInit() {
@@ -896,6 +912,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.allCategoryDi();
         this.getLocationList();
         this.notificationService.startWorker();
+
+        // Deep-link notification : ?di=&action= → ouvre pricing / négociation 2
+        // (openers qui MUTENT le statut → gardés par statut), sinon détail.
+        this.deepLinkConsumer = new DeepLinkConsumer(
+            this.route,
+            this.router,
+            () => this.diList,
+            (row, diId, action) => this.openFromParams(row, diId, action),
+        );
+        this.deepLinkConsumer.listen(this.destroy$);
 
         // Setup search with debounce
         this.searchSubject$
@@ -941,8 +967,33 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        this.deepLinkConsumer?.destroy();
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    /** Deep-link : ouvre pricing / négociation 2 pour la ligne trouvée SI le
+     *  statut le permet (ces openers MUTENT le statut à l'ouverture), sinon
+     *  retombe sur le modal détail partagé (jamais un clic mort). */
+    private openFromParams(
+        row: any | null,
+        diId: string,
+        action: string,
+    ): void {
+        const st = row?.status;
+        if (
+            row &&
+            action === 'pricing' &&
+            (st === 'PRICING' || st === 'PRICING_DIAG')
+        ) {
+            this.showDialogForPricing(row);
+            return;
+        }
+        if (row && action === 'negociation2' && st === 'NEGOTIATION2') {
+            this.showDialogForNegociate2(row);
+            return;
+        }
+        this.diDetail.openById(diId);
     }
 
     /**
@@ -2002,6 +2053,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     .subscribe(({ loading }) => {
                         this.bcBtnDisabled = loading;
                         this.isLoading = loading;
+                        // Statut avancé (WAITING_DEVIS → WAITING_BC) → refresh liste.
+                        if (!loading) this.loadData();
                     });
 
                 this.enregistrerDevisBtncondition = true;
@@ -2044,7 +2097,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
             })
             .subscribe(({ data, loading }) => {
                 this.isLoading = loading;
-                console.log('data devis', data);
+                // Statut avancé (WAITING_DEVIS → WAITING_BC) → refresh liste.
+                if (!loading) this.loadData();
             });
     }
 
@@ -3221,6 +3275,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
                                 type === 'BC' ? 'Bon de commande' : 'Devis'
                             } enregistré avec succès`,
                         });
+                        // L'upload du devis fait avancer le statut côté back
+                        // (WAITING_DEVIS → WAITING_BC). On recharge la liste pour
+                        // que le nouveau statut s'affiche SANS refresh manuel.
+                        this.loadData();
                     }
                 },
                 error: () => {

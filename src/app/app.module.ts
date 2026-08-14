@@ -1,5 +1,9 @@
 import { NgModule, isDevMode } from '@angular/core';
-import { PathLocationStrategy, LocationStrategy } from '@angular/common';
+import {
+    CommonModule,
+    PathLocationStrategy,
+    LocationStrategy,
+} from '@angular/common';
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { AppLayoutModule } from './layout/app.layout.module';
@@ -17,14 +21,17 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { ImageModule } from 'primeng/image';
+import { DiInfoModalComponent } from './demo/components/ticket/shared/di-info-modal/di-info-modal.component';
 
 @NgModule({
     declarations: [AppComponent, NotfoundComponent],
     imports: [
+        CommonModule,
         AppRoutingModule,
         AppLayoutModule,
         GraphQlModule,
         ToastModule,
+        DiInfoModalComponent,
         ServiceWorkerModule.register('ngsw-worker.js', {
             enabled: !isDevMode(),
             // Register the ServiceWorker as soon as the application is stable

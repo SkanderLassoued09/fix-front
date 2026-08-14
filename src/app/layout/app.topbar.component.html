@@ -102,7 +102,12 @@
                             class="topbar-bell__dot"
                             *ngIf="!n.readAt"
                         ></span>
-                        <span class="topbar-bell__msg">{{ n.message }}</span>
+                        <span class="topbar-bell__body">
+                            <span class="topbar-bell__msg">{{ n.message }}</span>
+                            <span class="topbar-bell__time">{{
+                                n.createdAt | date: "dd/MM/yyyy HH:mm"
+                            }}</span>
+                        </span>
                     </button>
                 </div>
             </div>

@@ -19,6 +19,9 @@ import { NotificationService } from 'src/app/demo/service/notification.service';
 import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
 import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DiDetailService } from 'src/app/demo/service/di-detail.service';
+import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
 import {
     formatTableValue,
     isLocationColumn,
@@ -297,6 +300,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
         { label: 'Autre', value: 'AUTRE' },
     ];
 
+    /** Deep-link notification → ouverture de la modale d'affectation. */
+    private deepLinkConsumer?: DeepLinkConsumer;
+
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -305,6 +311,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
         private notificationService: NotificationService,
         private ticketRefreshService: TicketRefreshService,
         private mutationRunner: MutationRunner,
+        private route: ActivatedRoute,
+        private router: Router,
+        private diDetail: DiDetailService,
     ) {}
 
     /** Ouvre le modal d'annulation (repart d'un formulaire vierge). */
@@ -376,6 +385,16 @@ export class CoordinatorDiListComponent implements OnDestroy {
         this.getStatusCount();
         this.confirmationBTN = false;
 
+        // Deep-link notification : ?di=&action= → ouvre la modale d'affectation
+        // (openModalConfig) sur la ligne concernée, sinon modal détail.
+        this.deepLinkConsumer = new DeepLinkConsumer(
+            this.route,
+            this.router,
+            () => this.diList,
+            (row, diId, action) => this.openFromParams(row, diId, action),
+        );
+        this.deepLinkConsumer.listen(this.destroy$);
+
         // Setup search with debounce
         this.searchSubject$
             .pipe(debounceTime(400), takeUntil(this.destroy$))
@@ -393,21 +412,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
         this.notificationService.sentComponentToCoordinator$
             .pipe(takeUntil(this.destroy$))
             .subscribe((message: any) => {
-                console.log(
-                    'Composant comes from magasin this message should display in coordinator-di-list',
-                    message,
-                );
                 if (message) {
-                    console.log(
-                        'in condition composant comes from magasin this message should display in coordinator-di-list',
-                        message,
-                    );
-                    this.messageservice.add({
-                        severity: 'info',
-                        summary: 'Components Received',
-                        detail: `Components for DI #${message.message._id} are ready for your review and confirmation.`,
-                        sticky: true,
-                    });
+                    // Ancien toast « Components Received » retiré (remplacé par la
+                    // notification ERP). On garde UNIQUEMENT le rafraîchissement
+                    // de la liste quand le magasin envoie les composants.
                     this.ticketRefreshService.requestRefresh(
                         'coordinator-list',
                         {
@@ -438,8 +446,23 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     ngOnDestroy() {
+        this.deepLinkConsumer?.destroy();
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    /** Deep-link : ouvre la modale d'affectation pour la ligne trouvée, sinon
+     *  retombe sur le modal détail partagé (jamais un clic mort). */
+    private openFromParams(
+        row: any | null,
+        diId: string,
+        action: string,
+    ): void {
+        if (row && action === 'affecter') {
+            this.openModalConfig(row);
+            return;
+        }
+        this.diDetail.openById(diId);
     }
 
     /**

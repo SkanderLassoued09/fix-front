@@ -16,7 +16,7 @@ import {
     NotificationCenterService,
     ErpNotification,
 } from '../demo/service/notification-center.service';
-import { landingRouteForRole } from '../shared/landing-route';
+import { NotificationDeepLinkService } from '../demo/service/notification-deep-link.service';
 
 @Component({
     selector: 'app-topbar',
@@ -79,6 +79,7 @@ export class AppTopBarComponent implements OnInit {
         private readonly router: Router,
         private readonly sessionService: SessionService,
         private readonly notificationCenter: NotificationCenterService,
+        private readonly deepLink: NotificationDeepLinkService,
     ) {}
     ngOnInit(): void {
         // this.getNotificationFromDb();
@@ -122,22 +123,21 @@ export class AppTopBarComponent implements OnInit {
         );
     }
 
-    /** Ouvre/ferme le panneau cloche ; charge la liste À l'ouverture seulement. */
+    /** Ouvre/ferme le panneau cloche ; charge la liste À l'ouverture seulement.
+     *  Le clic débloque aussi l'audio (geste utilisateur → le son marchera). */
     toggleBell(): void {
         this.bellOpen = !this.bellOpen;
+        this.notificationCenter.unlockAudio();
         if (this.bellOpen) this.notificationCenter.loadList();
     }
 
-    /** Clic sur une notification : marquée lue + deep-link vers la DI concernée. */
+    /** Clic sur une notification : marquée lue D'ABORD (badge/bandeau corrects),
+     *  puis deep-link → modale d'ACTION de la page-rôle, sinon modal détail
+     *  (fallback). Fonctionne depuis n'importe quelle page. */
     onErpNotifClick(n: ErpNotification): void {
         if (!n?.readAt) this.notificationCenter.markRead(n._id);
         this.bellOpen = false;
-        if (n?.diId) {
-            const role = (localStorage.getItem('role') ?? '').trim();
-            this.router.navigate([landingRouteForRole(role)], {
-                queryParams: { di: n.diId },
-            });
-        }
+        this.deepLink.open(n);
     }
 
     markAllErpRead(): void {

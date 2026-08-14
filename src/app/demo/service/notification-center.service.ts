@@ -1,6 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { io, Socket } from 'socket.io-client';
 import { environment } from 'src/environments/environment';
 
@@ -29,10 +29,17 @@ export class NotificationCenterService {
     private readonly base = (environment.apiUrl ?? '').replace(/\/+$/, '');
     private socket?: Socket;
     private started = false;
+    /** _id de l'utilisateur sur lequel le socket est ACTUELLEMENT branché. Si le
+     *  compte change (logout → login autre rôle, SANS reload), on rebranche. */
+    private connectedUserId: string | null = null;
+    /** true dès que la liste de la cloche a été chargée au moins une fois. */
+    private lastListLoaded = false;
 
     readonly unreadCount$ = new BehaviorSubject<number>(0);
     readonly notifications$ = new BehaviorSubject<ErpNotification[]>([]);
     readonly soundEnabled$ = new BehaviorSubject<boolean>(true);
+    /** Émet chaque notification entrante (temps réel) — pour le toast cliquable. */
+    readonly incoming$ = new Subject<ErpNotification>();
 
     // ── Son : Web Audio (aucun asset), débloqué au 1er geste, anti-spam ──────
     private audioCtx: AudioContext | null = null;
@@ -43,26 +50,82 @@ export class NotificationCenterService {
     constructor(private readonly apollo: Apollo, private readonly zone: NgZone) {}
 
     /** À appeler une fois l'utilisateur authentifié (topbar `ngOnInit`). */
+    /**
+     * Appelé à CHAQUE init du topbar. Le service est un singleton root qui
+     * survit à la destruction/recréation du topbar (logout → login) : sans
+     * garde sur l'utilisateur, le socket resterait abonné aux rooms de l'ANCIEN
+     * compte → aucune notif temps réel (toast + son) pour le nouveau. On rebranche
+     * donc dès que l'`_id` courant diffère de celui du socket connecté.
+     */
     start(): void {
-        if (this.started) return;
-        this.started = true;
-        this.primeAudioUnlockOnFirstGesture();
-        this.refreshUnreadCount();
+        const currentUser = localStorage.getItem('_id');
+        // Déjà branché sur le bon utilisateur → rien à faire.
+        if (this.started && this.connectedUserId === currentUser) return;
+
+        // Installation des écouteurs GLOBAUX une seule fois (jamais en double).
+        if (!this.started) {
+            this.started = true;
+            this.primeAudioUnlockOnFirstGesture();
+            this.installVisibilityRefresh();
+        }
+
+        // (Re)branchement du socket sur l'utilisateur COURANT.
+        this.connectedUserId = currentUser;
+        this.unreadCount$.next(0);
+        this.notifications$.next([]);
+        this.lastListLoaded = false;
         this.loadSoundPref();
+        this.socket?.disconnect();
+        this.socket = undefined;
         this.connectSocket();
+        this.refreshUnreadCount();
+    }
+
+    /** Filet de sécurité SI le socket temps réel est indisponible (proxy qui ne
+     *  relaie pas les WebSockets, back multi-instances sans adapter, etc.) : au
+     *  RETOUR sur l'onglet on rafraîchit le compteur non-lus (count INDEXÉ, pas
+     *  de polling par timer). La cloche montre alors les nouvelles notifs sans
+     *  recharger toute la page. */
+    private installVisibilityRefresh(): void {
+        if (typeof document === 'undefined') return;
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                this.refreshUnreadCount();
+                if (this.lastListLoaded) this.loadList();
+            }
+        });
+        window.addEventListener('focus', () => this.refreshUnreadCount());
     }
 
     stop(): void {
         this.socket?.disconnect();
         this.socket = undefined;
         this.started = false;
+        this.connectedUserId = null;
+        this.lastListLoaded = false;
         this.unreadCount$.next(0);
         this.notifications$.next([]);
     }
 
     private connectSocket(): void {
-        const token = localStorage.getItem('token') ?? '';
-        this.socket = io(this.base, { auth: { token } });
+        // `auth` en FONCTION → le token COURANT est relu à CHAQUE (re)connexion
+        // (re-login, reconnexion réseau) et non figé à la création du socket.
+        // websocket d'abord, repli polling → plus robuste derrière un proxy.
+        this.socket = io(this.base, {
+            auth: (cb) => cb({ token: localStorage.getItem('token') ?? '' }),
+            transports: ['websocket', 'polling'],
+        });
+        // Diagnostics visibles en console (DevTools) : permet de vérifier que le
+        // socket AUTHENTIFIÉ se connecte bien (sinon : aucune notif temps réel).
+        this.socket.on('connect', () =>
+            console.log('[notif] socket temps réel connecté', this.socket?.id),
+        );
+        this.socket.on('connect_error', (e: any) =>
+            console.warn('[notif] socket connect_error:', e?.message ?? e),
+        );
+        this.socket.on('disconnect', (reason: any) =>
+            console.warn('[notif] socket déconnecté:', reason),
+        );
         this.socket.on('notification.new', (n: ErpNotification) => {
             // Hors zone Angular (socket.io) → on rentre pour déclencher le rendu.
             this.zone.run(() => this.onIncoming(n));
@@ -72,6 +135,7 @@ export class NotificationCenterService {
     private onIncoming(n: ErpNotification): void {
         this.unreadCount$.next(this.unreadCount$.value + 1);
         this.notifications$.next([n, ...this.notifications$.value].slice(0, 50));
+        this.incoming$.next(n); // → toast cliquable
         this.playSound();
     }
 
@@ -114,8 +178,10 @@ export class NotificationCenterService {
                 fetchPolicy: 'network-only',
             })
             .subscribe({
-                next: ({ data }) =>
-                    this.notifications$.next(data?.myNotifications ?? []),
+                next: ({ data }) => {
+                    this.notifications$.next(data?.myNotifications ?? []);
+                    this.lastListLoaded = true;
+                },
                 error: () => {},
             });
     }
@@ -206,11 +272,14 @@ export class NotificationCenterService {
         if (typeof window === 'undefined') return;
         const unlock = () => this.unlockAudio();
         // Un seul déblocage suffit (les navigateurs exigent un geste préalable).
-        window.addEventListener('pointerdown', unlock, { once: true });
-        window.addEventListener('keydown', unlock, { once: true });
+        // On écoute plusieurs types de gestes pour débloquer au plus tôt.
+        ['pointerdown', 'click', 'keydown', 'touchstart'].forEach((ev) =>
+            window.addEventListener(ev, unlock, { once: true }),
+        );
     }
 
-    private unlockAudio(): void {
+    /** Débloque l'audio explicitement (ex. clic sur la cloche) — public. */
+    unlockAudio(): void {
         try {
             if (!this.audioCtx) {
                 const Ctx =
@@ -236,14 +305,30 @@ export class NotificationCenterService {
         this.lastSoundAt = now;
         try {
             const ctx = this.audioCtx;
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.frequency.value = 880;
-            gain.gain.value = 0.06;
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(ctx.currentTime + 0.12);
+            // Le contexte peut être repassé en « suspended » (inactivité,
+            // politique navigateur) → on le réveille avant de jouer, sinon le
+            // son est programmé mais jamais audible.
+            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+            const t0 = ctx.currentTime;
+            // Petit « ding-dong » à deux tons, avec fondu pour éviter le clic.
+            const play = (freq: number, start: number, dur: number) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                gain.gain.setValueAtTime(0.0001, t0 + start);
+                gain.gain.exponentialRampToValueAtTime(0.12, t0 + start + 0.02);
+                gain.gain.exponentialRampToValueAtTime(
+                    0.0001,
+                    t0 + start + dur,
+                );
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(t0 + start);
+                osc.stop(t0 + start + dur + 0.02);
+            };
+            play(880, 0, 0.14); // ding
+            play(660, 0.13, 0.18); // dong
         } catch {
             /* jamais d'erreur remontée à l'utilisateur */
         }

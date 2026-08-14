@@ -257,6 +257,18 @@ export class TicketService {
   `;
     }
 
+    /** Détail d'UNE DI dans la MÊME projection que la liste coordinatrice →
+     *  alimente le modal détail partagé ouvert au clic d'une notification. */
+    getDiDetail(_id: string) {
+        return gql`
+            {
+                getDiDetail(_id: "${_id}") {
+                    ${COORDINATOR_DI_FIELDS}
+                }
+            }
+        `;
+    }
+
     getAllDiForCoordinator(first, rows) {
         return gql`
             {

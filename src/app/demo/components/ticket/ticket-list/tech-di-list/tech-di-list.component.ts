@@ -90,7 +90,6 @@ interface PersistedTechDialogState {
 })
 export class TechDiListComponent implements OnInit, OnDestroy {
     private readonly dialogStateStorageKey = 'fix.tech-dialog-state.v1';
-    private readonly assignmentToastStorageKey = 'fix.tech-assignment-toasts.v1';
     private readonly dialogStateMaxAgeMs = 12 * 60 * 60 * 1000;
     // Search state tracking
     private currentSearchField: string = '';
@@ -525,10 +524,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     },
                     { mutation: this.ticketSerice.changeFinishStatus(diId) },
                 ],
-                successToast: {
-                    summary: 'Réparation terminée',
-                    detail: 'DI clôturée (FINISHED).',
-                },
+                // Ancien toast « Réparation terminée / DI clôturée » retiré
+                // (remplacé par la notification ERP). On garde le toast d'ERREUR.
                 errorToast: {
                     summary: 'Erreur',
                     detail: 'Échec de la clôture. Réessayez.',
@@ -686,7 +683,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     di: any;
     techList: any[] = [];
     selectedDi: any;
-    private knownTechDiIds = new Set<string>();
     isRunning: any;
     startTime: number;
     minutes: string;
@@ -964,11 +960,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private handleTechRealtimeMessage(message: any, source: string): void {
         const assignment = this.getTechAssignmentInfo(message);
 
+        // Plus de toast d'affectation ici : la notification ERP (cloche + toast
+        // `erp-notif`) le remplace. On garde UNIQUEMENT le rafraîchissement de la
+        // liste tech quand une affectation pertinente arrive.
         if (assignment.isRelevant) {
-            if (assignment.isNewAssignment) {
-                this.showTechAssignmentToast(assignment);
-            }
-
             this.ticketRefreshService.requestRefresh('tech-list', {
                 source,
                 assignmentType: assignment.type,
@@ -1007,10 +1002,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     private getTechAssignmentInfo(message: any): {
         isRelevant: boolean;
-        isNewAssignment: boolean;
         type: TechDialogMode;
         diIds: string[];
-        diNumber?: string;
     } {
         const currentTechId = this.idTech || localStorage.getItem('_id');
         const currentUsername = localStorage.getItem('username');
@@ -1018,7 +1011,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         if (!message || (!currentTechId && !currentUsername)) {
             return {
                 isRelevant: false,
-                isNewAssignment: false,
                 type: 'diagnostic',
                 diIds: [],
             };
@@ -1029,9 +1021,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         const statuses = this.collectValuesFromNotification(message, [
             'status',
         ]).map((status) => status.toUpperCase());
-        const diNumber = this.collectValuesFromNotification(message, [
-            '_idnum',
-        ])[0];
         const isTargetedToCurrentTech =
             (!!currentTechId && recipients.includes(currentTechId)) ||
             (!!currentUsername && recipients.includes(currentUsername));
@@ -1056,77 +1045,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         const isRelevant =
             isTargetedToCurrentTech &&
             (hasRepairMarker || hasDiagnosticMarker || diIds.length > 0);
-        const isNewAssignment =
-            isRelevant &&
-            (diIds.length === 0 ||
-                diIds.some((diId) => !this.knownTechDiIds.has(diId))) &&
-            !this.wasAssignmentToastShown(type, diIds);
-
-        if (isRelevant && diIds.length > 0) {
-            diIds.forEach((diId) => this.knownTechDiIds.add(diId));
-        }
-
         return {
             isRelevant,
-            isNewAssignment,
             type,
             diIds,
-            diNumber,
         };
-    }
-
-    private showTechAssignmentToast(assignment: {
-        type: TechDialogMode;
-        diIds: string[];
-        diNumber?: string;
-    }): void {
-        this.rememberAssignmentToast(assignment.type, assignment.diIds);
-
-        this.messageService.add({
-            severity: 'info',
-            summary:
-                assignment.type === 'repair'
-                    ? 'New repair task assigned'
-                    : 'New diagnostic task assigned',
-            detail: assignment.diNumber
-                ? `DI #${assignment.diNumber}`
-                : 'Un nouveau ticket vient d’être assigné',
-            sticky: true,
-        });
-    }
-
-    private wasAssignmentToastShown(
-        type: TechDialogMode,
-        diIds: string[],
-    ): boolean {
-        if (diIds.length === 0) {
-            return false;
-        }
-
-        const shown = this.getShownAssignmentToastKeys();
-        return diIds.every((diId) => shown.has(`${type}:${diId}`));
-    }
-
-    private rememberAssignmentToast(type: TechDialogMode, diIds: string[]) {
-        if (diIds.length === 0) {
-            return;
-        }
-
-        const shown = this.getShownAssignmentToastKeys();
-        diIds.forEach((diId) => shown.add(`${type}:${diId}`));
-        sessionStorage.setItem(
-            this.assignmentToastStorageKey,
-            JSON.stringify(Array.from(shown).slice(-200)),
-        );
-    }
-
-    private getShownAssignmentToastKeys(): Set<string> {
-        try {
-            const raw = sessionStorage.getItem(this.assignmentToastStorageKey);
-            return new Set(raw ? JSON.parse(raw) : []);
-        } catch {
-            return new Set();
-        }
     }
 
     private collectTechRecipientsFromNotification(message: any): string[] {
@@ -1417,7 +1340,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 .subscribe(({ data }) => {
                     if (data && data.searchTechDI) {
                         this.techList = data.searchTechDI.stat;
-                        this.rememberTechDiIds(this.techList);
                         this.restorePersistedDialogStateOnce();
                         this.techListCount =
                             data.searchTechDI.totalTechDataCount;
@@ -1701,21 +1623,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .subscribe(({ data }) => {
                 if (data) {
                     this.techList = data.getDiForTech.stat;
-                    this.rememberTechDiIds(this.techList);
                     this.restorePersistedDialogStateOnce();
                     this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
-    }
-
-    private rememberTechDiIds(diList: any[]) {
-        (diList || []).forEach((di) => {
-            const diId = di?._idDi || di?._idDI || di?.idDi || di?.diId;
-
-            if (diId) {
-                this.knownTechDiIds.add(diId);
-            }
-        });
     }
 
     handleNotification(message: any) {

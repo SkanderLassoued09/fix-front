@@ -1,50 +1,78 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MessageService, PrimeNGConfig } from 'primeng/api';
-import { ProfileService } from './demo/service/profile.service';
+import { SwUpdate } from '@angular/service-worker';
 import { SessionService } from './demo/service/session.service';
-import { Apollo } from 'apollo-angular';
-import { SwPush } from '@angular/service-worker';
 import { NotificationService } from './demo/service/notification.service';
-
-/**
- *
- * to continuee implementing notification uzsing web worker
- */
-interface NotificationSubscriptionResponse {
-    notificationDiagnostic: {
-        _idDi: string;
-        messageNotification: string;
-        _idtechDiag: string;
-    };
-}
+import { DiDetailService } from './demo/service/di-detail.service';
+import { NotificationDeepLinkService } from './demo/service/notification-deep-link.service';
+import {
+    NotificationCenterService,
+    ErpNotification,
+} from './demo/service/notification-center.service';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit {
-    private _idtech: string;
-
     constructor(
         private primengConfig: PrimeNGConfig,
-        private readonly profileService: ProfileService,
-        private readonly apollo: Apollo,
         private messageService: MessageService,
-        @Inject(SwPush) private swPush: SwPush,
         private notificationService: NotificationService,
         private readonly sessionService: SessionService,
-    ) {
-        this._idtech = localStorage.getItem('_id');
+        public detailService: DiDetailService,
+        private notifCenter: NotificationCenterService,
+        private deepLink: NotificationDeepLinkService,
+        private swUpdate: SwUpdate,
+    ) {}
+
+    /** Clic sur le toast temps réel → marque lu D'ABORD, puis deep-link vers la
+     *  modale d'action (sinon modal détail en fallback). */
+    onErpToastClick(n: ErpNotification): void {
+        this.messageService.clear('erp-notif');
+        if (n?._id) this.notifCenter.markRead(n._id);
+        this.deepLink.open(n);
+    }
+
+    onDetailVisibleChange(v: boolean): void {
+        this.detailService.setVisible(v);
     }
 
     ngOnInit() {
+        // PWA : dès qu'une NOUVELLE version est déployée, on l'active et on
+        // recharge. Sans ça, le service worker continue de servir l'ANCIEN
+        // bundle en cache — c'est ce qui fait que des correctifs (ex. socket
+        // temps réel) « ne s'appliquent pas » tant qu'on ne vide pas le cache.
+        // No-op en dev (SW désactivé → isEnabled=false).
+        if (this.swUpdate.isEnabled) {
+            this.swUpdate.versionUpdates.subscribe((e) => {
+                if (e.type === 'VERSION_READY') {
+                    this.swUpdate
+                        .activateUpdate()
+                        .then(() => document.location.reload());
+                }
+            });
+            this.swUpdate.checkForUpdate().catch(() => {});
+        }
+
+        // Toast temps réel CLIQUABLE (clé dédiée `erp-notif` → n'affecte pas les
+        // autres toasts). Le clic ouvre le modal détail de la DI concernée.
+        this.notifCenter.incoming$.subscribe((n) => {
+            this.messageService.add({
+                key: 'erp-notif',
+                severity: 'info',
+                summary: 'Notification',
+                detail: n?.message,
+                data: n,
+                life: 6000,
+            });
+        });
         // Best-effort tab-close cleanup so closing the browser also flips
         // `isConnected` back to false on the backend (otherwise the
         // account stays locked until the user clicks Déconnexion).
         this.sessionService.installAutoLogout();
         this.notificationService.startWorker();
         this.primengConfig.ripple = true;
-        this.notification();
         // Notification subscription
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {
@@ -90,40 +118,5 @@ export class AppComponent implements OnInit {
                 // }, 1000);
             }
         });
-    }
-
-    notification() {
-        this.swPush.subscription.subscribe(() => {
-            this.apollo
-                .subscribe<NotificationSubscriptionResponse>({
-                    query: this.profileService.notificationDiagnostic(),
-                })
-                .subscribe(({ data }) => {
-                    if (
-                        this._idtech == data.notificationDiagnostic._idtechDiag
-                    ) {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Travaille à faire',
-                            detail: 'Vous avez réçu une notification',
-                        });
-                    }
-                });
-        });
-    }
-    notificationrep() {
-        this.apollo
-            .subscribe<NotificationSubscriptionResponse>({
-                query: this.profileService.notificationrep(),
-            })
-            .subscribe(({ data }) => {
-                if (this._idtech == data.notificationDiagnostic._idtechDiag) {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Travaille à faire',
-                        detail: 'Vous avez réçu une notification',
-                    });
-                }
-            });
     }
 }

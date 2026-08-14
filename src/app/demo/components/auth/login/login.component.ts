@@ -5,6 +5,7 @@ import { Apollo } from 'apollo-angular';
 import { MessageService } from 'primeng/api';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { SessionService } from 'src/app/demo/service/session.service';
+import { NotificationCenterService } from 'src/app/demo/service/notification-center.service';
 import { LayoutService } from 'src/app/layout/service/app.layout.service';
 import { landingRouteForRole } from 'src/app/shared/landing-route';
 
@@ -311,6 +312,7 @@ export class LoginComponent {
         public layoutService: LayoutService,
         private readonly messageservice: MessageService,
         private readonly sessionService: SessionService,
+        private readonly notificationCenter: NotificationCenterService,
     ) {}
 
     togglePassword(): void {
@@ -349,6 +351,10 @@ export class LoginComponent {
                         // Register the tab-close fallback so a tab kill
                         // also frees `isConnected` (best-effort).
                         this.sessionService.installAutoLogout();
+                        // Rebranche le centre de notif sur le NOUVEL utilisateur
+                        // (SPA sans reload → le socket singleton pointerait sinon
+                        // sur le compte précédent → pas de toast/son temps réel).
+                        this.notificationCenter.start();
                         // Land each profile on its own page (tech → atelier,
                         // coordinateur/magasin → their lists, else ticket list).
                         this.router.navigateByUrl(

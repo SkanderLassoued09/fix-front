@@ -1,0 +1,71 @@
+import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
+import { DiDetailService } from './di-detail.service';
+
+/** Cible d'un deep-link de notification : page-rôle + action à ouvrir. */
+interface DeepLinkTarget {
+    route: string;
+    action: string;
+}
+
+/**
+ * Table CENTRALE `type → { route, action }` des deep-links de notification.
+ * Un clic sur une notification ACTIONNABLE navigue vers la page-rôle concernée
+ * avec `?di=&action=` ; la page ouvre alors sa modale d'action (via
+ * `DeepLinkConsumer`). Tout type ABSENT de la table — informatif ou multi-rôle
+ * (DI_DOC_*, DI_NEGOTIATION1, DI_REP_FINISHED, DI_FINISHED), et, jusqu'à P5, la
+ * ré-affectation tech (DI_ASSIGNED_DIAG/REP) — retombe sur le modal DÉTAIL
+ * partagé : jamais un clic mort.
+ *
+ * Générique : aucune logique par page ici, seulement la table. Chaque page-rôle
+ * sait ouvrir SES actions (fallback détail sinon).
+ */
+@Injectable({ providedIn: 'root' })
+export class NotificationDeepLinkService {
+    private static readonly COORD = '/tickets/ticket/coordinator-di-list';
+    private static readonly MAGASIN = '/tickets/ticket/magasin-di-list';
+    private static readonly ADMIN = '/tickets/ticket/ticket-list';
+
+    private static readonly TABLE: Record<string, DeepLinkTarget> = {
+        DI_PENDING1: { route: NotificationDeepLinkService.COORD, action: 'affecter' },
+        DI_PENDING2: { route: NotificationDeepLinkService.COORD, action: 'affecter' },
+        DI_PENDING3: { route: NotificationDeepLinkService.COORD, action: 'affecter' },
+        DI_MAGASIN_ESTIMATION: {
+            route: NotificationDeepLinkService.MAGASIN,
+            action: 'composants',
+        },
+        DI_IN_MAGASIN: {
+            route: NotificationDeepLinkService.MAGASIN,
+            action: 'composants',
+        },
+        DI_PRICING: { route: NotificationDeepLinkService.ADMIN, action: 'pricing' },
+        DI_NEGOTIATION2: {
+            route: NotificationDeepLinkService.ADMIN,
+            action: 'negociation2',
+        },
+    };
+
+    constructor(
+        private readonly router: Router,
+        private readonly diDetail: DiDetailService,
+    ) {}
+
+    /**
+     * Ouvre la bonne cible pour une notification. L'appelant a DÉJÀ marqué la
+     * notification lue (badge/bandeau corrects même sur le fallback détail).
+     */
+    open(n: { type?: string | null; diId?: string | null } | null | undefined): void {
+        const diId = n?.diId;
+        if (!diId) return;
+        const target = n?.type
+            ? NotificationDeepLinkService.TABLE[n.type]
+            : undefined;
+        if (target) {
+            this.router.navigate([target.route], {
+                queryParams: { di: diId, action: target.action },
+            });
+        } else {
+            this.diDetail.openById(diId); // fallback détail (comportement v1)
+        }
+    }
+}

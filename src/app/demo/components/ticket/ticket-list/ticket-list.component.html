@@ -1450,7 +1450,11 @@
         <p class="pricing-modal__section-label">Documents</p>
         <div class="fp-doc-grid">
             <!-- ── Bon de commande ────────────────────────────── -->
-            <div class="fp-doc-card" [class.fp-doc-card--done]="bcReady">
+            <div
+                class="fp-doc-card"
+                [class.fp-doc-card--done]="bcReady"
+                [class.fp-doc-card--locked]="bcUploadLocked"
+            >
                 <div class="fp-doc-card__head">
                     <span class="fp-doc-card__title">
                         <i class="pi pi-file"></i> Bon de commande
@@ -1482,10 +1486,18 @@
                     </a>
                 </div>
 
+                <!-- BC verrouillé tant que le devis est absent (la vraie garde
+                     est côté back). Message explicatif à la place du dropzone. -->
+                <div *ngIf="bcUploadLocked" class="fp-doc-locked">
+                    <i class="pi pi-lock"></i>
+                    Chargez d'abord le devis pour pouvoir ajouter le bon de
+                    commande.
+                </div>
+
                 <!-- Drag & drop — dropping a PDF uploads AND saves it directly
                      (no separate "Enregistrer" button; badge → "Chargé ✓"). -->
                 <app-pdf-dropzone
-                    *ngIf="!bcLoading"
+                    *ngIf="!bcLoading && !bcUploadLocked"
                     [maxSizeMo]="10"
                     [title]="
                         bcReady
@@ -1684,7 +1696,11 @@
 
         <p class="pricing-modal__section-label">Documents</p>
         <div class="fp-doc-grid">
-            <div class="fp-doc-card" [class.fp-doc-card--done]="bcReady">
+            <div
+                class="fp-doc-card"
+                [class.fp-doc-card--done]="bcReady"
+                [class.fp-doc-card--locked]="bcUploadLocked"
+            >
                 <div class="fp-doc-card__head">
                     <span class="fp-doc-card__title">
                         <i class="pi pi-file"></i> Bon de commande
@@ -1713,7 +1729,16 @@
                         <i class="pi pi-eye"></i> Voir
                     </a>
                 </div>
+
+                <!-- BC verrouillé tant que le devis est absent (la vraie garde
+                     est côté back). Message explicatif à la place de l'uploader. -->
+                <div *ngIf="bcUploadLocked" class="fp-doc-locked">
+                    <i class="pi pi-lock"></i>
+                    Chargez d'abord le devis pour pouvoir ajouter le bon de
+                    commande.
+                </div>
                 <p-fileUpload
+                    *ngIf="!bcUploadLocked"
                     [disabled]="bcBtnDisabled"
                     mode="basic"
                     [chooseLabel]="bcReady ? 'Remplacer' : 'Charger'"
@@ -1730,7 +1755,7 @@
                     "
                 ></p-fileUpload>
                 <p-button
-                    *ngIf="instantSelectedBc"
+                    *ngIf="instantSelectedBc && !bcUploadLocked"
                     [disabled]="enregistrerBcBtncondition"
                     (click)="enregistrerBC()"
                     label="Enregistrer"

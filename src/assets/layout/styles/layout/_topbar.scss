@@ -342,8 +342,21 @@
         flex: 0 0 auto;
     }
 
+    &__body {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 0;
+    }
+
     &__msg {
         font-size: 0.9rem;
         line-height: 1.35;
+    }
+
+    &__time {
+        font-size: 0.72rem;
+        color: var(--text-color-secondary);
+        font-weight: 400;
     }
 }

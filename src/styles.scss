@@ -48,3 +48,38 @@ td.trc-cell {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Toast temps réel des notifications ERP (clé `erp-notif`) — cliquable, charte bleue. */
+.p-toast .erp-toast {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+.p-toast .erp-toast__icon {
+    flex: 0 0 auto;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #fff;
+}
+.p-toast .erp-toast__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+.p-toast .erp-toast__msg {
+    font-weight: 600;
+    color: var(--text-color);
+    line-height: 1.35;
+}
+.p-toast .erp-toast__hint {
+    font-size: 0.75rem;
+    color: #2563eb;
+}

@@ -1,5 +1,28 @@
 <p-toast></p-toast>
 
+<!-- Toast temps réel des notifications ERP : clé dédiée + template CLIQUABLE
+     (ouvre le modal détail de la DI). N'affecte pas les autres toasts. -->
+<p-toast key="erp-notif" position="top-right" [baseZIndex]="11000">
+    <ng-template let-message pTemplate="message">
+        <div class="erp-toast" (click)="onErpToastClick(message.data)">
+            <span class="erp-toast__icon"><i class="pi pi-bell"></i></span>
+            <span class="erp-toast__body">
+                <span class="erp-toast__msg">{{ message.detail }}</span>
+                <span class="erp-toast__hint">Cliquer pour ouvrir la DI</span>
+            </span>
+        </div>
+    </ng-template>
+</p-toast>
+
+<!-- Modal détail DI GLOBAL — ouvert par le deep-link des notifications (clic
+     cloche ou toast), depuis N'IMPORTE QUELLE page. -->
+<app-di-info-modal
+    [visible]="(detailService.visible$ | async) || false"
+    (visibleChange)="onDetailVisibleChange($event)"
+    [di]="detailService.di$ | async"
+    context="interventions"
+></app-di-info-modal>
+
 <!-- Single primary outlet. There were TWO unnamed <router-outlet> here, which
      mounted every routed page TWICE (duplicate component instances) — the root
      cause of the duplicate toast (and duplicated dialogs/handlers). -->
