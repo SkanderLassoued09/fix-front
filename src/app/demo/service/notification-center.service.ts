@@ -92,9 +92,15 @@ export class NotificationCenterService {
             if (document.visibilityState === 'visible') {
                 this.refreshUnreadCount();
                 if (this.lastListLoaded) this.loadList();
+                // Garde le contexte audio VIVANT (les navigateurs le suspendent
+                // en arrière-plan) → le son reste fiable au retour sur l'onglet.
+                this.audioCtx?.resume?.().catch(() => {});
             }
         });
-        window.addEventListener('focus', () => this.refreshUnreadCount());
+        window.addEventListener('focus', () => {
+            this.refreshUnreadCount();
+            this.audioCtx?.resume?.().catch(() => {});
+        });
     }
 
     stop(): void {
@@ -303,34 +309,44 @@ export class NotificationCenterService {
         if (now - this.lastSoundAt < NotificationCenterService.SOUND_MIN_INTERVAL_MS)
             return;
         this.lastSoundAt = now;
-        try {
-            const ctx = this.audioCtx;
-            // Le contexte peut être repassé en « suspended » (inactivité,
-            // politique navigateur) → on le réveille avant de jouer, sinon le
-            // son est programmé mais jamais audible.
-            if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-            const t0 = ctx.currentTime;
-            // Petit « ding-dong » à deux tons, avec fondu pour éviter le clic.
-            const play = (freq: number, start: number, dur: number) => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                gain.gain.setValueAtTime(0.0001, t0 + start);
-                gain.gain.exponentialRampToValueAtTime(0.12, t0 + start + 0.02);
-                gain.gain.exponentialRampToValueAtTime(
-                    0.0001,
-                    t0 + start + dur,
-                );
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start(t0 + start);
-                osc.stop(t0 + start + dur + 0.02);
-            };
-            play(880, 0, 0.14); // ding
-            play(660, 0.13, 0.18); // dong
-        } catch {
-            /* jamais d'erreur remontée à l'utilisateur */
+        const ctx = this.audioCtx;
+        // Émet le ding-dong. Capturé APRÈS un éventuel resume() → `currentTime`
+        // est valide (sinon le son est programmé dans le passé et jamais audible).
+        const emit = () => {
+            try {
+                const t0 = ctx.currentTime;
+                const play = (freq: number, start: number, dur: number) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.0001, t0 + start);
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.12,
+                        t0 + start + 0.02,
+                    );
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.0001,
+                        t0 + start + dur,
+                    );
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t0 + start);
+                    osc.stop(t0 + start + dur + 0.02);
+                };
+                play(880, 0, 0.14); // ding
+                play(660, 0.13, 0.18); // dong
+            } catch {
+                /* jamais d'erreur remontée à l'utilisateur */
+            }
+        };
+        // CAUSE #1 du « son aléatoire » : le contexte repasse en « suspended »
+        // (inactivité / politique navigateur). `resume()` est ASYNCHRONE → on
+        // programme le son APRÈS sa résolution, jamais avant.
+        if (ctx.state === 'suspended') {
+            ctx.resume().then(emit).catch(emit);
+        } else {
+            emit();
         }
     }
 }

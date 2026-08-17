@@ -3,7 +3,9 @@
     <p-progressSpinner ariaLabel="loading" />
 </p-blockUI>
 
-<p-toast></p-toast>
+<!-- Pas de <p-toast> ici : le shell applicatif (app.component.html) en rend déjà
+     un (même MessageService, sans `key`). Un second doublonnerait CHAQUE toast
+     (cf. note identique dans company-list). -->
 <p-confirmDialog></p-confirmDialog>
 
 <!-- ═══════════════════════════════════════════════

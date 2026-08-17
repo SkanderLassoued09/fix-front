@@ -381,7 +381,7 @@
 
                     <ol class="cf-timeline">
                         <li
-                            *ngFor="let stage of getSegmentStages()"
+                            *ngFor="let stage of segmentStages; trackBy: trackByStageKey"
                             class="cf-stage"
                             [ngClass]="'cf-stage--' + stage.state"
                         >
@@ -489,7 +489,7 @@
                              Otherwise show the assigned tech as plain text. -->
                         <p-dropdown
                             *ngIf="!diag_condition"
-                            [options]="availableDiagTechs"
+                            [options]="availableDiagTechsList"
                             [(ngModel)]="selectedTechDiagModel"
                             optionLabel="firstName"
                             [disabled]="diagReassignLockedByRetour"

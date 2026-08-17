@@ -2586,14 +2586,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     })
                     .subscribe(({ loading }) => {
                         this.isLoading = loading;
-                        const index = this.diList.findIndex((el) => {
-                            el._id === rowData._id;
-                        });
-                        this.diList.splice(index, 0);
+                        // N'agir qu'à la fin de la mutation (une seule fois).
+                        if (loading) return;
                         this.messageservice.add({
-                            severity: 'danger',
-                            summary: 'Deleted',
-                            detail: 'La demande service supprimer',
+                            severity: 'success',
+                            summary: 'DI supprimée',
+                            detail: rowData?._idnum
+                                ? `La demande de service ${rowData._idnum} a été supprimée.`
+                                : 'La demande de service a été supprimée.',
                         });
                         this.loadData();
                     });

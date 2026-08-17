@@ -164,6 +164,47 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  segment so the modal lands on the currently-active cycle. */
     selectedFlowSegment = 0;
 
+    /** Timeline MÉMOÏSÉE du segment courant. `getSegmentStages()` est coûteux
+     *  (reconstruit un tableau + ~8 calculs par phase) : l'appeler directement
+     *  dans le `*ngFor` du template le ré-exécutait à CHAQUE cycle de détection
+     *  de changement → le modal figeait le navigateur (freeze + RAM). On le
+     *  recalcule UNIQUEMENT quand les données changent (ouverture, chargement des
+     *  logs, changement de segment) via `refreshTimeline()`. */
+    segmentStages: Array<{
+        key: string;
+        label: string;
+        state: 'done' | 'current' | 'pending' | 'skipped';
+        badgeLabel: string;
+        rawStatus: string | null;
+        actor: string;
+        timestamp: string | null;
+        duration: { text: string; ongoing: boolean } | null;
+    }> = [];
+
+    /** Recalcule la timeline mémoïsée (à appeler quand di/logs/segment changent). */
+    private refreshTimeline(): void {
+        this.segmentStages = this.getSegmentStages();
+    }
+
+    /** trackBy stable → le `*ngFor` de la timeline ne recrée pas le DOM. */
+    trackByStageKey = (_: number, s: { key: string }) => s.key;
+
+    /** Techniciens diagnostic sélectionnables — MÉMOÏSÉ (le getter recréait un
+     *  tableau à chaque cycle de détection → le p-dropdown re-traitait ses
+     *  options en boucle). Recalculé à l'ouverture du modal + au chargement des
+     *  techniciens. */
+    availableDiagTechsList: any[] = [];
+    private refreshAvailableDiagTechs(): void {
+        const abandoned = new Set(
+            (this.di?.diagAssignments ?? [])
+                .filter((a: any) => !!a.abandonedAt)
+                .map((a: any) => a.techId),
+        );
+        this.availableDiagTechsList = (this.techList ?? []).filter(
+            (t: any) => !abandoned.has(t?._id),
+        );
+    }
+
     /** ─── Coordination-modal: real-data-only state ─────────────────────────
      *  techAvgRepairByTechId is populated by the dashboardTechLeaderboard
      *  query when the modal opens. Keys = Profile._id, value = avg days
@@ -748,6 +789,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 this.isLoading = loading;
                 if (data) {
                     this.techList = data.getAllTech;
+                    // Techniciens chargés → recalcule la liste filtrée du modal.
+                    this.refreshAvailableDiagTechs();
                 }
             });
     }
@@ -775,23 +818,15 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return !hasComponents;
     }
 
-    /**
-     * Techniciens sélectionnables pour la (ré)affectation DIAGNOSTIC : on MASQUE
-     * ceux ayant abandonné cette DI sur le cycle courant (le serveur re-bloque
-     * de toute façon dans `createStat`). Match par id (`diagAssignments.techId`).
-     */
-    get availableDiagTechs(): any[] {
-        const abandoned = new Set(
-            (this.di?.diagAssignments ?? [])
-                .filter((a: any) => !!a.abandonedAt)
-                .map((a: any) => a.techId),
-        );
-        return (this.techList ?? []).filter((t: any) => !abandoned.has(t?._id));
-    }
+    // NB : la logique « techniciens diagnostic sélectionnables » (masque ceux
+    // ayant abandonné ce cycle) est désormais MÉMOÏSÉE dans
+    // `availableDiagTechsList` / `refreshAvailableDiagTechs()` (voir plus haut) —
+    // l'ancien getter recalculé à chaque cycle de détection faisait re-traiter le
+    // p-dropdown en boucle et participait au freeze du modal.
 
     openModalConfig(di) {
-        console.log('🍷[di]:', di);
         this.di = { ...di };
+        this.refreshAvailableDiagTechs();
         this.adminSentAt = di.pricingRequestSentAt ?? null;
         this.magasinConfirmedAt = di.componentsConfirmedAt ?? null;
         this.pricingRequestInFlight = false;
@@ -878,6 +913,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
     private fetchFlowLogsDi(_idDi: string, ignoreCount: number) {
         this.flowLogsDi = [];
         this.selectedFlowSegment = ignoreCount > 0 ? ignoreCount : 0;
+        // Rendu immédiat du segment actif (n'a pas besoin des logs).
+        this.refreshTimeline();
         if (!_idDi) return;
         this.apollo
             .query<any>({
@@ -889,6 +926,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 this.flowLogsDi = [...logs].sort(
                     (a, b) => (a.idIgnore ?? 0) - (b.idIgnore ?? 0),
                 );
+                // Les logs des cycles retour sont arrivés → on recalcule.
+                this.refreshTimeline();
             });
     }
 
@@ -1071,7 +1110,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  ni gonfler le numérateur ni le dénominateur. `+ 0.5×current` = remplissage
      *  fluide de la barre pour l'étape en cours. */
     get flowProgress(): { done: number; total: number; pct: number } {
-        const stages = this.getSegmentStages();
+        const stages = this.segmentStages;
         const realPath = stages.filter((s) => s.state !== 'skipped');
         const total = realPath.length || 5;
         const done = realPath.filter((s) => s.state === 'done').length;
@@ -1088,6 +1127,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
     selectFlowSegment(idx: number) {
         if (idx < 0 || idx > this.diRetourCount) return;
         this.selectedFlowSegment = idx;
+        this.refreshTimeline();
     }
 
     /** Status pill for the top banner — French label via the existing map. */
