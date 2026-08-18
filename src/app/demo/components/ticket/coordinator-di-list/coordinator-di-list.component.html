@@ -17,9 +17,6 @@
 <app-di-info-modal
     [(visible)]="ticketDetailsInfo"
     [di]="ticketData?.data"
-    [retour1]="retour1InfoFromLogs"
-    [retour2]="retour2InfoFromLogs"
-    [retour3]="retour3InfoFromLogs"
     context="coordinator"
 ></app-di-info-modal>
 
@@ -526,6 +523,25 @@
                             <i class="pi pi-user"></i>
                             {{ getAssignedDiagnosticTech() }}
                         </div>
+
+                        <!-- F2 — verdict « Erreur Fixtronix » (retour) tranché
+                             par la COORDINATRICE (déplacé du modal technicien). -->
+                        <div *ngIf="ignoreCount > 0" class="cf-card__error">
+                            <label class="cf-card__label">
+                                Erreur de Fixtronix ?
+                            </label>
+                            <p-toggleButton
+                                [ngModel]="
+                                    ticketData?.data?.isErrorFromFixtronix
+                                "
+                                onLabel="Erreur Fixtronix"
+                                offLabel="Erreur Client"
+                                onIcon="pi pi-exclamation-triangle"
+                                offIcon="pi pi-user"
+                                (onChange)="onErrorFromFixtronixChange($event)"
+                                styleClass="cf-card__dropdown"
+                            ></p-toggleButton>
+                        </div>
                     </article>
 
                     <article class="cf-card">
@@ -637,9 +653,11 @@
                             Technicien réparation
                         </label>
                         <!-- Dropdown while the repair stage is open for
-                             (re)assignment; otherwise the assigned tech as text. -->
+                             (re)assignment; otherwise the assigned tech as text.
+                             En mode « retour sans pièces » (needsDevisBeforeRepair)
+                             on bascule sur le bloc devis ci-dessous. -->
                         <p-dropdown
-                            *ngIf="!rep_condition"
+                            *ngIf="!rep_condition && !di?.needsDevisBeforeRepair"
                             [options]="techList"
                             [placeholder]="
                                 getAssignedRepairTech() === 'N/A'
@@ -660,6 +678,88 @@
                                 </ng-container>
                             </ng-template>
                         </p-dropdown>
+
+                        <!-- Raccourci « retour sans pièces » : magasin +
+                             tarification sautés → la coordinatrice envoie en
+                             réparation en joignant le devis, en UN SEUL geste
+                             (devis + technicien, bouton bloqué sinon). -->
+                        <div
+                            *ngIf="!rep_condition && di?.needsDevisBeforeRepair"
+                            class="cf-repair-devis"
+                        >
+                            <div class="cf-repair-devis__banner">
+                                <i class="pi pi-info-circle"></i>
+                                <span>
+                                    Retour sans pièces — magasin et tarification
+                                    sautés. Joignez le devis pour envoyer en
+                                    réparation.
+                                </span>
+                            </div>
+
+                            <p-dropdown
+                                [options]="techList"
+                                [(ngModel)]="selectedRepTechForDevis"
+                                placeholder="Sélectionner le technicien…"
+                                optionLabel="firstName"
+                                [showClear]="false"
+                                styleClass="cf-card__dropdown"
+                            >
+                                <ng-template let-tech pTemplate="item">
+                                    {{ tech?.firstName }} {{ tech?.lastName }}
+                                </ng-template>
+                                <ng-template
+                                    let-tech
+                                    pTemplate="selectedItem"
+                                >
+                                    <ng-container *ngIf="tech">
+                                        {{ tech.firstName }} {{ tech.lastName }}
+                                    </ng-container>
+                                </ng-template>
+                            </p-dropdown>
+
+                            <app-pdf-dropzone
+                                *ngIf="!sendingRepairWithDevis"
+                                [maxSizeMo]="10"
+                                [title]="
+                                    repairDevisName
+                                        ? 'Remplacer le devis'
+                                        : 'Déposer le devis'
+                                "
+                                ariaLabel="Déposer le devis (PDF)"
+                                (fileSelected)="onRepairDevisDrop($event)"
+                            ></app-pdf-dropzone>
+                            <div
+                                *ngIf="repairDevisName"
+                                class="cf-repair-devis__file"
+                            >
+                                <i class="pi pi-file-pdf"></i>
+                                {{ repairDevisName }}
+                            </div>
+
+                            <p-button
+                                label="Envoyer en réparation"
+                                icon="pi pi-send"
+                                [disabled]="
+                                    !selectedRepTechForDevis ||
+                                    !repairDevisBase64 ||
+                                    sendingRepairWithDevis
+                                "
+                                [loading]="sendingRepairWithDevis"
+                                (onClick)="sendToRepairWithDevis()"
+                                styleClass="cf-card__action"
+                            ></p-button>
+                            <small
+                                *ngIf="
+                                    !selectedRepTechForDevis ||
+                                    !repairDevisBase64
+                                "
+                                class="cf-repair-devis__hint"
+                            >
+                                Sélectionnez un technicien et joignez le devis
+                                pour activer l'envoi.
+                            </small>
+                        </div>
+
                         <div
                             *ngIf="rep_condition && getAssignedRepairTech() !== 'N/A'"
                             class="cf-card__assigned"

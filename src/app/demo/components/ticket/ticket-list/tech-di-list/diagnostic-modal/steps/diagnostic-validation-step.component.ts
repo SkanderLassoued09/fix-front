@@ -43,13 +43,17 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
           <input type="checkbox" formControlName="isPdr" class="switch" />
         </label>
 
-        <label class="decision" *ngIf="showErrorFromFixtronix">
+        <div class="decision" *ngIf="showErrorFromFixtronix">
           <div class="decision__copy">
             <strong>Erreur de Fixtronix ?</strong>
-            <span>À cocher si l'incident provient d'une intervention précédente Fixtronix.</span>
+            <span>Verdict tranché par la coordinatrice — lecture seule.</span>
           </div>
-          <input type="checkbox" formControlName="isErrorFromFixtronix" class="switch" />
-        </label>
+          <span
+            style="font-weight:700; font-size:0.8rem;"
+            [style.color]="form.get('isErrorFromFixtronix')?.value ? '#dc2626' : '#16a34a'"
+            >{{ form.get('isErrorFromFixtronix')?.value ? 'OUI (erreur Fixtronix)' : 'NON (erreur client)' }}</span
+          >
+        </div>
       </div>
     </div>
   `,

@@ -14,25 +14,23 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { DiPdfService } from 'src/app/demo/service/di-pdf.service';
 import { TicketService } from 'src/app/demo/service/ticket.service';
+import {
+    buildCycleTimeline,
+    sliceHistoryByCycle,
+    formatTimelineDate,
+    formatDuration,
+    TimelineRow,
+} from '../status-timeline.util';
 
 /**
- * Shared read-only "Information demande d'intervention" modal.
+ * Modal « Dossier d'intervention » — LECTURE SEULE, partagé par ticket-list ET
+ * coordinateur (une seule implémentation).
  *
- * Used by BOTH the Coordinator and Interventions (ticket-list) pages — the two
- * pages used to ship the same modal as two inline copies which drifted apart
- * (font sizes, off-charte purple). One component now owns the markup so the
- * two pages always render identically.
- *
- * Usage:
- *   <app-di-info-modal
- *     [(visible)]="ticketDetailsInfo"
- *     [di]="ticketData?.data"
- *   ></app-di-info-modal>
- *
- * The component is pure presentation — no mutations, no GraphQL — and inputs
- * the DI as a flat object (`{title, _idnum, price, final_price, …}`). Optional
- * `context` lets the host hint at a small variant if ever needed; today both
- * pages render exactly the same shape.
+ * Refonte : coque bornée (~85vh) à 3 zones — en-tête + sélecteur de cycle FIXES,
+ * corps DÉFILANT (une seule scrollbar), pied FIXE. Un sélecteur de CYCLE DE RETOUR
+ * (Flow original · Retour 1…N) re-scope TOUT le dossier (parcours, temps,
+ * documents, finances) au cycle choisi — SOURCE UNIQUE `di.logs` (cycle 0 = la DI
+ * elle-même ; cycle N = `di.logs[idIgnore=N]`). Aucun `retour1/2/3` en secours.
  */
 @Component({
     selector: 'app-di-info-modal',
@@ -46,91 +44,29 @@ export class DiInfoModalComponent implements OnChanges {
     @Input() di: any = null;
     @Input() visible = false;
     @Input() context: 'coordinator' | 'interventions' = 'interventions';
-    // Per-cycle retour snapshots (LogsDi), passed by the host. retour1 = #1, etc.
-    @Input() retour1: any = null;
-    @Input() retour2: any = null;
-    @Input() retour3: any = null;
     @Output() visibleChange = new EventEmitter<boolean>();
 
-    /** Historique d'affectation diagnostic à afficher : uniquement si au moins un
-     *  ABANDON a eu lieu (une simple affectation en cours n'est pas un historique). */
-    get hasDiagHistory(): boolean {
-        return (this.di?.diagAssignments ?? []).some((a: any) => !!a.abandonedAt);
-    }
+    /** Plancher de facturation du diagnostic (borne basse 150 TND, front-only —
+     *  cf. modal de tarification). L'écart se calcule contre max(plancher, coût). */
+    private static readonly FLOOR = 150;
+    /** Seuil « durée anormale » (rouge) — FIXE 48 h pour cette version. */
+    private static readonly ANOMALY_MS = 48 * 3600 * 1000;
+    /** Nombre d'étapes visibles avant « Tout afficher ». */
+    private static readonly TIMELINE_PREVIEW = 5;
 
-    /** Retour cycles to display, gated by the DI's ignoreCount. */
-    get retourEntries(): Array<{ n: number; data: any }> {
-        const count = Number(this.di?.ignoreCount ?? 0);
-        return [
-            { n: 1, data: this.retour1 },
-            { n: 2, data: this.retour2 },
-            { n: 3, data: this.retour3 },
-        ].filter((e) => e.n <= count);
-    }
+    /** Cycle actuellement consulté : 0 = flux original ; N = après le N-ième retour. */
+    selectedCycle = 0;
+    /** Section « Écart entre statuts » dépliée (au-delà des 5 premières). */
+    timelineExpanded = false;
 
-    /** Retour cycles newest-first, decorated for the vertical timeline
-     *  (`last` drops the connector line on the final node). */
-    get retoursNewestFirst(): Array<{ n: number; data: any; last: boolean }> {
-        const list = this.retourEntries.slice().reverse();
-        return list.map((e, i) => ({ ...e, last: i === list.length - 1 }));
-    }
-
-    /** Coarse workflow status → visual tone for the header pill.
-     *  ok = terminée (green) · ko = annulée (red) · info = retour (cyan) ·
-     *  warn = every in-progress state (amber, the design default). */
-    statusTone(status: any): 'ok' | 'ko' | 'info' | 'warn' {
-        const s = (status ?? '').toString().trim();
-        if (s === 'FINISHED') return 'ok';
-        if (s === 'ANNULER') return 'ko';
-        if (s === 'RETOUR1' || s === 'RETOUR2' || s === 'RETOUR3') return 'info';
-        return 'warn';
-    }
-
-    /** Per-retour document chips (scalar Drive URLs on the LogsDi snapshot).
-     *  LogsDi stores only the URL, not the file name — so we recover the REAL
-     *  name by matching the URL against the DI's `documents` (which carry
-     *  name + webViewLink), exactly like the main Documents section. Falls back
-     *  to the generic type label when the file isn't among the current
-     *  DI documents (e.g. replaced in a later cycle). */
-    retourDocs(data: any): Array<{ label: string; href: string }> {
-        const nameByLink = new Map<string, string>();
-        const nameByType = new Map<string, string>();
-        for (const d of this.di?.documents ?? []) {
-            const name = String(d?.name ?? '').trim();
-            if (!name) continue;
-            const link = String(d?.webViewLink ?? '').trim();
-            if (link) nameByLink.set(link, name);
-            if (d?.type) nameByType.set(String(d.type), name);
-        }
-        const out: Array<{ label: string; href: string }> = [];
-        const push = (href: any, type: string, typeLabel: string) => {
-            const h = String(href ?? '').trim();
-            if (!h) return;
-            out.push({
-                label: nameByLink.get(h) || nameByType.get(type) || typeLabel,
-                href: h,
-            });
-        };
-        push(data?.bon_de_commande, 'BC', 'BC');
-        push(data?.devis, 'Devis', 'Devis');
-        push(data?.bon_de_livraison, 'BL', 'BL');
-        push(data?.facture, 'Facture', 'Facture');
-        return out;
-    }
-
-    /** Set while the PDF is being generated (one-time lazy jsPDF import). */
-    downloading = false;
-
-    // ── Décomposition coût Diagnostic / Réparation (lecture seule) ──────────
-    // Le modal est majoritairement présentationnel ; ces 3 lectures (temps
-    // persistés du ledger Stat + taux Tarif + coût composants) alimentent les
-    // blocs « Diagnostic » et « Réparation ». Aucune capture, aucune mutation.
+    // ── Coûts (ledger Stat + taux Tarif + coût composants) — par cycle ─────────
     costLoading = false;
-    private _costsForId: string | null = null;
+    private _costsKey: string | null = null;
     diagSeconds = 0;
     repSeconds = 0;
     tarif = 0;
     composantCost = 0;
+    downloading = false;
 
     constructor(
         private readonly diPdf: DiPdfService,
@@ -139,14 +75,228 @@ export class DiInfoModalComponent implements OnChanges {
         private readonly cdr: ChangeDetectorRef,
     ) {}
 
-    ngOnChanges(_changes: SimpleChanges): void {
-        const id = this.di?._id;
-        if (id && this.visible && id !== this._costsForId) {
-            this.fetchCosts(id);
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['di']) {
+            // Nouvelle DI → ouvrir sur le cycle COURANT (le plus récent), replier
+            // la timeline, réinitialiser le sélecteur.
+            this.selectedCycle = this.cycleCount;
+            this.timelineExpanded = false;
         }
+        const id = this.di?._id;
+        if (id && this.visible) this.fetchCosts();
     }
 
-    /** HH:MM:SS persisté → secondes (0 si absent/malformé). */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Cycles de retour
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Nombre de retours (0 → pas de sélecteur du tout). */
+    get cycleCount(): number {
+        return Math.max(0, Number(this.di?.ignoreCount ?? 0)) || 0;
+    }
+
+    /** Pastilles du sélecteur — UNIQUEMENT si la DI a au moins un retour.
+     *  Index 0 = « Flow original », 1..N = « Retour N ». */
+    get cycles(): Array<{ n: number; label: string }> {
+        if (this.cycleCount <= 0) return [];
+        const out = [{ n: 0, label: 'Flux original' }];
+        for (let n = 1; n <= this.cycleCount; n++) {
+            out.push({ n, label: `Retour ${n}` });
+        }
+        return out;
+    }
+
+    /** Le cycle sélectionné est-il le cycle VIVANT (le plus récent) ? Seul lui
+     *  porte le statut courant de la DI. */
+    private get isActiveCycle(): boolean {
+        return this.selectedCycle >= this.cycleCount;
+    }
+
+    selectCycle(n: number): void {
+        if (n === this.selectedCycle) return;
+        this.selectedCycle = n;
+        this.timelineExpanded = false;
+        this.fetchCosts();
+    }
+
+    /** Snapshot du cycle sélectionné : la DI (cycle 0) ou la ligne `di.logs`
+     *  correspondante (cycle N). `null` si le cycle N n'a pas de ligne de log
+     *  (retour capturé sans re-diagnostic → sections snapshot masquées). */
+    get cycleSnapshot(): any {
+        if (this.selectedCycle <= 0) return this.di;
+        const logs: any[] = Array.isArray(this.di?.logs) ? this.di.logs : [];
+        return logs.find((l) => Number(l?.idIgnore) === this.selectedCycle) ?? null;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Écart entre statuts (timeline) — réutilise le calcul du modal Coordination
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Toutes les étapes RÉELLEMENT atteintes dans le cycle sélectionné. */
+    get timelineRows(): TimelineRow[] {
+        const segments = sliceHistoryByCycle(this.di?.statusHistory);
+        const slice = segments[this.selectedCycle] ?? [];
+        const currentStatus = this.isActiveCycle ? this.di?.status ?? null : null;
+        return buildCycleTimeline(
+            slice,
+            currentStatus,
+            DiInfoModalComponent.ANOMALY_MS,
+        );
+    }
+
+    /** Étapes affichées (5 par défaut, tout si déplié). */
+    get visibleTimelineRows(): TimelineRow[] {
+        const rows = this.timelineRows;
+        return this.timelineExpanded
+            ? rows
+            : rows.slice(0, DiInfoModalComponent.TIMELINE_PREVIEW);
+    }
+
+    get timelineHiddenCount(): number {
+        return Math.max(
+            0,
+            this.timelineRows.length - DiInfoModalComponent.TIMELINE_PREVIEW,
+        );
+    }
+
+    toggleTimeline(): void {
+        this.timelineExpanded = !this.timelineExpanded;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Bande de faits + sections snapshot (par cycle)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** Client / Société — jamais un ObjectId (displayName filtre). */
+    get customerLabel(): string {
+        return this.displayName(
+            this.di?.clientName,
+            this.di?.companyName,
+            this.di?.client_name,
+            this.di?.company_name,
+            this.di?.client_id,
+            this.di?.company_id,
+        );
+    }
+
+    get locationLabel(): string {
+        return this.displayName(
+            this.di?.location_name,
+            this.di?.locationName,
+            this.di?.location_id,
+        );
+    }
+
+    /** Composants du cycle sélectionné (DI ou snapshot de log). */
+    get activeComposants(): Array<{ nameComposant?: string; quantity?: number }> {
+        const src = this.cycleSnapshot;
+        return Array.isArray(src?.array_composants) ? src.array_composants : [];
+    }
+
+    /** Remarques du cycle sélectionné. */
+    get activeRemarques(): { admin: string; diag: string; rep: string } {
+        const s = this.cycleSnapshot ?? {};
+        return {
+            admin: s.remarque_manager || s.remarque_admin_manager || '',
+            diag: s.remarque_tech_diagnostic || '',
+            rep: s.remarque_tech_repair || '',
+        };
+    }
+
+    get hasAnyRemarque(): boolean {
+        const r = this.activeRemarques;
+        return !!(r.admin || r.diag || r.rep);
+    }
+
+    get activeCanBeRepaired(): boolean | null {
+        const v = this.cycleSnapshot?.can_be_repaired;
+        return v === true || v === false ? v : null;
+    }
+
+    get activeContainPdr(): boolean {
+        return !!this.cycleSnapshot?.contain_pdr;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Documents (vrais noms de fichier) — par cycle
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private readonly DOC_TYPES: ReadonlyArray<{
+        type: string;
+        label: string;
+        scalar: string;
+    }> = [
+        { type: 'BC', label: 'Bon de commande', scalar: 'bon_de_commande' },
+        { type: 'Devis', label: 'Devis', scalar: 'devis' },
+        { type: 'BL', label: 'Bon de livraison', scalar: 'bon_de_livraison' },
+        { type: 'Facture', label: 'Facture', scalar: 'facture' },
+    ];
+
+    /** Récupère le vrai nom de fichier depuis `di.documents` (DriveDocRef.name),
+     *  par lien puis par type ; sinon le libellé générique. */
+    private nameFor(href: string, type: string, fallback: string): string {
+        for (const d of this.di?.documents ?? []) {
+            const name = String(d?.name ?? '').trim();
+            if (!name) continue;
+            if (String(d?.webViewLink ?? '').trim() === href) return name;
+        }
+        for (const d of this.di?.documents ?? []) {
+            if (d?.type === type) {
+                const name = String(d?.name ?? '').trim();
+                if (name) return name;
+            }
+        }
+        return fallback;
+    }
+
+    /** Les 4 emplacements documents du cycle sélectionné : présent (nom réel +
+     *  lien) OU absent (`href: null`, signalé). Cycle 0 : `di.documents`
+     *  (DriveDocRef.name) + repli scalaire. Cycle N : URLs scalaires du snapshot,
+     *  nom récupéré best-effort depuis `di.documents`. */
+    get docSlots(): Array<{
+        type: string;
+        label: string;
+        href: string | null;
+    }> {
+        const src = this.cycleSnapshot ?? {};
+        return this.DOC_TYPES.map((t) => {
+            let href: string | null = null;
+            let label = t.label;
+            if (this.selectedCycle <= 0) {
+                const ref = (this.di?.documents ?? []).find(
+                    (d: any) => d?.type === t.type,
+                );
+                const h = String(
+                    ref?.webViewLink || this.di?.[t.scalar] || '',
+                ).trim();
+                href = h || null;
+                if (h) label = String(ref?.name ?? '').trim() || t.label;
+            } else {
+                const h = String(src?.[t.scalar] ?? '').trim();
+                href = h || null;
+                if (h) label = this.nameFor(h, t.type, t.label);
+            }
+            return { type: t.type, label, href };
+        });
+    }
+
+    get hasAnyDoc(): boolean {
+        return this.docSlots.some((d) => !!d.href);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Historique d'abandon (conditionnel)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    get hasDiagHistory(): boolean {
+        return (this.di?.diagAssignments ?? []).some((a: any) => !!a.abandonedAt);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Coûts / finances (par cycle) — écart CORRIGÉ (contre max(plancher, coût))
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /** HH:MM:SS persisté → secondes. */
     private hhmmssToSeconds(s: any): number {
         if (typeof s !== 'string') return 0;
         const p = s.split(':').map(Number);
@@ -154,9 +304,12 @@ export class DiInfoModalComponent implements OnChanges {
         return p[0] * 3600 + p[1] * 60 + p[2];
     }
 
-    /** Charge temps diag/répa (ledger Stat), taux (Tarif), coût composants. */
-    private fetchCosts(diId: string): void {
-        this._costsForId = diId;
+    /** Charge temps diag/répa (Stat DU CYCLE), taux, coût composants (DI). */
+    private fetchCosts(): void {
+        const diId = this.di?._id;
+        if (!diId) return;
+        const key = `${diId}#${this.selectedCycle}`;
+        this._costsKey = key;
         this.costLoading = true;
         this.diagSeconds = this.repSeconds = 0;
         this.tarif = this.composantCost = 0;
@@ -164,14 +317,20 @@ export class DiInfoModalComponent implements OnChanges {
         this.apollo
             .query<any>({ query: this.ticket.getTechTarif() })
             .subscribe(({ data }) => {
-                if (this._costsForId !== diId) return;
+                if (this._costsKey !== key) return;
                 this.tarif = Number(data?.getTarif?.tarif) || 0;
                 this.cdr.markForCheck();
             });
+        // Stat DU CYCLE sélectionné (arg _idLog) ; cycle 0 → Stat de la DI.
         this.apollo
-            .query<any>({ query: this.ticket.getStatByDI_ID(diId) })
+            .query<any>({
+                query: this.ticket.getStatByDI_ID(
+                    diId,
+                    this.selectedCycle > 0 ? this.selectedCycle : undefined,
+                ),
+            })
             .subscribe(({ data }) => {
-                if (this._costsForId !== diId) return;
+                if (this._costsKey !== key) return;
                 const s = data?.getInfoStatByIdDi;
                 this.diagSeconds = this.hhmmssToSeconds(s?.diag_time);
                 this.repSeconds = this.hhmmssToSeconds(s?.rep_time);
@@ -180,7 +339,7 @@ export class DiInfoModalComponent implements OnChanges {
         this.apollo
             .query<any>({ query: this.ticket.totalComposant(diId) })
             .subscribe(({ data }) => {
-                if (this._costsForId !== diId) return;
+                if (this._costsKey !== key) return;
                 this.composantCost =
                     Number(data?.calculateTicketComposantPrice) || 0;
                 this.costLoading = false;
@@ -188,34 +347,36 @@ export class DiInfoModalComponent implements OnChanges {
             });
     }
 
-    /** Coût calculé DIAGNOSTIC = main-d'œuvre (temps diag × taux). Composants
-     *  rattachés à la RÉPARATION (décision produit) → 0 ici. */
+    /** Temps passé (humanisé) — du cycle sélectionné. « — » si nul. */
+    get tempsDiagLabel(): string {
+        return this.diagSeconds > 0 ? formatDuration(this.diagSeconds * 1000) : '—';
+    }
+    get tempsRepLabel(): string {
+        return this.repSeconds > 0 ? formatDuration(this.repSeconds * 1000) : '—';
+    }
+    get hasTemps(): boolean {
+        return this.diagSeconds > 0 || this.repSeconds > 0;
+    }
+
+    /** Coût calculé DIAGNOSTIC = main-d'œuvre (temps diag × taux). */
     get coutDiag(): number {
-        return (
-            Math.round(((this.diagSeconds * this.tarif) / 3600) * 1000) / 1000
-        );
+        return Math.round(((this.diagSeconds * this.tarif) / 3600) * 1000) / 1000;
     }
     /** Coût calculé RÉPARATION = main-d'œuvre (temps répa × taux) + pièces. */
     get coutRepair(): number {
         const labor = (this.repSeconds * this.tarif) / 3600;
         return Math.round((labor + this.composantCost) * 1000) / 1000;
     }
-    /** Prix facturé DIAGNOSTIC = `di.price` (saisi dans « Fixer le prix »). */
+    /** Prix facturé DIAGNOSTIC du cycle : `di.price` (cycle 0) ou `log.price`. */
     get factureDiag(): number {
-        return Number(this.di?.price);
-    }
-    /** Écart diagnostic (facturé − calculé) — même formule/format que l'écart du
-     *  modal de tarification (montant + %, vert marge / rouge sous-facturation). */
-    get ecartDiag(): {
-        absent: boolean;
-        montant: number;
-        percent: number;
-        tone: 'pos' | 'neg' | 'neutral';
-    } {
-        return this.computeEcart(this.factureDiag, this.coutDiag);
+        return Number(this.cycleSnapshot?.price);
     }
 
-    /** Logique d'écart partagée (identique au modal « Fixer le prix »). */
+    /**
+     * Écart = facturé − max(plancher, coût). Le plancher 150 TND est un comportement
+     * de facturation LÉGITIME (pas une marge) : on ne le compte donc pas comme un
+     * écart. On garde le coût BRUT visible ailleurs (colonne « Coût réel »).
+     */
     private computeEcart(
         facture: number,
         cout: number,
@@ -228,8 +389,9 @@ export class DiInfoModalComponent implements OnChanges {
         if (!Number.isFinite(facture) || facture <= 0) {
             return { absent: true, montant: 0, percent: 0, tone: 'neutral' };
         }
-        const montant = Math.round((facture - cout) * 1000) / 1000;
-        const percent = cout > 0 ? (montant / cout) * 100 : 0;
+        const basis = Math.max(DiInfoModalComponent.FLOOR, cout);
+        const montant = Math.round((facture - basis) * 1000) / 1000;
+        const percent = basis > 0 ? (montant / basis) * 100 : 0;
         const tone: 'pos' | 'neg' | 'neutral' =
             Math.abs(montant) < 0.5 && Math.abs(percent) < 1
                 ? 'neutral'
@@ -239,83 +401,75 @@ export class DiInfoModalComponent implements OnChanges {
         return { absent: false, montant, percent, tone };
     }
 
-    onVisibleChange(v: boolean) {
-        this.visible = v;
-        this.visibleChange.emit(v);
-    }
-    close() {
-        this.onVisibleChange(false);
+    /** Diagnostic NON PAYANT (flag DI) : le « facturé » n'est pas 0 mais
+     *  « Non facturé » (le coût réel reste un coût interne assumé, pas un écart). */
+    get diagNonPayant(): boolean {
+        return this.di?.diagnosticPayant === false;
     }
 
-    /** Export the DI as a formal A4 PDF dossier (`DI_{N°DI}.pdf`) — reuses the
-     *  same client-side jsPDF pipeline as the PV export. */
-    async exportPdf(): Promise<void> {
-        if (!this.di || this.downloading) return;
-        this.downloading = true;
-        try {
-            await this.diPdf.generateAndDownload(this.di);
-        } finally {
-            this.downloading = false;
-        }
+    /** Lignes du tableau Finances : Diagnostic, Réparation, Total. Réparation
+     *  facturée = « — » (n'existe pas en base). Diagnostic non payant → « Non
+     *  facturé » (jamais 0,000, jamais d'écart −150). Écart contre max(plancher,
+     *  coût) sinon. */
+    get financeRows(): Array<{
+        phase: string;
+        coutReel: number | null;
+        facture: number | null;
+        ecart: ReturnType<DiInfoModalComponent['computeEcart']> | null;
+        isTotal?: boolean;
+        nonPayant?: boolean;
+    }> {
+        const np = this.diagNonPayant;
+        const facture = this.factureDiag;
+        const factureCell = np || !Number.isFinite(facture) ? null : facture;
+        const coutTotal =
+            Math.round((this.coutDiag + this.coutRepair) * 1000) / 1000;
+        return [
+            {
+                phase: 'Diagnostic',
+                coutReel: this.coutDiag,
+                facture: factureCell,
+                ecart: np ? null : this.computeEcart(facture, this.coutDiag),
+                nonPayant: np,
+            },
+            {
+                phase: 'Réparation',
+                coutReel: this.coutRepair,
+                facture: null, // pas de prix réparation facturé en base
+                ecart: null,
+            },
+            {
+                phase: 'Total',
+                coutReel: coutTotal,
+                facture: factureCell,
+                ecart: np ? null : this.computeEcart(facture, coutTotal),
+                isTotal: true,
+                nonPayant: np,
+            },
+        ];
     }
 
-    /** Raw workflow status → French label (mirrors the app's UI labels). */
+    // ─────────────────────────────────────────────────────────────────────────
+    // Présentation / helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    statusTone(status: any): 'ok' | 'ko' | 'info' | 'warn' {
+        const s = (status ?? '').toString().trim();
+        if (s === 'FINISHED') return 'ok';
+        if (s === 'ANNULER') return 'ko';
+        if (s === 'RETOUR1' || s === 'RETOUR2' || s === 'RETOUR3') return 'info';
+        return 'warn';
+    }
+
+    /** Statut brut en MAJUSCULES (décision d'affichage en vigueur). */
     statusLabel(status: any): string {
-        // Affichage BRUT de la valeur DB en MAJUSCULES.
         return (status ?? '').toString().trim().toUpperCase() || '—';
     }
 
-    /** Document types shown in the Documents section, in display order.
-     *  `type` matches the backend DriveDoc key; `scalar` is the legacy mirror
-     *  URL used as a fallback when no DriveDoc ref is present. */
-    private readonly DOC_TYPES: ReadonlyArray<{
-        type: string;
-        label: string;
-        scalar: string;
-    }> = [
-        { type: 'BC', label: 'Bon de commande', scalar: 'bon_de_commande' },
-        { type: 'Devis', label: 'Devis', scalar: 'devis' },
-        { type: 'BL', label: 'Bon de livraison', scalar: 'bon_de_livraison' },
-        { type: 'Facture', label: 'Facture', scalar: 'facture' },
-    ];
-
-    /** Renderable document links for the Documents section.
-     *  - Link text is the REAL Drive file name (`DriveDocRef.name`); when the
-     *    name is absent/empty it falls back to the generic type label.
-     *  - `href` uses the DriveDoc `webViewLink`, falling back to the legacy
-     *    scalar URL for older records.
-     *  - A type with neither a Drive ref nor a scalar URL is omitted entirely
-     *    (no DriveDocRef → no link). */
-    get docLinks(): Array<{ label: string; href: string }> {
-        const byType = new Map<string, any>();
-        for (const d of this.di?.documents ?? []) {
-            if (d?.type) byType.set(String(d.type), d);
-        }
-        const out: Array<{ label: string; href: string }> = [];
-        for (const t of this.DOC_TYPES) {
-            const ref = byType.get(t.type);
-            const href = String(ref?.webViewLink || this.di?.[t.scalar] || '').trim();
-            if (!href) continue;
-            const name = String(ref?.name ?? '').trim();
-            out.push({ label: name || t.label, href });
-        }
-        return out;
-    }
-
-    /** True when the DI has at least one uploaded document. */
-    get hasAnyDoc(): boolean {
-        return this.docLinks.length > 0;
-    }
-
-    /** True when a value looks like a raw Mongo ObjectId (24 hex chars).
-     *  Such ids must never be shown to a user — we fall back to a placeholder. */
     private isObjectId(value: any): boolean {
         return typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value.trim());
     }
 
-    /** Human-readable display for a field that may legitimately hold a name OR,
-     *  on legacy records, a raw ObjectId. Returns the first non-empty candidate
-     *  that is not an ObjectId, else the '—' placeholder. */
     displayName(...candidates: any[]): string {
         for (const c of candidates) {
             if (c == null) continue;
@@ -326,8 +480,6 @@ export class DiInfoModalComponent implements OnChanges {
         return '—';
     }
 
-    /** Two letters max, uppercase, derived from a display name. Falls back to
-     *  '?' for empty/unknown so the avatar tiles are never blank. */
     initials(text: any): string {
         const s = String(text ?? '').trim();
         if (!s) return '?';
@@ -336,7 +488,6 @@ export class DiInfoModalComponent implements OnChanges {
         return (words[0][0] + words[words.length - 1][0]).toUpperCase();
     }
 
-    /** TND with 3 decimals, fr-TN locale ("X XXX,XXX TND"). Non-finite → "—". */
     formatTnd3(value: any): string {
         const n = Number(value);
         if (!Number.isFinite(n)) return '—';
@@ -348,9 +499,69 @@ export class DiInfoModalComponent implements OnChanges {
         );
     }
 
-    /** Print the open modal. The `@media print` block in the SCSS hides
-     *  everything except `.di-info-modal` so the printer gets only the modal
-     *  content. Body class restored on `afterprint`. */
+    /** Date FR courte — réutilise le formateur du util (cohérent avec la timeline). */
+    fmtDate(at: any): string {
+        return formatTimelineDate(at) ?? '—';
+    }
+
+    onVisibleChange(v: boolean) {
+        this.visible = v;
+        this.visibleChange.emit(v);
+    }
+    close() {
+        this.onVisibleChange(false);
+    }
+
+    /** Export PDF (dossier A4 entièrement déplié). On passe au service les données
+     *  DÉRIVÉES que le modal détient (timeline par cycle + coûts) : le PDF n'a pas
+     *  accès aux requêtes Stat/Tarif/composant. */
+    async exportPdf(): Promise<void> {
+        if (!this.di || this.downloading) return;
+        this.downloading = true;
+        try {
+            await this.diPdf.generateAndDownload(this.di, {
+                cycles: this.buildPdfCycles(),
+                finance: this.financeRows,
+                financeCycleLabel:
+                    this.selectedCycle === 0
+                        ? 'Flux original'
+                        : `Retour ${this.selectedCycle}`,
+            });
+        } finally {
+            this.downloading = false;
+        }
+    }
+
+    /** Construit, pour le PDF, la timeline de CHAQUE cycle (tout déplié). Les coûts
+     *  chargés (Stat/Tarif) ne concernent que le cycle courant ; le PDF affiche donc
+     *  le détail des coûts pour le cycle affiché et le parcours pour tous. */
+    private buildPdfCycles(): Array<{
+        n: number;
+        label: string;
+        timeline: TimelineRow[];
+    }> {
+        const segments = sliceHistoryByCycle(this.di?.statusHistory);
+        const count = this.cycleCount;
+        const out: Array<{ n: number; label: string; timeline: TimelineRow[] }> =
+            [];
+        for (let n = 0; n <= count; n++) {
+            const slice = segments[n] ?? [];
+            if (n > 0 && !slice.length) continue; // cycle sans parcours → masqué
+            const isActive = n >= count;
+            out.push({
+                n,
+                label: n === 0 ? 'Flux original' : `Retour ${n}`,
+                timeline: buildCycleTimeline(
+                    slice,
+                    isActive ? this.di?.status ?? null : null,
+                    DiInfoModalComponent.ANOMALY_MS,
+                ),
+            });
+        }
+        return out;
+    }
+
+    /** Impression : `@media print` ne garde que `.di-info-modal`. */
     print() {
         try {
             document.body.classList.add('di-info-printing');

@@ -974,6 +974,37 @@
             ></textarea>
         </div>
 
+        <!-- Diagnostic payant / non payant + estimation (F1) -->
+        <div class="sav-form-row">
+            <label class="sav-label">Diagnostic payant ?</label>
+            <p-toggleButton
+                formControlName="diagnosticPayant"
+                onLabel="Payant"
+                offLabel="Non payant (gratuit)"
+                onIcon="pi pi-check"
+                offIcon="pi pi-gift"
+                styleClass="sav-toggle"
+            ></p-toggleButton>
+        </div>
+        <div
+            class="sav-form-row"
+            *ngIf="creationDiForm.get('diagnosticPayant')?.value"
+        >
+            <label class="sav-label" for="diagnosticEstimate"
+                >Estimation du prix du diagnostic (TND)</label
+            >
+            <p-inputNumber
+                inputId="diagnosticEstimate"
+                formControlName="diagnosticEstimate"
+                mode="decimal"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="3"
+                [min]="0"
+                placeholder="ex. 150"
+                styleClass="w-full"
+            ></p-inputNumber>
+        </div>
+
         <div class="sav-form-row">
             <!-- Drag & drop image zone (reuses the generic dropzone used by the
                  facture/affectation flow). FileReader → base64 happens in
@@ -2027,16 +2058,43 @@
                     <p-inputNumber
                         inputId="pricing-init-input"
                         [(ngModel)]="price"
-                        [min]="150"
-                        [max]="500"
+                        [min]="0"
                         [maxFractionDigits]="3"
                         [minFractionDigits]="0"
                         locale="fr-TN"
                         placeholder="0"
                         styleClass="pricing-step__input"
+                        [disabled]="!pricingDiagnosticPayant"
                         (onBlur)="clampDiagCost()"
                     ></p-inputNumber>
                     <span class="pricing-step__suffix">TND</span>
+                </div>
+                <div *ngIf="!pricingDiagnosticPayant" class="pricing-nonpayant">
+                    <i class="pi pi-gift"></i> Diagnostic <strong>non payant</strong>
+                    — non facturé au client. Le temps de diagnostic reste mesuré
+                    (coût interne), et le plancher de 150&nbsp;TND ne s'applique pas.
+                </div>
+                <div
+                    *ngIf="
+                        pricingDiagnosticPayant &&
+                        pricingDiagnosticEstimate != null
+                    "
+                    class="pricing-estimate-orig"
+                >
+                    Estimation à la création :
+                    <strong>{{ formatTnd3(pricingDiagnosticEstimate) }}</strong>
+                    (pré-rempli, ajustable).
+                </div>
+                <!-- (c) Avertissement NON bloquant si le montant sort de 150–500. -->
+                <div
+                    *ngIf="pricingDiagnosticPayant && reelOutOfBounds"
+                    class="pricing-warn"
+                >
+                    <i class="pi pi-exclamation-triangle"></i>
+                    Montant hors des bornes recommandées (150–500&nbsp;TND) —
+                    pré-rempli depuis l'estimation,
+                    <strong>autorisé sans blocage</strong>. Vérifiez avant de
+                    valider.
                 </div>
                 <div
                     class="pricing-chips"
@@ -2048,7 +2106,7 @@
                         type="button"
                         class="pricing-chip"
                         [class.pricing-chip--active]="activePricingChip === i"
-                        [disabled]="!pricingCoutTotal"
+                        [disabled]="!pricingCoutTotal || !pricingDiagnosticPayant"
                         (click)="applyPricingChip(i)"
                     >
                         <ng-container *ngIf="i === 0; else markupChip">
@@ -2060,7 +2118,7 @@
                 <!-- Écart TEMPS RÉEL prix saisi vs coût théorique (main-d'œuvre +
                      pièces) — marge (vert) / sous-facturation (rouge) / au coût. -->
                 <div
-                    *ngIf="pricingEcart as ec"
+                    *ngIf="pricingDiagnosticPayant && pricingEcart as ec"
                     class="pricing-ecart"
                     [ngClass]="'pricing-ecart--' + ec.tone"
                 >
@@ -2605,9 +2663,6 @@
 <app-di-info-modal
     [(visible)]="ticketDetailsInfo"
     [di]="ticketData?.data"
-    [retour1]="retour1InfoFromLogs"
-    [retour2]="retour2InfoFromLogs"
-    [retour3]="retour3InfoFromLogs"
     context="interventions"
 ></app-di-info-modal>
 

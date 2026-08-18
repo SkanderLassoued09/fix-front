@@ -17,6 +17,11 @@ const COORDINATOR_DI_FIELDS = `
     _idnum
     price
     final_price
+    repairEstimate
+    diagnosticPayant
+    diagnosticEstimate
+    needsDevisBeforeRepair
+    nSerie
     title
     description
     ignoreCount
@@ -77,6 +82,23 @@ const COORDINATOR_DI_FIELDS = `
     }
     logs {
         idIgnore
+        price
+        final_price
+        can_be_repaired
+        contain_pdr
+        array_composants {
+            nameComposant
+            quantity
+        }
+        devis
+        facture
+        bon_de_commande
+        bon_de_livraison
+        remarque_manager
+        remarque_admin_manager
+        remarque_tech_diagnostic
+        remarque_tech_repair
+        createdAt
         isSentToCoordinator
         isConfirmedComponentFromCoordinator
         handleSendingNotificationBetweenCoordinatorAndMagasin
@@ -139,6 +161,8 @@ export class TicketService {
                 diagTime
             }
             price
+            diagnosticPayant
+            diagnosticEstimate
             title
             description
             can_be_repaired
@@ -207,6 +231,8 @@ export class TicketService {
                 diagTime
             }
             price
+            diagnosticPayant
+            diagnosticEstimate
             title
             description
             can_be_repaired
@@ -714,10 +740,32 @@ export class TicketService {
                     image:"${diInfo.image ?? null}"
                     di_category_id:"${diInfo.di_category_id}"
                     location_id:"${diInfo.location}"
+                    diagnosticPayant: ${diInfo.diagnosticPayant ?? true}
+                    diagnosticEstimate: ${diInfo.diagnosticEstimate ?? null}
                 }
             ) {
                 _id
             }
+        }
+    `;
+    }
+
+    /** Gouvernance COORDINATRICE — bascule « Diagnostic payant » (back : verrouillé
+     *  une fois la tarification faite, rôle tech refusé). */
+    setDiagnosticPayant(diId: string, payant: boolean) {
+        return gql`
+        mutation {
+            setDiagnosticPayant(diId: "${diId}", payant: ${!!payant})
+        }
+    `;
+    }
+
+    /** Verdict « erreur Fixtronix » (phase retour) — COORDINATRICE (back : rôle
+     *  tech refusé, appel API direct compris). */
+    setErrorFromFixtronix(diId: string, value: boolean) {
+        return gql`
+        mutation {
+            setErrorFromFixtronix(diId: "${diId}", value: ${!!value})
         }
     `;
     }
@@ -1416,6 +1464,21 @@ export class TicketService {
         return gql`
             mutation {
                 changeStatusRepaire(_id: "${_id}")
+            }
+        `;
+    }
+
+    /** Raccourci « retour sans pièces » : la coordinatrice envoie en réparation
+     *  en joignant le devis, en UN SEUL geste (devis + tech + PENDING3→REPARATION).
+     *  Le PDF est une data-URL base64 (comme addDevis). */
+    coordinatorSendToRepairWithDevis(
+        _id: string,
+        repTechId: string,
+        pdf: string,
+    ) {
+        return gql`
+            mutation {
+                coordinatorSendToRepairWithDevis(_id: "${_id}", repTechId: "${repTechId}", pdf: "${pdf}")
             }
         `;
     }

@@ -109,6 +109,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
         category: new FormControl(),
         location: new FormControl(),
         remarqueManager: new FormControl(),
+        // Diagnostic payant (défaut OUI = payant) + estimation prix diagnostic
+        // (saisie uniquement si payant ; pré-remplit la tarification).
+        diagnosticPayant: new FormControl(true),
+        diagnosticEstimate: new FormControl(null),
     });
     updateDiForm = new FormGroup({
         title: new FormControl('', [Validators.required]),
@@ -263,6 +267,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
     array_composants: any;
     _idDi: any;
     price: number;
+    /** F1 — diagnostic payant + estimation de création, lus à l'ouverture du
+     *  modal de tarification. Non payant → prix diagnostic désactivé, plancher
+     *  150 non requis, aucune facturation (garde back en renfort). */
+    pricingDiagnosticPayant = true;
+    pricingDiagnosticEstimate: number | null = null;
     /** « Estimation réparation » saisie dans le modal de tarification
      *  diagnostic. Champ dédié (persisté via setRepairEstimate), optionnel —
      *  sert à comparer l'estimé au prix réel de réparation plus tard. */
@@ -725,13 +734,21 @@ export class TicketListComponent implements OnInit, OnDestroy {
     // ci-dessous pilotent l'état visuel (badge/bordure/aide) de chaque étape et
     // la ligne de statut du footer — miroir du `renderVals()` de la maquette.
     get reelValid(): boolean {
+        // (c) Bornes SOUPLES : la soumission n'exige plus 150–500, seulement un
+        // montant POSITIF (l'estimation de création peut être hors bornes). Un
+        // avertissement NON bloquant s'affiche si hors [150, 500] (reelOutOfBounds).
         const p = Number(this.price);
-        return Number.isFinite(p) && p >= 150 && p <= 500;
+        return Number.isFinite(p) && p > 0;
     }
-    get reelState(): 'idle' | 'ok' | 'err' {
+    /** Hors des bornes recommandées 150–500 TND → avertissement non bloquant. */
+    get reelOutOfBounds(): boolean {
+        const p = Number(this.price);
+        return Number.isFinite(p) && p > 0 && (p < 150 || p > 500);
+    }
+    get reelState(): 'idle' | 'ok' | 'warn' {
         const p = Number(this.price);
         if (!Number.isFinite(p) || p <= 0) return 'idle';
-        return this.reelValid ? 'ok' : 'err';
+        return this.reelOutOfBounds ? 'warn' : 'ok';
     }
     get repValid(): boolean {
         const r = Number(this.repairEstimate);
@@ -751,16 +768,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
     /** Aide contextuelle sous l'étape 1 (coût réel). */
     get reelHelp(): { text: string; char: string; tone: string } {
         const st = this.reelState;
-        if (st === 'err')
+        if (st === 'warn')
             return {
-                text: 'Choisissez un montant entre 150 et 500 TND',
+                text: 'Hors des bornes recommandées 150–500 TND — autorisé, vérifiez le montant.',
                 char: '!',
-                tone: 'err',
+                tone: 'warn',
             };
         if (st === 'ok')
             return { text: 'Montant valide', char: '✓', tone: 'ok' };
         return {
-            text: 'Un montant entre 150 et 500 TND',
+            text: 'Recommandé entre 150 et 500 TND (hors bornes possible).',
             char: 'i',
             tone: 'idle',
         };
@@ -819,7 +836,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
      *  DI est irréparable (champ masqué → non requis), + aucune requête en vol. */
     get pricingSubmitDisabled(): boolean {
         const repOk = this.isIrreparable || this.repValid;
-        return !this.reelValid || !repOk || this.isLoading;
+        // Non payant : aucun prix diagnostic requis → on n'exige pas `reelValid`
+        // (le plancher 150 ne s'applique pas).
+        const priceOk = !this.pricingDiagnosticPayant || this.reelValid;
+        return !priceOk || !repOk || this.isLoading;
     }
 
     /** Click on a pricing chip → fill price with cost × multiplier (rounded to
@@ -840,10 +860,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
      *  une saisie < 150 est ramenée à 150, une saisie > 500 à 500. Un champ
      *  laissé vide reste vide (pas de clamp). */
     clampDiagCost(): void {
+        // (c) Bornes SOUPLES : on NE force PLUS 150–500 (l'estimation de création
+        // peut être hors bornes ; décision commerciale). On empêche seulement un
+        // montant négatif ; l'avertissement non bloquant gère le hors-bornes.
+        // (Les boutons de marge, eux, continuent de clamper — cf. applyPricingChip.)
         if (this.price == null) return;
         const p = Number(this.price);
         if (!Number.isFinite(p)) return;
-        this.price = Math.min(500, Math.max(150, p));
+        this.price = Math.max(0, p);
     }
 
     /** Recompute the final price live as the user moves the slider / types in
@@ -2155,6 +2179,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
         this.seletedRow = data;
         this.repairEstimate = data?.repairEstimate ?? null;
+        // F1 — diagnostic payant + estimation (pré-remplira le prix si payant).
+        this.pricingDiagnosticPayant = data?.diagnosticPayant !== false;
+        this.pricingDiagnosticEstimate = data?.diagnosticEstimate ?? null;
         this.isErrorFromFixtronix = data.isErrorFromFixtronix;
         this.ignoreCountPricing = data.ignoreCount;
         this.pricingModalIgnoreCount = data.ignoreCount ?? 0;
@@ -2168,7 +2195,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.priceRemiseAffichage = null;
         this.pricesLogs = [];
         this.totalComposant = null;
-        this.price = null;
+        // Pré-remplissage MODIFIABLE depuis l'estimation de création (payant) ;
+        // non payant → aucun prix diagnostic.
+        this.price = this.pricingDiagnosticPayant
+            ? this.pricingDiagnosticEstimate
+            : null;
         this.activePricingChip = null;
 
         const isStale = () => this.current_id !== requestedRowId;
@@ -2487,9 +2518,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 // so a failed save never advances the workflow. Per-DI key
                 // prevents double-clicks from firing the chain twice.
                 const id = this.current_id;
-                const priceStep = {
-                    mutation: this.ticketSerice.pricing(id, this.price),
-                };
+                // Non payant : on NE facture PAS le diagnostic (le back rejette
+                // tout prix positif) → on saute l'étape prix.
+                const priceSteps = this.pricingDiagnosticPayant
+                    ? [{ mutation: this.ticketSerice.pricing(id, this.price) }]
+                    : [];
                 // Persist the repair estimate (dedicated field, no status
                 // change) between the price save and the transition — only when
                 // the admin entered one. Backend clears it on a non-finite value.
@@ -2511,7 +2544,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 try {
                     await this.mutationRunner.runChain({
                         key: `pricing:${id}`,
-                        steps: [priceStep, ...estimateSteps, transitionStep],
+                        steps: [...priceSteps, ...estimateSteps, transitionStep],
                         successToast: {
                             summary: 'Prix initial affecté',
                             detail: 'DI transmise à la négociation.',
@@ -2721,6 +2754,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
                         remarqueManager,
                         category,
                         location,
+                        diagnosticPayant,
+                        diagnosticEstimate,
                     } = this.creationDiForm.value;
 
                     const diInfo = {
@@ -2735,6 +2770,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
                         di_category_id: category,
                         location,
                         image: this.payload.file,
+                        diagnosticPayant,
+                        // Estimation seulement si payant (sinon null).
+                        diagnosticEstimate: diagnosticPayant
+                            ? diagnosticEstimate
+                            : null,
                     };
                     console.log('data used is ', diInfo);
                     this.apollo

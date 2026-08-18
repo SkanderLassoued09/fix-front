@@ -28,6 +28,18 @@ import {
     isEmplacementVide as isEmplacementVideUtil,
     trackByColumn,
 } from '../table-display.utils';
+// SOURCE UNIQUE du calcul de durées entre statuts — partagée avec di-info-modal
+// (« ne le réimplémente pas »). Les méthodes ci-dessous délèguent à ces fonctions.
+import {
+    ALL_STATUS_ORDER as SHARED_STATUS_ORDER,
+    BASE_PHASES as SHARED_BASE_PHASES,
+    sanitizeHistory as sharedSanitizeHistory,
+    phaseEntry as sharedPhaseEntry,
+    isPhaseBehindCurrent as sharedIsPhaseBehind,
+    computePhaseState as sharedComputePhaseState,
+    computePhaseDuration as sharedComputePhaseDuration,
+    formatDuration as sharedFormatDuration,
+} from '../shared/status-timeline.util';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -56,6 +68,15 @@ export class CoordinatorDiListComponent implements OnDestroy {
     rangeDates: Date[] | undefined;
 
     selectedTech: any; // Variable to store the selected tech data
+
+    // ── Raccourci « retour sans pièces » (envoi en réparation avec devis) ────
+    // La DI (needsDevisBeforeRepair) a sauté magasin + tarification : la
+    // coordinatrice choisit le technicien réparateur ET joint le devis, puis
+    // envoie en UN SEUL geste. Le bouton reste bloqué tant que les deux manquent.
+    selectedRepTechForDevis: any = null;
+    repairDevisBase64: string | null = null; // data-URL base64 du PDF
+    repairDevisName: string | null = null; // nom de fichier (affichage)
+    sendingRepairWithDevis = false;
 
     //--
     //Btn for confirmation
@@ -225,48 +246,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return (s ?? '').toString().toUpperCase() || '—';
     }
 
-    /** Canonical status ordering — used to decide if a phase is `done`
-     *  (current status comes AFTER the phase's last status) vs `pending`. */
-    private readonly ALL_STATUS_ORDER: string[] = [
-        'CREATED',
-        'PENDING1',
-        'DIAGNOSTIC',
-        'DIAGNOSTIC_Pause',
-        'INDIAGNOSTIC',
-        'MagasinEstimation',
-        // Étape préparation magasin — legacy 'PROCESSING' avant la valeur
-        // canonique 'CONFIRMATION' (rename 009), tolérée pour le statusHistory.
-        'PROCESSING',
-        'CONFIRMATION',
-        'CONFIRMATION_COMPOSANTS',
-        'ATTENTE_CONFIRMATION_COORDINATION',
-        'MAGASIN_FINALISATION',
-        'PENDING2',
-        'PRICING',
-        'PRICING_DIAG',
-        // Phase Approval documentaire (SPLIT). Legacy AVANT les nouveaux pour que
-        // le DERNIER sous-statut réel (WAITING_BC) porte l'index le PLUS élevé de
-        // la phase (ancre done/sautée/en attente).
-        'NEGOTIATION1',
-        'ATTENTE_BC_DEVIS',
-        'WAITING_DEVIS',
-        'WAITING_BC',
-        'NEGOTIATION2',
-        'PENDING3',
-        'REPARATION',
-        'REPARATION_Pause',
-        'INREPARATION',
-        // Phase de clôture documentaire (SPLIT). Legacy avant les nouveaux ;
-        // WAITING_FACTURE = dernier sous-statut (ancre juste avant FINISHED).
-        'ATTENTE_BL_FACTURE',
-        'CLOSING',
-        'WAITING_BL',
-        'WAITING_FACTURE',
-        'FINISHED',
-        'RETOUR1',
-        'RETOUR2',
-        'RETOUR3',
-    ];
+    /** Canonical status ordering — SOURCE UNIQUE partagée (status-timeline.util). */
+    private readonly ALL_STATUS_ORDER = SHARED_STATUS_ORDER;
 
     /** Timeline « Contrôle du Flow » — UN statut PAR étape (plus de regroupement
      *  en 5 phases). Ordre canonique du flux ; Retour 1/2/3 ajoutés dynamiquement
@@ -279,27 +260,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *                  + variantes `_Pause` ; ORDONNÉ pour que le DERNIER élément
      *                  ait l'index le PLUS ÉLEVÉ dans ALL_STATUS_ORDER (ancre du
      *                  seuil done/pending). */
-    private readonly BASE_PHASES = [
-        { key: 'CREATED', group: 'created', label: 'Créé', icon: 'pi pi-plus-circle', statuses: ['CREATED'] },
-        { key: 'PENDING1', group: 'diagnostic', label: 'En attente diagnostic', icon: 'pi pi-clipboard', statuses: ['PENDING1'] },
-        { key: 'DIAGNOSTIC', group: 'diagnostic', label: 'Diagnostic assigné', icon: 'pi pi-clipboard', statuses: ['DIAGNOSTIC'] },
-        { key: 'DIAGNOSTIC_Pause', group: 'diagnostic', label: 'Diagnostic en pause', icon: 'pi pi-pause-circle', statuses: ['DIAGNOSTIC_Pause'] },
-        { key: 'INDIAGNOSTIC', group: 'diagnostic', label: 'En diagnostic', icon: 'pi pi-clipboard', statuses: ['INDIAGNOSTIC'] },
-        { key: 'MagasinEstimation', group: 'magasin', label: 'Estimation magasin', icon: 'pi pi-box', statuses: ['MagasinEstimation'] },
-        { key: 'CONFIRMATION', group: 'magasin', label: 'CONFIRMATION', icon: 'pi pi-box', statuses: ['PROCESSING', 'CONFIRMATION'] },
-        { key: 'ATTENTE_CONFIRMATION_COORDINATION', group: 'magasin', label: 'En attente confirmation Coordination', icon: 'pi pi-box', statuses: ['CONFIRMATION_COMPOSANTS', 'ATTENTE_CONFIRMATION_COORDINATION'] },
-        { key: 'MAGASIN_FINALISATION', group: 'magasin', label: 'Finalisation magasin', icon: 'pi pi-box', statuses: ['MAGASIN_FINALISATION'] },
-        { key: 'PENDING2', group: 'admin', label: 'En attente prix', icon: 'pi pi-file', statuses: ['PENDING2'] },
-        { key: 'PRICING_DIAG', group: 'admin', label: 'Pricing', icon: 'pi pi-file', statuses: ['PRICING', 'PRICING_DIAG'] },
-        { key: 'WAITING_DEVIS', group: 'admin', label: 'Approval (devis/BC)', icon: 'pi pi-file', statuses: ['NEGOTIATION1', 'ATTENTE_BC_DEVIS', 'WAITING_DEVIS', 'WAITING_BC'] },
-        { key: 'NEGOTIATION2', group: 'admin', label: 'Négociation 2', icon: 'pi pi-file', statuses: ['NEGOTIATION2'] },
-        { key: 'PENDING3', group: 'repair', label: 'En attente réparation', icon: 'pi pi-wrench', statuses: ['PENDING3'] },
-        { key: 'REPARATION', group: 'repair', label: 'Réparation assignée', icon: 'pi pi-wrench', statuses: ['REPARATION'] },
-        { key: 'REPARATION_Pause', group: 'repair', label: 'Réparation en pause', icon: 'pi pi-pause-circle', statuses: ['REPARATION_Pause'] },
-        { key: 'INREPARATION', group: 'repair', label: 'En réparation', icon: 'pi pi-wrench', statuses: ['INREPARATION'] },
-        { key: 'WAITING_BL', group: 'closed', label: 'Clôture (BL/facture)', icon: 'pi pi-check-circle', statuses: ['ATTENTE_BL_FACTURE', 'CLOSING', 'WAITING_BL', 'WAITING_FACTURE'] },
-        { key: 'FINISHED', group: 'closed', label: 'Terminé', icon: 'pi pi-check-circle', statuses: ['FINISHED'] },
-    ];
+    private readonly BASE_PHASES = SHARED_BASE_PHASES;
     ticketData: { data: any; pauseLogs: any; logsDi: any };
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
@@ -504,6 +465,60 @@ export class CoordinatorDiListComponent implements OnDestroy {
             return;
         }
         this.diDetail.openById(diId);
+    }
+
+    /**
+     * F2 — verdict « Erreur Fixtronix » (phase retour) tranché par la
+     * COORDINATRICE (le tech ne juge plus sa propre erreur). Écrit via la mutation
+     * coordinatrice-only, reflet local immédiat sur le dossier ouvert.
+     * Lien F1↔F2 (SUGGESTION) : si Erreur = Oui, on propose de passer le
+     * diagnostic non-payant (case pré-cochée modifiable), sans forcer.
+     */
+    onErrorFromFixtronixChange(ev: any): void {
+        const di = this.ticketData?.data;
+        if (!di?._id) return;
+        const value = !!ev?.checked;
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.setErrorFromFixtronix(di._id, value),
+            })
+            .subscribe({
+                next: () => {
+                    di.isErrorFromFixtronix = value; // reflet local immédiat
+                    if (value) this.suggestNonPayant(di._id);
+                },
+                error: () => {
+                    di.isErrorFromFixtronix = !value; // rollback affichage
+                },
+            });
+    }
+
+    /** Suggestion (non forcée) : marquer le diagnostic non-payant suite à une
+     *  erreur Fixtronix. La coordinatrice tranche. */
+    private suggestNonPayant(diId: string): void {
+        this.confirmationService.confirm({
+            message:
+                'Erreur Fixtronix : marquer ce diagnostic comme NON PAYANT (non facturé au client) ?',
+            header: 'Diagnostic non payant ?',
+            icon: 'pi pi-question-circle',
+            accept: () => {
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.setDiagnosticPayant(
+                            diId,
+                            false,
+                        ),
+                    })
+                    .subscribe({
+                        next: () => {
+                            if (this.ticketData?.data) {
+                                this.ticketData.data.diagnosticPayant = false;
+                            }
+                        },
+                        error: () => {},
+                    });
+            },
+        });
     }
 
     /**
@@ -826,6 +841,12 @@ export class CoordinatorDiListComponent implements OnDestroy {
 
     openModalConfig(di) {
         this.di = { ...di };
+        // Raccourci « retour sans pièces » : repart d'un état vierge à chaque
+        // ouverture (aucun devis/technicien résiduel d'une DI précédente).
+        this.selectedRepTechForDevis = null;
+        this.repairDevisBase64 = null;
+        this.repairDevisName = null;
+        this.sendingRepairWithDevis = false;
         this.refreshAvailableDiagTechs();
         this.adminSentAt = di.pricingRequestSentAt ?? null;
         this.magasinConfirmedAt = di.componentsConfirmedAt ?? null;
@@ -1450,15 +1471,12 @@ export class CoordinatorDiListComponent implements OnDestroy {
         status: string,
         isActive: boolean = true,
     ): 'done' | 'current' | 'pending' | 'skipped' {
-        if (!status) return 'pending';
-        if (phase.statuses.includes(status)) return 'current';
-        const behind = this.isPhaseBehindCurrent(phase, status);
-        if (isActive) {
-            if (this.phaseEntry(phase.key)) return 'done'; // entrée réelle
-            return behind ? 'skipped' : 'pending';
-        }
-        // Segment d'historique : pas d'entrée par phase → ordre seul.
-        return behind ? 'done' : 'pending';
+        return sharedComputePhaseState(
+            this.sanitizedHistory(),
+            phase,
+            status,
+            isActive,
+        );
     }
 
     /** Le DERNIER statut de l'étape est-il AVANT le statut courant dans l'ordre
@@ -1467,11 +1485,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
         phase: { statuses: string[] },
         status: string,
     ): boolean {
-        const lastIdx = this.ALL_STATUS_ORDER.indexOf(
-            phase.statuses[phase.statuses.length - 1],
-        );
-        const currentIdx = this.ALL_STATUS_ORDER.indexOf(status);
-        return currentIdx > lastIdx;
+        return sharedIsPhaseBehind(phase, status);
     }
 
     private computePhaseBadgeLabel(
@@ -1530,12 +1544,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  malformées (statut non-string — ex. héritage du bug `:1493`) et les dates
      *  invalides, pour ne jamais planter le calcul d'écart. */
     private sanitizedHistory(): Array<{ status: string; at: Date }> {
-        const raw: any[] = this.di?.statusHistory ?? [];
-        return raw
-            .filter((h) => h && typeof h.status === 'string' && h.at != null)
-            .map((h) => ({ status: h.status as string, at: new Date(h.at) }))
-            .filter((h) => !Number.isNaN(h.at.getTime()))
-            .sort((a, b) => a.at.getTime() - b.at.getTime());
+        return sharedSanitizeHistory(this.di?.statusHistory);
     }
 
     /** Entrée d'historique d'ENTRÉE dans une phase = 1re entrée `statusHistory`
@@ -1543,13 +1552,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  valeur brute affichées (la MÊME entrée réellement stockée — aucun
      *  recalcul ; les valeurs legacy comme `NEGOTIATION1` sortent telles quelles). */
     private phaseEntry(phaseKey: string): { status: string; at: Date } | null {
-        const phase = this.BASE_PHASES.find((p) => p.key === phaseKey);
-        if (!phase) return null;
-        return (
-            this.sanitizedHistory().find((h) =>
-                phase.statuses.includes(h.status),
-            ) ?? null
-        );
+        return sharedPhaseEntry(this.sanitizedHistory(), phaseKey);
     }
 
     /** Date brute d'ENTRÉE dans une phase = `at` de l'entrée d'historique. */
@@ -1565,43 +1568,19 @@ export class CoordinatorDiListComponent implements OnDestroy {
         phaseKey: string,
         state: 'done' | 'current' | 'pending' | 'skipped',
     ): { text: string; ongoing: boolean } | null {
-        if (state === 'pending' || state === 'skipped') return null;
-        const start = this.phaseEntryRawDate(phaseKey);
-        if (!start) return null;
-        if (state === 'current') {
-            return {
-                text: this.formatDuration(Date.now() - start.getTime()),
-                ongoing: true,
-            };
-        }
-        // done → borne = entrée de la 1re phase suivante (ordre canonique) ayant
-        // une entrée postérieure. Absente (vieilles DI partielles) → null → « — ».
-        const order: string[] = this.BASE_PHASES.map((p) => p.key);
-        for (let j = order.indexOf(phaseKey) + 1; j < order.length; j++) {
-            const next = this.phaseEntryRawDate(order[j]);
-            if (next && next.getTime() > start.getTime()) {
-                return {
-                    text: this.formatDuration(next.getTime() - start.getTime()),
-                    ongoing: false,
-                };
-            }
-        }
-        return null;
+        const d = sharedComputePhaseDuration(
+            this.sanitizedHistory(),
+            phaseKey,
+            state,
+        );
+        return d ? { text: d.text, ongoing: d.ongoing } : null;
     }
 
     /** Millisecondes → durée humaine FR compacte : « 2 j 4 h », « 3 h 15 min »,
      *  « 12 min », « moins d'1 min ». La durée est un DELTA → indépendante du
      *  fuseau (l'instant courant = heure locale de la machine). */
     formatDuration(ms: number): string {
-        if (!Number.isFinite(ms) || ms < 0) return '—';
-        const totalMin = Math.floor(ms / 60000);
-        if (totalMin < 1) return "moins d'1 min";
-        const days = Math.floor(totalMin / 1440);
-        const hours = Math.floor((totalMin % 1440) / 60);
-        const mins = totalMin % 60;
-        if (days > 0) return hours > 0 ? `${days} j ${hours} h` : `${days} j`;
-        if (hours > 0) return mins > 0 ? `${hours} h ${mins} min` : `${hours} h`;
-        return `${mins} min`;
+        return sharedFormatDuration(ms);
     }
 
     /** Footer card: human-readable current phase label. */
@@ -1910,6 +1889,91 @@ export class CoordinatorDiListComponent implements OnDestroy {
                             this.loadData();
                             this.diDialog = false;
                         }
+                    });
+            },
+        });
+    }
+
+    /** Raccourci « retour sans pièces » : PDF déposé → data-URL base64 mémorisée
+     *  (PAS d'upload immédiat : le devis part avec l'envoi en réparation). */
+    onRepairDevisDrop(file: File) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.repairDevisBase64 = reader.result as string;
+            this.repairDevisName = file.name;
+        };
+        reader.onerror = () => {
+            this.repairDevisBase64 = null;
+            this.repairDevisName = null;
+            this.messageservice.add({
+                severity: 'error',
+                summary: 'Fichier non chargé',
+                detail: 'Le PDF n’a pas pu être préparé.',
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /** Envoi en réparation avec devis joint — UN SEUL geste (mutation
+     *  coordinatorSendToRepairWithDevis : devis + affectation tech + REPARATION).
+     *  Bloqué si le technicien ou le devis manque (double garde front + back). */
+    sendToRepairWithDevis() {
+        const techId = this.selectedRepTechForDevis?._id;
+        if (!techId || !this.repairDevisBase64) {
+            this.messageservice.add({
+                severity: 'warn',
+                summary: 'Envoi impossible',
+                detail: 'Sélectionnez un technicien et joignez le devis.',
+            });
+            return;
+        }
+        if (this.sendingRepairWithDevis) return;
+
+        this.confirmationService.confirm({
+            message:
+                'Envoyer en réparation avec le devis joint ? Le magasin et la ' +
+                'tarification ont été sautés (retour sans pièces).',
+            header: 'Confirmation réparation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.sendingRepairWithDevis = true;
+                this.apollo
+                    .mutate<any>({
+                        mutation:
+                            this.ticketSerice.coordinatorSendToRepairWithDevis(
+                                this.selectedDi,
+                                techId,
+                                this.repairDevisBase64,
+                            ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe({
+                        next: ({ data }) => {
+                            if (data) {
+                                this.messageservice.add({
+                                    severity: 'success',
+                                    summary: 'Envoyée en réparation',
+                                    detail: 'Devis joint et technicien affecté.',
+                                });
+                                this.selectedRepTechForDevis = null;
+                                this.repairDevisBase64 = null;
+                                this.repairDevisName = null;
+                                this.loadData();
+                                this.diDialog = false;
+                            }
+                            this.sendingRepairWithDevis = false;
+                        },
+                        error: (err) => {
+                            this.sendingRepairWithDevis = false;
+                            this.messageservice.add({
+                                severity: 'error',
+                                summary: 'Envoi échoué',
+                                detail:
+                                    err?.message ??
+                                    'La réparation n’a pas pu être lancée.',
+                            });
+                        },
                     });
             },
         });

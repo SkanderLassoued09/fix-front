@@ -3238,3 +3238,40 @@ $af-mono: "JetBrains Mono", ui-monospace, monospace;
     &:hover { filter: brightness(1.05); }
     &:disabled { opacity: 0.55; box-shadow: none !important; }
 }
+
+/* (c) Bornes SOUPLES — avertissement ambre non bloquant + état warn de l'étape 1,
+   note « non payant » et rappel de l'estimation d'origine (modal Tarification). */
+.pricing-warn {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0.5rem 0 0.25rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #fcd34d;
+    background: #fffbeb;
+    border-radius: 8px;
+    color: #b45309;
+    font-size: 0.8rem;
+    i { color: #b45309; }
+    strong { color: #92400e; }
+}
+.pricing-step__help--warn { color: #b45309; }
+.pricing-nonpayant {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.4rem 0;
+    padding: 0.5rem 0.7rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #475569;
+    font-size: 0.8rem;
+    i { color: #16a34a; }
+    strong { color: #334155; }
+}
+.pricing-estimate-orig {
+    margin: 0.35rem 0;
+    font-size: 0.8rem;
+    color: #64748b;
+    strong { color: #2563eb; }
+}
