@@ -456,6 +456,7 @@ export class DiInfoModalComponent implements OnChanges {
     statusTone(status: any): 'ok' | 'ko' | 'info' | 'warn' {
         const s = (status ?? '').toString().trim();
         if (s === 'FINISHED') return 'ok';
+        if (s === 'IRREPARABLE') return 'ko';
         if (s === 'ANNULER') return 'ko';
         if (s === 'RETOUR1' || s === 'RETOUR2' || s === 'RETOUR3') return 'info';
         return 'warn';

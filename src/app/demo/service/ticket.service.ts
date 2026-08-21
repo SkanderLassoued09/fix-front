@@ -760,16 +760,6 @@ export class TicketService {
     `;
     }
 
-    /** Verdict « erreur Fixtronix » (phase retour) — COORDINATRICE (back : rôle
-     *  tech refusé, appel API direct compris). */
-    setErrorFromFixtronix(diId: string, value: boolean) {
-        return gql`
-        mutation {
-            setErrorFromFixtronix(diId: "${diId}", value: ${!!value})
-        }
-    `;
-    }
-
     addDevis(_id: string, pdf: string) {
         return gql`
             mutation {
@@ -1392,6 +1382,16 @@ export class TicketService {
             }
         `;
     }
+    // Cas PAYANT irréparable : « Valider le prix » clôture en IRREPARABLE (au
+    // lieu d'entrer dans l'Approval réparation). Le back facture déjà le prix à
+    // l'étape précédente de la cascade.
+    changeStatusIrreparableFromPricing(_id: string) {
+        return gql`
+            mutation {
+                changeStatusIrreparableFromPricing(_id: "${_id}")
+            }
+        `;
+    }
     changeStatusNegociate2(_id: string) {
         return gql`
             mutation {
@@ -1439,6 +1439,24 @@ export class TicketService {
                     annulationMotif
                     annulationParClient
                     annulationCommentaire
+                    annulePar
+                    annuleLe
+                }
+            }
+        `;
+    }
+
+    /** Réactivation d'une DI annulée → la ramène au statut précédent (lu dans
+     *  statusHistory côté back). Réservé coordinatrice + admins (garde de rôle
+     *  back). Le back refuse : non annulée / sans statut précédent / origine
+     *  post-document / déjà réactivée une fois. */
+    reactiverDi(diId: string) {
+        return gql`
+            mutation {
+                reactiverDi(diId: "${diId}") {
+                    _id
+                    status
+                    current_roles
                     annulePar
                     annuleLe
                 }
@@ -1649,6 +1667,7 @@ export class TicketService {
                         bon_de_livraison
                         facture
                         contain_pdr
+                        diagnosticPayant
                         image
                         nSerie
                         location_id

@@ -523,25 +523,6 @@
                             <i class="pi pi-user"></i>
                             {{ getAssignedDiagnosticTech() }}
                         </div>
-
-                        <!-- F2 — verdict « Erreur Fixtronix » (retour) tranché
-                             par la COORDINATRICE (déplacé du modal technicien). -->
-                        <div *ngIf="ignoreCount > 0" class="cf-card__error">
-                            <label class="cf-card__label">
-                                Erreur de Fixtronix ?
-                            </label>
-                            <p-toggleButton
-                                [ngModel]="
-                                    ticketData?.data?.isErrorFromFixtronix
-                                "
-                                onLabel="Erreur Fixtronix"
-                                offLabel="Erreur Client"
-                                onIcon="pi pi-exclamation-triangle"
-                                offIcon="pi pi-user"
-                                (onChange)="onErrorFromFixtronixChange($event)"
-                                styleClass="cf-card__dropdown"
-                            ></p-toggleButton>
-                        </div>
                     </article>
 
                     <article class="cf-card">
@@ -799,9 +780,37 @@
 
             <!-- ── Footer ────────────────────────────────────── -->
             <footer class="cf-modal__footer">
+                <!-- Réactivation : uniquement si la DI est annulée. Ramène au
+                     statut précédent (lu dans l'historique). Désactivé + raison
+                     si non réactivable (origine post-document / déjà réactivée /
+                     statut précédent introuvable) ; le back reste autoritaire. -->
+                <span
+                    *ngIf="di?.status === 'ANNULER'"
+                    class="cf-reactivate"
+                >
+                    <p-button
+                        [label]="
+                            reactivablePreviousStatus
+                                ? 'Réactiver → ' + reactivablePreviousStatus
+                                : 'Réactiver la DI'
+                        "
+                        icon="pi pi-refresh"
+                        severity="help"
+                        [disabled]="!!reactivateBlockedReason || reactivateBusy"
+                        [loading]="reactivateBusy"
+                        (onClick)="reactivateDi()"
+                    ></p-button>
+                    <small
+                        *ngIf="reactivateBlockedReason"
+                        class="cf-reactivate__reason"
+                    >
+                        {{ reactivateBlockedReason }}
+                    </small>
+                </span>
                 <!-- Annulation de la DI : confirmée par mot de passe + motif.
                      Distincte du bouton « Fermer » ci-dessous. -->
                 <p-button
+                    *ngIf="di?.status !== 'ANNULER'"
                     label="Annuler la DI"
                     icon="pi pi-ban"
                     severity="danger"

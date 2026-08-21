@@ -335,6 +335,7 @@
 .di-imp-run {
     padding: 0.5rem 0.25rem;
     &__state { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; color: #1d4ed8; margin-bottom: 0.75rem; }
+    &__detail { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.6rem; font-size: 0.82rem; color: #334155; font-variant-numeric: tabular-nums; i { color: #2563eb; } }
     &__meta { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.55rem; font-size: 0.82rem; color: #475569; }
     &__phase { color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem; align-self: center; }
     &__eta { color: #64748b; }

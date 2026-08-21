@@ -158,6 +158,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         { label: 'Clôture — attente BL', value: 'WAITING_BL' },
         { label: 'Clôture — attente facture', value: 'WAITING_FACTURE' },
         { label: 'Finished', value: 'FINISHED' },
+        { label: 'Irréparable', value: 'IRREPARABLE' },
         { label: 'Annuler', value: 'ANNULER' },
         { label: 'Retour1', value: 'RETOUR1' },
         { label: 'Retour2', value: 'RETOUR2' },
@@ -632,18 +633,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
         return `${(n / (1024 * 1024)).toFixed(2).replace('.', ',')} Mo`;
     }
 
-    // Pricing-modal chips: label + multiplier vs the cost base (1.0 = Coût).
-    // Order matters: rendered as a row.
-    // Margin presets — capped at +25 %. No preset above +25 % (removed the old
-    // +30 % / +50 %).
-    readonly pricingChips: Array<{ label: string; mult: number }> = [
-        { label: 'Coût', mult: 1 },
-        { label: '+10 %', mult: 1.1 },
-        { label: '+20 %', mult: 1.2 },
-        { label: '+25 %', mult: 1.25 },
-    ];
-    activePricingChip: number | null = null;
-
     /** Coût total = facturation diagnostic + total composants. Single source
      *  of truth for the marge calc + chip multipliers. Components may be null
      *  while the modal is still loading; coerce to 0 so the UI shows 0,000 TND
@@ -654,30 +643,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
         return f + c;
     }
 
-    /** Écart TEMPS RÉEL entre le PRIX que l'admin saisit et le COÛT THÉORIQUE
-     *  (main-d'œuvre = temps×taux + pièces). Recalculé à chaque frappe (getter lu
-     *  au change-detection). Positif = marge (vert) ; négatif = sous-facturation
-     *  (rouge — on perd sur le temps passé) ; ~0 = au coût (neutre). `null` tant
-     *  qu'aucun prix n'est saisi. */
-    get pricingEcart(): {
-        montant: number;
-        percent: number;
-        tone: 'pos' | 'neg' | 'neutral';
-    } | null {
-        const theo = this.pricingCoutTotal;
-        const p = Number(this.price);
-        if (!Number.isFinite(p) || p <= 0) return null;
-        const montant = Math.round((p - theo) * 1000) / 1000;
-        const percent = theo > 0 ? (montant / theo) * 100 : 0;
-        // Zone neutre : écart négligeable en montant ET en %.
-        const tone: 'pos' | 'neg' | 'neutral' =
-            Math.abs(montant) < 0.5 && Math.abs(percent) < 1
-                ? 'neutral'
-                : montant > 0
-                  ? 'pos'
-                  : 'neg';
-        return { montant, percent, tone };
-    }
+    // NB: l'ancien indicateur « Marge sur le coût théorique » (getter
+    // `pricingEcart`) a été RETIRÉ : il comparait le PRIX du diagnostic au coût
+    // (main-d'œuvre diag + pièces RÉPARATION), une base incohérente qui affichait
+    // des pourcentages absurdes (ex. +13 433 %). Les boutons de majoration
+    // (+10/+20/+25) et le clamp associé ont été retirés pour la même raison.
 
     /** Gating for "Confirmer le prix final": both BC and Devis must be present
      *  (already persisted OR uploaded in this session). Same rule applies to
@@ -697,12 +667,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
         return !this.devisReady;
     }
     get prixFinalCanConfirm(): boolean {
-        return (
-            this.bcReady &&
-            this.devisReady &&
-            Number(this.price) > 0 &&
-            !this.isLoading
-        );
+        // Diagnostic NON PAYANT : aucun prix de diagnostic (price = 0) → on
+        // n'exige PAS `price > 0`, sinon « Confirmer le prix final » resterait
+        // bloqué après l'upload devis + BC. Le non-payant est lu UNIQUEMENT sur
+        // la DI courante (getDiById.di ou la ligne du modal négociation 2), pas
+        // sur `pricingDiagnosticPayant` (fixé par le modal Prix, jamais remis à
+        // zéro ici → risque de valeur périmée d'une DI précédente).
+        const nonPayant =
+            this.dataById?.getDiById?.di?.diagnosticPayant === false ||
+            this.selectedRowInNegociate2?.diagnosticPayant === false;
+        const priceOk = nonPayant || Number(this.price) > 0;
+        return this.bcReady && this.devisReady && priceOk && !this.isLoading;
     }
 
     /** TND with 3 decimals, fr-TN locale ("X XXX,XXX TND"). Falsy → "—". */
@@ -733,10 +708,20 @@ export class TicketListComponent implements OnInit, OnDestroy {
     // estimation de la réparation (désormais OBLIGATOIRE, > 0). Les getters
     // ci-dessous pilotent l'état visuel (badge/bordure/aide) de chaque étape et
     // la ligne de statut du footer — miroir du `renderVals()` de la maquette.
+    /** Le prix est-il PRÉ-REMPLI depuis l'estimation de création ? (DI payante
+     *  ET estimation > 0). Quand c'est vrai, l'estimation est la RÉFÉRENCE : le
+     *  champ est VERROUILLÉ (non modifiable) et l'aide au calcul (bornes 150–500)
+     *  est tue. On exige > 0 pour ne jamais verrouiller sur une estimation
+     *  nulle/absente (qui bloquerait la soumission — `reelValid` exige p > 0). */
+    get diagPriceFromEstimate(): boolean {
+        return (
+            this.pricingDiagnosticPayant &&
+            Number(this.pricingDiagnosticEstimate) > 0
+        );
+    }
     get reelValid(): boolean {
         // (c) Bornes SOUPLES : la soumission n'exige plus 150–500, seulement un
-        // montant POSITIF (l'estimation de création peut être hors bornes). Un
-        // avertissement NON bloquant s'affiche si hors [150, 500] (reelOutOfBounds).
+        // montant POSITIF (l'estimation de création peut être hors bornes).
         const p = Number(this.price);
         return Number.isFinite(p) && p > 0;
     }
@@ -748,6 +733,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     get reelState(): 'idle' | 'ok' | 'warn' {
         const p = Number(this.price);
         if (!Number.isFinite(p) || p <= 0) return 'idle';
+        // Prix issu de l'estimation → référence, jamais d'état « hors bornes ».
+        if (this.diagPriceFromEstimate) return 'ok';
         return this.reelOutOfBounds ? 'warn' : 'ok';
     }
     get repValid(): boolean {
@@ -767,6 +754,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
     /** Aide contextuelle sous l'étape 1 (coût réel). */
     get reelHelp(): { text: string; char: string; tone: string } {
+        // Prix pré-rempli depuis l'estimation de création : c'est la référence,
+        // on tait les bornes 150–500 (garde-fou de saisie manuelle seulement).
+        if (this.diagPriceFromEstimate)
+            return {
+                text: 'Prix verrouillé sur l’estimation de création (non modifiable).',
+                char: '🔒',
+                tone: 'ok',
+            };
         const st = this.reelState;
         if (st === 'warn')
             return {
@@ -804,14 +799,18 @@ export class TicketListComponent implements OnInit, OnDestroy {
         // DI irréparable : l'estimation est masquée → on ne l'exige pas et on ne
         // l'affiche pas comme manquante ; seul le coût du diagnostic compte.
         const repRequired = !this.isIrreparable;
-        if (!this.reelValid && repRequired && !this.repValid)
+        // Diagnostic NON PAYANT : aucun coût de diagnostic à saisir/vérifier →
+        // on ne l'exige pas et on ne montre pas l'avertissement « Vérifiez le
+        // coût du diagnostic ». Miroir de `priceOk` (pricingSubmitDisabled).
+        const diagCostOk = !this.pricingDiagnosticPayant || this.reelValid;
+        if (!diagCostOk && repRequired && !this.repValid)
             return {
                 text: 'Remplissez les 2 montants',
                 char: '•',
                 tone: 'idle',
                 iconTone: 'idle',
             };
-        if (!this.reelValid)
+        if (!diagCostOk)
             return {
                 text: 'Vérifiez le coût du diagnostic',
                 char: '!',
@@ -842,28 +841,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
         return !priceOk || !repOk || this.isLoading;
     }
 
-    /** Click on a pricing chip → fill price with cost × multiplier (rounded to
-     *  3 dp to match the display format). Stores the active chip index for the
-     *  pressed-state highlight. */
-    applyPricingChip(index: number) {
-        const chip = this.pricingChips[index];
-        if (!chip) return;
-        const base = this.pricingCoutTotal;
-        if (!base) return;
-        const raw = Math.round(base * chip.mult * 1000) / 1000;
-        // Le coût réel diagnostic ne peut jamais sortir de la borne 150–500 TND.
-        this.price = Math.min(500, Math.max(150, raw));
-        this.activePricingChip = index;
-    }
 
-    /** Verrouille le coût réel diagnostic dans la borne 150–500 TND au blur :
-     *  une saisie < 150 est ramenée à 150, une saisie > 500 à 500. Un champ
-     *  laissé vide reste vide (pas de clamp). */
+    /** Normalise le prix diagnostic au blur : empêche seulement un montant
+     *  négatif (floor 0). AUCUN clamp 150–500 (l'estimation de création peut
+     *  être hors bornes ; décision commerciale) — l'avertissement non bloquant
+     *  (saisie manuelle sans estimation) gère l'information hors-bornes. */
     clampDiagCost(): void {
-        // (c) Bornes SOUPLES : on NE force PLUS 150–500 (l'estimation de création
-        // peut être hors bornes ; décision commerciale). On empêche seulement un
-        // montant négatif ; l'avertissement non bloquant gère le hors-bornes.
-        // (Les boutons de marge, eux, continuent de clamper — cf. applyPricingChip.)
         if (this.price == null) return;
         const p = Number(this.price);
         if (!Number.isFinite(p)) return;
@@ -2200,7 +2183,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.price = this.pricingDiagnosticPayant
             ? this.pricingDiagnosticEstimate
             : null;
-        this.activePricingChip = null;
 
         const isStale = () => this.current_id !== requestedRowId;
 
@@ -2460,7 +2442,14 @@ export class TicketListComponent implements OnInit, OnDestroy {
                                 (el) => el.idIgnore === this.ignoreCountNeg1,
                             );
 
-                        this.price = filtredLogsDi.price;
+                        // Ne PAS écraser le pré-remplissage (estimation de
+                        // création) si le cycle n'a pas encore de prix facturé :
+                        // sinon le champ — désormais verrouillé quand il vient de
+                        // l'estimation — resterait vide → « Valider » bloqué.
+                        this.price =
+                            Number(filtredLogsDi.price) > 0
+                                ? filtredLogsDi.price
+                                : this.price;
                         this.selectedBc = filtredLogsDi.bon_de_commande;
                         this.selectedDevis = filtredLogsDi.devis;
                         console.log('INSIDE LOGS');
@@ -2469,7 +2458,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
                         console.log('this.selectedDevis', this.selectedDevis);
                     } else {
                         console.log('OUTSIDE LOGS');
-                        this.price = this.dataById.getDiById.di.price;
+                        // Idem : garder le pré-remplissage (estimation) tant
+                        // qu'aucun prix facturé n'est persisté (di.price vide).
+                        this.price =
+                            Number(this.dataById.getDiById.di.price) > 0
+                                ? this.dataById.getDiById.di.price
+                                : this.price;
                         this.selectedBc =
                             this.dataById.getDiById.di.bon_de_commande;
                         this.selectedDevis = this.dataById.getDiById.di.devis;
@@ -2538,9 +2532,19 @@ export class TicketListComponent implements OnInit, OnDestroy {
                               },
                           ]
                         : [];
-                const transitionStep = {
-                    mutation: this.ticketSerice.changeStatusNegociate1(id),
-                };
+                // DI NON RÉPARABLE (payant) : après facturation du diagnostic,
+                // « Valider le prix » clôture DIRECTEMENT en IRREPARABLE (pas de
+                // devis/BC/réparation). Sinon, flux Approval normal (WAITING_DEVIS).
+                const transitionStep = this.isIrreparable
+                    ? {
+                          mutation:
+                              this.ticketSerice.changeStatusIrreparableFromPricing(
+                                  id,
+                              ),
+                      }
+                    : {
+                          mutation: this.ticketSerice.changeStatusNegociate1(id),
+                      };
                 try {
                     await this.mutationRunner.runChain({
                         key: `pricing:${id}`,
@@ -2557,7 +2561,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     });
                     this.loadData();
                     this.pricingModal = false;
-                    this.activePricingChip = null;
                 } catch {
                     /* toasted; modal stays open, status unchanged */
                 }
@@ -2599,7 +2602,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     });
                     this.loadData();
                     this.pricingModal = false;
-                    this.activePricingChip = null;
                 } catch {
                     /* toasted; modal stays open */
                 }
@@ -2711,6 +2713,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 return 'info';
             case 'FINISHED':
                 return 'success';
+            case 'IRREPARABLE':
+                return 'danger';
             case 'ANNULER':
                 return 'contrast';
             case 'RETOUR1':

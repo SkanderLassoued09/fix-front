@@ -420,25 +420,14 @@
                         </div>
 
                         <div class="sav-form-row" *ngIf="ignoreCount > 0">
-                            <label class="sav-label"
-                                >Erreur Fixtronix ? (verdict coordinatrice —
-                                lecture seule)</label
-                            >
-                            <span
-                                style="font-weight: 700"
-                                [style.color]="
-                                    diagFormTech.get('isErrorFromFixtronix')
-                                        ?.value
-                                        ? '#dc2626'
-                                        : '#16a34a'
-                                "
-                                >{{
-                                    diagFormTech.get("isErrorFromFixtronix")
-                                        ?.value
-                                        ? "Erreur Fixtronix"
-                                        : "Erreur Client"
-                                }}</span
-                            >
+                            <label class="sav-label">Type d'erreur</label>
+                            <p-toggleButton
+                                formControlName="isErrorFromFixtronix"
+                                onLabel="Erreur Fixtronix"
+                                offLabel="Erreur Client"
+                                (click)="updateDisableValues()"
+                                styleClass="sav-toggle"
+                            ></p-toggleButton>
                         </div>
 
                         <div class="sav-form-row">

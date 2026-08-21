@@ -34,6 +34,9 @@ export enum STATUS_DI {
     WAITING_BL = 'WAITING_BL',
     WAITING_FACTURE = 'WAITING_FACTURE',
     FINISHED = 'FINISHED',
+    // Statut TERMINAL « équipement irréparable » — clôture d'une DI non
+    // réparable (remplace FINISHED pour ces fins). Terminal, aucun retour.
+    IRREPARABLE = 'IRREPARABLE',
     ANNULER = 'ANNULER',
     RETOUR1 = 'RETOUR1',
     RETOUR2 = 'RETOUR2',

@@ -2878,3 +2878,14 @@ $cf-surface: #f8fafc;
         font-size: 0.75rem;
     }
 }
+
+// Réactivation d'une DI annulée (footer du modal coordinateur).
+.cf-reactivate {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    &__reason {
+        font-size: 0.72rem;
+        color: #b45309;
+    }
+}

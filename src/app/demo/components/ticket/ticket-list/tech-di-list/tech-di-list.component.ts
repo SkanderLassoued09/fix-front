@@ -3232,6 +3232,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             PENDING3: 'secondary',
 
             // 🔴 ERROR / CRITICAL
+            IRREPARABLE: 'danger',
             RETOUR1: 'danger',
             RETOUR2: 'danger',
             RETOUR3: 'danger',
@@ -4099,6 +4100,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         ATTENTE_BL_FACTURE: 'CLOSING',
         CLOSING: 'CLOSING',
         FINISHED: 'Terminé',
+        IRREPARABLE: 'Irréparable',
         ANNULER: 'Annulé',
         RETOUR1: 'Retour 1',
         RETOUR2: 'Retour 2',

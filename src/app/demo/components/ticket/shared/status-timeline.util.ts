@@ -55,6 +55,7 @@ export const ALL_STATUS_ORDER: string[] = [
   'WAITING_BL',
   'WAITING_FACTURE',
   'FINISHED',
+  'IRREPARABLE',
   'RETOUR1',
   'RETOUR2',
   'RETOUR3',
@@ -92,6 +93,7 @@ export const BASE_PHASES: PhaseDef[] = [
   { key: 'INREPARATION', group: 'repair', label: 'En réparation', icon: 'pi pi-wrench', statuses: ['INREPARATION'] },
   { key: 'WAITING_BL', group: 'closed', label: 'Clôture (BL/facture)', icon: 'pi pi-check-circle', statuses: ['ATTENTE_BL_FACTURE', 'CLOSING', 'WAITING_BL', 'WAITING_FACTURE'] },
   { key: 'FINISHED', group: 'closed', label: 'Terminé', icon: 'pi pi-check-circle', statuses: ['FINISHED'] },
+  { key: 'IRREPARABLE', group: 'closed', label: 'Irréparable', icon: 'pi pi-ban', statuses: ['IRREPARABLE'] },
 ];
 
 /** `statusHistory` nettoyé + trié chronologiquement. Ignore les entrées

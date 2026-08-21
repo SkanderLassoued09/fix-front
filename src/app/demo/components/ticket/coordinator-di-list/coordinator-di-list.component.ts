@@ -380,6 +380,105 @@ export class CoordinatorDiListComponent implements OnDestroy {
         }
     }
 
+    // ── Réactivation d'une DI annulée → statut précédent ─────────────────────
+    // L'annulation n'a rien détruit ; on relit le statut précédent dans
+    // `statusHistory`. Miroir FRONT des gardes back (informatif : le back reste
+    // autoritaire et renvoie un message clair en cas de refus).
+    private readonly POST_DOC_STATUSES = [
+        'WAITING_BL',
+        'WAITING_FACTURE',
+        'CLOSING',
+        'ATTENTE_BL_FACTURE',
+        'FINISHED',
+    ];
+    reactivateBusy = false;
+
+    /** Statut juste avant la DERNIÈRE annulation (entrée avant le dernier ANNULER
+     *  de l'historique), ou null si introuvable. */
+    get reactivablePreviousStatus(): string | null {
+        const di = this.di;
+        if (!di || di.status !== 'ANNULER') return null;
+        const h = Array.isArray(di.statusHistory) ? di.statusHistory : [];
+        let lastAnn = -1;
+        for (let i = h.length - 1; i >= 0; i--) {
+            if (h[i]?.status === 'ANNULER') {
+                lastAnn = i;
+                break;
+            }
+        }
+        return lastAnn > 0 ? h[lastAnn - 1]?.status ?? null : null;
+    }
+
+    /** Raison de blocage de la réactivation (null = réactivable). */
+    get reactivateBlockedReason(): string | null {
+        const di = this.di;
+        if (!di || di.status !== 'ANNULER') return null;
+        const prev = this.reactivablePreviousStatus;
+        if (!prev) return 'Statut précédent introuvable';
+        if (this.POST_DOC_STATUSES.includes(prev))
+            return 'Origine post-document (BL/facture émis)';
+        const h = Array.isArray(di.statusHistory) ? di.statusHistory : [];
+        const already = h.some(
+            (e: any, i: number) =>
+                e?.status === 'ANNULER' &&
+                i < h.length - 1 &&
+                h[i + 1]?.status !== 'ANNULER',
+        );
+        if (already) return 'DI déjà réactivée une fois';
+        return null;
+    }
+
+    /** Réactive la DI (remet au statut précédent). Confirmation → mutation ;
+     *  succès → toast + rafraîchit + ferme ; refus back → toast du message. */
+    reactivateDi(): void {
+        const di = this.di;
+        if (!di?._id || di.status !== 'ANNULER') return;
+        const blocked = this.reactivateBlockedReason;
+        if (blocked) {
+            this.messageservice.add({
+                severity: 'warn',
+                summary: 'Réactivation impossible',
+                detail: blocked,
+            });
+            return;
+        }
+        const prev = this.reactivablePreviousStatus;
+        this.confirmationService.confirm({
+            message: `Réactiver cette DI et la remettre en « ${prev} » ? L'annulation sera défaite (action tracée).`,
+            header: 'Réactiver la DI',
+            icon: 'pi pi-refresh',
+            accept: () => {
+                this.reactivateBusy = true;
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.reactiverDi(di._id),
+                    })
+                    .subscribe({
+                        next: () => {
+                            this.messageservice.add({
+                                severity: 'success',
+                                summary: 'DI réactivée',
+                                detail: `Remise en « ${prev} ».`,
+                            });
+                            this.reactivateBusy = false;
+                            this.loadData();
+                            this.diDialog = false;
+                        },
+                        error: (e) => {
+                            this.reactivateBusy = false;
+                            this.messageservice.add({
+                                severity: 'error',
+                                summary: 'Réactivation refusée',
+                                detail:
+                                    e?.message ??
+                                    'La réactivation a échoué.',
+                            });
+                        },
+                    });
+            },
+        });
+    }
+
     ngOnInit() {
         // Initial load
         this.loadData();
@@ -465,60 +564,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
             return;
         }
         this.diDetail.openById(diId);
-    }
-
-    /**
-     * F2 — verdict « Erreur Fixtronix » (phase retour) tranché par la
-     * COORDINATRICE (le tech ne juge plus sa propre erreur). Écrit via la mutation
-     * coordinatrice-only, reflet local immédiat sur le dossier ouvert.
-     * Lien F1↔F2 (SUGGESTION) : si Erreur = Oui, on propose de passer le
-     * diagnostic non-payant (case pré-cochée modifiable), sans forcer.
-     */
-    onErrorFromFixtronixChange(ev: any): void {
-        const di = this.ticketData?.data;
-        if (!di?._id) return;
-        const value = !!ev?.checked;
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.setErrorFromFixtronix(di._id, value),
-            })
-            .subscribe({
-                next: () => {
-                    di.isErrorFromFixtronix = value; // reflet local immédiat
-                    if (value) this.suggestNonPayant(di._id);
-                },
-                error: () => {
-                    di.isErrorFromFixtronix = !value; // rollback affichage
-                },
-            });
-    }
-
-    /** Suggestion (non forcée) : marquer le diagnostic non-payant suite à une
-     *  erreur Fixtronix. La coordinatrice tranche. */
-    private suggestNonPayant(diId: string): void {
-        this.confirmationService.confirm({
-            message:
-                'Erreur Fixtronix : marquer ce diagnostic comme NON PAYANT (non facturé au client) ?',
-            header: 'Diagnostic non payant ?',
-            icon: 'pi pi-question-circle',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.setDiagnosticPayant(
-                            diId,
-                            false,
-                        ),
-                    })
-                    .subscribe({
-                        next: () => {
-                            if (this.ticketData?.data) {
-                                this.ticketData.data.diagnosticPayant = false;
-                            }
-                        },
-                        error: () => {},
-                    });
-            },
-        });
     }
 
     /**
@@ -1204,6 +1249,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
             STATUS_DI.REPARATION,
             STATUS_DI.INREPARATION,
             STATUS_DI.FINISHED,
+            // Terminal irréparable : le diagnostic EST fait (verdict non réparable).
+            STATUS_DI.IRREPARABLE,
             STATUS_DI.RETOUR1,
             STATUS_DI.RETOUR2,
             STATUS_DI.RETOUR3,
@@ -1213,10 +1260,15 @@ export class CoordinatorDiListComponent implements OnDestroy {
             STATUS_DI.REPARATION,
             STATUS_DI.INREPARATION,
             STATUS_DI.FINISHED,
+            // Terminal irréparable : la phase admin est franchie (payant : facturé ;
+            // non payant : clôturé) — la DI ne reviendra plus dans ce flux.
+            STATUS_DI.IRREPARABLE,
             STATUS_DI.RETOUR1,
             STATUS_DI.RETOUR2,
             STATUS_DI.RETOUR3,
         ];
+        // NB : IRREPARABLE n'est PAS dans `afterRepair` — l'équipement n'a jamais
+        // été réparé, l'étape « réparation » ne doit pas s'afficher « faite ».
         const afterRepair = [STATUS_DI.FINISHED, STATUS_DI.RETOUR1, STATUS_DI.RETOUR2, STATUS_DI.RETOUR3];
 
         if (step === 'diagnostic') {
@@ -1735,6 +1787,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 return 'info';
             case 'FINISHED':
                 return 'success';
+            case 'IRREPARABLE':
+                return 'danger';
             case 'ANNULER':
                 return 'contrast';
             case 'RETOUR1':

@@ -599,6 +599,8 @@ export class MagasinDiListComponent implements OnDestroy {
                 return 'info';
             case 'FINISHED':
                 return 'success';
+            case 'IRREPARABLE':
+                return 'danger';
             case 'ANNULER':
                 return 'contrast';
             case 'RETOUR1':
