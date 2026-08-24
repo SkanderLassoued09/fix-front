@@ -1425,6 +1425,22 @@ export class TicketService {
         `;
     }
 
+    /** Cas NON PAYANT : l'admin saisit UNIQUEMENT le prix de réparation ; le
+     *  serveur calcule et persiste le prix final
+     *  (final = prix_réparation + main-d'œuvre diagnostic + pièces). */
+    setRepairFinalPrice(_id: string, repairPrice: number) {
+        return gql`
+            mutation {
+                setRepairFinalPrice(_id: "${_id}", repairPrice: ${repairPrice}) {
+                    repairPrice
+                    diagLabour
+                    componentsCost
+                    final_price
+                }
+            }
+        `;
+    }
+
     /** Annulation d'une DI (bouton coordinateur), confirmée par mot de passe.
      *  Utilise des VARIABLES GraphQL : le mot de passe et les textes libres
      *  (motif « Autre », commentaire) ne doivent JAMAIS être interpolés dans la

@@ -2520,18 +2520,33 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 // Persist the repair estimate (dedicated field, no status
                 // change) between the price save and the transition — only when
                 // the admin entered one. Backend clears it on a non-finite value.
-                const estimateSteps =
+                // NON PAYANT + réparable : le prix final est CALCULÉ CÔTÉ SERVEUR
+                // = prix_réparation + main-d'œuvre diagnostic + pièces
+                // (setRepairFinalPrice, server-authoritative). PAYANT : on ne
+                // persiste que l'estimation de réparation (comparaison ultérieure).
+                const hasRepair =
                     Number.isFinite(this.repairEstimate) &&
-                    this.repairEstimate != null
-                        ? [
-                              {
-                                  mutation: this.ticketSerice.setRepairEstimate(
-                                      id,
-                                      this.repairEstimate,
-                                  ),
-                              },
-                          ]
-                        : [];
+                    this.repairEstimate != null;
+                const estimateSteps = !hasRepair
+                    ? []
+                    : !this.pricingDiagnosticPayant && !this.isIrreparable
+                      ? [
+                            {
+                                mutation:
+                                    this.ticketSerice.setRepairFinalPrice(
+                                        id,
+                                        this.repairEstimate,
+                                    ),
+                            },
+                        ]
+                      : [
+                            {
+                                mutation: this.ticketSerice.setRepairEstimate(
+                                    id,
+                                    this.repairEstimate,
+                                ),
+                            },
+                        ];
                 // DI NON RÉPARABLE (payant) : après facturation du diagnostic,
                 // « Valider le prix » clôture DIRECTEMENT en IRREPARABLE (pas de
                 // devis/BC/réparation). Sinon, flux Approval normal (WAITING_DEVIS).
