@@ -17,6 +17,11 @@ const COORDINATOR_DI_FIELDS = `
     _idnum
     price
     final_price
+    repairEstimate
+    diagnosticPayant
+    diagnosticEstimate
+    needsDevisBeforeRepair
+    nSerie
     title
     description
     ignoreCount
@@ -37,6 +42,15 @@ const COORDINATOR_DI_FIELDS = `
     annulationCommentaire
     annulePar
     annuleLe
+    diagAssignments {
+        tech
+        techId
+        assignedAt
+        abandonedAt
+        motif
+        abandonedBy
+        diagTime
+    }
     array_composants {
         nameComposant
         quantity
@@ -68,6 +82,23 @@ const COORDINATOR_DI_FIELDS = `
     }
     logs {
         idIgnore
+        price
+        final_price
+        can_be_repaired
+        contain_pdr
+        array_composants {
+            nameComposant
+            quantity
+        }
+        devis
+        facture
+        bon_de_commande
+        bon_de_livraison
+        remarque_manager
+        remarque_admin_manager
+        remarque_tech_diagnostic
+        remarque_tech_repair
+        createdAt
         isSentToCoordinator
         isConfirmedComponentFromCoordinator
         handleSendingNotificationBetweenCoordinatorAndMagasin
@@ -120,7 +151,18 @@ export class TicketService {
             annulationCommentaire
             annulePar
             annuleLe
+            diagAssignments {
+                tech
+                techId
+                assignedAt
+                abandonedAt
+                motif
+                abandonedBy
+                diagTime
+            }
             price
+            diagnosticPayant
+            diagnosticEstimate
             title
             description
             can_be_repaired
@@ -179,7 +221,18 @@ export class TicketService {
             annulationCommentaire
             annulePar
             annuleLe
+            diagAssignments {
+                tech
+                techId
+                assignedAt
+                abandonedAt
+                motif
+                abandonedBy
+                diagTime
+            }
             price
+            diagnosticPayant
+            diagnosticEstimate
             title
             description
             can_be_repaired
@@ -255,6 +308,18 @@ export class TicketService {
       }
     }
   `;
+    }
+
+    /** Détail d'UNE DI dans la MÊME projection que la liste coordinatrice →
+     *  alimente le modal détail partagé ouvert au clic d'une notification. */
+    getDiDetail(_id: string) {
+        return gql`
+            {
+                getDiDetail(_id: "${_id}") {
+                    ${COORDINATOR_DI_FIELDS}
+                }
+            }
+        `;
     }
 
     getAllDiForCoordinator(first, rows) {
@@ -675,10 +740,22 @@ export class TicketService {
                     image:"${diInfo.image ?? null}"
                     di_category_id:"${diInfo.di_category_id}"
                     location_id:"${diInfo.location}"
+                    diagnosticPayant: ${diInfo.diagnosticPayant ?? true}
+                    diagnosticEstimate: ${diInfo.diagnosticEstimate ?? null}
                 }
             ) {
                 _id
             }
+        }
+    `;
+    }
+
+    /** Gouvernance COORDINATRICE — bascule « Diagnostic payant » (back : verrouillé
+     *  une fois la tarification faite, rôle tech refusé). */
+    setDiagnosticPayant(diId: string, payant: boolean) {
+        return gql`
+        mutation {
+            setDiagnosticPayant(diId: "${diId}", payant: ${!!payant})
         }
     `;
     }
@@ -1305,6 +1382,16 @@ export class TicketService {
             }
         `;
     }
+    // Cas PAYANT irréparable : « Valider le prix » clôture en IRREPARABLE (au
+    // lieu d'entrer dans l'Approval réparation). Le back facture déjà le prix à
+    // l'étape précédente de la cascade.
+    changeStatusIrreparableFromPricing(_id: string) {
+        return gql`
+            mutation {
+                changeStatusIrreparableFromPricing(_id: "${_id}")
+            }
+        `;
+    }
     changeStatusNegociate2(_id: string) {
         return gql`
             mutation {
@@ -1359,10 +1446,57 @@ export class TicketService {
         `;
     }
 
+    /** Réactivation d'une DI annulée → la ramène au statut précédent (lu dans
+     *  statusHistory côté back). Réservé coordinatrice + admins (garde de rôle
+     *  back). Le back refuse : non annulée / sans statut précédent / origine
+     *  post-document / déjà réactivée une fois. */
+    reactiverDi(diId: string) {
+        return gql`
+            mutation {
+                reactiverDi(diId: "${diId}") {
+                    _id
+                    status
+                    current_roles
+                    annulePar
+                    annuleLe
+                }
+            }
+        `;
+    }
+
+    /** Abandon du diagnostic par un technicien : la DI retourne en PENDING1.
+     *  Variables GraphQL (texte libre du motif jamais interpolé). Le back trace
+     *  l'abandon (motif/qui/quand) et bloque la réaffectation du même tech. */
+    abandonDi() {
+        return gql`
+            mutation AbandonDi($input: AbandonDiInput!) {
+                abandonDi(AbandonDiInput: $input) {
+                    _id
+                    status
+                }
+            }
+        `;
+    }
+
     changeStatusRepaire(_id: string) {
         return gql`
             mutation {
                 changeStatusRepaire(_id: "${_id}")
+            }
+        `;
+    }
+
+    /** Raccourci « retour sans pièces » : la coordinatrice envoie en réparation
+     *  en joignant le devis, en UN SEUL geste (devis + tech + PENDING3→REPARATION).
+     *  Le PDF est une data-URL base64 (comme addDevis). */
+    coordinatorSendToRepairWithDevis(
+        _id: string,
+        repTechId: string,
+        pdf: string,
+    ) {
+        return gql`
+            mutation {
+                coordinatorSendToRepairWithDevis(_id: "${_id}", repTechId: "${repTechId}", pdf: "${pdf}")
             }
         `;
     }
@@ -1533,6 +1667,7 @@ export class TicketService {
                         bon_de_livraison
                         facture
                         contain_pdr
+                        diagnosticPayant
                         image
                         nSerie
                         location_id

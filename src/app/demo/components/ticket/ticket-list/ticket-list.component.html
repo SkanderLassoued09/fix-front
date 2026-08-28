@@ -3,7 +3,9 @@
     <p-progressSpinner ariaLabel="loading" />
 </p-blockUI>
 
-<p-toast></p-toast>
+<!-- Pas de <p-toast> ici : le shell applicatif (app.component.html) en rend déjà
+     un (même MessageService, sans `key`). Un second doublonnerait CHAQUE toast
+     (cf. note identique dans company-list). -->
 <p-confirmDialog></p-confirmDialog>
 
 <!-- ═══════════════════════════════════════════════
@@ -972,6 +974,37 @@
             ></textarea>
         </div>
 
+        <!-- Diagnostic payant / non payant + estimation (F1) -->
+        <div class="sav-form-row">
+            <label class="sav-label">Diagnostic payant ?</label>
+            <p-toggleButton
+                formControlName="diagnosticPayant"
+                onLabel="Payant"
+                offLabel="Non payant (gratuit)"
+                onIcon="pi pi-check"
+                offIcon="pi pi-gift"
+                styleClass="sav-toggle"
+            ></p-toggleButton>
+        </div>
+        <div
+            class="sav-form-row"
+            *ngIf="creationDiForm.get('diagnosticPayant')?.value"
+        >
+            <label class="sav-label" for="diagnosticEstimate"
+                >Estimation du prix du diagnostic (TND)</label
+            >
+            <p-inputNumber
+                inputId="diagnosticEstimate"
+                formControlName="diagnosticEstimate"
+                mode="decimal"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="3"
+                [min]="0"
+                placeholder="ex. 150"
+                styleClass="w-full"
+            ></p-inputNumber>
+        </div>
+
         <div class="sav-form-row">
             <!-- Drag & drop image zone (reuses the generic dropzone used by the
                  facture/affectation flow). FileReader → base64 happens in
@@ -1329,6 +1362,11 @@
                         ></button>
 
                         <!-- Retour / Relancer -->
+                        <!-- Le retour s'ouvre désormais dès la phase « attente
+                             BL » (WAITING_BL, juste après la réparation) EN PLUS
+                             du stade facturé (FINISHED) : on ne dépend plus de la
+                             facture pour renvoyer une DI dans le cycle, tout en
+                             gardant le retour possible sur une DI clôturée. -->
                         <button
                             pButton
                             pTooltip="Retour {{ rowData.ignoreCount }}"
@@ -1338,7 +1376,8 @@
                             (click)="ignore(rowData)"
                             [disabled]="
                                 rowData.ignoreCount === 3 ||
-                                rowData.status !== 'FINISHED'
+                                (rowData.status !== 'WAITING_BL' &&
+                                    rowData.status !== 'FINISHED')
                             "
                         ></button>
 
@@ -1450,7 +1489,11 @@
         <p class="pricing-modal__section-label">Documents</p>
         <div class="fp-doc-grid">
             <!-- ── Bon de commande ────────────────────────────── -->
-            <div class="fp-doc-card" [class.fp-doc-card--done]="bcReady">
+            <div
+                class="fp-doc-card"
+                [class.fp-doc-card--done]="bcReady"
+                [class.fp-doc-card--locked]="bcUploadLocked"
+            >
                 <div class="fp-doc-card__head">
                     <span class="fp-doc-card__title">
                         <i class="pi pi-file"></i> Bon de commande
@@ -1482,10 +1525,18 @@
                     </a>
                 </div>
 
+                <!-- BC verrouillé tant que le devis est absent (la vraie garde
+                     est côté back). Message explicatif à la place du dropzone. -->
+                <div *ngIf="bcUploadLocked" class="fp-doc-locked">
+                    <i class="pi pi-lock"></i>
+                    Chargez d'abord le devis pour pouvoir ajouter le bon de
+                    commande.
+                </div>
+
                 <!-- Drag & drop — dropping a PDF uploads AND saves it directly
                      (no separate "Enregistrer" button; badge → "Chargé ✓"). -->
                 <app-pdf-dropzone
-                    *ngIf="!bcLoading"
+                    *ngIf="!bcLoading && !bcUploadLocked"
                     [maxSizeMo]="10"
                     [title]="
                         bcReady
@@ -1684,7 +1735,11 @@
 
         <p class="pricing-modal__section-label">Documents</p>
         <div class="fp-doc-grid">
-            <div class="fp-doc-card" [class.fp-doc-card--done]="bcReady">
+            <div
+                class="fp-doc-card"
+                [class.fp-doc-card--done]="bcReady"
+                [class.fp-doc-card--locked]="bcUploadLocked"
+            >
                 <div class="fp-doc-card__head">
                     <span class="fp-doc-card__title">
                         <i class="pi pi-file"></i> Bon de commande
@@ -1713,7 +1768,16 @@
                         <i class="pi pi-eye"></i> Voir
                     </a>
                 </div>
+
+                <!-- BC verrouillé tant que le devis est absent (la vraie garde
+                     est côté back). Message explicatif à la place de l'uploader. -->
+                <div *ngIf="bcUploadLocked" class="fp-doc-locked">
+                    <i class="pi pi-lock"></i>
+                    Chargez d'abord le devis pour pouvoir ajouter le bon de
+                    commande.
+                </div>
                 <p-fileUpload
+                    *ngIf="!bcUploadLocked"
                     [disabled]="bcBtnDisabled"
                     mode="basic"
                     [chooseLabel]="bcReady ? 'Remplacer' : 'Charger'"
@@ -1730,7 +1794,7 @@
                     "
                 ></p-fileUpload>
                 <p-button
-                    *ngIf="instantSelectedBc"
+                    *ngIf="instantSelectedBc && !bcUploadLocked"
                     [disabled]="enregistrerBcBtncondition"
                     (click)="enregistrerBC()"
                     label="Enregistrer"
@@ -2000,67 +2064,45 @@
                     <p-inputNumber
                         inputId="pricing-init-input"
                         [(ngModel)]="price"
-                        [min]="150"
-                        [max]="500"
+                        [min]="0"
                         [maxFractionDigits]="3"
                         [minFractionDigits]="0"
                         locale="fr-TN"
                         placeholder="0"
                         styleClass="pricing-step__input"
+                        [disabled]="!pricingDiagnosticPayant || diagPriceFromEstimate"
                         (onBlur)="clampDiagCost()"
                     ></p-inputNumber>
                     <span class="pricing-step__suffix">TND</span>
                 </div>
-                <div
-                    class="pricing-chips"
-                    role="group"
-                    aria-label="Suggestions de prix"
-                >
-                    <button
-                        *ngFor="let chip of pricingChips; let i = index"
-                        type="button"
-                        class="pricing-chip"
-                        [class.pricing-chip--active]="activePricingChip === i"
-                        [disabled]="!pricingCoutTotal"
-                        (click)="applyPricingChip(i)"
-                    >
-                        <ng-container *ngIf="i === 0; else markupChip">
-                            Coût total ({{ formatTnd3(pricingCoutTotal) }})
-                        </ng-container>
-                        <ng-template #markupChip>{{ chip.label }}</ng-template>
-                    </button>
+                <div *ngIf="!pricingDiagnosticPayant" class="pricing-nonpayant">
+                    <i class="pi pi-gift"></i> Diagnostic <strong>non payant</strong>
+                    — non facturé au client. Le temps de diagnostic reste mesuré
+                    (coût interne), et le plancher de 150&nbsp;TND ne s'applique pas.
                 </div>
-                <!-- Écart TEMPS RÉEL prix saisi vs coût théorique (main-d'œuvre +
-                     pièces) — marge (vert) / sous-facturation (rouge) / au coût. -->
                 <div
-                    *ngIf="pricingEcart as ec"
-                    class="pricing-ecart"
-                    [ngClass]="'pricing-ecart--' + ec.tone"
+                    *ngIf="
+                        pricingDiagnosticPayant &&
+                        pricingDiagnosticEstimate != null
+                    "
+                    class="pricing-estimate-orig"
                 >
-                    <span class="pricing-ecart__head" [ngSwitch]="ec.tone">
-                        <i
-                            class="pi"
-                            [ngClass]="
-                                ec.tone === 'pos'
-                                    ? 'pi-arrow-up-right'
-                                    : ec.tone === 'neg'
-                                      ? 'pi-exclamation-triangle'
-                                      : 'pi-minus'
-                            "
-                        ></i>
-                        <span *ngSwitchCase="'pos'">Marge sur le coût théorique</span>
-                        <span *ngSwitchCase="'neg'"
-                            >Sous-facturation — sous le coût réel</span
-                        >
-                        <span *ngSwitchDefault>Au coût théorique</span>
-                    </span>
-                    <span class="pricing-ecart__value">
-                        {{ ec.montant >= 0 ? "+" : "" }}{{ formatTnd3(ec.montant) }}
-                        <span class="pricing-ecart__pct">
-                            ({{ ec.montant >= 0 ? "+" : ""
-                            }}{{ ec.percent | number: "1.0-1" }} %)
-                        </span>
-                    </span>
+                    Estimation à la création :
+                    <strong>{{ formatTnd3(pricingDiagnosticEstimate) }}</strong>
+                    — prix verrouillé (non modifiable).
+                </div>
+                <!-- Avertissement bornes 150–500 : UNIQUEMENT en saisie manuelle
+                     SANS estimation (tu quand le prix vient de l'estimation, qui
+                     fait référence). Boutons de majoration + indicateur de marge
+                     RETIRÉS (base de comparaison incohérente). -->
+                <div
+                    *ngIf="reelOutOfBounds && !diagPriceFromEstimate"
+                    class="pricing-warn"
+                >
+                    <i class="pi pi-exclamation-triangle"></i>
+                    Montant hors des bornes recommandées (150–500&nbsp;TND) —
+                    <strong>autorisé sans blocage</strong>. Vérifiez avant de
+                    valider.
                 </div>
                 <div
                     class="pricing-step__help"
@@ -2578,9 +2620,6 @@
 <app-di-info-modal
     [(visible)]="ticketDetailsInfo"
     [di]="ticketData?.data"
-    [retour1]="retour1InfoFromLogs"
-    [retour2]="retour2InfoFromLogs"
-    [retour3]="retour3InfoFromLogs"
     context="interventions"
 ></app-di-info-modal>
 

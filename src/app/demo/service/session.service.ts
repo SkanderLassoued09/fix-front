@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
 import { environment } from 'src/environments/environment';
 import { ProfileService } from './profile.service';
+import { NotificationCenterService } from './notification-center.service';
 
 /**
  * Single-session lifecycle — minimal version.
@@ -27,6 +28,7 @@ export class SessionService {
         private apollo: Apollo,
         private router: Router,
         private profileService: ProfileService,
+        private notificationCenter: NotificationCenterService,
     ) {}
 
     /**
@@ -91,6 +93,9 @@ export class SessionService {
         // (qui bloque déjà toute route protégée sans token), le retour arrière
         // ne peut pas ramener sur une page authentifiée.
         const cleanup = () => {
+            // Coupe le socket de notif (sinon il resterait branché sur l'ancien
+            // compte ; il sera rebranché au prochain login).
+            this.notificationCenter.stop();
             localStorage.removeItem('token');
             localStorage.removeItem('_id');
             localStorage.removeItem('role');

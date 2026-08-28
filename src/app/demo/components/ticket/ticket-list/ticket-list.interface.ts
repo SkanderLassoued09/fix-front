@@ -38,6 +38,8 @@ export interface CreateDiInput {
     image: string;
     di_category_id: string;
     location: string;
+    diagnosticPayant?: boolean;
+    diagnosticEstimate?: number | null;
 }
 
 export interface CreateDiMutationResult {

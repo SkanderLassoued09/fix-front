@@ -7,7 +7,9 @@ import {
     ComposantByNameQueryResponse,
     GetAllMagasinQueryResponse,
 } from './magasin-di-list.interfaces';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DiDetailService } from 'src/app/demo/service/di-detail.service';
+import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
@@ -166,6 +168,9 @@ export class MagasinDiListComponent implements OnDestroy {
         { field: 'category_composant', header: 'Category Composant' },
     ];
 
+    /** Deep-link notification → ouverture de la modale composants. */
+    private deepLinkConsumer?: DeepLinkConsumer;
+
     constructor(
         private ticketSerice: TicketService,
         private readonly messageservice: MessageService,
@@ -174,6 +179,8 @@ export class MagasinDiListComponent implements OnDestroy {
         private confirmationService: ConfirmationService,
         private notificationService: NotificationService,
         private readonly mutationRunner: MutationRunner,
+        private route: ActivatedRoute,
+        private diDetail: DiDetailService,
     ) {
         this.formUpdateComposant = new FormGroup({
             _id: new FormControl(null),
@@ -245,6 +252,16 @@ export class MagasinDiListComponent implements OnDestroy {
         this.getAllComposant();
         this.getStatusCount();
 
+        // Deep-link notification : ?di=&action=composants → ouvre la modale
+        // composants (openDialogMagasin) sur la ligne concernée, sinon détail.
+        this.deepLinkConsumer = new DeepLinkConsumer(
+            this.route,
+            this.router,
+            () => this.diList,
+            (row, diId, action) => this.openFromParams(row, diId, action),
+        );
+        this.deepLinkConsumer.listen(this.destroy$);
+
         // Setup search with debounce
         this.searchSubject$
             .pipe(debounceTime(400), takeUntil(this.destroy$))
@@ -270,16 +287,10 @@ export class MagasinDiListComponent implements OnDestroy {
 
         this.notificationService.componentConfirmedByCoordinator$
             .pipe(takeUntil(this.destroy$))
-            .subscribe((message: any) => {
-                console.log('Should display in magasin di list', message);
-
-                this.messageservice.add({
-                    severity: 'success',
-                    summary: 'Components Confirmed',
-                    detail: `All components for DI #${message.message._id} have been successfully confirmed by the coordinator.`,
-                    sticky: true,
-                });
-
+            .subscribe(() => {
+                // Ancien toast « Components Confirmed » retiré (remplacé par la
+                // notification ERP). On garde UNIQUEMENT le rafraîchissement de
+                // la liste quand la coordination confirme les composants.
                 setTimeout(() => {
                     this.loadData();
                 }, 1000);
@@ -303,8 +314,23 @@ export class MagasinDiListComponent implements OnDestroy {
     }
 
     ngOnDestroy() {
+        this.deepLinkConsumer?.destroy();
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    /** Deep-link : ouvre la modale composants pour la ligne trouvée, sinon
+     *  retombe sur le modal détail partagé (jamais un clic mort). */
+    private openFromParams(
+        row: any | null,
+        diId: string,
+        action: string,
+    ): void {
+        if (row && action === 'composants') {
+            this.openDialogMagasin(row);
+            return;
+        }
+        this.diDetail.openById(diId);
     }
 
     /**
@@ -573,6 +599,8 @@ export class MagasinDiListComponent implements OnDestroy {
                 return 'info';
             case 'FINISHED':
                 return 'success';
+            case 'IRREPARABLE':
+                return 'danger';
             case 'ANNULER':
                 return 'contrast';
             case 'RETOUR1':

@@ -90,7 +90,6 @@ interface PersistedTechDialogState {
 })
 export class TechDiListComponent implements OnInit, OnDestroy {
     private readonly dialogStateStorageKey = 'fix.tech-dialog-state.v1';
-    private readonly assignmentToastStorageKey = 'fix.tech-assignment-toasts.v1';
     private readonly dialogStateMaxAgeMs = 12 * 60 * 60 * 1000;
     // Search state tracking
     private currentSearchField: string = '';
@@ -525,10 +524,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     },
                     { mutation: this.ticketSerice.changeFinishStatus(diId) },
                 ],
-                successToast: {
-                    summary: 'Réparation terminée',
-                    detail: 'DI clôturée (FINISHED).',
-                },
+                // Ancien toast « Réparation terminée / DI clôturée » retiré
+                // (remplacé par la notification ERP). On garde le toast d'ERREUR.
                 errorToast: {
                     summary: 'Erreur',
                     detail: 'Échec de la clôture. Réessayez.',
@@ -686,7 +683,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     di: any;
     techList: any[] = [];
     selectedDi: any;
-    private knownTechDiIds = new Set<string>();
     isRunning: any;
     startTime: number;
     minutes: string;
@@ -868,6 +864,80 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         );
     }
 
+    // ── Abandon du diagnostic (le tech ne parvient pas à diagnostiquer) ──────
+    abandonDialog = false;
+    abandonRow: any = null;
+    abandonForm: { motif: string | null; motifAutre: string } = {
+        motif: null,
+        motifAutre: '',
+    };
+    readonly ABANDON_KEY = 'abandon-di';
+    /** Motifs d'abandon — CODES alignés sur la liste blanche serveur
+     *  (`DiService.ABANDON_MOTIFS`). */
+    readonly abandonMotifs = [
+        { label: 'Panne non identifiable', value: 'PANNE_NON_IDENTIFIABLE' },
+        { label: 'Compétence / spécialité inadaptée', value: 'COMPETENCE_INADAPTEE' },
+        { label: 'Équipement / outillage manquant', value: 'OUTILLAGE_MANQUANT' },
+        { label: 'Documentation indisponible', value: 'DOC_INDISPONIBLE' },
+        { label: 'Autre', value: 'AUTRE' },
+    ];
+
+    /** Bouton « Abandonner » actif : DI en diagnostic ET affectée au tech courant. */
+    canAbandon(row: any): boolean {
+        return this.isDiagStatusActive(row) && this.isDiAssignedToMe(row, 'diag');
+    }
+
+    openAbandonDialog(row: any): void {
+        this.abandonRow = row;
+        this.abandonForm = { motif: null, motifAutre: '' };
+        this.abandonDialog = true;
+    }
+
+    get abandonBusy(): boolean {
+        return this.mutationRunner.isBusy(this.ABANDON_KEY);
+    }
+
+    get abandonSubmitDisabled(): boolean {
+        const f = this.abandonForm;
+        if (!f.motif) return true;
+        if (f.motif === 'AUTRE' && !f.motifAutre.trim()) return true;
+        return this.abandonBusy;
+    }
+
+    /** Envoie l'abandon (motif obligatoire, texte libre si « Autre »). Ferme +
+     *  rafraîchit UNIQUEMENT au succès ; un échec est toasté, DI inchangée. */
+    async submitAbandon(): Promise<void> {
+        if (this.abandonSubmitDisabled) return;
+        const row = this.abandonRow;
+        const diId = row?._idDi ?? row?._id;
+        const f = this.abandonForm;
+        try {
+            await this.mutationRunner.run({
+                key: this.ABANDON_KEY,
+                mutation: this.ticketSerice.abandonDi(),
+                variables: {
+                    input: {
+                        diId,
+                        motif: f.motif,
+                        motifAutre:
+                            f.motif === 'AUTRE' ? f.motifAutre.trim() : null,
+                    },
+                },
+                successToast: {
+                    summary: 'Diagnostic abandonné',
+                    detail: 'DI renvoyée à la coordination pour réaffectation.',
+                },
+            });
+            this.abandonDialog = false;
+            this.abandonRow = null;
+            this.ticketRefreshService.requestRefresh('tech-list', {
+                source: 'abandon',
+            });
+        } catch {
+            // Échec déjà toasté par MutationRunner ; modal laissé ouvert.
+        }
+    }
+
     /** Enable rule for the Réparation action button on a row. */
     canRepair(row: any): boolean {
         return (
@@ -964,11 +1034,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private handleTechRealtimeMessage(message: any, source: string): void {
         const assignment = this.getTechAssignmentInfo(message);
 
+        // Plus de toast d'affectation ici : la notification ERP (cloche + toast
+        // `erp-notif`) le remplace. On garde UNIQUEMENT le rafraîchissement de la
+        // liste tech quand une affectation pertinente arrive.
         if (assignment.isRelevant) {
-            if (assignment.isNewAssignment) {
-                this.showTechAssignmentToast(assignment);
-            }
-
             this.ticketRefreshService.requestRefresh('tech-list', {
                 source,
                 assignmentType: assignment.type,
@@ -1007,10 +1076,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     private getTechAssignmentInfo(message: any): {
         isRelevant: boolean;
-        isNewAssignment: boolean;
         type: TechDialogMode;
         diIds: string[];
-        diNumber?: string;
     } {
         const currentTechId = this.idTech || localStorage.getItem('_id');
         const currentUsername = localStorage.getItem('username');
@@ -1018,7 +1085,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         if (!message || (!currentTechId && !currentUsername)) {
             return {
                 isRelevant: false,
-                isNewAssignment: false,
                 type: 'diagnostic',
                 diIds: [],
             };
@@ -1029,9 +1095,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         const statuses = this.collectValuesFromNotification(message, [
             'status',
         ]).map((status) => status.toUpperCase());
-        const diNumber = this.collectValuesFromNotification(message, [
-            '_idnum',
-        ])[0];
         const isTargetedToCurrentTech =
             (!!currentTechId && recipients.includes(currentTechId)) ||
             (!!currentUsername && recipients.includes(currentUsername));
@@ -1056,77 +1119,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         const isRelevant =
             isTargetedToCurrentTech &&
             (hasRepairMarker || hasDiagnosticMarker || diIds.length > 0);
-        const isNewAssignment =
-            isRelevant &&
-            (diIds.length === 0 ||
-                diIds.some((diId) => !this.knownTechDiIds.has(diId))) &&
-            !this.wasAssignmentToastShown(type, diIds);
-
-        if (isRelevant && diIds.length > 0) {
-            diIds.forEach((diId) => this.knownTechDiIds.add(diId));
-        }
-
         return {
             isRelevant,
-            isNewAssignment,
             type,
             diIds,
-            diNumber,
         };
-    }
-
-    private showTechAssignmentToast(assignment: {
-        type: TechDialogMode;
-        diIds: string[];
-        diNumber?: string;
-    }): void {
-        this.rememberAssignmentToast(assignment.type, assignment.diIds);
-
-        this.messageService.add({
-            severity: 'info',
-            summary:
-                assignment.type === 'repair'
-                    ? 'New repair task assigned'
-                    : 'New diagnostic task assigned',
-            detail: assignment.diNumber
-                ? `DI #${assignment.diNumber}`
-                : 'Un nouveau ticket vient d’être assigné',
-            sticky: true,
-        });
-    }
-
-    private wasAssignmentToastShown(
-        type: TechDialogMode,
-        diIds: string[],
-    ): boolean {
-        if (diIds.length === 0) {
-            return false;
-        }
-
-        const shown = this.getShownAssignmentToastKeys();
-        return diIds.every((diId) => shown.has(`${type}:${diId}`));
-    }
-
-    private rememberAssignmentToast(type: TechDialogMode, diIds: string[]) {
-        if (diIds.length === 0) {
-            return;
-        }
-
-        const shown = this.getShownAssignmentToastKeys();
-        diIds.forEach((diId) => shown.add(`${type}:${diId}`));
-        sessionStorage.setItem(
-            this.assignmentToastStorageKey,
-            JSON.stringify(Array.from(shown).slice(-200)),
-        );
-    }
-
-    private getShownAssignmentToastKeys(): Set<string> {
-        try {
-            const raw = sessionStorage.getItem(this.assignmentToastStorageKey);
-            return new Set(raw ? JSON.parse(raw) : []);
-        } catch {
-            return new Set();
-        }
     }
 
     private collectTechRecipientsFromNotification(message: any): string[] {
@@ -1417,7 +1414,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 .subscribe(({ data }) => {
                     if (data && data.searchTechDI) {
                         this.techList = data.searchTechDI.stat;
-                        this.rememberTechDiIds(this.techList);
                         this.restorePersistedDialogStateOnce();
                         this.techListCount =
                             data.searchTechDI.totalTechDataCount;
@@ -1701,21 +1697,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .subscribe(({ data }) => {
                 if (data) {
                     this.techList = data.getDiForTech.stat;
-                    this.rememberTechDiIds(this.techList);
                     this.restorePersistedDialogStateOnce();
                     this.techListCount = data.getDiForTech.totalTechDataCount;
                 }
             });
-    }
-
-    private rememberTechDiIds(diList: any[]) {
-        (diList || []).forEach((di) => {
-            const diId = di?._idDi || di?._idDI || di?.idDi || di?.diId;
-
-            if (diId) {
-                this.knownTechDiIds.add(diId);
-            }
-        });
     }
 
     handleNotification(message: any) {
@@ -3247,6 +3232,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             PENDING3: 'secondary',
 
             // 🔴 ERROR / CRITICAL
+            IRREPARABLE: 'danger',
             RETOUR1: 'danger',
             RETOUR2: 'danger',
             RETOUR3: 'danger',
@@ -4114,6 +4100,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         ATTENTE_BL_FACTURE: 'CLOSING',
         CLOSING: 'CLOSING',
         FINISHED: 'Terminé',
+        IRREPARABLE: 'Irréparable',
         ANNULER: 'Annulé',
         RETOUR1: 'Retour 1',
         RETOUR2: 'Retour 2',

@@ -19,12 +19,27 @@ import { NotificationService } from 'src/app/demo/service/notification.service';
 import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
 import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { DiDetailService } from 'src/app/demo/service/di-detail.service';
+import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
 import {
     formatTableValue,
     isLocationColumn,
     isEmplacementVide as isEmplacementVideUtil,
     trackByColumn,
 } from '../table-display.utils';
+// SOURCE UNIQUE du calcul de durées entre statuts — partagée avec di-info-modal
+// (« ne le réimplémente pas »). Les méthodes ci-dessous délèguent à ces fonctions.
+import {
+    ALL_STATUS_ORDER as SHARED_STATUS_ORDER,
+    BASE_PHASES as SHARED_BASE_PHASES,
+    sanitizeHistory as sharedSanitizeHistory,
+    phaseEntry as sharedPhaseEntry,
+    isPhaseBehindCurrent as sharedIsPhaseBehind,
+    computePhaseState as sharedComputePhaseState,
+    computePhaseDuration as sharedComputePhaseDuration,
+    formatDuration as sharedFormatDuration,
+} from '../shared/status-timeline.util';
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -53,6 +68,15 @@ export class CoordinatorDiListComponent implements OnDestroy {
     rangeDates: Date[] | undefined;
 
     selectedTech: any; // Variable to store the selected tech data
+
+    // ── Raccourci « retour sans pièces » (envoi en réparation avec devis) ────
+    // La DI (needsDevisBeforeRepair) a sauté magasin + tarification : la
+    // coordinatrice choisit le technicien réparateur ET joint le devis, puis
+    // envoie en UN SEUL geste. Le bouton reste bloqué tant que les deux manquent.
+    selectedRepTechForDevis: any = null;
+    repairDevisBase64: string | null = null; // data-URL base64 du PDF
+    repairDevisName: string | null = null; // nom de fichier (affichage)
+    sendingRepairWithDevis = false;
 
     //--
     //Btn for confirmation
@@ -161,6 +185,47 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  segment so the modal lands on the currently-active cycle. */
     selectedFlowSegment = 0;
 
+    /** Timeline MÉMOÏSÉE du segment courant. `getSegmentStages()` est coûteux
+     *  (reconstruit un tableau + ~8 calculs par phase) : l'appeler directement
+     *  dans le `*ngFor` du template le ré-exécutait à CHAQUE cycle de détection
+     *  de changement → le modal figeait le navigateur (freeze + RAM). On le
+     *  recalcule UNIQUEMENT quand les données changent (ouverture, chargement des
+     *  logs, changement de segment) via `refreshTimeline()`. */
+    segmentStages: Array<{
+        key: string;
+        label: string;
+        state: 'done' | 'current' | 'pending' | 'skipped';
+        badgeLabel: string;
+        rawStatus: string | null;
+        actor: string;
+        timestamp: string | null;
+        duration: { text: string; ongoing: boolean } | null;
+    }> = [];
+
+    /** Recalcule la timeline mémoïsée (à appeler quand di/logs/segment changent). */
+    private refreshTimeline(): void {
+        this.segmentStages = this.getSegmentStages();
+    }
+
+    /** trackBy stable → le `*ngFor` de la timeline ne recrée pas le DOM. */
+    trackByStageKey = (_: number, s: { key: string }) => s.key;
+
+    /** Techniciens diagnostic sélectionnables — MÉMOÏSÉ (le getter recréait un
+     *  tableau à chaque cycle de détection → le p-dropdown re-traitait ses
+     *  options en boucle). Recalculé à l'ouverture du modal + au chargement des
+     *  techniciens. */
+    availableDiagTechsList: any[] = [];
+    private refreshAvailableDiagTechs(): void {
+        const abandoned = new Set(
+            (this.di?.diagAssignments ?? [])
+                .filter((a: any) => !!a.abandonedAt)
+                .map((a: any) => a.techId),
+        );
+        this.availableDiagTechsList = (this.techList ?? []).filter(
+            (t: any) => !abandoned.has(t?._id),
+        );
+    }
+
     /** ─── Coordination-modal: real-data-only state ─────────────────────────
      *  techAvgRepairByTechId is populated by the dashboardTechLeaderboard
      *  query when the modal opens. Keys = Profile._id, value = avg days
@@ -181,48 +246,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return (s ?? '').toString().toUpperCase() || '—';
     }
 
-    /** Canonical status ordering — used to decide if a phase is `done`
-     *  (current status comes AFTER the phase's last status) vs `pending`. */
-    private readonly ALL_STATUS_ORDER: string[] = [
-        'CREATED',
-        'PENDING1',
-        'DIAGNOSTIC',
-        'DIAGNOSTIC_Pause',
-        'INDIAGNOSTIC',
-        'MagasinEstimation',
-        // Étape préparation magasin — legacy 'PROCESSING' avant la valeur
-        // canonique 'CONFIRMATION' (rename 009), tolérée pour le statusHistory.
-        'PROCESSING',
-        'CONFIRMATION',
-        'CONFIRMATION_COMPOSANTS',
-        'ATTENTE_CONFIRMATION_COORDINATION',
-        'MAGASIN_FINALISATION',
-        'PENDING2',
-        'PRICING',
-        'PRICING_DIAG',
-        // Phase Approval documentaire (SPLIT). Legacy AVANT les nouveaux pour que
-        // le DERNIER sous-statut réel (WAITING_BC) porte l'index le PLUS élevé de
-        // la phase (ancre done/sautée/en attente).
-        'NEGOTIATION1',
-        'ATTENTE_BC_DEVIS',
-        'WAITING_DEVIS',
-        'WAITING_BC',
-        'NEGOTIATION2',
-        'PENDING3',
-        'REPARATION',
-        'REPARATION_Pause',
-        'INREPARATION',
-        // Phase de clôture documentaire (SPLIT). Legacy avant les nouveaux ;
-        // WAITING_FACTURE = dernier sous-statut (ancre juste avant FINISHED).
-        'ATTENTE_BL_FACTURE',
-        'CLOSING',
-        'WAITING_BL',
-        'WAITING_FACTURE',
-        'FINISHED',
-        'RETOUR1',
-        'RETOUR2',
-        'RETOUR3',
-    ];
+    /** Canonical status ordering — SOURCE UNIQUE partagée (status-timeline.util). */
+    private readonly ALL_STATUS_ORDER = SHARED_STATUS_ORDER;
 
     /** Timeline « Contrôle du Flow » — UN statut PAR étape (plus de regroupement
      *  en 5 phases). Ordre canonique du flux ; Retour 1/2/3 ajoutés dynamiquement
@@ -235,27 +260,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *                  + variantes `_Pause` ; ORDONNÉ pour que le DERNIER élément
      *                  ait l'index le PLUS ÉLEVÉ dans ALL_STATUS_ORDER (ancre du
      *                  seuil done/pending). */
-    private readonly BASE_PHASES = [
-        { key: 'CREATED', group: 'created', label: 'Créé', icon: 'pi pi-plus-circle', statuses: ['CREATED'] },
-        { key: 'PENDING1', group: 'diagnostic', label: 'En attente diagnostic', icon: 'pi pi-clipboard', statuses: ['PENDING1'] },
-        { key: 'DIAGNOSTIC', group: 'diagnostic', label: 'Diagnostic assigné', icon: 'pi pi-clipboard', statuses: ['DIAGNOSTIC'] },
-        { key: 'DIAGNOSTIC_Pause', group: 'diagnostic', label: 'Diagnostic en pause', icon: 'pi pi-pause-circle', statuses: ['DIAGNOSTIC_Pause'] },
-        { key: 'INDIAGNOSTIC', group: 'diagnostic', label: 'En diagnostic', icon: 'pi pi-clipboard', statuses: ['INDIAGNOSTIC'] },
-        { key: 'MagasinEstimation', group: 'magasin', label: 'Estimation magasin', icon: 'pi pi-box', statuses: ['MagasinEstimation'] },
-        { key: 'CONFIRMATION', group: 'magasin', label: 'CONFIRMATION', icon: 'pi pi-box', statuses: ['PROCESSING', 'CONFIRMATION'] },
-        { key: 'ATTENTE_CONFIRMATION_COORDINATION', group: 'magasin', label: 'En attente confirmation Coordination', icon: 'pi pi-box', statuses: ['CONFIRMATION_COMPOSANTS', 'ATTENTE_CONFIRMATION_COORDINATION'] },
-        { key: 'MAGASIN_FINALISATION', group: 'magasin', label: 'Finalisation magasin', icon: 'pi pi-box', statuses: ['MAGASIN_FINALISATION'] },
-        { key: 'PENDING2', group: 'admin', label: 'En attente prix', icon: 'pi pi-file', statuses: ['PENDING2'] },
-        { key: 'PRICING_DIAG', group: 'admin', label: 'Pricing', icon: 'pi pi-file', statuses: ['PRICING', 'PRICING_DIAG'] },
-        { key: 'WAITING_DEVIS', group: 'admin', label: 'Approval (devis/BC)', icon: 'pi pi-file', statuses: ['NEGOTIATION1', 'ATTENTE_BC_DEVIS', 'WAITING_DEVIS', 'WAITING_BC'] },
-        { key: 'NEGOTIATION2', group: 'admin', label: 'Négociation 2', icon: 'pi pi-file', statuses: ['NEGOTIATION2'] },
-        { key: 'PENDING3', group: 'repair', label: 'En attente réparation', icon: 'pi pi-wrench', statuses: ['PENDING3'] },
-        { key: 'REPARATION', group: 'repair', label: 'Réparation assignée', icon: 'pi pi-wrench', statuses: ['REPARATION'] },
-        { key: 'REPARATION_Pause', group: 'repair', label: 'Réparation en pause', icon: 'pi pi-pause-circle', statuses: ['REPARATION_Pause'] },
-        { key: 'INREPARATION', group: 'repair', label: 'En réparation', icon: 'pi pi-wrench', statuses: ['INREPARATION'] },
-        { key: 'WAITING_BL', group: 'closed', label: 'Clôture (BL/facture)', icon: 'pi pi-check-circle', statuses: ['ATTENTE_BL_FACTURE', 'CLOSING', 'WAITING_BL', 'WAITING_FACTURE'] },
-        { key: 'FINISHED', group: 'closed', label: 'Terminé', icon: 'pi pi-check-circle', statuses: ['FINISHED'] },
-    ];
+    private readonly BASE_PHASES = SHARED_BASE_PHASES;
     ticketData: { data: any; pauseLogs: any; logsDi: any };
     retour1InfoFromLogs: any;
     retour2InfoFromLogs: any;
@@ -297,6 +302,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
         { label: 'Autre', value: 'AUTRE' },
     ];
 
+    /** Deep-link notification → ouverture de la modale d'affectation. */
+    private deepLinkConsumer?: DeepLinkConsumer;
+
     constructor(
         private ticketSerice: TicketService,
         private apollo: Apollo,
@@ -305,6 +313,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
         private notificationService: NotificationService,
         private ticketRefreshService: TicketRefreshService,
         private mutationRunner: MutationRunner,
+        private route: ActivatedRoute,
+        private router: Router,
+        private diDetail: DiDetailService,
     ) {}
 
     /** Ouvre le modal d'annulation (repart d'un formulaire vierge). */
@@ -369,12 +380,121 @@ export class CoordinatorDiListComponent implements OnDestroy {
         }
     }
 
+    // ── Réactivation d'une DI annulée → statut précédent ─────────────────────
+    // L'annulation n'a rien détruit ; on relit le statut précédent dans
+    // `statusHistory`. Miroir FRONT des gardes back (informatif : le back reste
+    // autoritaire et renvoie un message clair en cas de refus).
+    private readonly POST_DOC_STATUSES = [
+        'WAITING_BL',
+        'WAITING_FACTURE',
+        'CLOSING',
+        'ATTENTE_BL_FACTURE',
+        'FINISHED',
+    ];
+    reactivateBusy = false;
+
+    /** Statut juste avant la DERNIÈRE annulation (entrée avant le dernier ANNULER
+     *  de l'historique), ou null si introuvable. */
+    get reactivablePreviousStatus(): string | null {
+        const di = this.di;
+        if (!di || di.status !== 'ANNULER') return null;
+        const h = Array.isArray(di.statusHistory) ? di.statusHistory : [];
+        let lastAnn = -1;
+        for (let i = h.length - 1; i >= 0; i--) {
+            if (h[i]?.status === 'ANNULER') {
+                lastAnn = i;
+                break;
+            }
+        }
+        return lastAnn > 0 ? h[lastAnn - 1]?.status ?? null : null;
+    }
+
+    /** Raison de blocage de la réactivation (null = réactivable). */
+    get reactivateBlockedReason(): string | null {
+        const di = this.di;
+        if (!di || di.status !== 'ANNULER') return null;
+        const prev = this.reactivablePreviousStatus;
+        if (!prev) return 'Statut précédent introuvable';
+        if (this.POST_DOC_STATUSES.includes(prev))
+            return 'Origine post-document (BL/facture émis)';
+        const h = Array.isArray(di.statusHistory) ? di.statusHistory : [];
+        const already = h.some(
+            (e: any, i: number) =>
+                e?.status === 'ANNULER' &&
+                i < h.length - 1 &&
+                h[i + 1]?.status !== 'ANNULER',
+        );
+        if (already) return 'DI déjà réactivée une fois';
+        return null;
+    }
+
+    /** Réactive la DI (remet au statut précédent). Confirmation → mutation ;
+     *  succès → toast + rafraîchit + ferme ; refus back → toast du message. */
+    reactivateDi(): void {
+        const di = this.di;
+        if (!di?._id || di.status !== 'ANNULER') return;
+        const blocked = this.reactivateBlockedReason;
+        if (blocked) {
+            this.messageservice.add({
+                severity: 'warn',
+                summary: 'Réactivation impossible',
+                detail: blocked,
+            });
+            return;
+        }
+        const prev = this.reactivablePreviousStatus;
+        this.confirmationService.confirm({
+            message: `Réactiver cette DI et la remettre en « ${prev} » ? L'annulation sera défaite (action tracée).`,
+            header: 'Réactiver la DI',
+            icon: 'pi pi-refresh',
+            accept: () => {
+                this.reactivateBusy = true;
+                this.apollo
+                    .mutate<any>({
+                        mutation: this.ticketSerice.reactiverDi(di._id),
+                    })
+                    .subscribe({
+                        next: () => {
+                            this.messageservice.add({
+                                severity: 'success',
+                                summary: 'DI réactivée',
+                                detail: `Remise en « ${prev} ».`,
+                            });
+                            this.reactivateBusy = false;
+                            this.loadData();
+                            this.diDialog = false;
+                        },
+                        error: (e) => {
+                            this.reactivateBusy = false;
+                            this.messageservice.add({
+                                severity: 'error',
+                                summary: 'Réactivation refusée',
+                                detail:
+                                    e?.message ??
+                                    'La réactivation a échoué.',
+                            });
+                        },
+                    });
+            },
+        });
+    }
+
     ngOnInit() {
         // Initial load
         this.loadData();
         this.getAllTech();
         this.getStatusCount();
         this.confirmationBTN = false;
+
+        // Deep-link notification : ?di=&action= → ouvre la modale d'affectation
+        // (openModalConfig) sur la ligne concernée, sinon modal détail.
+        this.deepLinkConsumer = new DeepLinkConsumer(
+            this.route,
+            this.router,
+            () => this.diList,
+            (row, diId, action) => this.openFromParams(row, diId, action),
+        );
+        this.deepLinkConsumer.listen(this.destroy$);
 
         // Setup search with debounce
         this.searchSubject$
@@ -393,21 +513,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
         this.notificationService.sentComponentToCoordinator$
             .pipe(takeUntil(this.destroy$))
             .subscribe((message: any) => {
-                console.log(
-                    'Composant comes from magasin this message should display in coordinator-di-list',
-                    message,
-                );
                 if (message) {
-                    console.log(
-                        'in condition composant comes from magasin this message should display in coordinator-di-list',
-                        message,
-                    );
-                    this.messageservice.add({
-                        severity: 'info',
-                        summary: 'Components Received',
-                        detail: `Components for DI #${message.message._id} are ready for your review and confirmation.`,
-                        sticky: true,
-                    });
+                    // Ancien toast « Components Received » retiré (remplacé par la
+                    // notification ERP). On garde UNIQUEMENT le rafraîchissement
+                    // de la liste quand le magasin envoie les composants.
                     this.ticketRefreshService.requestRefresh(
                         'coordinator-list',
                         {
@@ -438,8 +547,23 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     ngOnDestroy() {
+        this.deepLinkConsumer?.destroy();
         this.destroy$.next();
         this.destroy$.complete();
+    }
+
+    /** Deep-link : ouvre la modale d'affectation pour la ligne trouvée, sinon
+     *  retombe sur le modal détail partagé (jamais un clic mort). */
+    private openFromParams(
+        row: any | null,
+        diId: string,
+        action: string,
+    ): void {
+        if (row && action === 'affecter') {
+            this.openModalConfig(row);
+            return;
+        }
+        this.diDetail.openById(diId);
     }
 
     /**
@@ -725,6 +849,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 this.isLoading = loading;
                 if (data) {
                     this.techList = data.getAllTech;
+                    // Techniciens chargés → recalcule la liste filtrée du modal.
+                    this.refreshAvailableDiagTechs();
                 }
             });
     }
@@ -752,9 +878,21 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return !hasComponents;
     }
 
+    // NB : la logique « techniciens diagnostic sélectionnables » (masque ceux
+    // ayant abandonné ce cycle) est désormais MÉMOÏSÉE dans
+    // `availableDiagTechsList` / `refreshAvailableDiagTechs()` (voir plus haut) —
+    // l'ancien getter recalculé à chaque cycle de détection faisait re-traiter le
+    // p-dropdown en boucle et participait au freeze du modal.
+
     openModalConfig(di) {
-        console.log('🍷[di]:', di);
         this.di = { ...di };
+        // Raccourci « retour sans pièces » : repart d'un état vierge à chaque
+        // ouverture (aucun devis/technicien résiduel d'une DI précédente).
+        this.selectedRepTechForDevis = null;
+        this.repairDevisBase64 = null;
+        this.repairDevisName = null;
+        this.sendingRepairWithDevis = false;
+        this.refreshAvailableDiagTechs();
         this.adminSentAt = di.pricingRequestSentAt ?? null;
         this.magasinConfirmedAt = di.componentsConfirmedAt ?? null;
         this.pricingRequestInFlight = false;
@@ -841,6 +979,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
     private fetchFlowLogsDi(_idDi: string, ignoreCount: number) {
         this.flowLogsDi = [];
         this.selectedFlowSegment = ignoreCount > 0 ? ignoreCount : 0;
+        // Rendu immédiat du segment actif (n'a pas besoin des logs).
+        this.refreshTimeline();
         if (!_idDi) return;
         this.apollo
             .query<any>({
@@ -852,6 +992,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 this.flowLogsDi = [...logs].sort(
                     (a, b) => (a.idIgnore ?? 0) - (b.idIgnore ?? 0),
                 );
+                // Les logs des cycles retour sont arrivés → on recalcule.
+                this.refreshTimeline();
             });
     }
 
@@ -1034,7 +1176,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  ni gonfler le numérateur ni le dénominateur. `+ 0.5×current` = remplissage
      *  fluide de la barre pour l'étape en cours. */
     get flowProgress(): { done: number; total: number; pct: number } {
-        const stages = this.getSegmentStages();
+        const stages = this.segmentStages;
         const realPath = stages.filter((s) => s.state !== 'skipped');
         const total = realPath.length || 5;
         const done = realPath.filter((s) => s.state === 'done').length;
@@ -1051,6 +1193,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
     selectFlowSegment(idx: number) {
         if (idx < 0 || idx > this.diRetourCount) return;
         this.selectedFlowSegment = idx;
+        this.refreshTimeline();
     }
 
     /** Status pill for the top banner — French label via the existing map. */
@@ -1106,6 +1249,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
             STATUS_DI.REPARATION,
             STATUS_DI.INREPARATION,
             STATUS_DI.FINISHED,
+            // Terminal irréparable : le diagnostic EST fait (verdict non réparable).
+            STATUS_DI.IRREPARABLE,
             STATUS_DI.RETOUR1,
             STATUS_DI.RETOUR2,
             STATUS_DI.RETOUR3,
@@ -1115,10 +1260,15 @@ export class CoordinatorDiListComponent implements OnDestroy {
             STATUS_DI.REPARATION,
             STATUS_DI.INREPARATION,
             STATUS_DI.FINISHED,
+            // Terminal irréparable : la phase admin est franchie (payant : facturé ;
+            // non payant : clôturé) — la DI ne reviendra plus dans ce flux.
+            STATUS_DI.IRREPARABLE,
             STATUS_DI.RETOUR1,
             STATUS_DI.RETOUR2,
             STATUS_DI.RETOUR3,
         ];
+        // NB : IRREPARABLE n'est PAS dans `afterRepair` — l'équipement n'a jamais
+        // été réparé, l'étape « réparation » ne doit pas s'afficher « faite ».
         const afterRepair = [STATUS_DI.FINISHED, STATUS_DI.RETOUR1, STATUS_DI.RETOUR2, STATUS_DI.RETOUR3];
 
         if (step === 'diagnostic') {
@@ -1373,15 +1523,12 @@ export class CoordinatorDiListComponent implements OnDestroy {
         status: string,
         isActive: boolean = true,
     ): 'done' | 'current' | 'pending' | 'skipped' {
-        if (!status) return 'pending';
-        if (phase.statuses.includes(status)) return 'current';
-        const behind = this.isPhaseBehindCurrent(phase, status);
-        if (isActive) {
-            if (this.phaseEntry(phase.key)) return 'done'; // entrée réelle
-            return behind ? 'skipped' : 'pending';
-        }
-        // Segment d'historique : pas d'entrée par phase → ordre seul.
-        return behind ? 'done' : 'pending';
+        return sharedComputePhaseState(
+            this.sanitizedHistory(),
+            phase,
+            status,
+            isActive,
+        );
     }
 
     /** Le DERNIER statut de l'étape est-il AVANT le statut courant dans l'ordre
@@ -1390,11 +1537,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
         phase: { statuses: string[] },
         status: string,
     ): boolean {
-        const lastIdx = this.ALL_STATUS_ORDER.indexOf(
-            phase.statuses[phase.statuses.length - 1],
-        );
-        const currentIdx = this.ALL_STATUS_ORDER.indexOf(status);
-        return currentIdx > lastIdx;
+        return sharedIsPhaseBehind(phase, status);
     }
 
     private computePhaseBadgeLabel(
@@ -1453,12 +1596,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  malformées (statut non-string — ex. héritage du bug `:1493`) et les dates
      *  invalides, pour ne jamais planter le calcul d'écart. */
     private sanitizedHistory(): Array<{ status: string; at: Date }> {
-        const raw: any[] = this.di?.statusHistory ?? [];
-        return raw
-            .filter((h) => h && typeof h.status === 'string' && h.at != null)
-            .map((h) => ({ status: h.status as string, at: new Date(h.at) }))
-            .filter((h) => !Number.isNaN(h.at.getTime()))
-            .sort((a, b) => a.at.getTime() - b.at.getTime());
+        return sharedSanitizeHistory(this.di?.statusHistory);
     }
 
     /** Entrée d'historique d'ENTRÉE dans une phase = 1re entrée `statusHistory`
@@ -1466,13 +1604,7 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  valeur brute affichées (la MÊME entrée réellement stockée — aucun
      *  recalcul ; les valeurs legacy comme `NEGOTIATION1` sortent telles quelles). */
     private phaseEntry(phaseKey: string): { status: string; at: Date } | null {
-        const phase = this.BASE_PHASES.find((p) => p.key === phaseKey);
-        if (!phase) return null;
-        return (
-            this.sanitizedHistory().find((h) =>
-                phase.statuses.includes(h.status),
-            ) ?? null
-        );
+        return sharedPhaseEntry(this.sanitizedHistory(), phaseKey);
     }
 
     /** Date brute d'ENTRÉE dans une phase = `at` de l'entrée d'historique. */
@@ -1488,43 +1620,19 @@ export class CoordinatorDiListComponent implements OnDestroy {
         phaseKey: string,
         state: 'done' | 'current' | 'pending' | 'skipped',
     ): { text: string; ongoing: boolean } | null {
-        if (state === 'pending' || state === 'skipped') return null;
-        const start = this.phaseEntryRawDate(phaseKey);
-        if (!start) return null;
-        if (state === 'current') {
-            return {
-                text: this.formatDuration(Date.now() - start.getTime()),
-                ongoing: true,
-            };
-        }
-        // done → borne = entrée de la 1re phase suivante (ordre canonique) ayant
-        // une entrée postérieure. Absente (vieilles DI partielles) → null → « — ».
-        const order: string[] = this.BASE_PHASES.map((p) => p.key);
-        for (let j = order.indexOf(phaseKey) + 1; j < order.length; j++) {
-            const next = this.phaseEntryRawDate(order[j]);
-            if (next && next.getTime() > start.getTime()) {
-                return {
-                    text: this.formatDuration(next.getTime() - start.getTime()),
-                    ongoing: false,
-                };
-            }
-        }
-        return null;
+        const d = sharedComputePhaseDuration(
+            this.sanitizedHistory(),
+            phaseKey,
+            state,
+        );
+        return d ? { text: d.text, ongoing: d.ongoing } : null;
     }
 
     /** Millisecondes → durée humaine FR compacte : « 2 j 4 h », « 3 h 15 min »,
      *  « 12 min », « moins d'1 min ». La durée est un DELTA → indépendante du
      *  fuseau (l'instant courant = heure locale de la machine). */
     formatDuration(ms: number): string {
-        if (!Number.isFinite(ms) || ms < 0) return '—';
-        const totalMin = Math.floor(ms / 60000);
-        if (totalMin < 1) return "moins d'1 min";
-        const days = Math.floor(totalMin / 1440);
-        const hours = Math.floor((totalMin % 1440) / 60);
-        const mins = totalMin % 60;
-        if (days > 0) return hours > 0 ? `${days} j ${hours} h` : `${days} j`;
-        if (hours > 0) return mins > 0 ? `${hours} h ${mins} min` : `${hours} h`;
-        return `${mins} min`;
+        return sharedFormatDuration(ms);
     }
 
     /** Footer card: human-readable current phase label. */
@@ -1679,6 +1787,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 return 'info';
             case 'FINISHED':
                 return 'success';
+            case 'IRREPARABLE':
+                return 'danger';
             case 'ANNULER':
                 return 'contrast';
             case 'RETOUR1':
@@ -1833,6 +1943,91 @@ export class CoordinatorDiListComponent implements OnDestroy {
                             this.loadData();
                             this.diDialog = false;
                         }
+                    });
+            },
+        });
+    }
+
+    /** Raccourci « retour sans pièces » : PDF déposé → data-URL base64 mémorisée
+     *  (PAS d'upload immédiat : le devis part avec l'envoi en réparation). */
+    onRepairDevisDrop(file: File) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            this.repairDevisBase64 = reader.result as string;
+            this.repairDevisName = file.name;
+        };
+        reader.onerror = () => {
+            this.repairDevisBase64 = null;
+            this.repairDevisName = null;
+            this.messageservice.add({
+                severity: 'error',
+                summary: 'Fichier non chargé',
+                detail: 'Le PDF n’a pas pu être préparé.',
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    /** Envoi en réparation avec devis joint — UN SEUL geste (mutation
+     *  coordinatorSendToRepairWithDevis : devis + affectation tech + REPARATION).
+     *  Bloqué si le technicien ou le devis manque (double garde front + back). */
+    sendToRepairWithDevis() {
+        const techId = this.selectedRepTechForDevis?._id;
+        if (!techId || !this.repairDevisBase64) {
+            this.messageservice.add({
+                severity: 'warn',
+                summary: 'Envoi impossible',
+                detail: 'Sélectionnez un technicien et joignez le devis.',
+            });
+            return;
+        }
+        if (this.sendingRepairWithDevis) return;
+
+        this.confirmationService.confirm({
+            message:
+                'Envoyer en réparation avec le devis joint ? Le magasin et la ' +
+                'tarification ont été sautés (retour sans pièces).',
+            header: 'Confirmation réparation',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                this.sendingRepairWithDevis = true;
+                this.apollo
+                    .mutate<any>({
+                        mutation:
+                            this.ticketSerice.coordinatorSendToRepairWithDevis(
+                                this.selectedDi,
+                                techId,
+                                this.repairDevisBase64,
+                            ),
+                        useMutationLoading: true,
+                    })
+                    .subscribe({
+                        next: ({ data }) => {
+                            if (data) {
+                                this.messageservice.add({
+                                    severity: 'success',
+                                    summary: 'Envoyée en réparation',
+                                    detail: 'Devis joint et technicien affecté.',
+                                });
+                                this.selectedRepTechForDevis = null;
+                                this.repairDevisBase64 = null;
+                                this.repairDevisName = null;
+                                this.loadData();
+                                this.diDialog = false;
+                            }
+                            this.sendingRepairWithDevis = false;
+                        },
+                        error: (err) => {
+                            this.sendingRepairWithDevis = false;
+                            this.messageservice.add({
+                                severity: 'error',
+                                summary: 'Envoi échoué',
+                                detail:
+                                    err?.message ??
+                                    'La réparation n’a pas pu être lancée.',
+                            });
+                        },
                     });
             },
         });

@@ -1,5 +1,13 @@
 import { Injectable } from '@angular/core';
 
+/** Données DÉRIVÉES passées par le modal (le PDF n'a pas accès aux requêtes
+ *  Stat/Tarif/composant) : timeline par cycle (tout déplié) + finances du cycle affiché. */
+export interface DiPdfOptions {
+    cycles?: Array<{ n: number; label: string; timeline: any[] }>;
+    finance?: any[];
+    financeCycleLabel?: string;
+}
+
 /**
  * Demande d'Intervention — printable A4 PDF dossier.
  *
@@ -28,9 +36,9 @@ export class DiPdfService {
     /** Build + download `DI_{_idnum}.pdf`. */
     async generateAndDownload(
         di: any,
-        profilesById: Map<string, string> = new Map(),
+        opts: DiPdfOptions = {},
     ): Promise<void> {
-        const doc = await this.buildDoc(di, profilesById);
+        const doc = await this.buildDoc(di, opts);
         const idnum = this.raw(di?._idnum) || 'DI';
         doc.save(`DI_${idnum}.pdf`);
     }
@@ -39,10 +47,7 @@ export class DiPdfService {
      * Build the jsPDF document (returned so callers/tests can inspect the
      * output, e.g. assert it starts with "%PDF"). Does NOT trigger a download.
      */
-    async buildDoc(
-        di: any,
-        profilesById: Map<string, string> = new Map(),
-    ): Promise<any> {
+    async buildDoc(di: any, opts: DiPdfOptions = {}): Promise<any> {
         const [jspdfMod, autoTableMod] = await Promise.all([
             import('jspdf'),
             import('jspdf-autotable'),
@@ -133,11 +138,127 @@ export class DiPdfService {
             ['Tech. réparation', this.name(di, ['techRep'])],
         ]);
 
-        // ── Coûts ──────────────────────────────────────────────────────
-        kv('Coûts', [
-            ['Prix initial', di?.price == null ? '—' : this.cur(di.price)],
-            ['Prix final', di?.final_price == null ? '—' : this.cur(di.final_price)],
-        ]);
+        // ── Parcours (écart entre statuts) — TOUS les cycles, TOUT déplié ──
+        const cycles: any[] = Array.isArray(opts.cycles) ? opts.cycles : [];
+        for (const cy of cycles) {
+            const rows: any[] = Array.isArray(cy?.timeline) ? cy.timeline : [];
+            if (!rows.length) continue;
+            y = this.sectionTitle(
+                doc,
+                `Parcours — ${this.raw(cy?.label) || 'Cycle'}`,
+                MARGIN_X,
+                y,
+                C,
+            );
+            autoTable(doc, {
+                startY: y,
+                margin: { left: MARGIN_X, right: MARGIN_X },
+                head: [['Statut', 'Date', 'Durée']],
+                body: rows.map((r) => [
+                    this.raw(r?.rawStatus) || '—',
+                    r?.date || '—',
+                    (r?.duration?.ongoing ? 'en cours · ' : '') +
+                        (r?.duration?.text || '—'),
+                ]),
+                styles: {
+                    fontSize: 8.5,
+                    cellPadding: 4,
+                    textColor: C.text,
+                    lineColor: C.border,
+                    lineWidth: 0.5,
+                },
+                headStyles: {
+                    fillColor: C.primaryLight,
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                },
+                alternateRowStyles: { fillColor: C.zebra },
+                columnStyles: { 1: { cellWidth: 120 }, 2: { cellWidth: 120 } },
+                // Durée anormale (>48 h) en rouge.
+                didParseCell: (data: any) => {
+                    if (
+                        data.section === 'body' &&
+                        data.column.index === 2 &&
+                        rows[data.row.index]?.anomalous
+                    ) {
+                        data.cell.styles.textColor = [220, 38, 38];
+                        data.cell.styles.fontStyle = 'bold';
+                    }
+                },
+            });
+            y = (doc as any).lastAutoTable.finalY + 14;
+        }
+
+        // ── Finances (écart contre max(plancher, coût)) ────────────────
+        const finance: any[] = Array.isArray(opts.finance) ? opts.finance : [];
+        if (finance.length) {
+            const cyLabel = opts.financeCycleLabel
+                ? ` — ${opts.financeCycleLabel}`
+                : '';
+            y = this.sectionTitle(doc, `Finances${cyLabel}`, MARGIN_X, y, C);
+            autoTable(doc, {
+                startY: y,
+                margin: { left: MARGIN_X, right: MARGIN_X },
+                head: [['Phase', 'Coût réel', 'Facturé', 'Écart']],
+                body: finance.map((f) => [
+                    this.raw(f?.phase) || '—',
+                    f?.coutReel == null ? '—' : this.cur(f.coutReel),
+                    f?.nonPayant
+                        ? 'Non facturé'
+                        : f?.facture == null
+                          ? '—'
+                          : this.cur(f.facture),
+                    f?.nonPayant
+                        ? 'Non facturé'
+                        : f?.ecart && !f.ecart.absent
+                          ? `${f.ecart.montant >= 0 ? '+' : ''}${this.cur(
+                                f.ecart.montant,
+                            )} (${f.ecart.montant >= 0 ? '+' : ''}${Number(
+                                f.ecart.percent ?? 0,
+                            ).toFixed(1)} %)`
+                          : '—',
+                ]),
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 5,
+                    textColor: C.text,
+                    lineColor: C.border,
+                    lineWidth: 0.5,
+                },
+                headStyles: {
+                    fillColor: C.primaryLight,
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                },
+                columnStyles: {
+                    1: { halign: 'right' },
+                    2: { halign: 'right' },
+                    3: { halign: 'right' },
+                },
+            });
+            y = (doc as any).lastAutoTable.finalY + 6;
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(8);
+            doc.setTextColor(...C.muted);
+            const note = doc.splitTextToSize(
+                `Réparation non facturée séparément (estimation ${
+                    di?.repairEstimate == null ? '—' : this.cur(di.repairEstimate)
+                }). Écart contre max(plancher 150 TND, coût réel).`,
+                CONTENT_W,
+            );
+            doc.text(note, MARGIN_X, y + 4);
+            y = y + 4 + note.length * 10 + 12;
+            doc.setFont('helvetica', 'normal');
+        } else {
+            // Repli (ex. tests) : coûts plats.
+            kv('Coûts', [
+                ['Prix initial', di?.price == null ? '—' : this.cur(di.price)],
+                [
+                    'Prix final',
+                    di?.final_price == null ? '—' : this.cur(di.final_price),
+                ],
+            ]);
+        }
 
         // ── Description ────────────────────────────────────────────────
         y = this.sectionTitle(doc, 'Description', MARGIN_X, y, C);

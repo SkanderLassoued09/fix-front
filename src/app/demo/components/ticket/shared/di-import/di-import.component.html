@@ -150,6 +150,11 @@
     <div class="di-imp-run" *ngIf="phase==='running'">
         <div class="di-imp-run__state"><i class="pi pi-spin pi-cog"></i> Exécution en cours…</div>
         <p-progressBar [value]="pct"></p-progressBar>
+        <!-- Étape en cours (suivi ligne par ligne) : « rattachement du client… »,
+             « création de la DI… », « réactivation… ». -->
+        <div class="di-imp-run__detail" *ngIf="progress?.detail">
+            <i class="pi pi-angle-right"></i> {{ progress?.detail }}
+        </div>
         <div class="di-imp-run__meta">
             <span><b>{{ progress?.done || 0 }}</b> / {{ progress?.total || 0 }}</span>
             <span *ngIf="progress?.currentRef">Ligne en cours : <b>{{ progress?.currentRef }}</b></span>
@@ -167,6 +172,7 @@
         <div class="di-imp-report__head"><i class="pi pi-check-circle"></i> Import terminé</div>
         <div class="di-imp-report__grid">
             <div class="di-imp-stat"><b>{{ crees?.dis || 0 }}</b><span>DI créées</span></div>
+            <div class="di-imp-stat" *ngIf="crees?.reactivees"><b>{{ crees?.reactivees }}</b><span>réactivées (réf. supprimée)</span></div>
             <div class="di-imp-stat"><b>{{ crees?.clients || 0 }}</b><span>clients auto-créés</span></div>
             <div class="di-imp-stat"><b>{{ crees?.ignorees || 0 }}</b><span>ignorées (déjà en base)</span></div>
             <div class="di-imp-stat"><b>{{ finalReport?.erreurs?.length || 0 }}</b><span>rejetées / erreurs</span></div>

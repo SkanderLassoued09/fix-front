@@ -32,6 +32,9 @@ export interface ImportCrees {
   clients: number;
   locations: number;
   ignorees: number;
+  /** DI dont la référence était supprimée (soft-delete) et a été réactivée
+   *  (vestige purgé + recréée) au ré-import. Sous-ensemble de `dis`. */
+  reactivees?: number;
 }
 export interface ImportReport {
   ligneEnTete: number | null;
@@ -64,6 +67,9 @@ export interface DiImportProgress {
   total: number;
   currentRef: string | null;
   phase: string;
+  /** Étape en cours (facultatif) : « rattachement du client… », « création de
+   *  la DI… », « réactivation… » — pour un suivi ligne par ligne. */
+  detail?: string;
 }
 
 export type DiImportJobStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';

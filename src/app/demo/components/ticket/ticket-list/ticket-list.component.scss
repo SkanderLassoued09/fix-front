@@ -2401,6 +2401,13 @@ $pricing-red: #dc2626;
         background: #f0fdf4;
     }
 
+    // BC verrouillé tant que le devis n'est pas chargé (séquence Approval).
+    &--locked {
+        opacity: 0.9;
+        background: $bg-surface;
+        border-style: dashed;
+    }
+
     &__head {
         display: flex;
         align-items: center;
@@ -2506,6 +2513,25 @@ $pricing-red: #dc2626;
     font-size: 0.85rem;
     font-weight: 600;
     color: #2563eb;
+}
+// Message « BC verrouillé » affiché à la place de l'uploader tant que le devis
+// est absent (le back reste la vraie garde).
+.fp-doc-locked {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 12px;
+    border: 1px dashed $border;
+    border-radius: 7px;
+    background: $bg-surface;
+    font-size: 0.78rem;
+    line-height: 1.35;
+    color: $text-secondary;
+    .pi {
+        flex: 0 0 auto;
+        font-size: 0.8rem;
+        color: $text-secondary;
+    }
 }
 ::ng-deep .fp-doc-upload {
     .p-button {
@@ -3211,4 +3237,41 @@ $af-mono: "JetBrains Mono", ui-monospace, monospace;
     box-shadow: 0 6px 16px rgba(124, 111, 224, 0.3) !important;
     &:hover { filter: brightness(1.05); }
     &:disabled { opacity: 0.55; box-shadow: none !important; }
+}
+
+/* (c) Bornes SOUPLES — avertissement ambre non bloquant + état warn de l'étape 1,
+   note « non payant » et rappel de l'estimation d'origine (modal Tarification). */
+.pricing-warn {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0.5rem 0 0.25rem;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid #fcd34d;
+    background: #fffbeb;
+    border-radius: 8px;
+    color: #b45309;
+    font-size: 0.8rem;
+    i { color: #b45309; }
+    strong { color: #92400e; }
+}
+.pricing-step__help--warn { color: #b45309; }
+.pricing-nonpayant {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0.4rem 0;
+    padding: 0.5rem 0.7rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    color: #475569;
+    font-size: 0.8rem;
+    i { color: #16a34a; }
+    strong { color: #334155; }
+}
+.pricing-estimate-orig {
+    margin: 0.35rem 0;
+    font-size: 0.8rem;
+    color: #64748b;
+    strong { color: #2563eb; }
 }
