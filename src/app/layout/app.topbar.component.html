@@ -46,6 +46,7 @@
             <button
                 type="button"
                 class="p-link layout-topbar-button topbar-bell__btn"
+                [class.topbar-bell__btn--beat]="blPending"
                 (click)="toggleBell()"
                 aria-label="Notifications"
             >
@@ -59,6 +60,15 @@
                 <div class="topbar-bell__head">
                     <strong>Notifications</strong>
                     <span class="topbar-bell__head-actions">
+                        <button
+                            *ngIf="blPending"
+                            type="button"
+                            class="p-link topbar-bell__snooze"
+                            (click)="snoozeBlAlert()"
+                            title="Mettre l'alerte BL en veille (coupe le son quelques minutes ; l'alerte reste tant que le BL n'est pas téléversé)"
+                        >
+                            <i class="pi pi-pause"></i>
+                        </button>
                         <button
                             type="button"
                             class="p-link"
@@ -96,11 +106,15 @@
                         *ngFor="let n of erpNotifications"
                         class="topbar-bell__item"
                         [class.topbar-bell__item--unread]="!n.readAt"
+                        [class.topbar-bell__item--beat]="n.type === BL_PENDING_TYPE"
                         (click)="onErpNotifClick(n)"
                     >
                         <span
                             class="topbar-bell__dot"
-                            *ngIf="!n.readAt"
+                            [class.topbar-bell__dot--beat]="
+                                n.type === BL_PENDING_TYPE
+                            "
+                            *ngIf="!n.readAt || n.type === BL_PENDING_TYPE"
                         ></span>
                         <span class="topbar-bell__body">
                             <span class="topbar-bell__msg">{{ n.message }}</span>

@@ -1000,6 +1000,20 @@ export class TicketListComponent implements OnInit, OnDestroy {
             this.showDialogForNegociate2(row);
             return;
         }
+        // BL à téléverser (DI_DOC_BL_PENDING) → modale « Affectation des Fichiers ».
+        if (
+            row &&
+            action === 'affectation' &&
+            (st === 'WAITING_BL' ||
+                st === 'WAITING_FACTURE' ||
+                st === 'CLOSING' ||
+                st === 'ATTENTE_BL_FACTURE' ||
+                st === 'FINISHED' ||
+                st === 'IRREPARABLE')
+        ) {
+            this.openUploadFileFinished(row);
+            return;
+        }
         this.diDetail.openById(diId);
     }
 
@@ -2501,6 +2515,29 @@ export class TicketListComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * RETOUR erreur Fixtronix SANS PDR (réparable) : bascule « facturer le
+     * diagnostic ? » du modal Pricing. Persiste le flag DI `diagnosticPayant`
+     * AVANT toute validation de prix (setDiagnosticPayant est verrouillé une fois
+     * price>0). Le routage n'en dépend PAS. Non payant ⇒ on efface le prix (le
+     * back rejette tout prix positif en non payant).
+     */
+    onPricingPayantToggle(): void {
+        const id = this.current_id;
+        if (!id) return;
+        if (!this.pricingDiagnosticPayant) {
+            this.price = null;
+        }
+        this.apollo
+            .mutate<any>({
+                mutation: this.ticketSerice.setDiagnosticPayant(
+                    id,
+                    this.pricingDiagnosticPayant,
+                ),
+            })
+            .subscribe({ error: () => {} });
+    }
+
     pricing() {
         this.confirmationService.confirm({
             message: 'Voulez vous confirmer les changements',
@@ -3348,6 +3385,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     onUpload(event: any, type: string) {
+        // Emplacement verrouillé une fois le document chargé : on ignore toute
+        // nouvelle sélection (couvre le drag-drop, que [disabled] ne bloque pas).
+        // Demande produit : « une fois le fichier uploadé, désactiver l'endroit
+        // d'upload ».
+        const alreadyUploaded =
+            (type === 'BL' && !!this.filesSelected?.bon_de_livraison) ||
+            (type === 'Facture' && !!this.filesSelected?.facture) ||
+            (type === 'BC' && this.bcReady) ||
+            (type === 'Devis' && this.devisReady);
+        if (alreadyUploaded) return;
         this.uploadFileLoading = true;
         if (type !== 'image') {
             this.isLoading = this.uploadFileLoading;
@@ -3712,6 +3759,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
     /** Affichage BRUT de la valeur DB en MAJUSCULES (décision produit : plus de
      *  libellés « jolis » ; on montre le statut tel qu'il est stocké). */
     getStatusLabel(status: string): string {
-        return (status ?? '').toString().toUpperCase() || '—';
+        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
+        // PRICING) affiché « Pricing » (demande produit).
+        const s = (status ?? '').toString().trim();
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        return s.toUpperCase() || '—';
     }
 }

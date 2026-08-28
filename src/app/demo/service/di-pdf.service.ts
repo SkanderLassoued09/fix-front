@@ -400,7 +400,10 @@ export class DiPdfService {
 
     /** Raw workflow status → French label (mirrors the app's UI labels). */
     private statusLabel(status: any): string {
-        // Affichage BRUT de la valeur DB en MAJUSCULES.
-        return (status ?? '').toString().trim().toUpperCase() || '—';
+        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
+        // PRICING) affiché « Pricing » (demande produit).
+        const s = (status ?? '').toString().trim();
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        return s.toUpperCase() || '—';
     }
 }

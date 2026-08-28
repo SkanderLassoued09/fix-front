@@ -47,6 +47,19 @@ export class NotificationCenterService {
     private lastSoundAt = 0;
     private static readonly SOUND_MIN_INTERVAL_MS = 3000;
 
+    // ── Alerte BL « cœur qui bat » : son EN BOUCLE tant qu'une notif
+    //    DI_DOC_BL_PENDING est présente (jusqu'à l'upload du BL). Snooze = coupe
+    //    le SON pour un délai (le visuel continue de battre) ; réarmé au reload
+    //    (état en mémoire) ou à l'arrivée d'une nouvelle alerte BL.
+    private static readonly BL_PENDING_TYPE = 'DI_DOC_BL_PENDING';
+    private static readonly HEARTBEAT_INTERVAL_MS = 2500;
+    private static readonly BL_SNOOZE_MS = 5 * 60 * 1000;
+    private blHeartbeatTimer: any = null;
+    private blSnoozeTimer: any = null;
+    private blSnoozeUntil = 0;
+    /** true tant qu'une alerte BL est présente — pilote le battement visuel. */
+    readonly blPending$ = new BehaviorSubject<boolean>(false);
+
     constructor(private readonly apollo: Apollo, private readonly zone: NgZone) {}
 
     /** À appeler une fois l'utilisateur authentifié (topbar `ngOnInit`). */
@@ -136,6 +149,12 @@ export class NotificationCenterService {
             // Hors zone Angular (socket.io) → on rentre pour déclencher le rendu.
             this.zone.run(() => this.onIncoming(n));
         });
+        this.socket.on(
+            'notification.removed',
+            (p: { diId?: string | null; type?: string | null }) => {
+                this.zone.run(() => this.onRemoved(p));
+            },
+        );
     }
 
     private onIncoming(n: ErpNotification): void {
@@ -143,6 +162,118 @@ export class NotificationCenterService {
         this.notifications$.next([n, ...this.notifications$.value].slice(0, 50));
         this.incoming$.next(n); // → toast cliquable
         this.playSound();
+        // Nouvelle alerte BL → on réarme le son (annule un snooze en cours) puis
+        // on (re)démarre le cœur qui bat.
+        if (n?.type === NotificationCenterService.BL_PENDING_TYPE) {
+            this.blSnoozeUntil = 0;
+        }
+        this.recomputeBlPending();
+    }
+
+    /** Retrait temps réel (event `notification.removed`) : la notif dont l'action
+     *  est faite (ex. BL/devis uploadé) disparaît de la cloche + coupe le son. */
+    private onRemoved(p: { diId?: string | null; type?: string | null }): void {
+        if (!p?.diId || !p?.type) return;
+        const before = this.notifications$.value;
+        const match = (n: ErpNotification) =>
+            n.diId === p.diId && n.type === p.type;
+        const removed = before.filter(match);
+        if (!removed.length) {
+            // Non présente en mémoire (liste pas encore chargée) → recale le compte.
+            this.refreshUnreadCount();
+        } else {
+            const unreadRemoved = removed.filter((n) => !n.readAt).length;
+            this.notifications$.next(before.filter((n) => !match(n)));
+            if (unreadRemoved > 0) {
+                this.unreadCount$.next(
+                    Math.max(0, this.unreadCount$.value - unreadRemoved),
+                );
+            }
+        }
+        this.recomputeBlPending();
+    }
+
+    /** Recalcule la présence d'une alerte BL (par PRÉSENCE, pas `readAt` : elle
+     *  nagge jusqu'à l'UPLOAD, pas jusqu'à la lecture) et pilote le battement. */
+    private recomputeBlPending(): void {
+        const pending = this.notifications$.value.some(
+            (n) => n.type === NotificationCenterService.BL_PENDING_TYPE,
+        );
+        if (pending !== this.blPending$.value) this.blPending$.next(pending);
+        this.updateHeartbeatLoop();
+    }
+
+    private updateHeartbeatLoop(): void {
+        const shouldSound =
+            this.blPending$.value &&
+            this.soundEnabled$.value &&
+            Date.now() >= this.blSnoozeUntil;
+        if (shouldSound && !this.blHeartbeatTimer) {
+            this.playHeartbeat(); // un battement immédiat…
+            this.blHeartbeatTimer = setInterval(
+                () => this.playHeartbeat(),
+                NotificationCenterService.HEARTBEAT_INTERVAL_MS,
+            ); // … puis en boucle.
+        } else if (!shouldSound && this.blHeartbeatTimer) {
+            clearInterval(this.blHeartbeatTimer);
+            this.blHeartbeatTimer = null;
+        }
+    }
+
+    /** Coupe le SON de l'alerte BL pour un délai (le visuel continue de battre).
+     *  Le son revient au reload ou après le délai. */
+    snoozeBl(): void {
+        this.blSnoozeUntil = Date.now() + NotificationCenterService.BL_SNOOZE_MS;
+        this.updateHeartbeatLoop();
+        if (this.blSnoozeTimer) clearTimeout(this.blSnoozeTimer);
+        // Ré-évalue à l'expiration du snooze (relance le son si BL toujours en attente).
+        this.blSnoozeTimer = setTimeout(
+            () => this.updateHeartbeatLoop(),
+            NotificationCenterService.BL_SNOOZE_MS + 50,
+        );
+    }
+
+    /** Battement SONORE de l'alerte BL = le MÊME son que la notification de l'app
+     *  (ding-dong 880/660 Hz), audible sur haut-parleurs (un « lub-dub » grave
+     *  ~120 Hz est inaudible sur la plupart des enceintes). */
+    private playHeartbeat(): void {
+        if (!this.soundEnabled$.value) return;
+        this.emitDingDong();
+    }
+
+    /** Émet le ding-dong (880/660 Hz) — LE son de notification de l'app. Requiert
+     *  l'audio débloqué. Réutilisé par le son one-shot (playSound) ET la boucle
+     *  d'alerte BL (playHeartbeat). */
+    private emitDingDong(): void {
+        if (!this.audioUnlocked || !this.audioCtx) return;
+        const ctx = this.audioCtx;
+        const emit = () => {
+            try {
+                const t0 = ctx.currentTime;
+                const play = (freq: number, start: number, dur: number) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.0001, t0 + start);
+                    gain.gain.exponentialRampToValueAtTime(0.12, t0 + start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(
+                        0.0001,
+                        t0 + start + dur,
+                    );
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(t0 + start);
+                    osc.stop(t0 + start + dur + 0.02);
+                };
+                play(880, 0, 0.14); // ding
+                play(660, 0.13, 0.18); // dong
+            } catch {
+                /* jamais d'erreur remontée */
+            }
+        };
+        if (ctx.state === 'suspended') ctx.resume().then(emit).catch(emit);
+        else emit();
     }
 
     // ── GraphQL ──────────────────────────────────────────────────────────────
@@ -187,6 +318,7 @@ export class NotificationCenterService {
                 next: ({ data }) => {
                     this.notifications$.next(data?.myNotifications ?? []);
                     this.lastListLoaded = true;
+                    this.recomputeBlPending();
                 },
                 error: () => {},
             });
@@ -261,6 +393,7 @@ export class NotificationCenterService {
     setSound(enabled: boolean): void {
         this.soundEnabled$.next(enabled);
         if (enabled) this.unlockAudio(); // un clic « activer » débloque aussi l'audio
+        this.updateHeartbeatLoop(); // couper/relancer le cœur qui bat selon le son
         this.apollo
             .mutate<any>({
                 mutation: gql`
@@ -309,44 +442,6 @@ export class NotificationCenterService {
         if (now - this.lastSoundAt < NotificationCenterService.SOUND_MIN_INTERVAL_MS)
             return;
         this.lastSoundAt = now;
-        const ctx = this.audioCtx;
-        // Émet le ding-dong. Capturé APRÈS un éventuel resume() → `currentTime`
-        // est valide (sinon le son est programmé dans le passé et jamais audible).
-        const emit = () => {
-            try {
-                const t0 = ctx.currentTime;
-                const play = (freq: number, start: number, dur: number) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0.0001, t0 + start);
-                    gain.gain.exponentialRampToValueAtTime(
-                        0.12,
-                        t0 + start + 0.02,
-                    );
-                    gain.gain.exponentialRampToValueAtTime(
-                        0.0001,
-                        t0 + start + dur,
-                    );
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(t0 + start);
-                    osc.stop(t0 + start + dur + 0.02);
-                };
-                play(880, 0, 0.14); // ding
-                play(660, 0.13, 0.18); // dong
-            } catch {
-                /* jamais d'erreur remontée à l'utilisateur */
-            }
-        };
-        // CAUSE #1 du « son aléatoire » : le contexte repasse en « suspended »
-        // (inactivité / politique navigateur). `resume()` est ASYNCHRONE → on
-        // programme le son APRÈS sa résolution, jamais avant.
-        if (ctx.state === 'suspended') {
-            ctx.resume().then(emit).catch(emit);
-        } else {
-            emit();
-        }
+        this.emitDingDong();
     }
 }

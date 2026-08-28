@@ -52,6 +52,11 @@ export class AppTopBarComponent implements OnInit {
     erpUnread = 0;
     erpNotifications: ErpNotification[] = [];
     erpSoundOn = true;
+    /** true tant qu'une alerte BL est présente — pilote le battement (cœur) de la
+     *  cloche et de l'item, et l'affichage du bouton snooze. */
+    blPending = false;
+    /** Type de la notif d'alerte BL (cœur qui bat + son en boucle). */
+    readonly BL_PENDING_TYPE = 'DI_DOC_BL_PENDING';
 
     // ── Utilisateur connecté (affiché en haut à droite) ──────────────────────
     userName = '';
@@ -121,6 +126,15 @@ export class AppTopBarComponent implements OnInit {
         this.notificationCenter.soundEnabled$.subscribe(
             (on) => (this.erpSoundOn = on),
         );
+        this.notificationCenter.blPending$.subscribe((p) => {
+            this.blPending = p;
+            this.cdr.markForCheck?.();
+        });
+    }
+
+    /** Coupe le SON de l'alerte BL pour un délai (le cœur continue de battre). */
+    snoozeBlAlert(): void {
+        this.notificationCenter.snoozeBl();
     }
 
     /** Ouvre/ferme le panneau cloche ; charge la liste À l'ouverture seulement.

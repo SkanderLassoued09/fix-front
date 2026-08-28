@@ -3083,6 +3083,16 @@ $af-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
 // Dropzone
+@keyframes af-dropzone-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(47, 97, 224, 0);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(47, 97, 224, 0.18);
+    }
+}
+
 .af-dropzone {
     display: flex;
     flex-direction: column;
@@ -3101,6 +3111,13 @@ $af-mono: "JetBrains Mono", ui-monospace, monospace;
         opacity: 0.55;
         cursor: not-allowed;
         pointer-events: none;
+    }
+    // Item 5 — « bruyant tant que non uploadé » : l'emplacement d'un document que
+    // NOTRE côté doit fournir (BL en premier) pulse pour attirer l'œil, et ne
+    // s'arrête qu'une fois le fichier chargé (il passe alors en --disabled).
+    &--pulse {
+        border-color: $af-p2;
+        animation: af-dropzone-pulse 1.4s ease-in-out infinite;
     }
     &__icon {
         width: 42px;

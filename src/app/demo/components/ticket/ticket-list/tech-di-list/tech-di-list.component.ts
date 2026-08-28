@@ -104,6 +104,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     // `dialogAutoPaused` is the flag we persist so a refresh-restore also resumes.
     private autoPausedByLifecycle = false;
     private dialogAutoPaused = false;
+
     private diagnosticTimerId: any = null;
     private repairTimerId: any = null;
     private dialogAutoSaveTimerId: any = null;
@@ -411,7 +412,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             }
             this.startStopwatch1();
             this.persistActiveDialogState('repair');
-            this.requestTechListRefresh('action:repair-resume');
+            // Pas de rechargement de liste (flicker) : patch optimiste + statut serveur.
             return;
         }
 
@@ -425,6 +426,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 ? Math.max(0, Date.now() - this.repairRunStartedAtMs)
                 : 0);
         this.repairRunStartedAtMs = null;
+        // Pause MANUELLE — cf. onDiagPause (même garde sur le gel automatique).
+        if (!this.autoPausedByLifecycle) {
+            this.dialogAutoPaused = false;
+        }
         const frozenRepTime = this.msToTimeString(this.repairElapsedBaseMs);
         if (this.di) {
             // Carry the frozen rep_time + paused status onto `this.di` so the
@@ -453,7 +458,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // of replaying the stale INREPARATION snapshot — which repModal() would
         // auto-resume via changeStatusInReparation.
         this.persistActiveDialogState('repair');
-        this.requestTechListRefresh('action:repair-pause');
+        // Pas de rechargement de liste (flicker) : patch optimiste + statut serveur.
     }
 
     /**
@@ -979,6 +984,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .pipe(debounceTime(150), takeUntil(this.destroy$))
             .subscribe(() => {
                 this.persistActiveDialogState();
+                // Recalcule le GATING des boutons de fin à CHAQUE changement de
+                // bascule. Sans ça, `updateDisableValues()` ne tournait qu'à
+                // l'ouverture du modal : décocher « réparable » laissait « Fin
+                // diagnostique retour » actif au lieu de « Envoyer vers finir »
+                // (seul chemin qui route un retour non réparable → IRREPARABLE).
+                this.updateDisableValues();
                 this.refreshDiagnosticVm();
             });
 
@@ -990,7 +1001,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .listen('tech-list')
             .pipe(takeUntil(this.destroy$))
             .subscribe(() => {
-                this.loadData();
+                this.loadData(/* silent */ true); // rafraîchissement de fond
             });
 
         // Notification subscription
@@ -1390,8 +1401,17 @@ export class TechDiListComponent implements OnInit, OnDestroy {
      * Centralized data loading method
      * Handles both search and regular data fetching with pagination
      */
-    loadData() {
-        this.isLoading = true;
+    /**
+     * @param silent rafraîchissement de FOND (déclenché par le temps réel) : ne
+     *   lève pas le voile `p-blockUI`. La pause/reprise émet un `updateTicket`
+     *   côté serveur qui revient par websocket et rappelait `loadData()` — d'où
+     *   le « petit refresh » visible à chaque clic, alors même que l'action
+     *   elle-même ne recharge plus rien. On garde la fraîcheur, on retire le voile.
+     */
+    loadData(silent = false) {
+        if (!silent) {
+            this.isLoading = true;
+        }
 
         const hasActiveSearch =
             this.currentSearchField &&
@@ -1868,13 +1888,27 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
     };
 
-    private readonly onWindowBeforeUnload = (): void => {
-        // Backup for the visibilitychange:hidden freeze above. Usually a no-op
-        // (hidden fires first and already flipped the DI to *_Pause), but if it
-        // didn't, this still freezes + persists so the reopen never counts the
-        // closed-tab idle.
-        this.freezeActiveDialogForLifecycle();
+    private readonly onWindowBeforeUnload = (e: BeforeUnloadEvent): void => {
+        // Une DI EN COURS (non pausée) au moment de fermer/rafraîchir : on AVERTIT
+        // l'utilisateur (dialogue natif « Quitter le site ? ») ET on gèle en
+        // best-effort (l'ancre est repliée côté serveur s'il part quand même, donc
+        // aucun temps mort n'est compté). Aucun prompt si rien ne tourne.
+        if (this.hasRunningUnpausedDi()) {
+            e.preventDefault();
+            e.returnValue = ''; // requis pour déclencher le prompt natif
+            this.freezeActiveDialogForLifecycle(); // auto-pause best-effort
+        }
     };
+
+    /** true si une DI diag/rep est ACTIVEMENT en cours : un modal est ouvert, le
+     *  statut ne finit pas par `_Pause`, et le chrono tourne. Condition unique de
+     *  l'avertissement de fermeture ET du gel best-effort. */
+    private hasRunningUnpausedDi(): boolean {
+        const mode = this.getActiveDialogMode();
+        if (!mode) return false;
+        if ((this.di?.status ?? '').endsWith('_Pause')) return false;
+        return mode === 'repair' ? !!this.repairRunStartedAtMs : !!this.isRunning;
+    }
 
     /**
      * Freeze the active diag/rep on page-hide / refresh / close: reuse the
@@ -1884,14 +1918,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
      * `autoPaused = true` so a refresh-restore knows to auto-resume.
      */
     private freezeActiveDialogForLifecycle(): void {
+        if (!this.hasRunningUnpausedDi()) return; // rien en cours / déjà pausé
         const mode = this.getActiveDialogMode();
-        if (!mode) return;
-        const status = this.di?.status ?? '';
-        // Already paused (manually or by a prior freeze) — don't double-pause.
-        if (status.endsWith('_Pause')) return;
-        const running =
-            mode === 'repair' ? !!this.repairRunStartedAtMs : this.isRunning;
-        if (!running) return;
 
         this.autoPausedByLifecycle = true;
         this.dialogAutoPaused = true; // picked up by persistActiveDialogState()
@@ -2143,7 +2171,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             if (!isRestoringDiagnostic && di?.status !== 'DIAGNOSTIC_Pause') {
                 promises.push(this.changeStatus(di._idDi));
             }
-            promises.push(this.getTimeSpent(di._id));
+            // `di.status` est disponible MAINTENANT ; `this.di` ne sera affecté
+            // qu'APRÈS ce `Promise.all`. La souscription de `getTimeSpent` ne doit
+            // donc pas décider « en pause ? » en lisant `this.di` (encore vide au
+            // 1er tick → elle démarrait le chrono d'une DI pausée).
+            promises.push(
+                this.getTimeSpent(
+                    di._id,
+                    di?.status === 'DIAGNOSTIC_Pause',
+                ),
+            );
             promises.push(this.getImage(di._idDi));
             promises.push(this.getAllRemarque(di._idDi));
 
@@ -2227,6 +2264,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.diagModalVisibleVm = true;
                 this.activeDiagnosticDraft = true;
                 this.persistActiveDialogState('diagnostic', di);
+                // Les préremplissages patchent en `{ emitEvent: false }` : il faut
+                // réaligner EXPLICITEMENT ce qui dérive de « réparable » (miroir
+                // `isReperable`, toggle PDR grisé/réactivé) avant de calculer le
+                // gating des boutons — sinon une DI seedée non réparable s'ouvrirait
+                // avec le toggle PDR encore actif.
+                this.syncReparableDerivedState(
+                    this.diagFormTech.get('isReparable')?.value,
+                );
                 this.updateDisableValues();
                 this.refreshDiagnosticVm();
             }
@@ -2256,11 +2301,27 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     di.remarqueTech ||
                     dataLogs.remarque_tech_diagnostic ||
                     '',
-                isPdr: di.isPdr || dataLogs.contain_pdr || true,
+                // `??` et NON `||` : un `false` persisté est une DÉCISION du tech
+                // (« pas de PDR »), pas une absence de valeur. Avec `|| true` tout
+                // `false` était écrasé et le modal s'ouvrait toujours sur Oui, ce
+                // qui obligeait à décocher à la main sur FT-02/05/08. Le défaut
+                // `true` ne s'applique plus qu'à un champ réellement ABSENT.
+                isPdr: di.isPdr ?? dataLogs.contain_pdr ?? true,
                 di_category_id:
                     di.di_category_id || dataLogs.di_category_id || true,
                 isReparable:
-                    di.isReparable || dataLogs.can_be_repaired || true,
+                    di.isReparable ?? dataLogs.can_be_repaired ?? true,
+                // RETOUR : le verdict « erreur Fixtronix » (notre faute) DOIT être
+                // pré-rempli depuis la DI / le snapshot du cycle. Sinon la bascule
+                // reste OFF (défaut) → le routage part en « erreur client » →
+                // PENDING2 + tarification, ce qui FACTURERAIT au client une erreur
+                // de notre côté. Une DI marquée Fixtronix ne doit JAMAIS aller en
+                // PENDING2/Pricing (→ PENDING3 direct, non facturé). `??` pour
+                // respecter un `false` explicite.
+                isErrorFromFixtronix:
+                    di.isErrorFromFixtronix ??
+                    dataLogs.isErrorFromFixtronix ??
+                    false,
                 quantity: di.quantity || 0,
                 composantSelectedDropdown:
                     di.composantSelectedDropdown ?? dataLogs.array_composants,
@@ -2281,9 +2342,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     this.cleanStr(di.remarqueTech) ||
                     this.cleanStr(detailsDi.remarque_tech_diagnostic) ||
                     '',
-                isPdr: di.isPdr || detailsDi.contain_pdr || true,
+                // `??` et NON `||` — cf. `processDiagnosticWithLogs` : un `false`
+                // persisté doit survivre au préremplissage.
+                isPdr: di.isPdr ?? detailsDi.contain_pdr ?? true,
                 isReparable:
-                    di.isReparable || detailsDi.can_be_repaired || true,
+                    di.isReparable ?? detailsDi.can_be_repaired ?? true,
                 di_category_id:
                     di.di_category_id || detailsDi.di_category_id || '',
                 quantity: di.quantity || 0,
@@ -2454,7 +2517,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     this.error = 'Failed to load data';
                 },
             });
-        this.ignoreCount = di.ignoreCount;
+        // NE PAS écrire `this.ignoreCount` ici : ce champ est lu par `diagContext`
+        // (`ignoreCount: this.ignoreCount ?? 0`) pour décider `isRetour`, donc quelle
+        // PAIRE de boutons de fin le modal DIAGNOSTIC affiche. Le renseigner depuis
+        // la réparation faisait qu'ouvrir une répa puis un diagnostic pouvait
+        // afficher les boutons retour sur une DI du flux original (et l'inverse).
+        // Le modal de réparation n'en a pas besoin : il lit `this.di`.
         this.resetModalForm();
         // `resetModalForm()` nulls `this.di` (it clears the diagnostic form and
         // the working DI). Assign the repair DI AFTER the reset so the
@@ -2498,7 +2566,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
         this.showRepairModal = true;
         this.persistActiveDialogState('repair', di);
-        this.getTimeSpentRep(di._id);
+        this.getTimeSpentRep(di._id, di?.status === 'REPARATION_Pause');
         this.getImage(di._idDi);
         // Only transition the DI to INREPARATION when it's NOT already paused.
         // Otherwise reopening a paused ticket would silently revive it on the
@@ -2542,11 +2610,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .mutate<any>({
                 mutation: this.ticketSerice.addLogPause(logsPause),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                }
-            });
+            // Journalisation de pause : jamais d'overlay global (cf. changeStatus).
+            .subscribe(() => {});
     }
 
     updatePauseLog(_idStat: string, _idDoc: string) {
@@ -2559,11 +2624,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .mutate<any>({
                 mutation: this.ticketSerice.updateLogPause(update),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                }
-            });
+            // Journalisation de pause : jamais d'overlay global (cf. changeStatus).
+            .subscribe(() => {});
     }
 
     getAllRemarque(_id) {
@@ -2598,6 +2660,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     show() {}
 
     hideDialogDiag() {
+        this.stopDiagnosticTimer(); // cf. onDiagMinimize : sinon l'intervalle survit
         this.diDialogDiag[this.selectedDi] = false;
         this.clearPersistedDialogState('diagnostic');
     }
@@ -2649,9 +2712,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .mutate<Boolean>({
                 mutation: this.ticketSerice.changeStatusDiToInDiagnostique(_id),
             })
-            .subscribe(({ loading }) => {
-                this.isLoading = loading;
-            });
+            // Pas de `isLoading` global : la reprise est OPTIMISTE (ligne + puce
+            // déjà patchées). Piloter l'overlay ici faisait « clignoter » l'écran
+            // à chaque pause/reprise — le « petit refresh sans raison ».
+            .subscribe(() => {});
     }
 
     changeStatusInReparation(_id) {
@@ -2735,8 +2799,25 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * DÉMARRE le chrono. Ce n'était pas un démarrage mais un TOGGLE : si un
+     * intervalle résiduel traînait (`isRunning` resté vrai), le clic « Reprendre »
+     * partait dans la branche `else` et ARRÊTAIT au lieu de démarrer — le
+     * « il faut cliquer deux fois ». L'arrêt a sa méthode dédiée
+     * (`stopDiagnosticTimer`) ; ici on ne fait que démarrer, ou ré-ancrer.
+     */
     startStopwatch(anchorMs?: number) {
-        if (!this.isRunning) {
+        if (this.isRunning) {
+            // Déjà en cours : ré-ancrer si l'appelant fournit une ancre serveur
+            // plus juste, sinon ne rien faire (idempotent).
+            if (anchorMs != null && anchorMs !== this.diagRunStartedAtMs) {
+                this.startTime = anchorMs;
+                this.diagRunStartedAtMs = anchorMs;
+                this.persistActiveDialogState();
+            }
+            return;
+        }
+        {
             this.isRunning = true;
             // Prefer the authoritative server anchor (Stat.diagRunStartedAt,
             // passed by getTimeSpent / resume) so elapsed survives refresh and
@@ -2753,14 +2834,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
             this.persistActiveDialogState();
             this.updateTimer();
-        } else {
-            this.stopDiagnosticTimer();
-            this.persistActiveDialogState();
         }
     }
 
+    /** Démarrage strict — cf. `startStopwatch` (ce n'était pas un toggle voulu). */
     startStopwatch1() {
-        if (!this.isRunning1) {
+        if (this.isRunning1) {
+            return;
+        }
+        {
             this.isRunning1 = true;
             this.startTime1 = Date.now();
             console.debug({
@@ -2772,9 +2854,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
             this.persistActiveDialogState();
             this.updateTimer1();
-        } else {
-            this.stopRepairTimer();
-            this.persistActiveDialogState();
         }
     }
 
@@ -2928,7 +3007,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     padZero(value: number): string {
-        return value.toString().padStart(2, '0');
+        // `Math.trunc` + garde : `padStart` ne tronque pas, donc `padZero(777.65)`
+        // rendait « 777.65 » — le SEUL chemin du front qui injecte un flottant
+        // dans une partie de temps (via `setInitialTime`), d'où les affichages à
+        // rallonge avec un point. `NaN`/`undefined` rendaient « NaN » ou jetaient.
+        const n = Number(value);
+        if (!Number.isFinite(n)) {
+            return '00';
+        }
+        return Math.trunc(Math.abs(n)).toString().padStart(2, '0');
     }
 
     private timeStringToMs(timeString: string): number {
@@ -2953,7 +3040,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     setInitialTime(timeString: string) {
-        const s = (timeString ?? '').trim(); // tolerate legacy spaced values
+        const raw = (timeString ?? '').trim(); // tolerate legacy spaced values
+        // Valider AVANT d'alimenter l'affichage : cette méthode poussait le
+        // résultat brut de `split(':').map(Number)` dans les champs rendus, sans
+        // aucun contrôle — une valeur corrompue en base (on en a trouvé 2 valant
+        // littéralement « undefined ») s'affichait telle quelle.
+        const s = this.isValidTimeFormat(raw) ? raw : '00:00:00';
         const [hours, minutes, seconds] = s.split(':').map(Number);
         // Reset run-leg state — the offset is the new floor, no idle to fold.
         // Drop any stale anchor; the caller re-anchors from the server next.
@@ -2967,7 +3059,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     setInitialTime1(timeString: string) {
-        const s = (timeString ?? '').trim(); // tolerate legacy spaced values
+        const raw = (timeString ?? '').trim(); // tolerate legacy spaced values
+        const s = this.isValidTimeFormat(raw) ? raw : '00:00:00'; // cf. setInitialTime
         const [hours, minutes, seconds] = s.split(':').map(Number);
         this.startTime1 = 0;
         this.isRunning1 = false;
@@ -3077,11 +3170,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 useMutationLoading: true,
             })
             .pipe(takeUntil(this.destroy$))
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                }
-            });
+            // Journalisation de pause : jamais d'overlay global (cf. changeStatus).
+            .subscribe(() => {});
 
         this.apollo
             .mutate<any>({
@@ -3092,8 +3182,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 useMutationLoading: true,
             })
             .pipe(takeUntil(this.destroy$))
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
+            // Pas d'overlay global : la pause est optimiste (cf. changeStatus).
+            .subscribe(({ data }) => {
                 if (data) {
                     this.persistActiveDialogState('diagnostic');
                 }
@@ -3107,8 +3197,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 useMutationLoading: true,
             })
             .pipe(takeUntil(this.destroy$))
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
+            // Pas d'overlay global : la pause est optimiste (cf. changeStatus).
+            .subscribe(({ data }) => {
                 if (data) {
                     this.markDiagnosticPausedFrontend();
                     this.refreshDiagnosticVm();
@@ -3117,7 +3207,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
 
         this.addPauseLogs(this.selectedDi, 'diag');
-        this.loadData(); // Use loadData instead of getAllTechDi
+        // Pas de rechargement de liste ici (flicker « sans raison ») : la ligne est
+        // déjà patchée optimistiquement (patchTechListRowStatus) et le statut est
+        // persisté côté serveur par les mutations ci-dessus.
         this.persistActiveDialogState('diagnostic');
         this.refreshDiagnosticVm();
     }
@@ -3189,8 +3281,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     getStatusLabel(status: string): string {
-        // Affichage BRUT de la valeur DB en MAJUSCULES.
-        return (status ?? '').toString().toUpperCase() || '—';
+        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
+        // PRICING) affiché « Pricing » (demande produit).
+        const s = (status ?? '').toString().trim();
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        return s.toUpperCase() || '—';
     }
 
     getSeverity(status: string) {
@@ -3245,14 +3340,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     updateDisableValues() {
-        const isReperable = this.diagFormTech.get('isReparable')?.value ?? true;
-        let isPdr = this.diagFormTech.get('isPdr')?.value ?? true;
-
-        isReperable == false ? (isPdr = false) : (isPdr = isPdr);
-
-        const isErrorFromFixtronixTech =
-            this.diagFormTech.get('isErrorFromFixtronix')?.value ?? true;
-
         // « Finir diag » n'est JAMAIS gaté par la sélection PDR : conclure un
         // diagnostic sans aucune pièce est un cas valide, donc décocher la
         // dernière PDR ne doit plus rien bloquer (l'ancienne règle
@@ -3263,13 +3350,27 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // Magasin (qui recevrait une demande de pièces vide).
         this.disabledDiagnostiqueValue = false;
 
-        this.techRetourSendFinished = !(
-            (isPdr === false && isErrorFromFixtronixTech === true) ||
-            isReperable === false
-        );
-
-        this.disabledDiagnostiqueRetourValue =
-            this.disabledDiagnostiqueValue || !this.techRetourSendFinished;
+        // Flux RETOUR : PLUS AUCUN GRISAGE. Les deux boutons (« Fin diagnostique
+        // retour » et « Envoyer vers finir ») sont toujours cliquables.
+        //
+        // Historiquement l'un des deux était grisé parce que le BACKEND routait
+        // mal si on cliquait l'autre : « Envoyer vers finir » clôturait en
+        // IRREPARABLE une DI réparable, et « Fin diagnostique retour » envoyait
+        // une DI NON réparable en PENDING2. L'UI compensait un trou serveur.
+        //
+        // Ces deux trous sont désormais bouchés et SERVEUR-AUTORITAIRES :
+        //   - `changeStatusPending2` : non réparable + sortie de diagnostic
+        //     → IRREPARABLE (backstop, miroir de `changeStatusMagasinEstimation`) ;
+        //   - `changeStatusTofinsh` : branche RETOUR routant les DI RÉPARABLES
+        //     (avec PDR → magasin ; sans PDR → PENDING3 si Fixtronix, sinon PENDING2).
+        // Les deux boutons produisent donc le MÊME statut correct : il n'y a plus
+        // rien à protéger côté UI, et le tech n'est plus bloqué par un bouton gris.
+        //
+        // ⚠️ Polarité : `techRetourSendFinished` est lié à `[retourSendDisabled]`
+        // (true = GRISÉ), et `disabledDiagnostiqueRetourValue` à `[primaryDisabled]`.
+        // Les deux sont écrits explicitement — surtout pas dérivés l'un de l'autre.
+        this.techRetourSendFinished = false;
+        this.disabledDiagnostiqueRetourValue = false;
 
         this.cdr.detectChanges();
     }
@@ -3394,8 +3495,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             accept: () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
-                    pdr: this.diagFormTech.value.isPdr,
-                    reparable: this.diagFormTech.value.isReparable,
+                    // getRawValue : quand la DI est NON réparable, le contrôle
+                    // `isPdr` est DÉSACTIVÉ (checkValueChangesReperable) et Angular
+                    // retire les contrôles désactivés de `.value` → `isPdr` valait
+                    // `undefined` → `contain_pdr: undefined` faisait ÉCHOUER
+                    // tech_startDiagnostic (Boolean! ≠ undefined) et le changement
+                    // de statut, chaîné dans le subscribe(success), ne partait
+                    // jamais → DI bloquée en INDIAGNOSTIC. getRawValue rend `false`.
+                    pdr: !!this.diagFormTech.getRawValue().isPdr,
+                    reparable: !!this.diagFormTech.getRawValue().isReparable,
                     remarqueTech: this.diagFormTech.value.remarqueTech,
                     isErrorFromFixtronix:
                         this.diagFormTech.value.isErrorFromFixtronix ?? false,
@@ -3453,8 +3561,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             accept: () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
-                    pdr: this.diagFormTech.value.isPdr,
-                    reparable: this.diagFormTech.value.isReparable,
+                    // getRawValue : quand la DI est NON réparable, le contrôle
+                    // `isPdr` est DÉSACTIVÉ (checkValueChangesReperable) et Angular
+                    // retire les contrôles désactivés de `.value` → `isPdr` valait
+                    // `undefined` → `contain_pdr: undefined` faisait ÉCHOUER
+                    // tech_startDiagnostic (Boolean! ≠ undefined) et le changement
+                    // de statut, chaîné dans le subscribe(success), ne partait
+                    // jamais → DI bloquée en INDIAGNOSTIC. getRawValue rend `false`.
+                    pdr: !!this.diagFormTech.getRawValue().isPdr,
+                    reparable: !!this.diagFormTech.getRawValue().isReparable,
                     remarqueTech: this.diagFormTech.value.remarqueTech,
                     isErrorFromFixtronix:
                         this.diagFormTech.value.isErrorFromFixtronix ?? false,
@@ -3679,19 +3794,28 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
     }
 
-    getTimeSpent(_idStat: string) {
+    /**
+     * @param pausedAtOpen verdict « la DI est en pause » calculé par l'APPELANT au
+     *   moment de l'ouverture. Indispensable : `this.di` est affecté après le
+     *   `Promise.all` de `diagModal()`, donc il est encore vide à la première
+     *   émission de ce `watchQuery`.
+     */
+    getTimeSpent(_idStat: string, pausedAtOpen = false) {
         this.apollo
             .watchQuery<any>({
                 query: this.ticketSerice.getLastPauseTime(_idStat),
             })
             .valueChanges.pipe(takeUntil(this.destroy$))
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
+            // Pas de voile global : cette requête ré-émet après chaque mutation de
+            // pause/reprise, ce qui faisait clignoter le `p-blockUI` — le
+            // « petit refresh sans raison ». Le modal gère son propre rendu.
+            .subscribe(({ data }) => {
                 // Authoritative source of "should the timer tick?" is the
                 // server-side status, NOT the historical timer flag. When the
                 // user reopens a paused DI, we hydrate the accumulated time
                 // but keep the stopwatch idle until they hit Resume.
-                const isPaused = this.di?.status === 'DIAGNOSTIC_Pause';
+                const isPaused =
+                    this.di?.status === 'DIAGNOSTIC_Pause' || pausedAtOpen;
                 if (
                     data &&
                     data.getLastPauseTime.diag_time &&
@@ -3714,21 +3838,28 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     this.startStopwatch(serverAnchor);
                 } else {
                     // Paused: no live anchor — display the frozen base only.
+                    // `stopDiagnosticTimer()` d'ABORD : ce `watchQuery` ré-émet, et
+                    // un passage antérieur a pu démarrer un setInterval qui n'était
+                    // JAMAIS coupé ici (il continuait à 1 Hz sur une DI pausée).
+                    // Idempotent, et remet `isRunning = false`.
+                    this.stopDiagnosticTimer();
                     this.diagRunStartedAtMs = null;
                 }
                 this.applyPendingRestoredDialogState('diagnostic', _idStat);
             });
     }
 
-    getTimeSpentRep(_idStat: string) {
+    /** @param pausedAtOpen cf. `getTimeSpent` — même course sur `this.di`. */
+    getTimeSpentRep(_idStat: string, pausedAtOpen = false) {
         this.apollo
             .query<any>({
                 query: this.ticketSerice.getLastPauseTime(_idStat),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
+            // Pas de voile global — cf. getTimeSpent.
+            .subscribe(({ data }) => {
                 // Same guard as getTimeSpent: don't tick on a paused DI.
-                const isPaused = this.di?.status === 'REPARATION_Pause';
+                const isPaused =
+                    this.di?.status === 'REPARATION_Pause' || pausedAtOpen;
                 if (
                     data &&
                     data.getLastPauseTime.rep_time &&
@@ -3740,6 +3871,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 }
                 if (!isPaused) {
                     this.startStopwatch1();
+                } else {
+                    this.stopRepairTimer();
                 }
                 this.applyPendingRestoredDialogState('repair', _idStat);
             });
@@ -3750,7 +3883,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return false;
         }
         const trimmedTimeString = timeString.trim();
-        const regex = /^\d{2}:\d{2}:\d{2}$/;
+        // `\d{2,}` et NON `\d{2}` : le backend émet volontairement des heures à 3
+        // chiffres (`msToHhmmss` documente « HH peut dépasser 99 », et son propre
+        // parseur utilise `\d{2,}`). Avec `\d{2}` toute durée >= 100 h était jugée
+        // invalide → `setInitialTime('00:00:00')` → le temps accumulé retombait à
+        // ZÉRO à l'écran. Aligné sur le format réellement produit.
+        const regex = /^\d{2,}:\d{2}:\d{2}$/;
         const is = regex.test(trimmedTimeString);
         return is;
     }
@@ -3842,8 +3980,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         if (!isFinishRep) {
             this.addPauseLogs(this.statId, 'rep');
         }
-
-        this.loadData();
+        // Pas de rechargement de liste ici (flicker) : la ligne est déjà patchée
+        // optimistiquement et le statut est persisté côté serveur.
     }
 
     setDiInReparationPause(_id: string) {
@@ -3851,21 +3989,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .mutate<any>({
                 mutation: this.ticketSerice.diReperationInPAUSE(_id),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                    // Belt-and-suspenders reconcile. The backend already
-                    // broadcasts this status change over WS WITH the Stat's
-                    // tech ids (di.service.broadcastDiStatusChange →
-                    // target.id_tech_rep), which tech-list's relevance filter
-                    // (handleTechRealtimeMessage / getTechAssignmentInfo)
-                    // accepts. We still request one refresh here so the current
-                    // view reconciles against server truth the instant the
-                    // pause persists, independent of WS delivery/timing.
-                    this.ticketRefreshService.requestRefresh('tech-list', {
-                        source: 'mutation:setDiInReparationPause',
-                    });
-                }
+                    .subscribe(() => {
+                // Réconciliation assurée par le broadcast WS + le patch optimiste ;
+                // on NE force NI un rechargement de liste NI l'overlay `isLoading`
+                // ici — c'était une source de flicker à la mise en pause.
             });
     }
 
@@ -3889,19 +4016,34 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.diagFormTech
             .get('isReparable')
             ?.valueChanges.pipe(takeUntil(this.destroy$))
-            .subscribe((value) => {
-                this.isReperable = value;
-                // Non réparable → aucun PDR à demander : forcer le toggle PDR à
-                // false et le désactiver (grisé). Réactivé dès que « réparable »
-                // repasse à vrai.
-                const pdr = this.diagFormTech.get('isPdr');
-                if (!value) {
-                    pdr?.setValue(false, { emitEvent: false });
-                    pdr?.disable({ emitEvent: false });
-                } else {
-                    pdr?.enable({ emitEvent: false });
-                }
-            });
+            .subscribe((value) => this.syncReparableDerivedState(value));
+    }
+
+    /**
+     * Aligne tout ce qui DÉRIVE de « réparable » : le miroir `isReperable`, et
+     * l'état du toggle PDR (non réparable → aucun PDR à demander : forcé à false
+     * et grisé ; réactivé dès que « réparable » repasse à vrai).
+     *
+     * Extrait de la souscription `valueChanges` parce que les préremplissages
+     * patchent en `{ emitEvent: false }` : sans appel EXPLICITE à l'ouverture du
+     * modal, préremplir `isReparable: false` ne grisait pas le toggle PDR et
+     * laissait `this.isReperable` périmé. Pire, après un `diagFormTech.reset()`
+     * (`repModal` → `resetModalForm`) le contrôle `isPdr` restait désactivé de
+     * façon PERMANENTE, puisque seul un changement ÉMIS de `isReparable` le
+     * réactivait.
+     */
+    private syncReparableDerivedState(value: unknown): void {
+        this.isReperable = value as boolean;
+        const pdr = this.diagFormTech.get('isPdr');
+        if (!value) {
+            pdr?.setValue(false, { emitEvent: false });
+            pdr?.disable({ emitEvent: false });
+        } else {
+            pdr?.enable({ emitEvent: false });
+        }
+        // `hasPdr` est mis à jour par la souscription `isPdr`, qui ne se déclenche
+        // pas ici (emitEvent: false) — on le réaligne sur la valeur RÉELLE.
+        this.hasPdr = !!this.diagFormTech.get('isPdr')?.value;
     }
 
     changeStatusToFinished(_id: string) {
@@ -4260,7 +4402,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             form: this.diagFormTech,
             timer: {
                 display: `${this.minutes ?? '00'}:${this.seconds ?? '00'}:${this.milliseconds ?? '00'}`,
-                isRunning: !!this.isRunning,
+                // Le LIBELLÉ du bouton (Mettre en pause ↔ Reprendre) doit venir du
+                // MÊME source que l'ACTION (le statut de la DI), pas du flag chrono
+                // `isRunning` qui dérive (watchQuery `getTimeSpent`) → sinon libellé
+                // et action pointent à l'opposé et il faut cliquer deux fois.
+                isRunning: !this.isDiagnosticOfficiallyPaused(),
             },
             hasPdr: !!this.hasPdr,
             isReperable: !!this.isReperable,
@@ -4493,15 +4639,25 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.changeStatus(this.selectedDi_id);
             this.startStopwatch(resumeAnchor);
             this.persistActiveDialogState('diagnostic');
-            this.requestTechListRefresh('action:diag-resume');
+            // Pas de rechargement de liste (flicker) : patch optimiste + statut serveur.
             return;
         }
 
-        // Active -> Pause. The heavy `lapTimeForPauseAndGetBack()` already
-        // fires the backend mutations; we layer optimistic UI + a refresh
-        // request on top so the list row + chip flip immediately. Drop the run
-        // anchor on the snapshot too (the server clears Stat.diagRunStartedAt in
-        // changeToDiagnosticInPause) so a paused restore stays frozen.
+        // Active -> Pause. The heavy `lapTimeForPauseAndGetBack()` already fires
+        // the backend mutations; we layer an OPTIMISTIC UI patch on top so the list
+        // row + chip flip immediately — NO full-list reload (that caused the
+        // flicker). Drop the run anchor on the snapshot too (the server clears
+        // Stat.diagRunStartedAt in changeToDiagnosticInPause) so a paused restore
+        // stays frozen.
+        // Pause MANUELLE : purger le marqueur d'auto-pause. Il n'était jamais remis
+        // à false, donc une DI pausée à la main héritait de `autoPaused: true` et se
+        // faisait AUTO-REPRENDRE à la réouverture.
+        // GARDE : `freezeActiveDialogForLifecycle()` pose ces drapeaux PUIS appelle
+        // cette méthode — dans ce cas il ne faut surtout pas les effacer, sinon le
+        // gel automatique (refresh/fermeture d'onglet) ne se reprendrait plus.
+        if (!this.autoPausedByLifecycle) {
+            this.dialogAutoPaused = false;
+        }
         if (this.di) {
             this.di = {
                 ...this.di,
@@ -4511,7 +4667,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
         this.patchTechListRowStatus(this.di?._id, 'DIAGNOSTIC_Pause');
         this.lapTimeForPauseAndGetBack();
-        this.requestTechListRefresh('action:diag-pause');
+        // Pas de rechargement de liste (flicker) : ligne déjà patchée ci-dessus.
     }
 
     onDiagMinimize(): void {
@@ -4526,6 +4682,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
 
         this.persistActiveDialogState('diagnostic');
+        // Couper l'intervalle : la fermeture ne l'arrêtait JAMAIS, il continuait à
+        // tourner à 1 Hz en fond (persist + refreshDiagnosticVm) sur un modal clos.
+        this.stopDiagnosticTimer();
         if (this.selectedDi) {
             this.diDialogDiag[this.selectedDi] = false;
         }

@@ -623,8 +623,11 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     getStatusLabel(status: string): string {
-        // Affichage BRUT de la valeur DB en MAJUSCULES.
-        return (status ?? '').toString().toUpperCase() || '—';
+        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
+        // PRICING) affiché « Pricing » (demande produit).
+        const s = (status ?? '').toString().trim();
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        return s.toUpperCase() || '—';
     }
 
     /**

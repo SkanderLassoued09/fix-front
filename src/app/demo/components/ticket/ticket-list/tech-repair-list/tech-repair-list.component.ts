@@ -474,9 +474,14 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
             (running
                 ? Math.max(0, Date.now() - (this.runStartedAtMs as number))
                 : 0);
+        // AFFICHAGE piloté par l'ancre (`running`), mais le LIBELLÉ du bouton
+        // (Mettre en pause ↔ Reprendre) vient du STATUT — même source que l'action
+        // de pause/reprise. Sinon l'ancre `runStartedAtMs` (qui peut dériver) fait
+        // pointer libellé et action à l'opposé → « il faut cliquer deux fois ».
+        const paused = (this.di?.status ?? '') === 'REPARATION_Pause';
         this.timer = {
             display: this.formatHMS(Math.floor(ms / 1000)),
-            isRunning: running,
+            isRunning: !paused,
         };
         this.cdr.markForCheck();
     }

@@ -464,7 +464,11 @@ export class DiInfoModalComponent implements OnChanges {
 
     /** Statut brut en MAJUSCULES (décision d'affichage en vigueur). */
     statusLabel(status: any): string {
-        return (status ?? '').toString().trim().toUpperCase() || '—';
+        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
+        // PRICING) affiché « Pricing » (demande produit).
+        const s = (status ?? '').toString().trim();
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        return s.toUpperCase() || '—';
     }
 
     private isObjectId(value: any): boolean {

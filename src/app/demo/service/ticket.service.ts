@@ -561,6 +561,7 @@ export class TicketService {
           diag_time
           rep_time
           repRunStartedAt
+          diagRunStartedAt
           id_tech_diag
           id_tech_rep
           client {

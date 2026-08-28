@@ -43,6 +43,12 @@ export class NotificationDeepLinkService {
             route: NotificationDeepLinkService.ADMIN,
             action: 'negociation2',
         },
+        // BL à téléverser → ouvre DIRECTEMENT la modale « Affectation des
+        // Fichiers » (upload BL/Facture) sur la liste tickets.
+        DI_DOC_BL_PENDING: {
+            route: NotificationDeepLinkService.ADMIN,
+            action: 'affectation',
+        },
     };
 
     constructor(
@@ -57,6 +63,16 @@ export class NotificationDeepLinkService {
     open(n: { type?: string | null; diId?: string | null } | null | undefined): void {
         const diId = n?.diId;
         if (!diId) return;
+        // Le technicien ne consulte JAMAIS le détail d'une DI : ses notifications
+        // sont de simples avis SANS lien profond (ni route, ni modal détail).
+        // On n'ouvre donc rien pour lui (couvre la cloche ET le toast temps réel).
+        let role: string | null = null;
+        try {
+            role = localStorage.getItem('role');
+        } catch {
+            role = null;
+        }
+        if (role === 'TECH') return;
         const target = n?.type
             ? NotificationDeepLinkService.TABLE[n.type]
             : undefined;

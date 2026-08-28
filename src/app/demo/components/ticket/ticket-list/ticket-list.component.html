@@ -1288,7 +1288,10 @@
                                 rowData.status === 'WAITING_FACTURE' ||
                                 rowData.status === 'CLOSING' ||
                                 rowData.status === 'ATTENTE_BL_FACTURE' ||
-                                rowData.status === 'FINISHED'
+                                rowData.status === 'FINISHED' ||
+                                (rowData.status === 'IRREPARABLE' &&
+                                    rowData.ignoreCount > 0 &&
+                                    rowData.isErrorFromFixtronix !== true)
                             "
                             pButton
                             pTooltip="Fichiers"
@@ -1340,7 +1343,10 @@
                                 rowData.status === 'WAITING_DEVIS' ||
                                 rowData.status === 'WAITING_BC' ||
                                 rowData.status === 'NEGOTIATION1' ||
-                                rowData.status === 'ATTENTE_BC_DEVIS'
+                                rowData.status === 'ATTENTE_BC_DEVIS' ||
+                                (rowData.status === 'IRREPARABLE' &&
+                                    rowData.ignoreCount > 0 &&
+                                    rowData.isErrorFromFixtronix !== true)
                             "
                             pButton
                             pTooltip="Négociation"
@@ -2046,6 +2052,26 @@
 
         <!-- ── Les deux questions ───────────────────────────── -->
         <div class="pricing-steps">
+            <!-- RETOUR erreur CLIENT (non-Fixtronix) réparable arrivant en Pricing :
+                 décision « facturer le diagnostic ? » (flag diagnosticPayant),
+                 prise ICI en Pricing. Les cas erreur Fixtronix ne passent PAS par
+                 Pricing (PENDING3 ou IRREPARABLE directs, non facturés), donc le
+                 toggle ne les concerne pas. Ne change PAS le routage. -->
+            <div
+                *ngIf="ignoreCountPricing > 0 && isErrorFromFixtronix !== true && !isIrreparable"
+                class="pricing-facturer"
+            >
+                <label class="pricing-step__label">
+                    Facturer le diagnostic&nbsp;?
+                </label>
+                <p-toggleButton
+                    [(ngModel)]="pricingDiagnosticPayant"
+                    onLabel="Payant"
+                    offLabel="Non payant"
+                    (onChange)="onPricingPayantToggle()"
+                ></p-toggleButton>
+            </div>
+
             <!-- Étape 1 — coût RÉEL du diagnostic (borné 150–500 TND) -->
             <div class="pricing-step" [ngClass]="'pricing-step--' + reelState">
                 <div class="pricing-step__head">
@@ -2078,7 +2104,7 @@
                 <div *ngIf="!pricingDiagnosticPayant" class="pricing-nonpayant">
                     <i class="pi pi-gift"></i> Diagnostic <strong>non payant</strong>
                     — non facturé au client. Le temps de diagnostic reste mesuré
-                    (coût interne), et le plancher de 150&nbsp;TND ne s'applique pas.
+                    (coût interne).
                 </div>
                 <div
                     *ngIf="
@@ -2420,7 +2446,10 @@
                                 class="af-dropzone"
                                 [class.af-dropzone--active]="afDragActive['BL']"
                                 [class.af-dropzone--disabled]="
-                                    blBtnDisabled || blLoading
+                                    blBtnDisabled || blLoading || !!filesSelected?.bon_de_livraison
+                                "
+                                [class.af-dropzone--pulse]="
+                                    !filesSelected?.bon_de_livraison && !blLoading && !blBtnDisabled
                                 "
                                 (dragover)="onAfDragOver($event, 'BL')"
                                 (dragleave)="onAfDragLeave($event, 'BL')"
@@ -2430,7 +2459,7 @@
                                     type="file"
                                     accept="application/pdf"
                                     hidden
-                                    [disabled]="blBtnDisabled || blLoading"
+                                    [disabled]="blBtnDisabled || blLoading || !!filesSelected?.bon_de_livraison"
                                     (change)="onAfPicker($event, 'BL')"
                                 />
                                 <span
@@ -2450,7 +2479,7 @@
                                         blLoading
                                             ? "Chargement…"
                                             : filesSelected?.bon_de_livraison
-                                              ? "Remplacer le PDF"
+                                              ? "PDF chargé ✓"
                                               : "Ajouter un PDF"
                                     }}
                                 </span>
@@ -2539,7 +2568,10 @@
                                     afDragActive['Facture']
                                 "
                                 [class.af-dropzone--disabled]="
-                                    factureBtnDisabled || factureLoading
+                                    factureBtnDisabled || factureLoading || !!filesSelected?.facture
+                                "
+                                [class.af-dropzone--pulse]="
+                                    !filesSelected?.facture && !factureLoading && !factureBtnDisabled
                                 "
                                 (dragover)="onAfDragOver($event, 'Facture')"
                                 (dragleave)="onAfDragLeave($event, 'Facture')"
@@ -2550,7 +2582,7 @@
                                     accept="application/pdf"
                                     hidden
                                     [disabled]="
-                                        factureBtnDisabled || factureLoading
+                                        factureBtnDisabled || factureLoading || !!filesSelected?.facture
                                     "
                                     (change)="onAfPicker($event, 'Facture')"
                                 />
@@ -2571,7 +2603,7 @@
                                         factureLoading
                                             ? "Chargement…"
                                             : filesSelected?.facture
-                                              ? "Remplacer le PDF"
+                                              ? "PDF chargé ✓"
                                               : "Ajouter un PDF"
                                     }}
                                 </span>

@@ -81,6 +81,7 @@
                         [isRetour]="ctx.ignoreCount > 0"
                         [primaryDisabled]="ctx.ignoreCount > 0 ? ctx.disabledRetour : ctx.disabledFinish"
                         [retourSendDisabled]="ctx.retourSendFinished"
+                        [notReparableDisabled]="ctx.disabledFinish"
                         (finishDiag)="finishDiag.emit()"
                         (finishRetour)="finishRetour.emit()"
                         (sendToFinishRetour)="sendToFinishRetour.emit()"
