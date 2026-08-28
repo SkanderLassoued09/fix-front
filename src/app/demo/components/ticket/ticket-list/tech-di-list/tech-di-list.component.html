@@ -209,6 +209,7 @@
         [partOptions]="repairPartOptions"
         [categories]="repairCategories"
         (visibleChange)="onRepairModalVisibleChange($event)"
+        (minimizeClicked)="onRepairModalMinimize()"
         (pauseClicked)="onRepairModalPause()"
         (finishClicked)="onRepairModalFinish($event)"
     ></app-tech-repair-list>

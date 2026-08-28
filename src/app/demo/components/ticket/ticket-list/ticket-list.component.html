@@ -1368,11 +1368,12 @@
                         ></button>
 
                         <!-- Retour / Relancer -->
-                        <!-- Le retour s'ouvre désormais dès la phase « attente
-                             BL » (WAITING_BL, juste après la réparation) EN PLUS
-                             du stade facturé (FINISHED) : on ne dépend plus de la
-                             facture pour renvoyer une DI dans le cycle, tout en
-                             gardant le retour possible sur une DI clôturée. -->
+                        <!-- Disponible sur TOUTE la phase de clôture documentaire
+                             (WAITING_BL, WAITING_FACTURE + valeurs legacy) et sur
+                             une DI clôturée : on ne dépend ni du BL ni de la
+                             facture pour renvoyer une DI dans le cycle. La règle
+                             vit dans `canRetour()` — cf. le bouton « Fichiers »
+                             de la même cellule, qui couvre les mêmes statuts. -->
                         <button
                             pButton
                             pTooltip="Retour {{ rowData.ignoreCount }}"
@@ -1380,11 +1381,7 @@
                             [label]="'R' + rowData.ignoreCount"
                             class="sav-icon-btn sav-icon-btn--retour"
                             (click)="ignore(rowData)"
-                            [disabled]="
-                                rowData.ignoreCount === 3 ||
-                                (rowData.status !== 'WAITING_BL' &&
-                                    rowData.status !== 'FINISHED')
-                            "
+                            [disabled]="!canRetour(rowData)"
                         ></button>
 
                         <button

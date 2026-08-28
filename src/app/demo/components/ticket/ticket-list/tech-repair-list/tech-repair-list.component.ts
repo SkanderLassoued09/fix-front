@@ -74,6 +74,12 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     @Output() pauseClicked = new EventEmitter<void>();
 
     /**
+     * « Réduire » a été cliqué. INTENTION seulement : c'est l'hôte qui ferme,
+     * après confirmation s'il reste du travail non sauvegardé (`hasUnsavedWork`).
+     */
+    @Output() minimizeClicked = new EventEmitter<void>();
+
+    /**
      * Emitted when the user confirms « Fin réparation ». The host
      * (tech-di-list) runs the real finish mutations (persist parts + remark,
      * tech_finishReperation, changestatusToFinishReparation → FINISHED). The
@@ -130,6 +136,9 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     // ───────────────────────────────────────────────────────────────
     @Input() elapsedBaseMs: number = 0;
     @Input() runStartedAtMs: number | null = null;
+
+    /** Cf. `renderTimer` — plafond de plausibilité d'un segment continu (12 h). */
+    private static readonly MAX_PLAUSIBLE_LEG_MS = 12 * 60 * 60 * 1000;
 
     timer: TimerDisplayState = { display: '00:00:00', isRunning: false };
     private timerHandle: ReturnType<typeof setInterval> | null = null;
@@ -224,8 +233,26 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     onRepairMinimize(): void {
-        this.setRepairModalVisible(false);
-        // TODO: persist active draft so reopening picks up where we left off.
+        // INTENTION seulement — c'est l'hôte qui ferme, après confirmation si du
+        // travail est en cours. Ce composant fermait directement, sans rien
+        // demander et sans sauvegarder : les travaux saisis et les pièces
+        // ajoutées étaient perdus. Il n'injecte ni ConfirmationService ni
+        // MessageService : la décision appartient au parent (« dumb tree →
+        // smart parent », comme pause/reprise).
+        this.minimizeClicked.emit();
+    }
+
+    /**
+     * Le technicien a-t-il saisi quelque chose qui serait perdu à la fermeture ?
+     *
+     * `dirty` est fiable ici : le préremplissage passe par `patchValue`
+     * (ngOnChanges), qui ne salit PAS le formulaire — `dirty` signifie donc bien
+     * « l'utilisateur a tapé ». On y ajoute une pièce ajoutée à la main, qui ne
+     * transite pas par le formulaire.
+     */
+    get hasUnsavedWork(): boolean {
+        const prefilled = this.prefill?.parts?.length ?? 0;
+        return this.repairForm.dirty || this.parts.length !== prefilled;
     }
 
     onRepairStepChange(next: RepairStepKey): void {
@@ -469,11 +496,17 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
      */
     private renderTimer(): void {
         const running = this.runStartedAtMs != null;
-        const ms =
-            (this.elapsedBaseMs || 0) +
-            (running
-                ? Math.max(0, Date.now() - (this.runStartedAtMs as number))
-                : 0);
+        // Même garde que l'hôte : un segment ouvert depuis plus d'une journée est
+        // une session abandonnée, pas du temps travaillé. On l'ignore plutôt que
+        // d'afficher des centaines d'heures (l'hôte annule déjà l'ancre hors phase).
+        const rawLeg = running
+            ? Date.now() - (this.runStartedAtMs as number)
+            : 0;
+        const leg =
+            rawLeg > 0 && rawLeg <= TechRepairListComponent.MAX_PLAUSIBLE_LEG_MS
+                ? rawLeg
+                : 0;
+        const ms = (this.elapsedBaseMs || 0) + leg;
         // AFFICHAGE piloté par l'ancre (`running`), mais le LIBELLÉ du bouton
         // (Mettre en pause ↔ Reprendre) vient du STATUT — même source que l'action
         // de pause/reprise. Sinon l'ancre `runStartedAtMs` (qui peut dériver) fait

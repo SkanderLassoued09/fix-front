@@ -4,8 +4,14 @@ import {
     DoCheck,
     OnDestroy,
     OnInit,
+    ViewChild,
 } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { TechRepairListComponent } from '../tech-repair-list/tech-repair-list.component';
+import {
+    isDiagRunningStatus,
+    isRepairRunningStatus,
+} from 'src/app/layout/api/status-di';
 import { Apollo } from 'apollo-angular';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
@@ -80,7 +86,22 @@ interface PersistedTechDialogState {
     statSnapshot?: any;
     diagFormValue?: any;
     repairFormValue?: any;
+    /** Brouillon du wizard de RÉPARATION (travaux, bascules) + pièces saisies.
+     *  Distinct de `repairFormValue`, qui ne porte que la remarque de l'hôte. */
+    repairWizardValue?: any;
+    repairWizardParts?: any[];
     composantCombo?: any[];
+}
+
+/** Préremplissage du wizard de réparation (DI) + brouillon restitué. */
+interface RepairWizardPrefill {
+    di_category_id?: string | null;
+    // `repairPlan` / `worksDone` : le wizard les accepte déjà en entrée ; ils
+    // servent à restituer un brouillon après une fermeture accidentelle.
+    repairPlan?: string;
+    worksDone?: string;
+    remarqueExtra?: string;
+    parts?: Array<{ nameComposant: string; reference?: string; quantity: number }>;
 }
 
 @Component({
@@ -99,6 +120,19 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private lastSearchKey = '';
     private hasAttemptedDialogRestore = false;
     private pendingRestoredDialogState: PersistedTechDialogState | null = null;
+    /**
+     * Brouillon VIVANT du wizard de réparation, tenu À PART de
+     * `pendingRestoredDialogState` — ce dernier est vidé dès la première
+     * restitution et n'était alimenté qu'au démarrage (lecture du localStorage).
+     * Résultat : fermer puis rouvrir la réparation DANS LA MÊME SESSION ne
+     * restituait rien. Ce brouillon-ci survit à la fermeture jusqu'à la clôture
+     * effective de la réparation.
+     */
+    private repairDraft: {
+        diId: string;
+        value: any;
+        parts: any[];
+    } | null = null;
     // Part 4 — lifecycle auto-pause. `autoPausedByLifecycle` tracks an in-memory
     // pause we triggered on page-hide so we can auto-resume on return.
     // `dialogAutoPaused` is the flag we persist so a refresh-restore also resumes.
@@ -241,11 +275,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     repairFinishing = false;
     /** Pre-fill payload handed to the wizard on open (category, repair remark,
      *  already-selected parts) so the tech doesn't re-enter everything. */
-    repairPrefill: {
-        di_category_id?: string | null;
-        remarqueExtra?: string;
-        parts?: Array<{ nameComposant: string; reference?: string; quantity: number }>;
-    } | null = null;
+    repairPrefill: RepairWizardPrefill | null = null;
     /** Parts catalog + categories fed to the wizard's pickers. */
     repairPartOptions: Array<{ name: string; reference?: string }> = [];
     repairCategories: Array<{ _id: string; category: string }> = [];
@@ -467,6 +497,100 @@ export class TechDiListComponent implements OnInit, OnDestroy {
      * code paths reading it (timer pause-on-close, persistence) see a
      * consistent state.
      */
+    /** Wizard de réparation monté — lu pour savoir s'il porte une saisie. */
+    @ViewChild(TechRepairListComponent)
+    private repairWizard?: TechRepairListComponent;
+
+    /**
+     * Le diagnostic ouvert porte-t-il une saisie qui serait perdue ?
+     *
+     * `dirty` est fiable : TOUS les préremplissages passent par `patchValue`,
+     * qui ne salit pas le formulaire — `dirty` signifie donc « le tech a tapé ».
+     * On y ajoute les composants ajoutés à la main pendant la session.
+     */
+    private diagnosticHasUnsavedWork(): boolean {
+        if (!this.diagContextVm) {
+            return false;
+        }
+        const prefilled = this.allComposantLogsAndOriginal?.length ?? 0;
+        return (
+            this.diagFormTech.dirty ||
+            (this.composantCombo?.length ?? 0) !== prefilled
+        );
+    }
+
+    /** Idem côté réparation — délégué au wizard, qui possède son formulaire. */
+    private repairHasUnsavedWork(): boolean {
+        return !!this.showRepairModal && !!this.repairWizard?.hasUnsavedWork;
+    }
+
+    /**
+     * Superpose le brouillon de réparation au préremplissage issu de la DI.
+     *
+     * `repModal` (requête `getDiById`) et la restitution après rechargement
+     * (`getTimeSpentRep`) arrivent par DEUX callbacks asynchrones indépendants :
+     * sans cette superposition, celui qui arrivait en dernier écrasait la saisie
+     * du technicien par les valeurs de la DI.
+     */
+    private withRepairDraft(base: RepairWizardPrefill): RepairWizardPrefill {
+        const draft = this.repairDraft;
+        if (!draft || draft.diId !== this.selectedRep) {
+            return base;
+        }
+        return {
+            ...base,
+            repairPlan: draft.value?.repairPlan ?? base.repairPlan ?? '',
+            worksDone: draft.value?.worksDone ?? base.worksDone ?? '',
+            remarqueExtra:
+                draft.value?.remarqueExtra ?? base.remarqueExtra ?? '',
+            parts: draft.parts?.length ? [...draft.parts] : base.parts ?? [],
+        };
+    }
+
+    /**
+     * Confirme avant de détruire un modal porteur de travail non sauvegardé.
+     * Résout `true` s'il faut poursuivre. Sans travail en cours : aucune
+     * question, on ne rajoute pas de friction inutile.
+     */
+    private confirmDiscardWork(
+        detail: string,
+        hasWork: boolean,
+    ): Promise<boolean> {
+        if (!hasWork) {
+            return Promise.resolve(true);
+        }
+        return new Promise((resolve) => {
+            this.confirmationService.confirm({
+                header: 'Travail non enregistré',
+                message: detail,
+                icon: 'pi pi-exclamation-triangle',
+                acceptLabel: 'Fermer quand même',
+                rejectLabel: 'Annuler',
+                accept: () => resolve(true),
+                reject: () => resolve(false),
+            });
+        });
+    }
+
+    /**
+     * « Réduire » côté RÉPARATION. Le wizard n'ferme plus lui-même : il émet une
+     * intention et c'est ici qu'on décide. Avant, la fermeture était immédiate,
+     * silencieuse, et le brouillon n'était pas sauvegardé — la saisie était
+     * purement perdue.
+     */
+    async onRepairModalMinimize(): Promise<void> {
+        const ok = await this.confirmDiscardWork(
+            'Des travaux saisis ne sont pas encore enregistrés. Fermer la fenêtre de réparation ?',
+            this.repairHasUnsavedWork(),
+        );
+        if (!ok) {
+            return;
+        }
+        this.persistActiveDialogState('repair');
+        this.stopRepairTimer();
+        this.onRepairModalVisibleChange(false);
+    }
+
     onRepairModalVisibleChange(v: boolean): void {
         this.showRepairModal = v;
         this.diDialogRep = v;
@@ -544,6 +668,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.diDialogRep = false;
             this.repairDiInputVm = null;
             this.repairPrefill = null;
+            this.repairDraft = null;
             this.clearPersistedDialogState('repair');
             this.loadData();
             this.requestTechListRefresh('action:repair-finish');
@@ -1809,8 +1934,26 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 : snapshot,
             diagFormValue: this.diagFormTech.value,
             repairFormValue: this.remarque.value,
+            // Le wizard possède son propre FormGroup : sans ça, fermer la
+            // réparation perdait les travaux saisis et les pièces ajoutées
+            // (le composant portait un `// TODO: persist active draft`).
+            repairWizardValue: this.repairWizard?.repairForm?.value ?? null,
+            repairWizardParts: this.repairWizard
+                ? [...this.repairWizard.parts]
+                : null,
             composantCombo: this.composantCombo || [],
         };
+
+        // On ne remplace JAMAIS un brouillon par un formulaire vierge : la
+        // sauvegarde périodique (1 Hz) tourne aussi sur un wizard qui vient
+        // d'être réhydraté par `patchValue` (donc non « dirty »).
+        if (activeMode === 'repair' && this.repairWizard?.hasUnsavedWork) {
+            this.repairDraft = {
+                diId,
+                value: this.repairWizard.repairForm.value,
+                parts: [...this.repairWizard.parts],
+            };
+        }
 
         try {
             localStorage.setItem(
@@ -2031,6 +2174,20 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
         }
 
+        // Brouillon du wizard : on le réinjecte via `repairPrefill`, l'entrée que
+        // le wizard consomme déjà à l'ouverture (`ngOnChanges`). Rouvrir une
+        // réparation fermée par erreur restitue donc la saisie.
+        if (mode === 'repair' && state.repairWizardValue) {
+            this.repairPrefill = this.withRepairDraft({
+                ...(this.repairPrefill ?? {}),
+                di_category_id: state.repairWizardValue.di_category_id ?? null,
+                repairPlan: state.repairWizardValue.repairPlan ?? '',
+                worksDone: state.repairWizardValue.worksDone ?? '',
+                remarqueExtra: state.repairWizardValue.remarqueExtra ?? '',
+                parts: state.repairWizardParts ?? this.repairPrefill?.parts ?? [],
+            });
+        }
+
         if (state.repairFormValue) {
             this.remarque.patchValue(state.repairFormValue, {
                 emitEvent: false,
@@ -2128,11 +2285,18 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     async diagModal(di) {
         this.composantSelected = null;
-        // Mutual exclusion — opening a diagnostic must close any open repair
-        // modal. Without this, the persisted-state restoration on init can
-        // open the repair modal first, and then a user-triggered diagnostic
-        // would stack on top. The autosave (1Hz) has already flushed any
-        // in-flight repair form changes so closing here is safe.
+        // Mutual exclusion — ouvrir un diagnostic ferme le modal de réparation.
+        // Cette fermeture était SILENCIEUSE : cliquer la loupe d'une autre DI
+        // détruisait la saisie de réparation en cours sans le moindre signal.
+        // On demande confirmation ; un refus annule l'ouverture.
+        if (
+            !(await this.confirmDiscardWork(
+                'Une réparation est ouverte avec des travaux non enregistrés. Ouvrir ce diagnostic la fermera.',
+                this.repairHasUnsavedWork(),
+            ))
+        ) {
+            return;
+        }
         this.closeOppositeModal('diagnostic');
 
         try {
@@ -2377,7 +2541,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             });
     }
 
-    repModal(di) {
+    async repModal(di) {
         // NOTE: do NOT call `updatePauseLog` here even if the DI is in
         // REPARATION_Pause. That mutation stamps `pauseEnd: now()` on the
         // open pause log, which the backend treats as "user resumed work" —
@@ -2444,7 +2608,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
                         // B3 — pre-fill the redesigned repair wizard from the DI
                         // so the tech doesn't re-enter category / remark / parts.
-                        this.repairPrefill = {
+                        this.repairPrefill = this.withRepairDraft({
                             di_category_id: detailsDi.di_category_id ?? null,
                             remarqueExtra:
                                 di.remarque_tech_repair ||
@@ -2457,7 +2621,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                                     quantity: c.quantity,
                                 }),
                             ),
-                        };
+                        });
                         // Feed the wizard's pickers from the catalogs already
                         // loaded by the host (best-effort — empty until loaded).
                         this.repairPartOptions = (this.composantList || []).map(
@@ -2535,9 +2699,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // `this.di`; this realigns repair with that reliability.
         this.di = { ...di };
         this.selectedDi = di._id;
-        // Mutual exclusion — opening a repair must close any open diagnostic.
-        // Otherwise a restored-on-init diagnostic stacks under the manually-
-        // opened repair, leaving two modals visible at once.
+        // Mutual exclusion — symétrique de `diagModal` : ouvrir une réparation
+        // ferme le diagnostic, et cette fermeture était elle aussi silencieuse.
+        if (
+            !(await this.confirmDiscardWork(
+                'Un diagnostic est ouvert avec une saisie non enregistrée. Ouvrir cette réparation le fermera.',
+                this.diagnosticHasUnsavedWork(),
+            ))
+        ) {
+            return;
+        }
         this.closeOppositeModal('repair');
         this.diDialogRep = true;
         // Mirror what diagModal() does for the diagnostic flow: snapshot the
@@ -2555,14 +2726,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         //   - fresh start     → anchor "now"; the open auto-transition stamps
         //                       Stat.repRunStartedAt = now server-side to match.
         this.repairElapsedBaseMs = this.timeStringToMs(di?.rep_time || '00:00:00');
-        if (di?.status === 'REPARATION_Pause') {
+        if (!isRepairRunningStatus(di?.status)) {
+            // Hors phase de réparation (pause incluse) : AUCUN segment vivant.
+            // L'ancienne branche `else` ancrait `Date.now()` pour n'importe quel
+            // statut, et une ancre périmée en base faisait exploser l'affichage.
             this.repairRunStartedAtMs = null;
-        } else if (di?.status === 'INREPARATION') {
+        } else {
             this.repairRunStartedAtMs = di?.repRunStartedAt
                 ? new Date(di.repRunStartedAt).getTime()
                 : Date.now();
-        } else {
-            this.repairRunStartedAtMs = Date.now();
         }
         this.showRepairModal = true;
         this.persistActiveDialogState('repair', di);
@@ -2755,25 +2927,51 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     // Wall-clock idle while the modal is closed cannot enter the elapsed
     // total because runStartedAt is frozen the moment the timer stops.
 
+    /**
+     * Durée maximale plausible pour UN segment de travail continu.
+     *
+     * Au-delà, le segment n'est pas un vrai temps de travail mais une session
+     * abandonnée (onglet fermé sans pause, transition qui n'a pas fermé le
+     * segment). On l'IGNORE à l'affichage plutôt que d'inventer des centaines
+     * d'heures. Le serveur applique la même règle et ne facture pas ce segment.
+     */
+    private static readonly MAX_PLAUSIBLE_LEG_MS = 12 * 60 * 60 * 1000;
+
+    /**
+     * Portion vivante du segment courant, en ms — 0 si l'ancre est absente ou
+     * manifestement périmée. C'est le seul endroit qui transforme une ancre en
+     * durée : le garde y est donc unique et non contournable.
+     */
+    private liveLegMs(anchorMs: number | null): number {
+        if (!anchorMs) {
+            return 0;
+        }
+        const leg = Date.now() - anchorMs;
+        if (leg < 0 || leg > TechDiListComponent.MAX_PLAUSIBLE_LEG_MS) {
+            console.warn({
+                event: 'tech.timer.stale_anchor_ignored',
+                anchorMs,
+                legMs: leg,
+            });
+            return 0;
+        }
+        return leg;
+    }
+
     private computeLiveElapsedDiag(): number {
         // Single source of truth: the run leg is anchored to the SERVER's
         // Stat.diagRunStartedAt (mirrored into diagRunStartedAtMs), never a
         // local startTime read back from localStorage — that drifted to
         // 837:15:12 when the app sat closed for a long time. null anchor ⇒
         // paused/stopped ⇒ frozen at the accumulated base.
-        return (
-            (this.initialOffset || 0) +
-            (this.diagRunStartedAtMs
-                ? Math.max(0, Date.now() - this.diagRunStartedAtMs)
-                : 0)
-        );
+        return (this.initialOffset || 0) + this.liveLegMs(this.diagRunStartedAtMs);
     }
 
     private computeLiveElapsedRep(): number {
         const running = this.isRunning1 && this.startTime1 > 0;
         return (
             (this.initialOffset1 || 0) +
-            (running ? Math.max(0, Date.now() - this.startTime1) : 0)
+            (running ? this.liveLegMs(this.startTime1) : 0)
         );
     }
 
@@ -3832,10 +4030,20 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     // (now - diagRunStartedAt), independent of localStorage. Fall
                     // back to now only when the server hasn't stamped an anchor
                     // yet (legacy in-flight DI) — the next start/resume fixes it.
-                    const serverAnchor = this.di?.diagRunStartedAt
-                        ? new Date(this.di.diagRunStartedAt).getTime()
-                        : Date.now();
-                    this.startStopwatch(serverAnchor);
+                    // L'ancre n'est reprise QUE si la DI est réellement dans sa
+                    // phase de diagnostic. Hors phase, une ancre en base est un
+                    // reliquat (on en a trouvé 25, jusqu'à 1400 h) et l'ajouter au
+                    // cumul affichait des centaines d'heures.
+                    const serverAnchor = isDiagRunningStatus(this.di?.status)
+                        ? this.di?.diagRunStartedAt
+                            ? new Date(this.di.diagRunStartedAt).getTime()
+                            : Date.now()
+                        : null;
+                    if (serverAnchor === null) {
+                        this.stopDiagnosticTimer(); // cumul figé, aucun segment vivant
+                    } else {
+                        this.startStopwatch(serverAnchor);
+                    }
                 } else {
                     // Paused: no live anchor — display the frozen base only.
                     // `stopDiagnosticTimer()` d'ABORD : ce `watchQuery` ré-émet, et

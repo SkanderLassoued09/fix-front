@@ -82,6 +82,35 @@ export function isApprovalDocStatus(status: string | null | undefined): boolean 
  * valeurs LEGACY (`CLOSING`, `ATTENTE_BL_FACTURE`) tant que la migration 008
  * n'a pas tourné.
  */
+/**
+ * Statuts pendant lesquels le chrono de DIAGNOSTIC a le droit de COURIR.
+ *
+ * Un segment de travail ne peut avancer que dans sa phase : hors de cette liste
+ * une ancre (`Stat.diagRunStartedAt`) est forcément un reliquat, et l'ajouter au
+ * cumul produisait des durées de plusieurs centaines d'heures. `DIAGNOSTIC_Pause`
+ * en est volontairement EXCLU (le chrono y est gelé).
+ */
+export const DIAG_RUNNING_STATUS_VALUES: readonly string[] = [
+    'DIAGNOSTIC',
+    'INDIAGNOSTIC',
+];
+
+/** Jumeau réparation de `DIAG_RUNNING_STATUS_VALUES` (`REPARATION_Pause` exclu). */
+export const REPAIR_RUNNING_STATUS_VALUES: readonly string[] = [
+    'REPARATION',
+    'INREPARATION',
+];
+
+/** True si le chrono de diagnostic peut légitimement courir dans ce statut. */
+export function isDiagRunningStatus(status: string | null | undefined): boolean {
+    return DIAG_RUNNING_STATUS_VALUES.includes(status ?? '');
+}
+
+/** True si le chrono de réparation peut légitimement courir dans ce statut. */
+export function isRepairRunningStatus(status: string | null | undefined): boolean {
+    return REPAIR_RUNNING_STATUS_VALUES.includes(status ?? '');
+}
+
 export const CLOSING_STATUS_VALUES: readonly string[] = [
     'WAITING_BL',
     'WAITING_FACTURE',

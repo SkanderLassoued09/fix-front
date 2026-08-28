@@ -82,6 +82,7 @@ const COORDINATOR_DI_FIELDS = `
     }
     logs {
         idIgnore
+        status
         price
         final_price
         can_be_repaired
@@ -89,16 +90,29 @@ const COORDINATOR_DI_FIELDS = `
         array_composants {
             nameComposant
             quantity
+            isUpdated
         }
         devis
         facture
         bon_de_commande
         bon_de_livraison
+        image
+        comment
         remarque_manager
         remarque_admin_manager
+        remarque_admin_tech
         remarque_tech_diagnostic
         remarque_tech_repair
+        remarque_magasin
+        remarque_coordinator
+        discount
+        discount_value
+        type_client
+        service_quality
+        isErrorFromFixtronix
+        confirmationComposant
         createdAt
+        updatedAt
         isSentToCoordinator
         isConfirmedComponentFromCoordinator
         handleSendingNotificationBetweenCoordinatorAndMagasin
@@ -107,6 +121,32 @@ const COORDINATOR_DI_FIELDS = `
     di_category_id
     isSentToCoordinator
     isConfirmedComponentFromCoordinator
+    image
+    devis
+    facture
+    dateReception
+    isErrorFromFixtronix
+    confirmationComposant
+    gotComposantFromMagasin
+    current_workers_ids
+    pvReunions
+    statusUpdatedAt
+    location_name
+    di_category_name
+    discount
+    discount_value
+    type_client
+    service_quality
+    contact {
+        kind
+        name
+        email
+        phone
+        fax
+        address
+        region
+        mf
+    }
 `;
 
 @Injectable({
@@ -143,60 +183,7 @@ export class TicketService {
       }" }
     ) {
      di {
-            _id
-            _idnum
-            final_price
-            annulationParClient
-            annulationMotif
-            annulationCommentaire
-            annulePar
-            annuleLe
-            diagAssignments {
-                tech
-                techId
-                assignedAt
-                abandonedAt
-                motif
-                abandonedBy
-                diagTime
-            }
-            price
-            diagnosticPayant
-            diagnosticEstimate
-            title
-            description
-            can_be_repaired
-            bon_de_commande
-            bon_de_livraison
-            contain_pdr
-            facture
-            devis
-            status
-            createdAt
-            updatedAt
-            image
-            isErrorFromFixtronix
-            company_id
-            client_id
-            techRep
-            techDiag
-            remarque_tech_diagnostic
-            remarque_tech_repair
-            remarque_manager
-            createdBy
-            ignoreCount
-            location_id
-            location_name
-            di_category_id
-            di_category_name
-            logs {
-                idIgnore
-                facture
-            }
-            array_composants {
-                nameComposant
-                quantity
-            }
+            ${COORDINATOR_DI_FIELDS}
         }
         totalDiCount
     }
@@ -213,65 +200,7 @@ export class TicketService {
         }", endDate: "${endDate ? endDate : null}" }
     ) {
         di {
-            _id
-            _idnum
-            final_price
-            annulationParClient
-            annulationMotif
-            annulationCommentaire
-            annulePar
-            annuleLe
-            diagAssignments {
-                tech
-                techId
-                assignedAt
-                abandonedAt
-                motif
-                abandonedBy
-                diagTime
-            }
-            price
-            diagnosticPayant
-            diagnosticEstimate
-            title
-            description
-            can_be_repaired
-            bon_de_commande
-            bon_de_livraison
-            contain_pdr
-            facture
-            devis
-            status
-            createdAt
-            updatedAt
-            image
-            isErrorFromFixtronix
-            company_id
-            client_id
-            techRep
-            techDiag
-            remarque_tech_diagnostic
-            remarque_tech_repair
-            remarque_manager
-            createdBy
-            ignoreCount
-            location_id
-            location_name
-            di_category_id
-            di_category_name
-            documents {
-                type
-                name
-                webViewLink
-            }
-            logs {
-                idIgnore
-                facture
-            }
-            array_composants {
-                nameComposant
-                quantity
-            }
+            ${COORDINATOR_DI_FIELDS}
         }
         totalDiCount
     }
@@ -1785,6 +1714,184 @@ export class TicketService {
             }
         `;
         }
+    }
+
+    /**
+     * Journal de travail COMPLET d'un cycle : au-delà des cumuls `diag_time` /
+     * `rep_time` (les seuls que demandait `getStatByDI_ID`), on récupère les
+     * segments de travail fermés côté serveur, les pauses et la chaîne
+     * d'affectation. C'est la pièce justificative du temps facturé.
+     */
+    getStatDetailByDI_ID(_idDi: string, _idLog?: number) {
+        const args = _idLog
+            ? `_idDi: "${_idDi}", _idLogs: ${_idLog}`
+            : `_idDi: "${_idDi}"`;
+        return gql`
+            query {
+                getInfoStatByIdDi(${args}) {
+                    diag_time
+                    rep_time
+                    diagRunStartedAt
+                    repRunStartedAt
+                    retour_count
+                    retour_time
+                    diagnostiquefinishedFLAG
+                    reperationfinishedFLAG
+                    ignoreCount
+                    techDiag
+                    techRep
+                    pauseLogs {
+                        pauseType
+                        pauseStart
+                        pauseEnd
+                    }
+                    diagSegments {
+                        startedAt
+                        stoppedAt
+                    }
+                    repSegments {
+                        startedAt
+                        stoppedAt
+                    }
+                    diagAssignments {
+                        tech
+                        assignedAt
+                        abandonedAt
+                        motif
+                        abandonedBy
+                        diagTimeStart
+                        diagTime
+                    }
+                }
+            }
+        `;
+    }
+
+    /** Tous les `Stat` d'une DI (un par cycle de retour) — un seul aller-retour. */
+    getRetourDataStats(_idDi: string) {
+        return gql`
+            query {
+                getRetourDataStats(_idDi: "${_idDi}") {
+                    _id
+                    ignoreCount
+                    diag_time
+                    rep_time
+                    status
+                    techDiag
+                    techRep
+                    retour_count
+                    retour_time
+                    diagnostiquefinishedFLAG
+                    reperationfinishedFLAG
+                }
+            }
+        `;
+    }
+
+    /**
+     * Journal ERP de la DI — `SystemEvent`, append-only, avec ACTEUR. C'est le
+     * seul magasin qui retient QUI a fait quoi ; `statusHistory` ne stocke que
+     * le statut et la date (le hook Mongoose n'a pas de contexte de requête).
+     */
+    getDiEventJournal(diId: string, limit = 300, skip = 0) {
+        return gql`
+            query {
+                notificationHistory(diId: "${diId}", limit: ${limit}, skip: ${skip}) {
+                    _id
+                    type
+                    actorId
+                    actorRole
+                    message
+                    payloadJson
+                    createdAt
+                }
+            }
+        `;
+    }
+
+    /** Alertes opérationnelles (stagnation) de la DI — ouvertes ET résolues. */
+    getDiAlerts(diId: string) {
+        return gql`
+            query {
+                listDiAlerts(input: { diId: "${diId}", openOnly: false, limit: 100 }) {
+                    _id
+                    type
+                    severity
+                    message
+                    escalationLevel
+                    resolvedAt
+                    resolvedBy
+                    createdAt
+                }
+            }
+        `;
+    }
+
+    /** Rappels de stagnation déjà envoyés — clé HUMAINE (`_idnum`). */
+    getDiStagnationHistory(idNum: string) {
+        return gql`
+            query {
+                diStagnationHistory(idNum: "${idNum}", limit: 120) {
+                    date
+                    status
+                    ageHours
+                    sentAt
+                }
+            }
+        `;
+    }
+
+    /** Traces d'audit de la DI (dont `DI_REACTIVATED`). */
+    getDiAuditTrail(diId: string) {
+        return gql`
+            query {
+                getAuditByDi(diId: "${diId}", limit: 100) {
+                    _id
+                    type
+                    message
+                    isSeen
+                    createdAt
+                }
+            }
+        `;
+    }
+
+    /** PV de réunion rattachés à la DI (résumé pour l'onglet « Liens »). */
+    getDiReunionPvs(diId: string) {
+        return gql`
+            query {
+                reunionPVs(diId: "${diId}") {
+                    _id
+                    reference
+                    titre
+                    objet
+                    dateReunion
+                    lieu
+                    statut
+                    contexteRetour {
+                        niveau
+                        motif
+                    }
+                }
+            }
+        `;
+    }
+
+    /**
+     * Édition administrative du dossier — mutation SÉPARÉE d'`updateDi`, gardée
+     * côté serveur sur le rôle `ADMIN_TECH` et journalisée (`DI_EDITED`).
+     * Variables typées : les valeurs libres ne sont JAMAIS interpolées dans la
+     * requête (pas d'injection possible depuis un champ de saisie).
+     */
+    adminTechUpdateDi() {
+        return gql`
+            mutation ($input: AdminTechUpdateDiInput!) {
+                adminTechUpdateDi(input: $input) {
+                    _id
+                    status
+                }
+            }
+        `;
     }
     confirmerRecoitComposant(_idDI: string) {
         return gql`

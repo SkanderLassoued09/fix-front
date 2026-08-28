@@ -9,7 +9,7 @@ import {
 } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
-import { STATUS_DI } from 'src/app/layout/api/status-di';
+import { STATUS_DI, isClosingStatus } from 'src/app/layout/api/status-di';
 import {
     FormControl,
     FormGroup,
@@ -3064,6 +3064,29 @@ export class TicketListComponent implements OnInit, OnDestroy {
         FileSaver.saveAs(
             data,
             fileName + '_export_' + new Date().getTime() + EXCEL_EXTENSION,
+        );
+    }
+
+    /**
+     * Le bouton « Retour » est-il disponible sur cette ligne ?
+     *
+     * Toute la phase de CLÔTURE DOCUMENTAIRE y donne droit — `WAITING_BL`,
+     * `WAITING_FACTURE` et les valeurs legacy `CLOSING` / `ATTENTE_BL_FACTURE`
+     * (via `isClosingStatus`) — plus la DI clôturée (`FINISHED`). Avant, la
+     * règle était une liste de DEUX valeurs codée en dur dans le template :
+     * `WAITING_FACTURE` était grisé alors que le back accepte le retour depuis
+     * n'importe quel statut, et que le bouton « Fichiers » de la même cellule
+     * couvre déjà les quatre statuts de clôture.
+     *
+     * Seule limite réelle : 3 retours maximum (`countIgnore` plafonne à 3).
+     */
+    canRetour(rowData: any): boolean {
+        if (!rowData || rowData.ignoreCount === 3) {
+            return false;
+        }
+        return (
+            isClosingStatus(rowData.status) ||
+            rowData.status === STATUS_DI.FINISHED
         );
     }
 

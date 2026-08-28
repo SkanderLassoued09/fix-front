@@ -6,6 +6,26 @@ export interface DiPdfOptions {
     cycles?: Array<{ n: number; label: string; timeline: any[] }>;
     finance?: any[];
     financeCycleLabel?: string;
+    /** Journal fusionné (événements ERP + transitions), déjà trié et filtré. */
+    journal?: Array<{
+        date: string | null;
+        label: string;
+        code: string;
+        actor: string | null;
+        cycle: number | null;
+    }>;
+    /** Journal de travail du cycle affiché (segments, pauses, cumuls). */
+    times?: {
+        diagLabel?: string;
+        repLabel?: string;
+        diagSegments?: any[];
+        repSegments?: any[];
+        pauseLogs?: any[];
+        cycleStats?: any[];
+        segmentDuration?: (seg: any) => string;
+    };
+    /** Éléments rattachés (PV, alertes, rappels de stagnation). */
+    links?: { pvs?: any[]; alerts?: any[]; stagnations?: any[] };
 }
 
 /**
@@ -113,7 +133,10 @@ export class DiPdfService {
             ['Réparable', this.yesNo(di?.can_be_repaired)],
             ['PDR', di?.contain_pdr ? 'Oui' : 'Non'],
             ['Emplacement', this.name(di, ['location_name', 'locationName', 'location_id'])],
+            ['Catégorie', this.name(di, ['di_category_name', 'di_category_id'])],
             ['Date de création', this.raw(di?.createdAt) || '—'],
+            ['Date de réception', this.fmt(di?.dateReception)],
+            ['Erreur Fixtronix', this.yesNo(di?.isErrorFromFixtronix)],
         ]);
 
         // ── Client / Société ───────────────────────────────────────────
@@ -130,6 +153,10 @@ export class DiPdfService {
                 ]),
             ],
             ['Créé par', this.name(di, ['createdBy'])],
+            ['Téléphone', this.raw(di?.contact?.phone) || '—'],
+            ['Email', this.raw(di?.contact?.email) || '—'],
+            ['Adresse', this.raw(di?.contact?.address) || '—'],
+            ['Région', this.raw(di?.contact?.region) || '—'],
         ]);
 
         // ── Techniciens ────────────────────────────────────────────────
@@ -312,10 +339,197 @@ export class DiPdfService {
             ['Facture', di?.facture ? 'Présent' : '—'],
         ]);
 
+        // ── Autres remarques (4 des 7 n'apparaissaient nulle part) ─────
+        const extra: Array<[string, string]> = [
+            ['Admin manager', this.raw(di?.remarque_admin_manager)],
+            ['Admin technique', this.raw(di?.remarque_admin_tech)],
+            ['Magasin', this.raw(di?.remarque_magasin)],
+            ['Coordination', this.raw(di?.remarque_coordinator)],
+            ['Commentaire', this.raw(di?.comment)],
+        ].filter(([, v]) => !!v) as Array<[string, string]>;
+        if (extra.length) kv('Autres remarques', extra);
+
+        // ── Jalons datés + acteur ──────────────────────────────────────
+        const milestones: Array<[string, string]> = [];
+        if (di?.pricingRequestSentAt) {
+            milestones.push([
+                'Demande de tarification',
+                `${this.fmt(di.pricingRequestSentAt)} · ${this.name(di, ['pricingRequestSentBy'])}`,
+            ]);
+        }
+        if (di?.componentsConfirmedAt) {
+            milestones.push([
+                'Composants confirmés',
+                `${this.fmt(di.componentsConfirmedAt)} · ${this.name(di, ['componentsConfirmedBy'])}`,
+            ]);
+        }
+        if (di?.retourDate || di?.retourReason) {
+            milestones.push([
+                'Dernier retour',
+                `${this.fmt(di?.retourDate)}${di?.retourReason ? ' · ' + this.raw(di.retourReason) : ''}`,
+            ]);
+        }
+        if (milestones.length) kv('Jalons', milestones);
+
+        // ── Temps & chrono — pièce justificative du temps facturé ──────
+        const t = opts.times;
+        if (t) {
+            const segRows: any[] = [];
+            const pushSegs = (label: string, list: any[]) => {
+                for (const g of list ?? []) {
+                    segRows.push([
+                        label,
+                        this.fmt(g?.startedAt),
+                        this.fmt(g?.stoppedAt),
+                        t.segmentDuration ? t.segmentDuration(g) : '—',
+                    ]);
+                }
+            };
+            pushSegs('Diagnostic', t.diagSegments ?? []);
+            pushSegs('Réparation', t.repSegments ?? []);
+            if (segRows.length) {
+                y = this.sectionTitle(doc, 'Segments de travail', MARGIN_X, y, C);
+                autoTable(doc, {
+                    startY: y,
+                    margin: { left: MARGIN_X, right: MARGIN_X },
+                    head: [['Phase', 'Début', 'Fin', 'Durée']],
+                    body: segRows,
+                    styles: { fontSize: 8, cellPadding: 4, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                    headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: C.zebra },
+                });
+                y = (doc as any).lastAutoTable.finalY + 14;
+            }
+
+            const pauses: any[] = t.pauseLogs ?? [];
+            if (pauses.length) {
+                y = this.sectionTitle(doc, 'Pauses', MARGIN_X, y, C);
+                autoTable(doc, {
+                    startY: y,
+                    margin: { left: MARGIN_X, right: MARGIN_X },
+                    head: [['Type', 'Début', 'Fin']],
+                    body: pauses.map((p) => [
+                        p?.pauseType === 'rep' ? 'Réparation' : 'Diagnostic',
+                        this.fmt(p?.pauseStart),
+                        p?.pauseEnd ? this.fmt(p.pauseEnd) : 'en cours',
+                    ]),
+                    styles: { fontSize: 8, cellPadding: 4, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                    headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: C.zebra },
+                });
+                y = (doc as any).lastAutoTable.finalY + 14;
+            }
+
+            const cs: any[] = t.cycleStats ?? [];
+            if (cs.length) {
+                y = this.sectionTitle(doc, 'Temps par cycle', MARGIN_X, y, C);
+                autoTable(doc, {
+                    startY: y,
+                    margin: { left: MARGIN_X, right: MARGIN_X },
+                    head: [['Cycle', 'Diagnostic', 'Réparation', 'Tech. diag', 'Tech. répa']],
+                    body: cs.map((c) => [
+                        c?.ignoreCount ? `Retour ${c.ignoreCount}` : 'Flux original',
+                        this.raw(c?.diag_time) || '—',
+                        this.raw(c?.rep_time) || '—',
+                        this.raw(c?.techDiag) || '—',
+                        this.raw(c?.techRep) || '—',
+                    ]),
+                    styles: { fontSize: 8, cellPadding: 4, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                    headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                    alternateRowStyles: { fillColor: C.zebra },
+                });
+                y = (doc as any).lastAutoTable.finalY + 14;
+            }
+        }
+
+        // ── Éléments rattachés ─────────────────────────────────────────
+        const L = opts.links;
+        if (L?.pvs?.length) {
+            y = this.sectionTitle(doc, `PV de réunion (${L.pvs.length})`, MARGIN_X, y, C);
+            autoTable(doc, {
+                startY: y,
+                margin: { left: MARGIN_X, right: MARGIN_X },
+                head: [['Référence', 'Titre', 'Date', 'Statut']],
+                body: L.pvs.map((pv: any) => [
+                    this.raw(pv?.reference) || '—',
+                    this.raw(pv?.titre) || '—',
+                    this.fmt(pv?.dateReunion),
+                    this.raw(pv?.statut) || '—',
+                ]),
+                styles: { fontSize: 8, cellPadding: 4, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: C.zebra },
+            });
+            y = (doc as any).lastAutoTable.finalY + 14;
+        }
+        if (L?.alerts?.length) {
+            y = this.sectionTitle(doc, `Alertes (${L.alerts.length})`, MARGIN_X, y, C);
+            autoTable(doc, {
+                startY: y,
+                margin: { left: MARGIN_X, right: MARGIN_X },
+                head: [['Type', 'Sévérité', 'Créée le', 'Résolue']],
+                body: L.alerts.map((a: any) => [
+                    this.raw(a?.type) || '—',
+                    this.raw(a?.severity) || '—',
+                    this.fmt(a?.createdAt),
+                    a?.resolvedAt ? this.fmt(a.resolvedAt) : 'ouverte',
+                ]),
+                styles: { fontSize: 8, cellPadding: 4, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: C.zebra },
+            });
+            y = (doc as any).lastAutoTable.finalY + 14;
+        }
+
+        // ── Journal du dossier — en DERNIER : c'est la section la plus
+        //    volumineuse, elle ne doit pas repousser le reste du dossier.
+        const journal = Array.isArray(opts.journal) ? opts.journal : [];
+        if (journal.length) {
+            y = this.sectionTitle(
+                doc,
+                `Journal du dossier (${journal.length})`,
+                MARGIN_X,
+                y,
+                C,
+            );
+            autoTable(doc, {
+                startY: y,
+                margin: { left: MARGIN_X, right: MARGIN_X },
+                head: [['Date', 'Événement', 'Code', 'Acteur', 'Cycle']],
+                body: journal.map((r) => [
+                    r?.date || '—',
+                    this.raw(r?.label) || '—',
+                    this.raw(r?.code) || '—',
+                    this.raw(r?.actor) || '—',
+                    r?.cycle ? `Retour ${r.cycle}` : 'Flux original',
+                ]),
+                styles: { fontSize: 7.5, cellPadding: 3.5, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: C.zebra },
+                columnStyles: { 0: { cellWidth: 78 }, 2: { cellWidth: 92 }, 4: { cellWidth: 62 } },
+            });
+            y = (doc as any).lastAutoTable.finalY + 14;
+        }
+
         // ── Footer on every page ───────────────────────────────────────
         this.addFooter(doc, MARGIN_X);
 
         return doc;
+    }
+
+    /** Date FR courte (Africa/Tunis) — « — » si absente/invalide. */
+    private fmt(v: any): string {
+        if (!v) return '—';
+        const d = new Date(v);
+        if (Number.isNaN(d.getTime())) return '—';
+        return new Intl.DateTimeFormat('fr-FR', {
+            timeZone: 'Africa/Tunis',
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(d);
     }
 
     // ── helpers ────────────────────────────────────────────────────────

@@ -290,3 +290,78 @@ export function buildCycleTimeline(
   }
   return rows;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Journal BRUT des transitions — complément de `buildCycleTimeline`
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Une transition telle qu'elle a été ENREGISTRÉE, sans regroupement. */
+export interface RawTimelineRow {
+  /** Rang chronologique dans l'historique complet (stable, sert de clé). */
+  index: number;
+  rawStatus: string;
+  /** Libellé de la phase correspondante, ou le statut brut si inconnu. */
+  label: string;
+  at: Date;
+  date: string | null;
+  /** Cycle de retour auquel appartient la transition (0 = flux original). */
+  cycle: number;
+  /** Durée jusqu'à la transition SUIVANTE (ou jusqu'à maintenant si dernière). */
+  duration: PhaseDuration | null;
+  anomalous: boolean;
+}
+
+/** Libellé lisible d'un statut brut (repli : le statut lui-même). */
+export function labelForStatus(status: string): string {
+  const phase = BASE_PHASES.find((p) => p.statuses.includes(status));
+  if (phase) return phase.label;
+  const m = /^RETOUR([123])$/.exec(status);
+  if (m) return `Retour ${m[1]}`;
+  if (status === 'ANNULER') return 'Annulée';
+  return status;
+}
+
+/**
+ * Journal CHRONOLOGIQUE et EXHAUSTIF de `statusHistory`.
+ *
+ * `buildCycleTimeline` répond à « combien de temps a duré chaque ÉTAPE » : il
+ * ne garde donc qu'UNE ligne par phase (la première occurrence). Les
+ * allers-retours — pause/reprise de diagnostic, repassages en réparation — y
+ * sont invisibles alors qu'ils sont bel et bien enregistrés.
+ *
+ * Cette fonction répond à l'autre question, « que s'est-il passé, dans
+ * l'ordre » : une ligne PAR transition, chacune datée, rattachée à son cycle de
+ * retour, avec la durée jusqu'à la suivante. Les deux vues sont
+ * complémentaires — celle-ci n'en remplace aucune.
+ */
+export function buildRawTimeline(
+  raw: any,
+  anomalyThresholdMs: number,
+  now: number = Date.now(),
+): RawTimelineRow[] {
+  const hist = sanitizeHistory(raw);
+  let cycle = 0;
+  return hist.map((entry, i) => {
+    const m = /^RETOUR([123])$/.exec(entry.status);
+    // La transition RETOUR{N} OUVRE le cycle N — même convention que
+    // `sliceHistoryByCycle`, pour que les deux vues concordent.
+    if (m) cycle = Number(m[1]);
+    const next = hist[i + 1];
+    const ms = (next ? next.at.getTime() : now) - entry.at.getTime();
+    const ongoing = !next;
+    const duration: PhaseDuration | null =
+      Number.isFinite(ms) && ms >= 0
+        ? { text: formatDuration(ms), ongoing, ms }
+        : null;
+    return {
+      index: i,
+      rawStatus: entry.status,
+      label: labelForStatus(entry.status),
+      at: entry.at,
+      date: formatTimelineDate(entry.at),
+      cycle,
+      duration,
+      anomalous: !ongoing && ms > anomalyThresholdMs,
+    };
+  });
+}

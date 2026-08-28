@@ -862,3 +862,460 @@
         break-inside: avoid;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Onglets du dossier + vues « Journal », « Temps & chrono », « Liens »,
+   et le formulaire d'édition ADMIN_TECH.
+   Mêmes jetons que ci-dessus (aucune nouvelle couleur introduite).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.di-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 20px;
+    border-top: 1px solid var(--di-line);
+    overflow-x: auto;
+
+    .di-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        flex: 0 0 auto;
+        padding: 10px 14px;
+        border: 0;
+        border-bottom: 2px solid transparent;
+        background: transparent;
+        color: var(--di-slate-500);
+        font: inherit;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: color 0.15s ease, border-color 0.15s ease;
+
+        i {
+            font-size: 0.8rem;
+        }
+
+        &:hover:not(:disabled) {
+            color: var(--di-ink);
+        }
+
+        &:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        &--active {
+            color: var(--di-blue-strong);
+            border-bottom-color: var(--di-blue-strong);
+        }
+    }
+}
+
+/* ── Blocs génériques réutilisés par les nouveaux onglets ─────────────────── */
+
+.di-note {
+    margin: 4px 0 12px;
+    color: var(--di-slate-500);
+    font-size: 0.78rem;
+    line-height: 1.45;
+
+    &--warn {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--di-line);
+        border-left: 3px solid var(--di-amber);
+        border-radius: 8px;
+        background: var(--di-bg-soft);
+        color: var(--di-slate-700);
+    }
+}
+
+.di-empty,
+.di-loading {
+    padding: 18px 0;
+    color: var(--di-slate-500);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.di-loading i {
+    margin-right: 6px;
+}
+
+/* Paires clé/valeur — utilisées en colonne droite ET dans les onglets. */
+.di-kv {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    &__row {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 0.84rem;
+
+        span {
+            color: var(--di-slate-500);
+        }
+
+        strong {
+            color: var(--di-ink);
+            font-weight: 600;
+            text-align: right;
+            word-break: break-word;
+
+            &[data-tone='ok'] {
+                color: var(--di-green);
+            }
+            &[data-tone='ko'] {
+                color: var(--di-red);
+            }
+            &[data-tone='warn'] {
+                color: var(--di-amber);
+            }
+            &[data-tone='info'] {
+                color: var(--di-blue-strong);
+            }
+            &[data-tone='muted'] {
+                color: var(--di-slate-500);
+            }
+        }
+    }
+
+    &--sm &__row {
+        font-size: 0.78rem;
+    }
+}
+
+/* Tableau générique — 3 colonnes par défaut, 4 ou 5 au besoin. */
+.di-table {
+    border: 1px solid var(--di-line);
+    border-radius: 10px;
+    overflow: hidden;
+    font-size: 0.8rem;
+
+    &__head,
+    &__row {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr;
+        gap: 10px;
+        padding: 8px 12px;
+        align-items: center;
+    }
+
+    &__head {
+        background: var(--di-bg-soft2);
+        color: var(--di-slate-500);
+        font-weight: 600;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    &__row + &__row,
+    &__head + &__row {
+        border-top: 1px solid var(--di-line);
+    }
+
+    &__row {
+        color: var(--di-slate-700);
+        word-break: break-word;
+
+        a {
+            color: var(--di-blue-strong);
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        em {
+            color: var(--di-slate-400);
+            font-style: normal;
+        }
+    }
+
+    &--4 &__head,
+    &--4 &__row {
+        grid-template-columns: 0.9fr 1.6fr 1fr 0.9fr;
+    }
+
+    &--5 &__head,
+    &--5 &__row {
+        grid-template-columns: repeat(5, 1fr);
+    }
+}
+
+/* Filtres du journal. */
+.di-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+
+    .di-chip {
+        padding: 4px 10px;
+        border: 1px solid var(--di-line);
+        border-radius: 999px;
+        background: #fff;
+        color: var(--di-slate-500);
+        font: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--di-ink);
+        }
+
+        &--active {
+            border-color: var(--di-blue-strong);
+            background: var(--di-blue-strong);
+            color: #fff;
+        }
+    }
+}
+
+/* ── Journal fusionné ─────────────────────────────────────────────────────── */
+.di-journal {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 14px;
+    border-left: 1px solid var(--di-line);
+
+    .di-jrow {
+        position: relative;
+        padding: 0 0 16px 14px;
+
+        &__dot {
+            position: absolute;
+            left: -20px;
+            top: 5px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--di-slate-400);
+            box-shadow: 0 0 0 3px #fff;
+        }
+
+        /* Un événement ERP porte un acteur : on le distingue d'une simple
+           transition de statut, qui n'en a pas. */
+        &[data-kind='event'] .di-jrow__dot {
+            background: var(--di-blue-strong);
+        }
+
+        &__top {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        &__label {
+            color: var(--di-ink);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        &__code {
+            padding: 1px 6px;
+            border-radius: 5px;
+            background: var(--di-bg-soft2);
+            color: var(--di-slate-500);
+            font-size: 0.68rem;
+        }
+
+        &__cycle {
+            padding: 1px 7px;
+            border-radius: 999px;
+            background: var(--di-bg-soft2);
+            color: var(--di-amber);
+            font-size: 0.68rem;
+            font-weight: 700;
+        }
+
+        &__meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 3px;
+            color: var(--di-slate-500);
+            font-size: 0.75rem;
+        }
+
+        &__more {
+            border: 0;
+            background: transparent;
+            color: var(--di-blue-strong);
+            font: inherit;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+
+        &__payload {
+            margin: 6px 0 0;
+            padding: 8px 10px;
+            border: 1px solid var(--di-line);
+            border-radius: 8px;
+            background: var(--di-bg-soft);
+            color: var(--di-slate-700);
+            font-size: 0.72rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 220px;
+            overflow: auto;
+        }
+    }
+}
+
+/* ── Formulaire d'édition ─────────────────────────────────────────────────── */
+.di-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.di-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+
+    @media (max-width: 720px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.di-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    &--wide {
+        grid-column: 1 / -1;
+    }
+
+    > span {
+        color: var(--di-slate-500);
+        font-size: 0.74rem;
+        font-weight: 600;
+    }
+
+    input,
+    select,
+    textarea {
+        width: 100%;
+        padding: 7px 10px;
+        border: 1px solid var(--di-line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--di-ink);
+        font: inherit;
+        font-size: 0.84rem;
+
+        &:focus {
+            outline: none;
+            border-color: var(--di-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+    }
+
+    textarea {
+        resize: vertical;
+    }
+}
+
+.di-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--di-slate-700);
+    font-size: 0.84rem;
+
+    input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--di-blue-strong);
+    }
+}
+
+.di-mini-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    border: 1px solid var(--di-line);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--di-slate-700);
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        background: var(--di-bg-soft2);
+    }
+
+    &--danger {
+        color: var(--di-red);
+    }
+}
+
+.di-comp-edit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    &__row {
+        display: grid;
+        grid-template-columns: 1fr 100px auto;
+        gap: 8px;
+        align-items: center;
+
+        input {
+            padding: 7px 10px;
+            border: 1px solid var(--di-line);
+            border-radius: 8px;
+            font: inherit;
+            font-size: 0.84rem;
+
+            &:focus {
+                outline: none;
+                border-color: var(--di-blue);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            }
+        }
+    }
+}
+
+/* ── Bandeau de retour — pendant du bandeau d'annulation ──────────────────── */
+.di-retour-banner {
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    border: 1px solid var(--di-line);
+    border-left: 3px solid var(--di-amber);
+    border-radius: 10px;
+    background: var(--di-bg-soft);
+    color: var(--di-slate-700);
+    font-size: 0.82rem;
+
+    strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--di-amber);
+        margin-right: 4px;
+    }
+}
