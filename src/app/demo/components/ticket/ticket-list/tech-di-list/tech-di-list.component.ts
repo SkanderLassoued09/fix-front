@@ -2516,6 +2516,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 quantity: di.quantity || 0,
                 composantSelectedDropdown:
                     di.composantSelectedDropdown ?? detailsDi.array_composants,
+                // Ce contrôle n'était PAS prérempli ici : il gardait la valeur
+                // laissée par la DI précédemment ouverte. Comme la pause et la
+                // fin de diagnostic renvoient la valeur VIVE du formulaire, un
+                // verdict « Erreur Fixtronix » pouvait être écrasé par celui
+                // d'une autre DI — et la DI repartait en facturation. On le
+                // réamorce donc explicitement, comme dans `...WithLogs`.
+                isErrorFromFixtronix:
+                    detailsDi.isErrorFromFixtronix ??
+                    di.isErrorFromFixtronix ??
+                    false,
             },
             { emitEvent: false },
         );
@@ -3766,7 +3776,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     // tech_startDiagnostic (Boolean! ≠ undefined) et le changement
                     // de statut, chaîné dans le subscribe(success), ne partait
                     // jamais → DI bloquée en INDIAGNOSTIC. getRawValue rend `false`.
-                    pdr: !!this.diagFormTech.getRawValue().isPdr,
+                    // « PDR » = case cochée ET liste non vide, comme dans
+                    // `techFinishDiag` et comme l'exige le back (`hasPdr =
+                    // cyclePdr && cycleHasComposants`). Sur `pdr` seul, une case
+                    // cochée sans composant demandait MagasinEstimation là où le
+                    // back route ailleurs : l'intention affichée divergeait du
+                    // résultat.
+                    pdr:
+                        !!this.diagFormTech.getRawValue().isPdr &&
+                        this.composantCombo.length > 0,
                     reparable: !!this.diagFormTech.getRawValue().isReparable,
                     remarqueTech: this.diagFormTech.value.remarqueTech,
                     isErrorFromFixtronix:

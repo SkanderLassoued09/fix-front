@@ -1319,3 +1319,31 @@
         margin-right: 4px;
     }
 }
+
+/* Marqueur d'ORIGINE d'une valeur sur un cycle de retour : « ce cycle » (la
+   valeur est enregistrée pour ce retour) vs « hérité » (reprise du dossier).
+   Sert aussi à signaler une entrée d'historique « reconstruit » (backfill).
+   Volontairement discret : c'est une précision, pas une alerte. */
+.di-origin {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    padding: 1px 7px;
+    border: 1px solid var(--di-line);
+    border-radius: 999px;
+    background: var(--di-bg-soft2);
+    color: var(--di-slate-500);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: lowercase;
+    white-space: nowrap;
+}
+
+/* Provenance du motif de retour (journal ERP / PV / dossier). */
+.di-retour-banner__src {
+    margin-left: 6px;
+    color: var(--di-slate-400);
+    font-size: 0.72rem;
+    font-style: normal;
+}

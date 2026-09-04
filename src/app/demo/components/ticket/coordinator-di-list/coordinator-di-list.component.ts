@@ -1825,6 +1825,13 @@ export class CoordinatorDiListComponent implements OnDestroy {
             .then(({ data }) => data?.getStatByIdlogs || []);
     }
 
+    /** Idem ticket-list : recharge la liste après une édition ADMIN_TECH. */
+    onDiUpdatedFromModal(): void {
+        this.ticketRefreshService.requestRefresh('coordinator-list', {
+            source: 'di-info-modal:updated',
+        });
+    }
+
     openTicketDetails(data: any) {
         Promise.all([this.getLogsDi(data._id), this.getLogsData(data._id)])
             .then(([logsDi, pauseLogs]) => {

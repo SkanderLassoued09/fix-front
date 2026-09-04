@@ -11,6 +11,8 @@
 export interface StatusHistoryEntry {
   status: string;
   at: Date;
+  /** Entrée reconstruite par le backfill (migration 011), pas observée. */
+  reconstructed?: boolean;
 }
 
 export interface PhaseDuration {
@@ -102,7 +104,11 @@ export function sanitizeHistory(raw: any): StatusHistoryEntry[] {
   const arr: any[] = Array.isArray(raw) ? raw : [];
   return arr
     .filter((h) => h && typeof h.status === 'string' && h.at != null)
-    .map((h) => ({ status: h.status as string, at: new Date(h.at) }))
+    .map((h) => ({
+      status: h.status as string,
+      at: new Date(h.at),
+      reconstructed: h.reconstructed === true,
+    }))
     .filter((h) => !Number.isNaN(h.at.getTime()))
     .sort((a, b) => a.at.getTime() - b.at.getTime());
 }
@@ -228,6 +234,8 @@ export interface TimelineRow {
   state: PhaseState;
   /** Durée anormale (dépasse le seuil) — rendu en rouge. */
   anomalous: boolean;
+  /** L'entrée d'origine est une reconstruction, pas une transition observée. */
+  reconstructed?: boolean;
 }
 
 /**
@@ -286,6 +294,7 @@ export function buildCycleTimeline(
       duration,
       state,
       anomalous,
+      reconstructed: entry.reconstructed === true,
     });
   }
   return rows;
@@ -309,6 +318,8 @@ export interface RawTimelineRow {
   /** Durée jusqu'à la transition SUIVANTE (ou jusqu'à maintenant si dernière). */
   duration: PhaseDuration | null;
   anomalous: boolean;
+  /** L'entrée est une reconstruction (backfill), pas une observation. */
+  reconstructed?: boolean;
 }
 
 /** Libellé lisible d'un statut brut (repli : le statut lui-même). */
@@ -362,6 +373,7 @@ export function buildRawTimeline(
       cycle,
       duration,
       anomalous: !ongoing && ms > anomalyThresholdMs,
+      reconstructed: entry.reconstructed === true,
     };
   });
 }

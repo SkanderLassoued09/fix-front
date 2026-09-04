@@ -3732,6 +3732,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Le dossier vient d'être modifié (édition ADMIN_TECH dans le modal).
+     * Sans ce rafraîchissement la ligne de la liste gardait ses anciennes
+     * valeurs jusqu'au prochain rechargement manuel.
+     */
+    onDiUpdatedFromModal(): void {
+        this.ticketRefreshService.requestRefresh('ticket-list', {
+            source: 'di-info-modal:updated',
+        });
+    }
+
     openTicketDetails(data: any) {
         Promise.all([
             this.getLogsDi(data._id),

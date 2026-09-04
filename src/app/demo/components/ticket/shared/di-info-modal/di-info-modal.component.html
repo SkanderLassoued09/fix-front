@@ -201,6 +201,22 @@
                 </div>
             </div>
 
+            <!-- Contexte du cycle de retour affiché. `di.retourReason` étant
+                 écrasé à chaque retour, le motif vient du journal ERP (une
+                 entrée par cycle) puis du PV ; la date vient de l'entrée
+                 RETOUR{n} de l'historique. -->
+            <div *ngIf="retourContext as rc" class="di-retour-banner">
+                <strong>
+                    <i class="pi pi-replay"></i> Retour {{ rc.level }}
+                </strong>
+                <span *ngIf="rc.date"> le {{ rc.date }}</span>
+                <span *ngIf="rc.motif"> — motif : {{ rc.motif }}</span>
+                <span *ngIf="!rc.motif"> — motif non enregistré</span>
+                <em *ngIf="rc.source" class="di-retour-banner__src">
+                    (source : {{ rc.source }})
+                </em>
+            </div>
+
             <!-- Bandeau de retour — pendant du bandeau d'annulation -->
             <div *ngIf="hasRetourInfo" class="di-retour-banner">
                 <strong><i class="pi pi-replay"></i> Dossier retourné</strong>
@@ -263,6 +279,19 @@
                 <!-- COLONNE GAUCHE -->
                 <div class="di-main">
                     <!-- Écart entre statuts -->
+                    <!-- Étape non atteinte ≠ étape inconnue : quand le cycle
+                         n'a aucune transition, on le DIT plutôt que de masquer
+                         la section (l'utilisateur croyait à une info manquante). -->
+                    <section
+                        class="di-sec avoid-break"
+                        *ngIf="!timelineRows.length"
+                    >
+                        <div class="di-label">Écart entre statuts</div>
+                        <p class="di-empty">
+                            Aucune transition enregistrée pour ce cycle.
+                        </p>
+                    </section>
+
                     <section
                         class="di-sec avoid-break"
                         *ngIf="timelineRows.length"
@@ -282,6 +311,12 @@
                                         <span class="di-step__status">{{
                                             r.rawStatus
                                         }}</span>
+                                        <span
+                                            class="di-origin"
+                                            *ngIf="r.reconstructed"
+                                            title="Date déduite de la création et du dernier changement de statut, pas observée en direct"
+                                            >reconstruit</span
+                                        >
                                         <span class="di-step__date di-mono">{{
                                             r.date || "—"
                                         }}</span>
@@ -337,6 +372,11 @@
                             <span class="di-pill">{{
                                 activeComposants.length
                             }}</span>
+                            <span
+                                class="di-origin"
+                                *ngIf="originLabel('array_composants') as o"
+                                >{{ o }}</span
+                            >
                         </div>
                         <div class="di-comp">
                             <div class="di-comp__head">
@@ -360,9 +400,24 @@
                         </div>
                     </section>
 
+                    <section
+                        class="di-sec avoid-break"
+                        *ngIf="!activeComposants.length"
+                    >
+                        <div class="di-label">Composants</div>
+                        <p class="di-empty">Aucun composant pour ce cycle.</p>
+                    </section>
+
                     <!-- Remarques -->
                     <section class="di-sec avoid-break" *ngIf="hasAnyRemarque">
-                        <div class="di-label">Remarques</div>
+                        <div class="di-label">
+                            Remarques
+                            <span
+                                class="di-origin"
+                                *ngIf="originLabel('remarque_tech_diagnostic') as o"
+                                >{{ o }}</span
+                            >
+                        </div>
                         <div class="di-remarks">
                             <div
                                 class="di-remark di-remark--admin"
@@ -438,7 +493,14 @@
                 <aside class="di-side">
                     <!-- État -->
                     <div class="di-sec avoid-break">
-                        <div class="di-label di-label--sm">État</div>
+                        <div class="di-label di-label--sm">
+                            État
+                            <span
+                                class="di-origin"
+                                *ngIf="originLabel('can_be_repaired') as o"
+                                >{{ o }}</span
+                            >
+                        </div>
                         <div class="di-state">
                             <span
                                 class="di-state__chip"
@@ -558,7 +620,14 @@
 
                     <!-- Documents (présents + absents signalés) -->
                     <div class="di-sec avoid-break">
-                        <div class="di-label di-label--sm">Documents</div>
+                        <div class="di-label di-label--sm">
+                            Documents
+                            <span
+                                class="di-origin"
+                                *ngIf="originLabel('devis') as o"
+                                >{{ o }}</span
+                            >
+                        </div>
                         <div class="di-docs">
                             <ng-container *ngFor="let d of docSlots">
                                 <a
@@ -795,10 +864,12 @@
                 <div class="di-edit">
                     <p class="di-note di-note--warn">
                         <i class="pi pi-info-circle"></i>
-                        Modification administrative. Le statut, le parcours et les
-                        temps enregistrés ne sont pas modifiables : ils
-                        constituent la piste d'audit. Chaque enregistrement est
-                        tracé dans le journal.
+                        Modification administrative du <strong>dossier</strong>
+                        (flux original) — les cycles de retour ne sont pas
+                        modifiables ici. Le statut, le parcours et les temps
+                        enregistrés restent intouchables : ils constituent la
+                        piste d'audit. Chaque enregistrement est tracé dans le
+                        journal.
                     </p>
 
                     <section class="di-sec">
@@ -1367,6 +1438,8 @@
                     label="Fermer"
                     icon="pi pi-times"
                     severity="primary"
+                    [disabled]="editing"
+                    pTooltip="Terminez ou annulez la modification en cours"
                     (onClick)="close()"
                 ></p-button>
             </div>

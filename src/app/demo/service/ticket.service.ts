@@ -21,6 +21,16 @@ const COORDINATOR_DI_FIELDS = `
     diagnosticPayant
     diagnosticEstimate
     needsDevisBeforeRepair
+    cycle0Snapshot {
+        can_be_repaired
+        contain_pdr
+        isErrorFromFixtronix
+        remarque_tech_diagnostic
+        array_composants {
+            nameComposant
+            quantity
+        }
+    }
     nSerie
     title
     description
@@ -71,9 +81,12 @@ const COORDINATOR_DI_FIELDS = `
     pricingRequestSentBy
     componentsConfirmedAt
     componentsConfirmedBy
+    client_name
+    company_name
     statusHistory {
         status
         at
+        reconstructed
     }
     documents {
         type
@@ -1733,8 +1746,6 @@ export class TicketService {
                     rep_time
                     diagRunStartedAt
                     repRunStartedAt
-                    retour_count
-                    retour_time
                     diagnostiquefinishedFLAG
                     reperationfinishedFLAG
                     ignoreCount
@@ -1779,8 +1790,6 @@ export class TicketService {
                     status
                     techDiag
                     techRep
-                    retour_count
-                    retour_time
                     diagnostiquefinishedFLAG
                     reperationfinishedFLAG
                 }
@@ -1800,6 +1809,7 @@ export class TicketService {
                     _id
                     type
                     actorId
+                    actorName
                     actorRole
                     message
                     payloadJson

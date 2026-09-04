@@ -20,7 +20,6 @@
     [visible]="(detailService.visible$ | async) || false"
     (visibleChange)="onDetailVisibleChange($event)"
     [di]="detailService.di$ | async"
-    context="interventions"
 ></app-di-info-modal>
 
 <!-- Single primary outlet. There were TWO unnamed <router-outlet> here, which

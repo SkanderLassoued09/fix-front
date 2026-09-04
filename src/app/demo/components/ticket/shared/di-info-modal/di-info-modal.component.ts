@@ -21,9 +21,11 @@ import { DiImageComponent } from '../di-image/di-image.component';
 import {
     buildCycleTimeline,
     buildRawTimeline,
+    sanitizeHistory,
     sliceHistoryByCycle,
     formatTimelineDate,
     formatDuration,
+    RawTimelineRow,
     TimelineRow,
 } from '../status-timeline.util';
 
@@ -72,7 +74,6 @@ export interface JournalRow {
 export class DiInfoModalComponent implements OnChanges {
     @Input() di: any = null;
     @Input() visible = false;
-    @Input() context: 'coordinator' | 'interventions' = 'interventions';
     @Output() visibleChange = new EventEmitter<boolean>();
 
     /** Plancher de facturation du diagnostic (borne basse 150 TND, front-only —
@@ -164,6 +165,9 @@ export class DiInfoModalComponent implements OnChanges {
             // Un onglet autre que « Dossier » peut rester actif d'une ouverture
             // à l'autre : on le recharge pour la nouvelle DI.
             this.ensureTabLoaded(this.activeTab);
+            // Le cycle pré-sélectionné est le plus récent : si c'est un retour,
+            // l'encart de contexte a besoin du journal et des PV.
+            this.ensureRetourContext();
         }
     }
 
@@ -249,8 +253,8 @@ export class DiInfoModalComponent implements OnChanges {
     }
 
     /** À quel cycle de retour appartient un instant donné. */
-    private cycleAt(at: Date): number {
-        const rows = buildRawTimeline(
+    private cycleAt(at: Date, rows?: RawTimelineRow[]): number {
+        rows ??= buildRawTimeline(
             this.di?.statusHistory,
             DiInfoModalComponent.ANOMALY_MS,
         );
@@ -272,12 +276,32 @@ export class DiInfoModalComponent implements OnChanges {
      * n'est pas émis à chaque changement de statut.
      */
     get journalRows(): JournalRow[] {
+        // Mémoïsation : le template lit ce getter 4× par cycle de détection et
+        // chaque appel rejouait `buildRawTimeline` PUIS, par événement,
+        // `cycleAt()` qui le rejouait encore (O(n²) sur les grosses DI).
+        const key = `${this.di?._id}#${this.events.length}#${
+            (this.di?.statusHistory ?? []).length
+        }#${this.journalFilter}`;
+        if (this._journalKey === key && this._journalRows) {
+            return this._journalRows;
+        }
+        const out = this.computeJournalRows();
+        this._journalKey = key;
+        this._journalRows = out;
+        return out;
+    }
+
+    private _journalKey: string | null = null;
+    private _journalRows: JournalRow[] | null = null;
+
+    private computeJournalRows(): JournalRow[] {
         const rows: JournalRow[] = [];
 
-        for (const r of buildRawTimeline(
+        const raw = buildRawTimeline(
             this.di?.statusHistory,
             DiInfoModalComponent.ANOMALY_MS,
-        )) {
+        );
+        for (const r of raw) {
             rows.push({
                 kind: 'status',
                 at: r.at,
@@ -304,9 +328,9 @@ export class DiInfoModalComponent implements OnChanges {
                 date: formatTimelineDate(at),
                 code: String(e?.type ?? ''),
                 label: String(e?.message ?? e?.type ?? ''),
-                actor: e?.actorId ? String(e.actorId) : null,
+                actor: e?.actorName ? String(e.actorName) : null,
                 actorRole: e?.actorRole ? String(e.actorRole) : null,
-                cycle: this.cycleAt(at),
+                cycle: this.cycleAt(at, raw),
                 details: this.prettyPayload(e?.payloadJson),
             });
         }
@@ -506,6 +530,9 @@ export class DiInfoModalComponent implements OnChanges {
      * quand le journal ne porte rien pour ce type.
      */
     docTrace(type: string): { date: string | null; actor: string | null } | null {
+        // Pas de `Facture` : le back n'émet volontairement PAS de
+        // `DI_DOC_FACTURE` (il ferait doublon avec `DI_DOC_BL`). La ligne
+        // Facture reste donc sans date ni auteur — c'est exact, pas un oubli.
         const code = {
             BC: 'DI_DOC_BC',
             Devis: 'DI_DOC_DEVIS',
@@ -521,7 +548,7 @@ export class DiInfoModalComponent implements OnChanges {
         if (!hit) return null;
         return {
             date: formatTimelineDate(hit.createdAt),
-            actor: hit.actorId ? String(hit.actorId) : null,
+            actor: hit.actorName ? String(hit.actorName) : null,
         };
     }
 
@@ -553,6 +580,10 @@ export class DiInfoModalComponent implements OnChanges {
 
     selectCycle(n: number): void {
         if (n === this.selectedCycle) return;
+        // Même garde que `selectTab` : changer de cycle en pleine édition
+        // laisserait le formulaire (qui porte le flux original) sur un autre
+        // cycle que celui affiché.
+        if (this.editing) return;
         this.selectedCycle = n;
         this.timelineExpanded = false;
         this.fetchCosts();
@@ -560,15 +591,98 @@ export class DiInfoModalComponent implements OnChanges {
         // changer de cycle sans le recharger afficherait les segments du cycle
         // précédent.
         if (this.loaded.has('temps')) void this.loadTimes();
+        this.ensureRetourContext();
+    }
+
+    /**
+     * Le motif d'un retour vit dans le journal ERP et, à défaut, dans les PV.
+     * Ces deux onglets étant chargés paresseusement, l'encart « Retour N » du
+     * DOSSIER resterait muet tant qu'on ne les a pas ouverts : on les précharge
+     * dès qu'un cycle de retour est sélectionné.
+     */
+    private ensureRetourContext(): void {
+        if (this.selectedCycle <= 0 || !this.di?._id) return;
+        if (!this.loaded.has('journal')) {
+            this.loaded.add('journal');
+            void this.loadJournal();
+        }
+        if (!this.loaded.has('liens')) {
+            this.loaded.add('liens');
+            void this.loadLinks();
+        }
     }
 
     /** Snapshot du cycle sélectionné : la DI (cycle 0) ou la ligne `di.logs`
      *  correspondante (cycle N). `null` si le cycle N n'a pas de ligne de log
      *  (retour capturé sans re-diagnostic → sections snapshot masquées). */
-    get cycleSnapshot(): any {
-        if (this.selectedCycle <= 0) return this.di;
+    /** Ligne de log BRUTE du cycle (ou `null`) — sert à décider l'ORIGINE. */
+    private get cycleLog(): any {
+        if (this.selectedCycle <= 0) return null;
         const logs: any[] = Array.isArray(this.di?.logs) ? this.di.logs : [];
         return logs.find((l) => Number(l?.idIgnore) === this.selectedCycle) ?? null;
+    }
+
+    /**
+     * Snapshot du cycle sélectionné, avec HÉRITAGE.
+     *
+     * Une ligne `logsdis` est créée quasi VIDE puis remplie au fil du cycle :
+     * seuls ~15 champs y sont jamais écrits (jamais `status`, `comment`,
+     * `image`, les remarques admin/magasin/coordination, ni le volet
+     * commercial). Renvoyer la ligne brute affichait donc un dossier de retour
+     * quasi vide — et `null` quand aucune ligne n'existait encore.
+     *
+     * On fusionne donc `DI ◂ log` : la valeur du cycle gagne quand elle existe,
+     * sinon celle de la DI. `fieldOrigin()` dit laquelle, pour que l'UI marque
+     * « hérité » et ne fasse JAMAIS passer une valeur globale pour une valeur
+     * du cycle.
+     */
+    get cycleSnapshot(): any {
+        if (this.selectedCycle <= 0) {
+            // Le document DI porte désormais le verdict du cycle COURANT : le
+            // back l'y écrit AUSSI en retour (sans quoi le routeur retour lisait
+            // un drapeau jamais renseigné et facturait les erreurs Fixtronix).
+            // L'onglet « Flux original » superpose donc la photo prise à l'entrée
+            // du 1er retour, sinon il afficherait le verdict d'un cycle ultérieur.
+            const snap = this.di?.cycle0Snapshot;
+            if (!snap) return this.di;
+            const merged: any = { ...(this.di ?? {}) };
+            for (const [k, v] of Object.entries(snap)) {
+                if (k === 'capturedAt' || k === '__typename') continue;
+                if (this.isPresent(v)) merged[k] = v;
+            }
+            return merged;
+        }
+        const log = this.cycleLog;
+        if (!log) return this.di;
+        const merged: any = { ...(this.di ?? {}) };
+        for (const [k, v] of Object.entries(log)) {
+            if (this.isPresent(v)) merged[k] = v;
+        }
+        return merged;
+    }
+
+    /** Une valeur du log compte comme RENSEIGNÉE (donc propre au cycle) ? */
+    private isPresent(v: any): boolean {
+        if (v === null || v === undefined) return false;
+        if (typeof v === 'string') return v.trim() !== '';
+        if (Array.isArray(v)) return v.length > 0;
+        return true;
+    }
+
+    /**
+     * Origine de la valeur affichée pour un champ, sur le cycle courant :
+     * `'cycle'` = enregistrée pour ce retour · `'inherited'` = reprise de la DI.
+     * Sur le flux original tout est `'cycle'` (rien à marquer).
+     */
+    fieldOrigin(key: string): 'cycle' | 'inherited' {
+        if (this.selectedCycle <= 0) return 'cycle';
+        return this.isPresent(this.cycleLog?.[key]) ? 'cycle' : 'inherited';
+    }
+
+    /** Libellé du marqueur, ou `null` quand il n'y a rien à signaler. */
+    originLabel(key: string): string | null {
+        if (this.selectedCycle <= 0) return null;
+        return this.fieldOrigin(key) === 'cycle' ? 'ce cycle' : 'hérité';
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -613,12 +727,12 @@ export class DiInfoModalComponent implements OnChanges {
     /** Client / Société — jamais un ObjectId (displayName filtre). */
     get customerLabel(): string {
         return this.displayName(
-            this.di?.clientName,
-            this.di?.companyName,
-            this.di?.client_name,
             this.di?.company_name,
-            this.di?.client_id,
+            this.di?.client_name,
+            this.di?.companyName,
+            this.di?.clientName,
             this.di?.company_id,
+            this.di?.client_id,
         );
     }
 
@@ -723,9 +837,6 @@ export class DiInfoModalComponent implements OnChanges {
         });
     }
 
-    get hasAnyDoc(): boolean {
-        return this.docSlots.some((d) => !!d.href);
-    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Historique d'abandon (conditionnel)
@@ -918,12 +1029,22 @@ export class DiInfoModalComponent implements OnChanges {
         return typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value.trim());
     }
 
+    /** Sentinelles d'absence renvoyées par le back — à traiter comme du vide. */
+    private static readonly SENTINELS = new Set(['n/a', 'na', '-', '—', 'unknown']);
+
+    /** La valeur porte-t-elle une information affichable ? */
+    hasValue(v: any): boolean {
+        if (v === null || v === undefined) return false;
+        const t = String(v).trim();
+        if (!t) return false;
+        if (DiInfoModalComponent.SENTINELS.has(t.toLowerCase())) return false;
+        return !this.isObjectId(t);
+    }
+
     displayName(...candidates: any[]): string {
         for (const c of candidates) {
-            if (c == null) continue;
-            const s = String(c).trim();
-            if (!s || this.isObjectId(s)) continue;
-            return s;
+            if (!this.hasValue(c)) continue;
+            return String(c).trim();
         }
         return '—';
     }
@@ -1092,9 +1213,78 @@ export class DiInfoModalComponent implements OnChanges {
         return formatDuration(Date.now() - t);
     }
 
-    /** Bandeau Retour — pendant du bandeau Annulation. */
+    /**
+     * Contexte du retour pour le cycle affiché.
+     *
+     * `di.retourReason` / `di.retourDate` sont ÉCRASÉS à chaque retour
+     * (`changeDiRetour1/2/3` écrivent les deux mêmes champs) : ils ne valent
+     * donc que pour le DERNIER cycle. Le motif de chaque retour vit en revanche
+     * dans le journal ERP — `SystemEvent DI_RETOUR_{n}`, `payload.reason` —
+     * qui est append-only, et dans `ReunionPV.contexteRetour` quand un PV a été
+     * rédigé. On interroge ces sources dans cet ordre.
+     */
+    get retourContext(): {
+        level: number;
+        date: string | null;
+        motif: string | null;
+        source: string;
+    } | null {
+        const n = this.selectedCycle;
+        if (n <= 0) return null;
+
+        // Date : l'entrée `RETOUR{n}` de l'historique est la seule datation
+        // fiable par cycle ; `di.retourDate` ne vaut que pour le dernier.
+        const hist = sanitizeHistory(this.di?.statusHistory);
+        const entry = hist.find((h) => h.status === `RETOUR${n}`);
+        const isLast = n >= this.cycleCount;
+        const at = entry?.at ?? (isLast && this.di?.retourDate ? new Date(this.di.retourDate) : null);
+
+        // Motif : journal ERP du niveau n → PV du même niveau → champ DI (dernier).
+        let motif: string | null = null;
+        let source = '';
+        const ev = this.events.find((e) => e?.type === `DI_RETOUR_${n}`);
+        if (ev) {
+            try {
+                const payload = ev.payloadJson ? JSON.parse(ev.payloadJson) : null;
+                const r = String(payload?.reason ?? '').trim();
+                if (r) {
+                    motif = r;
+                    source = 'journal';
+                }
+            } catch {
+                /* payload illisible → on tente les autres sources */
+            }
+        }
+        if (!motif) {
+            const pv = this.pvs.find(
+                (p) => Number(p?.contexteRetour?.niveau) === n,
+            );
+            const r = String(pv?.contexteRetour?.motif ?? '').trim();
+            if (r) {
+                motif = r;
+                source = 'PV de réunion';
+            }
+        }
+        if (!motif && isLast && this.hasValue(this.di?.retourReason)) {
+            motif = String(this.di.retourReason).trim();
+            source = 'dossier';
+        }
+
+        if (!at && !motif) return null;
+        return {
+            level: n,
+            date: at ? formatTimelineDate(at) : null,
+            motif,
+            source,
+        };
+    }
+
+    /** Bandeau Retour du flux original — pendant du bandeau Annulation. */
     get hasRetourInfo(): boolean {
-        return !!(this.di?.retourReason || this.di?.retourDate);
+        return (
+            this.selectedCycle <= 0 &&
+            !!(this.hasValue(this.di?.retourReason) || this.di?.retourDate)
+        );
     }
 
     /**
@@ -1228,10 +1418,11 @@ export class DiInfoModalComponent implements OnChanges {
 
     startEdit(): void {
         if (!this.canEdit) return;
-        // L'édition porte sur la DI elle-même, jamais sur un snapshot de cycle :
-        // on force donc l'affichage sur le flux courant pour éviter que
-        // l'utilisateur croie modifier un retour archivé.
-        this.selectedCycle = this.cycleCount;
+        // `adminTechUpdateDi` écrit sur la DI, JAMAIS dans `logsdis`. Éditer
+        // depuis un cycle de retour affichait donc des valeurs du cycle, et
+        // l'enregistrement partait silencieusement dans le flux original.
+        // On bascule explicitement sur le flux original (le bandeau le dit).
+        this.selectedCycle = 0;
         this.activeTab = 'dossier';
         this.form = {};
         for (const k of DiInfoModalComponent.EDITABLE) {
@@ -1359,7 +1550,10 @@ export class DiInfoModalComponent implements OnChanges {
         if (!v) return null;
         const d = new Date(v);
         if (Number.isNaN(d.getTime())) return null;
-        return d.toISOString().slice(0, 10);
+        // Composantes LOCALES : `toISOString()` convertit en UTC et affichait
+        // la veille pour une date à minuit en Africa/Tunis (UTC+1).
+        const p2 = (n: number) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
     }
 
     private normalizeNumber(v: any): number | null {
@@ -1501,18 +1695,4 @@ export class DiInfoModalComponent implements OnChanges {
         );
     }
 
-    /** Impression : `@media print` ne garde que `.di-info-modal`. */
-    print() {
-        try {
-            document.body.classList.add('di-info-printing');
-            const restore = () => {
-                document.body.classList.remove('di-info-printing');
-                window.removeEventListener('afterprint', restore);
-            };
-            window.addEventListener('afterprint', restore);
-            window.print();
-        } catch {
-            document.body.classList.remove('di-info-printing');
-        }
-    }
 }

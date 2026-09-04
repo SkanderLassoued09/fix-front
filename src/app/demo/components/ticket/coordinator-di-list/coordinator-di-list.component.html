@@ -17,7 +17,7 @@
 <app-di-info-modal
     [(visible)]="ticketDetailsInfo"
     [di]="ticketData?.data"
-    context="coordinator"
+    (updated)="onDiUpdatedFromModal()"
 ></app-di-info-modal>
 
 <!-- ═══════════════════════════════════════════════

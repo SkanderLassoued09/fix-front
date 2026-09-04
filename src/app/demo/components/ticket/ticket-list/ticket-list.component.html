@@ -2649,7 +2649,7 @@
 <app-di-info-modal
     [(visible)]="ticketDetailsInfo"
     [di]="ticketData?.data"
-    context="interventions"
+    (updated)="onDiUpdatedFromModal()"
 ></app-di-info-modal>
 
 <!-- Procès-Verbal de Réunion — opened after a Retour transition fired
