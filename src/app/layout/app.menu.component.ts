@@ -20,8 +20,14 @@ export class AppMenuComponent implements OnInit {
         //                 « Demandes d'intervention »
         //   Items       : « Tableau de bord », « Personnel », « Clients »,
         //                 « Sociétés », « Toutes les DI », « Coordination »,
-        //                 « Magasin », « Atelier technique », « Réunions »
+        //                 « Magasin », « Atelier technique »
         // Routes are unchanged — only the user-visible labels move.
+        //
+        // « Archives DI » (/archives) et « Réunions » (/tickets/reunions) ont été
+        // RETIRÉS du menu pour TOUS les rôles. Les routes, elles, restent
+        // ouvertes et les listes blanches de `role-routes.ts` sont inchangées :
+        // un rappel Discord poste un lien `/tickets/reunions?open=<pvId>` qui
+        // doit continuer de fonctionner. Masquer n'est donc PAS interdire.
         if (this.role === 'ADMIN_MANAGER' || this.role === 'ADMIN_TECH') {
             this.model = [
                 {
@@ -69,11 +75,6 @@ export class AppMenuComponent implements OnInit {
                             routerLink: ['/tickets/ticket/ticket-list'],
                         },
                         {
-                            label: 'Archives DI',
-                            icon: 'pi pi-fw pi-folder-open',
-                            routerLink: ['/archives'],
-                        },
-                        {
                             label: 'Coordination',
                             icon: 'pi pi-fw pi-check-square',
                             routerLink: ['/tickets/ticket/coordinator-di-list'],
@@ -88,10 +89,15 @@ export class AppMenuComponent implements OnInit {
                             icon: 'pi pi-fw pi-exclamation-circle',
                             routerLink: ['/tickets/ticket/tech-di-list'],
                         },
+                    ],
+                },
+                {
+                    label: 'Composants',
+                    items: [
                         {
-                            label: 'Réunions',
-                            icon: 'pi pi-fw pi-comments',
-                            routerLink: ['/tickets/reunions'],
+                            label: 'Catalogue composants',
+                            icon: 'pi pi-fw pi-box',
+                            routerLink: ['/tickets/composants'],
                         },
                     ],
                 },
@@ -109,9 +115,6 @@ export class AppMenuComponent implements OnInit {
                             icon: 'pi pi-fw pi-exclamation-circle',
                             routerLink: ['/tickets/ticket/tech-di-list'],
                         },
-                        // « Réunions » is intentionally NOT shown to a plain
-                        // TECH — only ADMIN_TECH, ADMIN_MANAGER, MANAGER and
-                        // COORDINATOR see it.
                     ],
                 },
             ];
@@ -154,16 +157,6 @@ export class AppMenuComponent implements OnInit {
                             icon: 'pi pi-fw pi-file',
                             routerLink: ['/tickets/ticket/ticket-list'],
                         },
-                        {
-                            label: 'Archives DI',
-                            icon: 'pi pi-fw pi-folder-open',
-                            routerLink: ['/archives'],
-                        },
-                        {
-                            label: 'Réunions',
-                            icon: 'pi pi-fw pi-comments',
-                            routerLink: ['/tickets/reunions'],
-                        },
                     ],
                 },
             ];
@@ -179,11 +172,6 @@ export class AppMenuComponent implements OnInit {
                             icon: 'pi pi-fw pi-check-square',
                             routerLink: ['/tickets/ticket/coordinator-di-list'],
                         },
-                        {
-                            label: 'Réunions',
-                            icon: 'pi pi-fw pi-comments',
-                            routerLink: ['/tickets/reunions'],
-                        },
                     ],
                 },
             ];
@@ -198,6 +186,16 @@ export class AppMenuComponent implements OnInit {
                             label: 'Magasin',
                             icon: 'pi pi-fw pi-bookmark',
                             routerLink: ['/tickets/ticket/magasin-di-list'],
+                        },
+                    ],
+                },
+                {
+                    label: 'Composants',
+                    items: [
+                        {
+                            label: 'Catalogue composants',
+                            icon: 'pi pi-fw pi-box',
+                            routerLink: ['/tickets/composants'],
                         },
                     ],
                 },

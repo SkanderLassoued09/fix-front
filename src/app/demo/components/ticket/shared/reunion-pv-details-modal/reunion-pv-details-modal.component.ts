@@ -22,11 +22,11 @@ import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
-import { MessageService } from 'primeng/api';
 import { ReunionPvService } from 'src/app/demo/service/reunion-pv.service';
 import { ReunionPvPdfService } from 'src/app/demo/service/reunion-pv-pdf.service';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { SearchableDropdownDirective } from 'src/app/shared/searchable-dropdown.directive';
+import { NotifyService } from '../../../../../shared/ui/notify.service';
 
 interface ProfileOption {
     _id: string;
@@ -101,7 +101,7 @@ export class ReunionPvDetailsModalComponent implements OnInit, OnChanges {
         private readonly reunionGql: ReunionPvService,
         private readonly profileService: ProfileService,
         private readonly pdf: ReunionPvPdfService,
-        private readonly toast: MessageService,
+        private readonly notify: NotifyService,
         private readonly cdr: ChangeDetectorRef,
     ) {}
 
@@ -400,21 +400,19 @@ export class ReunionPvDetailsModalComponent implements OnInit, OnChanges {
                 // Re-sync local pv (statut + jira back-links) and re-patch.
                 this.pv = { ...this.pv, ...updated };
                 this.patchFormFromPv(this.pv);
-                this.toast.add({
-                    severity: 'success',
-                    summary: finalize ? 'Réunion finalisée' : 'Réunion documentée',
-                    detail: finalize
+                this.notify.success(
+                    finalize
                         ? 'Le PV est finalisé.'
                         : 'Les sections ont été enregistrées et les actions poussées dans Jira.',
-                });
+                    { summary: finalize ? 'Réunion finalisée' : 'Réunion documentée' },
+                );
                 this.saved.emit();
             }
         } catch {
-            this.toast.add({
-                severity: 'error',
-                summary: 'Enregistrement impossible',
-                detail: 'Vérifiez les champs et réessayez.',
-            });
+            this.notify.error(
+                'Vérifiez les champs et réessayez.',
+                { summary: 'Enregistrement impossible' },
+            );
         } finally {
             this.saving = false;
             this.cdr.markForCheck();

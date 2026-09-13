@@ -71,8 +71,8 @@ import { DiImageComponent } from 'src/app/demo/components/ticket/shared/di-image
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        background: #22c55e;
-        color: #ffffff;
+        background: var(--fx-green);
+        color: var(--fx-text-on-accent);
         font-weight: 700;
         font-size: 1.2rem;
         flex-shrink: 0;
@@ -81,14 +81,14 @@ import { DiImageComponent } from 'src/app/demo/components/ticket/shared/di-image
         margin: 0;
         font-size: 1.3rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
         letter-spacing: -0.015em;
         line-height: 1.2;
       }
       .step__head p {
         margin: 0.3rem 0 0;
         font-size: 0.95rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
         line-height: 1.35;
       }
       .step__grid {
@@ -101,16 +101,16 @@ import { DiImageComponent } from 'src/app/demo/components/ticket/shared/di-image
         display: block;
         font-size: 0.85rem;
         font-weight: 650;
-        color: #64748b;
+        color: var(--fx-text-muted);
         margin-bottom: 0.4rem;
       }
       .field__value {
         padding: 0.85rem 1rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
-        background: #f8fafc;
+        background: var(--fx-bg-surface);
         font-size: 0.95rem;
-        color: #0f172a;
+        color: var(--fx-text);
         line-height: 1.4;
       }
       .field__value--multi { white-space: pre-wrap; }

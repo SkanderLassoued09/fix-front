@@ -32,6 +32,44 @@ describe('DiPdfService', () => {
         expect(head).toBe('%PDF');
     });
 
+    it('builds the enriched composant table when the modal supplies rows', async () => {
+        // Le modal passe les lignes DÉJÀ jointes au catalogue et scopées au
+        // cycle affiché (même convention que `cycles` / `finance` / `times`).
+        const svc = new DiPdfService();
+        const doc = await svc.buildDoc(di, {
+            composants: {
+                cycleLabel: 'Retour 1',
+                total: 196,
+                partial: true,
+                priced: 2,
+                rows: [
+                    {
+                        name: 'Écran LCD',
+                        quantity: 1,
+                        status: 'En stock',
+                        prixVente: 140,
+                        lineTotal: 140,
+                        comingDate: '12/03/2026',
+                    },
+                    {
+                        // Ligne hors catalogue : ni prix, ni total.
+                        name: 'Composant fantôme',
+                        quantity: 4,
+                        status: 'Hors catalogue',
+                        prixVente: null,
+                        lineTotal: null,
+                        comingDate: '—',
+                    },
+                ],
+            },
+        });
+        const bytes = new Uint8Array(doc.output('arraybuffer'));
+
+        expect(bytes.length).toBeGreaterThan(0);
+        const head = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+        expect(head).toBe('%PDF');
+    });
+
     it('maps the workflow status to a French label', () => {
         const svc: any = new DiPdfService();
         expect(svc.statusLabel('FINISHED')).toBe('Terminée');

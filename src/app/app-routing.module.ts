@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { NotfoundComponent } from './demo/components/notfound/notfound.component';
 import { AppLayoutComponent } from './layout/app.layout.component';
 import { authGuard } from './demo/components/auth/auth-guard';
+import { routeAccessGuard } from './shared/route-access.guard';
 
 @NgModule({
     imports: [
@@ -11,7 +12,10 @@ import { authGuard } from './demo/components/auth/auth-guard';
                 {
                     path: '',
                     component: AppLayoutComponent,
-                    canActivate: [authGuard],
+                    // `authGuard` = authentification ; `routeAccessGuard` =
+                    // rôle. Posé ici, il couvre TOUTES les routes enfants, y
+                    // compris celles qu'aucun menu ne lie.
+                    canActivate: [authGuard, routeAccessGuard],
                     children: [
                         {
                             path: '',

@@ -4,6 +4,7 @@ import { SwUpdate } from '@angular/service-worker';
 import { SessionService } from './demo/service/session.service';
 import { NotificationService } from './demo/service/notification.service';
 import { DiDetailService } from './demo/service/di-detail.service';
+import { DiFilesService } from './demo/service/di-files.service';
 import { NotificationDeepLinkService } from './demo/service/notification-deep-link.service';
 import {
     NotificationCenterService,
@@ -21,6 +22,7 @@ export class AppComponent implements OnInit {
         private notificationService: NotificationService,
         private readonly sessionService: SessionService,
         public detailService: DiDetailService,
+        public filesService: DiFilesService,
         private notifCenter: NotificationCenterService,
         private deepLink: NotificationDeepLinkService,
         private swUpdate: SwUpdate,
@@ -36,6 +38,20 @@ export class AppComponent implements OnInit {
 
     onDetailVisibleChange(v: boolean): void {
         this.detailService.setVisible(v);
+    }
+
+    /** Fermeture de la modale GLOBALE « Affectation des Fichiers » (ouverte par
+     *  la notification BL). Aucune liste à rafraîchir ici : la page courante
+     *  n'est pas forcément une liste de DI, et la notif est retirée côté back
+     *  dès l'upload du BL (événement temps réel `notification.removed`). */
+    onFilesVisibleChange(v: boolean): void {
+        this.filesService.setVisible(v);
+    }
+
+    /** Enregistrement réussi depuis la modale globale : le service referme et
+     *  demande le rafraîchissement des listes qui écoutent. */
+    onFilesSaved(): void {
+        this.filesService.markSaved();
     }
 
     ngOnInit() {
@@ -57,6 +73,11 @@ export class AppComponent implements OnInit {
 
         // Toast temps réel CLIQUABLE (clé dédiée `erp-notif` → n'affecte pas les
         // autres toasts). Le clic ouvre le modal détail de la DI concernée.
+        // SEUL toast qui ne passe pas par `NotifyService`, et c'est voulu : il
+        // porte `data` (la notification complète, lue par le gestionnaire de
+        // clic) et vise un exutoire à template custom, qui remplace tout le
+        // corps du message. Sa sévérité n'a donc aucun effet visuel — la charte
+        // bleue lui vient de son propre CSS (`.erp-toast` dans `styles.scss`).
         this.notifCenter.incoming$.subscribe((n) => {
             this.messageService.add({
                 key: 'erp-notif',
@@ -73,6 +94,16 @@ export class AppComponent implements OnInit {
         this.sessionService.installAutoLogout();
         this.notificationService.startWorker();
         this.primengConfig.ripple = true;
+
+        // Libellés FR des boutons de confirmation. Sans ça, PrimeNG retombe sur
+        // ses défauts « Yes » / « No » : l'app affichait un texte français sous
+        // des boutons anglais dans 44 de ses 45 confirmations.
+        // `setTranslation` FUSIONNE avec la table existante — les clés de
+        // p-calendar (jours, mois) sont préservées.
+        this.primengConfig.setTranslation({
+            accept: 'Confirmer',
+            reject: 'Annuler',
+        });
         // Notification subscription
         this.notificationService.notification$.subscribe((message: any) => {
             if (message) {

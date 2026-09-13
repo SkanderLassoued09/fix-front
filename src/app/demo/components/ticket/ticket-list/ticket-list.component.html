@@ -3,11 +3,6 @@
     <p-progressSpinner ariaLabel="loading" />
 </p-blockUI>
 
-<!-- Pas de <p-toast> ici : le shell applicatif (app.component.html) en rend déjà
-     un (même MessageService, sans `key`). Un second doublonnerait CHAQUE toast
-     (cf. note identique dans company-list). -->
-<p-confirmDialog></p-confirmDialog>
-
 <!-- ═══════════════════════════════════════════════
      MODAL — RELATIONS & STRUCTURE (unified admin)
      Centralizes Emplacements, Catégories DI, and Catégories Composants.
@@ -17,7 +12,8 @@
     header="Relations & Structure"
     [(visible)]="openRelationsModal"
     [modal]="true"
-    [style]="{ width: '1100px', maxWidth: '96vw' }"
+    [style]="{ width: '1100px', maxWidth: '96vw', height: '88vh' }"
+    [breakpoints]="{ '1200px': '95vw', '768px': '98vw' }"
     [draggable]="false"
     [resizable]="false"
     appendTo="body"
@@ -74,12 +70,17 @@
                     [rows]="5"
                     [rowsPerPageOptions]="[5, 10, 20]"
                     styleClass="p-datatable-sm sav-modal-table"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="{first}-{last} sur {totalRecords} résultats"
                 >
                     <ng-template pTemplate="header">
                         <tr>
                             <th>Nom</th>
-                            <th>Capacité</th>
-                            <th>DIs liés</th>
+                            <th style="width: 120px">Capacité</th>
+                            <th style="width: 120px">DIs liés</th>
                             <th class="sav-modal-actions-th">Actions</th>
                         </tr>
                     </ng-template>
@@ -140,15 +141,20 @@
                     [rows]="8"
                     [rowsPerPageOptions]="[8, 16, 32]"
                     styleClass="p-datatable-sm sav-modal-table"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="{first}-{last} sur {totalRecords} résultats"
                 >
                     <ng-template pTemplate="header">
                         <tr>
-                            <th>DI</th>
+                            <th style="width: 90px">DI</th>
                             <th>Titre</th>
-                            <th>Emplacement</th>
-                            <th>Catégorie DI</th>
-                            <th>Status</th>
-                            <th>Réaffecter</th>
+                            <th style="width: 150px">Emplacement</th>
+                            <th style="width: 150px">Catégorie DI</th>
+                            <th style="width: 150px">Status</th>
+                            <th style="width: 220px">Réaffecter</th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-rowData>
@@ -263,11 +269,16 @@
                     [rows]="6"
                     [rowsPerPageOptions]="[6, 12, 24]"
                     styleClass="p-datatable-sm sav-modal-table"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="{first}-{last} sur {totalRecords} résultats"
                 >
                     <ng-template pTemplate="header">
                         <tr>
                             <th>Nom</th>
-                            <th>DIs liés</th>
+                            <th style="width: 140px">DIs liés</th>
                             <th class="sav-modal-actions-th">Actions</th>
                         </tr>
                     </ng-template>
@@ -327,14 +338,19 @@
                     [rows]="8"
                     [rowsPerPageOptions]="[8, 16, 32]"
                     styleClass="p-datatable-sm sav-modal-table"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="{first}-{last} sur {totalRecords} résultats"
                 >
                     <ng-template pTemplate="header">
                         <tr>
-                            <th>DI</th>
+                            <th style="width: 90px">DI</th>
                             <th>Titre</th>
-                            <th>Catégorie actuelle</th>
-                            <th>Status</th>
-                            <th>Réaffecter</th>
+                            <th style="width: 180px">Catégorie actuelle</th>
+                            <th style="width: 150px">Status</th>
+                            <th style="width: 220px">Réaffecter</th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-rowData>
@@ -449,11 +465,16 @@
                     [rows]="6"
                     [rowsPerPageOptions]="[6, 12, 24]"
                     styleClass="p-datatable-sm sav-modal-table"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="{first}-{last} sur {totalRecords} résultats"
                 >
                     <ng-template pTemplate="header">
                         <tr>
                             <th>Nom</th>
-                            <th>Composants liés</th>
+                            <th style="width: 160px">Composants liés</th>
                             <th class="sav-modal-actions-th">Actions</th>
                         </tr>
                     </ng-template>
@@ -520,13 +541,18 @@
                     [rows]="8"
                     [rowsPerPageOptions]="[8, 16, 32]"
                     styleClass="p-datatable-sm sav-modal-table"
+                    [scrollable]="true"
+                    scrollHeight="flex"
+                    [tableStyle]="{ width: '100%', 'table-layout': 'fixed' }"
+                    [showCurrentPageReport]="true"
+                    currentPageReportTemplate="{first}-{last} sur {totalRecords} résultats"
                 >
                     <ng-template pTemplate="header">
                         <tr>
-                            <th>Composant</th>
+                            <th style="width: 170px">Composant</th>
                             <th>Package</th>
-                            <th>Catégorie actuelle</th>
-                            <th>Réaffecter</th>
+                            <th style="width: 180px">Catégorie actuelle</th>
+                            <th style="width: 220px">Réaffecter</th>
                         </tr>
                     </ng-template>
                     <ng-template pTemplate="body" let-rowData>
@@ -1083,6 +1109,20 @@
                 class="sav-btn-new"
                 (click)="showDialogDiCreation()"
             ></button>
+            <!-- MASQUÉS TEMPORAIREMENT (demande produit) — « Relations &
+                 Structure » et « Importer des DI ». Rien n'est supprimé : la
+                 modale Relations (`openRelationsModal`, en haut de ce fichier)
+                 et le composant `app-di-import` restent en place, seuls leurs
+                 déclencheurs disparaissent. Pour les réafficher : retirer ce
+                 commentaire.
+
+                 À NOTER : `showDialogRelations()` (ts) chargeait aussi
+                 `getComposantCategories()` / `getComposantsForCategoryCount()` /
+                 `loadComposantsForReassignment()`. Elles ne servent QUE les
+                 onglets de cette modale. `allCategoryDi()` et
+                 `getLocationList()`, dont dépendent les listes déroulantes de
+                 la modale « Créer DI », sont appelées dans `ngOnInit` : elles
+                 ne sont donc PAS affectées par ce masquage.
             <button
                 pButton
                 icon="pi pi-sitemap"
@@ -1091,6 +1131,7 @@
                 (click)="showDialogRelations()"
             ></button>
             <app-di-import (imported)="loadData()"></app-di-import>
+            -->
         </div>
     </div>
 
@@ -1428,7 +1469,8 @@
         <!-- PAGINATOR -->
         <div class="sav-paginator-wrapper">
             <span class="sav-count"
-                >1–{{ rows }} sur {{ diListCount }} résultats</span
+                >{{ diListCount ? first + 1 : 0 }}–{{ rangeEnd }} sur
+                {{ diListCount || 0 }} résultats</span
             >
             <p-paginator
                 (onPageChange)="onPageChange($event)"
@@ -1604,10 +1646,36 @@
 
         <p class="pricing-modal__section-label">Tarification</p>
         <div class="fp-tarif-card">
-            <div class="fp-tarif-row">
+            <!-- Détail de la base de la remise. Cas NON PAYANT : le montant
+                 est un total calculé par le serveur (réparation + main-d'œuvre
+                 diagnostic + pièces) — on n'affiche pas un détail
+                 « diagnostic + estimation » qui ne le compose pas. -->
+            <ng-container *ngIf="!negoNonPayant">
+                <div class="fp-tarif-row">
+                    <span class="fp-tarif-row__label">Diagnostic</span>
+                    <strong class="fp-tarif-row__value">
+                        {{ formatTnd3(price) }}
+                    </strong>
+                </div>
+                <div class="fp-tarif-row" *ngIf="negoRepairEstimate != null">
+                    <span class="fp-tarif-row__label">
+                        Estimation réparation
+                    </span>
+                    <strong class="fp-tarif-row__value">
+                        {{ formatTnd3(negoRepairEstimate) }}
+                    </strong>
+                </div>
+            </ng-container>
+            <div class="fp-tarif-row fp-tarif-row--total">
                 <span class="fp-tarif-row__label">Prix initial</span>
-                <strong class="fp-tarif-row__value">{{ formatTnd3(price) }}</strong>
+                <strong class="fp-tarif-row__value">
+                    {{ formatTnd3(negoBaseAmount) }}
+                </strong>
             </div>
+            <p class="fp-tarif-note" *ngIf="negoNonPayant">
+                Diagnostic non payant — total calculé par le serveur
+                (réparation + main-d'œuvre diagnostic + pièces).
+            </p>
 
             <div class="fp-tarif-discount">
                 <div class="fp-tarif-discount__head">
@@ -1653,7 +1721,7 @@
                     <i class="pi pi-check-circle"></i> Prix final
                 </span>
                 <strong class="fp-tarif-final__value">
-                    {{ formatTnd3(finalPrice ?? price) }}
+                    {{ formatTnd3(finalPrice ?? negoBaseAmount) }}
                 </strong>
             </div>
         </div>
@@ -1867,10 +1935,36 @@
 
         <p class="pricing-modal__section-label">Tarification</p>
         <div class="fp-tarif-card">
-            <div class="fp-tarif-row">
+            <!-- Détail de la base de la remise. Cas NON PAYANT : le montant
+                 est un total calculé par le serveur (réparation + main-d'œuvre
+                 diagnostic + pièces) — on n'affiche pas un détail
+                 « diagnostic + estimation » qui ne le compose pas. -->
+            <ng-container *ngIf="!negoNonPayant">
+                <div class="fp-tarif-row">
+                    <span class="fp-tarif-row__label">Diagnostic</span>
+                    <strong class="fp-tarif-row__value">
+                        {{ formatTnd3(price) }}
+                    </strong>
+                </div>
+                <div class="fp-tarif-row" *ngIf="negoRepairEstimate != null">
+                    <span class="fp-tarif-row__label">
+                        Estimation réparation
+                    </span>
+                    <strong class="fp-tarif-row__value">
+                        {{ formatTnd3(negoRepairEstimate) }}
+                    </strong>
+                </div>
+            </ng-container>
+            <div class="fp-tarif-row fp-tarif-row--total">
                 <span class="fp-tarif-row__label">Prix initial</span>
-                <strong class="fp-tarif-row__value">{{ formatTnd3(price) }}</strong>
+                <strong class="fp-tarif-row__value">
+                    {{ formatTnd3(negoBaseAmount) }}
+                </strong>
             </div>
+            <p class="fp-tarif-note" *ngIf="negoNonPayant">
+                Diagnostic non payant — total calculé par le serveur
+                (réparation + main-d'œuvre diagnostic + pièces).
+            </p>
             <div class="fp-tarif-discount">
                 <div class="fp-tarif-discount__head">
                     <span class="fp-tarif-row__label">Remise (admin)</span>
@@ -1909,7 +2003,7 @@
                     <i class="pi pi-check-circle"></i> Prix final
                 </span>
                 <strong class="fp-tarif-final__value">
-                    {{ formatTnd3(finalPrice ?? price) }}
+                    {{ formatTnd3(finalPrice ?? negoBaseAmount) }}
                 </strong>
             </div>
         </div>
@@ -2006,69 +2100,115 @@
             </div>
         </div>
 
-        <!-- Remarque du technicien (diagnostic) — l'admin relit le verdict
-             (notamment un « non réparable ») avant de tarifer ou de renvoyer la
-             DI au diagnostic. -->
+        <!-- ── Contexte : ce que l'admin relit avant de tarifer ──────────
+             Note du technicien (verdict, notamment un « non réparable ») et,
+             en retour, l'historique des prix des cycles PRÉCÉDENTS. Grille
+             auto-fit : un bloc seul prend toute la largeur. -->
         <div
-            class="pricing-tech-note"
-            *ngIf="seletedRow?.remarque_tech_diagnostic"
+            class="pricing-context"
+            *ngIf="pricingTechNote || ignoreCountPricing > 0"
         >
-            <i class="pi pi-comment" aria-hidden="true"></i>
-            <span class="pricing-tech-note__tag">Note du technicien</span>
-            <span class="pricing-tech-note__text">
-                {{ seletedRow.remarque_tech_diagnostic }}
-            </span>
+            <section class="pricing-tech-note" *ngIf="pricingTechNote as note">
+                <header class="pricing-card-head">
+                    <i class="pi pi-comment" aria-hidden="true"></i>
+                    <span class="pricing-card-head__title">Note du technicien</span>
+                </header>
+                <p class="pricing-tech-note__text">{{ note.description }}</p>
+                <div class="pricing-tech-note__extra" *ngIf="note.remarque">
+                    <span class="pricing-tech-note__label">Remarque</span>
+                    <p class="pricing-tech-note__text">{{ note.remarque }}</p>
+                </div>
+            </section>
+
+            <!-- Historique : chaque montant vient de la ligne de SON cycle
+                 (`logsDi`), jamais du miroir DI vidé à l'entrée en retour.
+                 Absent → « Non renseigné », jamais « 0,000 ». -->
+            <section *ngIf="ignoreCountPricing > 0" class="pricing-history">
+                <header class="pricing-card-head">
+                    <i class="pi pi-history" aria-hidden="true"></i>
+                    <span class="pricing-card-head__title">Historique des prix</span>
+                    <span
+                        class="pricing-history__badge"
+                        [ngClass]="isErrorFromFixtronix ? 'pricing-history__badge--yes' : 'pricing-history__badge--no'"
+                    >
+                        Erreur Fixtronix&nbsp;:
+                        <strong>{{ isErrorFromFixtronix ? "OUI" : "NON" }}</strong>
+                    </span>
+                </header>
+                <div
+                    class="pricing-history__table"
+                    role="table"
+                    aria-label="Historique des prix par cycle"
+                >
+                    <div class="pricing-history__row pricing-history__row--head" role="row">
+                        <span role="columnheader">Cycle</span>
+                        <span role="columnheader">Prix initial</span>
+                        <span role="columnheader">Prix final</span>
+                    </div>
+                    <div class="pricing-history__row" role="row">
+                        <span class="pricing-history__cycle" role="cell">Flux original</span>
+                        <strong
+                            role="cell"
+                            [class.pricing-history__empty]="initialPriceAffichage == null"
+                        >{{ formatCycleMoney(initialPriceAffichage) }}</strong>
+                        <strong
+                            role="cell"
+                            [class.pricing-history__empty]="priceRemiseAffichage == null"
+                        >{{ formatCycleMoney(priceRemiseAffichage) }}</strong>
+                    </div>
+                    <div
+                        *ngFor="let item of pricesLogs"
+                        class="pricing-history__row"
+                        role="row"
+                    >
+                        <span class="pricing-history__cycle" role="cell">Retour {{ item.ignoreDispaly }}</span>
+                        <strong
+                            role="cell"
+                            [class.pricing-history__empty]="item.priceLogs == null"
+                        >{{ formatCycleMoney(item.priceLogs) }}</strong>
+                        <strong
+                            role="cell"
+                            [class.pricing-history__empty]="item.final_priceLog == null"
+                        >{{ formatCycleMoney(item.final_priceLog) }}</strong>
+                    </div>
+                    <div class="pricing-history__row pricing-history__row--current" role="row">
+                        <span class="pricing-history__cycle" role="cell">Retour {{ ignoreCountPricing }}</span>
+                        <span class="pricing-history__now" role="cell">En cours — à fixer ci-dessous</span>
+                    </div>
+                </div>
+            </section>
         </div>
 
-        <!-- History block: kept for retours (legacy data); rendered only when relevant -->
-        <div *ngIf="ignoreCountPricing > 0" class="pricing-history">
-            <div class="pricing-history__item">
-                <h5 class="pricing-history__title">Avant Retour</h5>
-                <div class="pricing-history__row">
-                    <span>Prix initial : <strong>{{ formatTnd3(initialPriceAffichage) }}</strong></span>
-                    <span>Prix final : <strong>{{ formatTnd3(priceRemiseAffichage) }}</strong></span>
-                </div>
+        <!-- RETOUR erreur CLIENT (non-Fixtronix) réparable arrivant en Pricing :
+             décision « facturer le diagnostic ? » (flag diagnosticPayant),
+             prise ICI en Pricing. Les cas erreur Fixtronix ne passent PAS par
+             Pricing (PENDING3 ou IRREPARABLE directs, non facturés), donc le
+             toggle ne les concerne pas. Ne change PAS le routage.
+             Bande pleine largeur, HORS de la grille des étapes : en cellule de
+             grille, elle poussait l'étape 1 à droite et l'étape 2 seule dessous. -->
+        <div
+            *ngIf="ignoreCountPricing > 0 && isErrorFromFixtronix !== true && !isIrreparable"
+            class="pricing-facturer"
+        >
+            <div class="pricing-facturer__text">
+                <span class="pricing-facturer__label">Facturer le diagnostic&nbsp;?</span>
+                <span class="pricing-facturer__hint">
+                    Retour dû au client : ce diagnostic peut être facturé ou offert.
+                </span>
             </div>
-            <div *ngFor="let item of pricesLogs" class="pricing-history__item">
-                <h5 class="pricing-history__title">Retour {{ item.ignoreDispaly }}</h5>
-                <div class="pricing-history__row">
-                    <span>Prix initial : <strong>{{ formatTnd3(item.priceLogs) }}</strong></span>
-                    <span>Prix final :
-                        <strong>{{ item.final_priceLog == null ? "N/A" : formatTnd3(item.final_priceLog) }}</strong>
-                    </span>
-                </div>
-            </div>
-            <div
-                class="pricing-history__badge"
-                [ngClass]="isErrorFromFixtronix ? 'pricing-history__badge--yes' : 'pricing-history__badge--no'"
-            >
-                Erreur Fixtronix :
-                <strong>{{ isErrorFromFixtronix ? "OUI" : "NON" }}</strong>
-            </div>
+            <p-toggleButton
+                [(ngModel)]="pricingDiagnosticPayant"
+                onLabel="Payant"
+                offLabel="Non payant"
+                onIcon="pi pi-check"
+                offIcon="pi pi-gift"
+                styleClass="pricing-facturer__toggle"
+                (onChange)="onPricingPayantToggle()"
+            ></p-toggleButton>
         </div>
 
         <!-- ── Les deux questions ───────────────────────────── -->
         <div class="pricing-steps">
-            <!-- RETOUR erreur CLIENT (non-Fixtronix) réparable arrivant en Pricing :
-                 décision « facturer le diagnostic ? » (flag diagnosticPayant),
-                 prise ICI en Pricing. Les cas erreur Fixtronix ne passent PAS par
-                 Pricing (PENDING3 ou IRREPARABLE directs, non facturés), donc le
-                 toggle ne les concerne pas. Ne change PAS le routage. -->
-            <div
-                *ngIf="ignoreCountPricing > 0 && isErrorFromFixtronix !== true && !isIrreparable"
-                class="pricing-facturer"
-            >
-                <label class="pricing-step__label">
-                    Facturer le diagnostic&nbsp;?
-                </label>
-                <p-toggleButton
-                    [(ngModel)]="pricingDiagnosticPayant"
-                    onLabel="Payant"
-                    offLabel="Non payant"
-                    (onChange)="onPricingPayantToggle()"
-                ></p-toggleButton>
-            </div>
-
             <!-- Étape 1 — coût RÉEL du diagnostic (borné 150–500 TND) -->
             <div class="pricing-step" [ngClass]="'pricing-step--' + reelState">
                 <div class="pricing-step__head">
@@ -2229,419 +2369,10 @@
     </div>
 </p-dialog>
 
-<!-- ═══════════════════════════════════════════════
-     MODAL — AFFECTATION DES FICHIERS  (FINISHED row)
-     Triggered by `openUploadFileFinished(rowData)` → `filsFinished = true`.
-     Body redesigned to match design/image.png ; same handlers as before:
-     onUpload($event,'BL'|'Facture') · enregistrerBL() · enregistrerFacture().
-════════════════════════════════════════════════ -->
-<p-dialog
-    [(visible)]="filsFinished"
-    [modal]="true"
-    [style]="{ width: '680px', maxWidth: '95vw' }"
-    [draggable]="false"
-    [resizable]="false"
-    [closable]="false"
-    [showHeader]="false"
-    appendTo="body"
-    styleClass="sav-dialog af-dialog"
->
-    <div class="af-modal">
-        <!-- ── Header ──────────────────────────────────── -->
-        <header class="af-modal__head">
-            <span class="af-modal__tile" aria-hidden="true">
-                <i class="pi pi-folder-open"></i>
-            </span>
-            <div class="af-modal__titles">
-                <h3 class="af-modal__title">Affectation des Fichiers</h3>
-                <p class="af-modal__subtitle">
-                    <span class="af-modal__code">
-                        {{ finishedData?._idnum || filesSelected?._idnum || "DI" }}
-                    </span>
-                    · documents joints au dossier
-                </p>
-            </div>
-            <button
-                type="button"
-                class="af-modal__close"
-                aria-label="Fermer"
-                (click)="filsFinished = false"
-            >
-                <i class="pi pi-times"></i>
-            </button>
-        </header>
-
-        <!-- ── Body (scroll) ───────────────────────────── -->
-        <div class="af-modal__body af-scroll">
-            <!-- FICHIERS PRINCIPAUX -->
-            <section class="af-block">
-                <div class="af-block__head">
-                    <span class="af-block__label">Fichiers principaux</span>
-                    <span class="af-count-pill">
-                        {{ affectationAvailableCount }}
-                    </span>
-                </div>
-                <div class="af-status-grid">
-                    <div
-                        *ngFor="let c of affectationMainCards"
-                        class="af-status-card"
-                        [class.af-status-card--missing]="!c.present"
-                    >
-                        <div class="af-status-card__top">
-                            <span class="af-status-card__icon" aria-hidden="true">
-                                <i class="pi pi-file"></i>
-                            </span>
-                            <span class="af-status-card__tag">{{ c.tag }}</span>
-                            <span
-                                class="af-status-card__dot"
-                                [class.af-status-card__dot--ok]="c.present"
-                            ></span>
-                        </div>
-                        <div class="af-status-card__title" [title]="c.title">
-                            {{ c.title }}
-                        </div>
-                        <div class="af-status-card__foot">
-                            <span class="af-status-card__state">
-                                {{ c.statusLabel }}
-                            </span>
-                            <a
-                                *ngIf="c.present && c.href"
-                                [href]="docHref(c.href)"
-                                target="_blank"
-                                class="af-status-card__link"
-                                title="Voir le document"
-                            >
-                                <i class="pi pi-eye"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- HISTORIQUE DES RETOURS (timeline) -->
-            <section class="af-block" *ngIf="affectationRetours.length">
-                <div class="af-block__head">
-                    <span class="af-block__ico af-block__ico--cyan">
-                        <i class="pi pi-history"></i>
-                    </span>
-                    <span class="af-block__label">Historique des retours</span>
-                    <span class="af-count-pill af-count-pill--cyan">
-                        {{ affectationRetours.length }}
-                    </span>
-                </div>
-                <div class="af-timeline">
-                    <div
-                        class="af-tl-item"
-                        *ngFor="let r of affectationRetours; let last = last"
-                    >
-                        <div class="af-tl-rail">
-                            <div class="af-tl-node">{{ r.num }}</div>
-                            <div
-                                class="af-tl-line"
-                                [class.af-tl-line--hidden]="last"
-                            ></div>
-                        </div>
-                        <div class="af-tl-card">
-                            <div class="af-tl-card__head">
-                                <span class="af-tl-card__title">
-                                    Retour N°{{ r.num }}
-                                </span>
-                                <span class="af-tl-card__date" *ngIf="r.date">
-                                    {{ r.date }}
-                                </span>
-                            </div>
-                            <div class="af-tl-docs">
-                                <span class="af-tl-docs__label">Documents</span>
-                                <a
-                                    *ngFor="let d of r.docs"
-                                    [href]="docHref(d.href)"
-                                    target="_blank"
-                                    rel="noopener"
-                                    class="af-tl-doc"
-                                    [title]="d.name"
-                                >
-                                    <i class="pi pi-file-pdf"></i>
-                                    <span class="af-tl-doc__name">
-                                        {{ d.name }}
-                                    </span>
-                                </a>
-                                <span
-                                    *ngIf="!r.docs.length"
-                                    class="af-tl-docs__none"
-                                >
-                                    Aucun document
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- AFFECTER & TÉLÉVERSER (BL + Facture) -->
-            <section class="af-block">
-                <div class="af-block__head">
-                    <span class="af-block__label">Affecter &amp; téléverser</span>
-                </div>
-                <div class="af-upload-grid">
-                    <!-- BL slot -->
-                    <div class="af-upload-cell">
-                        <div class="af-upload-cell__head">
-                            <span class="af-tag">BL</span>
-                            <span class="af-upload-cell__label">
-                                Bon de livraison
-                            </span>
-                        </div>
-
-                        <div *ngIf="selectedBL; else blDrop" class="af-file-card">
-                            <span class="af-file-card__icon" aria-hidden="true">
-                                <i class="pi pi-file-pdf"></i>
-                            </span>
-                            <div class="af-file-card__meta">
-                                <span
-                                    class="af-file-card__name"
-                                    [title]="
-                                        afSelectedMeta['BL']?.name ||
-                                        'Bon de livraison'
-                                    "
-                                >
-                                    {{
-                                        afSelectedMeta["BL"]?.name ||
-                                            "Bon de livraison sélectionné"
-                                    }}
-                                </span>
-                                <span class="af-file-card__size">
-                                    <i class="pi pi-check"></i>
-                                    {{
-                                        afSelectedMeta["BL"]?.size
-                                            ? formatFileSize(
-                                                  afSelectedMeta["BL"].size
-                                              )
-                                            : "Prêt à enregistrer"
-                                    }}
-                                </span>
-                            </div>
-                            <a
-                                [href]="selectedBL"
-                                target="_blank"
-                                class="af-file-card__view"
-                                title="Voir l'aperçu"
-                            >
-                                <i class="pi pi-eye"></i>
-                            </a>
-                            <button
-                                type="button"
-                                class="af-file-card__remove"
-                                title="Retirer le fichier"
-                                (click)="clearAffectationSlot('BL')"
-                            >
-                                <i class="pi pi-trash"></i>
-                            </button>
-                        </div>
-
-                        <ng-template #blDrop>
-                            <label
-                                class="af-dropzone"
-                                [class.af-dropzone--active]="afDragActive['BL']"
-                                [class.af-dropzone--disabled]="
-                                    blBtnDisabled || blLoading || !!filesSelected?.bon_de_livraison
-                                "
-                                [class.af-dropzone--pulse]="
-                                    !filesSelected?.bon_de_livraison && !blLoading && !blBtnDisabled
-                                "
-                                (dragover)="onAfDragOver($event, 'BL')"
-                                (dragleave)="onAfDragLeave($event, 'BL')"
-                                (drop)="onAfDrop($event, 'BL')"
-                            >
-                                <input
-                                    type="file"
-                                    accept="application/pdf"
-                                    hidden
-                                    [disabled]="blBtnDisabled || blLoading || !!filesSelected?.bon_de_livraison"
-                                    (change)="onAfPicker($event, 'BL')"
-                                />
-                                <span
-                                    class="af-dropzone__icon"
-                                    aria-hidden="true"
-                                >
-                                    <i
-                                        [class]="
-                                            blLoading
-                                                ? 'pi pi-spinner pi-spin'
-                                                : 'pi pi-upload'
-                                        "
-                                    ></i>
-                                </span>
-                                <span class="af-dropzone__title">
-                                    {{
-                                        blLoading
-                                            ? "Chargement…"
-                                            : filesSelected?.bon_de_livraison
-                                              ? "PDF chargé ✓"
-                                              : "Ajouter un PDF"
-                                    }}
-                                </span>
-                                <span class="af-dropzone__hint">
-                                    Glissez le fichier ici ou cliquez · max 10 Mo
-                                </span>
-                            </label>
-                        </ng-template>
-                    </div>
-
-                    <!-- Facture slot -->
-                    <div class="af-upload-cell">
-                        <div class="af-upload-cell__head">
-                            <span class="af-tag">FAC</span>
-                            <span class="af-upload-cell__label">Facture</span>
-                        </div>
-
-                        <div
-                            *ngIf="selectedFacture; else factureDrop"
-                            class="af-file-card"
-                        >
-                            <span class="af-file-card__icon" aria-hidden="true">
-                                <i class="pi pi-file-pdf"></i>
-                            </span>
-                            <div class="af-file-card__meta">
-                                <span
-                                    class="af-file-card__name"
-                                    [title]="
-                                        afSelectedMeta['Facture']?.name ||
-                                        'Facture'
-                                    "
-                                >
-                                    {{
-                                        afSelectedMeta["Facture"]?.name ||
-                                            "Facture sélectionnée"
-                                    }}
-                                </span>
-                                <span class="af-file-card__size">
-                                    <i class="pi pi-check"></i>
-                                    {{
-                                        afSelectedMeta["Facture"]?.size
-                                            ? formatFileSize(
-                                                  afSelectedMeta["Facture"].size
-                                              )
-                                            : "Prêt à enregistrer"
-                                    }}
-                                </span>
-                            </div>
-                            <a
-                                [href]="selectedFacture"
-                                target="_blank"
-                                class="af-file-card__view"
-                                title="Voir l'aperçu"
-                            >
-                                <i class="pi pi-eye"></i>
-                            </a>
-                            <button
-                                type="button"
-                                class="af-file-card__remove"
-                                title="Retirer le fichier"
-                                (click)="clearAffectationSlot('Facture')"
-                            >
-                                <i class="pi pi-trash"></i>
-                            </button>
-                        </div>
-
-                        <ng-template #factureDrop>
-                            <!-- Séquence : Facture verrouillée tant que le BL
-                                 n'est pas téléversé (DI en WAITING_BL). -->
-                            <div
-                                *ngIf="factureSlotLocked; else factureUploader"
-                                class="af-dropzone af-dropzone--disabled af-dropzone--locked"
-                            >
-                                <span class="af-dropzone__icon" aria-hidden="true">
-                                    <i class="pi pi-lock"></i>
-                                </span>
-                                <span class="af-dropzone__title">Verrouillé</span>
-                                <span class="af-dropzone__hint">
-                                    Téléversez d'abord le Bon de livraison (BL).
-                                </span>
-                            </div>
-                            <ng-template #factureUploader>
-                            <label
-                                class="af-dropzone"
-                                [class.af-dropzone--active]="
-                                    afDragActive['Facture']
-                                "
-                                [class.af-dropzone--disabled]="
-                                    factureBtnDisabled || factureLoading || !!filesSelected?.facture
-                                "
-                                [class.af-dropzone--pulse]="
-                                    !filesSelected?.facture && !factureLoading && !factureBtnDisabled
-                                "
-                                (dragover)="onAfDragOver($event, 'Facture')"
-                                (dragleave)="onAfDragLeave($event, 'Facture')"
-                                (drop)="onAfDrop($event, 'Facture')"
-                            >
-                                <input
-                                    type="file"
-                                    accept="application/pdf"
-                                    hidden
-                                    [disabled]="
-                                        factureBtnDisabled || factureLoading || !!filesSelected?.facture
-                                    "
-                                    (change)="onAfPicker($event, 'Facture')"
-                                />
-                                <span
-                                    class="af-dropzone__icon"
-                                    aria-hidden="true"
-                                >
-                                    <i
-                                        [class]="
-                                            factureLoading
-                                                ? 'pi pi-spinner pi-spin'
-                                                : 'pi pi-upload'
-                                        "
-                                    ></i>
-                                </span>
-                                <span class="af-dropzone__title">
-                                    {{
-                                        factureLoading
-                                            ? "Chargement…"
-                                            : filesSelected?.facture
-                                              ? "PDF chargé ✓"
-                                              : "Ajouter un PDF"
-                                    }}
-                                </span>
-                                <span class="af-dropzone__hint">
-                                    Glissez le fichier ici ou cliquez · max 10 Mo
-                                </span>
-                            </label>
-                            </ng-template>
-                        </ng-template>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- ── Footer ──────────────────────────────────── -->
-        <footer class="af-modal__footer">
-            <span class="af-modal__counter">
-                <ng-container *ngIf="affectationPendingCount > 0; else nothing">
-                    <strong>{{ affectationPendingCount }}</strong>
-                    fichier{{ affectationPendingCount > 1 ? "s" : "" }}
-                    prêt{{ affectationPendingCount > 1 ? "s" : "" }} à enregistrer
-                </ng-container>
-                <ng-template #nothing>Aucun nouveau fichier</ng-template>
-            </span>
-            <div class="af-modal__actions">
-                <p-button
-                    label="Annuler"
-                    styleClass="af-btn af-btn--cancel"
-                    (onClick)="filsFinished = false"
-                ></p-button>
-                <p-button
-                    label="Enregistrer"
-                    icon="pi pi-save"
-                    styleClass="af-btn af-btn--save"
-                    [disabled]="affectationPendingCount === 0 || isLoading"
-                    (onClick)="saveAffectationFichiers()"
-                ></p-button>
-            </div>
-        </footer>
-    </div>
-</p-dialog>
+<!-- La modale « AFFECTATION DES FICHIERS » vit maintenant dans le composant
+     partagé `app-di-files-modal`, monté UNE SEULE FOIS dans `app.component.html`
+     et piloté par `DiFilesService`. Le bouton trombone appelle toujours
+     `openUploadFileFinished(rowData)`, qui délègue au service. -->
 
 <!-- ═══════════════════════════════════════════════
      MODAL — INFORMATION DI (shared read-only component)
@@ -2654,7 +2385,10 @@
 
 <!-- Procès-Verbal de Réunion — opened after a Retour transition fired
      in confirmRetour(). The transition itself runs independently;
-     cancelling this modal does NOT roll the DI back. -->
+     cancelling this modal does NOT roll the DI back.
+     ⏸ EN PAUSE pour cette version : ne s'ouvre que si
+     `REUNION_PV_ON_RETOUR_ENABLED` vaut `true` (ticket-list.component.ts) ;
+     sinon un toast de succès confirme le retour. -->
 <app-reunion-pv-modal
     [(visible)]="reunionPvModalVisible"
     mode="retour"
@@ -2692,11 +2426,15 @@
                     placeholder="Décrivez le motif du retour..."
                 ></textarea>
             </div>
+            <!-- Convention de pied : « Annuler » NEUTRE (secondary outlined) à
+                 gauche, action engageante colorée à droite. Ici c'était inversé
+                 — le renoncement était en rouge et l'action confirmante en
+                 neutre, ce qui désignait le mauvais bouton comme dangereux. -->
             <div class="sav-dialog-footer">
                 <p-button
                     (click)="retourDialogVisible = false"
                     label="Annuler"
-                    severity="danger"
+                    severity="secondary"
                     [outlined]="true"
                     size="small"
                 ></p-button>
@@ -2704,6 +2442,7 @@
                     (click)="confirmRetour()"
                     icon="pi pi-undo"
                     label="Confirmer le retour"
+                    severity="danger"
                     size="small"
                 ></p-button>
             </div>

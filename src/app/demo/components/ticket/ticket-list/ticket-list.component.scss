@@ -4,30 +4,32 @@
 // ═══════════════════════════════════════════════════════
 
 // ── TOKENS ────────────────────────────────────────────
-$bg-page: #f1f5f9; // slate-100 page background
-$bg-card: #ffffff; // white card
-$bg-surface: #f8fafc; // slate-50 header / elevated
-$bg-row-hover: #f1f5f9;
-$bg-input: #ffffff;
-$border: #e2e8f0; // slate-200
-$text-primary: #1e293b; // slate-800
-$text-secondary: #64748b; // slate-500
-$text-muted: #94a3b8; // slate-400
+$bg-page: var(--fx-bg-page); // slate-100 page background
+$bg-card: var(--fx-bg-card); // white card
+$bg-surface: var(--fx-bg-surface); // slate-50 header / elevated
+$bg-row-hover: var(--fx-bg-hover);
+$bg-input: var(--fx-bg-input);
+$border: var(--fx-border); // slate-200
+$text-primary: var(--fx-text-strong); // slate-800
+$text-secondary: var(--fx-text-muted); // slate-500
+$text-muted: var(--fx-text-subtle); // slate-400
 $accent-blue: #2563eb; // blue-600 — DI ID links
 $accent-blue-hover: #1d4ed8;
 $white: #ffffff;
 
-$green: #16a34a;
-$orange: #ea580c;
-$red: #dc2626;
-$blue: #2563eb;
+$green: var(--fx-green-text);
+$orange: var(--fx-orange-text);
+$red: var(--fx-red-text);
+$blue: var(--fx-blue-text);
 
 // ── PAGE SHELL ────────────────────────────────────────
 .sav-page {
     background: $bg-page;
     min-height: 100vh;
     padding: 1.5rem 1.75rem;
-    font-family: "Segoe UI", system-ui, sans-serif;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
     color: $text-primary;
 }
 
@@ -53,7 +55,7 @@ $blue: #2563eb;
     }
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 1.1rem;
     }
 }
@@ -64,7 +66,7 @@ $blue: #2563eb;
 }
 
 .sav-btn-export {
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     border: 1px solid $border !important;
     color: $text-primary !important;
     font-size: 0.82rem !important;
@@ -73,21 +75,21 @@ $blue: #2563eb;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     &:hover {
         background: $bg-surface !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
     }
 }
 
 .sav-btn-new {
-    background: $accent-blue !important;
+    background: var(--fx-blue-strong) !important;
     border: none !important;
-    color: $white !important;
+    color: var(--fx-text-on-accent) !important;
     font-size: 0.82rem !important;
     padding: 0.45rem 1rem !important;
     border-radius: 6px !important;
     font-weight: 500 !important;
     box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3) !important;
     &:hover {
-        background: $accent-blue-hover !important;
+        background: var(--fx-blue-strong) !important;
     }
 }
 
@@ -125,13 +127,13 @@ $blue: #2563eb;
     height: 3px;
     border-radius: 2px;
     &.r1 {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
     &.r2 {
-        background: #ea580c;
+        background: var(--fx-orange);
     }
     &.r3 {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 
@@ -175,7 +177,7 @@ $blue: #2563eb;
     padding: 0.35rem 0.6rem !important;
     border-radius: 5px !important;
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: none !important;
     }
 }
@@ -214,7 +216,7 @@ $blue: #2563eb;
     transition: border-color 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
     }
     &::placeholder {
         color: $text-muted !important;
@@ -257,43 +259,43 @@ $blue: #2563eb;
     }
 
     &.row-retour1 {
-        border-left-color: #ca8a04 !important;
+        border-left-color: var(--fx-amber) !important;
 
         > td.sav-td:first-child::before {
-            background: #ca8a04;
+            background: var(--fx-amber);
         }
     }
     &.row-retour2 {
-        border-left-color: #ea580c !important;
+        border-left-color: var(--fx-orange) !important;
 
         > td.sav-td:first-child::before {
-            background: #ea580c;
+            background: var(--fx-orange);
         }
     }
     &.row-retour3 {
-        border-left-color: #dc2626 !important;
+        border-left-color: var(--fx-red) !important;
 
         > td.sav-td:first-child::before {
-            background: #dc2626;
+            background: var(--fx-red);
         }
     }
 
     // FINISHED ROWS — subtle green tint
     &.row-facture > td.sav-td {
-        background: #f0fdf4 !important;
+        background: var(--fx-green-soft-bg) !important;
     }
     &.row-facture-logs > td.sav-td {
-        background: #dcfce7 !important;
+        background: var(--fx-green-soft-bg-2) !important;
     }
 }
 
 // DI ID link
 .sav-id-link {
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     font-weight: 500;
     cursor: pointer;
     &:hover {
-        color: $accent-blue-hover;
+        color: var(--fx-blue-soft-fg);
         text-decoration: underline;
     }
 }
@@ -320,34 +322,34 @@ $blue: #2563eb;
 }
 
 ::ng-deep .status-DIAGNOSTIC {
-    background: #dbeafe !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg-2) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #3b82f6;
+        background: var(--fx-blue);
     }
 }
 ::ng-deep .status-INDIAGNOSTIC,
 ::ng-deep .status-IN_DIAGNOSTIC {
-    background: #ede9fe !important;
-    color: #5b21b6 !important;
+    background: var(--fx-purple-soft-bg-2) !important;
+    color: var(--fx-purple-soft-fg) !important;
     &::before {
-        background: #7c3aed;
+        background: var(--fx-purple);
     }
 }
 ::ng-deep .status-DIAGNOSTIC_Pause,
 ::ng-deep .status-DIAGNOSTIC_PAUSE {
-    background: #fef3c7 !important;
-    color: #92400e !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #f59e0b;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-NEGOTIATION1,
 ::ng-deep .status-NEGOTIATION2 {
-    background: #ffedd5 !important;
-    color: #9a3412 !important;
+    background: var(--fx-amber-soft-bg) !important;
+    color: var(--fx-amber-text) !important;
     &::before {
-        background: #ea580c;
+        background: var(--fx-orange);
     }
 }
 // Statuts d'ATTENTE v2 — ambre #b45309 (poignée de main coordination, BC/Devis,
@@ -359,79 +361,79 @@ $blue: #2563eb;
 ::ng-deep .status-CONFIRMATION_COMPOSANTS,
 ::ng-deep .status-ATTENTE_BL_FACTURE,
 ::ng-deep .status-CLOSING {
-    background: #fef3c7 !important;
-    color: #b45309 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-text) !important;
     &::before {
-        background: #b45309;
+        background: var(--fx-amber-strong);
     }
 }
 ::ng-deep .status-PENDING1,
 ::ng-deep .status-PENDING2,
 ::ng-deep .status-PENDING3 {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
+    background: var(--fx-bg-surface-2) !important;
+    color: var(--fx-text-muted-strong) !important;
     &::before {
-        background: #94a3b8;
+        background: var(--fx-border-strong);
     }
 }
 ::ng-deep .status-REPARATION {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #16a34a;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-INREPARATION,
 ::ng-deep .status-IN_REPARATION {
-    background: #bbf7d0 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-REPARATION_Pause {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-FINISHED {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-PRICING,
 ::ng-deep .status-PRICING_DIAG {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-RETOUR1,
 ::ng-deep .status-RETOUR2,
 ::ng-deep .status-RETOUR3 {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 ::ng-deep .status-CREATED {
-    background: #eff6ff !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #2563eb;
+        background: var(--fx-blue-strong);
     }
 }
 ::ng-deep .status-ANNULER {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 
@@ -465,9 +467,9 @@ $blue: #2563eb;
         box-shadow 0.12s;
 
     &:hover {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         color: $text-primary !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
     }
 
@@ -478,19 +480,19 @@ $blue: #2563eb;
     }
 
     &--danger:hover {
-        border-color: #fca5a5 !important;
+        border-color: var(--fx-red-soft-bd) !important;
         color: $red !important;
-        background: #fff5f5 !important;
+        background: var(--fx-red-soft-bg) !important;
     }
     &--warn:hover {
-        border-color: #fdba74 !important;
+        border-color: var(--fx-amber-soft-bd) !important;
         color: $orange !important;
-        background: #fff8f0 !important;
+        background: var(--fx-amber-soft-bg) !important;
     }
     &--info:hover {
-        border-color: #93c5fd !important;
+        border-color: var(--fx-blue-soft-bd) !important;
         color: $blue !important;
-        background: #eff6ff !important;
+        background: var(--fx-blue-soft-bg) !important;
     }
 
     &--retour {
@@ -501,9 +503,9 @@ $blue: #2563eb;
         color: $text-muted !important;
 
         &:not(:disabled):hover {
-            border-color: #fca5a5 !important;
+            border-color: var(--fx-red-soft-bd) !important;
             color: $red !important;
-            background: #fff5f5 !important;
+            background: var(--fx-red-soft-bg) !important;
         }
     }
 }
@@ -545,7 +547,7 @@ $blue: #2563eb;
     padding: 0 !important;
 
     .p-paginator-element {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         color: $text-secondary !important;
         border-radius: 4px !important;
@@ -560,14 +562,14 @@ $blue: #2563eb;
             color: $text-primary !important;
         }
         &.p-highlight {
-            background: $accent-blue !important;
-            border-color: $accent-blue !important;
-            color: $white !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 
     .p-paginator-rpp-options .p-dropdown {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         border-radius: 4px !important;
         height: 28px !important;
@@ -669,7 +671,7 @@ $blue: #2563eb;
     font-family: inherit;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
     &::placeholder {
@@ -693,7 +695,7 @@ $blue: #2563eb;
         box-shadow 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
     &::placeholder {
@@ -724,17 +726,17 @@ $blue: #2563eb;
             color: $text-secondary !important;
         }
         &:hover {
-            border-color: #cbd5e1 !important;
+            border-color: var(--fx-border-strong) !important;
         }
         &.p-focus {
-            border-color: $accent-blue !important;
+            border-color: var(--fx-blue-strong) !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
         }
     }
 }
 
 ::ng-deep .p-dropdown-panel {
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     border: 1px solid $border !important;
     border-radius: 6px !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
@@ -748,8 +750,8 @@ $blue: #2563eb;
             background: $bg-surface !important;
         }
         &.p-highlight {
-            background: #eff6ff !important;
-            color: $accent-blue !important;
+            background: var(--fx-blue-soft-bg) !important;
+            color: var(--fx-blue-text) !important;
         }
     }
 }
@@ -781,9 +783,9 @@ $blue: #2563eb;
     font-size: 0.82rem !important;
 
     &.p-highlight {
-        background: #eff6ff !important;
-        border-color: $accent-blue !important;
-        color: $accent-blue !important;
+        background: var(--fx-blue-soft-bg) !important;
+        border-color: var(--fx-blue-strong) !important;
+        color: var(--fx-blue-text) !important;
     }
 }
 
@@ -796,14 +798,14 @@ $blue: #2563eb;
     padding: 0.4rem 0.8rem !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     &:hover {
-        background: $white !important;
-        border-color: #cbd5e1 !important;
+        background: var(--fx-bg-card) !important;
+        border-color: var(--fx-border-strong) !important;
     }
 }
 
 .sav-uploading {
     font-size: 0.75rem;
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     display: flex;
     align-items: center;
     gap: 4px;
@@ -843,9 +845,13 @@ $blue: #2563eb;
     text-align: center !important;
 }
 
+// `display: flex` ici transformait le <td> en conteneur flex : la cellule
+// perdait son comportement `table-cell` (plus de `vertical-align`, plus de
+// participation normale au calcul des largeurs), d'où des boutons décalés
+// verticalement. `.sav-icon-btn` est déjà en `inline-flex`, un simple
+// centrage de texte suffit.
 .sav-modal-actions-cell {
-    display: flex;
-    justify-content: center;
+    text-align: center;
 }
 
 .sav-modal-empty {
@@ -896,16 +902,20 @@ $blue: #2563eb;
 // `.sav-relations-card` blocks, each carrying a header row with a
 // title + subtitle and the body table/form.
 
+// La carte est un maillon de la chaîne flex qui descend du dialogue jusqu'au
+// corps du tableau (voir `.sav-relations-dialog` plus bas) : sans
+// `min-height: 0`, un enfant flex refuse de se comprimer sous la hauteur de son
+// contenu et le `overflow` du tableau ne défile jamais.
+// L'espacement entre cartes vient du `gap` du panneau — pas d'une marge, qui
+// s'additionnerait au gap.
 .sav-relations-card {
     background: $bg-card;
     border: 1px solid $border;
     border-radius: 10px;
     padding: 1rem 1.1rem 1.15rem;
-    margin-bottom: 1rem;
-
-    &:last-child {
-        margin-bottom: 0;
-    }
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 .sav-relations-card__header {
@@ -916,6 +926,8 @@ $blue: #2563eb;
     margin-bottom: 0.85rem;
     padding-bottom: 0.6rem;
     border-bottom: 1px solid $border;
+    flex: 0 0 auto; // l'en-tête ne se comprime jamais : c'est lui qui doit
+                    // rester visible quand la place manque.
 }
 
 .sav-relations-card__title {
@@ -962,15 +974,23 @@ $blue: #2563eb;
     gap: 0.55rem;
     flex-wrap: wrap;
     margin-bottom: 1rem;
+    flex: 0 0 auto;
 
+    // Le champ était en `flex: 1 1 200px` SANS borne haute : pour saisir un nom
+    // d'emplacement il s'étirait à ~930 px, et le bouton « Ajouter » se
+    // retrouvait rejeté à l'autre bout de la carte. On le borne et on pousse
+    // l'espace restant APRÈS le bouton (`margin-right: auto`), pour que les deux
+    // restent groupés à gauche.
     .sav-form-row {
         flex: 1 1 200px;
+        max-width: 420px;
         margin: 0;
     }
 
     .p-button {
         flex: 0 0 auto;
         align-self: flex-end;
+        margin-right: auto;
     }
 }
 
@@ -994,28 +1014,106 @@ $blue: #2563eb;
     margin: 0 0 0.6rem 0;
 }
 
+// `min-width: 160px` forçait la colonne « Réaffecter » à rester large et volait
+// la place de « Titre » (tronqué à 213 px). La largeur de la colonne est
+// désormais déclarée sur le `<th>` ; le dropdown se contente de la remplir.
 ::ng-deep .sav-relations-dropdown.p-dropdown {
     width: 100%;
-    min-width: 160px;
+    min-width: 0;
 }
 
-::ng-deep .sav-relations-dialog .p-dialog-content {
-    background: $bg-page;
-    padding: 1.1rem 1.25rem 1.4rem;
+// ATTENTION À LA SPÉCIFICITÉ ICI.
+// `styleClass="sav-dialog sav-relations-dialog"` pose les DEUX classes sur le
+// MÊME élément que `.p-dialog`. Or `.sav-dialog .p-dialog-content` (plus haut)
+// déclare son padding en `!important` : à spécificité égale (0,2,0) il gagnait,
+// et les règles écrites ici restaient sans effet — le padding réellement
+// appliqué était 1,25 rem, pas celui déclaré ci-dessous.
+// On préfixe donc par `.p-dialog` (même élément, pas un descendant) pour passer
+// à 0,3,0, et on garde `!important` là où il faut battre `.sav-dialog`.
+
+// Le dialogue lui-même : coquille, et cadre de hauteur fixe. `height` vient de
+// l'attribut `[style]` du template ; ici on installe la colonne flex qui
+// permettra au contenu de se répartir au lieu de déborder.
+::ng-deep .p-dialog.sav-relations-dialog {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+
+    background: $bg-card !important;
+    border: 1px solid $border !important;
+    border-radius: 10px !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important;
 }
 
-::ng-deep .sav-relations-dialog .p-dialog-header {
+// Chaîne flex #1 — le contenu occupe toute la hauteur restante et ne défile
+// PAS lui-même : le défilement est délégué au corps de chaque tableau.
+::ng-deep .p-dialog.sav-relations-dialog .p-dialog-content {
+    background: $bg-page !important;
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden !important;
+}
+
+::ng-deep .p-dialog.sav-relations-dialog .p-dialog-header {
+    background: $bg-card !important;
+    border-bottom: 1px solid $border !important;
+    padding: 0.85rem 1.25rem !important;
+    font-weight: 600;
+    flex: 0 0 auto;
+}
+
+// Chaîne flex #2 — le tabview et sa zone de panneaux.
+//
+// PIÈGE : Angular insère ses ÉLÉMENTS HÔTES (`<p-tabview>`, `<p-tabpanel>`,
+// `<p-table>`) entre les div PrimeNG. Ils sont en `display: block` (voire
+// `inline` pour p-tabpanel) avec `min-height: auto` : styler seulement
+// `.p-tabview` / `.p-datatable` laisse ces hôtes grandir à la hauteur du
+// contenu et TOUTE la chaîne casse là. Il faut les styler explicitement.
+::ng-deep .p-dialog.sav-relations-dialog {
+    p-tabview,
+    p-table {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    // Les TROIS `<p-tabpanel>` restent dans le DOM (seul l'onglet actif rend son
+    // `.p-tabview-panel` à l'intérieur). En faire des éléments flex leur ferait
+    // partager la hauteur à trois, dont deux vides — le panneau visible n'en
+    // recevait qu'un tiers. `display: contents` efface la boîte de l'hôte : le
+    // panneau actif devient directement l'élément flex, les hôtes vides ne
+    // pèsent rien.
+    p-tabpanel {
+        display: contents;
+    }
+}
+
+::ng-deep .p-dialog.sav-relations-dialog .p-tabview {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+// Le conteneur de la barre d'onglets (quand PrimeNG en génère un) ne doit
+// jamais absorber la hauteur restante.
+::ng-deep .p-dialog.sav-relations-dialog .p-tabview-nav-container {
+    flex: 0 0 auto;
+}
+
+// La barre d'onglets reste collée en haut et ne se comprime pas. Le padding
+// horizontal est porté ici (et sur les panneaux) depuis que `.p-dialog-content`
+// est à 0 : c'est ce qui permet au corps de défiler bord à bord sous l'onglet.
+::ng-deep .sav-relations-dialog .p-tabview .p-tabview-nav {
     background: $bg-card;
     border-bottom: 1px solid $border;
-    padding: 0.85rem 1.25rem;
-    font-weight: 600;
-}
-
-::ng-deep .sav-relations-dialog .p-tabview .p-tabview-nav {
-    background: transparent;
-    border-bottom: 1px solid $border;
-    margin-bottom: 1.25rem;
-    padding: 0;
+    margin-bottom: 0;
+    padding: 0 1.25rem;
+    flex: 0 0 auto;
 
     li {
         margin: 0 0.15rem 0 0;
@@ -1037,8 +1135,8 @@ $blue: #2563eb;
     }
 
     li.p-highlight .p-tabview-nav-link {
-        color: $accent-blue !important;
-        border-bottom-color: $accent-blue !important;
+        color: var(--fx-blue-text) !important;
+        border-bottom-color: var(--fx-blue-strong) !important;
         background: transparent !important;
     }
 
@@ -1048,15 +1146,85 @@ $blue: #2563eb;
     }
 }
 
-::ng-deep .sav-relations-dialog .p-tabview .p-tabview-panels {
+// Chaîne flex #3 — la zone de panneaux, puis le panneau actif qui empile les
+// deux cartes. `gap` remplace l'ancienne `margin-bottom` de `.sav-relations-card`.
+// La carte « Liste » garde sa taille naturelle (`0 1 auto`), la carte
+// « Réaffecter » absorbe le reste (`1 1 0`) : les DEUX en-têtes restent donc
+// visibles ensemble, ce qui était tout le problème.
+::ng-deep .p-dialog.sav-relations-dialog .p-tabview .p-tabview-panels {
     background: transparent;
     padding: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+// `:not([hidden])` est INDISPENSABLE : PrimeNG masque les onglets inactifs avec
+// l'attribut `hidden`, dont le `display: none` vient de la feuille de style du
+// navigateur — une simple règle de classe le bat. Sans ce garde, les trois
+// onglets s'affichaient empilés en même temps.
+::ng-deep .p-dialog.sav-relations-dialog .p-tabview .p-tabview-panel:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 1.1rem 1.25rem 1.25rem;
+    overflow: hidden;
+
+    // Répartition entre les deux cartes. La carte « Liste » garde sa hauteur
+    // naturelle tant qu'elle reste raisonnable, mais ne dépasse jamais 45 % :
+    // sans ce plafond elle prenait 460 px sur 678 et ne laissait que 171 px —
+    // soit une seule ligne — à la carte « Réaffecter », qui est pourtant la
+    // plus grande surface de travail.
+    // Répartition entre les deux cartes.
+    //
+    // La carte « Liste » garde sa hauteur naturelle tant qu'elle reste
+    // raisonnable, mais ne dépasse jamais 45 % : sans plafond elle prenait
+    // 460 px sur 678 et ne laissait qu'une seule ligne à la carte
+    // « Réaffecter », qui est pourtant la plus grande surface de travail.
+    //
+    // Le PLANCHER compte autant : son bandeau (en-tête + formulaire + ligne de
+    // titres + paginateur) occupe déjà ~186 px, donc sous ~270 px la table
+    // n'affiche plus AUCUNE ligne et paraît cassée. `min-height` l'emporte sur
+    // `max-height` en CSS : en 1280×720 c'est le plancher qui s'applique, et la
+    // carte « Réaffecter » prend le reste.
+    > .sav-relations-card:first-child {
+        flex: 0 1 auto;
+        max-height: 45%;
+        min-height: 270px;
+    }
+
+    > .sav-relations-card:last-child {
+        flex: 1 1 0;
+        min-height: 180px;
+    }
 }
 
 // Compact density for tables inside the relations modal — each row is
 // short and the dropdown sits inline on its own column without pushing
 // the layout around.
-::ng-deep .sav-relations-dialog .sav-modal-table {
+// Préfixé par `.p-dialog` : les règles génériques `.sav-modal-table` plus bas
+// portent `!important` à spécificité égale et, déclarées après, gagnaient —
+// le paginateur compact décrit ci-dessous n'existait donc pas à l'écran.
+::ng-deep .p-dialog.sav-relations-dialog .sav-modal-table {
+    // Chaîne flex #4 — dernier maillon : le tableau remplit la carte et c'est
+    // SON corps (`.p-datatable-wrapper`, via `scrollHeight="flex"`) qui défile,
+    // en-tête figé. Le dialogue, lui, ne défile plus.
+    &.p-datatable {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    &.p-datatable .p-datatable-wrapper {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
     &.p-datatable .p-datatable-thead > tr > th {
         background: $bg-surface !important;
         font-size: 0.7rem !important;
@@ -1073,9 +1241,26 @@ $blue: #2563eb;
         height: 32px;
     }
 
+    // Pied au standard de l'app : le compte à gauche, la pagination à droite
+    // (même lecture que `.sav-paginator-wrapper` des pages-listes), au lieu du
+    // bloc centré d'origine.
     .p-paginator {
-        background: transparent !important;
-        padding: 0.4rem 0 0 !important;
+        background: $bg-surface !important;
+        border-top: 1px solid $border !important;
+        padding: 0.45rem 0.6rem !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center;
+        flex: 0 0 auto;
+        border-radius: 0 0 8px 8px;
+    }
+
+    .p-paginator .p-paginator-current {
+        margin-right: auto;
+        margin-left: 0;
+        color: $text-secondary !important;
+        font-size: 0.75rem !important;
+        order: -1;
     }
 }
 
@@ -1107,7 +1292,7 @@ $blue: #2563eb;
     // Row that was just modified through the Relations & Structure modal
     // gets a brief green tint so the user can see the change landed.
     &.p-datatable .p-datatable-tbody > tr.sav-row-flash > td {
-        background: var(--green-50, #f0fdf4) !important;
+        background: var(--green-50, var(--fx-green-soft-bg)) !important;
         transition: background 0.4s ease-out;
     }
 
@@ -1118,7 +1303,7 @@ $blue: #2563eb;
     }
 
     .p-paginator-element {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         color: $text-secondary !important;
         border-radius: 4px !important;
@@ -1133,9 +1318,9 @@ $blue: #2563eb;
         }
 
         &.p-highlight {
-            background: $accent-blue !important;
-            border-color: $accent-blue !important;
-            color: $white !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 }
@@ -1145,8 +1330,8 @@ $blue: #2563eb;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    background: var(--fx-blue-soft-bg);
+    border: 1px solid var(--fx-blue-soft-bd);
     border-radius: 6px;
     padding: 0.65rem 0.9rem;
     margin-bottom: 0.9rem;
@@ -1154,7 +1339,7 @@ $blue: #2563eb;
     color: $text-secondary;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
     }
     strong {
         color: $text-primary;
@@ -1233,7 +1418,7 @@ $blue: #2563eb;
         padding: 0.4rem 0.6rem !important;
         width: 100px !important;
         &:focus {
-            border-color: $accent-blue !important;
+            border-color: var(--fx-blue-strong) !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
         }
     }
@@ -1258,12 +1443,12 @@ $blue: #2563eb;
     height: 5px !important;
 
     .p-slider-range {
-        background: $accent-blue !important;
+        background: var(--fx-blue-strong) !important;
         border-radius: 4px !important;
     }
     .p-slider-handle {
-        background: $white !important;
-        border: 2px solid $accent-blue !important;
+        background: var(--fx-bg-card) !important;
+        border: 2px solid var(--fx-blue-strong) !important;
         width: 14px !important;
         height: 14px !important;
         margin-top: -5px !important;
@@ -1309,12 +1494,12 @@ $blue: #2563eb;
     border-radius: 999px;
 
     &.error-yes {
-        background: #fee2e2;
-        color: #991b1b;
+        background: var(--fx-red-soft-bg-2);
+        color: var(--fx-red-soft-fg);
     }
     &.error-no {
-        background: #dcfce7;
-        color: #14532d;
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
     }
 }
 
@@ -1336,7 +1521,7 @@ $blue: #2563eb;
     color: $text-secondary;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.8rem;
     }
     strong {
@@ -1361,9 +1546,9 @@ $blue: #2563eb;
 
 .sav-pricing-note {
     font-size: 0.78rem;
-    color: #1e40af;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+    color: var(--fx-blue-soft-fg);
+    background: var(--fx-blue-soft-bg);
+    border: 1px solid var(--fx-blue-soft-bd);
     border-radius: 5px;
     padding: 0.5rem 0.75rem;
 }
@@ -1398,7 +1583,7 @@ $blue: #2563eb;
     border: 1px solid $border;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.8rem;
         flex-shrink: 0;
     }
@@ -1429,7 +1614,7 @@ $blue: #2563eb;
     font-size: 0.82rem;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.8rem;
     }
     span {
@@ -1495,15 +1680,15 @@ $blue: #2563eb;
     border-radius: 5px;
     background: $bg-surface;
     border: 1px solid $border;
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     text-decoration: none;
     transition:
         background 0.12s,
         border-color 0.12s;
 
     &:hover {
-        background: #eff6ff;
-        border-color: #93c5fd;
+        background: var(--fx-blue-soft-bg);
+        border-color: var(--fx-blue-soft-bd);
     }
     .pi {
         font-size: 0.8rem;
@@ -1525,36 +1710,32 @@ $blue: #2563eb;
 // ── GLOBAL PRIMENG OVERRIDES (light) ─────────────────
 ::ng-deep .p-inputtext {
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
 }
 
 ::ng-deep .p-radiobutton .p-radiobutton-box {
     border-color: $border !important;
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     &.p-highlight {
-        background: $accent-blue !important;
-        border-color: $accent-blue !important;
+        background: var(--fx-blue-strong) !important;
+        border-color: var(--fx-blue-strong) !important;
     }
     &:hover {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
     }
 }
 
 ::ng-deep .p-checkbox .p-checkbox-box {
     border-color: $border !important;
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     &.p-highlight {
-        background: $accent-blue !important;
-        border-color: $accent-blue !important;
+        background: var(--fx-blue-strong) !important;
+        border-color: var(--fx-blue-strong) !important;
     }
 }
 
-::ng-deep .p-toast .p-toast-message {
-    border-radius: 8px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-}
 // ── Negotiation modal ──────────────────────────────────────────────
 .sav-dialog {
     .p-dialog-content {
@@ -1758,12 +1939,12 @@ $blue: #2563eb;
 
 /* Emplacement VIDE → vert : rien à ranger, la DI n'occupe pas de place. */
 .sav-location-dot--vide {
-    background: #16a34a;
+    background: var(--fx-green);
 }
 
 /* Emplacement RENSEIGNÉ → rouge : une place du magasin est occupée. */
 .sav-location-dot--renseigne {
-    background: #dc2626;
+    background: var(--fx-red);
 }
 
 ::ng-deep .sav-main-table .row-bl-added > td {
@@ -1774,11 +1955,11 @@ $blue: #2563eb;
 //  PRICING MODALS (P3) — Prix initial + Prix final
 //  Shared chrome (.pricing-modal) + per-modal blocks
 // ═══════════════════════════════════════════════════════
-$pricing-green-soft: #ecfdf5;
-$pricing-green-border: #a7f3d0;
+$pricing-green-soft: var(--fx-green-soft-bg);
+$pricing-green-border: var(--fx-green-soft-bd);
 $pricing-green: #16a34a;
-$pricing-green-dark: #14532d;
-$pricing-red-soft: #fef2f2;
+$pricing-green-dark: var(--fx-green-soft-fg);
+$pricing-red-soft: var(--fx-red-soft-bg);
 $pricing-red: #dc2626;
 
 // We render our own header inside the dialog body — kill the default chrome padding.
@@ -1812,14 +1993,14 @@ $pricing-red: #dc2626;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: $pricing-green;
+    color: var(--fx-green-text);
     .pi {
         font-size: 1.05rem;
     }
     &--admin {
-        background: #eef2ff;
-        border-color: #c7d2fe;
-        color: #4338ca;
+        background: var(--fx-purple-soft-bg);
+        border-color: var(--fx-purple-soft-bd);
+        color: var(--fx-blue-soft-fg);
     }
 }
 
@@ -1860,7 +2041,7 @@ $pricing-red: #dc2626;
     &:hover {
         background: $bg-surface;
         color: $text-primary;
-        border-color: #cbd5e1;
+        border-color: var(--fx-border-strong);
     }
 }
 
@@ -1895,8 +2076,8 @@ $pricing-red: #dc2626;
     align-items: center;
     gap: 0.9rem;
     padding: 0.85rem 1rem;
-    background: #f0fdf4;
-    border: 1px solid #d1fae5;
+    background: var(--fx-green-soft-bg);
+    border: 1px solid var(--fx-green-soft-bd);
     border-radius: 14px;
 
     &__icon {
@@ -1904,8 +2085,8 @@ $pricing-red: #dc2626;
         width: 38px;
         height: 38px;
         border-radius: 10px;
-        background: #dcfce7;
-        color: #059669;
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-text);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1924,13 +2105,13 @@ $pricing-red: #dc2626;
     &__label {
         font-size: 0.8rem;
         font-weight: 600;
-        color: #047857;
+        color: var(--fx-green-soft-fg);
     }
     &__amount {
         font-size: 1.25rem;
         font-weight: 800;
         letter-spacing: -0.3px;
-        color: #065f46;
+        color: var(--fx-green-soft-fg);
         font-variant-numeric: tabular-nums;
     }
     &__stats {
@@ -1942,7 +2123,7 @@ $pricing-red: #dc2626;
         text-align: center;
         padding: 0.35rem 0.7rem;
         background: $bg-card;
-        border: 1px solid #d1fae5;
+        border: 1px solid var(--fx-green-soft-bd);
         border-radius: 9px;
     }
     &__stat-label {
@@ -1961,33 +2142,99 @@ $pricing-red: #dc2626;
     }
 }
 
-// ── Remarque du technicien (bande compacte) ─────────────
-.pricing-tech-note {
+// ── Contexte : note du technicien + historique des prix ─
+// Grille auto-fit : côte à côte quand les deux existent, pleine largeur sinon,
+// empilées sous ~560px sans media query.
+.pricing-context {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+// En-tête commun aux cartes de contexte
+.pricing-card-head {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    padding: 0.6rem 0.85rem;
-    border: 1px solid #dbeafe;
-    background: #eff6ff;
-    border-radius: 11px;
+    gap: 0.45rem;
+    margin-bottom: 0.5rem;
     .pi {
         flex: 0 0 auto;
-        color: $accent-blue;
         font-size: 0.85rem;
     }
-    &__tag {
-        flex: 0 0 auto;
+    &__title {
         font-size: 0.68rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: $accent-blue;
+        letter-spacing: 0.05em;
+    }
+}
+
+// ── Remarque du technicien ──────────────────────────────
+.pricing-tech-note {
+    min-width: 0;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--fx-blue-soft-bd);
+    background: var(--fx-blue-soft-bg);
+    border-radius: 12px;
+    .pricing-card-head {
+        color: var(--fx-blue-text);
     }
     &__text {
-        min-width: 0;
+        margin: 0;
         font-size: 0.84rem;
-        color: #1e3a5f;
+        line-height: 1.45;
+        color: var(--fx-text-strong);
+        // Garde les retours à la ligne saisis par le technicien.
+        white-space: pre-line;
         word-break: break-word;
+    }
+    &__extra {
+        margin-top: 0.55rem;
+        padding-top: 0.55rem;
+        border-top: 1px dashed var(--fx-blue-soft-bd);
+    }
+    &__label {
+        display: block;
+        margin-bottom: 0.15rem;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: var(--fx-blue-text);
+    }
+}
+
+// ── « Facturer le diagnostic ? » (retour erreur client) ─
+// Bande pleine largeur AU-DESSUS des étapes — jamais une cellule de leur grille.
+.pricing-facturer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem 1rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid $border;
+    border-radius: 12px;
+    background: var(--fx-bg-surface);
+
+    &__text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        min-width: 0;
+    }
+    &__label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: $text-primary;
+    }
+    &__hint {
+        font-size: 0.75rem;
+        color: $text-muted;
+    }
+    ::ng-deep .pricing-facturer__toggle.p-togglebutton {
+        min-width: 8.5rem;
+        border-radius: 9px;
+        font-weight: 700;
     }
 }
 
@@ -2003,16 +2250,16 @@ $pricing-red: #dc2626;
     padding: 1.05rem;
     border: 1.5px solid $border;
     border-radius: 16px;
-    background: #fafbfc;
+    background: var(--fx-bg-surface);
     transition: border-color 0.15s, background 0.15s;
 
     &--ok {
-        border-color: #bbf7d0;
-        background: #f0fdf4;
+        border-color: var(--fx-green-soft-bd);
+        background: var(--fx-green-soft-bg);
     }
     &--err {
-        border-color: #fecaca;
-        background: #fef2f2;
+        border-color: var(--fx-red-soft-bd);
+        background: var(--fx-red-soft-bg);
     }
 
     &__head {
@@ -2031,14 +2278,14 @@ $pricing-red: #dc2626;
         justify-content: center;
         font-size: 0.8rem;
         font-weight: 800;
-        background: #e0e7ff;
-        color: $accent-blue;
+        background: var(--fx-blue-soft-bg-2);
+        color: var(--fx-blue-text);
         .pi {
             font-size: 0.7rem;
         }
         &--ok {
-            background: #059669;
-            color: #fff;
+            background: var(--fx-green);
+            color: var(--fx-text-on-accent);
         }
     }
     &__label {
@@ -2048,7 +2295,7 @@ $pricing-red: #dc2626;
         line-height: 1.25;
     }
     &__req {
-        color: #ef4444;
+        color: var(--fx-red-text);
     }
 
     // Champ montant : grande saisie + suffixe TND
@@ -2063,7 +2310,7 @@ $pricing-red: #dc2626;
         transition: border-color 0.15s, box-shadow 0.15s;
 
         &:focus-within {
-            border-color: $accent-blue;
+            border-color: var(--fx-blue-strong);
             box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.13);
         }
 
@@ -2092,9 +2339,9 @@ $pricing-red: #dc2626;
         }
     }
     &--err &__field {
-        border-color: #f87171;
+        border-color: var(--fx-red-soft-bd);
         &:focus-within {
-            border-color: $accent-blue;
+            border-color: var(--fx-blue-strong);
         }
     }
     &__suffix {
@@ -2128,10 +2375,10 @@ $pricing-red: #dc2626;
         color: $text-muted;
 
         &--ok {
-            color: #059669;
+            color: var(--fx-green-text);
         }
         &--err {
-            color: #dc2626;
+            color: var(--fx-red-text);
         }
     }
     &__help-icon {
@@ -2144,14 +2391,14 @@ $pricing-red: #dc2626;
         justify-content: center;
         font-size: 0.7rem;
         font-weight: 800;
-        color: #fff;
-        background: #cbd5e1;
+        color: var(--fx-text-on-accent);
+        background: var(--fx-border-strong);
     }
     &__help--ok &__help-icon {
-        background: #059669;
+        background: var(--fx-green);
     }
     &__help--err &__help-icon {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 
@@ -2173,13 +2420,13 @@ $pricing-red: #dc2626;
     color: $text-muted;
 
     &--ok {
-        color: #059669;
+        color: var(--fx-green-text);
     }
     &--err {
-        color: #dc2626;
+        color: var(--fx-red-text);
     }
     &--warn {
-        color: #c2610c;
+        color: var(--fx-amber-text);
     }
 
     &__badge {
@@ -2193,14 +2440,14 @@ $pricing-red: #dc2626;
         justify-content: center;
         font-size: 0.7rem;
         font-weight: 800;
-        color: #fff;
-        background: #cbd5e1;
+        color: var(--fx-text-on-accent);
+        background: var(--fx-border-strong);
 
         &--ok {
-            background: #059669;
+            background: var(--fx-green);
         }
         &--err {
-            background: #dc2626;
+            background: var(--fx-red);
         }
     }
 }
@@ -2211,15 +2458,15 @@ $pricing-red: #dc2626;
     border-radius: 11px;
     padding: 0.8rem 1.6rem;
     font-weight: 700;
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    background: linear-gradient(135deg, var(--fx-blue), var(--fx-blue-strong));
     box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
 
     &:enabled:hover {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        background: linear-gradient(135deg, var(--fx-blue-strong), var(--fx-blue-strong));
     }
     &.p-disabled,
     &:disabled {
-        background: #cbd5e1;
+        background: var(--fx-border-strong);
         box-shadow: none;
         opacity: 1;
     }
@@ -2234,57 +2481,90 @@ $pricing-red: #dc2626;
     }
 }
 
-// Legacy history block (Retours) kept compact
+// ── Historique des prix (retours) ───────────────────────
+// Chaque montant vient de la ligne de SON cycle ; une absence s'écrit
+// « Non renseigné », en retrait, pour ne jamais passer pour un montant nul.
 .pricing-history {
-    background: $bg-surface;
+    min-width: 0;
+    padding: 0.75rem 0.9rem;
     border: 1px solid $border;
-    border-radius: 8px;
-    padding: 0.65rem 0.85rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    font-size: 0.78rem;
+    border-radius: 12px;
+    background: $bg-surface;
+    font-size: 0.8rem;
     color: $text-secondary;
 
-    &__title {
-        font-size: 0.78rem;
-        font-weight: 600;
+    .pricing-card-head {
         color: $text-primary;
-        margin: 0 0 0.2rem;
+    }
+
+    &__table {
+        display: flex;
+        flex-direction: column;
     }
     &__row {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem 1rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+        align-items: baseline;
+        gap: 0.5rem;
+        padding: 0.35rem 0;
+        border-top: 1px dashed $border;
+
         strong {
             color: $text-primary;
             font-variant-numeric: tabular-nums;
+            text-align: right;
+        }
+        &--head {
+            border-top: 0;
+            padding-top: 0;
+            font-size: 0.66rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: $text-muted;
+            span + span {
+                text-align: right;
+            }
         }
     }
-    &__item {
-        border-bottom: 1px dashed $border;
-        padding-bottom: 0.4rem;
-        &:last-of-type {
-            border-bottom: none;
-            padding-bottom: 0;
-        }
+    &__cycle {
+        font-weight: 600;
+        color: $text-primary;
+    }
+    &__row--current &__cycle,
+    &__now {
+        color: var(--fx-blue-text);
+    }
+    &__now {
+        grid-column: 2 / -1;
+        text-align: right;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    // Absence ≠ zéro : on l'écrit, en retrait.
+    strong.pricing-history__empty {
+        font-weight: 500;
+        font-style: italic;
+        color: $text-muted;
     }
     &__badge {
-        align-self: flex-start;
+        margin-left: auto;
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
-        font-size: 0.72rem;
+        font-size: 0.68rem;
         font-weight: 500;
+        text-transform: none;
+        letter-spacing: 0;
         padding: 2px 9px;
         border-radius: 999px;
         &--yes {
-            background: #fee2e2;
-            color: #991b1b;
+            background: var(--fx-red-soft-bg-2);
+            color: var(--fx-red-soft-fg);
         }
         &--no {
-            background: #dcfce7;
-            color: #14532d;
+            background: var(--fx-green-soft-bg-2);
+            color: var(--fx-green-soft-fg);
         }
     }
 }
@@ -2322,19 +2602,19 @@ $pricing-red: #dc2626;
     }
 
     &--pos {
-        background: #f0fdf4;
-        border-color: #bbf7d0;
-        color: #047857;
+        background: var(--fx-green-soft-bg);
+        border-color: var(--fx-green-soft-bd);
+        color: var(--fx-green-soft-fg);
     }
     &--neg {
-        background: #fef2f2;
-        border-color: #fecaca;
-        color: #b91c1c;
+        background: var(--fx-red-soft-bg);
+        border-color: var(--fx-red-soft-bd);
+        color: var(--fx-red-soft-fg);
     }
     &--neutral {
-        background: #f8fafc;
-        border-color: #e2e8f0;
-        color: #64748b;
+        background: var(--fx-bg-surface);
+        border-color: var(--fx-border);
+        color: var(--fx-text-muted);
     }
 }
 
@@ -2359,7 +2639,7 @@ $pricing-red: #dc2626;
 
     &:hover:not(:disabled) {
         background: $bg-surface;
-        border-color: #cbd5e1;
+        border-color: var(--fx-border-strong);
         color: $text-primary;
     }
     &:disabled {
@@ -2367,12 +2647,12 @@ $pricing-red: #dc2626;
         cursor: not-allowed;
     }
     &--active {
-        background: $accent-blue;
-        border-color: $accent-blue;
-        color: #fff;
+        background: var(--fx-blue-strong);
+        border-color: var(--fx-blue-strong);
+        color: var(--fx-text-on-accent);
         &:hover {
-            background: $accent-blue-hover;
-            color: #fff;
+            background: var(--fx-blue-strong);
+            color: var(--fx-text-on-accent);
         }
     }
 }
@@ -2398,7 +2678,7 @@ $pricing-red: #dc2626;
 
     &--done {
         border-color: $pricing-green-border;
-        background: #f0fdf4;
+        background: var(--fx-green-soft-bg);
     }
 
     // BC verrouillé tant que le devis n'est pas chargé (séquence Approval).
@@ -2422,7 +2702,7 @@ $pricing-red: #dc2626;
         font-weight: 600;
         color: $text-primary;
         .pi {
-            color: $accent-blue;
+            color: var(--fx-blue-text);
             font-size: 0.78rem;
         }
     }
@@ -2445,7 +2725,7 @@ $pricing-red: #dc2626;
         border: 1px solid $border;
     }
     &--done {
-        background: #dcfce7;
+        background: var(--fx-green-soft-bg-2);
         color: $pricing-green-dark;
         border: 1px solid $pricing-green-border;
     }
@@ -2466,8 +2746,8 @@ $pricing-red: #dc2626;
         width: 28px;
         height: 28px;
         border-radius: 5px;
-        background: #fee2e2;
-        color: #b91c1c;
+        background: var(--fx-red-soft-bg-2);
+        color: var(--fx-red-soft-fg);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -2489,12 +2769,12 @@ $pricing-red: #dc2626;
         display: inline-flex;
         align-items: center;
         gap: 0.25rem;
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-weight: 600;
         font-size: 0.75rem;
         text-decoration: none;
         &:hover {
-            color: $accent-blue-hover;
+            color: var(--fx-blue-soft-fg);
             text-decoration: underline;
         }
         .pi {
@@ -2512,7 +2792,7 @@ $pricing-red: #dc2626;
     padding: 18px 12px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #2563eb;
+    color: var(--fx-blue-text);
 }
 // Message « BC verrouillé » affiché à la place de l'uploader tant que le devis
 // est absent (le back reste la vraie garde).
@@ -2537,16 +2817,16 @@ $pricing-red: #dc2626;
     .p-button {
         width: 100%;
         justify-content: center;
-        background: $accent-blue !important;
-        border-color: $accent-blue !important;
-        color: #fff !important;
+        background: var(--fx-blue-strong) !important;
+        border-color: var(--fx-blue-strong) !important;
+        color: var(--fx-text-on-accent) !important;
         font-size: 0.78rem !important;
         font-weight: 600 !important;
         padding: 0.45rem 0.75rem !important;
         border-radius: 7px !important;
         &:hover {
-            background: $accent-blue-hover !important;
-            border-color: $accent-blue-hover !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
         }
     }
     &--secondary .p-button {
@@ -2589,6 +2869,30 @@ $pricing-red: #dc2626;
     }
 }
 
+/* Ligne de total : la base sur laquelle la remise s'applique (diagnostic +
+   estimation réparation). Se détache des lignes de détail qui la composent. */
+.fp-tarif-row--total {
+    border-top: 1px solid $border;
+
+    .fp-tarif-row__label {
+        color: $text-primary;
+        font-weight: 600;
+    }
+    .fp-tarif-row__value {
+        font-size: 0.95rem;
+    }
+}
+
+/* Note du cas NON PAYANT : la base n'est pas une somme saisie mais un total
+   calculé par le serveur — on le dit, sinon le montant paraît sorti de nulle part. */
+.fp-tarif-note {
+    margin: 0;
+    padding: 0 0.85rem 0.6rem;
+    font-size: 0.72rem;
+    color: $text-muted;
+    border-bottom: 1px solid $border;
+}
+
 .fp-tarif-discount {
     padding: 0.75rem 0.85rem;
     border-bottom: 1px solid $border;
@@ -2625,7 +2929,7 @@ $pricing-red: #dc2626;
     &__applied {
         margin: 0;
         font-size: 0.78rem;
-        color: $pricing-red;
+        color: var(--fx-red-text);
         font-weight: 500;
         font-variant-numeric: tabular-nums;
     }
@@ -2638,11 +2942,11 @@ $pricing-red: #dc2626;
         border-radius: 999px;
     }
     .p-slider-range {
-        background: $accent-blue;
+        background: var(--fx-blue-strong);
     }
     .p-slider-handle {
-        background: #fff;
-        border: 2px solid $accent-blue;
+        background: var(--fx-bg-card);
+        border: 2px solid var(--fx-blue-strong);
         height: 16px;
         width: 16px;
         margin-top: -5px;
@@ -2655,9 +2959,9 @@ $pricing-red: #dc2626;
     align-items: flex-start;
     gap: 0.45rem;
     font-size: 0.76rem;
-    color: $pricing-red;
+    color: var(--fx-red-text);
     background: $pricing-red-soft;
-    border: 1px solid #fecaca;
+    border: 1px solid var(--fx-red-soft-bd);
     border-radius: 7px;
     padding: 0.45rem 0.6rem;
     .pi {
@@ -2681,580 +2985,18 @@ $pricing-red: #dc2626;
         color: $pricing-green-dark;
         font-weight: 600;
         .pi {
-            color: $pricing-green;
+            color: var(--fx-green-text);
         }
     }
     &__value {
-        color: $pricing-green;
+        color: var(--fx-green-text);
         font-weight: 700;
         font-variant-numeric: tabular-nums;
     }
 }
 
-// ═══════════════════════════════════════════════════════
-//  AFFECTATION DES FICHIERS — "Affectation des Fichiers"
-//  Claude Design. Accent purple #7C6FE0, cyan retours,
-//  green file cards, red = PDF thumbnail (semantic).
-// ═══════════════════════════════════════════════════════
-$af-p: #7c6fe0;
-$af-p2: #8b7ce8;
-$af-p-soft: #f3f0fd;
-$af-p-tile: #f0eefb;
-$af-cy: #0e9bc4;
-$af-cy-soft: #e2f6fb;
-$af-cy-border: #bfeaf3;
-$af-cy-line: #d8e6ea;
-$af-blue: #2563eb;
-$af-blue-soft: #eef4ff;
-$af-green: #3fa971;
-$af-file-bg: #f4faf6;
-$af-file-bd: #d8eede;
-$af-pdf: #dc2626;
-$af-pdf-soft: #fdecec;
-$af-ink: #1f2733;
-$af-ink2: #2b3440;
-$af-ink3: #3a4453;
-$af-sub: #5b6678;
-$af-mut: #8a93a3;
-$af-mut2: #9aa2b1;
-$af-mut3: #7b8497;
-$af-faint: #aab1bf;
-$af-bd: #e7eaef;
-$af-bd2: #eef0f3;
-$af-bd3: #e2e8ec;
-$af-surface: #fafbfc;
-$af-mono: "JetBrains Mono", ui-monospace, monospace;
-
-::ng-deep .sav-dialog.af-dialog .p-dialog-content {
-    padding: 0 !important;
-    border-radius: 16px !important;
-    overflow: hidden !important;
-}
-::ng-deep .sav-dialog.af-dialog .p-dialog {
-    border-radius: 16px !important;
-    box-shadow: 0 24px 60px rgba(20, 28, 45, 0.22) !important;
-}
-
-.af-modal {
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-    color: $af-ink;
-    -webkit-font-smoothing: antialiased;
-}
-
-// ── Header ──────────────────────────────────────────────
-.af-modal__head {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 18px 24px;
-    border-bottom: 1px solid $af-bd;
-    flex: none;
-}
-.af-modal__tile {
-    width: 40px;
-    height: 40px;
-    flex: none;
-    border-radius: 11px;
-    background: $af-p-tile;
-    color: $af-p;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    .pi { font-size: 1.1rem; }
-}
-.af-modal__titles { flex: 1; min-width: 0; }
-.af-modal__title {
-    margin: 0;
-    font-size: 16px;
-    font-weight: 700;
-    letter-spacing: -0.2px;
-    color: $af-ink;
-}
-.af-modal__subtitle {
-    margin: 2px 0 0;
-    font-size: 12px;
-    color: $af-mut;
-}
-.af-modal__code {
-    font-family: $af-mono;
-    font-weight: 600;
-    color: $af-mut3;
-}
-.af-modal__close {
-    width: 34px;
-    height: 34px;
-    flex: none;
-    border-radius: 8px;
-    border: 1px solid $af-bd;
-    background: $af-surface;
-    color: $af-sub;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s;
-    &:hover { background: #f1f2f4; }
-    .pi { font-size: 0.85rem; }
-}
-
-// ── Body (scroll) ───────────────────────────────────────
-.af-modal__body {
-    flex: 1 1 auto;
-    min-height: 0;
-    max-height: calc(100vh - 15rem);
-    overflow-y: auto;
-    padding: 22px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-}
-.af-scroll {
-    &::-webkit-scrollbar { width: 9px; }
-    &::-webkit-scrollbar-thumb { background: #d6dae2; border-radius: 9px; }
-    &::-webkit-scrollbar-track { background: transparent; }
-}
-
-// ── Blocks ──────────────────────────────────────────────
-.af-block__head {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    margin-bottom: 12px;
-}
-.af-block__label {
-    font-size: 11px;
-    letter-spacing: 1px;
-    font-weight: 700;
-    color: $af-mut3;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-.af-block__ico {
-    width: 24px;
-    height: 24px;
-    border-radius: 7px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    &--cyan { background: $af-cy-soft; color: $af-cy; }
-    .pi { font-size: 0.75rem; }
-}
-.af-count-pill {
-    min-width: 22px;
-    height: 22px;
-    padding: 0 7px;
-    border-radius: 999px;
-    background: $af-p-soft;
-    color: $af-p;
-    font-size: 11px;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    &--cyan { background: $af-cy; color: #fff; }
-}
-
-// ── Status cards (4 doc types) ─────────────────────────
-.af-status-grid {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-}
-.af-status-card {
-    border: 1px solid $af-bd;
-    border-radius: 11px;
-    padding: 12px;
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    &--missing {
-        background: $af-surface;
-        border-color: $af-bd2;
-    }
-    &__top {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-    }
-    &__icon {
-        width: 30px;
-        height: 30px;
-        flex: none;
-        border-radius: 8px;
-        background: $af-blue-soft;
-        color: $af-blue;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        .pi { font-size: 0.8rem; }
-    }
-    &__tag {
-        font-family: $af-mono;
-        font-size: 9.5px;
-        font-weight: 700;
-        padding: 2px 6px;
-        border-radius: 5px;
-        background: $af-blue-soft;
-        color: $af-blue;
-    }
-    &__dot {
-        margin-left: auto;
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #cfd4dd;
-        &--ok { background: #16a34a; }
-    }
-    &__title {
-        font-size: 12.5px;
-        font-weight: 600;
-        margin-top: 10px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: $af-ink;
-        font-family: $af-mono;
-    }
-    &__foot {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 6px;
-        margin-top: 2px;
-    }
-    &__state {
-        font-size: 11px;
-        font-weight: 600;
-        color: $af-green;
-    }
-    &__link {
-        color: $af-mut2;
-        display: flex;
-        text-decoration: none;
-        &:hover { color: $af-p; }
-        .pi { font-size: 0.8rem; }
-    }
-    &--missing &__icon { background: #f1f2f4; color: $af-faint; }
-    &--missing &__tag { background: #f1f2f4; color: $af-faint; }
-    &--missing &__title { color: $af-faint; font-family: "Inter", sans-serif; }
-    &--missing &__state { color: $af-faint; }
-}
-
-// ── Timeline (retours) ─────────────────────────────────
-.af-timeline {
-    display: flex;
-    flex-direction: column;
-    padding-left: 3px;
-}
-.af-tl-item {
-    display: grid;
-    grid-template-columns: 32px 1fr;
-    gap: 13px;
-}
-.af-tl-rail {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.af-tl-node {
-    width: 32px;
-    height: 32px;
-    flex: none;
-    border-radius: 9px;
-    background: $af-cy-soft;
-    color: $af-cy;
-    border: 2px solid $af-cy-border;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    font-weight: 800;
-    font-family: $af-mono;
-    z-index: 1;
-}
-.af-tl-line {
-    flex: 1;
-    width: 2px;
-    background: $af-cy-line;
-    margin-top: 4px;
-    &--hidden { background: transparent; }
-}
-.af-tl-card {
-    border: 1px solid $af-bd3;
-    border-radius: 12px;
-    background: #fff;
-    padding: 13px 15px;
-    margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(20, 28, 45, 0.05);
-    &__head {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 11px;
-    }
-    &__title {
-        font-size: 13.5px;
-        font-weight: 700;
-        color: $af-ink2;
-        white-space: nowrap;
-    }
-    &__date {
-        font-size: 11.5px;
-        color: $af-mut2;
-        font-family: $af-mono;
-    }
-}
-.af-tl-docs {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    &__label {
-        font-size: 11px;
-        letter-spacing: 0.4px;
-        font-weight: 700;
-        color: $af-mut2;
-        text-transform: uppercase;
-    }
-    &__none {
-        font-size: 12px;
-        color: $af-faint;
-        font-style: italic;
-    }
-}
-.af-tl-doc {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    max-width: 100%;
-    border: 1px solid $af-bd;
-    border-radius: 8px;
-    padding: 6px 11px;
-    background: #fff;
-    text-decoration: none;
-    font-size: 12px;
-    font-weight: 600;
-    color: $af-ink3;
-    &:hover { border-color: $af-cy; background: #f4fcfe; }
-    .pi { flex: none; color: $af-pdf; font-size: 0.72rem; }
-    &__name {
-        font-family: $af-mono;
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-}
-
-// ── Upload ──────────────────────────────────────────────
-.af-upload-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-}
-.af-upload-cell {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-.af-upload-cell__head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-.af-tag {
-    font-family: $af-mono;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 5px;
-    background: $af-blue-soft;
-    color: $af-blue;
-}
-.af-upload-cell__label {
-    font-size: 13px;
-    font-weight: 600;
-    color: $af-ink;
-}
-
-// Dropzone
-@keyframes af-dropzone-pulse {
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(47, 97, 224, 0);
-    }
-    50% {
-        box-shadow: 0 0 0 6px rgba(47, 97, 224, 0.18);
-    }
-}
-
-.af-dropzone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 26px 14px;
-    border: 1.5px dashed #d4d8e0;
-    border-radius: 12px;
-    background: $af-surface;
-    cursor: pointer;
-    transition: all 0.15s;
-    &:hover { border-color: $af-p2; background: #f7f6fe; }
-    &--active { border-color: $af-p2; background: #f5f3fe; }
-    &--disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-        pointer-events: none;
-    }
-    // Item 5 — « bruyant tant que non uploadé » : l'emplacement d'un document que
-    // NOTRE côté doit fournir (BL en premier) pulse pour attirer l'œil, et ne
-    // s'arrête qu'une fois le fichier chargé (il passe alors en --disabled).
-    &--pulse {
-        border-color: $af-p2;
-        animation: af-dropzone-pulse 1.4s ease-in-out infinite;
-    }
-    &__icon {
-        width: 42px;
-        height: 42px;
-        border-radius: 11px;
-        background: $af-blue-soft;
-        color: $af-p;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        .pi { font-size: 1.15rem; }
-    }
-    &--active &__icon { background: #ece8fb; }
-    &__title {
-        font-size: 13.5px;
-        font-weight: 600;
-        margin-top: 10px;
-        color: $af-ink3;
-    }
-    &__hint {
-        font-size: 11.5px;
-        color: $af-mut2;
-        margin-top: 3px;
-    }
-}
-
-// File card (pending upload) — green
-.af-file-card {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    border: 1px solid $af-file-bd;
-    border-radius: 12px;
-    padding: 14px;
-    background: $af-file-bg;
-    min-width: 0;
-    &__icon {
-        width: 38px;
-        height: 38px;
-        flex: none;
-        border-radius: 9px;
-        background: $af-pdf-soft;
-        color: $af-pdf;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        .pi { font-size: 1.05rem; }
-    }
-    &__meta {
-        flex: 1 1 auto;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
-    &__name {
-        font-size: 13px;
-        font-weight: 600;
-        color: $af-ink;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    &__size {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 11.5px;
-        font-weight: 500;
-        color: $af-green;
-        .pi { font-size: 0.65rem; }
-    }
-    &__view,
-    &__remove {
-        width: 30px;
-        height: 30px;
-        flex: none;
-        border-radius: 8px;
-        border: 1px solid $af-bd;
-        background: #fff;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        transition: background 0.15s, color 0.15s, border-color 0.15s;
-        .pi { font-size: 0.8rem; }
-    }
-    &__view {
-        color: $af-sub;
-        &:hover { background: $af-surface; border-color: #cbd5e1; color: $af-ink; }
-    }
-    &__remove {
-        color: $af-pdf;
-        &:hover { background: $af-pdf-soft; }
-    }
-}
-
-// ── Footer ──────────────────────────────────────────────
-.af-modal__footer {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 14px 24px;
-    border-top: 1px solid $af-bd;
-    flex: none;
-}
-.af-modal__counter {
-    font-size: 11.5px;
-    color: $af-mut2;
-    margin-right: auto;
-    strong { color: $af-ink2; font-weight: 700; margin-right: 0.15rem; }
-}
-.af-modal__actions {
-    display: flex;
-    gap: 10px;
-}
-::ng-deep .af-btn.p-button {
-    border-radius: 9px !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    padding: 10px 18px !important;
-}
-::ng-deep .af-btn--cancel.p-button {
-    background: #fff !important;
-    border: 1px solid $af-bd !important;
-    color: $af-sub !important;
-    &:hover { background: #f1f2f4 !important; }
-}
-::ng-deep .af-btn--save.p-button {
-    border: none !important;
-    color: #fff !important;
-    background: linear-gradient(135deg, #8b7ce8, #7c6fe0) !important;
-    box-shadow: 0 6px 16px rgba(124, 111, 224, 0.3) !important;
-    &:hover { filter: brightness(1.05); }
-    &:disabled { opacity: 0.55; box-shadow: none !important; }
-}
+// Les styles « AFFECTATION DES FICHIERS » (.af-*) ont suivi la modale dans
+// `shared/di-files-modal/di-files-modal.component.scss`.
 
 /* (c) Bornes SOUPLES — avertissement ambre non bloquant + état warn de l'étape 1,
    note « non payant » et rappel de l'estimation d'origine (modal Tarification). */
@@ -3264,31 +3006,31 @@ $af-mono: "JetBrains Mono", ui-monospace, monospace;
     gap: 0.45rem;
     margin: 0.5rem 0 0.25rem;
     padding: 0.5rem 0.7rem;
-    border: 1px solid #fcd34d;
-    background: #fffbeb;
+    border: 1px solid var(--fx-amber-soft-bd);
+    background: var(--fx-amber-soft-bg);
     border-radius: 8px;
-    color: #b45309;
+    color: var(--fx-amber-text);
     font-size: 0.8rem;
-    i { color: #b45309; }
-    strong { color: #92400e; }
+    i { color: var(--fx-amber-text); }
+    strong { color: var(--fx-amber-soft-fg); }
 }
-.pricing-step__help--warn { color: #b45309; }
+.pricing-step__help--warn { color: var(--fx-amber-text); }
 .pricing-nonpayant {
     display: flex;
     align-items: center;
     gap: 0.4rem;
     margin: 0.4rem 0;
     padding: 0.5rem 0.7rem;
-    border: 1px dashed #cbd5e1;
+    border: 1px dashed var(--fx-border-strong);
     border-radius: 8px;
-    color: #475569;
+    color: var(--fx-text-muted-strong);
     font-size: 0.8rem;
-    i { color: #16a34a; }
-    strong { color: #334155; }
+    i { color: var(--fx-green-text); }
+    strong { color: var(--fx-text-strong); }
 }
 .pricing-estimate-orig {
     margin: 0.35rem 0;
     font-size: 0.8rem;
-    color: #64748b;
-    strong { color: #2563eb; }
+    color: var(--fx-text-muted);
+    strong { color: var(--fx-blue-text); }
 }

@@ -3,8 +3,6 @@
     <p-progressSpinner ariaLabel="loading" />
 </p-blockUI>
 
-<p-toast></p-toast>
-
 <!-- ═══════════════════════════════════════════════
      MODAL — TICKET DETAILS
 ════════════════════════════════════════════════ -->
@@ -167,7 +165,8 @@
 
         <div class="sav-paginator-wrapper">
             <span class="sav-count"
-                >1–{{ rows }} sur {{ diListCount }} résultats</span
+                >{{ diListCount ? first + 1 : 0 }}–{{ rangeEnd }} sur
+                {{ diListCount || 0 }} résultats</span
             >
             <p-paginator
                 (onPageChange)="onPageChange($event)"
@@ -200,7 +199,7 @@
             <!-- ── Header ────────────────────────────────────── -->
             <header class="cf-modal__head">
                 <span class="cf-modal__tile" aria-hidden="true">
-                    <i class="pi pi-sliders-h"></i>
+                    <i class="pi pi-sitemap"></i>
                 </span>
                 <div class="cf-modal__titles">
                     <div class="cf-modal__title-row">
@@ -245,10 +244,14 @@
             <section class="cf-banner">
                 <div class="cf-banner__row">
                     <div class="cf-banner__status">
-                        <span class="cf-banner__label">STATUT ACTUEL</span>
-                        <strong class="cf-banner__current">
+                        <span class="cf-banner__label">Statut actuel</span>
+                        <span
+                            class="cf-pill"
+                            [ngClass]="diCurrentStatusTone"
+                        >
+                            <span class="cf-pill__dot" aria-hidden="true"></span>
                             {{ diCurrentStatusLabel }}
-                        </strong>
+                        </span>
                     </div>
                     <div
                         *ngIf="diRetourCount > 0"
@@ -267,11 +270,11 @@
                 </div>
                 <div class="cf-banner__remarks">
                     <div class="cf-banner__remark">
-                        <span class="cf-banner__label">REMARQUE ADMINISTRATION</span>
+                        <span class="cf-banner__label">Remarque administration</span>
                         <p>{{ remarque_manager || "Aucune remarque" }}</p>
                     </div>
                     <div class="cf-banner__remark">
-                        <span class="cf-banner__label">REMARQUE TECHNICIEN</span>
+                        <span class="cf-banner__label">Remarque technicien</span>
                         <p>
                             {{
                                 remarque_tech_diagnostic ||
@@ -283,187 +286,13 @@
                 </div>
             </section>
 
-            <!-- ── 2-col grid body ───────────────────────────── -->
+            <!-- ── Corps du modal ────────────────────────────── -->
             <div class="cf-grid">
-                <!-- LEFT — Historique du flow -->
-                <section class="cf-history">
-                    <header class="cf-history__head">
-                        <h4 class="cf-section-label">
-                            <i class="pi pi-clock"></i> Historique du flow
-                        </h4>
-                        <div class="cf-legend" role="presentation">
-                            <span>
-                                <i class="cf-dot cf-dot--done"></i> Terminé
-                            </span>
-                            <span>
-                                <i class="cf-dot cf-dot--current"></i> En cours
-                            </span>
-                            <span>
-                                <i class="cf-dot cf-dot--pending"></i> En attente
-                            </span>
-                            <span>
-                                <i class="cf-dot cf-dot--retour"></i> Retour
-                            </span>
-                        </div>
-                    </header>
-
-                    <nav class="cf-tabs" role="tablist">
-                        <button
-                            *ngFor="let seg of flowSegments"
-                            type="button"
-                            role="tab"
-                            class="cf-tab"
-                            [ngClass]="{
-                                'cf-tab--active':
-                                    selectedFlowSegment === seg.idx,
-                                'cf-tab--retour': seg.idx > 0,
-                            }"
-                            (click)="selectFlowSegment(seg.idx)"
-                        >
-                            <i
-                                class="cf-dot"
-                                [ngClass]="{
-                                    'cf-dot--done': seg.state === 'done',
-                                    'cf-dot--current':
-                                        seg.state === 'current' && seg.idx === 0,
-                                    'cf-dot--retour':
-                                        seg.idx > 0 && seg.state === 'current',
-                                }"
-                            ></i>
-                            <span>{{ seg.label }}</span>
-                            <span
-                                class="cf-tab__badge"
-                                [ngClass]="
-                                    seg.state === 'done'
-                                        ? 'cf-tab__badge--done'
-                                        : seg.idx > 0
-                                          ? 'cf-tab__badge--retour'
-                                          : 'cf-tab__badge--current'
-                                "
-                            >
-                                {{ seg.state === "done" ? "Terminé" : "En cours" }}
-                            </span>
-                        </button>
-                    </nav>
-
-                    <div
-                        *ngIf="selectedFlowSegment > 0"
-                        class="cf-motif"
-                        role="alert"
-                    >
-                        <i class="pi pi-info-circle"></i>
-                        <div>
-                            <strong>Motif du retour :</strong>
-                            {{ diRetourMotif }}
-                            <br />
-                            <small>Date de retour : {{ diRetourDate }}</small>
-                        </div>
-                    </div>
-
-                    <div class="cf-progress">
-                        <span class="cf-progress__label">
-                            {{ flowProgress.done }} / {{ flowProgress.total }} étapes
-                        </span>
-                        <div class="cf-progress__bar">
-                            <div
-                                class="cf-progress__fill"
-                                [ngClass]="{
-                                    'cf-progress__fill--retour':
-                                        selectedFlowSegment > 0,
-                                }"
-                                [style.width.%]="flowProgress.pct"
-                            ></div>
-                        </div>
-                    </div>
-
-                    <ol class="cf-timeline">
-                        <li
-                            *ngFor="let stage of segmentStages; trackBy: trackByStageKey"
-                            class="cf-stage"
-                            [ngClass]="'cf-stage--' + stage.state"
-                        >
-                            <span class="cf-stage__bullet" aria-hidden="true">
-                                <i
-                                    *ngIf="stage.state === 'done'"
-                                    class="pi pi-check"
-                                ></i>
-                            </span>
-                            <div class="cf-stage__body">
-                                <div class="cf-stage__row">
-                                    <strong class="cf-stage__name">
-                                        {{ stage.label }}
-                                    </strong>
-                                    <!-- Valeur brute `di.status` telle qu'en base
-                                         (depuis statusHistory) — technique, discrète,
-                                         legacy affiché exactement. Étapes non
-                                         atteintes : absente. -->
-                                    <code
-                                        *ngIf="stage.rawStatus"
-                                        class="cf-stage__code"
-                                        [pTooltip]="
-                                            'Valeur du statut enregistrée en base'
-                                        "
-                                        tooltipPosition="top"
-                                        >{{ stage.rawStatus }}</code
-                                    >
-                                </div>
-                                <div class="cf-stage__meta" *ngIf="stage.actor">
-                                    <span class="cf-stage__actor">
-                                        <i class="pi pi-user"></i>
-                                        {{ stage.actor }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="cf-stage__when">
-                                <span *ngIf="stage.timestamp; else noTs">
-                                    {{ stage.timestamp }}
-                                </span>
-                                <ng-template #noTs>
-                                    <span
-                                        class="cf-stage__when--state"
-                                        *ngIf="stage.state === 'current'"
-                                    >
-                                        En cours
-                                    </span>
-                                    <span
-                                        class="cf-stage__when--muted"
-                                        *ngIf="stage.state !== 'current'"
-                                    >
-                                        —
-                                    </span>
-                                </ng-template>
-                                <!-- Écart : temps passé dans l'étape, dérivé des
-                                     `at` de statusHistory (aucune capture). -->
-                                <span
-                                    *ngIf="stage.duration"
-                                    class="cf-stage__duration"
-                                    [class.cf-stage__duration--ongoing]="
-                                        stage.duration.ongoing
-                                    "
-                                >
-                                    <i class="pi pi-clock"></i>
-                                    <ng-container
-                                        *ngIf="
-                                            stage.duration.ongoing;
-                                            else doneDuration
-                                        "
-                                        >depuis {{ stage.duration.text }}</ng-container
-                                    >
-                                    <ng-template #doneDuration
-                                        >Durée : {{ stage.duration.text }}</ng-template
-                                    >
-                                </span>
-                            </div>
-                        </li>
-                    </ol>
-                </section>
-
-                <!-- RIGHT — Contrôles par étape -->
+                <!-- Contrôles par étape (la colonne « Historique du flow »
+                     qui occupait la gauche a été retirée) -->
                 <aside class="cf-controls">
                     <header class="cf-controls__head">
-                        <h4 class="cf-section-label">
-                            <i class="pi pi-cog"></i> Contrôles par étape
-                        </h4>
+                        <h4 class="cf-section-label">Contrôles par étape</h4>
                         <span
                             *ngIf="diRetourCount > 0"
                             class="cf-controls__retour-badge"
@@ -473,308 +302,398 @@
                         </span>
                     </header>
 
-                    <article class="cf-card">
-                        <div class="cf-card__head">
-                            <span class="cf-card__num">1</span>
-                            <h5 class="cf-card__title">Diagnostic</h5>
-                        </div>
-                        <label class="cf-card__label">
-                            Technicien diagnostique
-                        </label>
-                        <!-- Dropdown while the diagnostic stage is open for
-                             (re)assignment — PENDING1 or any retour cycle.
-                             Otherwise show the assigned tech as plain text. -->
-                        <p-dropdown
-                            *ngIf="!diag_condition"
-                            [options]="availableDiagTechsList"
-                            [(ngModel)]="selectedTechDiagModel"
-                            optionLabel="firstName"
-                            [disabled]="diagReassignLockedByRetour"
-                            [placeholder]="
-                                getAssignedDiagnosticTech() === 'N/A'
-                                    ? 'Sélectionner…'
-                                    : 'Réaffecter (' + getAssignedDiagnosticTech() + ')'
-                            "
-                            [showClear]="false"
-                            (onChange)="selectedTechDiag($event)"
-                            styleClass="cf-card__dropdown"
+                    <!-- Timeline verticale : rail + pastille d'état à gauche,
+                         badge d'avancement à droite. L'état vient de
+                         getFlowStepState() (statut de la DI), les contrôles
+                         restent gouvernés par leurs propres conditions. -->
+                    <div class="cf-steps">
+                        <article
+                            class="cf-step"
+                            [ngClass]="getFlowStepClass('diagnostic')"
                         >
-                            <ng-template let-tech pTemplate="item">
-                                {{ tech?.firstName }} {{ tech?.lastName }}
-                            </ng-template>
-                            <ng-template let-tech pTemplate="selectedItem">
-                                <ng-container *ngIf="tech">
-                                    {{ tech.firstName }} {{ tech.lastName }}
-                                </ng-container>
-                            </ng-template>
-                        </p-dropdown>
-                        <p
-                            *ngIf="!diag_condition && diagReassignLockedByRetour"
-                            class="cf-card__lock-hint"
-                        >
-                            <i class="pi pi-lock"></i>
-                            Réaffectation disponible une fois la DI relancée par
-                            le manager (PENDING1).
-                        </p>
-                        <div
-                            *ngIf="diag_condition && getAssignedDiagnosticTech() !== 'N/A'"
-                            class="cf-card__assigned"
-                        >
-                            <i class="pi pi-user"></i>
-                            {{ getAssignedDiagnosticTech() }}
-                        </div>
-                    </article>
+                            <span class="cf-step__dot" aria-hidden="true"></span>
+                            <span class="cf-step__num">01</span>
+                            <div class="cf-step__body">
+                                <h5 class="cf-step__title">Diagnostic</h5>
+                                <p class="cf-step__hint">
+                                    Technicien diagnostique
+                                </p>
 
-                    <article class="cf-card">
-                        <div class="cf-card__head">
-                            <span class="cf-card__num">2</span>
-                            <h5 class="cf-card__title">Magasin</h5>
-                        </div>
-                        <p class="cf-card__hint">
-                            Confirmer la réception des composants
-                        </p>
-                        <!-- DI sans composant : la phase de confirmation est
-                             sautée (négociation → PENDING3 direct). On l'affiche
-                             explicitement au lieu d'un bouton mort. -->
-                        <div
-                            *ngIf="componentStepSkipped"
-                            class="cf-card__state"
-                        >
-                            <i class="pi pi-minus-circle"></i>
-                            <div>
-                                <strong>Étape sautée</strong>
-                                <small>Aucun composant</small>
-                            </div>
-                        </div>
-                        <ng-container *ngIf="!componentStepSkipped">
-                            <div
-                                *ngIf="magasinConfirmedAt; else magasinAction"
-                                class="cf-card__state cf-card__state--ok"
-                            >
-                                <i class="pi pi-check-circle"></i>
-                                <div>
-                                    <strong>Composants confirmés</strong>
-                                    <small>
-                                        {{ formatDateTime(magasinConfirmedAt) }}
-                                    </small>
+                                <!-- Dropdown while the diagnostic stage is open
+                                     for (re)assignment — PENDING1 or any retour
+                                     cycle. Otherwise show the assigned tech as
+                                     plain text. -->
+                                <div
+                                    *ngIf="!diag_condition"
+                                    class="cf-step__actions"
+                                >
+                                    <p-dropdown
+                                        [options]="availableDiagTechsList"
+                                        [(ngModel)]="selectedTechDiagModel"
+                                        optionLabel="firstName"
+                                        [disabled]="diagReassignLockedByRetour"
+                                        [placeholder]="
+                                            getAssignedDiagnosticTech() === 'N/A'
+                                                ? 'Sélectionner…'
+                                                : 'Réaffecter (' +
+                                                  getAssignedDiagnosticTech() +
+                                                  ')'
+                                        "
+                                        [showClear]="false"
+                                        (onChange)="selectedTechDiag($event)"
+                                        styleClass="cf-step__dropdown"
+                                    >
+                                        <ng-template let-tech pTemplate="item">
+                                            {{ tech?.firstName }}
+                                            {{ tech?.lastName }}
+                                        </ng-template>
+                                        <ng-template
+                                            let-tech
+                                            pTemplate="selectedItem"
+                                        >
+                                            <ng-container *ngIf="tech">
+                                                {{ tech.firstName }}
+                                                {{ tech.lastName }}
+                                            </ng-container>
+                                        </ng-template>
+                                    </p-dropdown>
+                                    <p
+                                        *ngIf="diagReassignLockedByRetour"
+                                        class="cf-step__note cf-step__note--warn"
+                                    >
+                                        <i class="pi pi-lock"></i>
+                                        Réaffectation disponible une fois la DI
+                                        relancée par le manager (PENDING1).
+                                    </p>
+                                </div>
+
+                                <div
+                                    *ngIf="
+                                        diag_condition &&
+                                        getAssignedDiagnosticTech() !== 'N/A'
+                                    "
+                                    class="cf-step__note"
+                                >
+                                    <i class="pi pi-user"></i>
+                                    {{ getAssignedDiagnosticTech() }}
                                 </div>
                             </div>
-                            <ng-template #magasinAction>
-                                <p-button
-                                    [disabled]="
-                                        (selectedDiStatus !==
-                                            'ATTENTE_CONFIRMATION_COORDINATION' &&
-                                            selectedDiStatus !==
-                                                'CONFIRMATION_COMPOSANTS') ||
-                                        magasinConfirmedAt ||
-                                        componentsConfirmInFlight
-                                    "
-                                    label="Confirmer les composants"
-                                    icon="pi pi-check"
-                                    severity="success"
-                                    size="small"
-                                    styleClass="cf-card__action"
-                                    (onClick)="gotcomposantfromMagasin()"
-                                ></p-button>
-                            </ng-template>
-                        </ng-container>
-                    </article>
+                            <span class="cf-step__badge">
+                                <i [class]="getFlowStepIcon('diagnostic')"></i>
+                                {{ getFlowStepLabel("diagnostic") }}
+                            </span>
+                        </article>
 
-                    <article class="cf-card">
-                        <div class="cf-card__head">
-                            <span class="cf-card__num">3</span>
-                            <h5 class="cf-card__title">Administration</h5>
-                        </div>
-                        <p class="cf-card__hint">
-                            Ouvrir DI pour affecter les prix
-                        </p>
-                        <div
-                            *ngIf="adminSentAt; else adminAction"
-                            class="cf-card__state cf-card__state--ok"
+                        <article
+                            class="cf-step"
+                            [ngClass]="getFlowStepClass('magasin')"
                         >
-                            <i class="pi pi-send"></i>
-                            <div>
-                                <strong>Envoyé aux admins</strong>
-                                <small>{{ formatDateTime(adminSentAt) }}</small>
-                            </div>
-                        </div>
-                        <ng-template #adminAction>
-                            <p-button
-                                [disabled]="
-                                    admin_condition ||
-                                    adminSentAt ||
-                                    pricingRequestInFlight
-                                "
-                                label="Envoyer aux admins"
-                                icon="pi pi-send"
-                                severity="info"
-                                size="small"
-                                styleClass="cf-card__action"
-                                (onClick)="changestatusToPricing($event)"
-                            ></p-button>
-                        </ng-template>
-                        <p-button
-                            *ngIf="adminSentAt"
-                            label="Ouvrir le DI"
-                            icon="pi pi-external-link"
-                            [outlined]="true"
-                            severity="info"
-                            size="small"
-                            styleClass="cf-card__action cf-card__action--ghost"
-                            (onClick)="openTicketDetails(di)"
-                        ></p-button>
-                    </article>
+                            <span class="cf-step__dot" aria-hidden="true"></span>
+                            <span class="cf-step__num">02</span>
+                            <div class="cf-step__body">
+                                <h5 class="cf-step__title">Magasin</h5>
+                                <p class="cf-step__hint">
+                                    Confirmer la réception des composants
+                                </p>
 
-                    <article class="cf-card">
-                        <div class="cf-card__head">
-                            <span class="cf-card__num">4</span>
-                            <h5 class="cf-card__title">Réparation</h5>
-                        </div>
-                        <label class="cf-card__label">
-                            Technicien réparation
-                        </label>
-                        <!-- Dropdown while the repair stage is open for
-                             (re)assignment; otherwise the assigned tech as text.
-                             En mode « retour sans pièces » (needsDevisBeforeRepair)
-                             on bascule sur le bloc devis ci-dessous. -->
-                        <p-dropdown
-                            *ngIf="!rep_condition && !di?.needsDevisBeforeRepair"
-                            [options]="techList"
-                            [placeholder]="
-                                getAssignedRepairTech() === 'N/A'
-                                    ? 'Sélectionner…'
-                                    : 'Réaffecter (' + getAssignedRepairTech() + ')'
-                            "
-                            optionLabel="firstName"
-                            [showClear]="false"
-                            (onChange)="selectedTechRep($event)"
-                            styleClass="cf-card__dropdown"
-                        >
-                            <ng-template let-tech pTemplate="item">
-                                {{ tech?.firstName }} {{ tech?.lastName }}
-                            </ng-template>
-                            <ng-template let-tech pTemplate="selectedItem">
-                                <ng-container *ngIf="tech">
-                                    {{ tech.firstName }} {{ tech.lastName }}
-                                </ng-container>
-                            </ng-template>
-                        </p-dropdown>
-
-                        <!-- Raccourci « retour sans pièces » : magasin +
-                             tarification sautés → la coordinatrice envoie en
-                             réparation en joignant le devis, en UN SEUL geste
-                             (devis + technicien, bouton bloqué sinon). -->
-                        <div
-                            *ngIf="!rep_condition && di?.needsDevisBeforeRepair"
-                            class="cf-repair-devis"
-                        >
-                            <div class="cf-repair-devis__banner">
-                                <i class="pi pi-info-circle"></i>
-                                <span>
-                                    Retour sans pièces — magasin et tarification
-                                    sautés. Joignez le devis pour envoyer en
-                                    réparation.
-                                </span>
-                            </div>
-
-                            <p-dropdown
-                                [options]="techList"
-                                [(ngModel)]="selectedRepTechForDevis"
-                                placeholder="Sélectionner le technicien…"
-                                optionLabel="firstName"
-                                [showClear]="false"
-                                styleClass="cf-card__dropdown"
-                            >
-                                <ng-template let-tech pTemplate="item">
-                                    {{ tech?.firstName }} {{ tech?.lastName }}
-                                </ng-template>
-                                <ng-template
-                                    let-tech
-                                    pTemplate="selectedItem"
+                                <!-- DI sans composant : la phase de confirmation
+                                     est sautée (négociation → PENDING3 direct).
+                                     On l'affiche explicitement au lieu d'un
+                                     bouton mort. -->
+                                <div
+                                    *ngIf="componentStepSkipped"
+                                    class="cf-step__note"
                                 >
-                                    <ng-container *ngIf="tech">
-                                        {{ tech.firstName }} {{ tech.lastName }}
-                                    </ng-container>
+                                    <i class="pi pi-minus-circle"></i>
+                                    Étape sautée · Aucun composant
+                                </div>
+
+                                <ng-container *ngIf="!componentStepSkipped">
+                                    <div
+                                        *ngIf="
+                                            magasinConfirmedAt;
+                                            else magasinAction
+                                        "
+                                        class="cf-step__note cf-step__note--ok"
+                                    >
+                                        <i class="pi pi-check-circle"></i>
+                                        Composants confirmés ·
+                                        {{ formatDateTime(magasinConfirmedAt) }}
+                                    </div>
+                                    <ng-template #magasinAction>
+                                        <div class="cf-step__actions">
+                                            <p-button
+                                                [disabled]="
+                                                    (selectedDiStatus !==
+                                                        'ATTENTE_CONFIRMATION_COORDINATION' &&
+                                                        selectedDiStatus !==
+                                                            'CONFIRMATION_COMPOSANTS') ||
+                                                    magasinConfirmedAt ||
+                                                    componentsConfirmInFlight
+                                                "
+                                                label="Confirmer les composants"
+                                                icon="pi pi-check"
+                                                severity="success"
+                                                size="small"
+                                                styleClass="cf-step__action"
+                                                (onClick)="
+                                                    gotcomposantfromMagasin()
+                                                "
+                                            ></p-button>
+                                        </div>
+                                    </ng-template>
+                                </ng-container>
+                            </div>
+                            <span class="cf-step__badge">
+                                <i [class]="getFlowStepIcon('magasin')"></i>
+                                {{ getFlowStepLabel("magasin") }}
+                            </span>
+                        </article>
+
+                        <article
+                            class="cf-step"
+                            [ngClass]="getFlowStepClass('admin')"
+                        >
+                            <span class="cf-step__dot" aria-hidden="true"></span>
+                            <span class="cf-step__num">03</span>
+                            <div class="cf-step__body">
+                                <h5 class="cf-step__title">Administration</h5>
+                                <p class="cf-step__hint">
+                                    Ouvrir DI pour affecter les prix
+                                </p>
+
+                                <div
+                                    *ngIf="adminSentAt; else adminAction"
+                                    class="cf-step__note cf-step__note--ok"
+                                >
+                                    <i class="pi pi-send"></i>
+                                    Envoyé aux admins ·
+                                    {{ formatDateTime(adminSentAt) }}
+                                </div>
+                                <ng-template #adminAction>
+                                    <div class="cf-step__actions">
+                                        <p-button
+                                            [disabled]="
+                                                admin_condition ||
+                                                adminSentAt ||
+                                                pricingRequestInFlight
+                                            "
+                                            label="Envoyer aux admins"
+                                            icon="pi pi-send"
+                                            severity="info"
+                                            size="small"
+                                            styleClass="cf-step__action"
+                                            (onClick)="
+                                                changestatusToPricing($event)
+                                            "
+                                        ></p-button>
+                                    </div>
                                 </ng-template>
-                            </p-dropdown>
-
-                            <app-pdf-dropzone
-                                *ngIf="!sendingRepairWithDevis"
-                                [maxSizeMo]="10"
-                                [title]="
-                                    repairDevisName
-                                        ? 'Remplacer le devis'
-                                        : 'Déposer le devis'
-                                "
-                                ariaLabel="Déposer le devis (PDF)"
-                                (fileSelected)="onRepairDevisDrop($event)"
-                            ></app-pdf-dropzone>
-                            <div
-                                *ngIf="repairDevisName"
-                                class="cf-repair-devis__file"
-                            >
-                                <i class="pi pi-file-pdf"></i>
-                                {{ repairDevisName }}
+                                <div
+                                    *ngIf="adminSentAt"
+                                    class="cf-step__actions"
+                                >
+                                    <p-button
+                                        label="Ouvrir le DI"
+                                        icon="pi pi-external-link"
+                                        [outlined]="true"
+                                        severity="info"
+                                        size="small"
+                                        styleClass="cf-step__action cf-step__action--ghost"
+                                        (onClick)="openTicketDetails(di)"
+                                    ></p-button>
+                                </div>
                             </div>
+                            <span class="cf-step__badge">
+                                <i [class]="getFlowStepIcon('admin')"></i>
+                                {{ getFlowStepLabel("admin") }}
+                            </span>
+                        </article>
 
-                            <p-button
-                                label="Envoyer en réparation"
-                                icon="pi pi-send"
-                                [disabled]="
-                                    !selectedRepTechForDevis ||
-                                    !repairDevisBase64 ||
-                                    sendingRepairWithDevis
-                                "
-                                [loading]="sendingRepairWithDevis"
-                                (onClick)="sendToRepairWithDevis()"
-                                styleClass="cf-card__action"
-                            ></p-button>
-                            <small
-                                *ngIf="
-                                    !selectedRepTechForDevis ||
-                                    !repairDevisBase64
-                                "
-                                class="cf-repair-devis__hint"
-                            >
-                                Sélectionnez un technicien et joignez le devis
-                                pour activer l'envoi.
-                            </small>
-                        </div>
-
-                        <div
-                            *ngIf="rep_condition && getAssignedRepairTech() !== 'N/A'"
-                            class="cf-card__assigned"
+                        <article
+                            class="cf-step"
+                            [ngClass]="getFlowStepClass('repair')"
                         >
-                            <i class="pi pi-user"></i>
-                            {{ getAssignedRepairTech() }}
-                        </div>
-                    </article>
+                            <span class="cf-step__dot" aria-hidden="true"></span>
+                            <span class="cf-step__num">04</span>
+                            <div class="cf-step__body">
+                                <h5 class="cf-step__title">Réparation</h5>
+                                <p class="cf-step__hint">
+                                    Technicien réparation
+                                </p>
 
-                    <article class="cf-card cf-card--closure">
-                        <div class="cf-card__head">
-                            <span class="cf-card__num">5</span>
-                            <h5 class="cf-card__title">Clôture</h5>
-                        </div>
-                        <p class="cf-card__hint">
-                            La clôture est automatique en fin de réparation.
-                        </p>
-                        <div
-                            *ngIf="di?.status === 'FINISHED'"
-                            class="cf-card__state cf-card__state--ok"
-                        >
-                            <i class="pi pi-check-circle"></i>
-                            <div>
-                                <strong>DI terminée</strong>
-                                <small>
-                                    {{
-                                        formatDateTime(
-                                            di?.statusUpdatedAt || di?.updatedAt
-                                        )
-                                    }}
-                                </small>
+                                <!-- Dropdown while the repair stage is open for
+                                     (re)assignment; otherwise the assigned tech
+                                     as text. En mode « retour sans pièces »
+                                     (needsDevisBeforeRepair) on bascule sur le
+                                     bloc devis ci-dessous. -->
+                                <div
+                                    *ngIf="
+                                        !rep_condition &&
+                                        !di?.needsDevisBeforeRepair
+                                    "
+                                    class="cf-step__actions"
+                                >
+                                    <p-dropdown
+                                        [options]="techList"
+                                        [placeholder]="
+                                            getAssignedRepairTech() === 'N/A'
+                                                ? 'Sélectionner…'
+                                                : 'Réaffecter (' +
+                                                  getAssignedRepairTech() +
+                                                  ')'
+                                        "
+                                        optionLabel="firstName"
+                                        [showClear]="false"
+                                        (onChange)="selectedTechRep($event)"
+                                        styleClass="cf-step__dropdown"
+                                    >
+                                        <ng-template let-tech pTemplate="item">
+                                            {{ tech?.firstName }}
+                                            {{ tech?.lastName }}
+                                        </ng-template>
+                                        <ng-template
+                                            let-tech
+                                            pTemplate="selectedItem"
+                                        >
+                                            <ng-container *ngIf="tech">
+                                                {{ tech.firstName }}
+                                                {{ tech.lastName }}
+                                            </ng-container>
+                                        </ng-template>
+                                    </p-dropdown>
+                                </div>
+
+                                <!-- Raccourci « retour sans pièces » : magasin +
+                                     tarification sautés → la coordinatrice envoie
+                                     en réparation en joignant le devis, en UN
+                                     SEUL geste (devis + technicien, bouton
+                                     bloqué sinon). -->
+                                <div
+                                    *ngIf="
+                                        !rep_condition &&
+                                        di?.needsDevisBeforeRepair
+                                    "
+                                    class="cf-repair-devis"
+                                >
+                                    <div class="cf-repair-devis__banner">
+                                        <i class="pi pi-info-circle"></i>
+                                        <span>
+                                            Retour sans pièces — magasin et
+                                            tarification sautés. Joignez le devis
+                                            pour envoyer en réparation.
+                                        </span>
+                                    </div>
+
+                                    <p-dropdown
+                                        [options]="techList"
+                                        [(ngModel)]="selectedRepTechForDevis"
+                                        placeholder="Sélectionner le technicien…"
+                                        optionLabel="firstName"
+                                        [showClear]="false"
+                                        styleClass="cf-step__dropdown"
+                                    >
+                                        <ng-template let-tech pTemplate="item">
+                                            {{ tech?.firstName }}
+                                            {{ tech?.lastName }}
+                                        </ng-template>
+                                        <ng-template
+                                            let-tech
+                                            pTemplate="selectedItem"
+                                        >
+                                            <ng-container *ngIf="tech">
+                                                {{ tech.firstName }}
+                                                {{ tech.lastName }}
+                                            </ng-container>
+                                        </ng-template>
+                                    </p-dropdown>
+
+                                    <app-pdf-dropzone
+                                        *ngIf="!sendingRepairWithDevis"
+                                        [maxSizeMo]="10"
+                                        [title]="
+                                            repairDevisName
+                                                ? 'Remplacer le devis'
+                                                : 'Déposer le devis'
+                                        "
+                                        ariaLabel="Déposer le devis (PDF)"
+                                        (fileSelected)="onRepairDevisDrop($event)"
+                                    ></app-pdf-dropzone>
+                                    <div
+                                        *ngIf="repairDevisName"
+                                        class="cf-repair-devis__file"
+                                    >
+                                        <i class="pi pi-file-pdf"></i>
+                                        {{ repairDevisName }}
+                                    </div>
+
+                                    <p-button
+                                        label="Envoyer en réparation"
+                                        icon="pi pi-send"
+                                        [disabled]="
+                                            !selectedRepTechForDevis ||
+                                            !repairDevisBase64 ||
+                                            sendingRepairWithDevis
+                                        "
+                                        [loading]="sendingRepairWithDevis"
+                                        (onClick)="sendToRepairWithDevis()"
+                                        styleClass="cf-step__action"
+                                    ></p-button>
+                                    <small
+                                        *ngIf="
+                                            !selectedRepTechForDevis ||
+                                            !repairDevisBase64
+                                        "
+                                        class="cf-repair-devis__hint"
+                                    >
+                                        Sélectionnez un technicien et joignez le
+                                        devis pour activer l'envoi.
+                                    </small>
+                                </div>
+
+                                <div
+                                    *ngIf="
+                                        rep_condition &&
+                                        getAssignedRepairTech() !== 'N/A'
+                                    "
+                                    class="cf-step__note"
+                                >
+                                    <i class="pi pi-user"></i>
+                                    {{ getAssignedRepairTech() }}
+                                </div>
                             </div>
-                        </div>
-                    </article>
+                            <span class="cf-step__badge">
+                                <i [class]="getFlowStepIcon('repair')"></i>
+                                {{ getFlowStepLabel("repair") }}
+                            </span>
+                        </article>
+
+                        <article
+                            class="cf-step cf-step--last"
+                            [ngClass]="getFlowStepClass('closure')"
+                        >
+                            <span class="cf-step__dot" aria-hidden="true"></span>
+                            <span class="cf-step__num">05</span>
+                            <div class="cf-step__body">
+                                <h5 class="cf-step__title">Clôture</h5>
+                                <p class="cf-step__hint">
+                                    La clôture est automatique en fin de
+                                    réparation.
+                                </p>
+                                <div
+                                    *ngIf="getFlowTimestamp('closure') as closedAt"
+                                    class="cf-step__note cf-step__note--ok"
+                                >
+                                    <i class="pi pi-check-circle"></i>
+                                    DI terminée · {{ closedAt }}
+                                </div>
+                            </div>
+                            <span class="cf-step__badge">
+                                <i [class]="getFlowStepIcon('closure')"></i>
+                                {{ getFlowStepLabel("closure") }}
+                            </span>
+                        </article>
+                    </div>
                 </aside>
             </div>
 
@@ -807,27 +726,20 @@
                         {{ reactivateBlockedReason }}
                     </small>
                 </span>
-                <!-- Annulation de la DI : confirmée par mot de passe + motif.
-                     Distincte du bouton « Fermer » ci-dessous. -->
+                <!-- Annulation de la DI : seule action du pied. Confirmée par mot
+                     de passe + motif dans un sous-modal dédié. -->
                 <p-button
                     *ngIf="di?.status !== 'ANNULER'"
                     label="Annuler la DI"
-                    icon="pi pi-ban"
+                    icon="pi pi-trash"
                     severity="danger"
+                    [outlined]="true"
+                    styleClass="cf-modal__footer-danger"
                     (onClick)="openCancelDialog()"
                 ></p-button>
-                <p-button
-                    label="Fermer"
-                    severity="secondary"
-                    [outlined]="true"
-                    (onClick)="hideDialog()"
-                ></p-button>
-                <p-button
-                    label="Enregistrer les modifications"
-                    icon="pi pi-save"
-                    severity="primary"
-                    (onClick)="saveProduct()"
-                ></p-button>
+                <!-- Spacer conservé : garde l'action destructive à gauche, loin du
+                     bord droit du modal. La fermeture passe par la croix de l'en-tête. -->
+                <span class="cf-modal__footer-spacer"></span>
             </footer>
         </div>
     </p-dialog>
@@ -923,8 +835,10 @@
         </div>
 
         <ng-template pTemplate="footer">
+            <!-- « Annuler » et non « Fermer » : même rôle que dans le modal
+                 d'abandon de `tech-di-list`, donc même mot. -->
             <p-button
-                label="Fermer"
+                label="Annuler"
                 severity="secondary"
                 [outlined]="true"
                 (onClick)="cancelDialog = false"
@@ -939,6 +853,4 @@
             ></p-button>
         </ng-template>
     </p-dialog>
-
-    <p-confirmDialog [style]="{ width: '450px' }"></p-confirmDialog>
 </div>

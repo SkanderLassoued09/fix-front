@@ -1,0 +1,57 @@
+<!-- `styleClass` atterrit sur le MÊME noeud que `.p-confirm-dialog` : le
+     template PrimeNG pose [ngClass] et [class] sur ce div. Le SCSS doit donc
+     utiliser le sélecteur COMPOSÉ `.fx-confirm-dialog.p-confirm-dialog` — la
+     forme descendante ne matcherait jamais rien. -->
+<p-confirmDialog
+    #cd
+    styleClass="fx-confirm-dialog"
+    [style]="{ width: '440px', maxWidth: '94vw' }"
+>
+    <ng-template pTemplate="headless" let-c>
+        <div class="fx-confirm" [ngClass]="'fx-confirm--' + confirm.variant">
+            <header class="fx-confirm__head">
+                <span class="fx-confirm__icon">
+                    <i [class]="c?.icon || 'pi pi-question-circle'"></i>
+                </span>
+                <h2 class="fx-confirm__title">
+                    {{ c?.header || "Confirmation" }}
+                </h2>
+                <button
+                    type="button"
+                    class="fx-confirm__close"
+                    (click)="cd.reject()"
+                    aria-label="Fermer"
+                >
+                    <i class="pi pi-times"></i>
+                </button>
+            </header>
+
+            <div class="fx-confirm__body">
+                <p class="fx-confirm__msg">{{ c?.message }}</p>
+            </div>
+
+            <!-- `p-confirm-dialog-reject` / `p-confirm-dialog-accept` sont des
+                 CROCHETS DE COMPATIBILITÉ, pas de la décoration : une vingtaine
+                 de specs Playwright (`qa/e2e`) cliquent
+                 `.p-confirm-dialog .p-confirm-dialog-accept`. Le mode headless
+                 supprime les boutons natifs qui les portaient — les retirer ici
+                 casserait toute la suite e2e. -->
+            <footer class="fx-confirm__foot">
+                <button
+                    type="button"
+                    class="fx-confirm__btn fx-confirm__btn--cancel p-confirm-dialog-reject"
+                    (click)="cd.reject()"
+                >
+                    {{ cd.rejectButtonLabel }}
+                </button>
+                <button
+                    type="button"
+                    class="fx-confirm__btn fx-confirm__btn--accept p-confirm-dialog-accept"
+                    (click)="cd.accept()"
+                >
+                    {{ cd.acceptButtonLabel }}
+                </button>
+            </footer>
+        </div>
+    </ng-template>
+</p-confirmDialog>

@@ -17,11 +17,13 @@ import { NodeService } from './demo/service/node.service';
 import { PhotoService } from './demo/service/photo.service';
 import { GraphQlModule } from './graphql.modules';
 import { ProfileService } from './demo/service/profile.service';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { ImageModule } from 'primeng/image';
 import { DiInfoModalComponent } from './demo/components/ticket/shared/di-info-modal/di-info-modal.component';
+import { DiFilesModalComponent } from './demo/components/ticket/shared/di-files-modal/di-files-modal.component';
+import { FxConfirmDialogComponent } from './shared/ui/fx-confirm-dialog.component';
 
 @NgModule({
     declarations: [AppComponent, NotfoundComponent],
@@ -32,6 +34,8 @@ import { DiInfoModalComponent } from './demo/components/ticket/shared/di-info-mo
         GraphQlModule,
         ToastModule,
         DiInfoModalComponent,
+        DiFilesModalComponent,
+        FxConfirmDialogComponent,
         ServiceWorkerModule.register('ngsw-worker.js', {
             enabled: !isDevMode(),
             // Register the ServiceWorker as soon as the application is stable
@@ -49,7 +53,13 @@ import { DiInfoModalComponent } from './demo/components/ticket/shared/di-info-mo
         PhotoService,
         ProductService,
         ProfileService,
+        // MessageService ET ConfirmationService sont fournis ICI, et NULLE
+        // PART AILLEURS. Un provider de module de feature crée une 2e
+        // instance : les composants de ce module émettent alors dans une
+        // instance que le <p-toast> / <p-confirmDialog> du shell n'écoute
+        // pas, et leurs messages n'apparaissent jamais.
         MessageService,
+        ConfirmationService,
         ImageModule,
     ],
     bootstrap: [AppComponent],

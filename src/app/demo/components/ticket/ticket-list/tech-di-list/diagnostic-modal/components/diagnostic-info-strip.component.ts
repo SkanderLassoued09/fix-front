@@ -71,16 +71,16 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.85rem;
         padding: 1.1rem 1.75rem;
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
+        background: var(--fx-bg-surface);
+        border-bottom: 1px solid var(--fx-border);
       }
       .sav-info-strip__cell {
         display: flex;
         align-items: center;
         gap: 0.85rem;
         padding: 0.9rem 1rem;
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: var(--fx-bg-card);
+        border: 1px solid var(--fx-border);
         border-radius: 10px;
         min-width: 0;
       }
@@ -93,15 +93,15 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
         flex-shrink: 0;
       }
       .sav-info-strip__icon i { font-size: 1.05rem; }
-      .sav-info-strip__icon--blue { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
-      .sav-info-strip__icon--cyan { background: rgba(6, 182, 212, 0.12); color: #0891b2; }
-      .sav-info-strip__icon--orange { background: rgba(249, 115, 22, 0.12); color: #ea580c; }
-      .sav-info-strip__icon--green { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
+      .sav-info-strip__icon--blue { background: rgba(59, 130, 246, 0.12); color: var(--fx-blue-text); }
+      .sav-info-strip__icon--cyan { background: rgba(6, 182, 212, 0.12); color: var(--fx-cyan-text); }
+      .sav-info-strip__icon--orange { background: rgba(249, 115, 22, 0.12); color: var(--fx-orange-text); }
+      .sav-info-strip__icon--green { background: rgba(34, 197, 94, 0.12); color: var(--fx-green-text); }
       .sav-info-strip__cell > div { min-width: 0; }
       .sav-info-strip__cell small {
         display: block;
         font-size: 0.78rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
         font-weight: 500;
         margin-bottom: 0.18rem;
       }
@@ -109,14 +109,14 @@ import { DiagnosticDiSummary } from '../diagnostic-modal.types';
         display: block;
         font-size: 0.95rem;
         font-weight: 650;
-        color: #0f172a;
+        color: var(--fx-text);
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
         line-height: 1.25;
       }
       .sav-info-strip__status {
-        color: #dc2626 !important;
+        color: var(--fx-red-text) !important;
         text-transform: uppercase;
         font-size: 0.85rem !important;
         font-weight: 700 !important;

@@ -21,7 +21,6 @@ import {
 
 // Repair-specific step components.
 import { RepairInfoStepComponent } from './steps/repair-info-step.component';
-import { RepairPlanStepComponent } from './steps/repair-plan-step.component';
 import { RepairPartsStepComponent } from './steps/repair-parts-step.component';
 import { RepairWorksStepComponent } from './steps/repair-works-step.component';
 import { RepairSummaryStepComponent } from './steps/repair-summary-step.component';
@@ -53,7 +52,6 @@ import {
     DiagnosticStepperComponent,
     DiagnosticSidebarComponent,
     RepairInfoStepComponent,
-    RepairPlanStepComponent,
     RepairPartsStepComponent,
     RepairWorksStepComponent,
     RepairSummaryStepComponent,
@@ -76,7 +74,8 @@ export class RepairModalComponent {
   @Input({ required: true }) progress!: RepairProgress;
   @Input() clientLine: string = '';
   @Input() categoryLabel: string = '';
-  @Input() repairPlan: string = '';
+  /** Première condition manquante pour clôturer, ou null si tout est réuni. */
+  @Input() blockedReason: string | null = null;
   @Input() repairSuccess: RepairBadgeValue = 'Non défini';
   @Input() testsValidated: RepairBadgeValue = 'Non défini';
   @Input() warrantyLabel: string = 'Non défini';

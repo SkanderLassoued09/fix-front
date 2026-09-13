@@ -5,18 +5,18 @@
    · vert #16a34a · ambre #b45309 · rouge #dc2626 (danger seul) · slate · AUCUN violet.
    ═══════════════════════════════════════════════════════════════════════════ */
 :host {
-    --di-blue: #3b82f6;
-    --di-blue-strong: #2563eb;
-    --di-green: #16a34a;
-    --di-amber: #b45309;
-    --di-red: #dc2626;
-    --di-ink: #0f172a;
-    --di-slate-700: #334155;
-    --di-slate-500: #64748b;
-    --di-slate-400: #94a3b8;
-    --di-line: #e2e8f0;
-    --di-bg-soft: #f8fafc;
-    --di-bg-soft2: #f1f5f9;
+    --di-blue: var(--fx-blue);
+    --di-blue-strong: var(--fx-blue-strong);
+    --di-green: var(--fx-green);
+    --di-amber: var(--fx-amber);
+    --di-red: var(--fx-red-text);
+    --di-ink: var(--fx-text);
+    --di-slate-700: var(--fx-text-strong);
+    --di-slate-500: var(--fx-text-muted);
+    --di-slate-400: var(--fx-border-strong);
+    --di-line: var(--fx-border);
+    --di-bg-soft: var(--fx-bg-surface);
+    --di-bg-soft2: var(--fx-bg-surface-2);
 
     font-family:
         'Inter',
@@ -42,7 +42,7 @@
     display: flex;
     flex-direction: column;
     max-height: 85vh;
-    background: #fff;
+    background: var(--fx-bg-card);
     color: var(--di-ink);
     border-radius: 14px;
     overflow: hidden;
@@ -52,7 +52,7 @@
 .di-fixed-top {
     flex: 0 0 auto;
     border-bottom: 1px solid var(--di-line);
-    background: #fff;
+    background: var(--fx-bg-card);
 }
 
 .di-head {
@@ -70,8 +70,8 @@
     place-items: center;
     font-weight: 700;
     font-size: 1rem;
-    color: #fff;
-    background: linear-gradient(135deg, var(--di-blue), var(--di-blue-strong));
+    color: var(--fx-text-on-accent);
+    background: linear-gradient(135deg, var(--fx-blue), var(--fx-blue-strong));
     letter-spacing: 0.5px;
 }
 .di-head__titles {
@@ -117,7 +117,7 @@
     width: 34px;
     height: 34px;
     border: 1px solid var(--di-line);
-    background: #fff;
+    background: var(--fx-bg-card);
     border-radius: 8px;
     color: var(--di-slate-500);
     cursor: pointer;
@@ -141,20 +141,20 @@
     border-radius: 999px;
     text-transform: uppercase;
     &[data-tone='ok'] {
-        color: var(--di-green);
-        background: #dcfce7;
+        color: var(--fx-green-text);
+        background: var(--fx-green-soft-bg-2);
     }
     &[data-tone='ko'] {
         color: var(--di-red);
-        background: #fee2e2;
+        background: var(--fx-red-soft-bg-2);
     }
     &[data-tone='info'] {
-        color: var(--di-blue-strong);
-        background: #dbeafe;
+        color: var(--fx-blue-text);
+        background: var(--fx-blue-soft-bg-2);
     }
     &[data-tone='warn'] {
-        color: var(--di-amber);
-        background: #fef3c7;
+        color: var(--fx-amber-text);
+        background: var(--fx-amber-soft-bg-2);
     }
 }
 
@@ -172,8 +172,30 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--di-slate-400);
+    color: var(--fx-text-subtle);
 }
+/* Bandeau « dossier reconstitué » — même gouttière que le sélecteur de cycle
+   qu'il suit, pour se lire comme une note sur le cycle sélectionné. */
+.di-cycle-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.55rem 1.25rem 0.7rem;
+    background: var(--di-bg-soft);
+    border-top: 1px solid var(--di-line);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: var(--fx-text-subtle);
+
+    i {
+        margin-top: 0.15rem;
+        flex: 0 0 auto;
+    }
+    strong {
+        color: inherit;
+    }
+}
+
 .di-cycles__pills {
     display: flex;
     flex-wrap: wrap;
@@ -181,7 +203,7 @@
 }
 .di-cycle-pill {
     border: 1px solid var(--di-line);
-    background: #fff;
+    background: var(--fx-bg-card);
     color: var(--di-slate-700);
     font-size: 0.78rem;
     font-weight: 600;
@@ -190,13 +212,13 @@
     cursor: pointer;
     transition: all 0.15s;
     &:hover {
-        border-color: var(--di-blue);
-        color: var(--di-blue-strong);
+        border-color: var(--fx-blue);
+        color: var(--fx-blue-text);
     }
     &--active {
-        background: var(--di-blue-strong);
-        border-color: var(--di-blue-strong);
-        color: #fff;
+        background: var(--fx-blue-strong);
+        border-color: var(--fx-blue-strong);
+        color: var(--fx-text-on-accent);
     }
 }
 
@@ -231,7 +253,7 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        color: var(--di-slate-400);
+        color: var(--fx-text-subtle);
     }
     &__v {
         font-size: 0.88rem;
@@ -245,12 +267,12 @@
 
 /* Bandeau annulation (danger) */
 .di-cancel-banner {
-    border: 1px solid #fecaca;
-    background: #fef2f2;
+    border: 1px solid var(--fx-red-soft-bd);
+    background: var(--fx-red-soft-bg);
     border-radius: 10px;
     padding: 0.7rem 0.85rem;
     font-size: 0.82rem;
-    color: #991b1b;
+    color: var(--fx-red-soft-fg);
     strong {
         color: var(--di-red);
         margin-right: 0.35rem;
@@ -258,7 +280,7 @@
     &__sub {
         margin-top: 0.25rem;
         font-style: italic;
-        color: #b91c1c;
+        color: var(--fx-red-soft-fg);
     }
 }
 
@@ -274,7 +296,7 @@
         color: var(--di-slate-700);
         margin-bottom: 0.4rem;
         i {
-            color: var(--di-blue-strong);
+            color: var(--fx-blue-text);
             margin-right: 0.3rem;
         }
     }
@@ -301,7 +323,7 @@
         color: var(--di-slate-500);
     }
     &__now {
-        color: var(--di-blue-strong);
+        color: var(--fx-blue-text);
         font-weight: 600;
     }
 }
@@ -341,7 +363,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--di-slate-400);
+    color: var(--fx-text-subtle);
     margin-bottom: 0.45rem;
     &--sm {
         margin-bottom: 0.4rem;
@@ -353,8 +375,8 @@
     }
 }
 .di-pill {
-    background: var(--di-blue-strong);
-    color: #fff;
+    background: var(--fx-blue-strong);
+    color: var(--fx-text-on-accent);
     font-size: 0.68rem;
     font-weight: 700;
     padding: 0.05rem 0.45rem;
@@ -392,17 +414,17 @@
         height: 12px;
         border-radius: 50%;
         margin-top: 0.2rem;
-        background: #fff;
-        border: 2px solid var(--di-slate-400);
+        background: var(--fx-bg-card);
+        border: 2px solid var(--fx-border-strong);
         z-index: 1;
         &[data-state='current'] {
-            border-color: var(--di-blue-strong);
-            background: var(--di-blue);
+            border-color: var(--fx-blue-strong);
+            background: var(--fx-blue);
             box-shadow: 0 0 0 3px #dbeafe;
         }
         &[data-state='done'] {
-            border-color: var(--di-green);
-            background: var(--di-green);
+            border-color: var(--fx-green);
+            background: var(--fx-green);
         }
     }
     &__body {
@@ -430,7 +452,7 @@
         color: var(--di-slate-500);
         margin-top: 0.05rem;
         &--ongoing {
-            color: var(--di-blue-strong);
+            color: var(--fx-blue-text);
             font-weight: 600;
         }
         &--anom {
@@ -443,8 +465,8 @@
     margin-top: 0.5rem;
     align-self: flex-start;
     border: 1px solid var(--di-line);
-    background: #fff;
-    color: var(--di-blue-strong);
+    background: var(--fx-bg-card);
+    color: var(--fx-blue-text);
     font-size: 0.76rem;
     font-weight: 600;
     padding: 0.28rem 0.7rem;
@@ -464,44 +486,231 @@
 }
 
 /* Composants */
+/* Composants — une CARTE par composant, toutes les données du catalogue.
+   Remplace l'ancien pseudo-tableau Composant/Qté. Aucune couleur en dur : les
+   pastilles sont bâties sur les triplets `--fx-*-soft-*`, donc valides aussi en
+   thème sombre (contrairement aux littéraux de `composant-management`). */
 .di-comp {
-    border: 1px solid var(--di-line);
-    border-radius: 9px;
-    overflow: hidden;
-    &__head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+
+    &__card {
+        border: 1px solid var(--di-line);
+        border-radius: 10px;
+        background: var(--fx-bg-card);
+        padding: 0.6rem 0.7rem;
         display: flex;
-        justify-content: space-between;
-        padding: 0.4rem 0.65rem;
-        background: var(--di-bg-soft2);
-        font-size: 0.7rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-        color: var(--di-slate-400);
+        flex-direction: column;
+        gap: 0.55rem;
+        /* Impression : une carte ne doit jamais être coupée en deux pages. */
+        break-inside: avoid;
+        &--orphan {
+            border-style: dashed;
+            background: var(--di-bg-soft);
+        }
     }
-    &__row {
+
+    &__card-head {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.4rem 0.65rem;
-        font-size: 0.84rem;
-        border-top: 1px solid var(--di-line);
-    }
-    &__name {
-        display: flex;
-        align-items: center;
-        gap: 0.45rem;
-        color: var(--di-ink);
-        min-width: 0;
+        align-items: flex-start;
+        gap: 0.5rem;
     }
     &__ico {
-        color: var(--di-blue-strong);
+        color: var(--fx-blue-text);
         display: inline-grid;
         place-items: center;
+        padding-top: 2px;
     }
-    &__qty {
+    &__id {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+    &__name {
+        font-size: 0.88rem;
         font-weight: 600;
-        font-variant-numeric: tabular-nums;
+        color: var(--di-ink);
+        overflow-wrap: anywhere;
+    }
+    &__sub {
+        margin-top: 1px;
+        font-size: 0.72rem;
+        color: var(--di-slate-500);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    &__sep {
+        color: var(--fx-text-subtle);
+    }
+
+    /* Pastille de statut — même vocabulaire que « Catalogue composants »
+       (« En stock » / « Interne » / « Externe »), mais tolérante aux graphies
+       héritées (cf. `composantStatusKey`). */
+    &__status {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 9px;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 700;
+        white-space: nowrap;
+        border: 1px solid transparent;
+        &::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+            flex-shrink: 0;
+        }
+        &[data-status="INSTOCK"] {
+            background: var(--fx-green-soft-bg);
+            color: var(--fx-green-soft-fg);
+            border-color: var(--fx-green-soft-bd);
+        }
+        &[data-status="INTERN"] {
+            background: var(--fx-blue-soft-bg);
+            color: var(--fx-blue-soft-fg);
+            border-color: var(--fx-blue-soft-bd);
+        }
+        &[data-status="EXTERN"] {
+            background: var(--fx-amber-soft-bg);
+            color: var(--fx-amber-soft-fg);
+            border-color: var(--fx-amber-soft-bd);
+        }
+        &[data-status="UNKNOWN"],
+        &[data-status="ORPHAN"] {
+            background: var(--fx-slate-soft-bg);
+            color: var(--fx-slate-soft-fg);
+            border-color: var(--fx-slate-soft-bd);
+        }
+    }
+
+    /* Grille clé/valeur — auto-fit : 3 colonnes au large, 2 puis 1 au étroit. */
+    &__kv {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+        gap: 0.35rem 0.8rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed var(--di-line);
+    }
+    &__cell {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+        > span {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--fx-text-subtle);
+        }
+        > strong {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--di-ink);
+            overflow-wrap: anywhere;
+        }
+        &--total > strong {
+            color: var(--fx-blue-text);
+        }
+    }
+
+    /* Santé du stock — mêmes trois états que `magasin-di-list`. */
+    &__stock {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 1px 7px;
+        &[data-health="ok"] {
+            background: var(--fx-green-soft-bg);
+            color: var(--fx-green-soft-fg);
+        }
+        &[data-health="low"] {
+            background: var(--fx-amber-soft-bg);
+            color: var(--fx-amber-soft-fg);
+        }
+        &[data-health="out"] {
+            background: var(--fx-red-soft-bg);
+            color: var(--fx-red-soft-fg);
+        }
+        &[data-health="unknown"] {
+            background: var(--fx-slate-soft-bg);
+            color: var(--fx-slate-soft-fg);
+        }
+    }
+    &__stock-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 99px;
+        background: currentColor;
+    }
+
+    &__card-foot {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    &__flag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: var(--fx-green-soft-bg);
+        color: var(--fx-green-soft-fg);
+    }
+    &__orphan {
+        margin: 0;
+        font-size: 0.74rem;
+        color: var(--fx-text-subtle);
+    }
+
+    /* Total du CYCLE AFFICHÉ (l'onglet Finances, lui, reste sur le cycle
+       courant — cf. `calculateTicketComposantPrice`). */
+    &__total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.8rem;
+        padding: 0.5rem 0.7rem;
+        border: 1px solid var(--di-line);
+        border-radius: 10px;
+        background: var(--di-bg-soft2);
+        break-inside: avoid;
+        > span {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            color: var(--fx-text-subtle);
+        }
+        > strong {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--di-ink);
+        }
+    }
+    &__note {
+        margin: 0.35rem 0 0;
+        font-size: 0.72rem;
+        color: var(--fx-text-subtle);
+    }
+}
+
+@media (max-width: 480px) {
+    .di-comp__kv {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -516,22 +725,22 @@
     border-left-width: 3px;
     border-radius: 8px;
     padding: 0.5rem 0.7rem;
-    background: #fff;
+    background: var(--fx-bg-card);
     &--admin {
-        border-left-color: var(--di-blue-strong);
+        border-left-color: var(--fx-blue-strong);
     }
     &--diag {
         border-left-color: var(--di-amber);
     }
     &--rep {
-        border-left-color: var(--di-green);
+        border-left-color: var(--fx-green);
     }
     &__head {
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        color: var(--di-slate-400);
+        color: var(--fx-text-subtle);
         margin-bottom: 0.2rem;
     }
     &__body {
@@ -557,23 +766,23 @@
         border-radius: 999px;
         border: 1px solid var(--di-line);
         &[data-kind='ok'] {
-            color: var(--di-green);
-            background: #dcfce7;
-            border-color: #bbf7d0;
+            color: var(--fx-green-text);
+            background: var(--fx-green-soft-bg-2);
+            border-color: var(--fx-green-soft-bd);
         }
         &[data-kind='ko'] {
             color: var(--di-red);
-            background: #fee2e2;
-            border-color: #fecaca;
+            background: var(--fx-red-soft-bg-2);
+            border-color: var(--fx-red-soft-bd);
         }
         &[data-kind='accent'] {
-            color: var(--di-blue-strong);
-            background: #dbeafe;
-            border-color: #bfdbfe;
+            color: var(--fx-blue-text);
+            background: var(--fx-blue-soft-bg-2);
+            border-color: var(--fx-blue-soft-bd);
         }
         &[data-kind='muted'] {
             color: var(--di-slate-500);
-            background: #fff;
+            background: var(--fx-bg-card);
         }
     }
 }
@@ -597,15 +806,15 @@
         place-items: center;
         font-size: 0.72rem;
         font-weight: 700;
-        color: #fff;
+        color: var(--fx-text-on-accent);
         &--creator {
-            background: #64748b;
+            background: var(--fx-border-strong);
         }
         &--diag {
-            background: var(--di-amber);
+            background: var(--fx-amber-strong);
         }
         &--rep {
-            background: var(--di-green);
+            background: var(--fx-green);
         }
     }
     &__meta {
@@ -617,7 +826,7 @@
         font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        color: var(--di-slate-400);
+        color: var(--fx-text-subtle);
         font-weight: 600;
     }
     &__name {
@@ -665,11 +874,11 @@
     text-decoration: none;
     color: var(--di-slate-700);
     font-size: 0.82rem;
-    background: #fff;
+    background: var(--fx-bg-card);
     transition: all 0.15s;
     &:hover {
-        border-color: var(--di-blue);
-        color: var(--di-blue-strong);
+        border-color: var(--fx-blue);
+        color: var(--fx-blue-text);
     }
     &__ico {
         color: var(--di-red);
@@ -682,20 +891,20 @@
         white-space: nowrap;
         em {
             font-style: normal;
-            color: var(--di-slate-400);
+            color: var(--fx-text-subtle);
             font-size: 0.72rem;
         }
     }
     &--absent {
         border-style: dashed;
-        color: var(--di-slate-400);
+        color: var(--fx-text-subtle);
         cursor: default;
         .di-doc__ico {
-            color: var(--di-slate-400);
+            color: var(--fx-text-subtle);
         }
         &:hover {
             border-color: var(--di-line);
-            color: var(--di-slate-400);
+            color: var(--fx-text-subtle);
         }
     }
 }
@@ -705,7 +914,7 @@
     border: 1px solid var(--di-line);
     border-radius: 12px;
     padding: 0.85rem;
-    background: #fff;
+    background: var(--fx-bg-card);
 }
 .di-fin-table {
     display: flex;
@@ -731,7 +940,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.4px;
-    color: var(--di-slate-400);
+    color: var(--fx-text-subtle);
 }
 .di-fin-row {
     border-top: 1px solid var(--di-line);
@@ -751,7 +960,7 @@
 .di-fin-ecart {
     font-weight: 600;
     &--pos {
-        color: var(--di-green);
+        color: var(--fx-green-text);
     }
     &--neg {
         color: var(--di-red);
@@ -906,8 +1115,8 @@
         }
 
         &--active {
-            color: var(--di-blue-strong);
-            border-bottom-color: var(--di-blue-strong);
+            color: var(--fx-blue-text);
+            border-bottom-color: var(--fx-blue-strong);
         }
     }
 }
@@ -969,16 +1178,16 @@
             word-break: break-word;
 
             &[data-tone='ok'] {
-                color: var(--di-green);
+                color: var(--fx-green-text);
             }
             &[data-tone='ko'] {
                 color: var(--di-red);
             }
             &[data-tone='warn'] {
-                color: var(--di-amber);
+                color: var(--fx-amber-text);
             }
             &[data-tone='info'] {
-                color: var(--di-blue-strong);
+                color: var(--fx-blue-text);
             }
             &[data-tone='muted'] {
                 color: var(--di-slate-500);
@@ -1026,7 +1235,7 @@
         word-break: break-word;
 
         a {
-            color: var(--di-blue-strong);
+            color: var(--fx-blue-text);
             text-decoration: none;
 
             &:hover {
@@ -1035,7 +1244,7 @@
         }
 
         em {
-            color: var(--di-slate-400);
+            color: var(--fx-text-subtle);
             font-style: normal;
         }
     }
@@ -1062,7 +1271,7 @@
         padding: 4px 10px;
         border: 1px solid var(--di-line);
         border-radius: 999px;
-        background: #fff;
+        background: var(--fx-bg-card);
         color: var(--di-slate-500);
         font: inherit;
         font-size: 0.72rem;
@@ -1074,9 +1283,9 @@
         }
 
         &--active {
-            border-color: var(--di-blue-strong);
-            background: var(--di-blue-strong);
-            color: #fff;
+            border-color: var(--fx-blue-strong);
+            background: var(--fx-blue-strong);
+            color: var(--fx-text-on-accent);
         }
     }
 }
@@ -1106,7 +1315,7 @@
         /* Un événement ERP porte un acteur : on le distingue d'une simple
            transition de statut, qui n'en a pas. */
         &[data-kind='event'] .di-jrow__dot {
-            background: var(--di-blue-strong);
+            background: var(--fx-blue-strong);
         }
 
         &__top {
@@ -1134,7 +1343,7 @@
             padding: 1px 7px;
             border-radius: 999px;
             background: var(--di-bg-soft2);
-            color: var(--di-amber);
+            color: var(--fx-amber-text);
             font-size: 0.68rem;
             font-weight: 700;
         }
@@ -1152,7 +1361,7 @@
         &__more {
             border: 0;
             background: transparent;
-            color: var(--di-blue-strong);
+            color: var(--fx-blue-text);
             font: inherit;
             font-size: 0.72rem;
             font-weight: 600;
@@ -1219,14 +1428,14 @@
         padding: 7px 10px;
         border: 1px solid var(--di-line);
         border-radius: 8px;
-        background: #fff;
+        background: var(--fx-bg-card);
         color: var(--di-ink);
         font: inherit;
         font-size: 0.84rem;
 
         &:focus {
             outline: none;
-            border-color: var(--di-blue);
+            border-color: var(--fx-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
     }
@@ -1257,7 +1466,7 @@
     padding: 4px 9px;
     border: 1px solid var(--di-line);
     border-radius: 7px;
-    background: #fff;
+    background: var(--fx-bg-card);
     color: var(--di-slate-700);
     font: inherit;
     font-size: 0.74rem;
@@ -1293,7 +1502,7 @@
 
             &:focus {
                 outline: none;
-                border-color: var(--di-blue);
+                border-color: var(--fx-blue);
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
             }
         }
@@ -1315,7 +1524,7 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        color: var(--di-amber);
+        color: var(--fx-amber-text);
         margin-right: 4px;
     }
 }
@@ -1343,7 +1552,7 @@
 /* Provenance du motif de retour (journal ERP / PV / dossier). */
 .di-retour-banner__src {
     margin-left: 6px;
-    color: var(--di-slate-400);
+    color: var(--fx-text-subtle);
     font-size: 0.72rem;
     font-style: normal;
 }

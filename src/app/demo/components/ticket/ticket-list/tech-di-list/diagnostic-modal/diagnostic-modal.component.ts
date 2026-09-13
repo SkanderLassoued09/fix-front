@@ -5,6 +5,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
+import { TreeNode } from 'primeng/api';
 import { CommonModule } from '@angular/common';
 import { DialogModule } from 'primeng/dialog';
 import { DiagnosticHeaderComponent } from './components/diagnostic-header.component';
@@ -80,14 +81,33 @@ export class DiagnosticModalComponent {
    *  désactivé + message affiché. Cas actuel : étape Validation, « contient des
    *  PDR » activé mais AUCUN composant sélectionné. */
   @Input() nextBlockedReason: string | null = null;
+  /** Création de catégorie en vol (étape « Panne ») → spinner + bouton inerte. */
+  @Input() categoryCreating: boolean = false;
+  /** Bumpé par le parent après une création réussie → l'étape ferme son panneau. */
+  @Input() categoryCreatedTick: number = 0;
 
   // intents — the parent maps these to existing mutations / persistence calls
+  /** Raison du grisage des boutons de CLÔTURE (étape Résumé) — parallèle de
+   *  `nextBlockedReason`, qui grise « Suivant ». `null` = rien ne bloque. */
+  @Input() finishBlockedReason: string | null = null;
+
   @Output() pauseClicked = new EventEmitter<void>();
   @Output() minimizeClicked = new EventEmitter<void>();
   @Output() stepChanged = new EventEmitter<DiagnosticStepKey>();
   @Output() addComposant = new EventEmitter<void>();
   @Output() removeComposant = new EventEmitter<string>();
+  /** Quantité corrigée sur une ligne déjà ajoutée (étape Composants). */
+  @Output() composantQuantityChange = new EventEmitter<{
+    nameComposant: string;
+    quantity: number;
+  }>();
   @Output() createComposant = new EventEmitter<void>();
+  /** Libellé saisi dans le filtre du dropdown catégorie, à créer. */
+  @Output() createCategory = new EventEmitter<string>();
+  /** Ouverture d'une catégorie dans l'arbre → charger ses composants. */
+  @Output() composantNodeExpand = new EventEmitter<TreeNode>();
+  /** Terme saisi dans le filtre de l'arbre (débouncé par le parent). */
+  @Output() composantSearch = new EventEmitter<string>();
   @Output() finishDiag = new EventEmitter<void>();
   @Output() finishRetour = new EventEmitter<void>();
   @Output() sendToFinishRetour = new EventEmitter<void>();
@@ -100,6 +120,21 @@ export class DiagnosticModalComponent {
   onVisibleChange(v: boolean): void {
     this.visible = v;
     this.visibleChange.emit(v);
+  }
+
+  /**
+   * Numéro d'une étape, lu dans le MÊME tableau `steps` que le stepper de
+   * gauche.
+   *
+   * Les pastilles étaient codées en dur dans chaque template
+   * (info 1, panne 2, composants 3, validation 4, résumé 5) alors que l'ordre
+   * réel est info 1, panne 2, validation 3, composants 4, résumé 5 : le corps
+   * et le stepper affichaient donc des numéros CONTRADICTOIRES pour Validation
+   * et Composants. Et quand « Contient PDR » vaut Non, l'étape Composants
+   * disparaît — tout ce qui suit se décalait d'un cran côté stepper seulement.
+   */
+  numberOf(key: DiagnosticStepKey): number {
+    return this.steps.find((s) => s.key === key)?.number ?? 0;
   }
 
   goPrevious(): void {

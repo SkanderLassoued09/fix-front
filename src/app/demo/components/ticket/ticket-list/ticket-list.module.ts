@@ -16,10 +16,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FileUploadModule } from 'primeng/fileupload';
 import { MagasinDiListRoutingModule } from '../magasin-di-list/magasin-di-list-routing.module';
 import { CoordinatorDiListRoutingModule } from '../coordinator-di-list/coordinator-di-list-routing.module';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { ToastModule } from 'primeng/toast';
 import { ToolbarModule } from 'primeng/toolbar';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { TagModule } from 'primeng/tag';
 import { CoordinatorDiListComponent } from '../coordinator-di-list/coordinator-di-list.component';
 import { MagasinDiListComponent } from '../magasin-di-list/magasin-di-list.component';
@@ -41,7 +38,6 @@ import { ImageModule } from 'primeng/image';
 import { PdfViewerModule } from 'ng2-pdf-viewer';
 import { ChartModule } from 'primeng/chart';
 import { PaginatorModule } from 'primeng/paginator';
-import { ComposantManagementComponent } from '../composant-management/composant-management.component';
 import { BlockUIModule } from 'primeng/blockui';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TabViewModule } from 'primeng/tabview';
@@ -64,7 +60,6 @@ import { TableCellTruncateDirective } from '../../../../shared/table-cell-trunca
         TechDiListComponent,
         TechRepairListComponent,
         DetailsComposantComponent,
-        ComposantManagementComponent,
     ],
     imports: [
         TableCellTruncateDirective,
@@ -87,8 +82,6 @@ import { TableCellTruncateDirective } from '../../../../shared/table-cell-trunca
         RadioButtonModule,
         FormsModule,
         FileUploadModule,
-        ConfirmDialogModule,
-        ToastModule,
         ToolbarModule,
         TagModule,
         ReactiveFormsModule,
@@ -119,6 +112,9 @@ import { TableCellTruncateDirective } from '../../../../shared/table-cell-trunca
         DiImportComponent,
         DiArchiveDetailModalComponent,
     ],
-    providers: [ConfirmationService, MessageService],
+    // Ni MessageService ni ConfirmationService ici : ils sont fournis
+    // UNIQUEMENT à la racine (`app.module.ts`), où le shell rend l'unique
+    // <p-toast> et l'unique <app-fx-confirm-dialog>. Un provider local
+    // recréerait une 2e instance, sans exutoire abonné.
 })
 export class TicketListModule {}

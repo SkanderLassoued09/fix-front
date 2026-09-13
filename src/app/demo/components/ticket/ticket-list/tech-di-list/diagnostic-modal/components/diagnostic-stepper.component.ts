@@ -72,14 +72,14 @@ import {
         flex-direction: column;
         height: 100%;
         padding: 1.5rem 1.15rem;
-        background: #f8fafc;
-        border-right: 1px solid #e2e8f0;
+        background: var(--fx-bg-surface);
+        border-right: 1px solid var(--fx-border);
       }
       .sav-stepper__head h3 {
         margin: 0;
         font-size: 1.05rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
         letter-spacing: -0.01em;
       }
       .sav-stepper__progress {
@@ -88,9 +88,9 @@ import {
         gap: 0.4rem;
         margin-top: 0.55rem;
         font-size: 0.88rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
       }
-      .sav-stepper__progress strong { color: #0f172a; font-weight: 700; font-size: 0.92rem; }
+      .sav-stepper__progress strong { color: var(--fx-text); font-weight: 700; font-size: 0.92rem; }
       .sav-stepper__bar {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
@@ -101,10 +101,10 @@ import {
         display: block;
         height: 6px;
         border-radius: 999px;
-        background: #e2e8f0;
+        background: var(--fx-bg-surface-2);
       }
-      .sav-stepper__bar-cell--done { background: #22c55e !important; }
-      .sav-stepper__bar-cell--current { background: #3b82f6 !important; }
+      .sav-stepper__bar-cell--done { background: var(--fx-green) !important; }
+      .sav-stepper__bar-cell--current { background: var(--fx-blue) !important; }
 
       .sav-stepper__list {
         list-style: none;
@@ -141,37 +141,37 @@ import {
         width: 40px;
         height: 40px;
         border-radius: 50%;
-        background: #e2e8f0;
-        color: #475569;
+        background: var(--fx-bg-surface-2);
+        color: var(--fx-text-muted);
         font-size: 1rem;
         font-weight: 700;
       }
       .sav-stepper__item--current .sav-stepper__num {
-        background: #3b82f6;
-        color: #ffffff;
+        background: var(--fx-blue);
+        color: var(--fx-text-on-accent);
       }
       .sav-stepper__item--done .sav-stepper__num {
-        background: #22c55e;
-        color: #ffffff;
+        background: var(--fx-green);
+        color: var(--fx-text-on-accent);
       }
       .sav-stepper__text { min-width: 0; flex: 1; }
       .sav-stepper__text strong {
         display: block;
         font-size: 0.98rem;
         font-weight: 650;
-        color: #0f172a;
+        color: var(--fx-text);
         line-height: 1.2;
       }
-      .sav-stepper__item--current .sav-stepper__text strong { color: #1d4ed8; }
+      .sav-stepper__item--current .sav-stepper__text strong { color: var(--fx-blue-soft-fg); }
       .sav-stepper__text em {
         display: block;
         font-style: normal;
         margin-top: 0.22rem;
         font-size: 0.82rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
         line-height: 1.2;
       }
-      .sav-stepper__done-icon { color: #22c55e; font-size: 1.1rem; }
+      .sav-stepper__done-icon { color: var(--fx-green-text); font-size: 1.1rem; }
     `,
   ],
 })

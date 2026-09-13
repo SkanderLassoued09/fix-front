@@ -29,6 +29,11 @@ export class NotificationCenterService {
     private readonly base = (environment.apiUrl ?? '').replace(/\/+$/, '');
     private socket?: Socket;
     private started = false;
+    /** Écouteurs GLOBAUX (`visibilitychange` / `focus`) posés une fois. Sans
+     *  cette référence on ne peut pas les retirer : ils survivaient à la
+     *  déconnexion et relançaient `unreadNotificationCount` SANS jeton à chaque
+     *  retour sur l'onglet — la cause des remontées 500 côté serveur. */
+    private globalListeners: AbortController | null = null;
     /** _id de l'utilisateur sur lequel le socket est ACTUELLEMENT branché. Si le
      *  compte change (logout → login autre rôle, SANS reload), on rebranche. */
     private connectedUserId: string | null = null;
@@ -101,24 +106,59 @@ export class NotificationCenterService {
      *  recharger toute la page. */
     private installVisibilityRefresh(): void {
         if (typeof document === 'undefined') return;
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
+        // Un AbortController rend le retrait ATOMIQUE : `stop()` coupe les deux
+        // écouteurs d'un coup, sans avoir à conserver chaque référence.
+        this.globalListeners?.abort();
+        const { signal } = (this.globalListeners = new AbortController());
+
+        document.addEventListener(
+            'visibilitychange',
+            () => {
+                if (document.visibilityState === 'visible') {
+                    this.refreshUnreadCount();
+                    if (this.lastListLoaded) this.loadList();
+                    // Garde le contexte audio VIVANT (les navigateurs le
+                    // suspendent en arrière-plan) → son fiable au retour.
+                    this.audioCtx?.resume?.().catch(() => {});
+                }
+            },
+            { signal },
+        );
+        window.addEventListener(
+            'focus',
+            () => {
                 this.refreshUnreadCount();
-                if (this.lastListLoaded) this.loadList();
-                // Garde le contexte audio VIVANT (les navigateurs le suspendent
-                // en arrière-plan) → le son reste fiable au retour sur l'onglet.
                 this.audioCtx?.resume?.().catch(() => {});
-            }
-        });
-        window.addEventListener('focus', () => {
-            this.refreshUnreadCount();
-            this.audioCtx?.resume?.().catch(() => {});
-        });
+            },
+            { signal },
+        );
     }
 
+    /**
+     * Démonte TOUT ce que `start()` a posé.
+     *
+     * Auparavant seul le socket était coupé : les écouteurs globaux restaient
+     * actifs et, comme `started` repassait à `false`, le `start()` suivant en
+     * réinstallait une paire SUPPLÉMENTAIRE. Un onglet resté ouvert après
+     * déconnexion rappelait donc `unreadNotificationCount` — sans jeton, et
+     * autant de fois qu'il y avait eu de cycles connexion/déconnexion.
+     */
     stop(): void {
         this.socket?.disconnect();
         this.socket = undefined;
+        this.globalListeners?.abort();
+        this.globalListeners = null;
+        // Les minuteries audio n'étaient pas nettoyées non plus : le battement
+        // BL continuait après la déconnexion.
+        if (this.blHeartbeatTimer) {
+            clearInterval(this.blHeartbeatTimer);
+            this.blHeartbeatTimer = null;
+        }
+        if (this.blSnoozeTimer) {
+            clearTimeout(this.blSnoozeTimer);
+            this.blSnoozeTimer = null;
+        }
+        this.blPending$.next(false);
         this.started = false;
         this.connectedUserId = null;
         this.lastListLoaded = false;
@@ -136,9 +176,19 @@ export class NotificationCenterService {
         });
         // Diagnostics visibles en console (DevTools) : permet de vérifier que le
         // socket AUTHENTIFIÉ se connecte bien (sinon : aucune notif temps réel).
-        this.socket.on('connect', () =>
-            console.log('[notif] socket temps réel connecté', this.socket?.id),
-        );
+        this.socket.on('connect', () => {
+            console.log('[notif] socket temps réel connecté', this.socket?.id);
+            // RATTRAPAGE. Tout ce qui a été émis pendant que le socket était
+            // coupé (coupure réseau, veille, redémarrage du back) n'a laissé
+            // AUCUNE trace côté client : les lignes existent en base, mais le
+            // push est perdu et rien ne les relisait. La cloche restait donc
+            // muette jusqu'à un changement d'onglet. On resynchronise à
+            // CHAQUE (re)connexion — même geste que le retour d'onglet.
+            this.zone.run(() => {
+                this.refreshUnreadCount();
+                if (this.lastListLoaded) this.loadList();
+            });
+        });
         this.socket.on('connect_error', (e: any) =>
             console.warn('[notif] socket connect_error:', e?.message ?? e),
         );
@@ -277,7 +327,19 @@ export class NotificationCenterService {
     }
 
     // ── GraphQL ──────────────────────────────────────────────────────────────
+
+    /**
+     * Y a-t-il une session ? Toutes les requêtes de la cloche sont
+     * AUTHENTIFIÉES : sans jeton, le lien Apollo omet l'en-tête `Authorization`
+     * et le serveur répond `UNAUTHENTICATED`. On s'abstient donc d'émettre —
+     * un onglet laissé ouvert après déconnexion ne doit pas pilonner l'API.
+     */
+    private get hasSession(): boolean {
+        return !!localStorage.getItem('token');
+    }
+
     refreshUnreadCount(): void {
+        if (!this.hasSession) return;
         this.apollo
             .query<any>({
                 query: gql`
@@ -296,6 +358,7 @@ export class NotificationCenterService {
 
     /** Chargé UNIQUEMENT à l'ouverture de la cloche (pas au démarrage). */
     loadList(limit = 20): void {
+        if (!this.hasSession) return;
         this.apollo
             .query<any>({
                 query: gql`

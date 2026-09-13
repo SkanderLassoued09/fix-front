@@ -6,12 +6,13 @@ import {
     AbstractControl,
 } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { Product } from 'src/app/demo/api/product';
 import { CompanyService } from 'src/app/demo/service/company.service';
 import { CompanyImportService } from 'src/app/demo/service/company-import.service';
 import { REGION } from '../../client/constant/region-constant';
 import { debounceTime, finalize, Subject, take } from 'rxjs';
+import { NotifyService } from '../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../shared/ui/confirm.service';
 
 interface Column {
     field: string;
@@ -199,8 +200,8 @@ export class CompanyListComponent {
     constructor(
         private apollo: Apollo,
         private companyService: CompanyService,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService,
+        private readonly notify: NotifyService,
+        private readonly confirm: ConfirmService,
         public companyImport: CompanyImportService,
     ) {
         this.region = REGION;
@@ -381,11 +382,7 @@ export class CompanyListComponent {
         const { unmapped, firstPath } = this.applyServerErrors(fieldMsgs);
         const toastMsgs = [...globalMsgs, ...unmapped];
         if (toastMsgs.length) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: toastMsgs.join(' · '),
-            });
+            this.notify.error(toastMsgs.join(' · '));
         }
         this.focusFirstError(firstPath ?? conflictPath);
     }
@@ -644,21 +641,15 @@ export class CompanyListComponent {
                         this.handleServerErrors(errors);
                         return;
                     }
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Succès',
-                        detail: 'La société modifiée avec succès',
-                    });
+                    this.notify.success('La société a été modifiée avec succès.');
                     this.loadData();
                     this.creationCompanyModalCondition = false; // onHide resets
                 },
                 error: () => {
                     this.loading = false;
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Erreur',
-                        detail: 'Erreur lors de la modification de la société',
-                    });
+                    this.notify.error(
+                        'Erreur lors de la modification de la société',
+                    );
                 },
             });
     }
@@ -715,18 +706,12 @@ export class CompanyListComponent {
                     if (loading) return;
                     this.deleting = false;
                     if (errors) {
-                        this.messageService.add({
-                            severity: 'error',
-                            summary: 'Erreur',
-                            detail: 'Erreur lors de la suppression de la société',
-                        });
+                        this.notify.error(
+                            'Erreur lors de la suppression de la société',
+                        );
                         return;
                     }
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Succès',
-                        detail: 'La société supprimée avec succès',
-                    });
+                    this.notify.success('La société a été supprimée avec succès.');
                     if (this.companiesList) {
                         this.companiesList = this.companiesList.filter(
                             (c: any) => c._id !== row._id,
@@ -738,11 +723,9 @@ export class CompanyListComponent {
                 },
                 error: () => {
                     this.deleting = false;
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Erreur',
-                        detail: 'Erreur lors de la suppression de la société',
-                    });
+                    this.notify.error(
+                        'Erreur lors de la suppression de la société',
+                    );
                 },
             });
     }
@@ -861,10 +844,8 @@ export class CompanyListComponent {
     }
 
     addCompany() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation création de société',
-            icon: 'pi pi-question-circle',
+        this.confirm.confirmCreate({
+            message: 'Voulez-vous créer cette société ?',
             accept: () => {
                 this.loading = true;
                 this.apollo
@@ -893,11 +874,9 @@ export class CompanyListComponent {
                                 return;
                             }
                             if (data) {
-                                this.messageService.add({
-                                    severity: 'success',
-                                    summary: 'Succès',
-                                    detail: 'La société ajoutée avec succès',
-                                });
+                                this.notify.success(
+                                    'La société ajoutée avec succès',
+                                );
                                 this.loadData();
                                 this.companyForm.reset();
                                 this.creationCompanyModalCondition = false;
@@ -905,11 +884,9 @@ export class CompanyListComponent {
                         },
                         error: () => {
                             this.loading = false;
-                            this.messageService.add({
-                                severity: 'error',
-                                summary: 'Erreur',
-                                detail: "Erreur lors de l'ajout de la société",
-                            });
+                            this.notify.error(
+                                "Erreur lors de l'ajout de la société",
+                            );
                         },
                     });
             },
@@ -966,11 +943,9 @@ export class CompanyListComponent {
                             this.findIndexById(this.companySelected._id)
                         ] = this.companySelected;
 
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Succès',
-                            detail: 'La société a été modifiée avec succès',
-                        });
+                        this.notify.success(
+                            'La société a été modifiée avec succès',
+                        );
                         this.CompanyModalCondition = false;
                         this.submitted = false;
                         this.loadData(); // Reload data after update
@@ -982,11 +957,7 @@ export class CompanyListComponent {
     saveUpdateServiceCompany(rowDataClient) {
         this.companySelected = { ...rowDataClient };
         this.detailsView = false;
-        this.messageService.add({
-            severity: 'success',
-            summary: 'Succès',
-            detail: 'La société a changé avec succès',
-        });
+        this.notify.success('La société a été modifiée avec succès.');
         this.loadData(); // Reload data after update
     }
 
@@ -1007,10 +978,8 @@ export class CompanyListComponent {
     }
 
     deleteSelectedCompany(rowData) {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous supprimer cette société?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmDelete({
+            message: 'Voulez-vous supprimer cette société ?',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -1024,12 +993,10 @@ export class CompanyListComponent {
                             });
                             this.companiesList.splice(index, 1);
 
-                            this.messageService.add({
-                                severity: 'success',
-                                summary: 'Supprimé',
-                                detail: `La société ${rowData.name} a été supprimée`,
-                                life: 3000,
-                            });
+                            this.notify.success(
+                                `La société ${rowData.name} a été supprimée`,
+                                { summary: 'Supprimé' },
+                            );
 
                             this.loadData(); // Reload data after delete
                         }

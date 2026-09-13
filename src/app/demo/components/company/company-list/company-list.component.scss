@@ -3,20 +3,20 @@
 //  Light ERP / SAV design aligned with DI and profile lists
 // ═══════════════════════════════════════════════════════
 
-$bg-page: #f1f5f9;
-$bg-card: #ffffff;
-$bg-surface: #f8fafc;
-$bg-row-hover: #f1f5f9;
-$bg-input: #ffffff;
-$border: #e2e8f0;
-$text-primary: #1e293b;
-$text-secondary: #64748b;
-$text-muted: #94a3b8;
+$bg-page: var(--fx-bg-page);
+$bg-card: var(--fx-bg-card);
+$bg-surface: var(--fx-bg-surface);
+$bg-row-hover: var(--fx-bg-hover);
+$bg-input: var(--fx-bg-input);
+$border: var(--fx-border);
+$text-primary: var(--fx-text-strong);
+$text-secondary: var(--fx-text-muted);
+$text-muted: var(--fx-text-subtle);
 $accent-blue: #2563eb;
-$accent-blue-hover: #1d4ed8;
+$accent-blue-hover: var(--fx-blue-strong);
 $white: #ffffff;
 $green: #16a34a;
-$red: #dc2626;
+$red: var(--fx-red-text);
 // Ambre du design system — accent du service Technique (remplace l'ancien
 // violet #7c3aed, hors palette).
 $amber: #b45309;
@@ -25,7 +25,9 @@ $amber: #b45309;
     background: $bg-page;
     min-height: 100vh;
     padding: 1.5rem 1.75rem;
-    font-family: "Segoe UI", system-ui, sans-serif;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
     color: $text-primary;
 }
 
@@ -50,7 +52,7 @@ $amber: #b45309;
     }
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 1.1rem;
     }
 }
@@ -61,9 +63,9 @@ $amber: #b45309;
 }
 
 ::ng-deep .sav-btn-new {
-    background: $accent-blue !important;
+    background: var(--fx-blue-strong) !important;
     border: none !important;
-    color: $white !important;
+    color: var(--fx-text-on-accent) !important;
     font-size: 0.82rem !important;
     padding: 0.45rem 1rem !important;
     border-radius: 6px !important;
@@ -117,7 +119,7 @@ $amber: #b45309;
     transition: border-color 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: none !important;
     }
 
@@ -192,9 +194,9 @@ $amber: #b45309;
         box-shadow 0.12s;
 
     &:hover {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         color: $text-primary !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
     }
 
@@ -205,20 +207,20 @@ $amber: #b45309;
 
     &--success:hover {
         border-color: rgba(22, 163, 74, 0.35) !important;
-        color: $green !important;
-        background: #f0fdf4 !important;
+        color: var(--fx-green-text) !important;
+        background: var(--fx-green-soft-bg) !important;
     }
 
     &--danger:hover {
         border-color: rgba(220, 38, 38, 0.35) !important;
         color: $red !important;
-        background: #fef2f2 !important;
+        background: var(--fx-red-soft-bg) !important;
     }
 
     &--info:hover {
         border-color: rgba(37, 99, 235, 0.35) !important;
-        color: $accent-blue !important;
-        background: #eff6ff !important;
+        color: var(--fx-blue-text) !important;
+        background: var(--fx-blue-soft-bg) !important;
     }
 }
 
@@ -244,7 +246,7 @@ $amber: #b45309;
 .sav-detail-service__title {
     font-size: 0.78rem;
     font-weight: 700;
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     margin-bottom: 0.4rem;
 }
 
@@ -269,20 +271,20 @@ $amber: #b45309;
 }
 
 ::ng-deep .company-EXONERATED {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
 
     &::before {
-        background: $green;
+        background: var(--fx-green);
     }
 }
 
 ::ng-deep .company-NORMAL {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
+    background: var(--fx-bg-surface-2) !important;
+    color: var(--fx-text-muted-strong) !important;
 
     &::before {
-        background: #94a3b8;
+        background: var(--fx-border-strong);
     }
 }
 
@@ -322,7 +324,7 @@ $amber: #b45309;
     padding: 0 !important;
 
     .p-paginator-element {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         color: $text-secondary !important;
         border-radius: 4px !important;
@@ -337,9 +339,9 @@ $amber: #b45309;
         }
 
         &.p-highlight {
-            background: $accent-blue !important;
-            border-color: $accent-blue !important;
-            color: $white !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 }
@@ -421,11 +423,11 @@ $amber: #b45309;
 }
 
 .service-achat {
-    border-left-color: $green;
+    border-left-color: var(--fx-green);
 }
 
 .service-financier {
-    border-left-color: $accent-blue;
+    border-left-color: var(--fx-blue-strong);
 }
 
 .service-technique {
@@ -468,7 +470,7 @@ $amber: #b45309;
     box-shadow: none !important;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: none !important;
     }
 }
@@ -539,7 +541,7 @@ $amber: #b45309;
    ═══════════════════════════════════════════════════════════════════════ */
 ::ng-deep .co-modal-dialog.p-dialog {
     border-radius: 18px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--fx-border);
     box-shadow: 0 18px 54px -18px rgba(15, 23, 42, 0.32);
     overflow: hidden;
     max-height: 92vh;
@@ -554,17 +556,17 @@ $amber: #b45309;
 }
 
 ::ng-deep .co-modal {
-    --c-border: #e2e8f0;
-    --c-border-soft: #eef2f6;
-    --c-ink: #0f172a;
-    --c-muted: #64748b;
+    --c-border: var(--fx-border);
+    --c-border-soft: var(--fx-border);
+    --c-ink: var(--fx-text);
+    --c-muted: var(--fx-text-muted);
     --c-faint: #94a3b8;
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     display: flex;
     flex-direction: column;
     width: 100%;
     max-height: 92vh;
-    background: #fff;
+    background: var(--fx-bg-card);
     color: var(--c-ink);
 
     * {
@@ -585,7 +587,7 @@ $amber: #b45309;
         gap: 16px;
         padding: 16px 24px;
         border-bottom: 1px solid var(--c-border-soft);
-        background: linear-gradient(180deg, #fff, #fbfcfe);
+        background: linear-gradient(180deg, var(--fx-bg-card), var(--fx-bg-surface));
         flex: none;
     }
     .co-head__left {
@@ -598,8 +600,8 @@ $amber: #b45309;
         width: 38px;
         height: 38px;
         border-radius: 10px;
-        background: #eff6ff;
-        color: #2563eb;
+        background: var(--fx-blue-soft-bg);
+        color: var(--fx-blue-text);
         display: grid;
         place-items: center;
         font-size: 18px;
@@ -619,24 +621,24 @@ $amber: #b45309;
     }
     .co-head__sub {
         font-size: 11.5px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         margin-top: 2px;
     }
     .co-head__close {
         width: 34px;
         height: 34px;
         border-radius: 9px;
-        border: 1px solid #e2e8f0;
-        background: #fff;
-        color: #64748b;
+        border: 1px solid var(--fx-border);
+        background: var(--fx-bg-card);
+        color: var(--fx-text-muted);
         display: grid;
         place-items: center;
         cursor: pointer;
         flex: none;
         transition: background 0.15s, border-color 0.15s;
         &:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
+            background: var(--fx-bg-surface);
+            border-color: var(--fx-border-strong);
         }
     }
 
@@ -663,7 +665,7 @@ $amber: #b45309;
         position: absolute;
         top: -8px;
         left: 14px;
-        background: #fff;
+        background: var(--fx-bg-card);
         padding: 0 6px;
         display: inline-flex;
         align-items: center;
@@ -672,16 +674,16 @@ $amber: #b45309;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.6px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         i {
             font-size: 12px;
         }
     }
     .co-section__legend--info i {
-        color: #2563eb;
+        color: var(--fx-blue-text);
     }
     .co-section__legend--users i {
-        color: #2563eb;
+        color: var(--fx-blue-text);
     }
 
     /* ── Grille + champs ── */
@@ -700,35 +702,35 @@ $amber: #b45309;
     .co-label {
         font-size: 11.5px;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--fx-text-strong);
         margin-bottom: 6px;
     }
     .co-req {
-        color: #dc2626;
+        color: var(--fx-red-text);
     }
     .co-input {
         width: 100%;
         padding: 10px 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
         font-size: 13.5px;
-        color: #0f172a;
-        background: #fff;
+        color: var(--fx-text);
+        background: var(--fx-bg-card);
         outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
         &::placeholder {
-            color: #b8c2cf;
+            color: var(--fx-text-subtle);
         }
         &:focus {
-            border-color: #3b82f6;
+            border-color: var(--fx-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
         }
     }
     /* Invalid field state + error message under the field. */
     .co-input--err {
-        border-color: #fecaca;
+        border-color: var(--fx-red-soft-bd);
         &:focus {
-            border-color: #dc2626;
+            border-color: var(--fx-red);
             box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.13);
         }
     }
@@ -736,7 +738,7 @@ $amber: #b45309;
         display: block;
         margin-top: 4px;
         font-size: 11px;
-        color: #dc2626;
+        color: var(--fx-red-text);
     }
 
     /* ── Cartes « Contacts par service » ── */
@@ -748,12 +750,12 @@ $amber: #b45309;
         flex-direction: column;
         gap: 9px;
         padding: 12px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 11px;
-        background: #fcfdff;
+        background: var(--fx-bg-surface);
         transition: border-color 0.15s;
         &:hover {
-            border-color: #cbd5e1;
+            border-color: var(--fx-border-strong);
         }
     }
     .co-service__head {
@@ -771,21 +773,21 @@ $amber: #b45309;
         flex: none;
     }
     .co-service[data-svc='achat'] .co-service__icon {
-        background: #ecfdf5;
-        color: #16a34a;
+        background: var(--fx-green-soft-bg);
+        color: var(--fx-green-text);
     }
     .co-service[data-svc='technique'] .co-service__icon {
-        background: #fffbeb;
-        color: #b45309;
+        background: var(--fx-amber-soft-bg);
+        color: var(--fx-amber-text);
     }
     .co-service[data-svc='financier'] .co-service__icon {
-        background: #eff6ff;
-        color: #2563eb;
+        background: var(--fx-blue-soft-bg);
+        color: var(--fx-blue-text);
     }
     .co-service__name {
         font-size: 13.5px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
     }
     .co-service__state {
         min-height: 24px;
@@ -796,13 +798,13 @@ $amber: #b45309;
     }
     .co-service__empty {
         font-size: 11px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
     }
     .co-chip {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: #f1f5f9;
+        background: var(--fx-bg-surface-2);
         border-radius: 99px;
         padding: 3px 4px 3px 9px;
         max-width: 100%;
@@ -810,7 +812,7 @@ $amber: #b45309;
     .co-chip__name {
         font-size: 11.5px;
         font-weight: 600;
-        color: #334155;
+        color: var(--fx-text-strong);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -821,7 +823,7 @@ $amber: #b45309;
         border-radius: 99px;
         border: none;
         background: transparent;
-        color: #64748b;
+        color: var(--fx-text-muted);
         display: grid;
         place-items: center;
         cursor: pointer;
@@ -831,8 +833,8 @@ $amber: #b45309;
             font-size: 9px;
         }
         &:hover {
-            background: #e2e8f0;
-            color: #dc2626;
+            background: var(--fx-bg-surface-2);
+            color: var(--fx-red-text);
         }
     }
     .co-service__add {
@@ -842,9 +844,9 @@ $amber: #b45309;
         gap: 5px;
         font-size: 12px;
         font-weight: 600;
-        color: #2563eb;
-        background: #fff;
-        border: 1px solid #e2e8f0;
+        color: var(--fx-blue-text);
+        background: var(--fx-bg-card);
+        border: 1px solid var(--fx-border);
         border-radius: 8px;
         padding: 6px 11px;
         cursor: pointer;
@@ -853,8 +855,8 @@ $amber: #b45309;
             font-size: 11px;
         }
         &:hover {
-            background: #eff6ff;
-            border-color: #cbd5e1;
+            background: var(--fx-blue-soft-bg);
+            border-color: var(--fx-border-strong);
         }
     }
 
@@ -862,34 +864,34 @@ $amber: #b45309;
     .co-editor {
         margin-top: 13px;
         padding: 14px;
-        border: 1px dashed #cbd5e1;
+        border: 1px dashed var(--fx-border-strong);
         border-radius: 11px;
-        background: #fafbfd;
+        background: var(--fx-bg-surface);
     }
     .co-editor__title {
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         margin-bottom: 10px;
     }
 
     /* ── Contrôles PrimeNG (dropdowns) ── */
     .p-dropdown {
         width: 100%;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
         .p-dropdown-label {
             padding: 10px 12px;
             font-size: 13.5px;
-            color: #0f172a;
+            color: var(--fx-text);
         }
         .p-dropdown-label.p-placeholder {
-            color: #b8c2cf;
+            color: var(--fx-text-subtle);
         }
         &:not(.p-disabled).p-focus {
-            border-color: #3b82f6;
+            border-color: var(--fx-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
         }
     }
@@ -902,7 +904,7 @@ $amber: #b45309;
         gap: 10px;
         padding: 14px 24px;
         border-top: 1px solid var(--c-border-soft);
-        background: #fafbfd;
+        background: var(--fx-bg-surface);
         flex: none;
     }
     .co-btn {
@@ -924,14 +926,14 @@ $amber: #b45309;
     }
     .co-btn--ghost {
         background: transparent;
-        color: #64748b;
+        color: var(--fx-text-muted);
         &:hover {
-            background: #f1f5f9;
+            background: var(--fx-bg-surface-2);
         }
     }
     .co-btn--primary {
-        color: #fff;
-        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: var(--fx-text-on-accent);
+        background: linear-gradient(135deg, var(--fx-green), var(--fx-green));
         box-shadow: 0 8px 18px -10px rgba(22, 163, 74, 0.7);
         &:hover:not(:disabled) {
             transform: translateY(-1px);
@@ -939,10 +941,10 @@ $amber: #b45309;
     }
     /* Édition → bleu (sauvegarde). Le vert reste réservé à la création. */
     .co-btn--save {
-        color: #fff;
-        background: #3b82f6;
+        color: var(--fx-text-on-accent);
+        background: var(--fx-blue);
         &:hover:not(:disabled) {
-            background: #2563eb;
+            background: var(--fx-blue-strong);
         }
     }
 
@@ -979,7 +981,7 @@ $amber: #b45309;
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     width: 100%;
     padding: 22px 22px 18px;
-    color: #0f172a;
+    color: var(--fx-text);
 
     * {
         box-sizing: border-box;
@@ -992,8 +994,8 @@ $amber: #b45309;
         width: 40px;
         height: 40px;
         border-radius: 10px;
-        background: #fef2f2;
-        color: #dc2626;
+        background: var(--fx-red-soft-bg);
+        color: var(--fx-red-text);
         display: grid;
         place-items: center;
         font-size: 18px;
@@ -1003,15 +1005,15 @@ $amber: #b45309;
         margin: 0 0 8px;
         font-size: 16px;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
     }
     .co-delete__body {
         margin: 0;
         font-size: 13px;
-        color: #64748b;
+        color: var(--fx-text-muted);
         line-height: 1.5;
         strong {
-            color: #0f172a;
+            color: var(--fx-text);
             font-weight: 700;
         }
     }
@@ -1021,9 +1023,9 @@ $amber: #b45309;
         gap: 7px;
         margin-top: 11px;
         font-size: 12px;
-        color: #b45309;
-        background: #fffbeb;
-        border: 1px solid #fde9c3;
+        color: var(--fx-amber-text);
+        background: var(--fx-amber-soft-bg);
+        border: 1px solid var(--fx-amber-soft-bd);
         border-radius: 9px;
         padding: 8px 11px;
     }
@@ -1057,16 +1059,16 @@ $amber: #b45309;
     }
     .co-btn--ghost {
         background: transparent;
-        color: #64748b;
+        color: var(--fx-text-muted);
         &:hover:not(:disabled) {
-            background: #f1f5f9;
+            background: var(--fx-bg-surface-2);
         }
     }
     .co-btn--danger {
-        color: #fff;
-        background: #dc2626;
+        color: var(--fx-text-on-accent);
+        background: var(--fx-red);
         &:hover:not(:disabled) {
-            background: #b91c1c;
+            background: var(--fx-red-strong);
         }
         &:focus-visible {
             box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.35);

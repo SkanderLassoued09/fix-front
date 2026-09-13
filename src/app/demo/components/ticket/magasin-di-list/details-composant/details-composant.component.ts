@@ -15,9 +15,10 @@ import { Apollo } from 'apollo-angular';
 import { ProductService } from 'src/app/demo/service/product.service';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { UpdateComposantMutationResponse } from '../magasin-di-list.interfaces';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
+import { NotifyService } from '../../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../../shared/ui/confirm.service';
 
 // TODO check type of these fields
 export interface Composant {
@@ -87,9 +88,9 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private apollo: Apollo,
         private readonly notificationService: NotificationService,
-        private readonly messageservice: MessageService,
+        private readonly notify: NotifyService,
         private readonly router: Router,
-        private confirmationService: ConfirmationService,
+        private readonly confirm: ConfirmService,
         private readonly mutationRunner: MutationRunner,
     ) {
         this._id = this.route.snapshot.paramMap.get('id');
@@ -152,13 +153,11 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                 next: ({ data, errors }) => {
                     const composant = data?.findOneComposant;
                     if (!composant) {
-                        this.messageservice.add({
-                            severity: 'warn',
-                            summary: 'Composant introuvable',
-                            detail:
-                                errors?.[0]?.message ||
+                        this.notify.error(
+                            errors?.[0]?.message ||
                                 `Le composant « ${selectedComposant} » n'existe pas dans le catalogue.`,
-                        });
+                            { summary: 'Composant introuvable' },
+                        );
                         return;
                     }
                     this.composantValues = composant;
@@ -181,13 +180,11 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                     this.formUpdateComposant.markAsPristine();
                 },
                 error: (error) => {
-                    this.messageservice.add({
-                        severity: 'error',
-                        summary: 'Erreur de chargement',
-                        detail:
-                            error?.message ||
+                    this.notify.error(
+                        error?.message ||
                             'Impossible de charger le composant.',
-                    });
+                        { summary: 'Erreur de chargement' },
+                    );
                 },
             });
     }
@@ -237,11 +234,9 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
 
     sentComponentToCoordinatorToConfirm() {
         const id = this._id;
-        this.confirmationService.confirm({
-            message:
-                'Envoyer les composants au coordinateur pour confirmation ?',
+        this.confirm.confirmSend({
+            message: 'Envoyer les composants au coordinateur pour confirmation ?',
             header: 'Envoyer au coordinateur',
-            icon: 'pi pi-send',
             accept: async () => {
                 try {
                     // Via MutationRunner : anti double-submit (clé), gestion
@@ -274,13 +269,10 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
                     if (err?.message === 'mutation-in-flight') return;
                     // ÉCHEC → toast avec le message serveur réel ; le modal RESTE
                     // ouvert (pas de fermeture aveugle).
-                    this.messageservice.add({
-                        severity: 'error',
-                        summary: 'Erreur',
-                        detail:
-                            err?.message ||
+                    this.notify.error(
+                        err?.message ||
                             "Échec de l'envoi au coordinateur. Réessayez.",
-                    });
+                    );
                 }
             },
         });
@@ -303,11 +295,9 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
             })
             .subscribe(({ data }) => {
                 if (data) {
-                     this.messageservice.add({
-                                    severity: 'info',
-                                    summary: 'Enregistrer',
-                                    detail: 'Les changements on été enregistrer',
-                                });
+                     this.notify.success(
+                         'Les modifications ont été enregistrées.',
+                     );
                     console.log('🥐[data]:', data);
                     // Update composantValues with the latest form values
                     Object.assign(
@@ -328,10 +318,8 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
     }
 
     changeStatusPending3() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous confirmer les changements',
-            header: 'Confirmation Liste des composants',
-            icon: 'pi pi-question-circle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer les modifications ?',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -397,10 +385,11 @@ export class DetailsComposantComponent implements OnInit, OnDestroy {
 
     // ── Handshake v2 : boutons pilotés par le STATUT (source de vérité) ──
     // Legacy INMAGASIN/CONFIRMATION_COMPOSANTS tolérés (DI pré-migration). Le
-    // flag `componentsAreConfirmed` sert de FILET pour les DI en RETOUR
-    // (ignoreCount > 0) : le back y avance les flags du logsDi et NON `di.status`
-    // (cohabitation), donc le statut ne passe jamais à MAGASIN_FINALISATION —
-    // sans ce filet, « Terminer » n'apparaîtrait jamais sur une DI renvoyée.
+    // back fait désormais avancer le STATUT dans TOUS les cycles, retour compris
+    // (CONFIRMATION → ATTENTE_CONFIRMATION_COORDINATION → MAGASIN_FINALISATION).
+    // Le flag `componentsAreConfirmed` ne reste qu'un FILET pour les DI en retour
+    // confirmées AVANT ce correctif (drapeaux du log posés, statut resté en
+    // CONFIRMATION) — sans lui, « Terminer » n'apparaîtrait jamais pour elles.
     /** Étape 1 — magasin prépare la liste → bouton « Envoyer au coordinateur ».
      *  Masqué dès que la coordination a confirmé (évite les deux boutons à la
      *  fois sur une DI en retour dont le statut reste en préparation). */

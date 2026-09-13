@@ -17,13 +17,13 @@ import {
     Validators,
 } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { MessageService } from 'primeng/api';
 import { DialogModule } from 'primeng/dialog';
 import { CalendarModule } from 'primeng/calendar';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { ReunionPvService } from 'src/app/demo/service/reunion-pv.service';
+import { NotifyService } from '../../../../../shared/ui/notify.service';
 
 /** Mode controls pre-fill + whether a DI/contexte-retour is attached. */
 export type ReunionPvModalMode = 'retour' | 'standalone';
@@ -107,7 +107,7 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
         private readonly fb: FormBuilder,
         private readonly apollo: Apollo,
         private readonly mutationRunner: MutationRunner,
-        private readonly toast: MessageService,
+        private readonly notify: NotifyService,
         private readonly profileService: ProfileService,
         private readonly reunionPvGql: ReunionPvService,
         private readonly cdr: ChangeDetectorRef,
@@ -179,12 +179,10 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
                 error: () => {
                     this.profilesLoading = false;
                     this.profilesError = true;
-                    this.toast.add({
-                        severity: 'warn',
-                        summary: 'Profils indisponibles',
-                        detail:
-                            'La liste des participants n’a pas pu être chargée. Réessayez.',
-                    });
+                    this.notify.error(
+                        'La liste des participants n’a pas pu être chargée. Réessayez.',
+                        { summary: 'Profils indisponibles' },
+                    );
                     this.cdr.markForCheck();
                 },
             });
@@ -230,11 +228,10 @@ export class ReunionPvModalComponent implements OnInit, OnChanges {
             return;
         }
         if (!this.currentUserId) {
-            this.toast.add({
-                severity: 'error',
-                summary: 'Auteur inconnu',
-                detail: 'Reconnectez-vous puis réessayez.',
-            });
+            this.notify.error(
+                'Reconnectez-vous puis réessayez.',
+                { summary: 'Auteur inconnu' },
+            );
             return;
         }
         const v = this.form.value;

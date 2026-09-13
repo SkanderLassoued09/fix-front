@@ -39,7 +39,9 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         </div>
 
         <div class="field field--full">
-          <label>Tests effectués</label>
+          <label>
+            Tests effectués <span class="req">*</span>
+          </label>
           <textarea
             class="sav-diag-textarea"
             rows="4"
@@ -107,8 +109,8 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        background: #e2e8f0;
-        color: #64748b;
+        background: var(--fx-bg-surface-2);
+        color: var(--fx-text-muted);
         font-weight: 700;
         font-size: 1.2rem;
         flex-shrink: 0;
@@ -117,14 +119,14 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         margin: 0;
         font-size: 1.3rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
         letter-spacing: -0.015em;
         line-height: 1.2;
       }
       .step__head p {
         margin: 0.3rem 0 0;
         font-size: 0.95rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
         line-height: 1.35;
       }
 
@@ -138,33 +140,33 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
       .field label {
         font-size: 0.95rem;
         font-weight: 650;
-        color: #334155;
+        color: var(--fx-text-strong);
         margin-bottom: 0.5rem;
       }
-      .req { color: #ef4444; margin-left: 0.15rem; }
+      .req { color: var(--fx-red-text); margin-left: 0.15rem; }
       .sav-diag-textarea {
         width: 100%;
         padding: 0.95rem 1.05rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
         font-size: 0.98rem;
         font-family: inherit;
         resize: vertical;
-        color: #0f172a;
-        background: #ffffff;
+        color: var(--fx-text);
+        background: var(--fx-bg-card);
         line-height: 1.5;
         transition: border-color 120ms ease, box-shadow 120ms ease;
       }
       .sav-diag-textarea:focus {
         outline: none;
-        border-color: #3b82f6;
+        border-color: var(--fx-blue);
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
       }
       .counter {
         align-self: flex-end;
         margin-top: 0.35rem;
         font-size: 0.82rem;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
       }
 
       .toggles {
@@ -178,9 +180,9 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         justify-content: space-between;
         gap: 0.75rem;
         padding: 1rem 1.1rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 10px;
-        background: #f8fafc;
+        background: var(--fx-bg-surface);
       }
       .toggle__label {
         display: inline-flex;
@@ -188,9 +190,9 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         gap: 0.55rem;
         font-size: 0.95rem;
         font-weight: 650;
-        color: #0f172a;
+        color: var(--fx-text);
       }
-      .toggle__label i { color: #64748b; font-size: 1rem; }
+      .toggle__label i { color: var(--fx-text-muted); font-size: 1rem; }
       .toggle__group {
         display: inline-flex;
         gap: 0.4rem;
@@ -199,24 +201,24 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         min-width: 60px;
         padding: 0.55rem 0.9rem;
         border-radius: 7px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
+        border: 1px solid var(--fx-border);
+        background: var(--fx-bg-card);
         font-size: 0.9rem;
         font-weight: 650;
-        color: #475569;
+        color: var(--fx-text-muted);
         cursor: pointer;
         transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
       }
-      .toggle__btn:hover { background: #f1f5f9; }
+      .toggle__btn:hover { background: var(--fx-bg-surface-2); }
       .toggle__btn--on {
         background: rgba(34, 197, 94, 0.12);
         border-color: rgba(34, 197, 94, 0.45);
-        color: #15803d;
+        color: var(--fx-green-soft-fg);
       }
       .toggle__btn--off {
         background: rgba(239, 68, 68, 0.1);
         border-color: rgba(239, 68, 68, 0.4);
-        color: #b91c1c;
+        color: var(--fx-red-soft-fg);
       }
 
       .tip {
@@ -227,7 +229,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         background: rgba(59, 130, 246, 0.08);
         border: 1px solid rgba(59, 130, 246, 0.2);
         border-radius: 10px;
-        color: #1d4ed8;
+        color: var(--fx-blue-soft-fg);
       }
       .tip i { font-size: 1.2rem; margin-top: 0.1rem; }
       .tip strong { display: block; font-size: 0.98rem; font-weight: 700; }
@@ -235,7 +237,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         display: block;
         margin-top: 0.25rem;
         font-size: 0.9rem;
-        color: #334155;
+        color: var(--fx-text-strong);
         line-height: 1.5;
       }
 

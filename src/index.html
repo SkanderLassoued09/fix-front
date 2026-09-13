@@ -15,16 +15,53 @@
             href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
             rel="stylesheet"
         />
+        <link rel="manifest" href="manifest.webmanifest" />
+        <meta name="theme-color" content="#1976d2" />
+        <!-- Seule source du thème PrimeNG : LayoutService.replaceThemeLink() échange
+             ce href à l'exécution. Ne JAMAIS rebundler un thème via angular.json ou
+             styles.scss — le bundle est injecté après ce lien et gagnerait la cascade,
+             rendant le changement de thème silencieusement sans effet. -->
         <link
             id="theme-css"
             rel="stylesheet"
             type="text/css"
-            href="assets/layout/styles/theme/lara-light-indigo/theme.css"
+            href="assets/layout/styles/theme/lara-light-blue/theme.css"
         />
-        <link rel="manifest" href="manifest.webmanifest" />
-        <meta name="theme-color" content="#1976d2" />
-        <link rel="manifest" href="manifest.webmanifest" />
-        <meta name="theme-color" content="#1976d2" />
+        <!-- Applique le mode sombre AVANT le premier rendu : sans cela la page
+             peint en clair puis bascule (flash blanc). Doit rester après le lien
+             #theme-css (il est lu ici) et avant le bundle Angular. -->
+        <script>
+            (function () {
+                try {
+                    // Doit rester aligne sur FOLLOW_SYSTEM_COLOR_SCHEME dans
+                    // app.layout.service.ts. A false tant que le bouton de
+                    // bascule est masque : sans bouton, suivre le systeme
+                    // enfermerait l'utilisateur en mode sombre.
+                    var followSystem = false;
+                    var stored = localStorage.getItem('fx-color-scheme');
+                    var dark =
+                        stored === 'dark' ||
+                        (followSystem &&
+                            stored !== 'light' &&
+                            window.matchMedia &&
+                            window.matchMedia('(prefers-color-scheme: dark)')
+                                .matches);
+                    if (!dark) return;
+                    document.documentElement.classList.add('app-dark');
+                    var link = document.getElementById('theme-css');
+                    if (link) {
+                        link.setAttribute(
+                            'href',
+                            'assets/layout/styles/theme/lara-dark-blue/theme.css'
+                        );
+                    }
+                    var meta = document.querySelector('meta[name="theme-color"]');
+                    if (meta) meta.setAttribute('content', '#111827');
+                } catch (e) {
+                    /* localStorage indisponible (navigation privée) : on reste en clair. */
+                }
+            })();
+        </script>
     </head>
 
     <body>

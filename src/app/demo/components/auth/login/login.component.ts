@@ -2,12 +2,12 @@ import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Apollo } from 'apollo-angular';
-import { MessageService } from 'primeng/api';
 import { ProfileService } from 'src/app/demo/service/profile.service';
 import { SessionService } from 'src/app/demo/service/session.service';
 import { NotificationCenterService } from 'src/app/demo/service/notification-center.service';
 import { LayoutService } from 'src/app/layout/service/app.layout.service';
 import { landingRouteForRole } from 'src/app/shared/landing-route';
+import { NotifyService } from '../../../../shared/ui/notify.service';
 
 interface LoginMutationResponse {
     login: {
@@ -49,11 +49,11 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 padding: 24px;
                 background: radial-gradient(
                     1200px 600px at 50% -10%,
-                    #eaf0fb 0%,
-                    #f1f5f9 55%,
-                    #eef2f6 100%
+                    var(--fx-blue-soft-bg) 0%,
+                    var(--fx-bg-surface-2) 55%,
+                    var(--fx-bg-page) 100%
                 );
-                color: #1e293b;
+                color: var(--fx-text-strong);
                 -webkit-font-smoothing: antialiased;
             }
             .fx-login__wrap {
@@ -61,8 +61,8 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 max-width: 400px;
             }
             .fx-login__card {
-                background: #fff;
-                border: 1px solid #e2e8f0;
+                background: var(--fx-bg-card);
+                border: 1px solid var(--fx-border);
                 border-radius: 18px;
                 overflow: hidden;
                 box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
@@ -73,8 +73,8 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 align-items: center;
                 gap: 10px;
                 padding: 30px 26px 22px;
-                border-bottom: 1px solid #eef2f6;
-                background: linear-gradient(180deg, #f8fafc, #fff);
+                border-bottom: 1px solid var(--fx-border);
+                background: linear-gradient(180deg, var(--fx-bg-surface), var(--fx-bg-card));
             }
             .fx-login__logo {
                 height: 46px;
@@ -82,7 +82,7 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
             }
             .fx-login__tag {
                 font-size: 13px;
-                color: #64748b;
+                color: var(--fx-text-muted);
             }
             .fx-login__body {
                 padding: 24px 26px 28px;
@@ -94,14 +94,14 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 gap: 10px;
                 padding: 12px 13px;
                 border-radius: 11px;
-                background: #fffbeb;
-                border: 1px solid #fde68a;
+                background: var(--fx-amber-soft-bg);
+                border: 1px solid var(--fx-amber-soft-bd);
                 margin-bottom: 20px;
             }
             .fx-alert__ico {
                 flex: none;
                 margin-top: 1px;
-                color: #d97706;
+                color: var(--fx-amber-text);
                 font-size: 1rem;
             }
             .fx-alert__body {
@@ -111,12 +111,12 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
             .fx-alert__title {
                 font-size: 12.5px;
                 font-weight: 700;
-                color: #b45309;
+                color: var(--fx-amber-text);
             }
             .fx-alert__text {
                 font-size: 12px;
                 line-height: 1.45;
-                color: #92702a;
+                color: var(--fx-amber-soft-fg);
                 margin-top: 2px;
             }
             .fx-alert__text strong {
@@ -128,7 +128,7 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 flex: none;
                 border: none;
                 background: transparent;
-                color: #c79653;
+                color: var(--fx-amber-text);
                 cursor: pointer;
                 border-radius: 6px;
                 display: flex;
@@ -140,7 +140,7 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 font-size: 0.72rem;
             }
             .fx-alert__close:hover {
-                background: #fef3c7;
+                background: var(--fx-amber-soft-bg-2);
             }
 
             /* Form */
@@ -156,16 +156,16 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
             .fx-label {
                 font-size: 12.5px;
                 font-weight: 600;
-                color: #334155;
+                color: var(--fx-text-strong);
                 margin-bottom: 7px;
             }
             .fx-input,
             .fx-pw {
                 width: 100%;
                 height: 46px;
-                border: 1.5px solid #e2e8f0;
+                border: 1.5px solid var(--fx-border);
                 border-radius: 11px;
-                background: #f8fafc;
+                background: var(--fx-bg-surface);
                 transition: border-color 0.15s, background 0.15s,
                     box-shadow 0.15s;
             }
@@ -173,15 +173,15 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 padding: 0 14px;
                 font-size: 14.5px;
                 font-family: inherit;
-                color: #1e293b;
+                color: var(--fx-text-strong);
                 outline: none;
             }
             .fx-input::placeholder {
-                color: #94a3b8;
+                color: var(--fx-text-subtle);
             }
             .fx-input:focus {
-                border-color: #2563eb;
-                background: #fff;
+                border-color: var(--fx-blue-strong);
+                background: var(--fx-bg-card);
                 box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
             }
             .fx-pw {
@@ -191,8 +191,8 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 padding: 0 14px;
             }
             .fx-pw:focus-within {
-                border-color: #2563eb;
-                background: #fff;
+                border-color: var(--fx-blue-strong);
+                background: var(--fx-bg-card);
                 box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
             }
             .fx-pw__input {
@@ -203,10 +203,10 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 background: transparent;
                 font-size: 14.5px;
                 font-family: inherit;
-                color: #1e293b;
+                color: var(--fx-text-strong);
             }
             .fx-pw__input::placeholder {
-                color: #94a3b8;
+                color: var(--fx-text-subtle);
                 letter-spacing: normal;
             }
             .fx-pw__input--masked {
@@ -215,7 +215,7 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
             .fx-pw__toggle {
                 border: none;
                 background: transparent;
-                color: #94a3b8;
+                color: var(--fx-text-subtle);
                 cursor: pointer;
                 padding: 4px;
                 display: flex;
@@ -225,7 +225,7 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 font-size: 1rem;
             }
             .fx-pw__toggle:hover {
-                color: #334155;
+                color: var(--fx-text-strong);
             }
 
             /* Submit */
@@ -234,8 +234,8 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 height: 48px;
                 border: none;
                 border-radius: 12px;
-                background: #2563eb;
-                color: #fff;
+                background: var(--fx-blue-strong);
+                color: var(--fx-text-on-accent);
                 font-size: 15px;
                 font-weight: 700;
                 font-family: inherit;
@@ -247,12 +247,12 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 transition: background 0.15s, box-shadow 0.15s;
             }
             .fx-submit:hover:not(:disabled) {
-                background: #1d4ed8;
+                background: var(--fx-blue-strong);
             }
             .fx-submit:disabled,
             .fx-submit--loading {
                 cursor: wait;
-                background: #93b4f5;
+                background: var(--fx-blue-soft-bg-2);
                 box-shadow: none;
             }
             .fx-spinner {
@@ -260,7 +260,7 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
                 height: 17px;
                 border-radius: 50%;
                 border: 2.4px solid rgba(255, 255, 255, 0.45);
-                border-top-color: #fff;
+                border-top-color: var(--fx-bg-card);
                 display: inline-block;
                 animation: fx-spin 0.7s linear infinite;
             }
@@ -274,11 +274,11 @@ const ACCOUNT_ALREADY_CONNECTED = 'ACCOUNT_ALREADY_CONNECTED';
             .fx-help {
                 text-align: center;
                 font-size: 12.5px;
-                color: #94a3b8;
+                color: var(--fx-text-subtle);
                 margin-top: 20px;
             }
             .fx-help__link {
-                color: #2563eb;
+                color: var(--fx-blue-text);
                 font-weight: 600;
                 cursor: pointer;
             }
@@ -310,7 +310,7 @@ export class LoginComponent {
         private apollo: Apollo,
         private router: Router,
         public layoutService: LayoutService,
-        private readonly messageservice: MessageService,
+        private readonly notify: NotifyService,
         private readonly sessionService: SessionService,
         private readonly notificationCenter: NotificationCenterService,
     ) {}
@@ -399,10 +399,6 @@ export class LoginComponent {
             this.blockedUsername = attemptedUsername ?? '';
             return;
         }
-        this.messageservice.add({
-            severity: 'error',
-            summary: 'Login',
-            detail: 'Authentification incorrect',
-        });
+        this.notify.error('Identifiants incorrects.');
     }
 }

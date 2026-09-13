@@ -12,6 +12,7 @@
  */
 
 import { FormGroup } from '@angular/forms';
+import { TreeNode } from 'primeng/api';
 
 /** Five-step wizard keys. Used for typed Output emissions + stepper state. */
 export type DiagnosticStepKey =
@@ -80,11 +81,6 @@ export interface DiagnosticDiSummary {
   readonly imageViewUrl?: string;
 }
 
-export interface ComposantOption {
-  readonly _id: string;
-  readonly name: string;
-}
-
 export interface CategoryOption {
   readonly _id: string;
   readonly category: string;
@@ -93,6 +89,29 @@ export interface CategoryOption {
 export interface ComposantEntry {
   readonly nameComposant: string;
   readonly quantity: number;
+}
+
+/**
+ * Diagnostic d'un cycle ANTÉRIEUR, affiché en lecture seule sur un retour.
+ *
+ * Lu sur la ligne `logsdis` de CE cycle, sans repli sur la DI : la DI est le
+ * miroir du cycle courant, remis à zéro à l'entrée du retour. Une valeur
+ * absente vaut `null` et s'affiche « Non renseigné ».
+ */
+export interface DiagnosticPreviousCycle {
+  /** 0 = flux original, 1..3 = retour n. */
+  readonly cycle: number;
+  readonly label: string;
+  /** Id BRUT de la catégorie du cycle. Le libellé est résolu à l'affichage :
+   *  les catégories arrivent en asynchrone, souvent APRÈS ce calcul. */
+  readonly categoryId: string | null;
+  readonly reparable: boolean | null;
+  readonly pdr: boolean | null;
+  /** Question posée aux seuls cycles retour — toujours `null` au cycle 0. */
+  readonly errorFromFixtronix: boolean | null;
+  readonly composants: readonly ComposantEntry[];
+  readonly remarqueDiagnostic: string;
+  readonly remarqueReparation: string;
 }
 
 /**
@@ -109,11 +128,26 @@ export interface DiagnosticContext {
   readonly isReperable: boolean;
   readonly isErrorFromFixtronix: boolean;
   readonly composantCombo: readonly ComposantEntry[];
-  readonly composantOptions: readonly ComposantOption[];
+  /**
+   * Arbre « Catégorie → Composant » du picker (étape 3).
+   *
+   * ⚠️ À ne pas confondre avec `categories` juste en dessous, qui est la
+   * catégorie de la DI (`di_category_id`, étape 2) — deux référentiels
+   * DIFFÉRENTS qui portaient jusqu'ici des noms trop proches.
+   */
+  readonly composantNodes: readonly TreeNode[];
+  /** Chargement de l'arbre / d'une branche en cours. */
+  readonly composantTreeLoading: boolean;
+  /** Recherche serveur en vol (≥ 2 caractères saisis). */
+  readonly composantSearching: boolean;
+  /** Catégories de DI — étape « Panne », PAS le picker de composants. */
   readonly categories: readonly CategoryOption[];
   readonly disabledFinish: boolean;
   readonly disabledRetour: boolean;
   readonly retourSendFinished: boolean;
+  /** Diagnostics des cycles antérieurs, du plus récent au plus ancien. Vide
+   *  hors retour. Lecture seule : rien n'en est repris dans le formulaire. */
+  readonly previousCycles: readonly DiagnosticPreviousCycle[];
 }
 
 /** Autosave hint shown in the footer — derived from form pristine/dirty + last persisted time. */

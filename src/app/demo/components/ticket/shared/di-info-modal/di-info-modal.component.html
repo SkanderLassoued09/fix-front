@@ -115,6 +115,19 @@
                 </div>
             </div>
 
+            <!-- Données RECONSTITUÉES : ce cycle est antérieur à la séparation
+                 des flux, ses valeurs d'origine avaient déjà été écrasées. On
+                 le dit — une donnée déduite ne doit jamais passer pour une
+                 donnée observée. -->
+            <div class="di-cycle-note" *ngIf="cycleIsReconstructed">
+                <i class="pi pi-info-circle"></i>
+                <span>
+                    Dossier de ce cycle <strong>reconstitué</strong> — antérieur
+                    à la séparation des flux. Les champs indisponibles sont
+                    affichés « non renseigné pour ce cycle ».
+                </span>
+            </div>
+
             <!-- Onglets — « Dossier » porte le contenu historique, inchangé.
                  Masqués à l'impression : le PDF déplie tout. -->
             <nav class="di-tabs no-print" role="tablist">
@@ -362,47 +375,201 @@
                         <div class="di-desc">{{ di?.description }}</div>
                     </section>
 
-                    <!-- Composants -->
+                    <!-- Composants — une CARTE par composant : toutes les
+                         données du catalogue (statut, prix, arrivage, stock,
+                         fiche, lien) jointes par NOM. -->
                     <section
                         class="di-sec avoid-break"
-                        *ngIf="activeComposants.length"
+                        *ngIf="composantLines.length"
                     >
                         <div class="di-label di-label--inline">
                             Composants
                             <span class="di-pill">{{
-                                activeComposants.length
+                                composantLines.length
                             }}</span>
                             <span
                                 class="di-origin"
                                 *ngIf="originLabel('array_composants') as o"
                                 >{{ o }}</span
                             >
+                            <span class="di-origin" *ngIf="catalogLoading"
+                                >catalogue en cours…</span
+                            >
                         </div>
                         <div class="di-comp">
-                            <div class="di-comp__head">
-                                <span>Composant</span>
-                                <span class="di-comp__qty">Qté</span>
-                            </div>
-                            <div
-                                class="di-comp__row"
-                                *ngFor="let c of activeComposants"
+                            <article
+                                class="di-comp__card"
+                                *ngFor="
+                                    let c of composantLines;
+                                    trackBy: trackComposantLine
+                                "
+                                [class.di-comp__card--orphan]="!c.found"
                             >
-                                <span class="di-comp__name">
+                                <header class="di-comp__card-head">
                                     <span class="di-comp__ico">
                                         <i class="pi pi-box"></i>
                                     </span>
-                                    {{ c.nameComposant || "—" }}
-                                </span>
-                                <span class="di-comp__qty">{{
-                                    c.quantity ?? 0
-                                }}</span>
+                                    <div class="di-comp__id">
+                                        <div class="di-comp__name">
+                                            {{ c.name || "—" }}
+                                        </div>
+                                        <div
+                                            class="di-comp__sub"
+                                            *ngIf="c.found"
+                                        >
+                                            <span>{{ c.package || "—" }}</span>
+                                            <span class="di-comp__sep">·</span>
+                                            <span>{{
+                                                composantCategoryLabel(c)
+                                            }}</span>
+                                            <ng-container *ngIf="c.ref">
+                                                <span class="di-comp__sep"
+                                                    >·</span
+                                                >
+                                                <span class="di-mono"
+                                                    >Réf. {{ c.ref }}</span
+                                                >
+                                            </ng-container>
+                                        </div>
+                                    </div>
+                                    <span
+                                        class="di-comp__status"
+                                        [attr.data-status]="
+                                            statusComposantKey(c)
+                                        "
+                                        >{{ statusComposantLabel(c) }}</span
+                                    >
+                                </header>
+
+                                <div class="di-comp__kv">
+                                    <div class="di-comp__cell">
+                                        <span>Qté demandée</span>
+                                        <strong class="di-mono">{{
+                                            c.quantity
+                                        }}</strong>
+                                    </div>
+                                    <div class="di-comp__cell">
+                                        <span>Stock</span>
+                                        <strong>
+                                            <span
+                                                class="di-comp__stock"
+                                                *ngIf="
+                                                    c.stock !== null;
+                                                    else stockInconnu
+                                                "
+                                                [attr.data-health]="
+                                                    stockHealthOf(c)
+                                                "
+                                            >
+                                                <i
+                                                    class="di-comp__stock-dot"
+                                                ></i
+                                                >{{ stockLabelOf(c) }}
+                                            </span>
+                                            <ng-template #stockInconnu
+                                                >—</ng-template
+                                            >
+                                        </strong>
+                                    </div>
+                                    <div class="di-comp__cell">
+                                        <span>Date d'arrivage</span>
+                                        <strong>{{
+                                            comingDateLabel(c)
+                                        }}</strong>
+                                    </div>
+                                    <div class="di-comp__cell">
+                                        <span>PU achat</span>
+                                        <strong class="di-mono">{{
+                                            fmtMoney(c.prixAchat)
+                                        }}</strong>
+                                    </div>
+                                    <div class="di-comp__cell">
+                                        <span>PU vente</span>
+                                        <strong class="di-mono">{{
+                                            fmtMoney(c.prixVente)
+                                        }}</strong>
+                                    </div>
+                                    <div
+                                        class="di-comp__cell di-comp__cell--total"
+                                    >
+                                        <span>Total ligne</span>
+                                        <strong class="di-mono">{{
+                                            fmtMoney(c.lineTotal)
+                                        }}</strong>
+                                    </div>
+                                </div>
+
+                                <footer
+                                    class="di-comp__card-foot"
+                                    *ngIf="c.pdf || c.link || c.isUpdated"
+                                >
+                                    <a
+                                        class="di-doc"
+                                        *ngIf="c.pdf"
+                                        [href]="composantPdfHref(c)"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <span class="di-doc__ico">
+                                            <i class="pi pi-file-pdf"></i>
+                                        </span>
+                                        <span class="di-doc__name"
+                                            >Fiche technique</span
+                                        >
+                                    </a>
+                                    <a
+                                        class="di-doc"
+                                        *ngIf="c.link"
+                                        [href]="c.link"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <span class="di-doc__ico">
+                                            <i class="pi pi-external-link"></i>
+                                        </span>
+                                        <span class="di-doc__name"
+                                            >Lien fournisseur</span
+                                        >
+                                    </a>
+                                    <span
+                                        class="di-comp__flag"
+                                        *ngIf="c.isUpdated"
+                                    >
+                                        <i class="pi pi-check"></i> Traité par
+                                        le magasin
+                                    </span>
+                                </footer>
+
+                                <p
+                                    class="di-comp__orphan"
+                                    *ngIf="!c.found && !catalogLoading"
+                                >
+                                    Composant absent du catalogue : seuls le nom
+                                    saisi sur le dossier et la quantité sont
+                                    connus.
+                                </p>
+                            </article>
+
+                            <div class="di-comp__total">
+                                <span
+                                    >Total composants ·
+                                    {{ selectedCycleLabel }}</span
+                                >
+                                <strong class="di-mono">{{
+                                    fmtMoney(composantLinesTotal)
+                                }}</strong>
                             </div>
                         </div>
+                        <p class="di-comp__note" *ngIf="composantLinesPartial">
+                            Total calculé sur {{ composantLinesPriced }} ligne(s)
+                            sur {{ composantLines.length }} — les autres n'ont
+                            pas de prix de vente au catalogue.
+                        </p>
                     </section>
 
                     <section
                         class="di-sec avoid-break"
-                        *ngIf="!activeComposants.length"
+                        *ngIf="!composantLines.length"
                     >
                         <div class="di-label">Composants</div>
                         <p class="di-empty">Aucun composant pour ce cycle.</p>
@@ -1095,90 +1262,6 @@
             </ng-container>
 
             <!-- ══════════ ONGLET 2 — JOURNAL ══════════ -->
-            <ng-container *ngIf="activeTab === 'journal'">
-                <section class="di-sec">
-                    <div class="di-label di-label--inline">
-                        Journal du dossier
-                        <span class="di-pill">{{ journalRows.length }}</span>
-                    </div>
-                    <p class="di-note">
-                        Chaque transition de statut enregistrée, fusionnée avec le
-                        journal ERP qui porte l'acteur de chaque action.
-                    </p>
-
-                    <div class="di-chips" *ngIf="journalCodes.length > 1">
-                        <button
-                            type="button"
-                            class="di-chip"
-                            [class.di-chip--active]="!journalFilter"
-                            (click)="setJournalFilter('')"
-                        >
-                            Tout
-                        </button>
-                        <button
-                            type="button"
-                            class="di-chip"
-                            *ngFor="let c of journalCodes"
-                            [class.di-chip--active]="journalFilter === c"
-                            (click)="setJournalFilter(c)"
-                        >
-                            {{ c }}
-                        </button>
-                    </div>
-
-                    <div class="di-loading" *ngIf="journalLoading">
-                        <i class="pi pi-spin pi-spinner"></i> Chargement du journal…
-                    </div>
-
-                    <ol class="di-journal" *ngIf="journalRows.length; else noJournal">
-                        <li
-                            class="di-jrow"
-                            *ngFor="let r of journalRows; let i = index"
-                            [attr.data-kind]="r.kind"
-                        >
-                            <span class="di-jrow__dot"></span>
-                            <div class="di-jrow__body">
-                                <div class="di-jrow__top">
-                                    <span class="di-jrow__label">{{ r.label }}</span>
-                                    <code class="di-jrow__code">{{ r.code }}</code>
-                                    <span class="di-jrow__cycle" *ngIf="r.cycle">
-                                        Retour {{ r.cycle }}
-                                    </span>
-                                </div>
-                                <div class="di-jrow__meta">
-                                    <span class="di-mono">{{ r.date || "—" }}</span>
-                                    <span *ngIf="r.actor">
-                                        · par {{ displayName(r.actor) }}
-                                        <ng-container *ngIf="r.actorRole"
-                                            >({{ r.actorRole }})</ng-container
-                                        >
-                                    </span>
-                                    <button
-                                        type="button"
-                                        class="di-jrow__more"
-                                        *ngIf="r.details"
-                                        (click)="toggleJournalRow(i)"
-                                    >
-                                        {{ journalOpen.has(i) ? "Masquer" : "Détails" }}
-                                    </button>
-                                </div>
-                                <pre
-                                    class="di-jrow__payload"
-                                    *ngIf="r.details && journalOpen.has(i)"
-                                    >{{ r.details }}</pre
-                                >
-                            </div>
-                        </li>
-                    </ol>
-                    <ng-template #noJournal>
-                        <p class="di-empty" *ngIf="!journalLoading">
-                            Aucun événement enregistré pour ce dossier.
-                        </p>
-                    </ng-template>
-                </section>
-            </ng-container>
-
-            <!-- ══════════ ONGLET 3 — TEMPS &amp; CHRONO ══════════ -->
             <ng-container *ngIf="activeTab === 'temps'">
                 <div class="di-loading" *ngIf="timeLoading">
                     <i class="pi pi-spin pi-spinner"></i> Chargement du journal de travail…

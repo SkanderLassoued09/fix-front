@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { DIAG_STEP_STYLES } from './diagnostic-step.styles';
 
 /**
  * Step 4 · Validation — three decision toggles:
@@ -19,7 +20,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
   template: `
     <div class="step" [formGroup]="form">
       <header class="step__head">
-        <span class="step__num">4</span>
+        <span class="step__num">{{ stepNumber }}</span>
         <div>
           <h3>Validation</h3>
           <p>Validez les décisions clés avant de soumettre le diagnostic.</p>
@@ -54,24 +55,8 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
     </div>
   `,
   styles: [
+    DIAG_STEP_STYLES,
     `
-      :host { display: block; }
-      .step { padding: 1.25rem 1.5rem; }
-      .step__head { display: flex; align-items: flex-start; gap: 0.7rem; margin-bottom: 1.1rem; }
-      .step__num {
-        display: inline-grid;
-        place-items: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: #e2e8f0;
-        color: #64748b;
-        font-weight: 700;
-        font-size: 0.92rem;
-        flex-shrink: 0;
-      }
-      .step__head h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
-      .step__head p { margin: 0.15rem 0 0; font-size: 0.82rem; color: #64748b; }
 
       .decisions { display: flex; flex-direction: column; gap: 0.6rem; }
       .decision {
@@ -80,24 +65,24 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         justify-content: space-between;
         gap: 1rem;
         padding: 0.85rem 1rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--fx-bg-card);
         cursor: pointer;
         transition: border-color 120ms ease, background 120ms ease;
       }
-      .decision:hover { border-color: #cbd5e1; }
+      .decision:hover { border-color: var(--fx-border-strong); }
       .decision__copy strong {
         display: block;
         font-size: 0.86rem;
         font-weight: 650;
-        color: #0f172a;
+        color: var(--fx-text);
       }
       .decision__copy span {
         display: block;
         margin-top: 0.18rem;
         font-size: 0.76rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
       }
 
       /* Pure-CSS toggle switch — no PrimeNG dep needed, OnPush-safe */
@@ -107,7 +92,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         position: relative;
         width: 38px;
         height: 22px;
-        background: #cbd5e1;
+        background: var(--fx-border-strong);
         border-radius: 999px;
         cursor: pointer;
         transition: background 140ms ease;
@@ -120,21 +105,23 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
         left: 2px;
         width: 18px;
         height: 18px;
-        background: #ffffff;
+        background: var(--fx-bg-card);
         border-radius: 50%;
         transition: transform 140ms ease;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.15);
       }
-      .switch:checked { background: #22c55e; }
+      .switch:checked { background: var(--fx-green); }
       .switch:checked::after { transform: translateX(16px); }
       /* Disabled (e.g. PDR when the DI is non-réparable) — greyed + locked. */
-      .switch:disabled { opacity: 0.45; cursor: not-allowed; background: #cbd5e1; }
+      .switch:disabled { opacity: 0.45; cursor: not-allowed; background: var(--fx-border-strong); }
       .switch:disabled::after { box-shadow: none; }
     `,
   ],
 })
 export class DiagnosticValidationStepComponent {
   @Input({ required: true }) form!: FormGroup;
+  /** Numéro affiché — vient du MÊME tableau `steps` que le stepper de gauche. */
+  @Input() stepNumber = 0;
   /** Only meaningful on retour cycles — parent toggles this based on ignoreCount. */
   @Input() showErrorFromFixtronix: boolean = false;
 }

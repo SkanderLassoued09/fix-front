@@ -69,8 +69,8 @@ import { TimerDisplayState } from '../diagnostic-modal.types';
         justify-content: space-between;
         gap: 1.25rem;
         padding: 1.35rem 1.75rem;
-        border-bottom: 1px solid #e2e8f0;
-        background: #ffffff;
+        border-bottom: 1px solid var(--fx-border);
+        background: var(--fx-bg-card);
         border-top-left-radius: 14px;
         border-top-right-radius: 14px;
       }
@@ -84,12 +84,12 @@ import { TimerDisplayState } from '../diagnostic-modal.types';
         margin: 0;
         font-size: 1.5rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
         letter-spacing: -0.015em;
         line-height: 1.2;
       }
-      .sav-diag-header__sep { color: #94a3b8; font-weight: 400; margin: 0 0.25rem; }
-      .sav-diag-header__id { color: #0f172a; }
+      .sav-diag-header__sep { color: var(--fx-text-subtle); font-weight: 400; margin: 0 0.25rem; }
+      .sav-diag-header__id { color: var(--fx-text); }
 
       .sav-diag-header__actions {
         display: flex;
@@ -103,23 +103,23 @@ import { TimerDisplayState } from '../diagnostic-modal.types';
         gap: 0.5rem;
         padding: 0.65rem 1.1rem;
         border-radius: 9px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #0f172a;
+        border: 1px solid var(--fx-border);
+        background: var(--fx-bg-card);
+        color: var(--fx-text);
         font-size: 0.92rem;
         font-weight: 600;
         cursor: pointer;
         transition: background 120ms ease, border-color 120ms ease;
       }
       .sav-diag-header__pause:hover {
-        background: #f8fafc;
-        border-color: #cbd5e1;
+        background: var(--fx-bg-surface);
+        border-color: var(--fx-border-strong);
       }
       .sav-diag-header__pause i { font-size: 0.9rem; }
       .sav-diag-header__pause--running {
         background: rgba(59, 130, 246, 0.08);
         border-color: rgba(59, 130, 246, 0.25);
-        color: #1d4ed8;
+        color: var(--fx-blue-soft-fg);
       }
 
       .sav-diag-header__minimize {
@@ -128,18 +128,18 @@ import { TimerDisplayState } from '../diagnostic-modal.types';
         gap: 0.5rem;
         padding: 0.65rem 1.1rem;
         border-radius: 9px;
-        border: 1px solid #e2e8f0;
-        background: #ffffff;
-        color: #475569;
+        border: 1px solid var(--fx-border);
+        background: var(--fx-bg-card);
+        color: var(--fx-text-muted);
         font-size: 0.92rem;
         font-weight: 600;
         cursor: pointer;
         transition: background 120ms ease, color 120ms ease;
       }
       .sav-diag-header__minimize:hover:not(:disabled) {
-        background: #f8fafc;
-        color: #0f172a;
-        border-color: #cbd5e1;
+        background: var(--fx-bg-surface);
+        color: var(--fx-text);
+        border-color: var(--fx-border-strong);
       }
       .sav-diag-header__minimize i { font-size: 0.9rem; }
       .sav-diag-header__minimize:disabled {

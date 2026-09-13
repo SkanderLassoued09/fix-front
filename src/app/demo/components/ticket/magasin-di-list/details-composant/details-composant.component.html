@@ -1,10 +1,3 @@
-<!-- En mode EMBARQUÉ (modal magasin), l'hôte fournit déjà <p-toast> et
-     <p-confirmDialog> liés au MÊME service racine. En rendre une 2e copie ici
-     faisait apparaître le dialog de confirmation (et les toasts) EN DOUBLE.
-     On ne les rend donc que sur la page routée autonome (!embedded). -->
-<p-toast *ngIf="!embedded"></p-toast>
-<p-confirmDialog *ngIf="!embedded" />
-
 <!-- ═══════════════════════════════════════════════════════════
      AFFECTATION FINALE  (redesign « Affectation finale.dc.html »)
      Master-detail : préparer chaque pièce (réf/prix/stock) → confirmer
@@ -152,6 +145,7 @@
                                 appendTo="body"
                                 placeholder="JJ.MM.AAAA"
                                 styleClass="af-calendar"
+                                panelStyleClass="af-datepicker"
                                 [style]="{ width: '100%' }"
                             ></p-calendar>
                         </div>

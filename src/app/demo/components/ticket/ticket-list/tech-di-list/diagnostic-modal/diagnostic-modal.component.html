@@ -45,33 +45,50 @@
                 <ng-container [ngSwitch]="activeStep">
                     <sav-diag-info-step
                         *ngSwitchCase="'info'"
+                        [stepNumber]="numberOf('info')"
                         [di]="ctx.di"
+                        [previousCycles]="ctx.previousCycles"
+                        [categories]="ctx.categories"
                     ></sav-diag-info-step>
 
                     <sav-diag-failure-step
                         *ngSwitchCase="'failure'"
+                        [stepNumber]="numberOf('failure')"
                         [form]="ctx.form"
                         [categories]="ctx.categories"
+                        [categoryCreating]="categoryCreating"
+                        [categoryCreatedTick]="categoryCreatedTick"
+                        (createCategory)="createCategory.emit($event)"
                     ></sav-diag-failure-step>
 
                     <sav-diag-components-step
                         *ngSwitchCase="'components'"
+                        [stepNumber]="numberOf('components')"
                         [form]="ctx.form"
-                        [composantOptions]="ctx.composantOptions"
+                        [nodes]="ctx.composantNodes"
+                        [treeLoading]="ctx.composantTreeLoading"
+                        [searching]="ctx.composantSearching"
                         [composants]="ctx.composantCombo"
                         (add)="addComposant.emit()"
                         (create)="createComposant.emit()"
                         (remove)="removeComposant.emit($event)"
+                        (quantityChange)="
+                            composantQuantityChange.emit($event)
+                        "
+                        (nodeExpand)="composantNodeExpand.emit($event)"
+                        (filterChanged)="composantSearch.emit($event)"
                     ></sav-diag-components-step>
 
                     <sav-diag-validation-step
                         *ngSwitchCase="'validation'"
+                        [stepNumber]="numberOf('validation')"
                         [form]="ctx.form"
                         [showErrorFromFixtronix]="ctx.ignoreCount > 0"
                     ></sav-diag-validation-step>
 
                     <sav-diag-summary-step
                         *ngSwitchCase="'summary'"
+                        [stepNumber]="numberOf('summary')"
                         [di]="ctx.di"
                         [description]="ctx.form.get('remarqueTech')?.value || ''"
                         [categoryLabel]="categoryLabel"
@@ -82,6 +99,7 @@
                         [primaryDisabled]="ctx.ignoreCount > 0 ? ctx.disabledRetour : ctx.disabledFinish"
                         [retourSendDisabled]="ctx.retourSendFinished"
                         [notReparableDisabled]="ctx.disabledFinish"
+                        [blockedReason]="finishBlockedReason"
                         (finishDiag)="finishDiag.emit()"
                         (finishRetour)="finishRetour.emit()"
                         (sendToFinishRetour)="sendToFinishRetour.emit()"

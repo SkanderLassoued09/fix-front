@@ -10,7 +10,6 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { DiDetailService } from 'src/app/demo/service/di-detail.service';
 import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { environment } from 'src/environments/environment';
@@ -22,6 +21,8 @@ import {
     isEmplacementVide as isEmplacementVideUtil,
     trackByColumn,
 } from '../table-display.utils';
+import { NotifyService } from '../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../shared/ui/confirm.service';
 
 @Component({
     selector: 'app-magasin-di-list',
@@ -29,12 +30,13 @@ import {
     styleUrl: './magasin-di-list.component.scss',
 })
 export class MagasinDiListComponent implements OnDestroy {
-    // Search state tracking
-    private currentSearchField: string = '';
-    private currentSearchValue: string = '';
+    // Filtres de colonnes CUMULATIFS : searchKey → valeur saisie (trimée).
+    private columnFilters: Record<string, string> = {};
     private searchSubject$ = new Subject<void>();
     private destroy$ = new Subject<void>();
-    private lastSearchKey = '';
+    /** Jeton anti-réponse périmée : seule la DERNIÈRE requête de `loadData`
+     *  (recherche, pagination, notification) peut écrire la liste. */
+    private loadSeq = 0;
 
     baseUrl = environment.apiUrl;
 
@@ -59,7 +61,7 @@ export class MagasinDiListComponent implements OnDestroy {
     selectedDetailsDiId: string = '';
     selectedComposant;
     cols = [
-        { field: '_idnum', header: 'ID', searchKey: '_id' },
+        { field: '_idnum', header: 'ID', searchKey: '_idnum' },
         { field: 'title', header: 'Title', searchKey: 'title' },
         { field: 'status', header: 'Status', searchKey: 'status' },
     ];
@@ -75,27 +77,12 @@ export class MagasinDiListComponent implements OnDestroy {
     loadedDataComposant: any;
     selectedDi_id: any;
     selectedstatusComposant: string;
-    openCreationComposantModal: boolean;
     payloadImage: { image: string };
     first: number = 0;
     rows: number = 10;
     page: any;
 
-    composantMagasin = new FormGroup({
-        _id: new FormControl(),
-        name: new FormControl(),
-        packageComposant: new FormControl(),
-        category_composant_id: new FormControl(),
-        link: new FormControl(),
-        pdf: new FormControl(),
-        quantity_stocked: new FormControl(),
-        status: new FormControl(),
-        prix_vente: new FormControl(),
-        coming_date: new FormControl(),
-        prix_achat: new FormControl(),
-    });
     composantList: any;
-    isToUpdate: boolean = false;
     basicOptions: {
         plugins: { legend: { labels: { color: string } } };
         scales: {
@@ -129,10 +116,6 @@ export class MagasinDiListComponent implements OnDestroy {
     ignoreCount: any;
     categorieDiListDropDown: any;
     composantCategory: any;
-    openCreationCategoryComposantModal: boolean = false;
-    addCategoryCompsant = new FormGroup({
-        categoryName: new FormControl(null, Validators.required),
-    });
     instantSelectedcPDF: string;
     payload: { file: string } = { file: '' };
     pdfAdded: any;
@@ -140,7 +123,6 @@ export class MagasinDiListComponent implements OnDestroy {
     preparingPdfName: string = '';
     validerComposantValidtor: boolean = true;
     validatorFinirListeComposant: boolean = true;
-    composantCatgorieList: any;
 
     // ── Master-detail « Affectation des composants » ──────────────────────
     /** DI `_idnum` shown after the modal title (« — {code DI} »). */
@@ -164,19 +146,16 @@ export class MagasinDiListComponent implements OnDestroy {
      */
     readonly allowValidateWhenOutOfStock = true;
     private readonly CATEGORY_PALETTES: Array<'a' | 'b' | 'c'> = ['a', 'b', 'c'];
-    colCategoryComposants = [
-        { field: 'category_composant', header: 'Category Composant' },
-    ];
 
     /** Deep-link notification → ouverture de la modale composants. */
     private deepLinkConsumer?: DeepLinkConsumer;
 
     constructor(
         private ticketSerice: TicketService,
-        private readonly messageservice: MessageService,
+        private readonly notify: NotifyService,
         private apollo: Apollo,
         private router: Router,
-        private confirmationService: ConfirmationService,
+        private readonly confirm: ConfirmService,
         private notificationService: NotificationService,
         private readonly mutationRunner: MutationRunner,
         private route: ActivatedRoute,
@@ -221,11 +200,10 @@ export class MagasinDiListComponent implements OnDestroy {
     /** Toast d'erreur unique + déblocage de l'overlay, pour tous les flux. */
     private failWithToast(summary: string, source: any, fallback: string) {
         this.isLoading = false;
-        this.messageservice.add({
-            severity: 'error',
-            summary,
-            detail: this.errorDetail(source, fallback),
-        });
+        this.notify.error(
+            this.errorDetail(source, fallback),
+            { summary: summary },
+        );
     }
 
     /**
@@ -274,10 +252,12 @@ export class MagasinDiListComponent implements OnDestroy {
             .subscribe((message: any) => {
                 console.log('from app component BBBLLLLL', message);
 
-                this.messageservice.add({
-                    severity: 'success',
-                    summary: `New BL - ${message.message.di._idnum}`,
-                    detail: `${message.message.di.title}`,
+                // Notification d'une action faite par QUELQU'UN D'AUTRE (dépôt
+                // d'un BL) : `info` (bleu), pas `success` — le magasin n'a rien
+                // réussi ici, on l'informe. `sticky` est conservé à dessein :
+                // un BL manqué bloque la suite du dossier.
+                this.notify.info(message.message.di.title, {
+                    summary: `Nouveau BL — ${message.message.di._idnum}`,
                     sticky: true,
                 });
                 setTimeout(() => {
@@ -339,34 +319,53 @@ export class MagasinDiListComponent implements OnDestroy {
      */
     loadData() {
         this.isLoading = true;
+        // Une réponse lente d'une requête DÉPASSÉE ne doit ni écraser la liste
+        // ni éteindre le chargement de la requête en cours.
+        const seq = ++this.loadSeq;
+        const isCurrent = () => seq === this.loadSeq;
 
-        const hasActiveSearch =
-            this.currentSearchField &&
-            this.currentSearchValue &&
-            this.currentSearchValue.trim().length > 0;
+        const searches = Object.entries(this.columnFilters).map(
+            ([field, value]) => ({ field, value }),
+        );
 
-        if (hasActiveSearch) {
-            // Perform search
+        if (searches.length) {
+            // Perform search — saisie en variable GraphQL, jamais interpolée
             this.apollo
                 .query<any>({
                     query: this.ticketSerice.getAllMagasinSearch(
                         this.first,
                         this.rows,
-                        this.currentSearchField,
-                        this.currentSearchValue,
                     ),
+                    variables: { search: searches },
                     fetchPolicy: 'no-cache',
                 })
-                .pipe(finalize(() => (this.isLoading = false)))
+                .pipe(
+                    finalize(() => {
+                        if (isCurrent()) this.isLoading = false;
+                    }),
+                )
                 .subscribe({
-                    next: ({ data }) => {
-                        if (data && data.searchDiForMagasin) {
+                    // `errorPolicy: 'all'` (graphql.modules) livre les erreurs
+                    // GraphQL dans `next`, pas dans `error` : sans ce test la
+                    // recherche échouait sans le moindre toast.
+                    next: ({ data, errors }) => {
+                        if (!isCurrent()) return;
+                        if (errors?.length) {
+                            this.failWithToast(
+                                'Erreur de recherche',
+                                errors,
+                                'La recherche a échoué. Réessayez.',
+                            );
+                            return;
+                        }
+                        if (data?.searchDiForMagasin) {
                             this.diList = data.searchDiForMagasin.di;
                             this.diListCount =
                                 data.searchDiForMagasin.totalDiCount;
                         }
                     },
                     error: (error) => {
+                        if (!isCurrent()) return;
                         this.failWithToast(
                             'Erreur de recherche',
                             error,
@@ -384,9 +383,22 @@ export class MagasinDiListComponent implements OnDestroy {
                     ),
                     fetchPolicy: 'no-cache',
                 })
-                .pipe(finalize(() => (this.isLoading = false)))
+                .pipe(
+                    finalize(() => {
+                        if (isCurrent()) this.isLoading = false;
+                    }),
+                )
                 .subscribe({
-                    next: ({ data }) => {
+                    next: ({ data, errors }) => {
+                        if (!isCurrent()) return;
+                        if (errors?.length) {
+                            this.failWithToast(
+                                'Erreur de chargement',
+                                errors,
+                                'Impossible de charger la liste des DI.',
+                            );
+                            return;
+                        }
                         if (data?.getDiForMagasin) {
                             this.diList = data.getDiForMagasin.di;
                             this.diListCount =
@@ -394,6 +406,7 @@ export class MagasinDiListComponent implements OnDestroy {
                         }
                     },
                     error: (error) => {
+                        if (!isCurrent()) return;
                         this.failWithToast(
                             'Erreur de chargement',
                             error,
@@ -405,35 +418,29 @@ export class MagasinDiListComponent implements OnDestroy {
     }
 
     /**
-     * Handle column search
+     * Handle column search — filtres CUMULATIFS : chaque colonne garde sa
+     * valeur ; vider une colonne ne retire QUE son propre filtre.
      */
     onColumnSearch(field: string, value: string) {
-        const v = value?.trim();
         const f = field?.trim();
-        const searchKey = `${f || ''}:${v || ''}`;
+        if (!f) return;
+        const v = value?.trim() ?? '';
+        if ((this.columnFilters[f] ?? '') === v) return;
 
-        if (searchKey === this.lastSearchKey) {
-            return;
-        }
-
-        this.lastSearchKey = searchKey;
-
-        if (v && v.length > 0 && f && f.length > 0) {
-            // Set search state
-            this.currentSearchField = f;
-            this.currentSearchValue = v;
-            this.first = 0; // Reset to first page on new search
-
-            // Trigger search
-            this.searchSubject$.next();
+        if (v) {
+            this.columnFilters[f] = v;
         } else {
-            // Clear search state
-            this.currentSearchField = '';
-            this.currentSearchValue = '';
-
-            // Load regular data
-            this.loadData();
+            delete this.columnFilters[f];
         }
+        this.first = 0; // Reset to first page on new search
+        // Debounced for typing AND clearing (clearing used to fire at once and
+        // could race a pending search).
+        this.searchSubject$.next();
+    }
+
+    /** Dernier rang affiché dans le compteur « a–b sur N résultats ». */
+    get rangeEnd(): number {
+        return Math.min(this.first + this.rows, this.diListCount || 0);
     }
 
     formatCell(row: any, field: string): string {
@@ -451,13 +458,6 @@ export class MagasinDiListComponent implements OnDestroy {
 
     trackByColumn = trackByColumn;
 
-    onComposantFilter(event: any) {
-        const searchValue = event.filter?.trim();
-
-        if (searchValue && searchValue.length >= 2) {
-            // Implement composant search if needed
-        }
-    }
 
     allCategoryDi() {
         this.apollo
@@ -560,15 +560,9 @@ export class MagasinDiListComponent implements OnDestroy {
 
     annulerMagasinEstimation() {
         this.magasinDiDialog = false;
-        this.openCreationComposantModal = false;
         this.formMagasin.reset();
-        this.composantMagasin.reset();
     }
 
-    showDialogcomposantCreation() {
-        this.openCreationComposantModal = true;
-        this.findAllComposant_Category();
-    }
 
     getSeverity(status: string) {
         switch (status) {
@@ -614,7 +608,7 @@ export class MagasinDiListComponent implements OnDestroy {
 
     /**
      * Recharge les catégories partout où elles sont affichées : la table du
-     * dialog de gestion (`composantCatgorieList`) ET les options des dropdowns
+     * les options du dropdown catégorie du modal d'affectation
      * (`composantCategory`, via `findAllComposant_Category`). Avant, une
      * catégorie créée n'apparaissait pas dans les dropdowns tant que le modal
      * n'était pas rouvert.
@@ -629,9 +623,7 @@ export class MagasinDiListComponent implements OnDestroy {
                     this.isLoading = loading;
                     const categories = data?.findAllComposant_Category;
                     if (!categories) return;
-                    // Table du dialog de gestion (lignes brutes).
-                    this.composantCatgorieList = categories;
-                    // Options des dropdowns : value = _id, name = libellé
+                    // Options du dropdown catégorie : value = _id, name = libellé
                     // (même contrat que `findAllComposant_Category()`).
                     this.composantCategory = categories.map((el) => ({
                         name: el.category_composant,
@@ -648,120 +640,9 @@ export class MagasinDiListComponent implements OnDestroy {
             });
     }
 
-    showDialogCategoryComposant() {
-        this.openCreationCategoryComposantModal = true;
-        this.refreshCategoryLists();
-    }
 
-    deletComposant() {
-        if (!this.loadedDataComposant?._id) {
-            this.messageservice.add({
-                severity: 'warn',
-                summary: 'Aucun composant',
-                detail: 'Sélectionnez d’abord un composant à supprimer.',
-            });
-            return;
-        }
 
-        this.confirmationService.confirm({
-            message: 'Voulez-vous Supprimer ce composant ?',
-            header: 'Confirmation Suppression',
-            icon: 'pi pi-exclamation-triangle',
-            accept: async () => {
-                try {
-                    await this.mutationRunner.run({
-                        key: `removeComposant:${this.loadedDataComposant._id}`,
-                        mutation: this.ticketSerice.removeComposant(
-                            this.loadedDataComposant._id,
-                        ),
-                        successToast: {
-                            summary: 'Composant supprimé',
-                            detail: this.loadedDataComposant.name || '',
-                        },
-                        errorToast: {
-                            summary: 'Erreur',
-                            detail: 'Suppression impossible. Réessayez.',
-                        },
-                        onLoading: (v) => (this.isLoading = v),
-                    });
-                    // L'ancien code relançait getAllComposant mais lisait
-                    // `data.findAllComposant_Category` (inexistant sur cette
-                    // query) — refresh explicite des deux listes à la place.
-                    this.getAllComposant();
-                    this.refreshCategoryLists();
-                } catch {
-                    /* toast déjà affiché par le runner */
-                }
-            },
-        });
-    }
 
-    deleteCategorycomposant(rowData) {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous Supprimer cette categorie ?',
-            header: 'Confirmation Suppression',
-            icon: 'pi pi-exclamation-triangle',
-            accept: async () => {
-                try {
-                    await this.mutationRunner.run({
-                        key: `removeComposantCategory:${rowData._id}`,
-                        mutation: this.ticketSerice.removeComposant_Category(
-                            rowData._id,
-                        ),
-                        successToast: {
-                            summary: 'Catégorie supprimée',
-                            detail: rowData.category_composant || '',
-                        },
-                        errorToast: {
-                            summary: 'Erreur',
-                            detail: 'Suppression impossible. Réessayez.',
-                        },
-                        onLoading: (v) => (this.isLoading = v),
-                    });
-                    this.refreshCategoryLists();
-                } catch {
-                    /* toast déjà affiché par le runner */
-                }
-            },
-        });
-    }
-
-    addNewCategoryComposant() {
-        const categoryName = this.addCategoryCompsant.value.categoryName;
-        if (!categoryName?.trim()) {
-            this.addCategoryCompsant.markAllAsTouched();
-            return;
-        }
-        this.confirmationService.confirm({
-            message: 'Voulez-vous créer cette categorie ?',
-            header: 'Confirmation Creation',
-            icon: 'pi pi-exclamation-triangle',
-            accept: async () => {
-                try {
-                    await this.mutationRunner.run({
-                        key: 'addComposantCategory',
-                        mutation:
-                            this.ticketSerice.addNewCategoryComposant(
-                                categoryName,
-                            ),
-                        successToast: {
-                            summary: 'Catégorie créée',
-                            detail: categoryName,
-                        },
-                        errorToast: {
-                            summary: 'Erreur',
-                            detail: 'Création impossible. Réessayez.',
-                        },
-                        onLoading: (v) => (this.isLoading = v),
-                    });
-                    this.addCategoryCompsant.reset();
-                    this.refreshCategoryLists();
-                } catch {
-                    /* toast déjà affiché par le runner */
-                }
-            },
-        });
-    }
 
     onPdfSelect(event: any, type: string) {
         if (type !== 'cPDF') {
@@ -779,11 +660,10 @@ export class MagasinDiListComponent implements OnDestroy {
 
         this.isPdfPreparing = false;
         this.preparingPdfName = '';
-        this.messageservice.add({
-            severity: 'error',
-            summary: 'PDF non chargé',
-            detail: 'Le fichier PDF n’a pas pu être préparé.',
-        });
+        this.notify.error(
+            'Le fichier PDF n’a pas pu être préparé.',
+            { summary: 'PDF non chargé' },
+        );
     }
 
     onUpload(event: any, type: string) {
@@ -826,20 +706,8 @@ export class MagasinDiListComponent implements OnDestroy {
                         this.instantSelectedcPDF,
                     );
                 }
-                if (type === 'addComposant') {
-                    this.instantSelectedcPDF = blobUrl;
-                    console.log('🍈[blobUrl]:', blobUrl);
-                    console.log(
-                        '🥕[this.instantSelectedcPDF]:',
-                        this.instantSelectedcPDF,
-                    );
-                }
 
-                this.messageservice.add({
-                    severity: 'info',
-                    summary: 'Fichier enregistré',
-                    detail: 'Fichier a été ajouté avec succès',
-                });
+                this.notify.success('Le fichier a été enregistré.');
                 previewReady = true;
                 finishPreparing();
             };
@@ -863,67 +731,6 @@ export class MagasinDiListComponent implements OnDestroy {
         }
     }
 
-    selectedDropDownComposant(selectedItem) {
-        this.isToUpdate = true;
-        this.selectedItem = selectedItem;
-
-        if (selectedItem.value) {
-            this.apollo
-                .query<ComposantByNameQueryResponse>({
-                    query: this.ticketSerice.composantByName(
-                        selectedItem.value,
-                    ),
-                })
-                .subscribe({
-                    // errorPolicy 'all' : erreurs GraphQL livrées dans `next`
-                    // avec `data: null` — garde obligatoire.
-                    next: ({ data, errors, loading }) => {
-                        this.isLoading = loading;
-                        const composant = data?.findOneComposant;
-                        if (!composant) {
-                            this.loadedDataComposant = null;
-                            this.composantMagasin.reset();
-                            this.messageservice.add({
-                                severity: 'warn',
-                                summary: 'Composant introuvable',
-                                detail: this.errorDetail(
-                                    errors,
-                                    `Le composant « ${selectedItem.value} » n'existe pas dans le catalogue de cette base.`,
-                                ),
-                            });
-                            return;
-                        }
-                        this.loadedDataComposant = composant;
-                        this.composantMagasin.patchValue({
-                            _id: composant._id,
-                            name: composant.name,
-                            packageComposant: composant.package,
-                            category_composant_id: this.normalizeCategoryId(
-                                composant.category_composant_id,
-                            ),
-                            prix_achat: composant.prix_achat,
-                            prix_vente: composant.prix_vente,
-                            coming_date: new Date(composant.coming_date),
-                            link: composant.link,
-                            quantity_stocked: composant.quantity_stocked,
-                            pdf: composant.pdf,
-                            status: composant.status_composant,
-                        });
-                    },
-                    error: (error) => {
-                        this.failWithToast(
-                            'Erreur de chargement',
-                            error,
-                            'Impossible de charger le composant. Réessayez.',
-                        );
-                    },
-                });
-        }
-
-        if (!selectedItem.value) {
-            this.composantMagasin.reset();
-        }
-    }
 
     openDialogMagasin(item) {
         this.findAllComposant_Category();
@@ -1133,11 +940,14 @@ export class MagasinDiListComponent implements OnDestroy {
         }
     }
 
-    /** True when the active line can be validated (form complete; back-order
-     *  allowed per policy — see `allowValidateWhenOutOfStock`). */
+    /** True when the active line can be validated (form complete AND saved;
+     *  back-order allowed per policy — see `allowValidateWhenOutOfStock`). */
     get canValidateActive(): boolean {
         if (!this.activeLine || this.activeLine.validated) return false;
         if (this.formUpdateComposant.invalid) return false;
+        // Même condition que le reflet de « Enregistrer » : tant que des
+        // modifications attendent d'être enregistrées, on ne valide pas.
+        if (this.saveNeedsAttention) return false;
         if (
             !this.allowValidateWhenOutOfStock &&
             this.availabilityOf(this.activeLine) !== 'disponible'
@@ -1147,30 +957,76 @@ export class MagasinDiListComponent implements OnDestroy {
         return true;
     }
 
+    // ── Rappel « pensez à Enregistrer » ───────────────────────────────────
+    // Le magasin peut éditer un champ puis changer de carte dans le rail :
+    // `selectLine` re-`patchValue` le formulaire depuis le serveur et la saisie
+    // est perdue sans le moindre signal. Le pied du modal affiche donc un
+    // rappel tant que le composant actif porte des modifications non
+    // enregistrées.
+
+    /**
+     * Le composant actif porte des modifications non enregistrées. Même
+     * convention que « Affectation finale » (`details-composant.formDirty`) :
+     * `patchValue` laisse le formulaire pristine, seules les saisies
+     * utilisateur — et le dropzone PDF, qui marque `pdf` dirty à la main
+     * (`onPdfFileSelected` / `onPdfFileRemoved`) — le salissent.
+     *
+     * `activeLine` est testé EN PREMIER : après validation du dernier
+     * composant, `advanceToNextUnvalidated()` met `activeLine` à null sans
+     * toucher au formulaire — sans ce garde le rappel survivrait sur l'écran
+     * « Tous les composants demandés sont validés ».
+     */
+    get hasUnsavedComposant(): boolean {
+        return !!this.activeLine && this.formUpdateComposant.dirty;
+    }
+
+    /** Texte du rappel affiché dans le pied ; null = rien à afficher. */
+    get saveReminder(): string | null {
+        if (!this.hasUnsavedComposant) return null;
+        return this.formUpdateComposant.valid
+            ? 'Modifications non enregistrées — cliquez sur « Enregistrer ».'
+            : 'Complétez les champs obligatoires pour pouvoir enregistrer.';
+    }
+
+    /**
+     * Bouton « Enregistrer » en aplat ambre + reflet animé sur sa face :
+     * modifié ET réellement enregistrable.
+     * On ne fait jamais briller un bouton désactivé — formulaire incomplet,
+     * le rappel bascule sur « Complétez les champs obligatoires ».
+     * Même condition qui GRISE « Valider ce composant » (`canValidateActive`).
+     */
+    get saveNeedsAttention(): boolean {
+        return this.hasUnsavedComposant && this.formUpdateComposant.valid;
+    }
+
     /**
      * « Valider ce composant » — persists the edited fields then marks the DI
      * line done, both via the EXISTING save logic (`updateComposant` /
      * `setComposantAsUpdated`). On success the card greys out and the next
-     * pending component opens.
+     * pending component opens. Only reachable once « Enregistrer » is done.
      */
     validateCurrentComponent(): void {
         const line = this.activeLine;
         if (!line || line.validated) return;
+        if (this.saveNeedsAttention) {
+            this.notify.warn(
+                'Enregistrez vos modifications avant de valider.',
+                { summary: 'Modifications non enregistrées' },
+            );
+            return;
+        }
         if (this.formUpdateComposant.invalid) {
             this.formUpdateComposant.markAllAsTouched();
-            this.messageservice.add({
-                severity: 'warn',
-                summary: 'Champs requis',
-                detail: 'Complétez les champs obligatoires avant de valider.',
-            });
+            this.notify.warn(
+                'Complétez les champs obligatoires avant de valider.',
+                { summary: 'Champs requis' },
+            );
             return;
         }
 
-        this.confirmationService.confirm({
-            message:
-                'Une fois validé, ce composant sera figé et retiré de la liste en attente.',
+        this.confirm.confirmValidate({
+            message: 'Une fois validé, ce composant sera figé et retiré de la liste en attente.',
             header: 'Valider le composant',
-            icon: 'pi pi-check-circle',
             accept: async () => {
                 const updatedComposantData = {
                     ...this.formUpdateComposant.value,
@@ -1342,16 +1198,14 @@ export class MagasinDiListComponent implements OnDestroy {
                             this.formUpdateComposant.patchValue({
                                 name: selectedItem.value,
                             });
-                            this.messageservice.add({
-                                severity: 'warn',
-                                summary: 'Composant introuvable',
-                                detail:
-                                    this.errorDetail(
+                            this.notify.error(
+                                this.errorDetail(
                                         errors,
                                         `Le composant « ${selectedItem.value} » n'existe pas dans le catalogue de cette base.`,
                                     ) +
                                     ' Créez-le d’abord via « Créer un composant ».',
-                            });
+                                { summary: 'Composant introuvable' },
+                            );
                             return;
                         }
                         this.loadedDataComposant = composant;
@@ -1372,6 +1226,13 @@ export class MagasinDiListComponent implements OnDestroy {
                                 this.selectedstatusComposant ||
                                 composant.status_composant,
                         });
+                        // Le chargement ne doit pas compter comme une
+                        // modification : `patchValue` conserve l'état dirty de
+                        // la ligne PRÉCÉDENTE. Point de passage unique — il
+                        // couvre l'ouverture d'une carte (`selectLine`), la
+                        // ré-injection après « Enregistrer » et l'avance
+                        // automatique après « Valider ce composant ».
+                        this.formUpdateComposant.markAsPristine();
                     },
                     error: (error) => {
                         this.failWithToast(
@@ -1417,18 +1278,15 @@ export class MagasinDiListComponent implements OnDestroy {
     updateComposant() {
         if (this.formUpdateComposant.invalid) {
             this.formUpdateComposant.markAllAsTouched();
-            this.messageservice.add({
-                severity: 'warn',
-                summary: 'Champs requis',
-                detail: 'Complétez les champs obligatoires avant d’enregistrer.',
-            });
+            this.notify.warn(
+                'Complétez les champs obligatoires avant d’enregistrer.',
+                { summary: 'Champs requis' },
+            );
             return;
         }
 
-        this.confirmationService.confirm({
-            message: 'Voulez-vous confirmer les changements ?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer les modifications ?',
             accept: () => {
                 // Keep a staged PDF if one was just selected; otherwise keep the
                 // already-saved file name from the form.
@@ -1458,11 +1316,14 @@ export class MagasinDiListComponent implements OnDestroy {
                             if (!data?.addComposantInfo) return;
 
                             this.pdfAdded = data.addComposantInfo.pdf;
-                            this.messageservice.add({
-                                severity: 'success',
-                                summary: 'Enregistré',
-                                detail: 'Composant mis à jour.',
-                            });
+                            this.notify.success(
+                                'Composant mis à jour.',
+                                { summary: 'Enregistré' },
+                            );
+                            // Rappel « pensez à Enregistrer » au repos TOUT DE
+                            // SUITE : la ré-injection ci-dessous passe par une
+                            // requête, le halo survivrait sinon à la sauvegarde.
+                            this.formUpdateComposant.markAsPristine();
 
                             // Proof of persistence + keep the form in sync (incl.
                             // a renamed component): reload the saved row by its
@@ -1500,10 +1361,9 @@ export class MagasinDiListComponent implements OnDestroy {
     }
 
     finishMagasinEstimation() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous confirmer les changements',
-            header: 'Confirmation Magasin Estimation',
-            icon: 'pi pi-question-circle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer les modifications ?',
+            header: 'Estimation magasin',
             accept: async () => {
                 try {
                     // Attendre la confirmation serveur AVANT de fermer le
@@ -1529,118 +1389,18 @@ export class MagasinDiListComponent implements OnDestroy {
             this.payload = payload;
             console.log('🍓[payload]:', this.payload);
         }
-        if (type === 'addComposant') {
-            const payload = {
-                file: base64,
-            };
-
-            this.payload = payload;
-            console.log('🍓[payload]:', this.payload);
-        }
     }
 
-    onClear() {
-        this.isToUpdate = false;
-    }
 
-    clearDropDown() {
-        this.isToUpdate = false;
-    }
 
-    addComposant() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous Ajouter ce composant ?',
-            header: 'Confirmation Ajout',
 
-            accept: async () => {
-                // Création d'un NOUVEAU composant du catalogue.
-                if (!this.isToUpdate) {
-                    const composantDataTosend = {
-                        ...this.composantMagasin.value,
-                        pdf: this.payload?.file || null,
-                    };
-                    try {
-                        // L'ancien subscribe n'avait AUCUN callback d'erreur :
-                        // un échec (doublon de nom, catégorie manquante…)
-                        // laissait le modal ouvert sans aucun retour.
-                        await this.mutationRunner.run({
-                            key: 'addComposantMagasin',
-                            mutation:
-                                this.ticketSerice.addComposantMagasin(
-                                    composantDataTosend,
-                                ),
-                            successToast: {
-                                summary: 'Composant créé',
-                                detail: composantDataTosend.name || '',
-                            },
-                            errorToast: {
-                                summary: 'Erreur',
-                                detail: 'Création impossible. Réessayez.',
-                            },
-                            onLoading: (v) => (this.isLoading = v),
-                        });
-                        this.getAllComposant();
-                        this.composantMagasin.reset();
-                        this.openCreationComposantModal = false;
-                    } catch {
-                        /* toast déjà affiché ; le modal reste ouvert */
-                    }
-                    return;
-                }
-
-                // Mise à jour d'un composant EXISTANT (sélectionné en haut).
-                const formattedComposantInfo = {
-                    _id: this.composantMagasin.value._id,
-                    name: this.composantMagasin.value.name,
-                    package: this.composantMagasin.value.packageComposant,
-                    category_composant_id:
-                        this.composantMagasin.value.category_composant_id,
-                    prix_achat: this.composantMagasin.value.prix_achat,
-                    prix_vente: this.composantMagasin.value.prix_vente,
-                    coming_date: this.composantMagasin.value.coming_date,
-                    link: this.composantMagasin.value.link,
-                    quantity_stocked:
-                        this.composantMagasin.value.quantity_stocked,
-                    pdf: this.payload?.file || null,
-                    status_composant: this.composantMagasin.value.status,
-                };
-                try {
-                    await this.mutationRunner.run({
-                        key: `updateComposantFromCreation:${
-                            formattedComposantInfo._id ||
-                            formattedComposantInfo.name
-                        }`,
-                        mutation: this.ticketSerice.updateComposant(
-                            formattedComposantInfo,
-                        ),
-                        successToast: {
-                            summary: 'Composant mis à jour',
-                            detail: formattedComposantInfo.name || '',
-                        },
-                        errorToast: {
-                            summary: 'Erreur',
-                            detail: 'Mise à jour impossible. Réessayez.',
-                        },
-                        onLoading: (v) => (this.isLoading = v),
-                    });
-                    this.getAllComposant();
-                    this.composantMagasin.reset();
-                    this.openCreationComposantModal = false;
-                } catch {
-                    /* toast déjà affiché ; le modal reste ouvert */
-                }
-            },
-        });
-    }
-
-    directToComposantManagement() {
-        this.router.navigate(['tickets/ticket/composant-management']);
-    }
     getStatusLabel(status: string): string {
-        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
-        // PRICING) affiché « Pricing » (demande produit).
+        // Affichage BRUT en MAJUSCULES. PRICING_DIAG et son ancienne valeur
+        // PRICING sont ramenés au MÊME libellé « PRICING » : les deux valeurs
+        // coexistent en base (renommage forward-only, sans backfill) et la
+        // colonne « Statut » afficherait sinon deux libellés pour un même état.
         const s = (status ?? '').toString().trim();
-        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'PRICING';
         return s.toUpperCase() || '—';
     }
 }

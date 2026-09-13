@@ -86,7 +86,7 @@ export const BASE_PHASES: PhaseDef[] = [
   { key: 'ATTENTE_CONFIRMATION_COORDINATION', group: 'magasin', label: 'En attente confirmation Coordination', icon: 'pi pi-box', statuses: ['CONFIRMATION_COMPOSANTS', 'ATTENTE_CONFIRMATION_COORDINATION'] },
   { key: 'MAGASIN_FINALISATION', group: 'magasin', label: 'Finalisation magasin', icon: 'pi pi-box', statuses: ['MAGASIN_FINALISATION'] },
   { key: 'PENDING2', group: 'admin', label: 'En attente prix', icon: 'pi pi-file', statuses: ['PENDING2'] },
-  { key: 'PRICING_DIAG', group: 'admin', label: 'Pricing', icon: 'pi pi-file', statuses: ['PRICING', 'PRICING_DIAG'] },
+  { key: 'PRICING_DIAG', group: 'admin', label: 'PRICING', icon: 'pi pi-file', statuses: ['PRICING', 'PRICING_DIAG'] },
   { key: 'WAITING_DEVIS', group: 'admin', label: 'Approval (devis/BC)', icon: 'pi pi-file', statuses: ['NEGOTIATION1', 'ATTENTE_BC_DEVIS', 'WAITING_DEVIS', 'WAITING_BC'] },
   { key: 'NEGOTIATION2', group: 'admin', label: 'Négociation 2', icon: 'pi pi-file', statuses: ['NEGOTIATION2'] },
   { key: 'PENDING3', group: 'repair', label: 'En attente réparation', icon: 'pi pi-wrench', statuses: ['PENDING3'] },
@@ -111,6 +111,11 @@ export function sanitizeHistory(raw: any): StatusHistoryEntry[] {
     }))
     .filter((h) => !Number.isNaN(h.at.getTime()))
     .sort((a, b) => a.at.getTime() - b.at.getTime());
+}
+
+/** Phase à laquelle appartient un statut brut (null si inconnu). */
+export function phaseOfStatus(status: string): PhaseDef | null {
+  return BASE_PHASES.find((p) => p.statuses.includes(status)) ?? null;
 }
 
 /** 1re entrée d'historique dont le statut appartient à la phase. Source COMMUNE
@@ -173,19 +178,30 @@ export function computePhaseDuration(
   now: number = Date.now(),
 ): PhaseDuration | null {
   if (state === 'pending' || state === 'skipped') return null;
-  const start = phaseEntryRawDate(history, phaseKey);
-  if (!start) return null;
+  const entry = phaseEntry(history, phaseKey);
+  if (!entry) return null;
+  const start = entry.at;
   if (state === 'current') {
     const ms = now - start.getTime();
     return { text: formatDuration(ms), ongoing: true, ms };
   }
-  const order = BASE_PHASES.map((p) => p.key);
-  for (let j = order.indexOf(phaseKey) + 1; j < order.length; j++) {
-    const next = phaseEntryRawDate(history, order[j]);
-    if (next && next.getTime() > start.getTime()) {
-      const ms = next.getTime() - start.getTime();
-      return { text: formatDuration(ms), ongoing: false, ms };
-    }
+  // Borne de fin = la prochaine entrée DANS LE TEMPS appartenant à une AUTRE
+  // phase.
+  //
+  // Auparavant on parcourait l'ordre CANONIQUE `BASE_PHASES` avec un `>` strict.
+  // Or l'ordre réel n'est pas l'ordre canonique : le flux est
+  // `DIAGNOSTIC → INDIAGNOSTIC → DIAGNOSTIC_Pause`, alors que la liste place la
+  // pause AVANT `INDIAGNOSTIC`. La borne était donc sautée et on tombait sur la
+  // phase d'après — le MÊME intervalle était attribué à DEUX lignes (« 2 h 2 min »
+  // affiché deux fois sur T1455). Deux entrées au même instant produisaient le
+  // même double comptage, le `>` strict les écartant aussi.
+  const startIdx = history.indexOf(entry);
+  for (let j = startIdx + 1; j < history.length; j++) {
+    // Même phase (ex. doublon `PRICING_DIAG` poussé deux fois par le middleware)
+    // → ce n'est pas une sortie de phase, on continue.
+    if (phaseOfStatus(history[j].status)?.key === phaseKey) continue;
+    const ms = Math.max(0, history[j].at.getTime() - entry.at.getTime());
+    return { text: formatDuration(ms), ongoing: false, ms };
   }
   return null;
 }
@@ -272,20 +288,52 @@ export function buildCycleTimeline(
   now: number = Date.now(),
 ): TimelineRow[] {
   const rows: TimelineRow[] = [];
-  for (const phase of BASE_PHASES) {
-    const entry = phase.statuses.length
-      ? historySlice.find((h) => phase.statuses.includes(h.status)) ?? null
-      : null;
-    if (!entry) continue; // étape non atteinte dans ce cycle → masquée
+
+  // On parcourt l'HISTORIQUE, pas la liste canonique des phases.
+  //
+  // Émettre dans l'ordre de `BASE_PHASES` affichait une chronologie FAUSSE — la
+  // pause apparaissait au-dessus de `INDIAGNOSTIC` alors qu'elle a eu lieu
+  // après — et ne gardait qu'UNE ligne par phase, rendant invisibles les
+  // allers-retours pause/reprise pourtant bien enregistrés.
+  for (let i = 0; i < historySlice.length; i++) {
+    const entry = historySlice[i];
+    const phase = phaseOfStatus(entry.status);
+    if (!phase) continue; // statut hors nomenclature → ignoré
+
+    // Doublon consécutif de la même phase (le middleware Mongoose pousse une
+    // entrée dès que `status` est PRÉSENT dans l'update, pas seulement quand il
+    // CHANGE) : on garde la première et on prolonge jusqu'à la sortie réelle.
+    if (i > 0 && phaseOfStatus(historySlice[i - 1].status)?.key === phase.key) {
+      continue;
+    }
+
+    // Sortie de phase = prochaine entrée d'une AUTRE phase.
+    let exitAt: Date | null = null;
+    for (let j = i + 1; j < historySlice.length; j++) {
+      if (phaseOfStatus(historySlice[j].status)?.key !== phase.key) {
+        exitAt = historySlice[j].at;
+        break;
+      }
+    }
+
+    // « En cours » = on n'est jamais ressorti de cette phase ET c'est bien le
+    // statut vivant de la DI.
     const isCurrent =
-      !!currentStatus && phase.statuses.includes(currentStatus);
+      exitAt === null &&
+      !!currentStatus &&
+      phase.statuses.includes(currentStatus);
     const state: PhaseState = isCurrent ? 'current' : 'done';
-    const duration = computePhaseDuration(historySlice, phase.key, state, now);
-    const anomalous =
-      !!duration &&
-      !duration.ongoing &&
-      duration.ms != null &&
-      duration.ms > anomalyThresholdMs;
+
+    const ms = isCurrent
+      ? now - entry.at.getTime()
+      : exitAt
+        ? Math.max(0, exitAt.getTime() - entry.at.getTime())
+        : null;
+    const duration =
+      ms === null
+        ? null
+        : { text: formatDuration(ms), ongoing: isCurrent, ms };
+
     rows.push({
       key: phase.key,
       label: phase.label,
@@ -293,7 +341,8 @@ export function buildCycleTimeline(
       date: formatTimelineDate(entry.at),
       duration,
       state,
-      anomalous,
+      anomalous:
+        !!duration && !duration.ongoing && duration.ms > anomalyThresholdMs,
       reconstructed: entry.reconstructed === true,
     });
   }

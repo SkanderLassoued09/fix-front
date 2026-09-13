@@ -124,6 +124,21 @@ const COORDINATOR_DI_FIELDS = `
         service_quality
         isErrorFromFixtronix
         confirmationComposant
+        documents {
+            type
+            name
+            webViewLink
+        }
+        openedAt
+        closedAt
+        retourReason
+        retourDate
+        reconstructed
+        reconstructedReason
+        repairEstimate
+        needsDevisBeforeRepair
+        pricingRequestSentAt
+        componentsConfirmedAt
         createdAt
         updatedAt
         isSentToCoordinator
@@ -178,22 +193,18 @@ export class TicketService {
             }
         `;
     }
-    searchDi(
-        field: string,
-        value: string,
-        first: number,
-        rows: number,
-        startDate?: string,
-        endDate?: string,
-    ) {
+    /**
+     * Recherche tickets, filtres de colonnes CUMULATIFS : la saisie passe en
+     * variable GraphQL (`variables: { search: [{ field, value }] }`), jamais
+     * interpolée. (`filterConfig` retiré : jamais renseigné par l'appelant et
+     * ignoré par le resolver.)
+     */
+    searchDi(first: number, rows: number) {
         return gql`
-  {
+  query SearchDi($search: [SearchDiInput!]!) {
     searchDi(
       paginationConfig: { first: ${first}, rows: ${rows} }
-      search: { field: "${field}", value: "${value}" }
-      filterConfig: { startDate: "${startDate ? startDate : null}", endDate: "${
-          endDate ? endDate : null
-      }" }
+      search: $search
     ) {
      di {
             ${COORDINATOR_DI_FIELDS}
@@ -231,17 +242,14 @@ export class TicketService {
         `;
     }
 
-    searchCoordinatorDI(
-        field: string,
-        value: string,
-        first: number,
-        rows: number,
-    ) {
+    /** Recherche coordination, filtres CUMULATIFS — saisie en variable
+     *  GraphQL (`variables: { search: [{ field, value }] }`). */
+    searchCoordinatorDI(first: number, rows: number) {
         return gql`
-    {
+    query SearchCoordinatorDI($search: [SearchDiInput!]!) {
       searchCoordinatorDI(
         paginationConfig: { first: ${first}, rows: ${rows} }
-        search: { field: "${field}", value: "${value}" }
+        search: $search
       ) {
         di {
           ${COORDINATOR_DI_FIELDS}
@@ -312,12 +320,17 @@ export class TicketService {
         `;
     }
 
-    getAllMagasinSearch(first, rows, field, value) {
+    /**
+     * Recherche magasin, filtres de colonnes CUMULATIFS. La saisie passe en
+     * variable GraphQL (`variables: { search: [{ field, value }] }`), jamais
+     * interpolée dans le texte de la requête : un `"` ou un `\` la cassait.
+     */
+    getAllMagasinSearch(first, rows) {
         return gql`
-    {
+    query SearchDiForMagasin($search: [SearchDiInput!]!) {
       searchDiForMagasin(
         paginationConfig: { first: ${first}, rows: ${rows} }
-        search: { field: "${field}", value: "${value}" }
+        search: $search
       ) {
         di {
           _id
@@ -833,6 +846,7 @@ export class TicketService {
                     quantity_stocked
                     pdf
                     status_composant
+                    category_composant_id
                 }
             }
         `;
@@ -845,6 +859,43 @@ export class TicketService {
                     _id
                     name
                  
+                }
+            }
+        `;
+    }
+
+    /**
+     * Picker de composants du modal diagnostic — page filtrée + paginée.
+     *
+     * ⚠️ Requête À VARIABLES, contrairement au reste de ce service qui
+     * interpole dans la chaîne gql. Ici la valeur vient d'un champ de
+     * RECHERCHE : un `"` tapé par le technicien produirait une requête
+     * malformée (et l'interpolation est un vecteur d'injection GraphQL).
+     * Appeler avec `{ query: ..., variables: { input } }`.
+     */
+    browseComposants() {
+        return gql`
+            query BrowseComposants($input: ComposantBrowseInput!) {
+                browseComposants(input: $input) {
+                    composantRecord {
+                        _id
+                        name
+                        category_composant_id
+                    }
+                    totalComposantCount
+                }
+            }
+        `;
+    }
+
+    /** Racines de l'arbre : catégories + nombre de composants. */
+    composantCategoryTree() {
+        return gql`
+            {
+                composantCategoryTree {
+                    _id
+                    category_composant
+                    composantCount
                 }
             }
         `;
@@ -1239,11 +1290,27 @@ export class TicketService {
         `;
     }
 
-    ignore(_id) {
+    /**
+     * Ouvre un cycle RETOUR — UNE seule mutation.
+     *
+     * Remplace l'enchaînement `countIgnore` puis `changeStatusRetourN` que le
+     * composant faisait côté client : si la seconde échouait, la DI restait au
+     * compteur incrémenté mais au statut inchangé (constaté en base sur 3 DI),
+     * et tout le cycle retour écrivait alors sur les données du cycle 0. Le
+     * serveur revendique le niveau atomiquement et le renvoie.
+     */
+    startRetour(_id: string, reason: string) {
         return gql`
             mutation {
-                countIgnore(_idDI: "${_id}") {
-                    ignoreCount
+                changeStatusRetour(_id: "${_id}", reason: ${JSON.stringify(
+                    reason ?? '',
+                )}) {
+                    level
+                    di {
+                        _id
+                        status
+                        ignoreCount
+                    }
                 }
             }
         `;
@@ -1627,6 +1694,7 @@ export class TicketService {
                         facture
                         contain_pdr
                         diagnosticPayant
+                        repairEstimate
                         image
                         nSerie
                         location_id
@@ -1955,12 +2023,19 @@ export class TicketService {
     `;
     }
     //!CRUD
+    /**
+     * `created` distingue une VRAIE création d'un doublon : le back renvoie la
+     * catégorie existante (sans lever) quand le nom est déjà pris, insensible à
+     * la casse. Sans ce champ, l'appelant annoncerait « Catégorie créée » alors
+     * que rien n'a été ajouté.
+     */
     addCatgoryDi(category: string) {
         return gql`
             mutation {
                 createDiCategory(category: ${gqlStr(category)}) {
                     _id
                     category
+                    created
                 }
             }
         `;

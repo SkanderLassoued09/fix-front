@@ -3,9 +3,6 @@
     <p-progressSpinner ariaLabel="loading" />
 </p-blockUI>
 
-<p-toast></p-toast>
-<p-confirmDialog />
-
 <div class="sav-page">
     <!-- ═══════════════════════════════════════════════
          MAIN TABLE
@@ -181,12 +178,19 @@
         [headerStatusTone]="diagHeaderStatusToneVm"
         [canMinimize]="diagCanMinimizeVm"
         [nextBlockedReason]="diagNextBlockedReason"
+        [finishBlockedReason]="diagFinishBlockedReason"
         (pauseClicked)="onDiagPause()"
         (minimizeClicked)="onDiagMinimize()"
         (stepChanged)="onDiagStepChange($event)"
         (addComposant)="onDiagAddComposant()"
         (removeComposant)="onDiagRemoveComposant($event)"
+        (composantQuantityChange)="onDiagComposantQuantityChange($event)"
         (createComposant)="onDiagCreateComposant()"
+        [categoryCreating]="diagCategoryCreating"
+        [categoryCreatedTick]="diagCategoryCreatedTick"
+        (createCategory)="onDiagCreateCategory($event)"
+        (composantNodeExpand)="onDiagNodeExpand($event)"
+        (composantSearch)="onDiagComposantSearch($event)"
         (finishDiag)="onDiagFinish()"
         (finishRetour)="onDiagFinishRetour()"
         (sendToFinishRetour)="onDiagSendToFinishRetour()"
@@ -389,12 +393,14 @@
                             </ng-template>
                             <ng-template pTemplate="header">
                                 <tr>
+                                    <th>Cycle</th>
                                     <th>Nom composant</th>
                                     <th>Quantité</th>
                                 </tr>
                             </ng-template>
                             <ng-template pTemplate="body" let-c>
                                 <tr>
+                                    <td>{{ c.cycleLabel }}</td>
                                     <td>{{ c.nameComposant }}</td>
                                     <td>{{ c.quantity }}</td>
                                 </tr>

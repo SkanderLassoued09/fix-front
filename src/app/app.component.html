@@ -1,14 +1,31 @@
+<!-- Les DEUX seuls <p-toast> de l'application (plus l'unique modale de
+     confirmation). Ne jamais en ajouter dans une page : un second exutoire
+     lié au MÊME MessageService doublonne CHAQUE toast. -->
 <p-toast></p-toast>
+
+<!-- Modale de confirmation GLOBALE et unique — pilotée par `ConfirmService`.
+     Elle remplace les 10 <p-confirmDialog> qui étaient déclarés page par page. -->
+<app-fx-confirm-dialog></app-fx-confirm-dialog>
 
 <!-- Toast temps réel des notifications ERP : clé dédiée + template CLIQUABLE
      (ouvre le modal détail de la DI). N'affecte pas les autres toasts. -->
 <p-toast key="erp-notif" position="top-right" [baseZIndex]="11000">
     <ng-template let-message pTemplate="message">
-        <div class="erp-toast" (click)="onErpToastClick(message.data)">
+        <!-- Toutes les notifications ne portent PAS de DI (p. ex. la création
+             d'une catégorie de diagnostic, `diId: null`). `DeepLinkService.open()`
+             sort alors immédiatement : le clic est un no-op silencieux. On ne
+             promet donc l'ouverture QUE quand il y a vraiment une DI à ouvrir. -->
+        <div
+            class="erp-toast"
+            [class.erp-toast--static]="!message.data?.diId"
+            (click)="onErpToastClick(message.data)"
+        >
             <span class="erp-toast__icon"><i class="pi pi-bell"></i></span>
             <span class="erp-toast__body">
                 <span class="erp-toast__msg">{{ message.detail }}</span>
-                <span class="erp-toast__hint">Cliquer pour ouvrir la DI</span>
+                <span class="erp-toast__hint" *ngIf="message.data?.diId">
+                    Cliquer pour ouvrir la DI
+                </span>
             </span>
         </div>
     </ng-template>
@@ -21,6 +38,19 @@
     (visibleChange)="onDetailVisibleChange($event)"
     [di]="detailService.di$ | async"
 ></app-di-info-modal>
+
+<!-- Modale « Affectation des Fichiers » GLOBALE — ouverte par la notification
+     BL (`DI_DOC_BL_PENDING`), depuis N'IMPORTE QUELLE page et SANS navigation.
+     C'est ce qui la rend accessible à la coordinatrice, qui n'a pas le droit
+     d'aller sur `ticket-list`. `ticket-list` garde sa propre instance pour le
+     bouton trombone (elle, rafraîchit la liste après enregistrement). -->
+<app-di-files-modal
+    [visible]="(filesService.visible$ | async) || false"
+    (visibleChange)="onFilesVisibleChange($event)"
+    [di]="filesService.di$ | async"
+    [loading]="(filesService.loading$ | async) || false"
+    (saved)="onFilesSaved()"
+></app-di-files-modal>
 
 <!-- Single primary outlet. There were TWO unnamed <router-outlet> here, which
      mounted every routed page TWICE (duplicate component instances) — the root

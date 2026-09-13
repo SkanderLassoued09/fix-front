@@ -9,13 +9,33 @@ html {
 
 body {
     font-family: var(--font-family);
+    /* Inter rend plus fin que le sans-serif système qu'elle remplace : à 400
+       l'interface paraissait délavée. 500 (Medium) redonne de la présence au
+       texte courant sans le rendre gras. Ne touche QUE le texte qui n'impose
+       pas son propre poids — les 500+ déclarations explicites du code
+       (600/700) sont inchangées. */
+    font-weight: 500;
     color: var(--text-color);
     background-color: var(--surface-ground);
     margin: 0;
     padding: 0;
     min-height: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    /* `-webkit-font-smoothing: antialiased` retiré : il AMINCIT le rendu
+       (nettement sur macOS), ce qui allait à l'encontre du poids voulu. */
+}
+
+/* Les contrôles de formulaire n'héritent PAS de la police de la page : le
+   navigateur leur impose la sienne (un <button> nu rendait en Arial alors que
+   tout le reste passait en Inter). Cette règle est ce qui fait réellement
+   descendre --font-family jusqu'aux boutons, champs et listes déroulantes.
+   Volontairement limitée à `font-family` : hériter aussi `font-size`
+   changerait les tailles de contrôles partout dans l'app. */
+button,
+input,
+select,
+textarea,
+optgroup {
+    font-family: inherit;
 }
 
 a {

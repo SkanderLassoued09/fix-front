@@ -156,6 +156,24 @@ export class ProfileService {
     }
 
     /**
+     * Changement de mot de passe par l'utilisateur LUI-MÊME.
+     *
+     * VARIABLES GraphQL, jamais d'interpolation : un mot de passe interpolé dans
+     * le corps de la requête finirait dans les logs réseau et casserait sur tout
+     * caractère spécial. (Les mutations plus anciennes de ce service utilisent
+     * encore `gqlStr` — ne pas les reprendre comme modèle.)
+     *
+     * Aucun identifiant n'est envoyé : le serveur prend l'acteur dans le jeton.
+     */
+    changeMyPassword() {
+        return gql`
+            mutation ChangeMyPassword($input: ChangePasswordInput!) {
+                changeMyPassword(input: $input)
+            }
+        `;
+    }
+
+    /**
      * delete profile soft delete
      */
 

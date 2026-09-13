@@ -1,6 +1,10 @@
 /* You can add global styles to this file, and also import other style files */
 
 $gutter: 1rem; //for primeflex grid system
+
+/* Jetons de couleur clair/sombre — doit precede le reste. */
+@import "assets/layout/styles/tokens";
+
 @import "assets/layout/styles/layout/layout.scss";
 
 /* PrimeNG */
@@ -12,8 +16,6 @@ $gutter: 1rem; //for primeflex grid system
 @import "assets/demo/styles/flags/flags.css";
 @import "assets/demo/styles/badges.scss";
 @import "assets/demo/styles/code.scss";
-@import "primeng/resources/themes/lara-light-blue/theme.css";
-@import "primeng/resources/primeng.css";
 
 /* Retour-cycle indicator — shown on step modals when a DI is in a retour
    cycle (ignoreCount > 0) so it's clear it's not the original flow. */
@@ -24,9 +26,9 @@ $gutter: 1rem; //for primeflex grid system
     margin-left: 8px;
     padding: 2px 9px;
     border-radius: 999px;
-    background: #fef2f2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
+    background: var(--fx-red-soft-bg);
+    color: var(--fx-red-soft-fg);
+    border: 1px solid var(--fx-red-soft-bd);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -49,6 +51,22 @@ td.trc-cell {
     white-space: nowrap;
 }
 
+/* ── Toasts ───────────────────────────────────────────────────────────────
+   Habillage COMMUN à tous les toasts, posé une seule fois ici. Ce bloc était
+   auparavant recopié à l'identique dans 4 SCSS de composants (ticket-list,
+   tech-di-list, coordinator-di-list, magasin-di-list) : comme il était en
+   `::ng-deep`, il fuyait dans toute l'application depuis n'importe laquelle de
+   ces pages — donc l'app changeait d'aspect selon la page visitée en premier.
+
+   Les COULEURS de sévérité ne sont PAS redéfinies ici, et ne doivent pas
+   l'être : le thème PrimeNG les rend déjà correctement (succès vert, erreur
+   rouge, info bleu, warn orange) dans les deux modes. Le choix de la sévérité
+   se fait exclusivement via `NotifyService`. */
+.p-toast .p-toast-message {
+    border-radius: 8px;
+    box-shadow: var(--fx-shadow-md);
+}
+
 /* Toast temps réel des notifications ERP (clé `erp-notif`) — cliquable, charte bleue. */
 .p-toast .erp-toast {
     display: flex;
@@ -65,8 +83,8 @@ td.trc-cell {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-    color: #fff;
+    background: linear-gradient(135deg, var(--fx-blue) 0%, var(--fx-blue-strong) 100%);
+    color: var(--fx-text-on-accent);
 }
 .p-toast .erp-toast__body {
     display: flex;
@@ -79,7 +97,11 @@ td.trc-cell {
     color: var(--text-color);
     line-height: 1.35;
 }
+/* Notification sans DI : rien à ouvrir, le curseur ne doit pas suggérer un clic. */
+.p-toast .erp-toast--static {
+    cursor: default;
+}
 .p-toast .erp-toast__hint {
     font-size: 0.75rem;
-    color: #2563eb;
+    color: var(--fx-blue-text);
 }

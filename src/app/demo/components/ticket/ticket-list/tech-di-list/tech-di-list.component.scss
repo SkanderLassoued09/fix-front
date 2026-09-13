@@ -5,27 +5,29 @@
 @use "../../tech-workflow-cards";
 
 // ── TOKENS (mirrored from di-list) ────────────────────
-$bg-page: #f1f5f9;
-$bg-card: #ffffff;
-$bg-surface: #f8fafc;
-$bg-row-hover: #f1f5f9;
-$bg-input: #ffffff;
-$border: #e2e8f0;
-$text-primary: #1e293b;
-$text-secondary: #64748b;
-$text-muted: #94a3b8;
+$bg-page: var(--fx-bg-page);
+$bg-card: var(--fx-bg-card);
+$bg-surface: var(--fx-bg-surface);
+$bg-row-hover: var(--fx-bg-hover);
+$bg-input: var(--fx-bg-input);
+$border: var(--fx-border);
+$text-primary: var(--fx-text-strong);
+$text-secondary: var(--fx-text-muted);
+$text-muted: var(--fx-text-subtle);
 $accent-blue: #2563eb;
 $white: #ffffff;
 
-$green: #16a34a;
-$red: #dc2626;
+$green: var(--fx-green-text);
+$red: var(--fx-red-text);
 
 // ── PAGE SHELL ────────────────────────────────────────
 .sav-page {
     background: $bg-page;
     min-height: 100vh;
     padding: 1.5rem 1.75rem;
-    font-family: "Segoe UI", system-ui, sans-serif;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
     color: $text-primary;
 }
 
@@ -51,7 +53,7 @@ $red: #dc2626;
     }
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 1.1rem;
     }
 }
@@ -99,7 +101,7 @@ $red: #dc2626;
     transition: border-color 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
     }
     &::placeholder {
         color: $text-muted !important;
@@ -141,24 +143,24 @@ $red: #dc2626;
     }
 
     &.row-retour1 {
-        border-left-color: #ca8a04 !important;
+        border-left-color: var(--fx-amber) !important;
 
         > td.sav-td:first-child::before {
-            background: #ca8a04;
+            background: var(--fx-amber);
         }
     }
     &.row-retour2 {
-        border-left-color: #ea580c !important;
+        border-left-color: var(--fx-orange) !important;
 
         > td.sav-td:first-child::before {
-            background: #ea580c;
+            background: var(--fx-orange);
         }
     }
     &.row-retour3 {
-        border-left-color: #dc2626 !important;
+        border-left-color: var(--fx-red) !important;
 
         > td.sav-td:first-child::before {
-            background: #dc2626;
+            background: var(--fx-red);
         }
     }
 }
@@ -186,40 +188,40 @@ $red: #dc2626;
 
 // Diagnostic
 ::ng-deep .status-DIAGNOSTIC {
-    background: #dbeafe !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg-2) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #3b82f6;
+        background: var(--fx-blue);
     }
 }
 
 // In diagnostic / actively open
 ::ng-deep .status-INDIAGNOSTIC,
 ::ng-deep .status-IN_DIAGNOSTIC {
-    background: #ede9fe !important;
-    color: #5b21b6 !important;
+    background: var(--fx-purple-soft-bg-2) !important;
+    color: var(--fx-purple-soft-fg) !important;
     &::before {
-        background: #7c3aed;
+        background: var(--fx-purple);
     }
 }
 
 // Diagnostic paused
 ::ng-deep .status-DIAGNOSTIC_Pause,
 ::ng-deep .status-DIAGNOSTIC_PAUSE {
-    background: #fef3c7 !important;
-    color: #92400e !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #f59e0b;
+        background: var(--fx-amber);
     }
 }
 
 // Negotiation
 ::ng-deep .status-NEGOTIATION1,
 ::ng-deep .status-NEGOTIATION2 {
-    background: #ffedd5 !important;
-    color: #9a3412 !important;
+    background: var(--fx-amber-soft-bg) !important;
+    color: var(--fx-amber-text) !important;
     &::before {
-        background: #ea580c;
+        background: var(--fx-orange);
     }
 }
 
@@ -227,55 +229,55 @@ $red: #dc2626;
 ::ng-deep .status-PENDING1,
 ::ng-deep .status-PENDING2,
 ::ng-deep .status-PENDING3 {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
+    background: var(--fx-bg-surface-2) !important;
+    color: var(--fx-text-muted-strong) !important;
     &::before {
-        background: #94a3b8;
+        background: var(--fx-border-strong);
     }
 }
 
 // Réparation
 ::ng-deep .status-REPARATION {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #16a34a;
+        background: var(--fx-green);
     }
 }
 
 ::ng-deep .status-INREPARATION,
 ::ng-deep .status-IN_REPARATION {
-    background: #bbf7d0 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 
 ::ng-deep .status-REPARATION_Pause {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 
 // Finished
 ::ng-deep .status-FINISHED {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 
 // Pricing
 ::ng-deep .status-PRICING,
 ::ng-deep .status-PRICING_DIAG {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 
@@ -283,28 +285,28 @@ $red: #dc2626;
 ::ng-deep .status-RETOUR1,
 ::ng-deep .status-RETOUR2,
 ::ng-deep .status-RETOUR3 {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 
 // Created
 ::ng-deep .status-CREATED {
-    background: #eff6ff !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #2563eb;
+        background: var(--fx-blue-strong);
     }
 }
 
 // Annulé
 ::ng-deep .status-ANNULER {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 
@@ -349,9 +351,9 @@ $red: #dc2626;
         box-shadow 0.12s;
 
     &:hover {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         color: $text-primary !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
     }
 
@@ -362,9 +364,9 @@ $red: #dc2626;
     }
 
     &--danger:hover {
-        border-color: #fca5a5 !important;
+        border-color: var(--fx-red-soft-bd) !important;
         color: $red !important;
-        background: #fff5f5 !important;
+        background: var(--fx-red-soft-bg) !important;
     }
 }
 
@@ -405,7 +407,7 @@ $red: #dc2626;
     padding: 0 !important;
 
     .p-paginator-element {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         color: $text-secondary !important;
         border-radius: 4px !important;
@@ -420,9 +422,9 @@ $red: #dc2626;
             color: $text-primary !important;
         }
         &.p-highlight {
-            background: $accent-blue !important;
-            border-color: $accent-blue !important;
-            color: $white !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 }
@@ -518,7 +520,7 @@ $red: #dc2626;
     font-family: inherit;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
     &::placeholder {
@@ -542,7 +544,7 @@ $red: #dc2626;
         box-shadow 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
     &::placeholder {
@@ -572,10 +574,10 @@ $red: #dc2626;
             color: $text-secondary !important;
         }
         &:hover {
-            border-color: #cbd5e1 !important;
+            border-color: var(--fx-border-strong) !important;
         }
         &.p-focus {
-            border-color: $accent-blue !important;
+            border-color: var(--fx-blue-strong) !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
         }
     }
@@ -596,9 +598,9 @@ $red: #dc2626;
     font-size: 0.82rem !important;
 
     &.p-highlight {
-        background: #eff6ff !important;
-        border-color: $accent-blue !important;
-        color: $accent-blue !important;
+        background: var(--fx-blue-soft-bg) !important;
+        border-color: var(--fx-blue-strong) !important;
+        color: var(--fx-blue-text) !important;
     }
 }
 
@@ -611,8 +613,8 @@ $red: #dc2626;
     padding: 0.4rem 0.8rem !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
     &:hover {
-        background: $white !important;
-        border-color: #cbd5e1 !important;
+        background: var(--fx-bg-card) !important;
+        border-color: var(--fx-border-strong) !important;
     }
 }
 
@@ -671,8 +673,8 @@ $red: #dc2626;
     color: $text-primary;
     margin: 0;
     padding: 0.4rem 0.75rem;
-    background: #fef9c3;
-    border-left: 3px solid #ca8a04;
+    background: var(--fx-amber-soft-bg-2);
+    border-left: 3px solid var(--fx-amber);
     border-radius: 4px;
 }
 
@@ -693,7 +695,7 @@ $red: #dc2626;
     border: 1px solid $border;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.8rem;
         flex-shrink: 0;
     }
@@ -727,7 +729,7 @@ $red: #dc2626;
     font-size: 0.82rem;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.8rem;
     }
     span {
@@ -792,35 +794,31 @@ $red: #dc2626;
 
 // ── GLOBAL PRIMENG OVERRIDES ──────────────────────────
 ::ng-deep .p-inputtext:focus {
-    border-color: $accent-blue !important;
+    border-color: var(--fx-blue-strong) !important;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
 }
 
 ::ng-deep .p-radiobutton .p-radiobutton-box {
     border-color: $border !important;
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     &.p-highlight {
-        background: $accent-blue !important;
-        border-color: $accent-blue !important;
+        background: var(--fx-blue-strong) !important;
+        border-color: var(--fx-blue-strong) !important;
     }
     &:hover {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
     }
 }
 
 ::ng-deep .p-checkbox .p-checkbox-box {
     border-color: $border !important;
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     &.p-highlight {
-        background: $accent-blue !important;
-        border-color: $accent-blue !important;
+        background: var(--fx-blue-strong) !important;
+        border-color: var(--fx-blue-strong) !important;
     }
 }
 
-::ng-deep .p-toast .p-toast-message {
-    border-radius: 8px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-}
 
 ::ng-deep .p-fieldset {
     border: 1px solid $border !important;
@@ -845,7 +843,7 @@ $red: #dc2626;
 }
 
 ::ng-deep .p-dropdown-panel {
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     border: 1px solid $border !important;
     border-radius: 6px !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
@@ -858,8 +856,8 @@ $red: #dc2626;
             background: $bg-surface !important;
         }
         &.p-highlight {
-            background: #eff6ff !important;
-            color: $accent-blue !important;
+            background: var(--fx-blue-soft-bg) !important;
+            color: var(--fx-blue-text) !important;
         }
     }
 }
@@ -872,7 +870,7 @@ $red: #dc2626;
     font-size: 0.82rem !important;
     padding: 0.4rem 0.6rem !important;
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
 }
@@ -903,12 +901,12 @@ $red: #dc2626;
 
 /* Emplacement VIDE → vert : rien à ranger, la DI n'occupe pas de place. */
 .sav-location-dot--vide {
-    background: #16a34a;
+    background: var(--fx-green);
 }
 
 /* Emplacement RENSEIGNÉ → rouge : une place du magasin est occupée. */
 .sav-location-dot--renseigne {
-    background: #dc2626;
+    background: var(--fx-red);
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -945,7 +943,7 @@ $red: #dc2626;
     border: 1px solid $border;
     border-radius: 6px;
     overflow: hidden;
-    background: #ffffff;
+    background: var(--fx-bg-card);
 
     .p-inputnumber-input {
         flex: 1 1 auto;
@@ -969,13 +967,13 @@ $red: #dc2626;
         flex: 1 1 50%;
         width: 1.75rem !important;
         min-height: 0 !important;
-        background: #eff6ff !important;
-        color: $accent-blue !important;
+        background: var(--fx-blue-soft-bg) !important;
+        color: var(--fx-blue-text) !important;
         border: 0 !important;
         border-radius: 0 !important;
 
         &:hover {
-            background: #dbeafe !important;
+            background: var(--fx-blue-soft-bg-2) !important;
         }
         .p-button-icon {
             font-size: 0.7rem;
@@ -986,7 +984,7 @@ $red: #dc2626;
     }
 
     &:focus-within {
-        border-color: $accent-blue;
+        border-color: var(--fx-blue-strong);
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
 }
@@ -995,8 +993,8 @@ $red: #dc2626;
 ::ng-deep .sav-composant-add.p-button {
     height: 38px;
     align-self: flex-end;
-    background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
-    color: #ffffff !important;
+    background: linear-gradient(90deg, var(--fx-blue) 0%, var(--fx-blue-strong) 100%) !important;
+    color: var(--fx-text-on-accent) !important;
     border: 0 !important;
     border-radius: 6px !important;
     font-size: 0.85rem !important;
@@ -1011,16 +1009,16 @@ $red: #dc2626;
     margin: 0.85rem 0;
 }
 ::ng-deep .sav-composant-create-btn.p-button {
-    background: #ffffff !important;
-    color: $accent-blue !important;
-    border: 1px solid #bfdbfe !important;
+    background: var(--fx-bg-card) !important;
+    color: var(--fx-blue-text) !important;
+    border: 1px solid var(--fx-blue-soft-bd) !important;
     border-radius: 6px !important;
     font-size: 0.82rem !important;
     font-weight: 600 !important;
     padding: 0.45rem 0.9rem !important;
 
     &:hover {
-        background: #eff6ff !important;
+        background: var(--fx-blue-soft-bg) !important;
     }
 }
 

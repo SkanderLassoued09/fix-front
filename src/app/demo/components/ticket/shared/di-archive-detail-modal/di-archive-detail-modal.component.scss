@@ -1,13 +1,13 @@
 :host {
     --da-blue: #3b82f6;
-    --da-blue-strong: #2563eb;
-    --da-green: #16a34a;
-    --da-amber: #b45309;
-    --da-red: #dc2626;
+    --da-blue-strong: var(--fx-blue-text);
+    --da-green: var(--fx-green-text);
+    --da-amber: var(--fx-amber-text);
+    --da-red: var(--fx-red-text);
     --da-slate: #475569;
-    --da-ink: #0f172a;
-    --da-muted: #64748b;
-    --da-border: #e2e8f0;
+    --da-ink: var(--fx-text);
+    --da-muted: var(--fx-text-muted);
+    --da-border: var(--fx-border);
     font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
@@ -27,7 +27,7 @@
     > i {
         font-size: 1.3rem;
         color: var(--da-blue-strong);
-        background: #eff6ff;
+        background: var(--fx-blue-soft-bg);
         padding: 0.55rem;
         border-radius: 12px;
     }
@@ -57,19 +57,19 @@
     white-space: nowrap;
 
     &--incomplet {
-        background: #fffbeb;
+        background: var(--fx-amber-soft-bg);
         color: var(--da-amber);
-        border-color: #fde68a;
+        border-color: var(--fx-amber-soft-bd);
     }
     &--complet {
-        background: #f0fdf4;
+        background: var(--fx-green-soft-bg);
         color: var(--da-green);
-        border-color: #bbf7d0;
+        border-color: var(--fx-green-soft-bd);
     }
     &--cloture {
-        background: #f1f5f9;
-        color: var(--da-slate);
-        border-color: #cbd5e1;
+        background: var(--fx-bg-surface-2);
+        color: var(--fx-text-muted);
+        border-color: var(--fx-border-strong);
     }
 }
 
@@ -90,11 +90,11 @@
     border: 1px solid var(--da-border);
     border-radius: 12px;
     padding: 0.75rem 0.85rem 0.85rem;
-    background: #fff;
+    background: var(--fx-bg-card);
 
     &--filled {
-        border-color: #bbf7d0;
-        background: #f6fef9;
+        border-color: var(--fx-green-soft-bd);
+        background: var(--fx-green-soft-bg);
     }
 }
 .da-slot__head {
@@ -124,7 +124,7 @@
     gap: 0.35rem;
     margin-bottom: 0.5rem;
     font-size: 0.78rem;
-    color: var(--da-slate);
+    color: var(--fx-text-muted);
 
     i {
         font-size: 0.7rem;
@@ -148,7 +148,7 @@
     padding: 0.5rem 0.65rem;
     border: 1px solid var(--da-border);
     border-radius: 9px;
-    background: #fff;
+    background: var(--fx-bg-card);
     text-decoration: none;
     color: var(--da-blue-strong);
     font-size: 0.82rem;
@@ -156,8 +156,8 @@
     transition: border-color 0.15s, background 0.15s;
 
     &:hover {
-        border-color: var(--da-blue);
-        background: #eff6ff;
+        border-color: var(--fx-blue);
+        background: var(--fx-blue-soft-bg);
     }
     i:first-child {
         color: var(--da-red);
@@ -186,14 +186,14 @@
     font-weight: 600;
     cursor: pointer;
     border: 1px solid var(--da-border);
-    background: #fff;
+    background: var(--fx-bg-card);
     transition: background 0.15s, border-color 0.15s;
 
     &--danger {
         color: var(--da-red);
-        border-color: #fecaca;
+        border-color: var(--fx-red-soft-bd);
         &:hover:not(:disabled) {
-            background: #fef2f2;
+            background: var(--fx-red-soft-bg);
         }
     }
     &:disabled {
@@ -236,7 +236,7 @@
     margin-left: auto;
     background: var(--da-slate);
     border-color: var(--da-slate);
-    color: #fff;
+    color: var(--fx-text-on-accent);
 
     &:hover:not(:disabled) {
         filter: brightness(1.08);
@@ -254,14 +254,14 @@
     gap: 0.5rem;
     margin: 1rem 0 0;
     padding: 0.7rem 0.85rem;
-    background: #f8fafc;
+    background: var(--fx-bg-surface);
     border: 1px solid var(--da-border);
     border-radius: 10px;
     font-size: 0.78rem;
     color: var(--da-muted);
 
     i {
-        color: var(--da-blue);
+        color: var(--fx-blue-text);
         margin-top: 0.1rem;
     }
     b {

@@ -18,6 +18,21 @@ import { TicketService } from 'src/app/demo/service/ticket.service';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import { environment } from 'src/environments/environment';
 import { DiImageComponent } from '../di-image/di-image.component';
+import { ComposantCatalogService, ComposantCatalog } from 'src/app/demo/service/composant-catalog.service';
+import { docHref } from '../doc-href.util';
+import {
+    DiComposantLine,
+    ComposantStatusKey,
+    StockHealth,
+    enrichComposants,
+    composantsGrandTotal,
+    composantsPricedCount,
+    composantStatusKey,
+    stockHealth,
+    stockBadgeLabel,
+    formatComingDate,
+    cleanComposantValue,
+} from '../composant-enrichment.util';
 import {
     buildCycleTimeline,
     buildRawTimeline,
@@ -30,22 +45,10 @@ import {
 } from '../status-timeline.util';
 
 /** Onglets du dossier. `dossier` = la vue historique, inchangée. */
+// `journal` n'est plus un onglet AFFICHÉ : il subsiste comme clé de chargement
+// des événements ERP, dont dépendent le motif du bandeau « Retour N » et les
+// traces de dépôt de documents de l'onglet Liens.
 export type DiInfoTab = 'dossier' | 'journal' | 'temps' | 'finances' | 'liens';
-
-/** Une ligne du journal fusionné (événement ERP OU transition de statut). */
-export interface JournalRow {
-    kind: 'event' | 'status';
-    at: Date;
-    date: string | null;
-    /** Code d'événement (`DI_DOC_BC`…) ou statut brut (`PENDING2`…). */
-    code: string;
-    label: string;
-    actor: string | null;
-    actorRole: string | null;
-    cycle: number | null;
-    /** Payload JSON déplié à la demande (événements uniquement). */
-    details: string | null;
-}
 
 /**
  * Modal « Dossier d'intervention » — LECTURE SEULE, partagé par ticket-list ET
@@ -98,25 +101,34 @@ export class DiInfoModalComponent implements OnChanges {
     composantCost = 0;
     downloading = false;
 
+    // ── Catalogue composants (jointure par NOM) ───────────────────────────────
+    /** Catalogue chargé (cache applicatif). `null` tant qu'il n'est pas arrivé. */
+    private catalog: ComposantCatalog | null = null;
+    catalogLoading = false;
+    /** Incrémenté à l'arrivée du catalogue — entre dans la clé de mémoïsation. */
+    private catalogVersion = 0;
+    /** Mémoïsation des lignes enrichies : la vue les lit dans un `*ngFor`, donc
+     *  à CHAQUE cycle de détection. Recalculer produirait de nouveaux objets à
+     *  chaque tick (churn + `trackBy` inopérant sous OnPush). */
+    private _linesKey: string | null = null;
+    private _lines: DiComposantLine[] = [];
+
     /** Onglet actif. `dossier` porte EXACTEMENT le contenu d'avant la refonte. */
     activeTab: DiInfoTab = 'dossier';
     /** Onglets déjà chargés — le chargement est PARESSEUX (1 onglet = 1 requête
      *  au plus), pour ne pas payer 6 allers-retours à chaque ouverture. */
     private readonly loaded = new Set<DiInfoTab>();
 
-    // ── Journal (onglet 2) ───────────────────────────────────────────────────
-    journalLoading = false;
-    /** Événements ERP bruts (`SystemEvent`) — porteurs de l'ACTEUR. */
-    private events: any[] = [];
-    /** Filtre par code d'événement/statut ; '' = tout. */
-    journalFilter = '';
-    /** Index des lignes dont le payload est déplié. */
-    readonly journalOpen = new Set<number>();
 
     // ── Temps & chrono (onglet 3) ────────────────────────────────────────────
     timeLoading = false;
     statDetail: any = null;
     cycleStats: any[] = [];
+
+    // ── Événements ERP (plus d'onglet, mais toujours consommés) ──────────────
+    // Alimentent `retourContext` (motif du bandeau « Retour N ») et `docTrace`
+    // (« Déposé le / Par » de l'onglet Liens). Aucune autre source n'existe.
+    private events: any[] = [];
 
     // ── Liens (onglet 5) ─────────────────────────────────────────────────────
     linksLoading = false;
@@ -146,6 +158,7 @@ export class DiInfoModalComponent implements OnChanges {
         private readonly ticket: TicketService,
         private readonly cdr: ChangeDetectorRef,
         private readonly runner: MutationRunner,
+        private readonly catalogSvc: ComposantCatalogService,
     ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -158,10 +171,13 @@ export class DiInfoModalComponent implements OnChanges {
             // périmé. Sans ce reset, l'onglet Journal afficherait l'historique
             // de la DI d'avant.
             this.resetLifecycleCaches();
+            // Nouvelle DI → les lignes enrichies du dossier précédent sont périmées.
+            this._linesKey = null;
         }
         const id = this.di?._id;
         if (id && this.visible) {
             this.fetchCosts();
+            void this.ensureCatalog();
             // Un onglet autre que « Dossier » peut rester actif d'une ouverture
             // à l'autre : on le recharge pour la nouvelle DI.
             this.ensureTabLoaded(this.activeTab);
@@ -177,7 +193,6 @@ export class DiInfoModalComponent implements OnChanges {
 
     readonly tabs: ReadonlyArray<{ key: DiInfoTab; label: string; icon: string }> = [
         { key: 'dossier', label: 'Dossier', icon: 'pi pi-folder' },
-        { key: 'journal', label: 'Journal', icon: 'pi pi-history' },
         { key: 'temps', label: 'Temps & chrono', icon: 'pi pi-stopwatch' },
         { key: 'finances', label: 'Finances', icon: 'pi pi-wallet' },
         { key: 'liens', label: 'Liens', icon: 'pi pi-link' },
@@ -196,8 +211,6 @@ export class DiInfoModalComponent implements OnChanges {
     private resetLifecycleCaches(): void {
         this.loaded.clear();
         this.events = [];
-        this.journalFilter = '';
-        this.journalOpen.clear();
         this.statDetail = null;
         this.cycleStats = [];
         this.pvs = [];
@@ -210,20 +223,20 @@ export class DiInfoModalComponent implements OnChanges {
     private ensureTabLoaded(tab: DiInfoTab): void {
         if (!this.di?._id || this.loaded.has(tab)) return;
         this.loaded.add(tab);
-        // Le résultat n'intéresse que l'export PDF (qui, lui, l'attend).
-        if (tab === 'journal') void this.loadJournal();
-        else if (tab === 'temps') void this.loadTimes();
+        if (tab === 'temps') void this.loadTimes();
         else if (tab === 'liens') void this.loadLinks();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Onglet Journal — SystemEvent (avec acteur) ∪ statusHistory (exhaustif)
+    // Événements ERP (SystemEvent) — l'onglet Journal a été RETIRÉ, mais ces
+    // événements alimentent encore le motif du bandeau « Retour N »
+    // (`retourContext`) et les traces de dépôt de documents (`docTrace`), qui
+    // n'ont aucune autre source.
     // ─────────────────────────────────────────────────────────────────────────
 
     private loadJournal(): Promise<void> {
         const diId = this.di?._id;
         if (!diId) return Promise.resolve();
-        this.journalLoading = true;
         return new Promise<void>((resolve) => {
         this.apollo
             .query<any>({
@@ -235,7 +248,6 @@ export class DiInfoModalComponent implements OnChanges {
                     // Le dossier peut avoir changé pendant la requête.
                     if (this.di?._id !== diId) return resolve();
                     this.events = data?.notificationHistory ?? [];
-                    this.journalLoading = false;
                     this.cdr.markForCheck();
                     resolve();
                 },
@@ -244,7 +256,6 @@ export class DiInfoModalComponent implements OnChanges {
                     // Le journal ERP est un PLUS : s'il échoue, on affiche quand
                     // même les transitions de statut (toujours en mémoire).
                     this.events = [];
-                    this.journalLoading = false;
                     this.cdr.markForCheck();
                     resolve();
                 },
@@ -253,127 +264,9 @@ export class DiInfoModalComponent implements OnChanges {
     }
 
     /** À quel cycle de retour appartient un instant donné. */
-    private cycleAt(at: Date, rows?: RawTimelineRow[]): number {
-        rows ??= buildRawTimeline(
-            this.di?.statusHistory,
-            DiInfoModalComponent.ANOMALY_MS,
-        );
-        let cycle = 0;
-        for (const r of rows) {
-            if (r.at.getTime() <= at.getTime()) cycle = r.cycle;
-            else break;
-        }
-        return cycle;
-    }
 
-    /**
-     * Journal FUSIONNÉ, du plus récent au plus ancien.
-     *
-     * Les deux sources sont complémentaires et aucune ne suffit seule :
-     * `statusHistory` contient TOUTES les transitions mais sans auteur (le hook
-     * Mongoose n'a pas de contexte de requête) ; `SystemEvent` porte l'acteur et
-     * les actions non-transitionnelles (uploads, confirmations, abandons) mais
-     * n'est pas émis à chaque changement de statut.
-     */
-    get journalRows(): JournalRow[] {
-        // Mémoïsation : le template lit ce getter 4× par cycle de détection et
-        // chaque appel rejouait `buildRawTimeline` PUIS, par événement,
-        // `cycleAt()` qui le rejouait encore (O(n²) sur les grosses DI).
-        const key = `${this.di?._id}#${this.events.length}#${
-            (this.di?.statusHistory ?? []).length
-        }#${this.journalFilter}`;
-        if (this._journalKey === key && this._journalRows) {
-            return this._journalRows;
-        }
-        const out = this.computeJournalRows();
-        this._journalKey = key;
-        this._journalRows = out;
-        return out;
-    }
-
-    private _journalKey: string | null = null;
-    private _journalRows: JournalRow[] | null = null;
-
-    private computeJournalRows(): JournalRow[] {
-        const rows: JournalRow[] = [];
-
-        const raw = buildRawTimeline(
-            this.di?.statusHistory,
-            DiInfoModalComponent.ANOMALY_MS,
-        );
-        for (const r of raw) {
-            rows.push({
-                kind: 'status',
-                at: r.at,
-                date: r.date,
-                code: r.rawStatus,
-                label: r.label,
-                actor: null,
-                actorRole: null,
-                cycle: r.cycle,
-                details: r.duration
-                    ? `Durée jusqu'à l'étape suivante : ${r.duration.text}${
-                          r.duration.ongoing ? ' (en cours)' : ''
-                      }`
-                    : null,
-            });
-        }
-
-        for (const e of this.events) {
-            const at = new Date(e?.createdAt);
-            if (Number.isNaN(at.getTime())) continue;
-            rows.push({
-                kind: 'event',
-                at,
-                date: formatTimelineDate(at),
-                code: String(e?.type ?? ''),
-                label: String(e?.message ?? e?.type ?? ''),
-                actor: e?.actorName ? String(e.actorName) : null,
-                actorRole: e?.actorRole ? String(e.actorRole) : null,
-                cycle: this.cycleAt(at, raw),
-                details: this.prettyPayload(e?.payloadJson),
-            });
-        }
-
-        rows.sort((a, b) => b.at.getTime() - a.at.getTime());
-        const f = this.journalFilter;
-        return f ? rows.filter((r) => r.code === f) : rows;
-    }
-
-    /** Codes présents, pour alimenter le filtre (jamais une liste en dur). */
-    get journalCodes(): string[] {
-        const set = new Set<string>();
-        for (const r of this.journalRows) set.add(r.code);
-        // `journalRows` est déjà filtré : on repart des sources pour garder la
-        // liste complète même quand un filtre est actif.
-        for (const e of this.events) if (e?.type) set.add(String(e.type));
-        return [...set].sort();
-    }
-
-    setJournalFilter(code: string): void {
-        this.journalFilter = code;
-        this.journalOpen.clear();
-    }
-
-    toggleJournalRow(i: number): void {
-        this.journalOpen.has(i)
-            ? this.journalOpen.delete(i)
-            : this.journalOpen.add(i);
-    }
 
     /** Payload JSON → texte lisible ; null si vide ou illisible. */
-    private prettyPayload(payloadJson: any): string | null {
-        if (!payloadJson) return null;
-        try {
-            const obj = JSON.parse(String(payloadJson));
-            if (!obj || typeof obj !== 'object') return null;
-            const keys = Object.keys(obj);
-            if (!keys.length) return null;
-            return JSON.stringify(obj, null, 2);
-        } catch {
-            return null;
-        }
-    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // Onglet Temps & chrono
@@ -561,8 +454,9 @@ export class DiInfoModalComponent implements OnChanges {
         return Math.max(0, Number(this.di?.ignoreCount ?? 0)) || 0;
     }
 
-    /** Pastilles du sélecteur — UNIQUEMENT si la DI a au moins un retour.
-     *  Index 0 = « Flow original », 1..N = « Retour N ». */
+    /** Pastilles du sélecteur — affichées dès qu'il y a au moins un retour.
+     *  Index 0 = « Flux original », 1..N = « Retour N ».
+     *  (Sans retour, un seul cycle : le sélecteur n'apporte rien.) */
     get cycles(): Array<{ n: number; label: string }> {
         if (this.cycleCount <= 0) return [];
         const out = [{ n: 0, label: 'Flux original' }];
@@ -586,6 +480,8 @@ export class DiInfoModalComponent implements OnChanges {
         if (this.editing) return;
         this.selectedCycle = n;
         this.timelineExpanded = false;
+        // Les composants sont PAR CYCLE : la mémoïsation doit tomber avec lui.
+        this._linesKey = null;
         this.fetchCosts();
         // Le journal de travail est PAR CYCLE (`getInfoStatByIdDi(_idLogs)`) :
         // changer de cycle sans le recharger afficherait les segments du cycle
@@ -612,56 +508,39 @@ export class DiInfoModalComponent implements OnChanges {
         }
     }
 
-    /** Snapshot du cycle sélectionné : la DI (cycle 0) ou la ligne `di.logs`
-     *  correspondante (cycle N). `null` si le cycle N n'a pas de ligne de log
-     *  (retour capturé sans re-diagnostic → sections snapshot masquées). */
-    /** Ligne de log BRUTE du cycle (ou `null`) — sert à décider l'ORIGINE. */
-    private get cycleLog(): any {
-        if (this.selectedCycle <= 0) return null;
-        const logs: any[] = Array.isArray(this.di?.logs) ? this.di.logs : [];
-        return logs.find((l) => Number(l?.idIgnore) === this.selectedCycle) ?? null;
-    }
-
     /**
-     * Snapshot du cycle sélectionné, avec HÉRITAGE.
+     * Dossier du cycle sélectionné — LA ligne `logs[idIgnore === n]`, cycle 0
+     * compris. Aucune fusion avec la DI.
      *
-     * Une ligne `logsdis` est créée quasi VIDE puis remplie au fil du cycle :
-     * seuls ~15 champs y sont jamais écrits (jamais `status`, `comment`,
-     * `image`, les remarques admin/magasin/coordination, ni le volet
-     * commercial). Renvoyer la ligne brute affichait donc un dossier de retour
-     * quasi vide — et `null` quand aucune ligne n'existait encore.
-     *
-     * On fusionne donc `DI ◂ log` : la valeur du cycle gagne quand elle existe,
-     * sinon celle de la DI. `fieldOrigin()` dit laquelle, pour que l'UI marque
-     * « hérité » et ne fasse JAMAIS passer une valeur globale pour une valeur
-     * du cycle.
+     * L'ancienne version partait de `{...this.di}` et n'écrasait qu'avec les
+     * valeurs « présentes » du log (`[]` et `''` comptaient comme absentes).
+     * Résultat exact du bug signalé : un retour déclaré SANS PDR héritait de la
+     * liste PDR du cycle 0, et chaque document non redéposé affichait le
+     * fichier — et le NOM de fichier — du flux original. Un badge « hérité » ne
+     * corrigeait rien : c'était une étiquette posée sur une donnée d'un AUTRE
+     * cycle. Une valeur absente doit rester absente.
      */
     get cycleSnapshot(): any {
-        if (this.selectedCycle <= 0) {
-            // Le document DI porte désormais le verdict du cycle COURANT : le
-            // back l'y écrit AUSSI en retour (sans quoi le routeur retour lisait
-            // un drapeau jamais renseigné et facturait les erreurs Fixtronix).
-            // L'onglet « Flux original » superpose donc la photo prise à l'entrée
-            // du 1er retour, sinon il afficherait le verdict d'un cycle ultérieur.
-            const snap = this.di?.cycle0Snapshot;
-            if (!snap) return this.di;
-            const merged: any = { ...(this.di ?? {}) };
-            for (const [k, v] of Object.entries(snap)) {
-                if (k === 'capturedAt' || k === '__typename') continue;
-                if (this.isPresent(v)) merged[k] = v;
-            }
-            return merged;
-        }
-        const log = this.cycleLog;
-        if (!log) return this.di;
-        const merged: any = { ...(this.di ?? {}) };
-        for (const [k, v] of Object.entries(log)) {
-            if (this.isPresent(v)) merged[k] = v;
-        }
-        return merged;
+        const logs: any[] = Array.isArray(this.di?.logs) ? this.di.logs : [];
+        return (
+            logs.find((l) => Number(l?.idIgnore) === this.selectedCycle) ?? null
+        );
     }
 
-    /** Une valeur du log compte comme RENSEIGNÉE (donc propre au cycle) ? */
+    /** Le dossier de ce cycle a-t-il été RECONSTITUÉ par la migration ? Une
+     *  donnée déduite après coup ne doit jamais se faire passer pour une donnée
+     *  observée — la bannière le dit explicitement. */
+    get cycleIsReconstructed(): boolean {
+        return this.cycleSnapshot?.reconstructed === true;
+    }
+
+    get cycleReconstructedReason(): string | null {
+        return this.cycleSnapshot?.reconstructedReason ?? null;
+    }
+
+    /** Une valeur est-elle renseignée pour ce cycle ? Sert UNIQUEMENT à
+     *  l'affichage (« non renseigné pour ce cycle »), jamais à choisir une
+     *  source de repli. */
     private isPresent(v: any): boolean {
         if (v === null || v === undefined) return false;
         if (typeof v === 'string') return v.trim() !== '';
@@ -669,20 +548,12 @@ export class DiInfoModalComponent implements OnChanges {
         return true;
     }
 
-    /**
-     * Origine de la valeur affichée pour un champ, sur le cycle courant :
-     * `'cycle'` = enregistrée pour ce retour · `'inherited'` = reprise de la DI.
-     * Sur le flux original tout est `'cycle'` (rien à marquer).
-     */
-    fieldOrigin(key: string): 'cycle' | 'inherited' {
-        if (this.selectedCycle <= 0) return 'cycle';
-        return this.isPresent(this.cycleLog?.[key]) ? 'cycle' : 'inherited';
-    }
-
-    /** Libellé du marqueur, ou `null` quand il n'y a rien à signaler. */
+    /** Libellé affiché quand le cycle ne porte PAS la valeur. `null` si elle
+     *  est renseignée (rien à signaler). */
     originLabel(key: string): string | null {
-        if (this.selectedCycle <= 0) return null;
-        return this.fieldOrigin(key) === 'cycle' ? 'ce cycle' : 'hérité';
+        return this.isPresent(this.cycleSnapshot?.[key])
+            ? null
+            : 'non renseigné pour ce cycle';
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -750,6 +621,114 @@ export class DiInfoModalComponent implements OnChanges {
         return Array.isArray(src?.array_composants) ? src.array_composants : [];
     }
 
+    // ── Composants enrichis du catalogue ──────────────────────────────────────
+
+    /**
+     * Charge le catalogue (au plus une fois par session grâce au cache du
+     * service). L'échec n'est PAS bloquant : la carte retombe sur nom + qté.
+     */
+    private ensureCatalog(): Promise<void> {
+        if (this.catalog) return Promise.resolve();
+        this.catalogLoading = true;
+        return new Promise<void>((resolve) => {
+            this.catalogSvc.load().subscribe({
+                next: (cat) => {
+                    this.catalog = cat;
+                    this.catalogVersion++;
+                    this._linesKey = null;
+                    this.catalogLoading = false;
+                    this.cdr.markForCheck();
+                    resolve();
+                },
+                error: () => {
+                    this.catalogLoading = false;
+                    this.cdr.markForCheck();
+                    resolve();
+                },
+            });
+        });
+    }
+
+    /**
+     * Lignes composants DU CYCLE SÉLECTIONNÉ, enrichies du catalogue.
+     *
+     * Fonction PURE de (activeComposants, catalogue) : elle vaut donc pour TOUS
+     * les cycles, cycle 0 compris, sans jamais retomber sur la racine `di` —
+     * même discipline que `cycleSnapshot`.
+     */
+    get composantLines(): DiComposantLine[] {
+        const src = this.activeComposants;
+        const key = `${this.di?._id ?? ''}#${this.selectedCycle}#${this.catalogVersion}#${src.length}`;
+        if (this._linesKey !== key) {
+            this._lines = enrichComposants(src, this.catalog?.byName);
+            this._linesKey = key;
+        }
+        return this._lines;
+    }
+
+    /** Identité stable d'une ligne — deux lignes peuvent porter le MÊME nom. */
+    trackComposantLine = (i: number, l: DiComposantLine): string =>
+        `${i}#${l.name}`;
+
+    statusComposantKey(l: DiComposantLine): ComposantStatusKey {
+        return l.found ? composantStatusKey(l.statusRaw) : 'ORPHAN';
+    }
+
+    statusComposantLabel(l: DiComposantLine): string {
+        if (!l.found) return 'Hors catalogue';
+        return cleanComposantValue(l.statusRaw) || 'Statut non renseigné';
+    }
+
+    stockHealthOf(l: DiComposantLine): StockHealth {
+        return stockHealth(l.stock);
+    }
+
+    stockLabelOf(l: DiComposantLine): string {
+        return stockBadgeLabel(l.stock);
+    }
+
+    comingDateLabel(l: DiComposantLine): string {
+        return formatComingDate(l.comingDate) || '—';
+    }
+
+    /** Fiche technique : même résolution que les documents de la DI — le champ
+     *  porte tantôt un `webViewLink` Drive, tantôt un nom de fichier hérité. */
+    composantPdfHref(l: DiComposantLine): string {
+        return docHref(l.pdf);
+    }
+
+    /** Libellé de catégorie du COMPOSANT. Nom distinct de `categoryLabel`, qui
+     *  désigne la catégorie de PANNE de la DI. Les lignes héritées stockent le
+     *  LIBELLÉ au lieu de l'id `C_Composant<N>` → on rend la valeur brute quand
+     *  elle ne résout pas. */
+    composantCategoryLabel(l: DiComposantLine): string {
+        const raw = l.categoryRaw;
+        if (!raw) return '—';
+        return this.catalog?.categoryById.get(raw) ?? raw;
+    }
+
+    /** Total du cycle AFFICHÉ = Σ(prix_vente × quantité) sur les lignes tarifées. */
+    get composantLinesTotal(): number {
+        return composantsGrandTotal(this.composantLines);
+    }
+
+    get composantLinesPriced(): number {
+        return composantsPricedCount(this.composantLines);
+    }
+
+    /** Vrai si certaines lignes n'ont pas pu être tarifées (total partiel). */
+    get composantLinesPartial(): boolean {
+        const rows = this.composantLines;
+        return rows.length > 0 && this.composantLinesPriced < rows.length;
+    }
+
+    /** « Flux original » / « Retour N » — libellé du cycle affiché. */
+    get selectedCycleLabel(): string {
+        return this.selectedCycle === 0
+            ? 'Flux original'
+            : `Retour ${this.selectedCycle}`;
+    }
+
     /** Remarques du cycle sélectionné. */
     get activeRemarques(): { admin: string; diag: string; rep: string } {
         const s = this.cycleSnapshot ?? {};
@@ -789,50 +768,32 @@ export class DiInfoModalComponent implements OnChanges {
         { type: 'Facture', label: 'Facture', scalar: 'facture' },
     ];
 
-    /** Récupère le vrai nom de fichier depuis `di.documents` (DriveDocRef.name),
-     *  par lien puis par type ; sinon le libellé générique. */
-    private nameFor(href: string, type: string, fallback: string): string {
-        for (const d of this.di?.documents ?? []) {
-            const name = String(d?.name ?? '').trim();
-            if (!name) continue;
-            if (String(d?.webViewLink ?? '').trim() === href) return name;
-        }
-        for (const d of this.di?.documents ?? []) {
-            if (d?.type === type) {
-                const name = String(d?.name ?? '').trim();
-                if (name) return name;
-            }
-        }
-        return fallback;
-    }
-
-    /** Les 4 emplacements documents du cycle sélectionné : présent (nom réel +
-     *  lien) OU absent (`href: null`, signalé). Cycle 0 : `di.documents`
-     *  (DriveDocRef.name) + repli scalaire. Cycle N : URLs scalaires du snapshot,
-     *  nom récupéré best-effort depuis `di.documents`. */
+    /**
+     * Les 4 emplacements documents DU CYCLE sélectionné : présent (nom réel +
+     * lien) ou absent (`href: null`, signalé à l'écran).
+     *
+     * UN SEUL chemin pour tous les cycles, cycle 0 compris : on lit les
+     * `documents[]` de la ligne de cycle, dérivés de SON `driveDocs`. Avant,
+     * le cycle 0 lisait `di.documents` et les cycles N retombaient sur les
+     * scalaires de la DI dès que le log n'avait rien — avec en prime un
+     * `nameFor()` qui allait chercher le NOM du fichier dans `di.documents`,
+     * c'est-à-dire dans le flux original. D'où « le même fichier » affiché sur
+     * deux cycles différents.
+     */
     get docSlots(): Array<{
         type: string;
         label: string;
         href: string | null;
     }> {
-        const src = this.cycleSnapshot ?? {};
+        const src = this.cycleSnapshot;
+        const docs: any[] = Array.isArray(src?.documents) ? src.documents : [];
         return this.DOC_TYPES.map((t) => {
-            let href: string | null = null;
-            let label = t.label;
-            if (this.selectedCycle <= 0) {
-                const ref = (this.di?.documents ?? []).find(
-                    (d: any) => d?.type === t.type,
-                );
-                const h = String(
-                    ref?.webViewLink || this.di?.[t.scalar] || '',
-                ).trim();
-                href = h || null;
-                if (h) label = String(ref?.name ?? '').trim() || t.label;
-            } else {
-                const h = String(src?.[t.scalar] ?? '').trim();
-                href = h || null;
-                if (h) label = this.nameFor(h, t.type, t.label);
-            }
+            const ref = docs.find((d: any) => d?.type === t.type);
+            const href =
+                String(ref?.webViewLink || src?.[t.scalar] || '').trim() || null;
+            const label = href
+                ? String(ref?.name ?? '').trim() || t.label
+                : t.label;
             return { type: t.type, label, href };
         });
     }
@@ -1018,10 +979,12 @@ export class DiInfoModalComponent implements OnChanges {
 
     /** Statut brut en MAJUSCULES (décision d'affichage en vigueur). */
     statusLabel(status: any): string {
-        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
-        // PRICING) affiché « Pricing » (demande produit).
+        // Affichage BRUT en MAJUSCULES. PRICING_DIAG et son ancienne valeur
+        // PRICING sont ramenés au MÊME libellé « PRICING » : les deux valeurs
+        // coexistent en base (renommage forward-only, sans backfill) et la
+        // colonne « Statut » afficherait sinon deux libellés pour un même état.
         const s = (status ?? '').toString().trim();
-        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'PRICING';
         return s.toUpperCase() || '—';
     }
 
@@ -1092,14 +1055,28 @@ export class DiInfoModalComponent implements OnChanges {
             // l'utilisateur n'a pas encore consulté, sinon l'export refléterait
             // les onglets visités plutôt que la vie réelle de la DI.
             await this.loadAllTabs();
+            // Les prix/statuts des composants viennent du catalogue : sans cette
+            // attente, un export déclenché juste après l'ouverture partirait avec
+            // des colonnes vides.
+            await this.ensureCatalog();
             await this.diPdf.generateAndDownload(this.di, {
                 cycles: this.buildPdfCycles(),
                 finance: this.financeRows,
-                financeCycleLabel:
-                    this.selectedCycle === 0
-                        ? 'Flux original'
-                        : `Retour ${this.selectedCycle}`,
-                journal: this.journalRowsForPdf,
+                financeCycleLabel: this.selectedCycleLabel,
+                composants: {
+                    cycleLabel: this.selectedCycleLabel,
+                    total: this.composantLinesTotal,
+                    partial: this.composantLinesPartial,
+                    priced: this.composantLinesPriced,
+                    rows: this.composantLines.map((l) => ({
+                        name: l.name,
+                        quantity: l.quantity,
+                        status: this.statusComposantLabel(l),
+                        prixVente: l.prixVente,
+                        lineTotal: l.lineTotal,
+                        comingDate: this.comingDateLabel(l),
+                    })),
+                },
                 times: {
                     diagLabel: this.tempsDiagLabel,
                     repLabel: this.tempsRepLabel,
@@ -1123,38 +1100,22 @@ export class DiInfoModalComponent implements OnChanges {
     /** Charge les onglets non encore visités (idempotent). */
     private async loadAllTabs(): Promise<void> {
         const jobs: Array<Promise<void>> = [];
-        for (const tab of ['journal', 'temps', 'liens'] as DiInfoTab[]) {
+        for (const tab of ['temps', 'liens'] as DiInfoTab[]) {
             if (this.loaded.has(tab)) continue;
             this.loaded.add(tab);
-            if (tab === 'journal') jobs.push(this.loadJournal());
-            else if (tab === 'temps') jobs.push(this.loadTimes());
-            else jobs.push(this.loadLinks());
+            jobs.push(tab === 'temps' ? this.loadTimes() : this.loadLinks());
+        }
+        // L'onglet Journal a été retiré, mais ses ÉVÉNEMENTS restent nécessaires :
+        // `docTrace()` (« Déposé le / Par » de l'onglet Liens) et le motif du
+        // bandeau « Retour N » n'ont aucune autre source. On les charge donc en
+        // silence, sans onglet ni section PDF.
+        if (!this.loaded.has('journal')) {
+            this.loaded.add('journal');
+            jobs.push(this.loadJournal());
         }
         await Promise.all(jobs);
     }
 
-    /** Journal COMPLET (sans le filtre d'écran) pour l'export. */
-    private get journalRowsForPdf(): Array<{
-        date: string | null;
-        label: string;
-        code: string;
-        actor: string | null;
-        cycle: number | null;
-    }> {
-        const keep = this.journalFilter;
-        this.journalFilter = '';
-        try {
-            return this.journalRows.map((r) => ({
-                date: r.date,
-                label: r.label,
-                code: r.code,
-                actor: r.actor ? this.displayName(r.actor) : null,
-                cycle: r.cycle,
-            }));
-        } finally {
-            this.journalFilter = keep;
-        }
-    }
 
     /** Construit, pour le PDF, la timeline de CHAQUE cycle (tout déplié). Les coûts
      *  chargés (Stat/Tarif) ne concernent que le cycle courant ; le PDF affiche donc
@@ -1659,6 +1620,8 @@ export class DiInfoModalComponent implements OnChanges {
                 .subscribe({
                     next: ({ data }) => {
                         if (data?.getDiDetail) this.di = data.getDiDetail;
+                        // `di` remplacé → les lignes enrichies sont périmées.
+                        this._linesKey = null;
                         this.cdr.markForCheck();
                         resolve();
                     },

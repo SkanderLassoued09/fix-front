@@ -6,13 +6,13 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
 import { PdfDropzoneComponent } from '../../magasin-di-list/pdf-dropzone/pdf-dropzone.component';
 import {
   DiArchiveImportService,
   ImportLigne,
   ImportReport,
 } from 'src/app/demo/service/di-archive-import.service';
+import { NotifyService } from '../../../../../shared/ui/notify.service';
 
 /**
  * "Importer des archives" — modal cloned from `app-di-import`, targeting the
@@ -65,7 +65,7 @@ export class DiArchiveImportComponent {
 
   constructor(
     private readonly importSvc: DiArchiveImportService,
-    private readonly message: MessageService,
+    private readonly notify: NotifyService,
   ) {}
 
   open(): void {
@@ -92,11 +92,10 @@ export class DiArchiveImportComponent {
   onFileSelected(file: File): void {
     if (!file) return;
     if (!/\.xlsx$/i.test(file.name)) {
-      this.message.add({
-        severity: 'error',
-        summary: 'Format invalide',
-        detail: 'Un fichier .xlsx est attendu.',
-      });
+      this.notify.error(
+          'Un fichier .xlsx est attendu.',
+          { summary: 'Format invalide' },
+      );
       return;
     }
     this.file = file;
@@ -119,22 +118,16 @@ export class DiArchiveImportComponent {
         this.loading = false;
         this.report = r;
         if (r.enTeteInvalide) {
-          this.message.add({
-            severity: 'error',
-            summary: 'En-tête invalide',
-            detail:
+          this.notify.error(
               r.erreurs?.[0]?.motifs?.[0] ??
               'Colonne obligatoire manquante (Désignation).',
-          });
+              { summary: 'En-tête invalide' },
+          );
         }
       },
       error: (e) => {
         this.loading = false;
-        this.message.add({
-          severity: 'error',
-          summary: "Échec de l'aperçu",
-          detail: this.errMsg(e),
-        });
+        this.notify.error(this.errMsg(e), { summary: "Échec de l'aperçu" });
       },
     });
   }
@@ -146,22 +139,17 @@ export class DiArchiveImportComponent {
       next: (r) => {
         this.importing = false;
         const c = r.crees;
-        this.message.add({
-          severity: 'success',
-          summary: 'Import terminé',
-          detail: `${c?.archives ?? 0} archives importées, ${c?.ignorees ?? 0} ignorées`,
-        });
+        this.notify.success(
+            `${c?.archives ?? 0} archives importées, ${c?.ignorees ?? 0} ignorées`,
+            { summary: 'Import terminé' },
+        );
         this.imported.emit();
         this.visible = false;
         this.reset();
       },
       error: (e) => {
         this.importing = false;
-        this.message.add({
-          severity: 'error',
-          summary: "Échec de l'import",
-          detail: this.errMsg(e),
-        });
+        this.notify.error(this.errMsg(e), { summary: "Échec de l'import" });
       },
     });
   }

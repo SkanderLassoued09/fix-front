@@ -1,10 +1,11 @@
 import { Component } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { ClientService } from 'src/app/demo/service/client.service';
 import { REGION } from '../constant/region-constant';
 import { debounceTime, finalize, Subject } from 'rxjs';
+import { NotifyService } from '../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../shared/ui/confirm.service';
 
 // Separate interface file
 interface Column {
@@ -85,8 +86,8 @@ export class ClientListComponent {
     constructor(
         private apollo: Apollo,
         private clientService: ClientService,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService,
+        private readonly notify: NotifyService,
+        private readonly confirm: ConfirmService,
     ) {
         this.region = REGION;
     }
@@ -179,21 +180,13 @@ export class ClientListComponent {
             .subscribe(({ data, loading, errors }) => {
                 this.loading = loading;
                 if (data) {
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Succès',
-                        detail: 'Le client ajouté avec succès',
-                    });
+                    this.notify.success('Le client a été ajouté avec succès.');
                     this.loadData(); // Reload data after adding
                     this.clientForm.reset();
                     this.visible = false;
                 }
                 if (errors) {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Erreur',
-                        detail: "Erreur lors de l'ajout du client",
-                    });
+                    this.notify.error("Erreur lors de l'ajout du client");
                 }
             });
     }
@@ -243,11 +236,9 @@ export class ClientListComponent {
                             this.findIndexById(this.clientData._id)
                         ] = this.clientData;
 
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Succès',
-                            detail: 'Le client a été modifié avec succès',
-                        });
+                        this.notify.success(
+                            'Le client a été modifié avec succès',
+                        );
                         this.clientModalCondition = false;
                         this.submitted = false;
                         this.loadData(); // Reload data after update
@@ -257,10 +248,8 @@ export class ClientListComponent {
     }
 
     deleteSelectedClient(_id: string) {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous supprimer ce client?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmDelete({
+            message: 'Voulez-vous supprimer ce client ?',
             accept: () => {
                 this.deleteClientConfirmed(_id);
             },
@@ -276,12 +265,7 @@ export class ClientListComponent {
                         return el._id === _id;
                     });
                     this.clientsList.splice(index, 1);
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Succès',
-                        detail: 'Le client a été supprimé',
-                        life: 3000,
-                    });
+                    this.notify.success('Le client a été supprimé.');
                     this.loadData(); // Reload data after delete
                 }
             });

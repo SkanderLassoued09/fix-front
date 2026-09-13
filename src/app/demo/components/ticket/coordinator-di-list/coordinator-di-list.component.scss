@@ -4,26 +4,28 @@
 // ═══════════════════════════════════════════════════════
 
 // ── TOKENS ────────────────────────────────────────────
-$bg-page: #f1f5f9;
-$bg-card: #ffffff;
-$bg-surface: #f8fafc;
-$bg-row-hover: #f1f5f9;
-$bg-input: #ffffff;
-$border: #e2e8f0;
-$text-primary: #1e293b;
-$text-secondary: #64748b;
-$text-muted: #94a3b8;
+$bg-page: var(--fx-bg-page);
+$bg-card: var(--fx-bg-card);
+$bg-surface: var(--fx-bg-surface);
+$bg-row-hover: var(--fx-bg-hover);
+$bg-input: var(--fx-bg-input);
+$border: var(--fx-border);
+$text-primary: var(--fx-text-strong);
+$text-secondary: var(--fx-text-muted);
+$text-muted: var(--fx-text-subtle);
 $accent-blue: #2563eb;
 $white: #ffffff;
 $green: #16a34a;
-$red: #dc2626;
+$red: var(--fx-red-text);
 
 // ── PAGE SHELL ────────────────────────────────────────
 .sav-page {
     background: $bg-page;
     min-height: 100vh;
     padding: 1.5rem 1.75rem;
-    font-family: "Segoe UI", system-ui, sans-serif;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
     color: $text-primary;
 }
 
@@ -49,7 +51,7 @@ $red: #dc2626;
     }
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 1.1rem;
     }
 }
@@ -97,7 +99,7 @@ $red: #dc2626;
     transition: border-color 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
     }
     &::placeholder {
         color: $text-muted !important;
@@ -139,24 +141,24 @@ $red: #dc2626;
     }
 
     &.row-retour1 {
-        border-left-color: #ca8a04 !important;
+        border-left-color: var(--fx-amber) !important;
 
         > td.sav-td:first-child::before {
-            background: #ca8a04;
+            background: var(--fx-amber);
         }
     }
     &.row-retour2 {
-        border-left-color: #ea580c !important;
+        border-left-color: var(--fx-orange) !important;
 
         > td.sav-td:first-child::before {
-            background: #ea580c;
+            background: var(--fx-orange);
         }
     }
     &.row-retour3 {
-        border-left-color: #dc2626 !important;
+        border-left-color: var(--fx-red) !important;
 
         > td.sav-td:first-child::before {
-            background: #dc2626;
+            background: var(--fx-red);
         }
     }
 }
@@ -183,103 +185,103 @@ $red: #dc2626;
 }
 
 ::ng-deep .status-DIAGNOSTIC {
-    background: #dbeafe !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg-2) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #3b82f6;
+        background: var(--fx-blue);
     }
 }
 ::ng-deep .status-INDIAGNOSTIC,
 ::ng-deep .status-IN_DIAGNOSTIC {
-    background: #ede9fe !important;
-    color: #5b21b6 !important;
+    background: var(--fx-purple-soft-bg-2) !important;
+    color: var(--fx-purple-soft-fg) !important;
     &::before {
-        background: #7c3aed;
+        background: var(--fx-purple);
     }
 }
 ::ng-deep .status-DIAGNOSTIC_Pause,
 ::ng-deep .status-DIAGNOSTIC_PAUSE {
-    background: #fef3c7 !important;
-    color: #92400e !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #f59e0b;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-NEGOTIATION1,
 ::ng-deep .status-NEGOTIATION2 {
-    background: #ffedd5 !important;
-    color: #9a3412 !important;
+    background: var(--fx-amber-soft-bg) !important;
+    color: var(--fx-amber-text) !important;
     &::before {
-        background: #ea580c;
+        background: var(--fx-orange);
     }
 }
 ::ng-deep .status-PENDING1,
 ::ng-deep .status-PENDING2,
 ::ng-deep .status-PENDING3 {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
+    background: var(--fx-bg-surface-2) !important;
+    color: var(--fx-text-muted-strong) !important;
     &::before {
-        background: #94a3b8;
+        background: var(--fx-border-strong);
     }
 }
 ::ng-deep .status-REPARATION {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #16a34a;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-INREPARATION,
 ::ng-deep .status-IN_REPARATION {
-    background: #bbf7d0 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-REPARATION_Pause {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-FINISHED {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-PRICING,
 ::ng-deep .status-PRICING_DIAG {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-RETOUR1,
 ::ng-deep .status-RETOUR2,
 ::ng-deep .status-RETOUR3 {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 ::ng-deep .status-CREATED {
-    background: #eff6ff !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #2563eb;
+        background: var(--fx-blue-strong);
     }
 }
 ::ng-deep .status-ANNULER {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 
@@ -313,9 +315,9 @@ $red: #dc2626;
         box-shadow 0.12s;
 
     &:hover {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         color: $text-primary !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
     }
 
@@ -325,9 +327,9 @@ $red: #dc2626;
     }
 
     &--info:hover {
-        border-color: #93c5fd !important;
-        color: $accent-blue !important;
-        background: #eff6ff !important;
+        border-color: var(--fx-blue-soft-bd) !important;
+        color: var(--fx-blue-text) !important;
+        background: var(--fx-blue-soft-bg) !important;
     }
 }
 
@@ -368,7 +370,7 @@ $red: #dc2626;
     padding: 0 !important;
 
     .p-paginator-element {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         color: $text-secondary !important;
         border-radius: 4px !important;
@@ -382,9 +384,9 @@ $red: #dc2626;
             color: $text-primary !important;
         }
         &.p-highlight {
-            background: $accent-blue !important;
-            border-color: $accent-blue !important;
-            color: $white !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 }
@@ -469,7 +471,7 @@ $red: #dc2626;
         box-shadow 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
     &::placeholder {
@@ -498,17 +500,17 @@ $red: #dc2626;
             color: $text-secondary !important;
         }
         &:hover {
-            border-color: #cbd5e1 !important;
+            border-color: var(--fx-border-strong) !important;
         }
         &.p-focus {
-            border-color: $accent-blue !important;
+            border-color: var(--fx-blue-strong) !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
         }
     }
 }
 
 ::ng-deep .p-dropdown-panel {
-    background: $white !important;
+    background: var(--fx-bg-card) !important;
     border: 1px solid $border !important;
     border-radius: 6px !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
@@ -521,8 +523,8 @@ $red: #dc2626;
             background: $bg-surface !important;
         }
         &.p-highlight {
-            background: #eff6ff !important;
-            color: $accent-blue !important;
+            background: var(--fx-blue-soft-bg) !important;
+            color: var(--fx-blue-text) !important;
         }
     }
 }
@@ -620,9 +622,9 @@ $red: #dc2626;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: $accent-blue;
-    background: #eff6ff;
-    border: 1px solid #dbeafe;
+    color: var(--fx-blue-text);
+    background: var(--fx-blue-soft-bg);
+    border: 1px solid var(--fx-blue-soft-bd);
     flex: 0 0 auto;
 }
 
@@ -640,7 +642,7 @@ $red: #dc2626;
 
 .sav-assignment-card {
     .pi {
-        color: $green;
+        color: var(--fx-green-text);
         font-size: 1rem;
     }
 
@@ -673,9 +675,9 @@ $red: #dc2626;
 }
 
 .sav-confirm-state {
-    color: $green;
-    border-color: #bbf7d0;
-    background: #f0fdf4;
+    color: var(--fx-green-text);
+    border-color: var(--fx-green-soft-bd);
+    background: var(--fx-green-soft-bg);
     font-size: 0.84rem;
     font-weight: 600;
 }
@@ -717,7 +719,7 @@ $red: #dc2626;
     padding: 0.25rem 0.7rem;
     border-radius: 999px;
     background: rgba(34, 197, 94, 0.08);
-    color: #16a34a;
+    color: var(--fx-green-text);
     font-size: 0.7rem;
     font-weight: 600;
 }
@@ -725,7 +727,7 @@ $red: #dc2626;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #22c55e;
+    background: var(--fx-green);
     box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
     animation: sav-realtime-pulse 1.6s ease-in-out infinite;
 }
@@ -767,7 +769,7 @@ $red: #dc2626;
         align-items: center;
         justify-content: center;
         border-radius: 10px;
-        background: #f1f5f9;
+        background: var(--fx-bg-surface-2);
         color: $text-secondary;
         font-size: 0.95rem;
     }
@@ -777,7 +779,7 @@ $red: #dc2626;
         font-weight: 650;
         border-radius: 999px;
         padding: 0.2rem 0.6rem;
-        background: #f1f5f9;
+        background: var(--fx-bg-surface-2);
         color: $text-secondary;
         white-space: nowrap;
     }
@@ -806,8 +808,8 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #e2e8f0;
-    color: #64748b;
+    background: var(--fx-bg-surface-2);
+    color: var(--fx-text-muted);
     font-weight: 700;
     font-size: 0.85rem;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
@@ -821,7 +823,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     .sav-flow-step--current.sav-flow-step--tone-#{$i} .sav-flow-number {
         $c: nth($tone-colors, $i + 1);
         background: linear-gradient(135deg, lighten($c, 8%), $c);
-        color: #fff;
+        color: var(--fx-text-on-accent);
         box-shadow: 0 2px 6px rgba($c, 0.35);
     }
 }
@@ -829,22 +831,22 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 .sav-flow-step--current {
     .sav-flow-badge {
         background: rgba(59, 130, 246, 0.12);
-        color: $accent-blue;
+        color: var(--fx-blue-text);
     }
     .sav-flow-step-icon {
         background: rgba(59, 130, 246, 0.12);
-        color: $accent-blue;
+        color: var(--fx-blue-text);
     }
 }
 
 .sav-flow-step--done {
     .sav-flow-badge {
-        background: #dcfce7;
-        color: $green;
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-text);
     }
     .sav-flow-step-icon {
-        background: #dcfce7;
-        color: $green;
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-text);
     }
 }
 
@@ -853,7 +855,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     height: 2px;
     flex: 0 0 32px;
     margin-top: 17px;
-    background: #e2e8f0;
+    background: var(--fx-bg-surface-2);
     border-radius: 999px;
     align-self: flex-start;
 }
@@ -904,17 +906,17 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 }
 
 .sav-tech-status--available {
-    background: #dcfce7;
-    color: $green;
+    background: var(--fx-green-soft-bg-2);
+    color: var(--fx-green-text);
 }
 
 .sav-tech-status--busy {
-    background: #ffedd5;
-    color: #c2410c;
+    background: var(--fx-amber-soft-bg);
+    color: var(--fx-amber-text);
 }
 
 .sav-tech-status--full {
-    background: #fee2e2;
+    background: var(--fx-red-soft-bg-2);
     color: $red;
 }
 
@@ -983,7 +985,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 }
 
 .sav-tech-card--selected {
-    border-color: $accent-blue;
+    border-color: var(--fx-blue-strong);
     box-shadow:
         0 0 0 2px rgba(59, 130, 246, 0.15),
         0 1px 3px rgba(15, 23, 42, 0.06);
@@ -999,7 +1001,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     padding: 0.12rem 0.5rem;
     border-radius: 999px;
     background: rgba(59, 130, 246, 0.12);
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     font-size: 0.66rem;
     font-weight: 700;
 
@@ -1034,7 +1036,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     flex-wrap: wrap;
 }
 .sav-current-stage {
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     font-weight: 700;
 }
 .sav-tech-toolbar {
@@ -1067,7 +1069,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     }
     &:hover {
         background: $bg-surface;
-        border-color: darken($border, 8%);
+        border-color: var(--fx-border-strong);
     }
 }
 
@@ -1078,7 +1080,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     transition: border-color 140ms ease, box-shadow 140ms ease;
 
     &:hover {
-        border-color: darken($border, 6%);
+        border-color: var(--fx-border-strong);
         box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
     }
 }
@@ -1095,7 +1097,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: #ffffff;
+    color: var(--fx-text-on-accent);
     font-weight: 700;
     font-size: 0.95rem;
     flex-shrink: 0;
@@ -1113,12 +1115,12 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    border: 2px solid #ffffff;
-    background: #94a3b8;
+    border: 2px solid var(--fx-bg-card);
+    background: var(--fx-border-strong);
 }
-.sav-tech-dot--available { background: #22c55e; }
-.sav-tech-dot--busy { background: #f97316; }
-.sav-tech-dot--full { background: #ef4444; }
+.sav-tech-dot--available { background: var(--fx-green); }
+.sav-tech-dot--busy { background: var(--fx-orange); }
+.sav-tech-dot--full { background: var(--fx-red); }
 
 .sav-tech-id {
     display: flex;
@@ -1188,9 +1190,9 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     width: 100%;
     padding: 0.55rem 0.85rem;
     border-radius: 8px;
-    border: 1px solid $accent-blue;
+    border: 1px solid var(--fx-blue-strong);
     background: transparent;
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     font-size: 0.82rem;
     font-weight: 650;
     cursor: pointer;
@@ -1199,8 +1201,8 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     i { font-size: 0.85rem; }
 
     &:hover:not(:disabled) {
-        background: $accent-blue;
-        color: #ffffff;
+        background: var(--fx-blue-strong);
+        color: var(--fx-text-on-accent);
     }
 
     &:disabled {
@@ -1209,8 +1211,8 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     }
 
     &.sav-tech-assign-btn--selected {
-        background: $accent-blue;
-        color: #ffffff;
+        background: var(--fx-blue-strong);
+        color: var(--fx-text-on-accent);
         opacity: 0.95;
     }
 }
@@ -1260,19 +1262,19 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 }
 .sav-flow-footer-icon--blue {
     background: rgba(59, 130, 246, 0.12);
-    color: $accent-blue;
+    color: var(--fx-blue-text);
 }
 .sav-flow-footer-icon--purple {
     background: rgba(139, 92, 246, 0.12);
-    color: #8b5cf6;
+    color: var(--fx-purple-text);
 }
 .sav-flow-footer-icon--orange {
     background: rgba(249, 115, 22, 0.12);
-    color: #f97316;
+    color: var(--fx-orange-text);
 }
 .sav-flow-footer-icon--green {
     background: rgba(34, 197, 94, 0.12);
-    color: #22c55e;
+    color: var(--fx-green-text);
 }
 
 .sav-flow-footer {
@@ -1368,7 +1370,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 .sav-flow-left {
     padding: 1.65rem 1.5rem 1.35rem;
-    background: linear-gradient(180deg, #fbfdff 0%, #ffffff 100%);
+    background: linear-gradient(180deg, var(--fx-bg-surface) 0%, var(--fx-bg-card) 100%);
     border-right: 1px solid $border;
     gap: 1.45rem;
 }
@@ -1392,7 +1394,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     }
 
     label {
-        color: #52658a;
+        color: var(--fx-text-muted);
         font-size: 0.72rem;
         font-weight: 750;
         letter-spacing: 0.04em;
@@ -1402,7 +1404,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 .sav-select-card {
     min-height: 48px;
-    border: 1px solid #d8e1ee;
+    border: 1px solid var(--fx-border);
     border-radius: 6px;
     background: $bg-card;
     display: grid;
@@ -1423,7 +1425,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     }
 
     > .pi {
-        color: #33517d;
+        color: var(--fx-slate-soft-fg);
         font-size: 0.75rem;
     }
 }
@@ -1437,7 +1439,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     white-space: nowrap;
 
     .pi {
-        color: $green;
+        color: var(--fx-green-text);
         font-size: 0.75rem;
     }
 }
@@ -1445,10 +1447,10 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 .sav-confirm-state {
     min-height: 42px;
     border-radius: 6px;
-    border-color: #b7ebca;
-    background: linear-gradient(90deg, #f1fbf5 0%, #ffffff 100%);
+    border-color: var(--fx-green-soft-bd);
+    background: linear-gradient(90deg, var(--fx-green-soft-bg) 0%, var(--fx-bg-card) 100%);
     padding: 0.65rem 0.85rem;
-    color: #078b3e;
+    color: var(--fx-green-soft-fg);
     font-size: 0.78rem;
 
     span {
@@ -1471,7 +1473,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     margin-top: 0.25rem;
 
     label {
-        color: #52658a;
+        color: var(--fx-text-muted);
         font-size: 0.72rem;
         font-weight: 750;
         letter-spacing: 0.04em;
@@ -1509,11 +1511,11 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 .sav-panel-subtitle {
     margin: 0.65rem 0 0;
-    color: #52658a;
+    color: var(--fx-text-muted);
     font-size: 0.8rem;
 
     strong {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
     }
 }
 
@@ -1530,7 +1532,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
         left: calc(12.5% + 2.2rem);
         right: calc(12.5% + 2.2rem);
         height: 2px;
-        background: linear-gradient(90deg, $green 0 68%, $accent-blue 68% 100%);
+        background: linear-gradient(90deg, var(--fx-green) 0 68%, var(--fx-blue-strong) 68% 100%);
     }
 }
 
@@ -1548,15 +1550,15 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     }
 
     em {
-        border: 1px solid #bfdbfe;
-        background: #eff6ff;
-        color: $accent-blue;
+        border: 1px solid var(--fx-blue-soft-bd);
+        background: var(--fx-blue-soft-bg);
+        color: var(--fx-blue-text);
         border-radius: 4px;
         padding: 0.18rem 0.45rem;
     }
 
     small {
-        color: #52658a;
+        color: var(--fx-text-muted);
         font-size: 0.72rem;
     }
 }
@@ -1571,7 +1573,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 .sav-flow-step--done {
     em {
-        border-color: #bbf7d0;
+        border-color: var(--fx-green-soft-bd);
     }
 }
 
@@ -1579,20 +1581,20 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     display: flex;
     align-items: flex-start;
     gap: 0.8rem;
-    border: 1px solid #bfdbfe;
+    border: 1px solid var(--fx-blue-soft-bd);
     border-radius: 6px;
-    background: #f8fbff;
+    background: var(--fx-bg-surface);
     padding: 0.95rem 1.1rem;
-    color: #2d4772;
+    color: var(--fx-slate-soft-fg);
 
     > .pi {
         margin-top: 0.1rem;
-        color: $accent-blue;
+        color: var(--fx-blue-text);
     }
 
     strong {
         display: block;
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.88rem;
         margin-bottom: 0.55rem;
     }
@@ -1619,7 +1621,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     position: relative;
     min-height: 236px;
     padding: 1rem 0.95rem;
-    border-color: #d8e1ee;
+    border-color: var(--fx-border);
     background: $bg-card;
     gap: 0.8rem;
 
@@ -1627,8 +1629,8 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
         width: 100%;
         justify-content: center;
         background: $bg-card !important;
-        color: $accent-blue !important;
-        border-color: #7ca7ff !important;
+        color: var(--fx-blue-text) !important;
+        border-color: var(--fx-blue-soft-bd) !important;
         font-size: 0.75rem !important;
         font-weight: 700 !important;
     }
@@ -1641,7 +1643,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     width: 17px;
     height: 17px;
     border-radius: 50%;
-    border: 1px solid #bfd0e6;
+    border: 1px solid var(--fx-border-strong);
     background: $bg-card;
 }
 
@@ -1664,15 +1666,15 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 }
 
 .sav-tech-status--available {
-    border-color: #bbf7d0;
+    border-color: var(--fx-green-soft-bd);
 }
 
 .sav-tech-status--busy {
-    border-color: #fed7aa;
+    border-color: var(--fx-amber-soft-bd);
 }
 
 .sav-tech-status--full {
-    border-color: #fecaca;
+    border-color: var(--fx-red-soft-bd);
 }
 
 .sav-tech-metrics {
@@ -1691,7 +1693,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     }
 
     small {
-        color: #52658a;
+        color: var(--fx-text-muted);
         font-size: 0.76rem;
     }
 
@@ -1704,19 +1706,19 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 .sav-workload-bar {
     height: 4px;
-    background: #e5eaf1;
+    background: var(--fx-slate-soft-bg-2);
 
     span {
-        background: $green;
+        background: var(--fx-green);
     }
 }
 
 .sav-workload-bar--busy span {
-    background: #f97316;
+    background: var(--fx-orange);
 }
 
 .sav-workload-bar--full span {
-    background: #ef4444;
+    background: var(--fx-red);
 }
 
 .sav-flow-footer {
@@ -1727,12 +1729,12 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
     div {
         background: $bg-card;
-        border-color: #d8e1ee;
+        border-color: var(--fx-border);
         padding: 0.85rem 1rem;
     }
 
     span {
-        color: #52658a;
+        color: var(--fx-text-muted);
         text-transform: none;
         letter-spacing: 0;
     }
@@ -1820,7 +1822,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     border: 1px solid $border;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.8rem;
         flex-shrink: 0;
     }
@@ -1865,7 +1867,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     }
 
     &.highlight strong {
-        color: $green;
+        color: var(--fx-green-text);
     }
 }
 
@@ -1888,7 +1890,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     font-size: 0.82rem;
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 0.8rem;
     }
     span {
@@ -1958,15 +1960,15 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
     border-radius: 5px;
     background: $bg-surface;
     border: 1px solid $border;
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     text-decoration: none;
     transition:
         background 0.12s,
         border-color 0.12s;
 
     &:hover {
-        background: #eff6ff;
-        border-color: #93c5fd;
+        background: var(--fx-blue-soft-bg);
+        border-color: var(--fx-blue-soft-bd);
     }
     .pi {
         font-size: 0.8rem;
@@ -1983,7 +1985,7 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 // ── HELPERS ───────────────────────────────────────────
 .text-green {
-    color: $green !important;
+    color: var(--fx-green-text) !important;
 }
 .text-red {
     color: $red !important;
@@ -1994,18 +1996,11 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 // ── GLOBAL PRIMENG OVERRIDES ──────────────────────────
 ::ng-deep .p-inputtext:focus {
-    border-color: $accent-blue !important;
+    border-color: var(--fx-blue-strong) !important;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
 }
 
-::ng-deep .p-toast .p-toast-message {
-    border-radius: 8px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-}
 
-::ng-deep .p-confirm-dialog {
-    border-radius: 10px !important;
-}
 
 .sav-location-cell {
     display: inline-flex;
@@ -2023,12 +2018,12 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 
 /* Emplacement VIDE → vert : rien à ranger, la DI n'occupe pas de place. */
 .sav-location-dot--vide {
-    background: #16a34a;
+    background: var(--fx-green);
 }
 
 /* Emplacement RENSEIGNÉ → rouge : une place du magasin est occupée. */
 .sav-location-dot--renseigne {
-    background: #dc2626;
+    background: var(--fx-red);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2037,27 +2032,27 @@ $tone-colors: (#3b82f6, #8b5cf6, #f97316, #f59e0b, #22c55e, #06b6d4);
 //  Red is restricted to the RETOUR badge/escalation.
 // ═══════════════════════════════════════════════════════
 $cf-blue: #2563eb;
-$cf-blue-soft: #eff6ff;
-$cf-blue-border: #bfdbfe;
+$cf-blue-soft: var(--fx-blue-soft-bg);
+$cf-blue-border: var(--fx-blue-soft-bd);
 $cf-blue-dark: #1d4ed8;
 $cf-blue-500: #3b82f6;
 $cf-green: #16a34a;
-$cf-green-soft: #dcfce7;
-$cf-green-border: #a7f3d0;
-$cf-green-dark: #14532d;
+$cf-green-soft: var(--fx-green-soft-bg-2);
+$cf-green-border: var(--fx-green-soft-bd);
+$cf-green-dark: var(--fx-green-soft-fg);
 $cf-amber: #b45309;
-$cf-amber-soft: #fef3c7;
+$cf-amber-soft: var(--fx-amber-soft-bg-2);
 $cf-red: #ef4444;
-$cf-red-strong: #b91c1c;
-$cf-red-critical: #7f1d1d;
-$cf-red-soft: #fef2f2;
-$cf-red-soft-2: #fee2e2;
-$cf-text: #0f172a;
-$cf-text-body: #1e293b;
-$cf-text-secondary: #64748b;
-$cf-text-muted: #94a3b8;
-$cf-border: #e2e8f0;
-$cf-surface: #f8fafc;
+$cf-red-strong: var(--fx-red-soft-fg);
+$cf-red-critical: var(--fx-red-soft-fg);
+$cf-red-soft: var(--fx-red-soft-bg);
+$cf-red-soft-2: var(--fx-red-soft-bg-2);
+$cf-text: var(--fx-text);
+$cf-text-body: var(--fx-text-strong);
+$cf-text-secondary: var(--fx-text-muted);
+$cf-text-muted: var(--fx-text-subtle);
+$cf-border: var(--fx-border);
+$cf-surface: var(--fx-bg-surface);
 
 ::ng-deep .sav-dialog.cf-dialog .p-dialog-content {
     padding: 0 !important;
@@ -2072,7 +2067,7 @@ $cf-surface: #f8fafc;
     flex-direction: column;
     font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     color: $cf-text-body;
-    background: #fff;
+    background: var(--fx-bg-card);
     border-radius: 12px;
     overflow: hidden;
 }
@@ -2091,9 +2086,9 @@ $cf-surface: #f8fafc;
     width: 52px;
     height: 52px;
     border-radius: 12px;
-    background: $cf-blue-soft;
-    border: 1px solid $cf-blue-border;
-    color: $cf-blue-dark;
+    background: $cf-blue;
+    border: 1px solid $cf-blue;
+    color: $white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2124,7 +2119,7 @@ $cf-surface: #f8fafc;
     padding: 3px 9px;
     border-radius: 6px;
     background: $cf-blue-soft;
-    color: $cf-blue-dark;
+    color: var(--fx-blue-soft-fg);
     font-size: 0.75rem;
     font-weight: 600;
     font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -2137,7 +2132,7 @@ $cf-surface: #f8fafc;
     padding: 3px 10px;
     border-radius: 999px;
     background: $cf-red-soft;
-    border: 1px solid #fecaca;
+    border: 1px solid var(--fx-red-soft-bd);
     color: $cf-red-strong;
     font-size: 0.72rem;
     font-weight: 700;
@@ -2147,12 +2142,12 @@ $cf-surface: #f8fafc;
 }
 .cf-modal__flag.cf-retour-pill--strong {
     background: $cf-red-soft-2;
-    border-color: #f87171;
+    border-color: var(--fx-red-soft-bd);
     color: $cf-red-critical;
 }
 .cf-modal__flag.cf-retour-pill--critical {
-    background: #fecaca;
-    border-color: $cf-red;
+    background: var(--fx-red-soft-bg-2);
+    border-color: var(--fx-red);
     color: $cf-red-critical;
 }
 .cf-modal__subtitle {
@@ -2165,7 +2160,7 @@ $cf-surface: #f8fafc;
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: #fff;
+    background: var(--fx-bg-card);
     border: 1px solid $cf-border;
     color: $cf-text-secondary;
     cursor: pointer;
@@ -2179,56 +2174,59 @@ $cf-surface: #f8fafc;
     &:hover {
         background: $cf-surface;
         color: $cf-text-body;
-        border-color: #cbd5e1;
+        border-color: var(--fx-border-strong);
     }
 }
 
 // ── Banner ──────────────────────────────────────────────
+// Carte unique à 3 colonnes (statut · remarque admin · remarque technicien),
+// comme la maquette — l'ancien empilement « statut au-dessus des remarques »
+// gaspillait une hauteur de ligne pour une seule valeur.
 .cf-banner {
-    background: linear-gradient(180deg, #fafbff 0%, #ffffff 100%);
-    border-bottom: 1px solid $cf-border;
-    padding: 0.95rem 1.35rem 1.1rem;
-    display: flex;
-    flex-direction: column;
+    margin: 1.1rem 1.35rem 0;
+    background: $cf-surface;
+    border: 1px solid $cf-border;
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    display: grid;
+    grid-template-columns: minmax(200px, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
     gap: 0.75rem;
 }
 .cf-banner__row {
     display: flex;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+// Les deux remarques sont des enfants DIRECTS de la grille : le conteneur
+// `__remarks` ne sert plus qu'à les regrouper dans le DOM.
+.cf-banner__remarks {
+    display: contents;
 }
 .cf-banner__status {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
 }
+// Casse normale (et non capitales) : la valeur doit primer sur son étiquette.
 .cf-banner__label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-size: 0.78rem;
+    font-weight: 500;
     color: $cf-text-secondary;
 }
-.cf-banner__current {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: $cf-blue;
-}
-.cf-banner__remarks {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.95rem;
-    p {
-        margin: 0.25rem 0 0;
-        font-size: 0.875rem;
-        color: $cf-text-body;
-        line-height: 1.5;
-    }
-}
 .cf-banner__remark {
-    padding-left: 0.55rem;
-    border-left: 2px solid $cf-border;
+    padding-left: 1.1rem;
+    border-left: 1px solid $cf-border;
+    min-width: 0;
+    p {
+        margin: 0.35rem 0 0;
+        font-size: 0.95rem;
+        color: var(--fx-text-strong);
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
 }
 
 // Red retour pill — only place red is used decoratively
@@ -2239,7 +2237,7 @@ $cf-surface: #f8fafc;
     padding: 0.55rem 0.9rem;
     border-radius: 10px;
     background: $cf-red-soft;
-    border: 1px solid #fecaca;
+    border: 1px solid var(--fx-red-soft-bd);
     color: $cf-red-strong;
     .pi {
         font-size: 1.05rem;
@@ -2258,25 +2256,28 @@ $cf-surface: #f8fafc;
     // Escalation: mild (1) → strong (2) → critical (3+)
     &--mild {
         background: $cf-red-soft;
-        border-color: #fecaca;
+        border-color: var(--fx-red-soft-bd);
         color: $cf-red-strong;
     }
     &--strong {
         background: $cf-red-soft-2;
-        border-color: #f87171;
+        border-color: var(--fx-red-soft-bd);
         color: $cf-red-critical;
     }
     &--critical {
-        background: #fecaca;
-        border-color: $cf-red;
+        background: var(--fx-red-soft-bg-2);
+        border-color: var(--fx-red);
         color: $cf-red-critical;
     }
 }
 
-// ── 2-col grid body ─────────────────────────────────────
+// ── Corps du modal ──────────────────────────────────────
+// Une seule colonne depuis le retrait de « Historique du flow » : la piste
+// 1.55fr/1fr laissait sinon « Contrôles par étape » sur ~61 % de la largeur,
+// avec une bande vide à droite (aucune media query ne corrigeait ça).
 .cf-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.35rem;
     padding: 1.35rem;
 }
@@ -2297,363 +2298,25 @@ $cf-surface: #f8fafc;
     }
 }
 
-// ── LEFT — Historique du flow ───────────────────────────
-.cf-history {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-    min-width: 0;
-}
-.cf-history__head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
-.cf-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    font-size: 0.78rem;
-    color: $cf-text-secondary;
-    span {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-    }
-}
-.cf-dot {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: $cf-text-muted;
-    &--done {
-        background: $cf-green;
-    }
-    &--current {
-        background: $cf-blue;
-    }
-    &--pending {
-        background: $cf-text-muted;
-    }
-    &--retour {
-        background: $cf-red;
-    }
-}
-
-// Tabs Flow Original / Retour #N
-.cf-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.6rem;
-}
-.cf-tab {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.85rem;
-    border-radius: 999px;
-    border: 1px solid $cf-border;
-    background: #fff;
-    color: $cf-text-body;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition:
-        background 0.15s,
-        border-color 0.15s,
-        color 0.15s;
-    &:hover {
-        background: $cf-surface;
-    }
-    &--active {
-        background: $cf-surface;
-        border-color: #cbd5e1;
-        font-weight: 600;
-    }
-    &--retour.cf-tab--active {
-        background: $cf-red-soft;
-        border-color: #fecaca;
-        color: $cf-red-strong;
-    }
-}
-.cf-tab__badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 1px 8px;
-    border-radius: 999px;
-    font-size: 0.72rem;
-    font-weight: 600;
-    &--done {
-        background: $cf-green-soft;
-        color: $cf-green-dark;
-    }
-    &--current {
-        background: $cf-blue-soft;
-        color: $cf-blue;
-    }
-    &--retour {
-        background: $cf-red-soft-2;
-        color: $cf-red-strong;
-    }
-}
-
-// Motif retour banner
-.cf-motif {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    padding: 0.8rem 0.9rem;
-    background: $cf-red-soft;
-    border: 1px solid #fecaca;
-    border-radius: 9px;
-    color: $cf-red-strong;
-    font-size: 0.9rem;
-    .pi {
-        margin-top: 0.15rem;
-    }
-    strong {
-        color: $cf-red-strong;
-        font-weight: 700;
-    }
-    small {
-        color: $cf-red-critical;
-        opacity: 0.85;
-        font-size: 0.78rem;
-    }
-}
-
-// Progress bar
-.cf-progress {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-.cf-progress__label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: $cf-text-secondary;
-    white-space: nowrap;
-}
-.cf-progress__bar {
-    flex: 1 1 auto;
-    height: 6px;
-    border-radius: 999px;
-    background: $cf-border;
-    overflow: hidden;
-}
-.cf-progress__fill {
-    height: 100%;
-    background: $cf-blue;
-    transition: width 0.25s ease;
-    &--retour {
-        background: $cf-red;
-    }
-}
-
-// Timeline
-.cf-timeline {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-}
-.cf-stage {
-    display: grid;
-    grid-template-columns: 28px 1fr auto;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.8rem 0;
-    position: relative;
-    border-bottom: 1px dashed $cf-border;
-    &:last-child {
-        border-bottom: none;
-    }
-}
-.cf-stage__bullet {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid $cf-text-muted;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    .pi {
-        font-size: 0.72rem;
-    }
-}
-.cf-stage--done .cf-stage__bullet {
-    background: $cf-green;
-    border-color: $cf-green;
-}
-.cf-stage--current .cf-stage__bullet {
-    background: $cf-blue;
-    border-color: $cf-blue;
-}
-.cf-stage--pending .cf-stage__bullet {
-    background: #fff;
-    border-color: $cf-text-muted;
-}
-// « Sautée » : étape JAMAIS atteinte (aucune entrée statusHistory) mais dépassée
-// par le curseur. Neutre/grise, VISUELLEMENT distincte de « Terminé » (vert) et
-// « En attente » (ambre) — pastille en pointillés + ligne barrée = « on n'est
-// pas passé par là ». Non comptée dans la progression.
-.cf-stage--skipped {
-    opacity: 0.72;
-}
-.cf-stage--skipped .cf-stage__bullet {
-    background: $cf-surface;
-    border-style: dashed;
-    border-color: $cf-text-muted;
-}
-.cf-stage--skipped .cf-stage__name {
-    color: $cf-text-muted;
-    text-decoration: line-through;
-    text-decoration-color: $cf-border;
-}
-
-.cf-stage__body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    min-width: 0;
-}
-.cf-stage__row {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-    flex-wrap: wrap;
-}
-.cf-stage__name {
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: $cf-text;
-}
-.cf-stage--pending .cf-stage__name {
-    color: $cf-text-muted;
-}
-.cf-stage__badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 9px;
-    border-radius: 999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    &--done {
-        background: $cf-green-soft;
-        color: $cf-green-dark;
-    }
-    &--current {
-        background: $cf-blue-soft;
-        color: $cf-blue;
-    }
-    &--pending {
-        background: $cf-amber-soft;
-        color: $cf-amber;
-    }
-    &--skipped {
-        background: $cf-surface;
-        color: $cf-text-muted;
-    }
-}
-// Valeur brute `di.status` (technique, discrète) à côté du libellé lisible.
-.cf-stage__code {
-    display: inline-flex;
-    align-items: center;
-    padding: 1px 7px;
-    border-radius: 5px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    background: $cf-surface;
-    border: 1px solid $cf-border;
-    color: $cf-text-secondary;
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-}
-.cf-substatus {
-    display: inline-flex;
-    align-items: center;
-    padding: 1px 7px;
-    border-radius: 5px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    background: $cf-surface;
-    border: 1px solid $cf-border;
-    color: $cf-text-secondary;
-    font-family: "JetBrains Mono", ui-monospace, monospace;
-    letter-spacing: 0.03em;
-    &--active {
-        background: $cf-blue-soft;
-        border-color: #93c5fd;
-        color: $cf-blue;
-    }
-}
-.cf-substatus-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
-}
-.cf-stage__meta {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.85rem;
-    color: $cf-text-secondary;
-}
-.cf-stage__actor {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    .pi {
-        font-size: 0.78rem;
-    }
-}
-.cf-stage__when {
-    font-size: 0.82rem;
-    color: $cf-text-secondary;
-    text-align: right;
-    line-height: 1.4;
-    &--state {
-        color: $cf-blue;
-        font-weight: 600;
-    }
-    &--muted {
-        color: $cf-text-muted;
-    }
-}
-// Écart (temps passé dans l'étape) — ligne discrète sous la date.
-.cf-stage__duration {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.3rem;
-    margin-top: 0.15rem;
-    font-size: 0.74rem;
-    color: $cf-text-muted;
-    font-variant-numeric: tabular-nums;
-    .pi {
-        font-size: 0.68rem;
-    }
-    &--ongoing {
-        color: $cf-blue;
-        font-weight: 600;
-    }
-}
-
-// ── RIGHT — Contrôles par étape ─────────────────────────
+// ── Contrôles par étape ─────────────────────────────────
+// Plus de bordure gauche : c'est le rail de la timeline qui porte désormais
+// l'axe vertical, deux traits parallèles se seraient concurrencés. Le cadre
+// passe sur `.cf-steps` — le titre reste au-dessus, hors carte.
 .cf-controls {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
-    border-left: 1px solid $cf-border;
-    padding-left: 1.25rem;
+    gap: 0.75rem;
     min-width: 0;
+}
+
+// Titre de section du panneau : en gras et sombre comme un vrai titre, et non
+// en petites capitales grises comme les étiquettes de champ.
+.cf-controls__head .cf-section-label {
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: normal;
+    color: $cf-text;
 }
 .cf-controls__head {
     display: flex;
@@ -2668,105 +2331,157 @@ $cf-surface: #f8fafc;
     border-radius: 999px;
     background: $cf-red-soft;
     color: $cf-red-strong;
-    border: 1px solid #fecaca;
+    border: 1px solid var(--fx-red-soft-bd);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.02em;
     &.cf-retour-pill--strong {
         background: $cf-red-soft-2;
-        border-color: #f87171;
+        border-color: var(--fx-red-soft-bd);
         color: $cf-red-critical;
     }
     &.cf-retour-pill--critical {
-        background: #fecaca;
-        border-color: $cf-red;
+        background: var(--fx-red-soft-bg-2);
+        border-color: var(--fx-red);
         color: $cf-red-critical;
     }
 }
 
-.cf-card {
-    background: #fff;
-    border: 1px solid $cf-border;
-    border-radius: 10px;
-    padding: 0.85rem 0.95rem;
+// ── Timeline verticale des 5 étapes ─────────────────────
+// Le rail continu est porté par le CONTENEUR (un ::before absolu) et non par
+// chaque étape : une bordure par étape laisserait des coupures entre les
+// cartes, et le trait doit s'arrêter au centre de la dernière pastille.
+.cf-steps {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
-    &--closure {
-        border-style: dashed;
-        background: $cf-surface;
+    border: 1px solid $cf-border;
+    border-radius: 10px;
+    padding: 0.25rem 1.1rem;
+    background: var(--fx-bg-card);
+
+    &::before {
+        content: "";
+        position: absolute;
+        left: calc(1.1rem + 4px);
+        top: 2rem;
+        bottom: 2rem;
+        width: 2px;
+        background: $cf-border;
     }
 }
-.cf-card__head {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
+
+.cf-step {
+    position: relative;
+    display: grid;
+    grid-template-columns: 10px 46px minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 0.9rem;
+    padding: 1rem 0.25rem;
+    border-bottom: 1px solid $cf-border;
+
+    &:last-child {
+        border-bottom: 0;
+    }
 }
-.cf-card__num {
-    flex: 0 0 26px;
-    width: 26px;
-    height: 26px;
-    border-radius: 7px;
-    background: $cf-blue-soft;
-    color: $cf-blue-dark;
+
+// Pastille du rail — reprend l'état de l'étape.
+.cf-step__dot {
+    grid-column: 1;
+    width: 10px;
+    height: 10px;
+    margin-top: 0.85rem;
+    border-radius: 50%;
+    background: var(--fx-slate-soft-bg-2);
+    box-shadow: 0 0 0 3px var(--fx-bg-card);
+}
+
+.cf-step__num {
+    grid-column: 2;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    background: var(--fx-slate-soft-bg);
+    color: var(--fx-slate-soft-fg);
 }
-.cf-card__title {
+
+.cf-step__body {
+    grid-column: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    padding-top: 0.2rem;
+}
+
+.cf-step__title {
     margin: 0;
     font-size: 1rem;
     font-weight: 700;
     color: $cf-text;
+    line-height: 1.25;
 }
-.cf-card__label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: $cf-text-secondary;
-}
-.cf-card__hint {
+
+.cf-step__hint {
     margin: 0;
-    font-size: 0.82rem;
+    font-size: 0.85rem;
     color: $cf-text-secondary;
     line-height: 1.45;
 }
-// Manager-gate hint shown under the (disabled) diagnostic reassignment dropdown
-// while the DI is in a Retour cycle.
-.cf-card__lock-hint {
+
+// Ligne d'information inline (technicien affecté, étape sautée, confirmation).
+// Inline plutôt qu'encadrée : la maquette garde une seule boîte par étape.
+.cf-step__note {
     display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    margin: 0.4rem 0 0;
-    font-size: 0.76rem;
-    line-height: 1.4;
-    color: $cf-text-secondary;
-    i {
-        font-size: 0.8rem;
-        margin-top: 1px;
-        color: #b45309; // amber-700 — "locked / awaiting action" cue (no purple)
-    }
-}
-.cf-card__assigned {
-    display: inline-flex;
     align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
+    gap: 0.45rem;
+    margin: 0.1rem 0 0;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #1e293b;
-    padding: 6px 2px;
+    color: $cf-text-secondary;
 
     i {
-        color: #2563eb;
         font-size: 0.95rem;
+        color: $cf-text-muted;
+    }
+
+    &--ok {
+        color: var(--fx-green-soft-fg);
+        i {
+            color: var(--fx-green-text);
+        }
+    }
+
+    &--warn {
+        font-weight: 500;
+        line-height: 1.4;
+        align-items: flex-start;
+        i {
+            margin-top: 2px;
+            color: var(--fx-amber-text);
+        }
     }
 }
-::ng-deep .cf-card__dropdown {
+
+.cf-step__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-top: 0.25rem;
+    max-width: 340px;
+}
+
+::ng-deep .cf-step__dropdown {
     .p-dropdown {
         width: 100% !important;
+        min-width: 240px;
         border-radius: 8px !important;
         border-color: $cf-border !important;
     }
@@ -2775,41 +2490,136 @@ $cf-surface: #f8fafc;
         color: $cf-text-body !important;
     }
 }
-.cf-card__state {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    padding: 0.65rem 0.75rem;
-    border-radius: 8px;
-    strong {
-        display: block;
-        font-size: 0.9rem;
-    }
-    small {
-        font-size: 0.78rem;
-        opacity: 0.9;
-    }
-    &--ok {
-        background: $cf-green-soft;
-        border: 1px solid $cf-green-border;
-        color: $cf-green-dark;
-        .pi {
-            color: $cf-green;
-            font-size: 1.05rem;
-        }
-    }
-}
-::ng-deep .cf-card__action {
+
+::ng-deep .cf-step__action {
     .p-button {
-        width: 100%;
         justify-content: center;
+        border-radius: 8px !important;
         font-size: 0.875rem !important;
         font-weight: 600 !important;
     }
     &--ghost .p-button {
         background: $cf-blue-soft !important;
-        color: $cf-blue !important;
+        color: var(--fx-blue-text) !important;
         border-color: $cf-blue-border !important;
+    }
+}
+
+// Badge d'avancement, aligné à droite sur la ligne du titre.
+.cf-step__badge {
+    grid-column: 4;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.2rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--fx-slate-soft-bg);
+    color: var(--fx-slate-soft-fg);
+
+    i {
+        font-size: 0.85rem;
+    }
+}
+
+// ── Déclinaisons par état ───────────────────────────────
+.cf-step--done {
+    .cf-step__dot {
+        background: var(--fx-green-text);
+    }
+    .cf-step__num {
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
+    }
+    .cf-step__badge {
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
+    }
+}
+
+.cf-step--current {
+    .cf-step__dot {
+        background: $cf-blue;
+    }
+    .cf-step__num {
+        background: $cf-blue-soft;
+        color: var(--fx-blue-soft-fg);
+    }
+    .cf-step__badge {
+        background: $cf-blue-soft;
+        color: var(--fx-blue-soft-fg);
+    }
+    .cf-step__title {
+        color: $cf-text;
+    }
+}
+
+// « Sauté » et « Non démarrée » partagent la teinte neutre : ce qui les
+// distingue est le libellé et l'icône, pas la couleur — les deux signifient
+// « rien à faire ici ».
+.cf-step--skipped,
+.cf-step--pending {
+    .cf-step__title,
+    .cf-step__hint {
+        color: $cf-text-secondary;
+    }
+}
+
+// ── Pastille de statut (bannière) ───────────────────────
+.cf-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: var(--fx-slate-soft-bg);
+    color: var(--fx-slate-soft-fg);
+
+    &__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    &--green {
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
+    }
+    &--blue {
+        background: $cf-blue-soft;
+        color: var(--fx-blue-soft-fg);
+    }
+    &--amber {
+        background: var(--fx-amber-soft-bg-2);
+        color: var(--fx-amber-soft-fg);
+    }
+    &--red {
+        background: $cf-red-soft-2;
+        color: $cf-red-strong;
+    }
+    &--slate {
+        background: var(--fx-slate-soft-bg-2);
+        color: var(--fx-slate-soft-fg);
+    }
+}
+
+@media (max-width: 720px) {
+    .cf-step {
+        grid-template-columns: 10px 40px minmax(0, 1fr);
+        row-gap: 0.5rem;
+    }
+    // Sous 720 px le badge passe sous le corps, décalé au niveau du texte,
+    // plutôt que d'écraser le titre sur deux caractères par ligne.
+    .cf-step__badge {
+        grid-column: 3;
+        justify-self: start;
     }
 }
 
@@ -2818,20 +2628,18 @@ $cf-surface: #f8fafc;
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 0.65rem;
+    // Pousse « Annuler la DI » / « Réactiver la DI » — seule action du pied — à
+    // gauche, à l'écart du bord droit où le curseur arrive par inertie.
+    .cf-modal__footer-spacer {
+        flex: 1 1 auto;
+    }
     padding: 0.95rem 1.35rem;
     border-top: 1px solid $cf-border;
     background: $cf-surface;
     ::ng-deep .p-button {
         font-size: 0.875rem !important;
-    }
-    ::ng-deep .p-button[severity="primary"] {
-        background: $cf-blue !important;
-        border-color: $cf-blue !important;
-        &:hover {
-            background: $cf-blue-dark !important;
-            border-color: $cf-blue-dark !important;
-        }
     }
 }
 
@@ -2847,15 +2655,15 @@ $cf-surface: #f8fafc;
         gap: 0.5rem;
         padding: 0.6rem 0.7rem;
         border-radius: 8px;
-        background: #eff6ff;
-        border: 1px solid #bfdbfe;
-        color: #1e40af;
+        background: var(--fx-blue-soft-bg);
+        border: 1px solid var(--fx-blue-soft-bd);
+        color: var(--fx-blue-soft-fg);
         font-size: 0.82rem;
         line-height: 1.35;
 
         i {
             margin-top: 1px;
-            color: #2563eb;
+            color: var(--fx-blue-text);
             font-size: 0.95rem;
         }
     }
@@ -2866,10 +2674,10 @@ $cf-surface: #f8fafc;
         gap: 6px;
         font-size: 0.82rem;
         font-weight: 600;
-        color: #166534;
+        color: var(--fx-green-soft-fg);
 
         i {
-            color: #dc2626;
+            color: var(--fx-red-text);
         }
     }
 
@@ -2886,6 +2694,6 @@ $cf-surface: #f8fafc;
     gap: 0.2rem;
     &__reason {
         font-size: 0.72rem;
-        color: #b45309;
+        color: var(--fx-amber-text);
     }
 }

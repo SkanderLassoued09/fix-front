@@ -3,9 +3,7 @@ import { Apollo } from 'apollo-angular';
 import { Product } from 'src/app/demo/api/product';
 
 import {
-    MessageService,
     PrimeNGConfig,
-    ConfirmationService,
 } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
@@ -38,6 +36,7 @@ import { environment } from 'src/environments/environment';
 import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DiDetailService } from 'src/app/demo/service/di-detail.service';
+import { DiFilesService } from 'src/app/demo/service/di-files.service';
 import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
 import {
     formatTableValue,
@@ -45,6 +44,22 @@ import {
     isEmplacementVide as isEmplacementVideUtil,
     trackByColumn,
 } from '../table-display.utils';
+import { applyChartTheme } from '../../../../shared/chart-theme';
+import { LayoutService } from '../../../../layout/service/app.layout.service';
+import { NotifyService } from '../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../shared/ui/confirm.service';
+
+/**
+ * ⚙️ INTERRUPTEUR TEMPORAIRE — PV de réunion après un Retour.
+ *
+ * `false` → confirmer un Retour n'ouvre PLUS le modal « Nouvelle réunion »
+ * (`app-reunion-pv-modal`, mode `retour`) ; un toast de succès confirme le
+ * retour à la place. La transition elle-même ne dépend pas du PV. Le code du
+ * modal et la création manuelle depuis la page Réunions restent intacts.
+ *
+ * ▶️ POUR RÉACTIVER : repasser cette constante à `true` (une seule ligne).
+ */
+const REUNION_PV_ON_RETOUR_ENABLED = false;
 
 @Component({
     selector: 'app-ticket-list',
@@ -54,12 +69,13 @@ import {
 })
 export class TicketListComponent implements OnInit, OnDestroy {
     private companySearch$ = new Subject<string>();
-    // Search state tracking
-    private currentSearchField: string = '';
-    private currentSearchValue: string = '';
+    // Filtres de colonnes CUMULATIFS : searchKey → valeur saisie (trimée).
+    private columnFilters: Record<string, string> = {};
     private searchSubject$ = new Subject<void>();
     private destroy$ = new Subject<void>();
-    private lastSearchKey = '';
+    /** Jeton anti-réponse périmée : seule la DERNIÈRE requête de `loadData`
+     *  (recherche, pagination, notification) peut écrire la liste. */
+    private loadSeq = 0;
 
     baseUrl = environment.apiUrl;
 
@@ -91,10 +107,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     bcLoading: boolean = false;
     devisLoading: boolean = false;
-    blLoading: boolean = false;
-    factureLoading: boolean = false;
 
-    filsFinished: boolean = false;
     creationDiForm = new FormGroup({
         title: new FormControl('', [
             Validators.required,
@@ -146,7 +159,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         { label: 'Indiagnostic', value: 'INDIAGNOSTIC' },
         { label: 'CONFIRMATION', value: 'CONFIRMATION' },
         { label: 'Pending2', value: 'PENDING2' },
-        { label: 'Pricing', value: 'PRICING_DIAG' },
+        { label: 'PRICING', value: 'PRICING_DIAG' },
         // Approval split en deux gates documentaires (recherche back par regex).
         { label: 'Approval — attente devis', value: 'WAITING_DEVIS' },
         { label: 'Approval — attente BC', value: 'WAITING_BC' },
@@ -279,6 +292,15 @@ export class TicketListComponent implements OnInit, OnDestroy {
     repairEstimate: number;
     seletedRow: any;
     discountedPriceNeg: number = 0;
+    /** Estimation de réparation du CYCLE COURANT, relue pour les modales
+     *  « Affectation du prix final ». Champ DISTINCT de `repairEstimate`, qui
+     *  n'est alimenté que par le modal de tarification (`showDialogForPricing`)
+     *  et porterait donc, ici, la valeur d'une DI ouverte précédemment. */
+    negoRepairEstimate: number | null = null;
+    /** `final_price` DÉJÀ persisté pour le cycle. Seul cas utile : diagnostic
+     *  NON PAYANT, où le back a calculé le total serveur-autoritaire
+     *  (réparation + main-d'œuvre diagnostic + pièces) dès la tarification. */
+    negoServerFinalPrice: number | null = null;
     slideEnd: any;
     slideAdminEnd: any;
     negocite1Modal: boolean;
@@ -313,9 +335,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
     /** File staged in the create-DI image drag & drop zone (controlled value). */
     imageDropFile: File | null = null;
 
-    facturePDF: { file: string };
-    blPDF: { file: string };
-    private _idPDFFinished: string;
     ticketDetailsInfo: boolean;
     selectedTicket: any;
     updateticketView: boolean;
@@ -330,12 +349,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     basicData: any;
     selectedBc: any;
     selectedDevis: any;
-    selectedBL: string;
-    selectedFacture: string;
     ignoreCountNeg1: any;
     logsDi: any;
-    finishedData: any;
-    filesSelected: any;
     isErrorFromFixtronix: any;
     ignoreCountPricing: number;
     /** Retour cycle # for the price-final modal banner (0 = original flow);
@@ -354,285 +369,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
     bcBtnDisabled: boolean = false;
     factureBtnDisabled: boolean = false;
     blBtnDisabled: boolean = false;
-    enregistrerBlBtncondition: boolean = true;
-    enregistrerFactureBtncondition: boolean = true;
     enregistrerBcBtncondition: boolean = true;
     enregistrerDevisBtncondition: boolean = true;
 
-    // ─── "Affectation des Fichiers" modal (redesign of `filsFinished`) ─────
-    // The existing modal lives on the FINISHED row's `pi-paperclip` button →
-    // `openUploadFileFinished()` → `filsFinished = true`. We keep that flow
-    // and just redesign its body to the design/image.png target. These two
-    // helpers are pure presentation:
-    //   `affectationDocTypes` drives the 4 status cards (BC/BL/Facture/Devis).
-    //   `formatFileSize` formats pending file sizes.
-    readonly affectationDocTypes: Array<{
-        key: 'BC' | 'BL' | 'Facture' | 'Devis';
-        tag: string;
-        label: string;
-        field:
-            | 'bon_de_commande'
-            | 'bon_de_livraison'
-            | 'facture'
-            | 'devis';
-    }> = [
-        { key: 'BC', tag: 'BC', label: 'Bon de commande', field: 'bon_de_commande' },
-        { key: 'BL', tag: 'BL', label: 'Bon de livraison', field: 'bon_de_livraison' },
-        { key: 'Facture', tag: 'FAC', label: 'Facture', field: 'facture' },
-        { key: 'Devis', tag: 'DEV', label: 'Devis', field: 'devis' },
-    ];
-
-    /** Count of "Disponible" docs on the current `filesSelected` row.
-     *  Drives the `FICHIERS PRINCIPAUX (n)` pill in the header. */
-    get affectationAvailableCount(): number {
-        if (!this.filesSelected) return 0;
-        return this.affectationDocTypes.filter(
-            (t) => !!this.filesSelected[t.field],
-        ).length;
-    }
-
-    /** Files ready to persist (selected via PrimeNG `customUpload` but not yet
-     *  saved). The existing flow keeps the BL preview in `selectedBL` and the
-     *  Facture preview in `selectedFacture` (set by `onUpload`). */
-    get affectationPendingCount(): number {
-        return (
-            (this.selectedBL ? 1 : 0) + (this.selectedFacture ? 1 : 0)
-        );
-    }
-
-    /** Séquence documentaire de clôture : la Facture ne peut être téléversée
-     *  qu'APRÈS le BL. Tant que la DI est en `WAITING_BL` (BL absent), le slot
-     *  Facture est VERROUILLÉ ; l'upload du BL fait passer la DI en
-     *  `WAITING_FACTURE` (transition auto back) → au ré-affichage le slot
-     *  s'ouvre. Les DI legacy (`CLOSING`/`ATTENTE_BL_FACTURE`) et `FINISHED`
-     *  ne sont PAS verrouillées (ancien flux BL+Facture ensemble / gestion
-     *  a posteriori). */
-    get factureSlotLocked(): boolean {
-        return this.filesSelected?.status === 'WAITING_BL';
-    }
-
-    /** Per-slot drag-over highlight (key = `'BL'` / `'Facture'`). Visual only —
-     *  reset on drag-leave / drop / picker-pick. */
-    afDragActive: Record<string, boolean> = {};
-
-    /** Per-type base64 cache so the single footer "Enregistrer" can persist
-     *  BOTH BL and Facture in one cascade. The legacy `this.payload.file` is
-     *  a single string that gets overwritten on every upload — using it for a
-     *  multi-file save would re-send the LAST file's content for every slot.
-     *  Populated by `onUpload` once FileReader resolves the data-URL. */
-    affectationBase64: Record<string, string> = {};
-
-    /** Real file name + size of the pending selection per slot ('BL'/'Facture'),
-     *  captured from the picked File so the upload card shows the actual file
-     *  (name + human size) instead of a generic label. */
-    afSelectedMeta: Record<string, { name: string; size: number }> = {};
-
-    /** "Fichiers principaux" cards — the 4 doc types resolved against the
-     *  current row's `documents` (real Drive file names + link) with a scalar
-     *  presence fallback. `title` shows the REAL file name when available, else
-     *  the generic type label. */
-    get affectationMainCards(): Array<{
-        tag: string;
-        present: boolean;
-        title: string;
-        statusLabel: string;
-        href: string | null;
-    }> {
-        const byType = new Map<string, any>();
-        for (const d of this.filesSelected?.documents ?? []) {
-            if (d?.type) byType.set(String(d.type), d);
-        }
-        return this.affectationDocTypes.map((t) => {
-            const doc = byType.get(t.key);
-            const scalar = this.filesSelected?.[t.field];
-            const href = doc?.webViewLink || scalar || null;
-            const present = !!href;
-            const name = (doc?.name && String(doc.name).trim()) || '';
-            return {
-                tag: t.tag,
-                present,
-                title: present ? name || t.label : t.label,
-                statusLabel: present ? 'Disponible' : 'Manquant',
-                href,
-            };
-        });
-    }
-
-    /** Retour history for the timeline (LogsDi snapshots). Doc chips show the
-     *  REAL file name (resolved from the row's `documents` by URL), falling back
-     *  to the type label. */
-    get affectationRetours(): Array<{
-        num: number;
-        date: string;
-        docs: Array<{ name: string; href: string }>;
-    }> {
-        const logs = this.finishedData?.logs ?? [];
-        return logs.map((log: any, i: number) => ({
-            num: Number(log?.idIgnore ?? i + 1),
-            date: log?.createdAt
-                ? new Date(log.createdAt).toLocaleDateString('fr-FR')
-                : '',
-            docs: this.affectationRetourDocs(log),
-        }));
-    }
-
-    /** Per-retour document chips (scalar URLs on the LogsDi log). Resolve the
-     *  REAL file name from the row's `documents`: exact URL match first (the
-     *  precise file), then by document TYPE (the current file of that type —
-     *  BC/Devis are rarely replaced across cycles), and only fall back to the
-     *  generic type label when the DI has no document of that type at all. */
-    affectationRetourDocs(log: any): Array<{ name: string; href: string }> {
-        const nameByLink = new Map<string, string>();
-        const nameByType = new Map<string, string>();
-        for (const d of this.filesSelected?.documents ?? []) {
-            const nm = String(d?.name ?? '').trim();
-            if (!nm) continue;
-            const link = String(d?.webViewLink ?? '').trim();
-            if (link) nameByLink.set(link, nm);
-            if (d?.type) nameByType.set(String(d.type), nm);
-        }
-        const out: Array<{ name: string; href: string }> = [];
-        const push = (href: any, type: string, label: string) => {
-            const h = String(href ?? '').trim();
-            if (!h) return;
-            out.push({
-                name: nameByLink.get(h) || nameByType.get(type) || label,
-                href: h,
-            });
-        };
-        push(log?.bon_de_commande, 'BC', 'BC');
-        push(log?.devis, 'Devis', 'Devis');
-        push(log?.bon_de_livraison, 'BL', 'BL');
-        push(log?.facture, 'Facture', 'Facture');
-        return out;
-    }
-
-    /** Drag-and-drop or picker → reuse the existing `onUpload(event, key)`
-     *  flow (FileReader → base64 → mutation). The event shape is exactly what
-     *  PrimeNG's customUpload provides: `{ files: File[] }` — `onUpload`
-     *  iterates `event.files` so the synthesized object stays compatible. */
-    onAfDragOver(ev: DragEvent, key: string) {
-        ev.preventDefault();
-        this.afDragActive = { ...this.afDragActive, [key]: true };
-    }
-    onAfDragLeave(ev: DragEvent, key: string) {
-        ev.preventDefault();
-        this.afDragActive = { ...this.afDragActive, [key]: false };
-    }
-    onAfDrop(ev: DragEvent, key: string) {
-        ev.preventDefault();
-        this.afDragActive = { ...this.afDragActive, [key]: false };
-        const all = Array.from(ev.dataTransfer?.files ?? []);
-        // Keep PDFs only — the dropzone's accept attribute is hint-only on drop.
-        const files = all.filter((f) => /pdf/i.test(f.type) || /\.pdf$/i.test(f.name));
-        if (!files.length) {
-            this.messageservice?.add?.({
-                severity: 'warn',
-                summary: 'Format non supporté',
-                detail: 'Glissez un fichier PDF.',
-            });
-            return;
-        }
-        this.onUpload({ files }, key);
-    }
-    onAfPicker(ev: Event, key: string) {
-        const input = ev.target as HTMLInputElement;
-        const files = Array.from(input.files ?? []);
-        if (!files.length) return;
-        this.onUpload({ files }, key);
-        // Reset so picking the same file again still fires `change`.
-        input.value = '';
-    }
-
-    /** Single "Enregistrer" for the Affectation modal — persists every
-     *  pending file (BL and/or Facture) in one cascade, with one confirm
-     *  dialog and one toast. Matches the design's single-CTA footer (the
-     *  legacy per-slot "Enregistrer BL / Facture" buttons are gone).
-     *  MutationRunner handles anti-double-click and spinner reset. */
-    saveAffectationFichiers() {
-        const id = this._idPDFFinished;
-        if (!id) return;
-        const bl = this.affectationBase64['BL'];
-        const fac = this.affectationBase64['Facture'];
-        if (!bl && !fac) {
-            this.filsFinished = false;
-            return;
-        }
-        const count = (bl ? 1 : 0) + (fac ? 1 : 0);
-        this.confirmationService.confirm({
-            message: `Enregistrer ${count} fichier${count > 1 ? 's' : ''} ?`,
-            header: 'Confirmation',
-            icon: 'pi pi-question-circle',
-            accept: async () => {
-                const steps: Array<{ mutation: any }> = [];
-                if (bl) steps.push({ mutation: this.ticketSerice.addBL(id, bl) });
-                if (fac)
-                    steps.push({
-                        mutation: this.ticketSerice.addFacture(id, fac),
-                    });
-                try {
-                    await this.mutationRunner.runChain({
-                        key: `affectationFichiers:${id}`,
-                        steps,
-                        // Toast de succès « Fichiers enregistrés » retiré (bruit :
-                        // les cartes passent déjà à « Disponible »). On garde le
-                        // toast d'ERREUR pour signaler un échec d'enregistrement.
-                        errorToast: {
-                            summary: 'Erreur',
-                            detail: "Échec de l'enregistrement. Réessayez.",
-                        },
-                        onLoading: (v) => (this.isLoading = v),
-                    });
-                    // Reset selection / cache so the cards flip to "Disponible"
-                    // on the next data refresh.
-                    this.selectedBL = '';
-                    this.selectedFacture = '';
-                    this.affectationBase64 = {};
-                    this.afSelectedMeta = {};
-                    this.enregistrerBlBtncondition = true;
-                    this.enregistrerFactureBtncondition = true;
-                    this.blBtnDisabled = false;
-                    this.factureBtnDisabled = false;
-                    this.filsFinished = false;
-                    this.loadData();
-                } catch {
-                    /* toasted; modal stays open so the user can retry */
-                }
-            },
-        });
-    }
-
-    /** Remove ONE pending slot (BL or Facture) without touching the other:
-     *  clears its preview + cached base64 so the dropzone comes back and the
-     *  slot can be re-picked (replace). The footer counter updates on its own
-     *  via `affectationPendingCount`. */
-    clearAffectationSlot(type: 'BL' | 'Facture') {
-        const next = { ...this.affectationBase64 };
-        delete next[type];
-        this.affectationBase64 = next;
-        const meta = { ...this.afSelectedMeta };
-        delete meta[type];
-        this.afSelectedMeta = meta;
-        if (type === 'BL') {
-            this.selectedBL = '';
-            this.blLoading = false;
-            this.enregistrerBlBtncondition = true;
-        } else {
-            this.selectedFacture = '';
-            this.factureLoading = false;
-            this.enregistrerFactureBtncondition = true;
-        }
-    }
-
-    /** Pretty file size: `n o` / `n Ko` / `n,nn Mo`. */
-    formatFileSize(bytes: number | undefined): string {
-        if (!Number.isFinite(bytes) || (bytes ?? 0) <= 0) return '0 o';
-        const n = bytes as number;
-        if (n < 1024) return `${n} o`;
-        if (n < 1024 * 1024) return `${Math.round(n / 1024)} Ko`;
-        return `${(n / (1024 * 1024)).toFixed(2).replace('.', ',')} Mo`;
-    }
-
+    // La modale « Affectation des Fichiers » a été EXTRAITE dans le composant
+    // partagé `app-di-files-modal` (demo/components/ticket/shared/di-files-modal),
+    // monté globalement dans `app.component.html` et piloté par `DiFilesService`.
+    // Raison : la notification BL doit pouvoir l'ouvrir depuis n'importe quelle
+    // page et pour n'importe quel rôle destinataire — la coordinatrice n'a pas
+    // accès à cette liste, et la DI visée n'est presque jamais dans les 10
+    // lignes chargées. Le bouton trombone passe désormais par le service.
     /** Coût total = facturation diagnostic + total composants. Single source
      *  of truth for the marge calc + chip multipliers. Components may be null
      *  while the modal is still loading; coerce to 0 so the UI shows 0,000 TND
@@ -666,18 +412,83 @@ export class TicketListComponent implements OnInit, OnDestroy {
     get bcUploadLocked(): boolean {
         return !this.devisReady;
     }
+    /** Diagnostic NON PAYANT du cycle courant. Lu UNIQUEMENT sur la DI courante
+     *  (getDiById.di ou la ligne du modal négociation 2), JAMAIS sur
+     *  `pricingDiagnosticPayant` — fixé par le modal de tarification et jamais
+     *  remis à zéro ici → risque de valeur périmée d'une DI précédente. */
+    get negoNonPayant(): boolean {
+        return (
+            this.dataById?.getDiById?.di?.diagnosticPayant === false ||
+            this.selectedRowInNegociate2?.diagnosticPayant === false
+        );
+    }
+
+    /** Base de la remise dans les modales « Affectation du prix final ».
+     *
+     *  - NON PAYANT : le back a déjà calculé ET persisté un total
+     *    serveur-autoritaire (réparation + main-d'œuvre diagnostic + pièces,
+     *    cf. `setRepairFinalPrice`) — c'est LUI la base. Le recomposer ici
+     *    donnerait un montant différent (`price` vaut 0 dans ce cas).
+     *  - Sinon : prix du diagnostic facturé + estimation de réparation, les
+     *    deux montants saisis à l'étape précédente (modal de tarification).
+     *
+     *  `negoRepairEstimate` est absent pour une DI IRRÉPARABLE (champ masqué en
+     *  tarification) → la base retombe sur le seul prix du diagnostic. */
+    get negoBaseAmount(): number {
+        if (this.negoNonPayant) {
+            const serverTotal = Number(this.negoServerFinalPrice);
+            if (Number.isFinite(serverTotal) && serverTotal > 0)
+                return serverTotal;
+        }
+        const diag = Number(this.price);
+        const rep = Number(this.negoRepairEstimate);
+        return (
+            Math.round(
+                ((Number.isFinite(diag) ? diag : 0) +
+                    (Number.isFinite(rep) ? rep : 0)) *
+                    1000,
+            ) / 1000
+        );
+    }
+
     get prixFinalCanConfirm(): boolean {
         // Diagnostic NON PAYANT : aucun prix de diagnostic (price = 0) → on
         // n'exige PAS `price > 0`, sinon « Confirmer le prix final » resterait
-        // bloqué après l'upload devis + BC. Le non-payant est lu UNIQUEMENT sur
-        // la DI courante (getDiById.di ou la ligne du modal négociation 2), pas
-        // sur `pricingDiagnosticPayant` (fixé par le modal Prix, jamais remis à
-        // zéro ici → risque de valeur périmée d'une DI précédente).
-        const nonPayant =
-            this.dataById?.getDiById?.di?.diagnosticPayant === false ||
-            this.selectedRowInNegociate2?.diagnosticPayant === false;
-        const priceOk = nonPayant || Number(this.price) > 0;
+        // bloqué après l'upload devis + BC.
+        const priceOk = this.negoNonPayant || Number(this.price) > 0;
         return this.bcReady && this.devisReady && priceOk && !this.isLoading;
+    }
+
+    /** Normalise un montant venant de GraphQL. `null`/`undefined`/`''` →
+     *  `null` (absent), afin de pouvoir enchaîner les sources avec `??`.
+     *  ATTENTION : `Number(null) === 0`, un test de finitude seul ferait donc
+     *  passer un champ absent pour un montant nul — or `0` est une valeur
+     *  LÉGITIME (diagnostic non payant). D'où le test d'absence explicite. */
+    toMoney(value: any): number | null {
+        if (value === null || value === undefined || value === '') return null;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+    }
+
+    /** Montant d'un cycle PASSÉ (historique du modal de tarification) : une
+     *  absence s'affiche comme telle, jamais « 0,000 TND » — `formatTnd3(null)`
+     *  rend 0,000 puisque `Number(null) === 0`. */
+    formatCycleMoney(value: number | null | undefined): string {
+        return value === null || value === undefined
+            ? 'Non renseigné'
+            : this.formatTnd3(value);
+    }
+
+    /** `remarque_tech_diagnostic` tel que composé par le technicien
+     *  (`description\n\nRemarque technicien :\nremarque`, cf.
+     *  `composeRemarqueDiagnostic` de tech-di-list), redécoupé en deux parties
+     *  lisibles. Une note sans séparateur reste entière dans `description`. */
+    get pricingTechNote(): { description: string; remarque: string | null } | null {
+        const raw = String(this.seletedRow?.remarque_tech_diagnostic ?? '').trim();
+        if (!raw) return null;
+        const [description, ...rest] = raw.split(/\s*Remarque technicien\s*:\s*/i);
+        const remarque = rest.join(' ').trim();
+        return { description: description.trim(), remarque: remarque || null };
     }
 
     /** TND with 3 decimals, fr-TN locale ("X XXX,XXX TND"). Falsy → "—". */
@@ -856,9 +667,13 @@ export class TicketListComponent implements OnInit, OnDestroy {
     /** Recompute the final price live as the user moves the slider / types in
      *  the input — spec says no separate "Appliquer remise" button. Source of
      *  truth = remise %. Soft cap at 20: values > 20 trigger a warning banner
-     *  in the template (negociation 2 / admin approval path). */
+     *  in the template (negociation 2 / admin approval path).
+     *
+     *  La base n'est PAS le seul prix du diagnostic : c'est `negoBaseAmount`
+     *  (diagnostic + estimation de réparation, ou le total serveur quand le
+     *  diagnostic est non payant). */
     onDiscountChange() {
-        const p = Number(this.price);
+        const p = this.negoBaseAmount;
         const d = Number(this.discountPercent);
         if (!Number.isFinite(p) || !Number.isFinite(d)) {
             this.finalPrice = null;
@@ -897,19 +712,30 @@ export class TicketListComponent implements OnInit, OnDestroy {
     private deepLinkConsumer?: DeepLinkConsumer;
 
     constructor(
+        public layoutService: LayoutService,
         private ticketSerice: TicketService,
         private apollo: Apollo,
         private cdr: ChangeDetectorRef,
-        private readonly messageservice: MessageService,
+        private readonly notify: NotifyService,
         private readonly notificationService: NotificationService,
         private config: PrimeNGConfig,
-        private confirmationService: ConfirmationService,
+        private readonly confirm: ConfirmService,
         private ticketRefreshService: TicketRefreshService,
         private readonly mutationRunner: MutationRunner,
         private route: ActivatedRoute,
         private router: Router,
         private diDetail: DiDetailService,
-    ) {}
+        private diFiles: DiFilesService,
+    ) {
+        // Chart.js dessine sur un canvas : il n'herite pas des variables CSS.
+        // Sans cette reapplication, axes et legende gardent les couleurs de
+        // l'ancien theme apres une bascule clair/sombre.
+        this.layoutService.configUpdate$.subscribe(() => {
+            if (this.basicOptions) {
+                this.basicOptions = applyChartTheme(this.basicOptions);
+            }
+        });
+}
 
     ngOnInit() {
         this.getStatusCount();
@@ -1000,18 +826,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
             this.showDialogForNegociate2(row);
             return;
         }
-        // BL à téléverser (DI_DOC_BL_PENDING) → modale « Affectation des Fichiers ».
-        if (
-            row &&
-            action === 'affectation' &&
-            (st === 'WAITING_BL' ||
-                st === 'WAITING_FACTURE' ||
-                st === 'CLOSING' ||
-                st === 'ATTENTE_BL_FACTURE' ||
-                st === 'FINISHED' ||
-                st === 'IRREPARABLE')
-        ) {
-            this.openUploadFileFinished(row);
+        // Deep-link hérité `?action=affectation` (lien partagé, favori). On ne
+        // dépend PLUS de `row` : il était quasiment toujours `null`, la DI visée
+        // n'étant pas dans les 10 lignes chargées. Le service récupère la DI par
+        // son id, vérifie l'éligibilité et retombe sur le détail si besoin.
+        if (action === 'affectation') {
+            this.diFiles.openById(diId);
             return;
         }
         this.diDetail.openById(diId);
@@ -1023,31 +843,60 @@ export class TicketListComponent implements OnInit, OnDestroy {
      */
     loadData() {
         this.isLoading = true;
+        // Une réponse lente d'une requête DÉPASSÉE ne doit ni écraser la liste
+        // ni éteindre le chargement de la requête en cours.
+        const seq = ++this.loadSeq;
+        const isCurrent = () => seq === this.loadSeq;
 
-        const hasActiveSearch =
-            this.currentSearchField &&
-            this.currentSearchValue &&
-            this.currentSearchValue.trim().length > 0;
+        const searches = Object.entries(this.columnFilters).map(
+            ([field, value]) => ({ field, value }),
+        );
 
-        if (hasActiveSearch) {
-            // Perform search
+        if (searches.length) {
+            // Perform search — saisie en variable GraphQL, jamais interpolée
             this.apollo
                 .query<any>({
-                    query: this.ticketSerice.searchDi(
-                        this.currentSearchField,
-                        this.currentSearchValue,
-                        this.first,
-                        this.rows,
-                    ),
+                    query: this.ticketSerice.searchDi(this.first, this.rows),
+                    variables: { search: searches },
                     fetchPolicy: 'no-cache',
                 })
-                .pipe(finalize(() => (this.isLoading = false)))
-                .subscribe(({ data }) => {
-                    if (data && data.searchDi) {
-                        this.diList = data.searchDi.di;
-                        this.totalDiCount = data.searchDi.totalDiCount;
-                        this.updateCounters();
-                    }
+                .pipe(
+                    finalize(() => {
+                        if (isCurrent()) this.isLoading = false;
+                    }),
+                )
+                .subscribe({
+                    // `errorPolicy: 'all'` (graphql.modules) livre les erreurs
+                    // GraphQL dans `next`, pas dans `error` : sans ce test la
+                    // recherche échouait sans le moindre toast.
+                    next: ({ data, errors }) => {
+                        if (!isCurrent()) return;
+                        if (errors?.length) {
+                            this.notify.error(
+                                errors[0]?.message ||
+                                    'La recherche a échoué. Réessayez.',
+                                { summary: 'Erreur de recherche' },
+                            );
+                            return;
+                        }
+                        if (data?.searchDi) {
+                            this.diList = data.searchDi.di;
+                            // Compteur ET paginateur lisent `diListCount` :
+                            // seul `totalDiCount` était écrit, d'où un total
+                            // et des pages NON filtrés pendant une recherche.
+                            this.diListCount = data.searchDi.totalDiCount;
+                            this.totalDiCount = data.searchDi.totalDiCount;
+                            this.updateCounters();
+                        }
+                    },
+                    error: (error) => {
+                        if (!isCurrent()) return;
+                        this.notify.error(
+                            error?.message ||
+                                'La recherche a échoué. Réessayez.',
+                            { summary: 'Erreur de recherche' },
+                        );
+                    },
                 });
         } else {
             // Regular data fetch
@@ -1061,8 +910,13 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     ),
                     fetchPolicy: 'no-cache',
                 })
-                .pipe(finalize(() => (this.isLoading = false)))
+                .pipe(
+                    finalize(() => {
+                        if (isCurrent()) this.isLoading = false;
+                    }),
+                )
                 .subscribe(({ data }) => {
+                    if (!isCurrent()) return;
                     if (data) {
                         this.diList = data.getAllDi.di;
                         this.diListCount = data.getAllDi.totalDiCount;
@@ -1117,35 +971,29 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handle column search
+     * Handle column search — filtres CUMULATIFS : chaque colonne garde sa
+     * valeur ; vider une colonne ne retire QUE son propre filtre.
      */
     onColumnSearch(field: string, value: string) {
-        const v = value?.trim();
         const f = field?.trim();
-        const searchKey = `${f || ''}:${v || ''}`;
+        if (!f) return;
+        const v = value?.trim() ?? '';
+        if ((this.columnFilters[f] ?? '') === v) return;
 
-        if (searchKey === this.lastSearchKey) {
-            return;
-        }
-
-        this.lastSearchKey = searchKey;
-
-        if (v && v.length > 0 && f && f.length > 0) {
-            // Set search state
-            this.currentSearchField = f;
-            this.currentSearchValue = v;
-            this.first = 0; // Reset to first page on new search
-
-            // Trigger search
-            this.searchSubject$.next();
+        if (v) {
+            this.columnFilters[f] = v;
         } else {
-            // Clear search state
-            this.currentSearchField = '';
-            this.currentSearchValue = '';
-
-            // Load regular data
-            this.loadData();
+            delete this.columnFilters[f];
         }
+        this.first = 0; // Reset to first page on new search
+        // Debounced for typing AND clearing (clearing used to fire at once and
+        // could race a pending search).
+        this.searchSubject$.next();
+    }
+
+    /** Dernier rang affiché dans le compteur « a–b sur N résultats ». */
+    get rangeEnd(): number {
+        return Math.min(this.first + this.rows, this.diListCount || 0);
     }
 
     formatCell(row: any, field: string): string {
@@ -1367,11 +1215,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
                             ];
                         }
                         this.flashDiRow(di._id);
-                        this.messageservice.add({
-                            severity: 'success',
-                            summary: 'Catégorie mise à jour',
-                            detail: `DI ${di._idnum} → ${newCategoryName}`,
-                        });
+                        this.notify.success(
+                            `DI ${di._idnum} → ${newCategoryName}`,
+                            { summary: 'Catégorie mise à jour' },
+                        );
                         this.ticketRefreshService.requestRefresh(
                             'ticket-list',
                             { source: 'mutation:reassignDiCategory' },
@@ -1381,11 +1228,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 },
                 error: (err) => {
                     console.error('reassignDiCategory failed', err);
-                    this.messageservice.add({
-                        severity: 'error',
-                        summary: 'Échec',
-                        detail: 'Impossible de mettre à jour la catégorie',
-                    });
+                    this.notify.error(
+                        'Impossible de mettre à jour la catégorie',
+                    );
                     this.reassigningCategoryDiId = null;
                 },
             });
@@ -1462,21 +1307,18 @@ export class TicketListComponent implements OnInit, OnDestroy {
                             this.composantCategoryList.find(
                                 (c) => c._id === newCategoryId,
                             )?.category_composant || '—';
-                        this.messageservice.add({
-                            severity: 'success',
-                            summary: 'Catégorie composant mise à jour',
-                            detail: `${comp.name} → ${catName}`,
-                        });
+                        this.notify.success(
+                            `${comp.name} → ${catName}`,
+                            { summary: 'Catégorie composant mise à jour' },
+                        );
                     }
                     this.reassigningComposantId = null;
                 },
                 error: (err) => {
                     console.error('reassignComposantCategory failed', err);
-                    this.messageservice.add({
-                        severity: 'error',
-                        summary: 'Échec',
-                        detail: "Impossible de mettre à jour la catégorie du composant",
-                    });
+                    this.notify.error(
+                        "Impossible de mettre à jour la catégorie du composant",
+                    );
                     this.reassigningComposantId = null;
                 },
             });
@@ -1597,11 +1439,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
                                 ...this.diList.slice(idx + 1),
                             ];
                         }
-                        this.messageservice.add({
-                            severity: 'success',
-                            summary: 'Emplacement mis à jour',
-                            detail: `DI ${di._idnum} → ${this.getLocationNameById(newLocationId)}`,
-                        });
+                        this.notify.success(
+                            `DI ${di._idnum} → ${newLocationName}`,
+                            { summary: 'Emplacement mis à jour' },
+                        );
                         // The backend's updateTicket broadcast will also
                         // trigger the standard refresh pipeline; this
                         // local request keeps things tight.
@@ -1614,11 +1455,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 },
                 error: (err) => {
                     console.error('reassignDiLocation failed', err);
-                    this.messageservice.add({
-                        severity: 'error',
-                        summary: 'Échec',
-                        detail: "Impossible de mettre à jour l'emplacement",
-                    });
+                    this.notify.error(
+                        "Impossible de mettre à jour l'emplacement",
+                    );
                     this.reassigningDiId = null;
                 },
             });
@@ -1672,10 +1511,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
         const name =
             this.composantCategoryForm.value.composantCategoryName?.trim();
         if (!name) return;
-        this.confirmationService.confirm({
+        this.confirm.confirmCreate({
             message: 'Voulez-vous créer cette catégorie de composant ?',
-            header: 'Confirmation Création',
-            icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -1694,11 +1531,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
                                 },
                             ];
                             this.composantCategoryForm.reset();
-                            this.messageservice.add({
-                                severity: 'success',
-                                summary: 'Catégorie créée',
-                                detail: name,
-                            });
+                            this.notify.success(
+                                name,
+                                { summary: 'Catégorie créée' },
+                            );
                         }
                     });
             },
@@ -1707,10 +1543,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     deleteComposantCategory(row: { _id: string; category_composant: string }) {
         if (!row?._id) return;
-        this.confirmationService.confirm({
+        this.confirm.confirmDelete({
             message: `Supprimer la catégorie « ${row.category_composant} » ?`,
-            header: 'Confirmation Suppression',
-            icon: 'pi pi-exclamation-triangle',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -1725,11 +1559,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
                                 this.composantCategoryList.filter(
                                     (c) => c._id !== row._id,
                                 );
-                            this.messageservice.add({
-                                severity: 'success',
-                                summary: 'Catégorie supprimée',
-                                detail: row.category_composant,
-                            });
+                            this.notify.success(
+                                row.category_composant,
+                                { summary: 'Catégorie supprimée' },
+                            );
                         }
                     });
             },
@@ -1741,10 +1574,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
             this.selectedTicket;
         const extractedData = { _id, title, description, remarque_manager };
 
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation Update DI',
-            icon: 'pi pi-question-circle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer les modifications ?',
+            header: 'Mise à jour de la DI',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -1758,11 +1590,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
                                     this.findIndexById(this.selectedTicket._id)
                                 ] = this.selectedTicket;
 
-                                this.messageservice.add({
-                                    severity: 'success',
-                                    summary: 'Success',
-                                    detail: 'Di a été Modifier',
-                                });
+                                this.notify.success('La DI a été modifiée.');
                                 this.updateticketView = false;
                             }
                         }
@@ -1901,10 +1729,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     confirmerNegociation(_step: any) {
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation du prix final',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer le prix final ?',
+            header: 'Prix final',
             accept: async () => {
                 const r1 = this.selectedRowInNegociate1;
                 const r2 = this.selectedRowInNegociate2;
@@ -1958,22 +1785,25 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 // Step 1: persist the price (no status change). Step 2 (LAST):
                 // the transition — only fires after the price is saved, and
                 // from the correct source status (M1 guard).
-                const priceStep =
-                    this.finalPrice == undefined
-                        ? {
-                              mutation:
-                                  this.ticketSerice.nego1nego2_InMagasin_noFinalPrice(
-                                      this._idDi,
-                                      this.price,
-                                  ),
-                          }
-                        : {
-                              mutation: this.ticketSerice.nego1nego2_InMagasin(
-                                  this._idDi,
-                                  this.price,
-                                  this.finalPrice,
-                              ),
-                          };
+                //
+                // `price` reste le PRIX DU DIAGNOSTIC, sens inchangé (il est lu
+                // par le PDF devis, le dossier, l'historique de retour et le
+                // verrou `setDiagnosticPayant`). Seul `final_price` porte la
+                // base sommée (diagnostic + estimation réparation, ou le total
+                // serveur en non payant) diminuée de la remise.
+                // `toMoney` et non `Number(...)` : `Number(null) === 0` est
+                // fini — un prix final non calculé (modal ouvert sans réponse
+                // serveur) serait persisté comme 0 au lieu de retomber sur la
+                // base. `0` reste une valeur légitime et passe telle quelle.
+                const finalToPersist =
+                    this.toMoney(this.finalPrice) ?? this.negoBaseAmount;
+                const priceStep = {
+                    mutation: this.ticketSerice.nego1nego2_InMagasin(
+                        this._idDi,
+                        Number(this.price) || 0,
+                        finalToPersist,
+                    ),
+                };
                 const steps = transitionStep
                     ? [priceStep, transitionStep]
                     : [priceStep];
@@ -2005,6 +1835,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     this.discountPercent = 0;
                     this.price = 0;
                     this.finalPrice = 0;
+                    this.negoRepairEstimate = null;
+                    this.negoServerFinalPrice = null;
                 } catch {
                     /* toasted; modals stay open, status unchanged past the
                        failed step (no status advance on unsaved price) */
@@ -2014,10 +1846,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     enregistrerBC() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous Enregistrer Bon de commande',
-            header: 'Confirmation Fichier',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer le bon de commande ?',
+            header: 'Bon de commande',
             accept: async () => {
                 this.apollo
                     .mutate<any>({
@@ -2059,10 +1890,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     enregistrerDevis() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous Enregistrer Devis',
-            header: 'Confirmation Fichier',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer le devis ?',
+            header: 'Devis',
             accept: async () => {
                 this.apollo
                     .mutate<any>({
@@ -2083,33 +1913,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
         });
     }
 
-    enregistrerBL() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous Enregistrer Bon de livraison',
-            header: 'Confirmation Fichier',
-            icon: 'pi pi-exclamation-triangle',
-            accept: async () => {
-                this.saveBLPDF(this._idPDFFinished, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-                this.factureBtnDisabled = false;
-                this.enregistrerBlBtncondition = true;
-            },
-        });
-    }
 
-    enregistrerFacture() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous Enregistrer Bon de livraison',
-            header: 'Confirmation Fichier',
-            icon: 'pi pi-exclamation-triangle',
-            accept: async () => {
-                this.saveFacturePDF(this._idPDFFinished, this.payload.file);
-                await new Promise((resolve) => setTimeout(resolve, 2000));
-                this.blBtnDisabled = false;
-                this.enregistrerFactureBtncondition = true;
-            },
-        });
-    }
 
     saveDevisPDF(_id: string, pdf: string) {
         this.apollo
@@ -2123,27 +1927,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
             });
     }
 
-    saveBLPDF(_id: string, pdf: string) {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.addBL(_id, pdf),
-            })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                console.log('data BL', data);
-            });
-    }
 
-    saveFacturePDF(_id: string, pdf: string) {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.addFacture(_id, pdf),
-            })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                console.log('🥟[data]:', data);
-            });
-    }
 
     saveBCPDF(_id: string, pdf: string) {
         this.apollo
@@ -2222,22 +2006,42 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     if (isStale()) return;
                     this.isLoading = loading;
                     if (data) {
-                        this.initialPriceAffichage = data.getDiById.di.price;
-                        this.priceRemiseAffichage =
-                            data.getDiById.di.final_price;
+                        // Historique par CYCLE : chaque montant est lu sur SA
+                        // ligne `logsDi`, jamais sur la DI — `di.price` /
+                        // `di.final_price` sont le miroir du cycle COURANT,
+                        // vidé à l'entrée en retour (d'où « Avant Retour :
+                        // 0,000 »). `toMoney` garde une absence (null)
+                        // distincte d'un 0 réel (diagnostic non payant).
+                        const logs: any[] = data.getDiById.logsDi ?? [];
+                        const original = logs.find(
+                            (el) => Number(el?.idIgnore) === 0,
+                        );
+                        this.initialPriceAffichage = this.toMoney(
+                            original?.price,
+                        );
+                        this.priceRemiseAffichage = this.toMoney(
+                            original?.final_price,
+                        );
 
-                        this.pricesLogs = data.getDiById.logsDi
-                            .map((el) => {
-                                if (el.price && el.idIgnore) {
-                                    return {
-                                        priceLogs: el.price,
-                                        final_priceLog: el.final_price,
-                                        ignoreDispaly: el.idIgnore,
-                                    };
-                                }
-                                return null;
+                        // Retours PRÉCÉDENTS uniquement : le cycle courant est
+                        // celui qu'on tarife, il n'a pas encore de prix.
+                        this.pricesLogs = logs
+                            .filter((el) => {
+                                const cycle = Number(el?.idIgnore);
+                                return (
+                                    cycle >= 1 &&
+                                    cycle < this.pricingModalIgnoreCount
+                                );
                             })
-                            .filter((log) => log !== null);
+                            .sort(
+                                (a, b) =>
+                                    Number(a.idIgnore) - Number(b.idIgnore),
+                            )
+                            .map((el) => ({
+                                priceLogs: this.toMoney(el.price),
+                                final_priceLog: this.toMoney(el.final_price),
+                                ignoreDispaly: el.idIgnore,
+                            }));
                     }
                 });
 
@@ -2343,6 +2147,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.discountPercent = 0;
         this.finalPrice = null;
         this.discountedPriceNeg = null;
+        this.negoRepairEstimate = null;
+        this.negoServerFinalPrice = null;
 
         this.slideEnd = 0;
         this.ignoreCountNeg1 = 0;
@@ -2382,6 +2188,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
         this._idDi = data._id;
 
+        // Reset SYNCHRONE avant la requête : la base du prix final est
+        // désormais une SOMME — un `price`/`negoRepairEstimate` résiduel d'une
+        // autre DI afficherait un montant faux le temps que `getDiByID`
+        // réponde, pas seulement une valeur périmée.
+        this.price = null;
+        this.negoRepairEstimate = null;
+        this.negoServerFinalPrice = null;
+        this.finalPrice = null;
+        this.discountPercent = 0;
+        this.discountedPriceNeg = 0;
+
         this.seletedRow = data._id;
         this.ignoreCountNeg1 = data.ignoreCount;
         this.pricingModalIgnoreCount = data.ignoreCount ?? 0;
@@ -2399,6 +2216,17 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.bcBtnDisabled = false;
         this.enregistrerBcBtncondition = true;
         this.enregistrerDevisBtncondition = true;
+
+        // Reset SYNCHRONE avant la requête : la base du prix final est
+        // désormais une SOMME — un `price`/`negoRepairEstimate` résiduel d'une
+        // autre DI afficherait un montant faux le temps que `getDiByID`
+        // réponde, pas seulement une valeur périmée.
+        this.price = null;
+        this.negoRepairEstimate = null;
+        this.negoServerFinalPrice = null;
+        this.finalPrice = null;
+        this.discountPercent = 0;
+        this.discountedPriceNeg = 0;
 
         this.selectedRowInNegociate2 = data;
         this.slectedRow = data._id;
@@ -2450,46 +2278,44 @@ export class TicketListComponent implements OnInit, OnDestroy {
                         '🍇🍇🍇🍇[this.selectedRowInNegociate1]:',
                         this.selectedRowInNegociate1,
                     );
-                    if (this.dataById.getDiById.logsDi) {
-                        const filtredLogsDi =
-                            this.dataById.getDiById.logsDi.find(
-                                (el) => el.idIgnore === this.ignoreCountNeg1,
-                            );
+                    const di = this.dataById.getDiById.di;
+                    const filtredLogsDi = (
+                        this.dataById.getDiById.logsDi ?? []
+                    ).find((el) => el.idIgnore === this.ignoreCountNeg1);
 
-                        // Ne PAS écraser le pré-remplissage (estimation de
-                        // création) si le cycle n'a pas encore de prix facturé :
-                        // sinon le champ — désormais verrouillé quand il vient de
-                        // l'estimation — resterait vide → « Valider » bloqué.
-                        this.price =
-                            Number(filtredLogsDi.price) > 0
-                                ? filtredLogsDi.price
-                                : this.price;
-                        this.selectedBc = filtredLogsDi.bon_de_commande;
-                        this.selectedDevis = filtredLogsDi.devis;
-                        console.log('INSIDE LOGS');
+                    // ARGENT DU CYCLE — le log d'abord, la DI en repli.
+                    // `getDiById` renvoie TOUJOURS un tableau `logsDi` (`[]`
+                    // est truthy), mais `affectinitialPrice` et
+                    // `setRepairFinalPrice` n'écrivent sur `logsdis` que si
+                    // `ignoreCount > 0` : au cycle 0 la ligne de log existe
+                    // (créée à l'affectation technicien) mais reste un
+                    // SQUELETTE sans montant, et les prix vivent sur la DI.
+                    // Lire le log sans repli laissait `price` sur une valeur
+                    // résiduelle — inoffensif tant qu'on ne faisait que
+                    // l'afficher, faux dès qu'on le SOMME.
+                    this.price =
+                        this.toMoney(filtredLogsDi?.price) ??
+                        this.toMoney(di?.price);
+                    this.negoServerFinalPrice =
+                        this.toMoney(filtredLogsDi?.final_price) ??
+                        this.toMoney(di?.final_price);
+                    // L'estimation de réparation vit TOUJOURS sur le miroir DI :
+                    // `setRepairEstimate` écrit `di.repairEstimate` quel que
+                    // soit `ignoreCount` (le log n'est jamais alimenté).
+                    this.negoRepairEstimate = this.toMoney(di?.repairEstimate);
 
-                        console.log('this.selectedBc', this.selectedBc);
-                        console.log('this.selectedDevis', this.selectedDevis);
-                    } else {
-                        console.log('OUTSIDE LOGS');
-                        // Idem : garder le pré-remplissage (estimation) tant
-                        // qu'aucun prix facturé n'est persisté (di.price vide).
-                        this.price =
-                            Number(this.dataById.getDiById.di.price) > 0
-                                ? this.dataById.getDiById.di.price
-                                : this.price;
-                        this.selectedBc =
-                            this.dataById.getDiById.di.bon_de_commande;
-                        this.selectedDevis = this.dataById.getDiById.di.devis;
-                        this.selectedDevis
-                            ? (this.devisUploaded = true)
-                            : (this.devisUploaded = false);
-                        this.selectedBc
-                            ? (this.bcUploaded = true)
-                            : (this.bcUploaded = false);
-                        console.log('this.selectedBc', this.selectedBc);
-                        console.log('this.selectedDevis', this.selectedDevis);
-                    }
+                    // Documents : inchangé — ils sont attachés à la ligne de
+                    // cycle par le back (`withCycleDocuments`), y compris au
+                    // cycle 0.
+                    this.selectedBc = filtredLogsDi?.bon_de_commande ?? null;
+                    this.selectedDevis = filtredLogsDi?.devis ?? null;
+                    console.log('this.selectedBc', this.selectedBc);
+                    console.log('this.selectedDevis', this.selectedDevis);
+
+                    // Amorce le prix final dès l'ouverture : sans cela il reste
+                    // null tant que le curseur n'a pas bougé, et la confirmation
+                    // persisterait le prix du diagnostic seul comme prix final.
+                    this.onDiscountChange();
                 }
             });
     }
@@ -2539,10 +2365,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     pricing() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation du prix Initial',
-            icon: 'pi pi-question-circle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer le prix initial ?',
+            header: 'Prix initial',
             accept: async () => {
                 // Cascade sérialisée (M2/M5 pattern): persist initial price,
                 // THEN transition status. Step 2 only runs if step 1 succeeds,
@@ -2627,11 +2452,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
     sendBackToDiagnostic(): void {
         const id = this.current_id;
         if (!id) return;
-        this.confirmationService.confirm({
-            message:
-                'Renvoyer cette DI au diagnostic ? Elle repartira au coordinateur pour réaffectation à un technicien.',
+        this.confirm.confirmSend({
+            message: 'Renvoyer cette DI au diagnostic ? Elle repartira au coordinateur pour réaffectation à un technicien.',
             header: 'Renvoyer au diagnostic',
-            icon: 'pi pi-replay',
+            acceptLabel: 'Renvoyer',
             accept: async () => {
                 try {
                     await this.mutationRunner.runChain({
@@ -2662,10 +2486,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     deleteDi(rowData) {
-        this.confirmationService.confirm({
-            message: 'Voulez vous supprimer ce DI',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmDelete({
+            message: 'Voulez-vous supprimer cette DI ?',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -2675,13 +2497,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
                         this.isLoading = loading;
                         // N'agir qu'à la fin de la mutation (une seule fois).
                         if (loading) return;
-                        this.messageservice.add({
-                            severity: 'success',
-                            summary: 'DI supprimée',
-                            detail: rowData?._idnum
+                        this.notify.success(
+                            rowData?._idnum
                                 ? `La demande de service ${rowData._idnum} a été supprimée.`
                                 : 'La demande de service a été supprimée.',
-                        });
+                            { summary: 'DI supprimée' },
+                        );
                         this.loadData();
                     });
             },
@@ -2795,10 +2616,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     createDi() {
         {
-            this.confirmationService.confirm({
-                message: 'Voulez vous confirmer les changements',
-                header: "Confirmation Demande d'intevention",
-                icon: 'pi pi-question-circle',
+            this.confirm.confirmSave({
+                message: 'Voulez-vous enregistrer les modifications ?',
+                header: "Demande d'intervention",
                 accept: () => {
                     const {
                         title,
@@ -2847,11 +2667,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
                             this.loadingCreatingDi = loading;
 
                             if (data) {
-                                this.messageservice.add({
-                                    severity: 'success',
-                                    summary: 'Success',
-                                    detail: 'La demande service ajouté',
-                                });
+                                this.notify.success(
+                                    "La demande d'intervention a été créée.",
+                                );
 
                                 this.creationDiForm.reset();
                                 this.payload.file = '';
@@ -2942,10 +2760,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     changeToPending1(data) {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous envoyer le DI au Coordinateur?',
-            header: "Relancer la Demande d'intervention",
-            icon: 'pi pi-question-circle',
+        this.confirm.confirmSend({
+            message: 'Voulez-vous envoyer cette DI au coordinateur ?',
+            header: "Relancer la demande d'intervention",
+            acceptLabel: 'Relancer',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -3003,10 +2821,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     nextNegociate2() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous envoyer ce di a l admin Manager',
-            header: 'Confirmation Pricing',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSend({
+            message: "Voulez-vous envoyer cette DI à l'admin manager ?",
+            header: 'Envoi à l’administration',
             accept: () => {
                 if (this.secondNegocition) {
                     this.changeStatusNegociate2(this.secondNegocition);
@@ -3097,56 +2914,79 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.retourDialogVisible = true;
     }
 
-    /** Confirm the retour: bump ignoreCount, then transition with the motif.
-     *  After the transition fires, the ReunionPV modal is opened so the
-     *  coordinator can immediately log the meeting that triggered the
-     *  escalation. The transition itself is NOT coupled to the PV — closing
-     *  the modal without saving leaves the DI exactly where the Retour
-     *  transition placed it (no rollback). */
+    /**
+     * Confirme le retour — UNE seule mutation, le serveur fait le reste.
+     *
+     * Avant : `countIgnore` puis, dans le callback, `changeStatusRetour{1,2,3}`
+     * choisi d'après le compteur renvoyé. Deux mutations non atomiques pilotées
+     * par le client — si la seconde échouait, la DI gardait un compteur
+     * incrémenté avec un statut inchangé, et le cycle retour écrivait alors sur
+     * les données du flux original. Le niveau est désormais revendiqué par le
+     * serveur (plafond de 3 compris) et renvoyé.
+     *
+     * Le PV de réunion (en pause, cf. `REUNION_PV_ON_RETOUR_ENABLED`) s'ouvre
+     * APRÈS la transition : le fermer sans enregistrer
+     * ne doit jamais annuler le retour.
+     */
     confirmRetour() {
         const _idticket = this.retourTarget;
         if (!_idticket) return;
         const reason = (this.retourMotifInput || '').trim();
         this.apollo
             .mutate<any>({
-                mutation: this.ticketSerice.ignore(_idticket._id),
+                mutation: this.ticketSerice.startRetour(_idticket._id, reason),
             })
-            .subscribe(({ data, loading }) => {
-                this.isLoading = loading;
-                if (data) {
-                    const updatedIgnoreCount = data.countIgnore.ignoreCount;
-                    let openedLevel: 1 | 2 | 3 | null = null;
+            .subscribe({
+                next: ({ data, loading }) => {
+                    this.isLoading = loading;
+                    const level = data?.changeStatusRetour?.level as
+                        | 1
+                        | 2
+                        | 3
+                        | undefined;
 
-                    if (updatedIgnoreCount === 1) {
-                        this.changeStatusRetour1(_idticket._id, reason);
-                        openedLevel = 1;
-                    } else if (updatedIgnoreCount === 2) {
-                        this.changeStatusRetour2(_idticket._id, reason);
-                        openedLevel = 2;
-                    } else if (updatedIgnoreCount === 3) {
-                        this.changeStatusRetour3(_idticket._id, reason);
-                        openedLevel = 3;
+                    if (level) {
+                        const ticketIndex = this.diList.findIndex(
+                            (item) => item._id === _idticket._id,
+                        );
+                        if (ticketIndex !== -1) {
+                            this.diList[ticketIndex].ignoreCount = level;
+                        }
+                        if (REUNION_PV_ON_RETOUR_ENABLED) {
+                            this.openReunionPv(_idticket, level, reason);
+                        } else {
+                            this.notify.success(
+                                `Retour ${level} enregistré pour ${_idticket?._idnum ?? 'la DI'}.`,
+                                { summary: 'Retour enregistré' },
+                            );
+                        }
+                        this.loadData?.();
                     }
 
-                    const ticketIndex = this.diList.findIndex(
-                        (item) => item._id === _idticket._id,
+                    this.closeRetourDialog();
+                },
+                error: (err) => {
+                    this.isLoading = false;
+                    // Le serveur refuse au-delà de 3 retours : on le dit, plutôt
+                    // que de fermer la modale comme si c'était passé.
+                    const code =
+                        err?.graphQLErrors?.[0]?.extensions?.code ?? null;
+                    this.notify.error(
+                        code === 'RETOUR_LIMIT_REACHED'
+                                ? 'Cette DI a déjà atteint le maximum de 3 retours.'
+                                : "Échec de l'enregistrement du retour. Réessayez.",
+                        { summary: 'Retour refusé' },
                     );
-                    if (ticketIndex !== -1) {
-                        this.diList[ticketIndex].ignoreCount =
-                            updatedIgnoreCount;
-                    }
-
-                    // Documentary PV — fired AFTER the transition. Closing
-                    // the modal without saving must NOT undo the retour.
-                    if (openedLevel) {
-                        this.openReunionPv(_idticket, openedLevel, reason);
-                    }
-                }
-                this.retourDialogVisible = false;
-                this.retourTarget = null;
-                this.retourMotifInput = '';
-                this.cdr.detectChanges();
+                    this.closeRetourDialog();
+                },
             });
+    }
+
+    private closeRetourDialog(): void {
+        this.retourDialogVisible = false;
+        this.retourTarget = null;
+        this.retourMotifInput = '';
+        this.cdr.detectChanges();
     }
 
     /** Open the PV modal pre-filled with the DI + retour context. */
@@ -3174,10 +3014,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     addCategoryDi() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous créer cette categorie ?',
-            header: 'Confirmation Creation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmCreate({
+            message: 'Voulez-vous créer cette catégorie ?',
             accept: () => {
                 typeof (this.categoryForm.value.categoryName, 'TYPE');
                 this.apollo
@@ -3207,10 +3045,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     addLocation() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous créer cette emplacement ?',
-            header: 'Confirmation Creation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmCreate({
+            message: 'Voulez-vous créer cet emplacement ?',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -3313,11 +3149,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     onImageUploadError() {
         this.uploadFileLoading = false;
-        this.messageservice.add({
-            severity: 'error',
-            summary: 'Image non chargée',
-            detail: "L'image n'a pas pu être préparée.",
-        });
+        this.notify.error(
+            "L'image n'a pas pu être préparée.",
+            { summary: 'Image non chargée' },
+        );
     }
 
     /** Image chosen via the drag & drop zone → reuse the existing image upload
@@ -3359,11 +3194,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
         reader.onerror = () => {
             if (type === 'BC') this.bcLoading = false;
             else this.devisLoading = false;
-            this.messageservice.add({
-                severity: 'error',
-                summary: 'Fichier non chargé',
-                detail: 'Le PDF n’a pas pu être préparé.',
-            });
+            this.notify.error(
+                'Le PDF n’a pas pu être préparé.',
+                { summary: 'Fichier non chargé' },
+            );
         };
         reader.readAsDataURL(file);
     }
@@ -3387,13 +3221,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     }
                     this.isLoading = loading;
                     if (!loading) {
-                        this.messageservice.add({
-                            severity: 'success',
-                            summary: 'Enregistré',
-                            detail: `${
-                                type === 'BC' ? 'Bon de commande' : 'Devis'
-                            } enregistré avec succès`,
-                        });
+                        this.notify.success(
+                            `${type} enregistré avec succès`,
+                        );
                         // L'upload du devis fait avancer le statut côté back
                         // (WAITING_DEVIS → WAITING_BC). On recharge la liste pour
                         // que le nouveau statut s'affiche SANS refresh manuel.
@@ -3407,14 +3237,15 @@ export class TicketListComponent implements OnInit, OnDestroy {
             });
     }
 
-    onUpload(event: any, type: string) {
+    /** Téléversement BC / Devis / image. Les emplacements BL et Facture ont
+     *  quitté cette méthode avec la modale « Affectation des Fichiers » : ils
+     *  sont gérés par `di-files-modal`, qui a son propre lecteur de fichier. */
+    onUpload(event: any, type: 'image' | 'BC' | 'Devis') {
         // Emplacement verrouillé une fois le document chargé : on ignore toute
         // nouvelle sélection (couvre le drag-drop, que [disabled] ne bloque pas).
         // Demande produit : « une fois le fichier uploadé, désactiver l'endroit
         // d'upload ».
         const alreadyUploaded =
-            (type === 'BL' && !!this.filesSelected?.bon_de_livraison) ||
-            (type === 'Facture' && !!this.filesSelected?.facture) ||
             (type === 'BC' && this.bcReady) ||
             (type === 'Devis' && this.devisReady);
         if (alreadyUploaded) return;
@@ -3426,18 +3257,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
         // ADD THESE: set per-file loading spinner
         if (type === 'BC') this.bcLoading = true;
         else if (type === 'Devis') this.devisLoading = true;
-        else if (type === 'BL') this.blLoading = true;
-        else if (type === 'Facture') this.factureLoading = true;
 
         for (let file of event.files) {
-            // Capture the real file name + size so the upload card shows the
-            // actual selection (BL/Facture slots only).
-            if (type === 'BL' || type === 'Facture') {
-                this.afSelectedMeta = {
-                    ...this.afSelectedMeta,
-                    [type]: { name: file.name, size: file.size },
-                };
-            }
             const reader = new FileReader();
             reader.readAsArrayBuffer(file);
             const readerForBase64 = new FileReader();
@@ -3462,14 +3283,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     this.bcBtnDisabled = true;
                     this.enregistrerDevisBtncondition = false;
                     this.devisLoading = false; // STOP spinner
-                } else if (type == 'BL') {
-                    // Each slot is independent: selecting BL must NOT lock the
-                    // Facture zone (and vice-versa). The single footer
-                    // "Enregistrer" persists every pending file together, so
-                    // both zones stay active until save.
-                    this.selectedBL = blobUrl;
-                } else if (type == 'Facture') {
-                    this.selectedFacture = blobUrl;
                 }
 
                 if (type !== 'image') {
@@ -3477,11 +3290,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
                     this.isLoading = this.uploadFileLoading;
                 }
 
-                this.messageservice.add({
-                    severity: 'info',
-                    summary: 'Fichier enregistré',
-                    detail: 'Fichier a été ajouté avec succès',
-                });
+                this.notify.success('Le fichier a été enregistré.');
             };
 
             reader.onerror = (error) => {
@@ -3492,28 +3301,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 }
                 this.bcLoading = false; // STOP spinner on error
                 this.devisLoading = false;
-                this.blLoading = false;
-                this.factureLoading = false;
             };
 
             readerForBase64.onload = () => {
                 const base64 = readerForBase64.result as string;
                 this.uploadFile(base64, type);
-                // Per-type cache so the global footer save can persist BL +
-                // Facture together without overwriting `payload.file`.
-                if (type === 'BL' || type === 'Facture') {
-                    this.affectationBase64 = {
-                        ...this.affectationBase64,
-                        [type]: base64,
-                    };
-                }
-                if (type === 'BL') {
-                    this.blLoading = false;
-                    this.enregistrerBlBtncondition = false;
-                } else if (type === 'Facture') {
-                    this.factureLoading = false;
-                    this.enregistrerFactureBtncondition = false;
-                }
                 if (type === 'image') {
                     this.uploadFileLoading = false;
                 }
@@ -3524,8 +3316,6 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 if (type === 'image') {
                     this.onImageUploadError();
                 }
-                this.blLoading = false;
-                this.factureLoading = false;
             };
         }
     }
@@ -3571,10 +3361,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     deletLocation(rowData) {
         console.log(rowData, 'eee');
-        this.confirmationService.confirm({
-            message: 'Voulez-vous supprimer cette emplacement ?',
-            header: 'Supprimer',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmDelete({
+            message: 'Voulez-vous supprimer cet emplacement ?',
             accept: () => {
                 console.log('DELETING now');
                 console.log(rowData, 'data we gonna USE');
@@ -3600,10 +3388,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     deleteCategory(selected) {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous supprimer cette categorie ?',
-            header: 'Supprimer ?',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmDelete({
+            message: 'Voulez-vous supprimer cette catégorie ?',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -3632,105 +3418,15 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.imageDropFile = null;
     }
 
+    /** Bouton trombone d'une ligne : la DI est déjà en main, on la passe au
+     *  service qui pilote la modale globale (aucune requête supplémentaire). */
     openUploadFileFinished(dataselected: any) {
-        this.filesSelected = dataselected;
-        console.log('🥩[dataselected]:', dataselected);
-        this.factureBtnDisabled = false;
-        this.blBtnDisabled = false;
-        this.blLoading = false;
-        this.factureLoading = false;
-
-        this.enregistrerBlBtncondition = true;
-        this.enregistrerFactureBtncondition = true;
-
-        this.filsFinished = true;
-        this._idPDFFinished = dataselected._id;
-
-        this.apollo
-            .query<any>({
-                query: this.ticketSerice.getLogsDi(dataselected._id),
-            })
-            .pipe(
-                tap(({ data }) => {
-                    if (data) {
-                        const logs = data.getAllLogsByDi;
-                        this.finishedData = { original: dataselected, logs };
-                        console.log(
-                            '🥠[ this.finishedData]:',
-                            this.finishedData,
-                        );
-                    }
-                }),
-            )
-            .subscribe({
-                error: (err) => console.error('Error fetching logs:', err),
-            });
+        this.diFiles.open(dataselected);
     }
 
-    onUploadFacture(event, type) {
-        for (let file of event.files) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                const base64 = reader.result as string;
 
-                this.saveFileFinished(base64, type);
-            };
-        }
-        this.messageservice.add({
-            severity: 'info',
-            summary: 'Fichier enregistré',
-            detail: 'Fichier a été ajouter avec succès',
-        });
-    }
 
-    onUploadBl(event, type) {
-        for (let file of event.files) {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => {
-                const base64 = reader.result as string;
 
-                this.saveFileFinished(base64, type);
-            };
-        }
-        this.messageservice.add({
-            severity: 'info',
-            summary: 'Bon de livraison Ajouter',
-            detail: 'Fichier a été ajouter avec succès',
-        });
-    }
-
-    saveFileFinished(base64: string, type: string) {
-        if (type === 'facture') {
-            const payload = {
-                file: base64,
-            };
-
-            this.facturePDF = payload;
-        }
-        if (type === 'bl') {
-            const payload = {
-                file: base64,
-            };
-
-            this.blPDF = payload;
-        }
-    }
-
-    sendFilePdf() {
-        this.apollo
-            .mutate<any>({
-                mutation: this.ticketSerice.addPdfFile(
-                    this._idPDFFinished,
-                    this.facturePDF.file,
-                    this.blPDF.file,
-                ),
-            })
-            .subscribe(({ loading }) => {
-                this.isLoading = loading;
-            });
-    }
 
     /**
      * Le dossier vient d'être modifié (édition ADMIN_TECH dans le modal).
@@ -3793,10 +3489,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
     /** Affichage BRUT de la valeur DB en MAJUSCULES (décision produit : plus de
      *  libellés « jolis » ; on montre le statut tel qu'il est stocké). */
     getStatusLabel(status: string): string {
-        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
-        // PRICING) affiché « Pricing » (demande produit).
+        // Affichage BRUT en MAJUSCULES. PRICING_DIAG et son ancienne valeur
+        // PRICING sont ramenés au MÊME libellé « PRICING » : les deux valeurs
+        // coexistent en base (renommage forward-only, sans backfill) et la
+        // colonne « Statut » afficherait sinon deux libellés pour un même état.
         const s = (status ?? '').toString().trim();
-        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'PRICING';
         return s.toUpperCase() || '—';
     }
 }

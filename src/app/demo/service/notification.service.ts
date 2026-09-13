@@ -1,5 +1,4 @@
 import { Injectable, NgZone } from '@angular/core';
-import { MessageService } from 'primeng/api';
 import {
     BehaviorSubject,
     catchError,
@@ -10,6 +9,7 @@ import {
     tap,
 } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { NotifyService } from '../../shared/ui/notify.service';
 
 @Injectable({
     providedIn: 'root',
@@ -46,7 +46,7 @@ export class NotificationService {
     private slowConnection = new BehaviorSubject<boolean>(false);
     public slowConnection$ = this.slowConnection.asObservable();
     constructor(
-        private readonly messageservice: MessageService,
+        private readonly notify: NotifyService,
         private http: HttpClient,
         private readonly zone: NgZone,
     ) {
@@ -95,12 +95,15 @@ export class NotificationService {
         switch (data.event) {
             case 'confirmAllComposant':
                 if (localStorage.getItem('username')) {
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: 'confirmAllComposant',
-                        sticky: true,
-                    });
+                    // C'est la notification d'une action faite par QUELQU'UN
+                    // D'AUTRE (la coordinatrice), pas le résultat d'une action
+                    // de l'utilisateur courant : `info` (bleu), pas `success`.
+                    // L'ancien toast affichait le nom d'événement brut
+                    // « confirmAllComposant » à l'utilisateur, et restait
+                    // collé à l'écran (`sticky`) jusqu'à fermeture manuelle.
+                    this.notify.info(
+                        'Les composants de la DI ont été confirmés par la coordination.',
+                    );
 
                     this.reminderSubject.next(data);
                     return 'confirmAllComposant';

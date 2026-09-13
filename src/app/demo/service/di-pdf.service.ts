@@ -6,14 +6,6 @@ export interface DiPdfOptions {
     cycles?: Array<{ n: number; label: string; timeline: any[] }>;
     finance?: any[];
     financeCycleLabel?: string;
-    /** Journal fusionné (événements ERP + transitions), déjà trié et filtré. */
-    journal?: Array<{
-        date: string | null;
-        label: string;
-        code: string;
-        actor: string | null;
-        cycle: number | null;
-    }>;
     /** Journal de travail du cycle affiché (segments, pauses, cumuls). */
     times?: {
         diagLabel?: string;
@@ -26,6 +18,22 @@ export interface DiPdfOptions {
     };
     /** Éléments rattachés (PV, alertes, rappels de stagnation). */
     links?: { pvs?: any[]; alerts?: any[]; stagnations?: any[] };
+    /** Composants DU CYCLE AFFICHÉ, déjà joints au catalogue par le modal.
+     *  Absent → repli sur `di.array_composants` (nom + qté), comme avant. */
+    composants?: {
+        cycleLabel?: string;
+        total?: number;
+        partial?: boolean;
+        priced?: number;
+        rows?: Array<{
+            name: string;
+            quantity: number;
+            status: string;
+            prixVente: number | null;
+            lineTotal: number | null;
+            comingDate: string;
+        }>;
+    };
 }
 
 /**
@@ -300,29 +308,88 @@ export class DiPdfService {
         y = y + 4 + desc.length * 11 + 12;
 
         // ── Composants ─────────────────────────────────────────────────
-        const comps: any[] = Array.isArray(di?.array_composants)
-            ? di.array_composants
-            : [];
-        y = this.sectionTitle(
-            doc,
-            `Composants (${comps.length})`,
-            MARGIN_X,
-            y,
-            C,
-        );
-        autoTable(doc, {
-            startY: y,
-            margin: { left: MARGIN_X, right: MARGIN_X },
-            head: [['Composant', 'Qté']],
-            body: comps.length
-                ? comps.map((c) => [this.raw(c?.nameComposant) || '—', String(c?.quantity ?? 0)])
-                : [['Aucun composant', '']],
-            styles: { fontSize: 9, cellPadding: 5, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
-            headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
-            alternateRowStyles: { fillColor: C.zebra },
-            columnStyles: { 1: { halign: 'right', cellWidth: 70 } },
-        });
-        y = (doc as any).lastAutoTable.finalY + 14;
+        // Lignes ENRICHIES fournies par le modal (déjà jointes au catalogue et
+        // scopées au cycle affiché) ; à défaut, repli sur la racine `di`.
+        const enriched = opts.composants?.rows;
+        if (enriched) {
+            const cyLabel = opts.composants?.cycleLabel
+                ? ` — ${opts.composants.cycleLabel}`
+                : '';
+            y = this.sectionTitle(
+                doc,
+                `Composants (${enriched.length})${cyLabel}`,
+                MARGIN_X,
+                y,
+                C,
+            );
+            autoTable(doc, {
+                startY: y,
+                margin: { left: MARGIN_X, right: MARGIN_X },
+                head: [['Composant', 'Qté', 'Statut', 'PU vente', 'Total', 'Arrivage']],
+                body: enriched.length
+                    ? enriched.map((r) => [
+                          this.raw(r.name) || '—',
+                          String(r.quantity ?? 0),
+                          this.raw(r.status) || '—',
+                          r.prixVente == null ? '—' : this.cur(r.prixVente),
+                          r.lineTotal == null ? '—' : this.cur(r.lineTotal),
+                          this.raw(r.comingDate) || '—',
+                      ])
+                    : [['Aucun composant', '', '', '', '', '']],
+                foot: enriched.length
+                    ? [['Total', '', '', '', this.cur(opts.composants?.total ?? 0), '']]
+                    : undefined,
+                styles: { fontSize: 8.5, cellPadding: 4, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                footStyles: { fillColor: C.zebra, textColor: C.text, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: C.zebra },
+                columnStyles: {
+                    1: { halign: 'right', cellWidth: 34 },
+                    2: { cellWidth: 70 },
+                    3: { halign: 'right', cellWidth: 72 },
+                    4: { halign: 'right', cellWidth: 72 },
+                    5: { halign: 'right', cellWidth: 62 },
+                },
+            });
+            y = (doc as any).lastAutoTable.finalY + 14;
+            // Total partiel : le dire, plutôt que laisser croire à un total complet.
+            if (opts.composants?.partial) {
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(8);
+                doc.setTextColor(...C.muted);
+                doc.text(
+                    `Total calculé sur ${opts.composants?.priced ?? 0} ligne(s) sur ${enriched.length} — les autres n'ont pas de prix de vente au catalogue.`,
+                    MARGIN_X,
+                    y,
+                );
+                doc.setFont('helvetica', 'normal');
+                y += 14;
+            }
+        } else {
+            const comps: any[] = Array.isArray(di?.array_composants)
+                ? di.array_composants
+                : [];
+            y = this.sectionTitle(
+                doc,
+                `Composants (${comps.length})`,
+                MARGIN_X,
+                y,
+                C,
+            );
+            autoTable(doc, {
+                startY: y,
+                margin: { left: MARGIN_X, right: MARGIN_X },
+                head: [['Composant', 'Qté']],
+                body: comps.length
+                    ? comps.map((c) => [this.raw(c?.nameComposant) || '—', String(c?.quantity ?? 0)])
+                    : [['Aucun composant', '']],
+                styles: { fontSize: 9, cellPadding: 5, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
+                headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: C.zebra },
+                columnStyles: { 1: { halign: 'right', cellWidth: 70 } },
+            });
+            y = (doc as any).lastAutoTable.finalY + 14;
+        }
 
         // ── Remarques ──────────────────────────────────────────────────
         kv('Remarques', [
@@ -481,36 +548,6 @@ export class DiPdfService {
             y = (doc as any).lastAutoTable.finalY + 14;
         }
 
-        // ── Journal du dossier — en DERNIER : c'est la section la plus
-        //    volumineuse, elle ne doit pas repousser le reste du dossier.
-        const journal = Array.isArray(opts.journal) ? opts.journal : [];
-        if (journal.length) {
-            y = this.sectionTitle(
-                doc,
-                `Journal du dossier (${journal.length})`,
-                MARGIN_X,
-                y,
-                C,
-            );
-            autoTable(doc, {
-                startY: y,
-                margin: { left: MARGIN_X, right: MARGIN_X },
-                head: [['Date', 'Événement', 'Code', 'Acteur', 'Cycle']],
-                body: journal.map((r) => [
-                    r?.date || '—',
-                    this.raw(r?.label) || '—',
-                    this.raw(r?.code) || '—',
-                    this.raw(r?.actor) || '—',
-                    r?.cycle ? `Retour ${r.cycle}` : 'Flux original',
-                ]),
-                styles: { fontSize: 7.5, cellPadding: 3.5, textColor: C.text, lineColor: C.border, lineWidth: 0.5 },
-                headStyles: { fillColor: C.primaryLight, textColor: [255, 255, 255], fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: C.zebra },
-                columnStyles: { 0: { cellWidth: 78 }, 2: { cellWidth: 92 }, 4: { cellWidth: 62 } },
-            });
-            y = (doc as any).lastAutoTable.finalY + 14;
-        }
-
         // ── Footer on every page ───────────────────────────────────────
         this.addFooter(doc, MARGIN_X);
 
@@ -614,10 +651,12 @@ export class DiPdfService {
 
     /** Raw workflow status → French label (mirrors the app's UI labels). */
     private statusLabel(status: any): string {
-        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
-        // PRICING) affiché « Pricing » (demande produit).
+        // Affichage BRUT en MAJUSCULES. PRICING_DIAG et son ancienne valeur
+        // PRICING sont ramenés au MÊME libellé « PRICING » : les deux valeurs
+        // coexistent en base (renommage forward-only, sans backfill) et la
+        // colonne « Statut » afficherait sinon deux libellés pour un même état.
         const s = (status ?? '').toString().trim();
-        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'PRICING';
         return s.toUpperCase() || '—';
     }
 }

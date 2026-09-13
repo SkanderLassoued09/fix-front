@@ -100,7 +100,7 @@ import { HttpClient } from '@angular/common/http';
         display: block;
         font-size: 0.72rem;
         font-weight: 650;
-        color: #64748b;
+        color: var(--fx-text-muted);
         margin-bottom: 0.35rem;
       }
       .di-photo__frame {
@@ -109,9 +109,9 @@ import { HttpClient } from '@angular/common/http';
         width: 100%;
         max-width: 460px;
         padding: 0;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 10px;
-        background: #f1f5f9;
+        background: var(--fx-bg-surface-2);
         overflow: hidden;
         cursor: zoom-in;
       }
@@ -120,7 +120,7 @@ import { HttpClient } from '@angular/common/http';
         width: 100%;
         max-height: 340px;
         object-fit: contain;
-        background: #f1f5f9;
+        background: var(--fx-bg-surface-2);
       }
       .di-photo__frame--loading {
         display: flex;
@@ -128,7 +128,7 @@ import { HttpClient } from '@angular/common/http';
         justify-content: center;
         gap: 0.5rem;
         min-height: 120px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         font-size: 0.82rem;
         cursor: default;
       }
@@ -140,7 +140,7 @@ import { HttpClient } from '@angular/common/http';
         height: 30px;
         border-radius: 8px;
         background: rgba(37, 99, 235, 0.92);
-        color: #fff;
+        color: var(--fx-text-on-accent);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -155,22 +155,22 @@ import { HttpClient } from '@angular/common/http';
         align-items: center;
         gap: 0.6rem;
         padding: 0.85rem 1rem;
-        border: 1px dashed #cbd5e1;
+        border: 1px dashed var(--fx-border-strong);
         border-radius: 10px;
-        background: #f8fafc;
-        color: #64748b;
+        background: var(--fx-bg-surface);
+        color: var(--fx-text-muted);
         font-size: 0.82rem;
       }
       .di-photo__unavailable > i {
         font-size: 1.1rem;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
       }
       .di-photo__open {
         margin-left: auto;
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        color: #2563eb;
+        color: var(--fx-blue-text);
         font-weight: 600;
         text-decoration: none;
         font-size: 0.82rem;
@@ -208,7 +208,7 @@ import { HttpClient } from '@angular/common/http';
         border: none;
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.12);
-        color: #fff;
+        color: var(--fx-text-on-accent);
         font-size: 1.1rem;
         cursor: pointer;
         display: flex;

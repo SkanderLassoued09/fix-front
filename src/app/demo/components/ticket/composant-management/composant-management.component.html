@@ -1,194 +1,629 @@
-<div class="cm-shell">
-    <header class="cm-header">
-        <div class="cm-header__text">
-            <h2 class="cm-title">Gestion des composants</h2>
-            <p class="cm-subtitle">
-                Catalogue des composants et pièces détachées.
-            </p>
+<div class="sav-page">
+    <div class="sav-page-header">
+        <div class="sav-page-title">
+            <i class="pi pi-box"></i>
+            <h2>Gestion des composants</h2>
         </div>
-        <div class="cm-header__actions">
-            <span class="p-input-icon-left cm-search">
-                <i class="pi pi-search"></i>
-                <input
-                    pInputText
-                    type="text"
-                    placeholder="Rechercher un composant…"
-                    (input)="dt.filterGlobal($any($event.target).value, 'contains')"
-                />
-            </span>
+        <!-- Boutons de création déplacés depuis l'écran magasin : le catalogue
+             est le seul endroit où l'on crée composants et catégories.
+             Action principale pleine, action secondaire en outline. -->
+        <div class="sav-page-actions">
+            <button
+                pButton
+                type="button"
+                icon="pi pi-plus"
+                label="Créer un composant"
+                class="sav-btn-new"
+                (click)="openCreateComposant()"
+            ></button>
+            <button
+                pButton
+                type="button"
+                icon="pi pi-book"
+                label="Nouvelle catégorie"
+                class="sav-btn-new sav-btn-new--outline"
+                (click)="showDialogCategoryComposant()"
+            ></button>
         </div>
-    </header>
+    </div>
 
-    <div class="cm-table">
+    <div class="sav-table-wrapper">
         <p-table
-            #dt
-            [value]="listComposants"
-            styleClass="p-datatable-sm"
-            [paginator]="true"
-            [rows]="15"
-            [rowsPerPageOptions]="[10, 15, 25, 50]"
-            responsiveLayout="scroll"
-            [tableStyle]="{ 'min-width': '60rem' }"
-            [globalFilterFields]="[
-                '_id',
-                'package',
-                'prix_achat',
-                'prix_vente',
-                'status_composant'
-            ]"
+            [columns]="cols"
+            [value]="pagedComposants"
+            [tableStyle]="{
+                width: '100%',
+                'min-width': '990px',
+                'table-layout': 'fixed'
+            }"
+            styleClass="p-datatable-sm sav-main-table"
         >
-            <ng-template pTemplate="header">
-                <tr>
-                    <th>Réf.</th>
-                    <th>Package</th>
-                    <th>Prix achat</th>
-                    <th>Prix vente</th>
-                    <th>Date d'arrivée</th>
-                    <th>Stock</th>
-                    <th>Statut</th>
-                    <th style="width: 120px; text-align: right">Actions</th>
+            <ng-template pTemplate="header" let-columns>
+                <tr class="sav-thead-row">
+                    <th
+                        *ngFor="let col of columns"
+                        class="sav-th"
+                        [style.width]="col.width || null"
+                    >
+                        {{ col.header }}
+                    </th>
+                    <th class="sav-th sav-th-actions">Actions</th>
+                </tr>
+                <tr class="sav-filter-row">
+                    <th
+                        *ngFor="let col of columns"
+                        class="sav-th-filter"
+                        [style.width]="col.width || null"
+                    >
+                        <input
+                            pInputText
+                            type="text"
+                            class="sav-filter-input"
+                            placeholder="Chercher..."
+                            (input)="
+                                onColumnSearch(
+                                    col.searchKey,
+                                    $event.target.value
+                                )
+                            "
+                        />
+                    </th>
+                    <th class="sav-th-filter"></th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-composant>
-                <tr>
-                    <td class="cm-ref">{{ formatValue(composant._id) }}</td>
-                    <td>{{ formatValue(composant.package) }}</td>
-                    <td>{{ formatValue(composant.prix_achat) }}</td>
-                    <td>{{ formatValue(composant.prix_vente) }}</td>
-                    <td>{{ getFormattedDate(composant.coming_date) }}</td>
-                    <td>{{ formatValue(composant.quantity_stocked) }}</td>
-                    <td>
-                        <span class="cm-status">{{
-                            formatValue(composant.status_composant)
-                        }}</span>
+
+            <ng-template pTemplate="body" let-rowData let-columns="columns">
+                <tr class="sav-row">
+                    <td *ngFor="let col of columns" class="sav-td">
+                        <ng-container [ngSwitch]="col.field">
+                            <!-- Statut : pastille, comme le rôle sur la liste
+                                 des profils et le statut sur les listes DI.
+                                 Statut absent ⇒ simple « — », pas une pastille
+                                 vide (beaucoup d'anciens composants n'en ont pas). -->
+                            <ng-container *ngSwitchCase="'status_composant'">
+                                <p-tag
+                                    *ngIf="hasStatus(rowData.status_composant); else statutVide"
+                                    [value]="formatValue(rowData.status_composant)"
+                                    styleClass="status-pill {{
+                                        statusClass(rowData.status_composant)
+                                    }}"
+                                ></p-tag>
+                                <ng-template #statutVide>
+                                    {{ formatValue(rowData.status_composant) }}
+                                </ng-template>
+                            </ng-container>
+                            <ng-container *ngSwitchCase="'coming_date'">
+                                {{ getFormattedDate(rowData.coming_date) }}
+                            </ng-container>
+                            <!-- Catégorie : on affiche le LIBELLÉ, la base
+                                 stocke l'`_id` (`C_ComposantN`). -->
+                            <ng-container
+                                *ngSwitchCase="'category_composant_id'"
+                            >
+                                {{ categoryLabel(rowData.category_composant_id) }}
+                            </ng-container>
+                            <ng-container *ngSwitchDefault>
+                                {{ formatValue(rowData[col.field]) }}
+                            </ng-container>
+                        </ng-container>
                     </td>
-                    <td class="cm-actions">
+                    <td class="sav-td sav-actions-cell">
                         <button
                             pButton
-                            pRipple
-                            type="button"
+                            pTooltip="Modifier"
+                            tooltipPosition="top"
                             icon="pi pi-pencil"
-                            title="Modifier"
-                            class="cm-row-btn cm-row-btn--edit"
-                            (click)="updateComposant(composant)"
+                            class="sav-icon-btn sav-icon-btn--success"
+                            [attr.aria-label]="
+                                'Modifier le composant ' + (rowData?._id || '')
+                            "
+                            [disabled]="loading"
+                            (click)="updateComposant(rowData)"
                         ></button>
                         <button
                             pButton
-                            pRipple
-                            type="button"
+                            pTooltip="Supprimer"
+                            tooltipPosition="top"
                             icon="pi pi-trash"
-                            title="Supprimer"
-                            class="cm-row-btn cm-row-btn--del"
-                            (click)="deleteComposant(composant._id)"
+                            class="sav-icon-btn sav-icon-btn--danger"
+                            [attr.aria-label]="
+                                'Supprimer le composant ' + (rowData?._id || '')
+                            "
+                            [disabled]="loading"
+                            (click)="deleteComposant(rowData)"
                         ></button>
                     </td>
                 </tr>
             </ng-template>
+
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="8" class="cm-empty">Aucun composant.</td>
+                    <td
+                        [attr.colspan]="(cols?.length || 0) + 1"
+                        class="sav-empty"
+                    >
+                        <!-- Le contenu flex vit dans un DIV, pas dans le <td> :
+                             sous `table-layout: fixed`, un <td> passé en
+                             `display: flex` perd son colspan et se replie sur la
+                             largeur de la 1re colonne (message tronqué). -->
+                        <div class="sav-empty__inner">
+                            <i class="pi pi-inbox"></i>
+                            <span>Aucun composant trouvé</span>
+                        </div>
+                    </td>
                 </tr>
             </ng-template>
         </p-table>
-    </div>
 
-    <p-dialog
-        [(visible)]="openModalEdit"
-        header="Modifier le composant"
-        [modal]="true"
-        [draggable]="false"
-        [resizable]="false"
-        styleClass="cu-dialog"
-        [style]="{ width: '560px', maxWidth: 'calc(100vw - 2rem)' }"
-    >
-        <form [formGroup]="updateComposantForm" class="cu-form">
-            <div class="cu-grid">
-                <div class="cu-field cu-field--full">
-                    <label class="cu-label">Package</label>
+        <div class="sav-paginator-wrapper">
+            <span class="sav-count">
+                {{ totalComposantRecord ? first + 1 : 0 }}-{{
+                    first + (pagedComposants?.length || 0)
+                }}
+                sur {{ totalComposantRecord || 0 }} résultats
+            </span>
+            <p-paginator
+                (onPageChange)="onPageChange($event)"
+                [first]="first"
+                [rows]="rows"
+                [totalRecords]="totalComposantRecord"
+                [rowsPerPageOptions]="[5, 10, 30]"
+                styleClass="sav-paginator"
+            ></p-paginator>
+        </div>
+    </div>
+</div>
+
+<p-dialog
+    [(visible)]="openModalEdit"
+    (onHide)="onComposantDialogHide()"
+    [header]="isCreateMode ? 'Nouveau composant' : 'Modifier le composant'"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [closable]="!quickCategoryLoading"
+    [closeOnEscape]="!quickCategoryLoading"
+    styleClass="sav-dialog"
+    [style]="{ width: '620px', maxWidth: 'calc(100vw - 2rem)' }"
+>
+    <form [formGroup]="updateComposantForm" class="sav-create-form">
+        <fieldset class="sav-fieldset">
+            <legend>Informations composant</legend>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="name">Nom</label>
                     <input
                         pInputText
+                        id="name"
+                        formControlName="name"
+                        class="sav-input"
+                    />
+                    <!-- `name` est la clé de liaison des DI : le back répercute
+                         le renommage sur `array_composants[].nameComposant`. -->
+                    <small
+                        class="sav-field-error"
+                        *ngIf="updateComposantForm.get('name')?.invalid"
+                    >
+                        Le nom est obligatoire.
+                    </small>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="category_composant_id">
+                        Catégorie
+                    </label>
+                    <!-- Dropdown + « + » accolé : même gabarit que le champ
+                         « Lien » plus bas. `SearchableDropdownDirective`
+                         (sélecteur `p-dropdown`) s'applique toujours — elle
+                         injecte le `Dropdown` de son propre hôte et ne dépend
+                         pas du DOM parent. -->
+                    <div class="sav-input-action">
+                        <p-dropdown
+                            inputId="category_composant_id"
+                            formControlName="category_composant_id"
+                            [options]="composantCategory"
+                            optionLabel="name"
+                            optionValue="value"
+                            [showClear]="true"
+                            placeholder="Choisir une catégorie"
+                            emptyMessage="Aucune catégorie — créez-en une avec « + »."
+                            appendTo="body"
+                            styleClass="sav-dropdown"
+                            [style]="{ width: '100%' }"
+                        ></p-dropdown>
+                        <!-- type="button" OBLIGATOIRE : on est dans un <form>,
+                             un bouton nu vaut `type="submit"`. -->
+                        <button
+                            pButton
+                            type="button"
+                            icon="pi pi-plus"
+                            class="sav-input-action__btn sav-input-action__btn--add"
+                            [class.is-open]="quickCategoryOpen"
+                            pTooltip="Créer une catégorie"
+                            tooltipPosition="top"
+                            aria-label="Créer une catégorie"
+                            aria-controls="quickCategoryPanel"
+                            [attr.aria-expanded]="quickCategoryOpen"
+                            [disabled]="loading || quickCategoryLoading"
+                            (click)="toggleQuickCategory()"
+                        ></button>
+                    </div>
+
+                    <!-- Création rapide : ligne dépliée DANS ce modal. Un
+                         second p-dialog empilerait deux masques PrimeNG et
+                         volerait le focus au champ. -->
+                    <div
+                        id="quickCategoryPanel"
+                        class="sav-quick-cat"
+                        *ngIf="quickCategoryOpen"
+                    >
+                        <label class="sav-label" for="quickCategoryName">
+                            Nouvelle catégorie
+                        </label>
+                        <!-- `[formControl]` et non `formControlName` : le champ
+                             est DANS le <form> du composant mais ne doit pas
+                             entrer dans `updateComposantForm`, dont la forme
+                             part telle quelle au back (buildSavePayload). -->
+                        <input
+                            pInputText
+                            type="text"
+                            id="quickCategoryName"
+                            class="sav-input sav-quick-cat__input"
+                            placeholder="Ex : Résistances"
+                            autocomplete="off"
+                            [formControl]="quickCategoryName"
+                            [readonly]="quickCategoryLoading"
+                            (keydown.enter)="onQuickCategoryEnter($event)"
+                        />
+                        <small
+                            class="sav-field-error"
+                            *ngIf="
+                                quickCategoryName.touched &&
+                                quickCategoryName.invalid
+                            "
+                        >
+                            Le nom de la catégorie est obligatoire.
+                        </small>
+                        <div class="sav-quick-cat__actions">
+                            <button
+                                pButton
+                                type="button"
+                                label="Annuler"
+                                class="sav-quick-cat__btn sav-quick-cat__btn--ghost"
+                                [disabled]="quickCategoryLoading"
+                                (click)="cancelQuickCategory()"
+                            ></button>
+                            <button
+                                pButton
+                                type="button"
+                                label="Créer"
+                                icon="pi pi-check"
+                                class="sav-quick-cat__btn sav-quick-cat__btn--create"
+                                [loading]="quickCategoryLoading"
+                                [disabled]="
+                                    quickCategoryName.invalid ||
+                                    quickCategoryLoading
+                                "
+                                (click)="createQuickCategory()"
+                            ></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="package">Package</label>
+                    <input
+                        pInputText
+                        id="package"
                         formControlName="package"
-                        class="cu-input"
+                        class="sav-input"
                     />
                 </div>
-
-                <div class="cu-field">
-                    <label class="cu-label">Prix d'achat</label>
-                    <p-inputNumber
-                        formControlName="prix_achat"
-                        mode="currency"
-                        currency="TND"
-                        styleClass="cu-number"
-                    ></p-inputNumber>
-                </div>
-
-                <div class="cu-field">
-                    <label class="cu-label">Prix de vente</label>
-                    <p-inputNumber
-                        formControlName="prix_vente"
-                        mode="currency"
-                        currency="TND"
-                        styleClass="cu-number"
-                    ></p-inputNumber>
-                </div>
-
-                <div class="cu-field">
-                    <label class="cu-label">Quantité en stock</label>
-                    <p-inputNumber
-                        formControlName="quantity_stocked"
-                        mode="decimal"
-                        styleClass="cu-number"
-                    ></p-inputNumber>
-                </div>
-
-                <div class="cu-field">
-                    <label class="cu-label">Date d'arrivée</label>
-                    <p-calendar
-                        formControlName="coming_date"
-                        dateFormat="yy-mm-dd"
-                        [showIcon]="true"
-                        styleClass="cu-calendar"
-                        [style]="{ width: '100%' }"
-                    ></p-calendar>
-                </div>
-
-                <div class="cu-field cu-field--full">
-                    <label class="cu-label">Statut</label>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="status_composant">Statut</label>
                     <p-dropdown
+                        inputId="status_composant"
                         formControlName="status_composant"
                         [options]="statusComposant"
                         optionLabel="name"
                         optionValue="value"
                         placeholder="Choisir un statut"
-                        styleClass="cu-dropdown"
+                        styleClass="sav-dropdown"
                         [style]="{ width: '100%' }"
                     ></p-dropdown>
                 </div>
             </div>
-        </form>
 
-        <ng-template pTemplate="footer">
-            <div class="cu-footer">
-                <button
-                    pButton
-                    type="button"
-                    label="Annuler"
-                    icon="pi pi-times"
-                    class="cu-btn cu-btn--ghost"
-                    (click)="openModalEdit = false"
-                ></button>
-                <button
-                    pButton
-                    type="button"
-                    label="Enregistrer"
-                    icon="pi pi-check"
-                    class="cu-btn cu-btn--primary"
-                    [disabled]="updateComposantForm.invalid"
-                    (click)="saveComposant()"
-                ></button>
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="prix_achat">Prix d'achat</label>
+                    <p-inputNumber
+                        inputId="prix_achat"
+                        formControlName="prix_achat"
+                        mode="currency"
+                        currency="TND"
+                        styleClass="sav-number"
+                    ></p-inputNumber>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="prix_vente">Prix de vente</label>
+                    <p-inputNumber
+                        inputId="prix_vente"
+                        formControlName="prix_vente"
+                        mode="currency"
+                        currency="TND"
+                        styleClass="sav-number"
+                    ></p-inputNumber>
+                </div>
             </div>
-        </ng-template>
-    </p-dialog>
-</div>
-<p-confirmDialog />
-<p-toast></p-toast>
+
+            <div class="sav-two-col">
+                <div class="sav-form-row">
+                    <label class="sav-label" for="quantity_stocked">
+                        Quantité en stock
+                    </label>
+                    <p-inputNumber
+                        inputId="quantity_stocked"
+                        formControlName="quantity_stocked"
+                        mode="decimal"
+                        styleClass="sav-number"
+                    ></p-inputNumber>
+                </div>
+                <div class="sav-form-row">
+                    <label class="sav-label" for="coming_date">
+                        Date d'arrivée
+                    </label>
+                    <p-calendar
+                        inputId="coming_date"
+                        formControlName="coming_date"
+                        dateFormat="yy-mm-dd"
+                        [showIcon]="true"
+                        styleClass="sav-calendar"
+                        [style]="{ width: '100%' }"
+                    ></p-calendar>
+                </div>
+            </div>
+
+            <div class="sav-form-row">
+                <label class="sav-label" for="link">Lien</label>
+                <div class="sav-input-action">
+                    <input
+                        pInputText
+                        id="link"
+                        formControlName="link"
+                        class="sav-input"
+                        placeholder="https://..."
+                    />
+                    <a
+                        class="sav-input-action__btn"
+                        [href]="updateComposantForm.get('link')?.value || null"
+                        target="_blank"
+                        rel="noopener"
+                        [class.disabled]="!updateComposantForm.get('link')?.value"
+                        aria-label="Ouvrir le lien"
+                    >
+                        <i class="pi pi-external-link"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="sav-form-row">
+                <label class="sav-label">Fiche technique (PDF)</label>
+                <a
+                    *ngIf="storedPdf"
+                    class="sav-fiche-link"
+                    [href]="docHref(storedPdf)"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    <i class="pi pi-file-pdf"></i>
+                    Consulter le PDF actuel
+                </a>
+                <!-- La dropzone n'émet qu'un File validé ; l'encodage base64 et
+                     l'envoi sont faits par le composant hôte. -->
+                <app-pdf-dropzone
+                    [value]="pdfFile"
+                    [maxSizeMo]="10"
+                    (fileSelected)="onPdfFileSelected($event)"
+                    (fileRemoved)="onPdfFileRemoved()"
+                ></app-pdf-dropzone>
+                <small class="sav-field-hint">
+                    Déposer un fichier remplace la fiche actuelle. Laisser vide
+                    la conserve.
+                </small>
+            </div>
+        </fieldset>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="sav-dialog-footer">
+            <p-button
+                label="Annuler"
+                icon="pi pi-times"
+                severity="secondary"
+                [text]="true"
+                [disabled]="loading || quickCategoryLoading"
+                (onClick)="openModalEdit = false"
+            ></p-button>
+            <p-button
+                [label]="isCreateMode ? 'Ajouter' : 'Enregistrer'"
+                [icon]="isCreateMode ? 'pi pi-plus' : 'pi pi-check'"
+                severity="success"
+                [loading]="loading"
+                [disabled]="
+                    updateComposantForm.invalid ||
+                    loading ||
+                    quickCategoryLoading
+                "
+                (onClick)="saveComposant()"
+            ></p-button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- ═══════════ CRÉATION CATÉGORIE COMPOSANT ═══════════
+     Déplacé depuis l'écran magasin (magasin-di-list) : le catalogue
+     est désormais le seul endroit où l'on gère les catégories.
+     Les libellés alimentent le dropdown « Catégorie » du modal
+     composant ci-dessus, via getAllCategories(). -->
+<p-dialog
+    [(visible)]="openCreationCategoryComposantModal"
+    header="Création Catégorie Composants"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="sav-dialog cat-dialog"
+    [style]="{ width: '600px', maxWidth: 'calc(100vw - 2rem)' }"
+    [breakpoints]="{ '640px': '96vw' }"
+>
+    <div class="cc-form cat-form">
+        <!-- ── Nouvelle catégorie ──────────────────────────────── -->
+        <section class="cc-section">
+            <div class="cc-section__head">
+                <span class="cc-section__dot"></span>
+                <h4 class="cc-section__title">Nouvelle catégorie</h4>
+            </div>
+
+            <form [formGroup]="addCategoryCompsant" class="cat-add-row">
+                <div class="cc-field">
+                    <label class="cc-label" for="catName">
+                        Nom de la catégorie
+                    </label>
+                    <input
+                        id="catName"
+                        pInputText
+                        type="text"
+                        formControlName="categoryName"
+                        class="cat-input"
+                        placeholder="Ex: Résistances"
+                    />
+                </div>
+                <button
+                    pButton
+                    type="button"
+                    label="Créer"
+                    icon="pi pi-plus"
+                    class="cat-btn cat-btn--create"
+                    [disabled]="
+                        !addCategoryCompsant.get('categoryName').value
+                    "
+                    (click)="addNewCategoryComposant()"
+                ></button>
+            </form>
+
+            <!-- Saisie d'espaces seuls → le bouton reste actif, le
+                 handler trim puis `markAllAsTouched()` → ce hint. -->
+            <p
+                class="cat-hint"
+                *ngIf="
+                    addCategoryCompsant.get('categoryName').touched &&
+                    addCategoryCompsant.get('categoryName').invalid
+                "
+            >
+                <i class="pi pi-exclamation-circle"></i>
+                Le nom de la catégorie est obligatoire.
+            </p>
+        </section>
+
+        <!-- ── Catégories existantes ───────────────────────────── -->
+        <section class="cc-section">
+            <div class="cc-section__head">
+                <span class="cc-section__dot cc-section__dot--green"></span>
+                <h4 class="cc-section__title">Catégories existantes</h4>
+                <span class="cat-count">{{
+                    composantCatgorieList?.length || 0
+                }}</span>
+                <span class="p-input-icon-left cat-search">
+                    <i class="pi pi-search"></i>
+                    <input
+                        pInputText
+                        type="text"
+                        placeholder="Rechercher…"
+                        (input)="
+                            catDt.filterGlobal(
+                                $any($event.target).value,
+                                'contains'
+                            )
+                        "
+                    />
+                </span>
+            </div>
+
+            <div class="cat-table-wrapper">
+                <p-table
+                    #catDt
+                    [columns]="colCategoryComposants"
+                    [value]="composantCatgorieList"
+                    [paginator]="true"
+                    [rows]="5"
+                    [rowsPerPageOptions]="[5, 10, 20]"
+                    [globalFilterFields]="['category_composant']"
+                    styleClass="p-datatable-sm sav-modal-table cat-table"
+                    [tableStyle]="{ 'min-width': '100%' }"
+                >
+                    <ng-template pTemplate="header" let-columns>
+                        <tr>
+                            <th *ngFor="let col of columns">
+                                {{ col.header }}
+                            </th>
+                            <th class="cat-actions-th">Actions</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template
+                        pTemplate="body"
+                        let-rowData
+                        let-columns="columns"
+                    >
+                        <tr>
+                            <td
+                                *ngFor="
+                                    let col of columns;
+                                    trackBy: trackByColumn
+                                "
+                            >
+                                {{ formatCell(rowData, col.field) }}
+                            </td>
+                            <td class="cat-actions-cell">
+                                <button
+                                    pButton
+                                    type="button"
+                                    icon="pi pi-trash"
+                                    title="Supprimer"
+                                    class="sav-icon-btn sav-icon-btn--danger"
+                                    (click)="deleteCategorycomposant(rowData)"
+                                ></button>
+                            </td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr>
+                            <td
+                                [attr.colspan]="
+                                    (colCategoryComposants?.length || 0) + 1
+                                "
+                                class="cat-empty"
+                            >
+                                <i class="pi pi-inbox"></i>
+                                <span>Aucune catégorie.</span>
+                            </td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </section>
+
+        <!-- ── Actions ─────────────────────────────────────────── -->
+        <footer class="cc-footer cat-footer">
+            <button
+                pButton
+                type="button"
+                label="Fermer"
+                icon="pi pi-times"
+                class="cc-btn cc-btn--ghost"
+                (click)="openCreationCategoryComposantModal = false"
+            ></button>
+        </footer>
+    </div>
+</p-dialog>

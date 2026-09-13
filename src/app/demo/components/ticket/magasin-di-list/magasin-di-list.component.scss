@@ -3,15 +3,15 @@
 //  Full design alignment with Coordinator page
 // ═══════════════════════════════════════════════════════
 
-$bg-page: #f1f5f9;
-$bg-card: #ffffff;
-$bg-surface: #f8fafc;
-$bg-row-hover: #f1f5f9;
-$bg-input: #ffffff;
-$border: #e2e8f0;
-$text-primary: #1e293b;
-$text-secondary: #64748b;
-$text-muted: #94a3b8;
+$bg-page: var(--fx-bg-page);
+$bg-card: var(--fx-bg-card);
+$bg-surface: var(--fx-bg-surface);
+$bg-row-hover: var(--fx-bg-hover);
+$bg-input: var(--fx-bg-input);
+$border: var(--fx-border);
+$text-primary: var(--fx-text-strong);
+$text-secondary: var(--fx-text-muted);
+$text-muted: var(--fx-text-subtle);
 $accent-blue: #2563eb;
 $white: #ffffff;
 
@@ -19,7 +19,9 @@ $white: #ffffff;
     background: $bg-page;
     min-height: 100vh;
     padding: 1.5rem 1.75rem;
-    font-family: "Segoe UI", system-ui, sans-serif;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
     color: $text-primary;
 }
 
@@ -40,7 +42,7 @@ $white: #ffffff;
         margin: 0;
     }
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 1.2rem;
     }
 }
@@ -54,9 +56,9 @@ $white: #ffffff;
    Action principale = plein bleu ; secondaires = outline bleu. Design system :
    bleu #2563eb / hover #1d4ed8, pas de violet. */
 :host ::ng-deep .sav-btn-new {
-    background: #2563eb !important;
-    border: 1px solid #2563eb !important;
-    color: #ffffff !important;
+    background: var(--fx-blue-strong) !important;
+    border: 1px solid var(--fx-blue-strong) !important;
+    color: var(--fx-text-on-accent) !important;
     font-size: 0.82rem !important;
     padding: 0.45rem 1rem !important;
     border-radius: 6px !important;
@@ -64,19 +66,19 @@ $white: #ffffff;
     box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3) !important;
 
     &:hover {
-        background: #1d4ed8 !important;
-        border-color: #1d4ed8 !important;
+        background: var(--fx-blue-strong) !important;
+        border-color: var(--fx-blue-strong) !important;
     }
 }
 /* Variante outline pour les actions secondaires (spécificité doublée pour
    battre le fond plein de .sav-btn-new). */
 :host ::ng-deep .sav-btn-new.sav-btn-new--outline {
-    background: #ffffff !important;
-    color: #2563eb !important;
+    background: var(--fx-bg-card) !important;
+    color: var(--fx-blue-text) !important;
     box-shadow: none !important;
 
     &:hover {
-        background: #eff6ff !important;
+        background: var(--fx-blue-soft-bg) !important;
     }
 }
 
@@ -117,7 +119,7 @@ $white: #ffffff;
     font-size: 0.75rem !important;
     padding: 0.3rem 0.55rem !important;
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
     }
     &::placeholder {
         color: $text-muted !important;
@@ -153,24 +155,24 @@ $white: #ffffff;
         border-radius: 0 3px 3px 0;
     }
     &.row-retour1 {
-        border-left-color: #ca8a04 !important;
+        border-left-color: var(--fx-amber) !important;
 
         > td.sav-td:first-child::before {
-            background: #ca8a04;
+            background: var(--fx-amber);
         }
     }
     &.row-retour2 {
-        border-left-color: #ea580c !important;
+        border-left-color: var(--fx-orange) !important;
 
         > td.sav-td:first-child::before {
-            background: #ea580c;
+            background: var(--fx-orange);
         }
     }
     &.row-retour3 {
-        border-left-color: #dc2626 !important;
+        border-left-color: var(--fx-red) !important;
 
         > td.sav-td:first-child::before {
-            background: #dc2626;
+            background: var(--fx-red);
         }
     }
 }
@@ -197,103 +199,103 @@ $white: #ffffff;
 }
 
 ::ng-deep .status-DIAGNOSTIC {
-    background: #dbeafe !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg-2) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #3b82f6;
+        background: var(--fx-blue);
     }
 }
 ::ng-deep .status-INDIAGNOSTIC,
 ::ng-deep .status-IN_DIAGNOSTIC {
-    background: #ede9fe !important;
-    color: #5b21b6 !important;
+    background: var(--fx-purple-soft-bg-2) !important;
+    color: var(--fx-purple-soft-fg) !important;
     &::before {
-        background: #7c3aed;
+        background: var(--fx-purple);
     }
 }
 ::ng-deep .status-DIAGNOSTIC_Pause,
 ::ng-deep .status-DIAGNOSTIC_PAUSE {
-    background: #fef3c7 !important;
-    color: #92400e !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #f59e0b;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-NEGOTIATION1,
 ::ng-deep .status-NEGOTIATION2 {
-    background: #ffedd5 !important;
-    color: #9a3412 !important;
+    background: var(--fx-amber-soft-bg) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ea580c;
+        background: var(--fx-orange);
     }
 }
 ::ng-deep .status-PENDING1,
 ::ng-deep .status-PENDING2,
 ::ng-deep .status-PENDING3 {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
+    background: var(--fx-bg-surface-2) !important;
+    color: var(--fx-text-muted-strong) !important;
     &::before {
-        background: #94a3b8;
+        background: var(--fx-border-strong);
     }
 }
 ::ng-deep .status-REPARATION {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #16a34a;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-INREPARATION,
 ::ng-deep .status-IN_REPARATION {
-    background: #bbf7d0 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-REPARATION_Pause {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-FINISHED {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
     &::before {
-        background: #22c55e;
+        background: var(--fx-green);
     }
 }
 ::ng-deep .status-PRICING,
 ::ng-deep .status-PRICING_DIAG {
-    background: #fef9c3 !important;
-    color: #713f12 !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
     &::before {
-        background: #ca8a04;
+        background: var(--fx-amber);
     }
 }
 ::ng-deep .status-RETOUR1,
 ::ng-deep .status-RETOUR2,
 ::ng-deep .status-RETOUR3 {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 ::ng-deep .status-CREATED {
-    background: #eff6ff !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg) !important;
+    color: var(--fx-blue-soft-fg) !important;
     &::before {
-        background: #2563eb;
+        background: var(--fx-blue-strong);
     }
 }
 ::ng-deep .status-ANNULER {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
     &::before {
-        background: #dc2626;
+        background: var(--fx-red);
     }
 }
 
@@ -325,9 +327,9 @@ $white: #ffffff;
         border-color 0.12s;
 
     &:hover {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         color: $text-primary !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
     }
     &:disabled {
         opacity: 0.35 !important;
@@ -368,7 +370,7 @@ $white: #ffffff;
     background: transparent !important;
     border: none !important;
     .p-paginator-element {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         color: $text-secondary !important;
         border-radius: 4px !important;
@@ -381,9 +383,9 @@ $white: #ffffff;
             color: $text-primary !important;
         }
         &.p-highlight {
-            background: $accent-blue !important;
-            border-color: $accent-blue !important;
-            color: $white !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 }
@@ -446,7 +448,7 @@ $white: #ffffff;
     padding: 0.5rem 0.75rem !important;
     width: 100%;
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
 }
@@ -464,10 +466,10 @@ $white: #ffffff;
         color: $text-secondary !important;
     }
     &:hover {
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
     }
     &.p-focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
 }
@@ -534,11 +536,11 @@ $white: #ffffff;
     border-radius: 5px;
     background: $bg-surface;
     border: 1px solid $border;
-    color: $accent-blue;
+    color: var(--fx-blue-text);
     text-decoration: none;
     &:hover {
-        background: #eff6ff;
-        border-color: #93c5fd;
+        background: var(--fx-blue-soft-bg);
+        border-color: var(--fx-blue-soft-bd);
     }
     &.disabled {
         opacity: 0.5;
@@ -564,15 +566,8 @@ $white: #ffffff;
 
 // ── Global PrimeNG overrides ──────────────────────────
 ::ng-deep .p-inputtext:focus {
-    border-color: $accent-blue !important;
+    border-color: var(--fx-blue-strong) !important;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
-}
-::ng-deep .p-toast .p-toast-message {
-    border-radius: 8px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
-}
-::ng-deep .p-confirm-dialog {
-    border-radius: 10px !important;
 }
 // DIALOG OVERLAY
 ::ng-deep .sav-dialog {
@@ -608,13 +603,13 @@ $white: #ffffff;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    background: #fef9c3;
-    border: 1px solid #fde68a;
+    background: var(--fx-amber-soft-bg-2);
+    border: 1px solid var(--fx-amber-soft-bd);
     border-radius: 6px;
     padding: 0.4rem 0.75rem;
     font-size: 0.78rem;
     font-weight: 600;
-    color: #92400e;
+    color: var(--fx-amber-soft-fg);
 
     .pi {
         font-size: 0.75rem;
@@ -623,18 +618,18 @@ $white: #ffffff;
 
 // ── Fieldset sections inside dialog ───────────────────
 .sav-fieldset {
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--fx-border);
     border-radius: 8px;
     padding: 0.85rem 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.7rem;
-    background: #f8fafc;
+    background: var(--fx-bg-surface);
 
     legend {
         font-size: 0.72rem;
         font-weight: 600;
-        color: #64748b;
+        color: var(--fx-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.05em;
         padding: 0 0.4rem;
@@ -650,10 +645,10 @@ $white: #ffffff;
 
 // ── Plain text input (replaces sav-textarea on inputs) ─
 .sav-input {
-    background: #ffffff !important;
-    border: 1px solid #e2e8f0 !important;
+    background: var(--fx-bg-card) !important;
+    border: 1px solid var(--fx-border) !important;
     border-radius: 6px !important;
-    color: #1e293b !important;
+    color: var(--fx-text-strong) !important;
     font-size: 0.85rem !important;
     padding: 0.5rem 0.75rem !important;
     width: 100%;
@@ -664,11 +659,11 @@ $white: #ffffff;
         box-shadow 0.15s;
 
     &:focus {
-        border-color: #2563eb !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
     &::placeholder {
-        color: #94a3b8 !important;
+        color: var(--fx-text-subtle) !important;
     }
 }
 
@@ -697,16 +692,16 @@ $white: #ffffff;
     }
 
     .p-inputnumber-input {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
+        background: var(--fx-bg-card) !important;
+        border: 1px solid var(--fx-border) !important;
         border-radius: 0 !important; // buttons handle the outer radius
-        color: #1e293b !important;
+        color: var(--fx-text-strong) !important;
         font-size: 0.85rem !important;
         padding: 0.5rem 0.75rem !important;
         text-align: center;
 
         &:focus {
-            border-color: #2563eb !important;
+            border-color: var(--fx-blue-strong) !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
             position: relative;
             z-index: 1;
@@ -716,34 +711,34 @@ $white: #ffffff;
     // decrement (left) button
     .p-inputnumber-button-group .p-button:first-child,
     .p-inputnumber-decrement-button {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
+        background: var(--fx-bg-surface) !important;
+        border: 1px solid var(--fx-border) !important;
         border-right: none !important;
         border-radius: 6px 0 0 6px !important;
-        color: #64748b !important;
+        color: var(--fx-text-muted) !important;
         width: 32px !important;
 
         &:hover {
-            background: #ffffff !important;
-            color: #1e293b !important;
-            border-color: #cbd5e1 !important;
+            background: var(--fx-bg-card) !important;
+            color: var(--fx-text-strong) !important;
+            border-color: var(--fx-border-strong) !important;
         }
     }
 
     // increment (right) button
     .p-inputnumber-button-group .p-button:last-child,
     .p-inputnumber-increment-button {
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
+        background: var(--fx-bg-surface) !important;
+        border: 1px solid var(--fx-border) !important;
         border-left: none !important;
         border-radius: 0 6px 6px 0 !important;
-        color: #64748b !important;
+        color: var(--fx-text-muted) !important;
         width: 32px !important;
 
         &:hover {
-            background: #ffffff !important;
-            color: #1e293b !important;
-            border-color: #cbd5e1 !important;
+            background: var(--fx-bg-card) !important;
+            color: var(--fx-text-strong) !important;
+            border-color: var(--fx-border-strong) !important;
         }
     }
 }
@@ -757,16 +752,16 @@ $white: #ffffff;
     }
 
     .p-inputtext {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
+        background: var(--fx-bg-card) !important;
+        border: 1px solid var(--fx-border) !important;
         border-radius: 6px !important;
-        color: #1e293b !important;
+        color: var(--fx-text-strong) !important;
         font-size: 0.85rem !important;
         padding: 0.5rem 0.75rem !important;
         width: 100% !important;
 
         &:focus {
-            border-color: #2563eb !important;
+            border-color: var(--fx-blue-strong) !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
         }
     }
@@ -774,17 +769,17 @@ $white: #ffffff;
 
 // ── File upload button ─────────────────────────────────
 ::ng-deep .sav-upload-btn .p-fileupload-choose {
-    background: #f8fafc !important;
-    border: 1px solid #e2e8f0 !important;
-    color: #1e293b !important;
+    background: var(--fx-bg-surface) !important;
+    border: 1px solid var(--fx-border) !important;
+    color: var(--fx-text-strong) !important;
     font-size: 0.8rem !important;
     border-radius: 5px !important;
     padding: 0.4rem 0.8rem !important;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 
     &:hover {
-        background: #ffffff !important;
-        border-color: #cbd5e1 !important;
+        background: var(--fx-bg-card) !important;
+        border-color: var(--fx-border-strong) !important;
     }
 }
 
@@ -807,12 +802,12 @@ $white: #ffffff;
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    color: #64748b;
+    color: var(--fx-text-muted);
     font-size: 0.78rem;
     white-space: nowrap;
 
     .pi {
-        color: #2563eb;
+        color: var(--fx-blue-text);
         font-size: 0.85rem;
     }
 }
@@ -823,8 +818,8 @@ $white: #ffffff;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    background: var(--fx-green-soft-bg);
+    border: 1px solid var(--fx-green-soft-bd);
     border-radius: 6px;
     padding: 0.65rem 0.9rem;
 }
@@ -834,7 +829,7 @@ $white: #ffffff;
     align-items: center;
     gap: 0.4rem;
     font-size: 0.78rem;
-    color: #166534;
+    color: var(--fx-green-soft-fg);
     flex: 1;
 
     .pi {
@@ -850,7 +845,7 @@ $white: #ffffff;
     justify-content: flex-end;
     gap: 0.5rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--fx-border);
     margin-top: 0.25rem;
 }
 
@@ -870,21 +865,40 @@ $white: #ffffff;
 
 /* Emplacement VIDE → vert : rien à ranger, la DI n'occupe pas de place. */
 .sav-location-dot--vide {
-    background: #16a34a;
+    background: var(--fx-green);
 }
 
 /* Emplacement RENSEIGNÉ → rouge : une place du magasin est occupée. */
 .sav-location-dot--renseigne {
-    background: #dc2626;
+    background: var(--fx-red);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
    « Affectation des composants » — modal master-detail
    (remplace l'ancien formulaire vertical ; cf. magasin-di-list.component.html)
    ═══════════════════════════════════════════════════════════════════════ */
+/* Reflet balayant la FACE de « Enregistrer » tant que des modifications
+   attendent d'être sauvegardées : c'est le bouton lui-même qui brille, plus un
+   halo autour (l'ancien anneau `box-shadow` pulsait À L'EXTÉRIEUR du bouton).
+   On n'anime QUE `transform` sur un pseudo-élément clippé par le bouton : aucun
+   reflow, le bouton ne bouge pas d'un pixel. Palier 60 → 100 % = pause entre
+   deux passages.
+   Le bouton passe aussi en aplat `--fx-amber-strong` (#b45309, cf.
+   `.cmp-btn--save.cmp-btn--attention`) : blanc dessus = 5:1 (AA à 13px), là où
+   `--fx-amber` ne donne que 3.2:1 ; valeur identique dans les deux thèmes. */
+@keyframes cmp-save-shine {
+    0% {
+        transform: translateX(-120%);
+    }
+    60%,
+    100% {
+        transform: translateX(120%);
+    }
+}
+
 ::ng-deep .cmp-assign-dialog.p-dialog {
     border-radius: 18px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--fx-border);
     box-shadow: 0 18px 54px -18px rgba(15, 23, 42, 0.32);
     overflow: hidden;
     max-height: 90vh;
@@ -899,10 +913,10 @@ $white: #ffffff;
 }
 
 ::ng-deep .cmp-assign {
-    --c-border: #e2e8f0;
-    --c-border-soft: #eef2f6;
-    --c-ink: #0f172a;
-    --c-muted: #64748b;
+    --c-border: var(--fx-border);
+    --c-border-soft: var(--fx-border);
+    --c-ink: var(--fx-text);
+    --c-muted: var(--fx-text-muted);
     --c-faint: #94a3b8;
     // Match the diagnostic/repair modal typography exactly (Inter, same stack
     // → same weights/letter-spacing). Falls back to the system stack without it.
@@ -911,7 +925,7 @@ $white: #ffffff;
     flex-direction: column;
     width: 100%;
     max-height: 90vh;
-    background: #fff;
+    background: var(--fx-bg-card);
     color: var(--c-ink);
 
     * {
@@ -936,7 +950,7 @@ $white: #ffffff;
         gap: 16px;
         padding: 15px 22px;
         border-bottom: 1px solid var(--c-border-soft);
-        background: linear-gradient(180deg, #fff, #fbfcfe);
+        background: linear-gradient(180deg, var(--fx-bg-card), var(--fx-bg-surface));
         flex: none;
     }
     .cmp-head__left {
@@ -949,8 +963,8 @@ $white: #ffffff;
         width: 34px;
         height: 34px;
         border-radius: 9px;
-        background: #eff6ff;
-        color: #2563eb;
+        background: var(--fx-blue-soft-bg);
+        color: var(--fx-blue-text);
         display: grid;
         place-items: center;
         flex: none;
@@ -967,7 +981,7 @@ $white: #ffffff;
         text-overflow: ellipsis;
     }
     .cmp-head__di {
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         font-weight: 600;
     }
     .cmp-head__right {
@@ -982,9 +996,9 @@ $white: #ffffff;
         gap: 5px;
         font-size: 11px;
         font-weight: 700;
-        color: #b45309;
-        background: #fffbeb;
-        border: 1px solid #fde9c3;
+        color: var(--fx-amber-text);
+        background: var(--fx-amber-soft-bg);
+        border: 1px solid var(--fx-amber-soft-bd);
         padding: 3px 8px;
         border-radius: 99px;
     }
@@ -998,7 +1012,7 @@ $white: #ffffff;
         width: 88px;
         height: 6px;
         border-radius: 99px;
-        background: #e7edf4;
+        background: var(--fx-slate-soft-bg-2);
         overflow: hidden;
         flex: none;
     }
@@ -1006,15 +1020,15 @@ $white: #ffffff;
         display: block;
         height: 100%;
         border-radius: 99px;
-        background: linear-gradient(90deg, #22c55e, #3b82f6);
+        background: linear-gradient(90deg, var(--fx-green), var(--fx-blue));
         transition: width 0.25s ease;
     }
     .cmp-head__close {
         width: 32px;
         height: 32px;
         border-radius: 8px;
-        border: 1px solid #e2e8f0;
-        background: #fff;
+        border: 1px solid var(--fx-border);
+        background: var(--fx-bg-card);
         color: var(--c-muted);
         display: grid;
         place-items: center;
@@ -1022,8 +1036,8 @@ $white: #ffffff;
         flex: none;
         transition: background 0.15s, border-color 0.15s;
         &:hover {
-            background: #f8fafc;
-            border-color: #cbd5e1;
+            background: var(--fx-bg-surface);
+            border-color: var(--fx-border-strong);
         }
     }
 
@@ -1040,7 +1054,7 @@ $white: #ffffff;
     .cmp-rail {
         display: flex;
         flex-direction: column;
-        background: #fafbfd;
+        background: var(--fx-bg-surface);
         border-right: 1px solid var(--c-border-soft);
         min-height: 0;
     }
@@ -1055,13 +1069,13 @@ $white: #ffffff;
         font-weight: 700;
         letter-spacing: 0.6px;
         text-transform: uppercase;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
     }
     .cmp-rail__count {
         font-size: 9.5px;
         font-weight: 700;
-        color: #fff;
-        background: #cbd5e1;
+        color: var(--fx-text-on-accent);
+        background: var(--fx-border-strong);
         border-radius: 99px;
         padding: 1px 7px;
     }
@@ -1074,7 +1088,7 @@ $white: #ffffff;
         min-height: 0;
     }
     .cmp-rail__empty {
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         font-size: 12px;
         padding: 12px;
         text-align: center;
@@ -1090,19 +1104,19 @@ $white: #ffffff;
         text-align: left;
         cursor: pointer;
         padding: 11px 12px;
-        background: #fff;
-        border: 1px solid #e2e8f0;
+        background: var(--fx-bg-card);
+        border: 1px solid var(--fx-border);
         border-radius: 12px;
         font: inherit;
         color: inherit;
         transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 
         &:hover:not(:disabled):not(.cmp-card--done) {
-            border-color: #cbd5e1;
+            border-color: var(--fx-border-strong);
             box-shadow: 0 6px 16px -10px rgba(15, 23, 42, 0.3);
         }
         &.cmp-card--active {
-            border-color: #3b82f6;
+            border-color: var(--fx-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
             &::before {
                 content: '';
@@ -1112,12 +1126,12 @@ $white: #ffffff;
                 bottom: 11px;
                 width: 3px;
                 border-radius: 0 3px 3px 0;
-                background: #3b82f6;
+                background: var(--fx-blue);
             }
         }
         &.cmp-card--done {
-            background: #f3f5f8;
-            border-color: #e7ebf1;
+            background: var(--fx-bg-page);
+            border-color: var(--fx-border);
             box-shadow: none;
             cursor: default;
             .cmp-avatar {
@@ -1125,7 +1139,7 @@ $white: #ffffff;
                 opacity: 0.65;
             }
             .cmp-card__name {
-                color: #94a3b8;
+                color: var(--fx-text-subtle);
                 text-decoration: line-through;
                 text-decoration-color: #cbd5e1;
             }
@@ -1163,9 +1177,9 @@ $white: #ffffff;
         gap: 3px;
         font-size: 10px;
         font-weight: 700;
-        color: #16a34a;
-        background: #ecfdf5;
-        border: 1px solid #bbf7d0;
+        color: var(--fx-green-text);
+        background: var(--fx-green-soft-bg);
+        border: 1px solid var(--fx-green-soft-bd);
         border-radius: 99px;
         padding: 2px 7px;
         i {
@@ -1184,16 +1198,16 @@ $white: #ffffff;
         font-size: 13px;
         font-weight: 700;
         &[data-palette='a'] {
-            background: #eef2ff;
-            color: #4f46e5;
+            background: var(--fx-purple-soft-bg);
+            color: var(--fx-purple-text);
         }
         &[data-palette='b'] {
-            background: #f5f3ff;
-            color: #7c3aed;
+            background: var(--fx-purple-soft-bg);
+            color: var(--fx-purple-text);
         }
         &[data-palette='c'] {
-            background: #ecfeff;
-            color: #0891b2;
+            background: var(--fx-cyan-soft-bg);
+            color: var(--fx-cyan-text);
         }
     }
     .cmp-avatar--sm {
@@ -1221,16 +1235,16 @@ $white: #ffffff;
             background: currentColor;
         }
         &[data-health='ok'] {
-            background: #ecfdf5;
-            color: #16a34a;
+            background: var(--fx-green-soft-bg);
+            color: var(--fx-green-text);
         }
         &[data-health='low'] {
-            background: #fffbeb;
-            color: #b45309;
+            background: var(--fx-amber-soft-bg);
+            color: var(--fx-amber-text);
         }
         &[data-health='out'] {
-            background: #fef2f2;
-            color: #dc2626;
+            background: var(--fx-red-soft-bg);
+            color: var(--fx-red-text);
         }
     }
 
@@ -1275,7 +1289,7 @@ $white: #ffffff;
             flex: none;
             display: grid;
             place-items: center;
-            background: #fff;
+            background: var(--fx-bg-card);
             border: 1px solid rgba(15, 23, 42, 0.08);
             font-size: 14px;
         }
@@ -1300,51 +1314,51 @@ $white: #ffffff;
             white-space: nowrap;
         }
         &[data-avail='disponible'] {
-            border-color: #bbf7d0;
-            background: #ecfdf5;
+            border-color: var(--fx-green-soft-bd);
+            background: var(--fx-green-soft-bg);
             .cmp-avail__icon {
-                color: #16a34a;
+                color: var(--fx-green-text);
             }
             .cmp-avail__title {
-                color: #14532d;
+                color: var(--fx-green-soft-fg);
             }
             .cmp-avail__sub {
-                color: #3f6b50;
+                color: var(--fx-green-soft-fg);
             }
             .cmp-avail__verdict {
-                color: #16a34a;
+                color: var(--fx-green-text);
             }
         }
         &[data-avail='partiel'] {
-            border-color: #fde9c3;
-            background: #fffbeb;
+            border-color: var(--fx-amber-soft-bd);
+            background: var(--fx-amber-soft-bg);
             .cmp-avail__icon {
-                color: #b45309;
+                color: var(--fx-amber-text);
             }
             .cmp-avail__title {
-                color: #7c4a07;
+                color: var(--fx-amber-soft-fg);
             }
             .cmp-avail__sub {
-                color: #8a6516;
+                color: var(--fx-amber-soft-fg);
             }
             .cmp-avail__verdict {
-                color: #b45309;
+                color: var(--fx-amber-text);
             }
         }
         &[data-avail='indisponible'] {
-            border-color: #fecaca;
-            background: #fef2f2;
+            border-color: var(--fx-red-soft-bd);
+            background: var(--fx-red-soft-bg);
             .cmp-avail__icon {
-                color: #dc2626;
+                color: var(--fx-red-text);
             }
             .cmp-avail__title {
-                color: #7f1d1d;
+                color: var(--fx-red-soft-fg);
             }
             .cmp-avail__sub {
-                color: #9b2c2c;
+                color: var(--fx-red-soft-fg);
             }
             .cmp-avail__verdict {
-                color: #dc2626;
+                color: var(--fx-red-text);
             }
         }
     }
@@ -1361,7 +1375,7 @@ $white: #ffffff;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.4px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         margin-bottom: 9px;
         padding-bottom: 6px;
         border-bottom: 1px solid var(--c-border-soft);
@@ -1374,16 +1388,16 @@ $white: #ffffff;
         text-transform: none;
         letter-spacing: 0;
         &[data-health='ok'] {
-            background: #ecfdf5;
-            color: #16a34a;
+            background: var(--fx-green-soft-bg);
+            color: var(--fx-green-text);
         }
         &[data-health='low'] {
-            background: #fffbeb;
-            color: #b45309;
+            background: var(--fx-amber-soft-bg);
+            color: var(--fx-amber-text);
         }
         &[data-health='out'] {
-            background: #fef2f2;
-            color: #dc2626;
+            background: var(--fx-red-soft-bg);
+            color: var(--fx-red-text);
         }
     }
     .cmp-grid {
@@ -1412,20 +1426,20 @@ $white: #ffffff;
         margin-bottom: 5px;
     }
     .cmp-req {
-        color: #dc2626;
+        color: var(--fx-red-text);
     }
     .cmp-input {
         width: 100%;
         padding: 9px 11px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
         font-size: 13px;
         color: var(--c-ink);
-        background: #fff;
+        background: var(--fx-bg-card);
         outline: none;
         transition: border-color 0.15s, box-shadow 0.15s;
         &:focus {
-            border-color: #3b82f6;
+            border-color: var(--fx-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
         }
     }
@@ -1442,18 +1456,18 @@ $white: #ffffff;
         place-items: center;
         width: 38px;
         border-radius: 9px;
-        border: 1px solid #e2e8f0;
-        color: #2563eb;
-        background: #f8fafc;
+        border: 1px solid var(--fx-border);
+        color: var(--fx-blue-text);
+        background: var(--fx-bg-surface);
         flex: none;
         text-decoration: none;
         &:hover {
-            background: #eff6ff;
+            background: var(--fx-blue-soft-bg);
         }
         &.disabled {
             pointer-events: none;
             opacity: 0.4;
-            color: #94a3b8;
+            color: var(--fx-text-subtle);
         }
     }
 
@@ -1483,7 +1497,7 @@ $white: #ffffff;
         gap: 5px;
         font-size: 12px;
         font-weight: 600;
-        color: #2563eb;
+        color: var(--fx-blue-text);
         text-decoration: none;
     }
     .cmp-dropzone {
@@ -1492,7 +1506,7 @@ $white: #ffffff;
     }
     .cmp-fiche__loading {
         font-size: 11px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         display: inline-flex;
         align-items: center;
         gap: 5px;
@@ -1505,7 +1519,7 @@ $white: #ffffff;
         gap: 12px;
         padding: 13px 22px;
         border-top: 1px solid var(--c-border-soft);
-        background: #fff;
+        background: var(--fx-bg-card);
         flex: none;
     }
     .cmp-detail__hint {
@@ -1521,10 +1535,10 @@ $white: #ffffff;
         border: none;
         border-radius: 10px;
         cursor: pointer;
-        color: #fff;
+        color: var(--fx-text-on-accent);
         font-size: 13px;
         font-weight: 700;
-        background: linear-gradient(135deg, #22c55e, #16a34a);
+        background: linear-gradient(135deg, var(--fx-green), var(--fx-green));
         box-shadow: 0 8px 18px -10px rgba(22, 163, 74, 0.7);
         transition: transform 0.12s, box-shadow 0.12s, opacity 0.12s;
         &:hover:not(:disabled) {
@@ -1545,10 +1559,10 @@ $white: #ffffff;
         align-items: center;
         justify-content: center;
         gap: 10px;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         i {
             font-size: 34px;
-            color: #22c55e;
+            color: var(--fx-green-text);
         }
         p {
             margin: 0;
@@ -1565,7 +1579,7 @@ $white: #ffffff;
         gap: 10px;
         padding: 13px 22px;
         border-top: 1px solid var(--c-border-soft);
-        background: #fafbfd;
+        background: var(--fx-bg-surface);
         flex: none;
     }
     .cmp-btn {
@@ -1579,7 +1593,7 @@ $white: #ffffff;
         font-weight: 600;
         font-family: inherit;
         border: 1px solid transparent;
-        transition: filter 0.12s, opacity 0.12s;
+        transition: filter 0.12s, opacity 0.12s, background-color 0.2s;
         &:disabled {
             opacity: 0.45;
             cursor: not-allowed;
@@ -1589,24 +1603,88 @@ $white: #ffffff;
         }
     }
     .cmp-btn--cancel {
-        color: #dc2626;
-        background: #fff;
-        border-color: #fecaca;
+        color: var(--fx-red-text);
+        background: var(--fx-bg-card);
+        border-color: var(--fx-red-soft-bd);
     }
     .cmp-btn--save {
-        color: #fff;
-        background: #3b82f6;
+        color: var(--fx-text-on-accent);
+        background: var(--fx-blue);
     }
     .cmp-btn--finish {
-        color: #fff;
-        background: #22c55e;
+        color: var(--fx-text-on-accent);
+        background: var(--fx-green);
+    }
+
+    /* Rappel « pensez à Enregistrer » : poussé à gauche (le pied est en
+       justify-content:flex-end), décalque de `.cmp-detail__hint` et du
+       compteur de `di-files-modal`. */
+    .cmp-foot__hint {
+        margin-right: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        font-weight: 500;
+        line-height: 1.4;
+        color: var(--c-muted);
+        i {
+            font-size: 12px;
+        }
+
+        /* Enregistrable : on monte le ton en ambre. `--fx-amber-text` est
+           éclairci par `html.app-dark`, donc lisible dans les deux thèmes. */
+        &--ready {
+            color: var(--fx-amber-text);
+            font-weight: 600;
+        }
+    }
+
+    /* Modifications à enregistrer : le bouton LUI-MÊME passe du bleu à l'ambre
+       (même famille que `.cmp-foot__hint--ready`) et un reflet balaie sa FACE
+       — plus de halo autour. Aplat, jamais de dégradé — convention des boutons
+       du modal (le reflet est un calque transitoire, pas le fond). Composé avec
+       `--save` pour battre `.cmp-btn--save { background: bleu }` sans dépendre
+       de l'ordre du fichier. */
+    .cmp-btn--save.cmp-btn--attention {
+        position: relative;
+        overflow: hidden; /* clippe le reflet au rayon du bouton */
+        isolation: isolate;
+        background: var(--fx-amber-strong);
+        color: var(--fx-text-on-accent);
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(
+                110deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.45) 50%,
+                transparent 70%
+            );
+            transform: translateX(-120%);
+            animation: cmp-save-shine 1.8s ease-in-out infinite;
+        }
+
+        /* Animation infinie = exactement le cas couvert par ce garde : sans
+           mouvement, un liseré INTÉRIEUR statique garde le repère sur le
+           bouton lui-même (toujours rien à l'extérieur). */
+        @media (prefers-reduced-motion: reduce) {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+            &::after {
+                animation: none;
+                display: none;
+            }
+        }
     }
 
     /* ── PrimeNG control overrides (selects / calendar / counters) ── */
     .p-dropdown,
     .p-calendar .p-inputtext {
         width: 100%;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
         font-size: 13px;
     }
@@ -1618,7 +1696,7 @@ $white: #ffffff;
             color: var(--c-ink);
         }
         &:not(.p-disabled).p-focus {
-            border-color: #3b82f6;
+            border-color: var(--fx-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
         }
     }
@@ -1630,7 +1708,7 @@ $white: #ffffff;
     .p-inputnumber.cmp-counter {
         display: flex;
         width: 100%;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
         overflow: hidden;
         .p-inputnumber-input {
@@ -1646,14 +1724,14 @@ $white: #ffffff;
         }
         .p-inputnumber-button {
             width: 34px;
-            background: #f8fafc;
-            color: #64748b;
+            background: var(--fx-bg-surface);
+            color: var(--fx-text-muted);
             border: none;
             border-radius: 0;
             transition: background 0.12s, color 0.12s;
             &:hover {
-                background: #eff6ff;
-                color: #2563eb;
+                background: var(--fx-blue-soft-bg);
+                color: var(--fx-blue-text);
             }
             .p-button-icon {
                 font-size: 16px;
@@ -1661,26 +1739,26 @@ $white: #ffffff;
         }
         .p-inputnumber-button-down {
             order: 1;
-            border-right: 1px solid #e2e8f0;
+            border-right: 1px solid var(--fx-border);
         }
         .p-inputnumber-button-up {
             order: 3;
-            border-left: 1px solid #e2e8f0;
+            border-left: 1px solid var(--fx-border);
         }
     }
 
     /* File upload (slim, dashed) */
     .cmp-upload .p-button.p-fileupload-choose {
-        border: 1.5px dashed #c7d2e0;
-        background: #fff;
-        color: #2563eb;
+        border: 1.5px dashed var(--fx-border-strong);
+        background: var(--fx-bg-card);
+        color: var(--fx-blue-text);
         border-radius: 9px;
         padding: 9px 14px;
         font-size: 12.5px;
         font-weight: 600;
         &:hover {
-            border-color: #3b82f6;
-            background: #eff6ff;
+            border-color: var(--fx-blue);
+            background: var(--fx-blue-soft-bg);
         }
     }
 }
@@ -1693,191 +1771,8 @@ $white: #ffffff;
     }
     ::ng-deep .cmp-assign .cmp-rail {
         border-right: none;
-        border-bottom: 1px solid #eef2f6;
+        border-bottom: 1px solid var(--fx-border);
         max-height: 38vh;
     }
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   « Création nouveau composant » modal — sectioned, responsive redesign.
-   Design system: Inter · blue #3b82f6/#2563eb · green #16a34a ·
-   amber #b45309 · red #dc2626 · slate text. No purple.
-   ══════════════════════════════════════════════════════════════════ */
-.cc-form {
-    font-family: 'Inter', sans-serif;
-    display: flex;
-    flex-direction: column;
-    gap: 1.15rem;
-    color: #0f172a;
-}
-
-.cc-section {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 1rem 1.1rem 1.15rem;
-    background: #ffffff;
-
-    &__head {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.9rem;
-    }
-    &__dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 999px;
-        background: #2563eb;
-        flex: none;
-        &--green {
-            background: #16a34a;
-        }
-        &--amber {
-            background: #b45309;
-        }
-    }
-    &__title {
-        margin: 0;
-        font-size: 0.82rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: #475569;
-    }
-}
-
-.cc-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem 1rem;
-}
-@media (max-width: 560px) {
-    .cc-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.cc-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    min-width: 0;
-    &--full {
-        grid-column: 1 / -1;
-    }
-}
-
-.cc-label {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: #475569;
-}
-
-.cc-readonly {
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: #0f172a;
-    background: #f8fafc;
-    border: 1px dashed #e2e8f0;
-    border-radius: 8px;
-    padding: 0.5rem 0.65rem;
-    min-height: 40px;
-    display: flex;
-    align-items: center;
-    word-break: break-all;
-}
-
-.cc-pdf {
-    margin-top: 0.5rem;
-}
-
-/* PrimeNG inputs — consistent full width, slate border, blue focus ring. */
-.cc-form {
-    /* Flex inputnumber/calendar so the inner <input> shrinks and the currency
-       text / calendar icon never overlap or overflow the column (no horizontal
-       scroll). box-sizing keeps padding inside the declared width. */
-    :host ::ng-deep .p-inputnumber,
-    :host ::ng-deep .p-calendar {
-        display: flex;
-        width: 100%;
-    }
-    :host ::ng-deep .cc-input,
-    :host ::ng-deep .p-dropdown {
-        width: 100%;
-        box-sizing: border-box;
-    }
-    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
-    :host ::ng-deep .p-calendar .p-inputtext {
-        flex: 1 1 auto;
-        width: 1%;
-        min-width: 0;
-        box-sizing: border-box;
-    }
-    :host ::ng-deep .p-calendar .p-datepicker-trigger {
-        flex: 0 0 auto;
-    }
-
-    :host ::ng-deep .cc-input,
-    :host ::ng-deep .p-dropdown,
-    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
-    :host ::ng-deep .p-calendar .p-inputtext {
-        border-radius: 8px !important;
-        border: 1px solid #e2e8f0 !important;
-        font-size: 0.9rem;
-    }
-    :host ::ng-deep .cc-input:focus,
-    :host ::ng-deep .p-inputnumber-input:focus,
-    :host ::ng-deep .p-calendar .p-inputtext:focus,
-    :host ::ng-deep .p-dropdown.p-focus {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
-    }
-}
-
-/* Footer — Annuler (ghost) left; Supprimer (danger) + Ajouter (primary) right. */
-.cc-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding-top: 0.75rem;
-    margin-top: 0.25rem;
-    border-top: 1px solid #f1f5f9;
-
-    &__right {
-        display: flex;
-        align-items: center;
-        gap: 0.6rem;
-    }
-}
-
-.cc-btn {
-    :host ::ng-deep & {
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 0.9rem !important;
-        padding: 0.55rem 1rem !important;
-    }
-    :host ::ng-deep &--ghost {
-        background: transparent !important;
-        color: #64748b !important;
-        border: 1px solid #e2e8f0 !important;
-        &:hover {
-            background: #f8fafc !important;
-        }
-    }
-    :host ::ng-deep &--danger {
-        background: #fef2f2 !important;
-        color: #dc2626 !important;
-        border: 1px solid #fecaca !important;
-        &:hover {
-            background: #fee2e2 !important;
-        }
-    }
-    :host ::ng-deep &--primary {
-        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
-        color: #ffffff !important;
-        border: 0 !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
-    }
-}

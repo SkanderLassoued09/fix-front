@@ -3,27 +3,29 @@
 //  Light ERP / SAV design aligned with DI list pages
 // ═══════════════════════════════════════════════════════
 
-$bg-page: #f1f5f9;
-$bg-card: #ffffff;
-$bg-surface: #f8fafc;
-$bg-row-hover: #f1f5f9;
-$bg-input: #ffffff;
-$border: #e2e8f0;
-$text-primary: #1e293b;
-$text-secondary: #64748b;
-$text-muted: #94a3b8;
+$bg-page: var(--fx-bg-page);
+$bg-card: var(--fx-bg-card);
+$bg-surface: var(--fx-bg-surface);
+$bg-row-hover: var(--fx-bg-hover);
+$bg-input: var(--fx-bg-input);
+$border: var(--fx-border);
+$text-primary: var(--fx-text-strong);
+$text-secondary: var(--fx-text-muted);
+$text-muted: var(--fx-text-subtle);
 $accent-blue: #2563eb;
-$accent-blue-hover: #1d4ed8;
+$accent-blue-hover: var(--fx-blue-strong);
 $white: #ffffff;
 $green: #16a34a;
 $red: #dc2626;
-$purple: #7c3aed;
+$purple: var(--fx-purple);
 
 .sav-page {
     background: $bg-page;
     min-height: 100vh;
     padding: 1.5rem 1.75rem;
-    font-family: "Segoe UI", system-ui, sans-serif;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
     color: $text-primary;
 }
 
@@ -48,7 +50,7 @@ $purple: #7c3aed;
     }
 
     .pi {
-        color: $accent-blue;
+        color: var(--fx-blue-text);
         font-size: 1.1rem;
     }
 }
@@ -59,9 +61,9 @@ $purple: #7c3aed;
 }
 
 ::ng-deep .sav-btn-new {
-    background: $accent-blue !important;
+    background: var(--fx-blue-strong) !important;
     border: none !important;
-    color: $white !important;
+    color: var(--fx-text-on-accent) !important;
     font-size: 0.82rem !important;
     padding: 0.45rem 1rem !important;
     border-radius: 6px !important;
@@ -115,7 +117,7 @@ $purple: #7c3aed;
     transition: border-color 0.15s;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: none !important;
     }
 
@@ -180,9 +182,9 @@ $purple: #7c3aed;
         box-shadow 0.12s;
 
     &:hover {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         color: $text-primary !important;
-        border-color: #cbd5e1 !important;
+        border-color: var(--fx-border-strong) !important;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
     }
 
@@ -193,14 +195,14 @@ $purple: #7c3aed;
 
     &--success:hover {
         border-color: rgba(22, 163, 74, 0.35) !important;
-        color: $green !important;
-        background: #f0fdf4 !important;
+        color: var(--fx-green-text) !important;
+        background: var(--fx-green-soft-bg) !important;
     }
 
     &--danger:hover {
         border-color: rgba(220, 38, 38, 0.35) !important;
-        color: $red !important;
-        background: #fef2f2 !important;
+        color: var(--fx-red-text) !important;
+        background: var(--fx-red-soft-bg) !important;
     }
 }
 
@@ -225,44 +227,44 @@ $purple: #7c3aed;
 }
 
 ::ng-deep .role-ADMIN_MANAGER {
-    background: #dcfce7 !important;
-    color: #14532d !important;
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
 
     &::before {
-        background: $green;
+        background: var(--fx-green);
     }
 }
 
 ::ng-deep .role-ADMIN_TECH {
-    background: #fef3c7 !important;
-    color: #92400e !important;
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
 
     &::before {
-        background: #f59e0b;
+        background: var(--fx-amber);
     }
 }
 
 ::ng-deep .role-TECH {
-    background: #fee2e2 !important;
-    color: #991b1b !important;
+    background: var(--fx-red-soft-bg-2) !important;
+    color: var(--fx-red-soft-fg) !important;
 
     &::before {
-        background: $red;
+        background: var(--fx-red);
     }
 }
 
 ::ng-deep .role-COORDIANTOR {
-    background: #dbeafe !important;
-    color: #1e40af !important;
+    background: var(--fx-blue-soft-bg-2) !important;
+    color: var(--fx-blue-soft-fg) !important;
 
     &::before {
-        background: #3b82f6;
+        background: var(--fx-blue);
     }
 }
 
 ::ng-deep .role-MAGASIN {
-    background: #ede9fe !important;
-    color: #5b21b6 !important;
+    background: var(--fx-purple-soft-bg-2) !important;
+    color: var(--fx-purple-soft-fg) !important;
 
     &::before {
         background: $purple;
@@ -270,11 +272,11 @@ $purple: #7c3aed;
 }
 
 ::ng-deep .role-MANAGER {
-    background: #f1f5f9 !important;
-    color: #334155 !important;
+    background: var(--fx-bg-surface-2) !important;
+    color: var(--fx-text-strong) !important;
 
     &::before {
-        background: #64748b;
+        background: var(--fx-border-strong);
     }
 }
 
@@ -314,7 +316,7 @@ $purple: #7c3aed;
     padding: 0 !important;
 
     .p-paginator-element {
-        background: $white !important;
+        background: var(--fx-bg-card) !important;
         border: 1px solid $border !important;
         color: $text-secondary !important;
         border-radius: 4px !important;
@@ -329,9 +331,9 @@ $purple: #7c3aed;
         }
 
         &.p-highlight {
-            background: $accent-blue !important;
-            border-color: $accent-blue !important;
-            color: $white !important;
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 }
@@ -433,7 +435,7 @@ $purple: #7c3aed;
     box-shadow: none !important;
 
     &:focus {
-        border-color: $accent-blue !important;
+        border-color: var(--fx-blue-strong) !important;
         box-shadow: none !important;
     }
 }

@@ -23,6 +23,7 @@ import { MessagesModule } from 'primeng/messages';
 import { CardModule } from 'primeng/card';
 import { MenuModule } from 'primeng/menu';
 import { AvatarModule } from 'primeng/avatar';
+import { PasswordModule } from 'primeng/password';
 
 @NgModule({
     declarations: [
@@ -52,6 +53,9 @@ import { AvatarModule } from 'primeng/avatar';
         CardModule,
         MenuModule,
         AvatarModule,
+        // « Mon profil » : les trois champs utilisent `p-password`
+        // ([toggleMask]) — même idiome que profile-list.
+        PasswordModule,
     ],
     exports: [AppLayoutComponent],
 })

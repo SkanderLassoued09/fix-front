@@ -22,6 +22,8 @@ import {
   PeriodSelection,
   buildPeriodFromPreset,
 } from './period-filter/period-filter.types';
+import { applyChartTheme, currentChartColors } from '../../../shared/chart-theme';
+import { LayoutService } from '../../../layout/service/app.layout.service';
 
 interface Technicien {
   nom: string;
@@ -174,6 +176,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   financeBarOptions: any;
 
   constructor(
+    public layoutService: LayoutService,
     private apollo: Apollo,
     private ticketService: TicketService,
     private notificationService: NotificationService,
@@ -181,7 +184,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
     private profileService: ProfileService,
     private dashboardService: SavDashboardService,
     private cdr: ChangeDetectorRef,
-  ) {}
+  ) {
+    // Les donnees restent les memes ; seules les couleurs de chrome changent.
+    this.layoutService.configUpdate$.subscribe(() => {
+      for (const f of [
+        'volumeChartOptions', 'trendChartOptions', 'categoryChartOptions',
+        'techFtrChartOptions', 'financeBarOptions', 'satisfactionTrendOptions',
+      ]) {
+        if ((this as any)[f]) {
+          (this as any)[f] = applyChartTheme((this as any)[f]);
+        }
+      }
+      // Les separateurs du donut suivent la carte, sinon cheveux blancs.
+      const card = getComputedStyle(document.documentElement)
+        .getPropertyValue('--fx-bg-card')
+        .trim();
+      const ds = this.categoryChartData?.datasets?.[0];
+      if (ds) {
+        ds.borderColor = card;
+        this.categoryChartData = { ...this.categoryChartData };
+      }
+    });
+}
 
   ngOnInit(): void {
     // Masquage temporaire : on ne construit rien et on ne déclenche NI query NI
@@ -679,6 +703,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // ─── CHART BUILDERS ─────────────────────────────────────────────────────
 
   private buildVolumeChart(): void {
+    // Couleurs de chrome (axes, legende, grille) relues dans le theme
+    // PrimeNG courant : un canvas n'herite pas des variables CSS.
+    const { textColor, textColorSecondary, surfaceBorder } =
+      currentChartColors();
+    const cardSurface = getComputedStyle(document.documentElement)
+      .getPropertyValue('--fx-bg-card')
+      .trim();
     this.volumeChartData = {
       labels: ['Reçus', 'Clôturés', 'En cours', 'Retours'],
       datasets: [
@@ -699,15 +730,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.volumeChartOptions = {
       plugins: { legend: { display: false } },
       scales: {
-        y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+        y: { beginAtZero: true, grid: { color: surfaceBorder } },
         x: { grid: { display: false } },
       },
       responsive: true,
       maintainAspectRatio: false,
     };
+    this.volumeChartOptions = applyChartTheme(this.volumeChartOptions);
   }
 
   private buildTrendChart(points: TrendPoint[]): void {
+    // Couleurs de chrome (axes, legende, grille) relues dans le theme
+    // PrimeNG courant : un canvas n'herite pas des variables CSS.
+    const { textColor, textColorSecondary, surfaceBorder } =
+      currentChartColors();
+    const cardSurface = getComputedStyle(document.documentElement)
+      .getPropertyValue('--fx-bg-card')
+      .trim();
     this.trendChartData = {
       labels: points.map((p) => p.label),
       datasets: [
@@ -748,15 +787,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
         legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
       },
       scales: {
-        y: { beginAtZero: true, grid: { color: '#e2e8f0' } },
+        y: { beginAtZero: true, grid: { color: surfaceBorder } },
         x: { grid: { display: false } },
       },
       responsive: true,
       maintainAspectRatio: false,
     };
+    this.trendChartOptions = applyChartTheme(this.trendChartOptions);
   }
 
   private buildCategoryChart(slices: CategorySlice[]): void {
+    // Couleurs de chrome (axes, legende, grille) relues dans le theme
+    // PrimeNG courant : un canvas n'herite pas des variables CSS.
+    const { textColor, textColorSecondary, surfaceBorder } =
+      currentChartColors();
+    const cardSurface = getComputedStyle(document.documentElement)
+      .getPropertyValue('--fx-bg-card')
+      .trim();
     // Top 5 + group everything else into "Autres" so the donut stays readable.
     const palette = ['#3b82f6', '#22c55e', '#f97316', '#a855f7', '#0ea5e9', '#94a3b8'];
     const top = slices.slice(0, 5);
@@ -775,7 +822,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           backgroundColor: labels.map((_, i) => palette[i % palette.length]),
           hoverOffset: 10,
           borderWidth: 2,
-          borderColor: '#ffffff',
+          borderColor: cardSurface,
         },
       ],
     };
@@ -790,9 +837,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       responsive: true,
       maintainAspectRatio: false,
     };
+    this.categoryChartOptions = applyChartTheme(this.categoryChartOptions);
   }
 
   private buildSatisfactionTrendChart(_points: any[]): void {
+    // Couleurs de chrome (axes, legende, grille) relues dans le theme
+    // PrimeNG courant : un canvas n'herite pas des variables CSS.
+    const { textColor, textColorSecondary, surfaceBorder } =
+      currentChartColors();
+    const cardSurface = getComputedStyle(document.documentElement)
+      .getPropertyValue('--fx-bg-card')
+      .trim();
     // Phase B will populate this with monthly satisfaction averages.
     this.satisfactionTrendData = {
       labels: [],
@@ -814,7 +869,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         y: {
           min: 3,
           max: 5,
-          grid: { color: '#e2e8f0' },
+          grid: { color: surfaceBorder },
           ticks: { callback: (v: number) => v + '/5' },
         },
         x: { grid: { display: false } },
@@ -822,9 +877,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       responsive: true,
       maintainAspectRatio: false,
     };
+    this.satisfactionTrendOptions = applyChartTheme(this.satisfactionTrendOptions);
   }
 
   private buildTechFtrChart(techs: Technicien[]): void {
+    // Couleurs de chrome (axes, legende, grille) relues dans le theme
+    // PrimeNG courant : un canvas n'herite pas des variables CSS.
+    const { textColor, textColorSecondary, surfaceBorder } =
+      currentChartColors();
+    const cardSurface = getComputedStyle(document.documentElement)
+      .getPropertyValue('--fx-bg-card')
+      .trim();
     const names = techs.map((t) => t.nom);
     const ftrValues = techs.map((t) => t.firstTimeRight);
     const bgColors = ftrValues.map((v) =>
@@ -858,7 +921,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         y: {
           min: 0,
           max: 100,
-          grid: { color: '#e2e8f0' },
+          grid: { color: surfaceBorder },
           ticks: { callback: (v: number) => v + '%' },
         },
         x: { grid: { display: false } },
@@ -866,9 +929,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
       responsive: true,
       maintainAspectRatio: false,
     };
+    this.techFtrChartOptions = applyChartTheme(this.techFtrChartOptions);
   }
 
   private buildFinanceChart(points: FinanceTrendPoint[]): void {
+    // Couleurs de chrome (axes, legende, grille) relues dans le theme
+    // PrimeNG courant : un canvas n'herite pas des variables CSS.
+    const { textColor, textColorSecondary, surfaceBorder } =
+      currentChartColors();
+    const cardSurface = getComputedStyle(document.documentElement)
+      .getPropertyValue('--fx-bg-card')
+      .trim();
     this.hasFinanceTrendData = points.some(
       (p) => p.caFacture > 0 || (p.tauxFacturation ?? 0) > 0,
     );
@@ -904,7 +975,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         y: {
           beginAtZero: true,
           title: { display: true, text: '€' },
-          grid: { color: '#e2e8f0' },
+          grid: { color: surfaceBorder },
         },
         y1: {
           position: 'right',
@@ -918,5 +989,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       responsive: true,
       maintainAspectRatio: false,
     };
+    this.financeBarOptions = applyChartTheme(this.financeBarOptions);
   }
 }

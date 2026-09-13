@@ -6,18 +6,18 @@
 
 // ── COLOR TOKENS ─────────────────────────────────
 $green-500: #22c55e;
-$green-100: #dcfce7;
+$green-100: var(--fx-green-soft-bg-2);
 $orange-500: #f97316;
-$orange-100: #ffedd5;
+$orange-100: var(--fx-amber-soft-bg-2);
 $red-500: #ef4444;
-$red-100: #fee2e2;
+$red-100: var(--fx-red-soft-bg-2);
 $blue-500: #3b82f6;
-$blue-50: #eff6ff;
+$blue-50: var(--fx-blue-soft-bg);
 $purple-500: #a855f7;
-$slate-800: #1e293b;
-$slate-600: #475569;
-$slate-200: #e2e8f0;
-$slate-50: #f8fafc;
+$slate-800: var(--fx-text-strong);
+$slate-600: var(--fx-text-muted-strong);
+$slate-200: var(--fx-border);
+$slate-50: var(--fx-bg-surface);
 $white: #ffffff;
 
 // ── ROOT LAYOUT ──────────────────────────────────
@@ -25,7 +25,9 @@ $white: #ffffff;
     padding: 1.5rem 2rem;
     background: $slate-50;
     min-height: 100vh;
-    font-family: "Segoe UI", system-ui, sans-serif;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
     color: $slate-800;
 }
 
@@ -36,9 +38,9 @@ $white: #ffffff;
     justify-content: space-between;
     margin-bottom: 1.5rem;
     padding: 1rem 1.5rem;
-    background: $white;
+    background: var(--fx-bg-card);
     border-radius: 10px;
-    border-left: 4px solid $blue-500;
+    border-left: 4px solid var(--fx-blue);
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 
     &__left {
@@ -55,7 +57,7 @@ $white: #ffffff;
         height: 44px;
         border-radius: 50%;
         background: $blue-50;
-        color: $blue-500;
+        color: var(--fx-blue-text);
         font-size: 1.25rem;
     }
 
@@ -87,7 +89,7 @@ $white: #ffffff;
     color: $slate-600;
     margin: 1.5rem 0 0.5rem;
     padding-left: 0.25rem;
-    border-left: 3px solid $blue-500;
+    border-left: 3px solid var(--fx-blue);
     padding-left: 0.6rem;
 }
 
@@ -107,7 +109,7 @@ $white: #ffffff;
 }
 
 .kpi-card {
-    background: $white;
+    background: var(--fx-bg-card);
     border-radius: 10px;
     padding: 1rem 1.25rem;
     display: flex;
@@ -129,17 +131,17 @@ $white: #ffffff;
         align-items: center;
         justify-content: center;
         font-size: 1.1rem;
-        color: $white;
+        color: var(--fx-text-on-accent);
         flex-shrink: 0;
 
         &.bg-green {
-            background: $green-500;
+            background: var(--fx-green);
         }
         &.bg-blue {
-            background: $blue-500;
+            background: var(--fx-blue);
         }
         &.bg-orange {
-            background: $orange-500;
+            background: var(--fx-orange);
         }
         &.bg-purple {
             background: $purple-500;
@@ -175,13 +177,13 @@ $white: #ffffff;
 
     // Status borders
     &.kpi-green {
-        border-top-color: $green-500;
+        border-top-color: var(--fx-green);
     }
     &.kpi-orange {
-        border-top-color: $orange-500;
+        border-top-color: var(--fx-orange);
     }
     &.kpi-red {
-        border-top-color: $red-500;
+        border-top-color: var(--fx-red);
     }
 }
 
@@ -259,8 +261,8 @@ $white: #ffffff;
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: $blue-500;
-    color: $white;
+    background: var(--fx-blue);
+    color: var(--fx-text-on-accent);
     font-size: 0.7rem;
     font-weight: 700;
     flex-shrink: 0;
@@ -336,16 +338,16 @@ $white: #ffffff;
 
 // ── STATUS COLORS ─────────────────────────────────
 .kpi-green {
-    color: $green-500;
+    color: var(--fx-green-text);
 }
 .kpi-orange {
-    color: $orange-500;
+    color: var(--fx-orange-text);
 }
 .kpi-red {
-    color: $red-500;
+    color: var(--fx-red-text);
 }
 .kpi-neutral {
-    color: $blue-500;
+    color: var(--fx-blue-text);
 }
 
 // ── KPI BADGE (table cells) ───────────────────────
@@ -357,20 +359,20 @@ $white: #ffffff;
     font-weight: 600;
 
     &.kpi-green {
-        background: $green-100;
-        color: darken($green-500, 10%);
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
     }
     &.kpi-orange {
-        background: $orange-100;
-        color: darken($orange-500, 10%);
+        background: var(--fx-amber-soft-bg-2);
+        color: var(--fx-amber-soft-fg);
     }
     &.kpi-red {
-        background: $red-100;
-        color: darken($red-500, 10%);
+        background: var(--fx-red-soft-bg-2);
+        color: var(--fx-red-soft-fg);
     }
     &.kpi-neutral {
         background: $blue-50;
-        color: $blue-500;
+        color: var(--fx-blue-text);
     }
 }
 
@@ -482,7 +484,7 @@ $white: #ffffff;
 }
 
 .fin-card {
-    background: $white;
+    background: var(--fx-bg-card);
     border-radius: 8px;
     padding: 0.9rem 1rem;
     display: flex;
@@ -513,27 +515,27 @@ $white: #ffffff;
     }
 
     &.fin-green {
-        border-left-color: $green-500;
+        border-left-color: var(--fx-green);
         .fin-card__icon {
-            color: $green-500;
+            color: var(--fx-green-text);
         }
     }
     &.fin-blue {
-        border-left-color: $blue-500;
+        border-left-color: var(--fx-blue);
         .fin-card__icon {
-            color: $blue-500;
+            color: var(--fx-blue-text);
         }
     }
     &.fin-orange {
-        border-left-color: $orange-500;
+        border-left-color: var(--fx-orange);
         .fin-card__icon {
-            color: $orange-500;
+            color: var(--fx-orange-text);
         }
     }
     &.fin-red {
-        border-left-color: $red-500;
+        border-left-color: var(--fx-red);
         .fin-card__icon {
-            color: $red-500;
+            color: var(--fx-red-text);
         }
     }
 }
@@ -558,7 +560,7 @@ $white: #ffffff;
     border-bottom: 1px solid $slate-200;
 
     &.warn strong {
-        color: $red-500;
+        color: var(--fx-red-text);
     }
     &:last-child {
         border-bottom: none;
@@ -636,16 +638,16 @@ $white: #ffffff;
     justify-content: center;
     gap: 0.5rem;
     padding: 1.25rem 1rem;
-    color: var(--text-color-secondary, #64748b);
-    background: var(--surface-50, #f8fafc);
-    border: 1px dashed var(--surface-200, #e2e8f0);
+    color: var(--text-color-secondary, var(--fx-text-muted));
+    background: var(--surface-50, var(--fx-bg-surface));
+    border: 1px dashed var(--surface-200, var(--fx-border));
     border-radius: 0.5rem;
     font-size: 0.85rem;
     text-align: center;
 
     i {
         font-size: 1.1rem;
-        color: var(--text-color-secondary, #94a3b8);
+        color: var(--text-color-secondary, var(--fx-text-subtle));
     }
 
     &--inline {
@@ -662,15 +664,15 @@ $white: #ffffff;
 // ── PHASE B PLACEHOLDER TILES (finance / RH) ────────────────────────────
 .fin-card.fin-card--placeholder,
 .fin-card.fin-neutral {
-    background: var(--surface-50, #f8fafc);
+    background: var(--surface-50, var(--fx-bg-surface));
     border-style: dashed;
 
     .fin-card__icon {
-        color: var(--text-color-secondary, #94a3b8);
+        color: var(--text-color-secondary, var(--fx-text-subtle));
         background: transparent;
     }
     .fin-card__value {
-        color: var(--text-color-secondary, #64748b);
+        color: var(--text-color-secondary, var(--fx-text-muted));
     }
 }
 
@@ -686,8 +688,8 @@ $white: #ffffff;
     width: 96px;
     height: 96px;
     border-radius: 50%;
-    border: 1px dashed var(--surface-300, #cbd5e1);
-    color: var(--text-color-secondary, #94a3b8);
+    border: 1px dashed var(--surface-300, var(--fx-border-strong));
+    color: var(--text-color-secondary, var(--fx-text-subtle));
     font-size: 1.25rem;
     font-weight: 600;
 }
@@ -712,8 +714,8 @@ $white: #ffffff;
     text-align: center;
     max-width: 420px;
     padding: 2.5rem 2rem;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--fx-bg-card);
+    border: 1px solid var(--fx-border);
     border-radius: 16px;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
@@ -723,8 +725,8 @@ $white: #ffffff;
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: #eff6ff;
-    color: #2563eb;
+    background: var(--fx-blue-soft-bg);
+    color: var(--fx-blue-text);
     font-size: 1.5rem;
     margin-bottom: 1.1rem;
 }
@@ -732,12 +734,12 @@ $white: #ffffff;
     margin: 0 0 0.4rem;
     font-size: 1.15rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--fx-text);
     letter-spacing: -0.01em;
 }
 .dash-undefined__text {
     margin: 0;
     font-size: 0.9rem;
     line-height: 1.5;
-    color: #64748b;
+    color: var(--fx-text-muted);
 }

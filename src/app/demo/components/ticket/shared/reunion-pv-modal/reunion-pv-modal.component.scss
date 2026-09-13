@@ -26,8 +26,8 @@
     flex-direction: column;
     height: 660px;
     max-height: calc(100vh - 3rem);
-    background: #fff;
-    color: #1f2733;
+    background: var(--fx-bg-card);
+    color: var(--fx-text-strong);
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
 
@@ -44,7 +44,7 @@
     align-items: center;
     gap: 14px;
     padding: 18px 24px;
-    border-bottom: 1px solid #eceef3;
+    border-bottom: 1px solid var(--fx-border);
     flex: none;
 
     &__icon {
@@ -52,8 +52,8 @@
         height: 44px;
         flex: none;
         border-radius: 12px;
-        background: linear-gradient(135deg, #eaf1ff, #dbe6ff);
-        color: #2f6bff;
+        background: linear-gradient(135deg, var(--fx-blue-soft-bg), var(--fx-blue-soft-bg-2));
+        color: var(--fx-blue-text);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -77,11 +77,11 @@
 
     &__subtitle {
         font-size: 12px;
-        color: #8a93a3;
+        color: var(--fx-text-subtle);
         margin-top: 2px;
 
         strong {
-            color: #5b6678;
+            color: var(--fx-text-muted);
             font-weight: 700;
         }
     }
@@ -91,9 +91,9 @@
         height: 34px;
         flex: none;
         border-radius: 9px;
-        border: 1px solid #eceef3;
-        background: #fafbfc;
-        color: #5b6678;
+        border: 1px solid var(--fx-border);
+        background: var(--fx-bg-surface);
+        color: var(--fx-text-muted);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -105,7 +105,7 @@
             height: 17px;
         }
         &:hover {
-            background: #f1f2f4;
+            background: var(--fx-bg-surface-2);
         }
     }
 }
@@ -120,8 +120,8 @@
 
 // ── Section rail ─────────────────────────────────────────────────────
 .pv-rail {
-    border-right: 1px solid #eceef3;
-    background: #fafbfd;
+    border-right: 1px solid var(--fx-border);
+    background: var(--fx-bg-surface);
     padding: 14px 12px;
     display: flex;
     flex-direction: column;
@@ -132,7 +132,7 @@
         font-size: 10.5px;
         letter-spacing: 1px;
         font-weight: 700;
-        color: #9aa2b1;
+        color: var(--fx-text-subtle);
         padding: 6px 10px 8px;
     }
 
@@ -149,7 +149,7 @@
         font-weight: 600;
         text-align: left;
         background: transparent;
-        color: #4a5364;
+        color: var(--fx-slate-soft-fg);
         transition: background 0.12s ease, color 0.12s ease;
 
         svg {
@@ -159,12 +159,12 @@
         }
 
         &:hover:not(.pv-rail__item--active) {
-            background: #f1f3f8;
+            background: var(--fx-bg-page);
         }
 
         &--active {
-            background: #eef3ff;
-            color: #2f6bff;
+            background: var(--fx-blue-soft-bg);
+            color: var(--fx-blue-text);
         }
     }
 
@@ -177,8 +177,8 @@
         height: 20px;
         padding: 0 6px;
         border-radius: 999px;
-        background: #eceef3;
-        color: #9aa2b1;
+        background: var(--fx-bg-surface-2);
+        color: var(--fx-text-subtle);
         font-size: 11px;
         font-weight: 700;
         display: flex;
@@ -186,8 +186,8 @@
         justify-content: center;
 
         &--active {
-            background: #dde8ff;
-            color: #2f6bff;
+            background: var(--fx-blue-soft-bg-2);
+            color: var(--fx-blue-text);
         }
     }
 }
@@ -204,7 +204,7 @@
         height: 9px;
     }
     &::-webkit-scrollbar-thumb {
-        background: #d6dae2;
+        background: var(--fx-border-strong);
         border-radius: 9px;
     }
     &::-webkit-scrollbar-track {
@@ -217,7 +217,7 @@
     font-size: 11px;
     letter-spacing: 1px;
     font-weight: 700;
-    color: #8b93a3;
+    color: var(--fx-text-subtle);
     margin-bottom: 16px;
 
     &--tight {
@@ -249,7 +249,7 @@
         display: block;
         font-size: 12.5px;
         font-weight: 600;
-        color: #3a4453;
+        color: var(--fx-slate-soft-fg);
         margin-bottom: 6px;
     }
     label.pv-label--sm {
@@ -259,33 +259,33 @@
 }
 
 .pv-req {
-    color: #e0567a;
+    color: var(--fx-red-text);
 }
 
 .pv-input {
     width: 100%;
-    border: 1px solid #e3e7ee;
+    border: 1px solid var(--fx-border);
     border-radius: 9px;
     padding: 11px 13px;
     font-size: 13.5px;
-    color: #1f2733;
-    background: #f8f9fb;
+    color: var(--fx-text-strong);
+    background: var(--fx-bg-surface);
     outline: none;
     font-family: inherit;
     transition: border-color 0.12s ease, box-shadow 0.12s ease,
         background 0.12s ease;
 
     &::placeholder {
-        color: #aab1bf;
+        color: var(--fx-text-subtle);
     }
     &:focus {
-        border-color: #2f6bff;
-        background: #fff;
+        border-color: var(--fx-blue);
+        background: var(--fx-bg-card);
         box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.12);
     }
 
     &--white {
-        background: #fff;
+        background: var(--fx-bg-card);
     }
     &--sm {
         padding: 9px 12px;
@@ -338,7 +338,7 @@
 }
 // Placeholder-state select text (the lighter "Sélectionner…" color)
 .pv-select--placeholder {
-    color: #6b7384;
+    color: var(--fx-text-muted);
 }
 
 // ── p-calendar → design date field ───────────────────────────────────
@@ -355,24 +355,24 @@
         flex: 1;
         min-width: 0;
         width: 100%;
-        border: 1px solid #e3e7ee;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
         padding: 11px 13px;
         font-size: 13.5px;
-        color: #1f2733;
-        background: #f8f9fb;
+        color: var(--fx-text-strong);
+        background: var(--fx-bg-surface);
         box-shadow: none;
         font-family: inherit;
 
         &::placeholder {
-            color: #aab1bf;
+            color: var(--fx-text-subtle);
         }
         &:enabled:hover {
-            border-color: #2f6bff;
+            border-color: var(--fx-blue);
         }
         &:enabled:focus {
-            border-color: #2f6bff;
-            background: #fff;
+            border-color: var(--fx-blue);
+            background: var(--fx-bg-card);
             box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.12);
             outline: 0;
         }
@@ -382,21 +382,21 @@
         flex: none;
         border: none;
         border-radius: 9px;
-        background: #2f6bff;
-        color: #fff;
+        background: var(--fx-blue);
+        color: var(--fx-text-on-accent);
         transition: background 0.12s ease;
 
         &:enabled:hover {
-            background: #1f57e6;
+            background: var(--fx-blue-strong);
         }
         .p-button-icon {
-            color: #fff;
+            color: var(--fx-text-on-accent);
             font-size: 0.95rem;
         }
     }
 
     &.pv-cal--sm .p-inputtext {
-        background: #fff;
+        background: var(--fx-bg-card);
         padding: 9px 12px;
         font-size: 13px;
     }
@@ -407,9 +407,9 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border: 1px solid #cfdcff;
-    background: #f4f7ff;
-    color: #2f6bff;
+    border: 1px solid var(--fx-blue-soft-bd);
+    background: var(--fx-blue-soft-bg);
+    color: var(--fx-blue-text);
     font-weight: 600;
     font-size: 12.5px;
     padding: 7px 12px;
@@ -423,7 +423,7 @@
         height: 14px;
     }
     &:hover {
-        background: #e9f0ff;
+        background: var(--fx-blue-soft-bg);
     }
 }
 
@@ -449,9 +449,9 @@
 .pv-remove {
     width: 42px;
     flex: none;
-    border: 1px solid #f2d5d5;
-    background: #fdf4f4;
-    color: #d65a5a;
+    border: 1px solid var(--fx-red-soft-bd);
+    background: var(--fx-red-soft-bg);
+    color: var(--fx-red-text);
     border-radius: 9px;
     cursor: pointer;
     display: flex;
@@ -464,7 +464,7 @@
         height: 16px;
     }
     &:hover:not(:disabled) {
-        background: #fbeaea;
+        background: var(--fx-red-soft-bg);
     }
     &:disabled {
         opacity: 0.45;
@@ -477,10 +477,10 @@
 
 // ── Cards (points / actions) ─────────────────────────────────────────
 .pv-card {
-    border: 1px solid #ebeef3;
+    border: 1px solid var(--fx-border);
     border-radius: 12px;
     padding: 14px;
-    background: #fbfcfd;
+    background: var(--fx-bg-surface);
 
     &__row {
         display: flex;
@@ -505,7 +505,7 @@
     gap: 6px;
     border: none;
     background: none;
-    color: #d65a5a;
+    color: var(--fx-red-text);
     font-weight: 600;
     font-size: 12.5px;
     cursor: pointer;
@@ -533,8 +533,8 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    background: #eef3ff;
-    color: #2f6bff;
+    background: var(--fx-blue-soft-bg);
+    color: var(--fx-blue-text);
     font-size: 12.5px;
     font-weight: 600;
     padding: 6px 8px 6px 12px;
@@ -557,20 +557,20 @@
 :host ::ng-deep .pv-multiselect.p-multiselect {
     width: 100%;
     border-radius: 9px;
-    border-color: #d7dce5;
+    border-color: var(--fx-border-strong);
 
     &:not(.p-disabled).p-focus {
-        border-color: #3b82f6;
+        border-color: var(--fx-blue);
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
     }
     .p-multiselect-label {
         font-size: 13.5px;
-        color: #2a3340;
+        color: var(--fx-text-strong);
         padding: 9px 12px;
     }
     .p-multiselect-token {
-        background: #eef3ff;
-        color: #2563eb;
+        background: var(--fx-blue-soft-bg);
+        color: var(--fx-blue-text);
         font-weight: 600;
     }
 }
@@ -581,10 +581,10 @@
     gap: 8px;
     margin-top: 8px;
     font-size: 12.5px;
-    color: #64748b;
+    color: var(--fx-text-muted);
 
     &--warn {
-        color: #b45309;
+        color: var(--fx-amber-text);
     }
     &__retry {
         border: 1px solid currentColor;
@@ -614,15 +614,15 @@
     align-items: center;
     gap: 12px;
     padding: 8px 10px 8px 14px;
-    background: #f8fafc;
-    border: 1px solid #eceef3;
+    background: var(--fx-bg-surface);
+    border: 1px solid var(--fx-border);
     border-radius: 10px;
 
     &__name {
         flex: 1 1 auto;
         font-size: 13.5px;
         font-weight: 600;
-        color: #334155;
+        color: var(--fx-text-strong);
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -633,7 +633,7 @@
         cursor: pointer;
         border: none;
         background: transparent;
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         font-size: 13px;
         line-height: 1;
         padding: 4px;
@@ -641,8 +641,8 @@
         transition: color 0.12s ease, background 0.12s ease;
 
         &:hover {
-            color: #334155;
-            background: #eceef3;
+            color: var(--fx-text-strong);
+            background: var(--fx-bg-surface-2);
         }
     }
 }
@@ -652,8 +652,8 @@
     flex: 0 0 auto;
     gap: 4px;
     padding: 3px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
+    background: var(--fx-bg-card);
+    border: 1px solid var(--fx-border);
     border-radius: 8px;
 
     &__opt {
@@ -661,7 +661,7 @@
         cursor: pointer;
         border: none;
         background: transparent;
-        color: #64748b;
+        color: var(--fx-text-muted);
         font: inherit;
         font-size: 12px;
         font-weight: 600;
@@ -670,10 +670,10 @@
         transition: background 0.12s ease, color 0.12s ease;
 
         &:hover:not(.pv-statut__opt--on) {
-            background: #f1f5f9;
+            background: var(--fx-bg-surface-2);
         }
         &--on {
-            color: #fff;
+            color: var(--fx-text-on-accent);
             background: var(--c);
         }
     }
@@ -683,7 +683,7 @@
 .pv-intro {
     font-size: 12.5px;
     line-height: 1.55;
-    color: #6b7384;
+    color: var(--fx-text-muted);
     margin: 0 0 16px;
 }
 
@@ -697,7 +697,7 @@
     &__eyebrow {
         font-size: 11px;
         font-weight: 700;
-        color: #8b93a3;
+        color: var(--fx-text-subtle);
         letter-spacing: 0.6px;
         margin-right: 2px;
     }
@@ -717,7 +717,7 @@
         height: 17px;
         padding: 0 4px;
         border-radius: 999px;
-        color: #fff;
+        color: var(--fx-text-on-accent);
         font-size: 10px;
         font-weight: 700;
         display: flex;
@@ -728,7 +728,7 @@
     &__total {
         margin-left: auto;
         font-size: 12px;
-        color: #6b7384;
+        color: var(--fx-text-muted);
     }
 }
 
@@ -739,11 +739,11 @@
 }
 
 .pv-panel {
-    border: 1px solid #ebeef3;
-    border-left: 3px solid #2f6bff; // overridden inline per family
+    border: 1px solid var(--fx-border);
+    border-left: 3px solid var(--fx-blue); // overridden inline per family
     border-radius: 11px;
     overflow: hidden;
-    background: #fff;
+    background: var(--fx-bg-card);
 
     &__head {
         width: 100%;
@@ -755,17 +755,17 @@
         cursor: pointer;
         font-family: inherit;
         text-align: left;
-        background: #fafbfd; // overridden inline when ≥1 cause
+        background: var(--fx-bg-surface); // overridden inline when ≥1 cause
     }
 
     &__name {
         font-size: 13.5px;
         font-weight: 700;
-        color: #2a3340;
+        color: var(--fx-text-strong);
     }
     &__desc {
         font-size: 11.5px;
-        color: #9aa2b1;
+        color: var(--fx-text-subtle);
     }
     &__count {
         margin-left: auto;
@@ -773,7 +773,7 @@
         height: 22px;
         padding: 0 7px;
         border-radius: 999px;
-        color: #fff;
+        color: var(--fx-text-on-accent);
         font-size: 11.5px;
         font-weight: 700;
         display: flex;
@@ -801,7 +801,7 @@
     align-items: center;
     gap: 11px;
     padding: 8px 0;
-    border-bottom: 1px solid #f2f3f6;
+    border-bottom: 1px solid var(--fx-border);
 
     &__label {
         flex: none;
@@ -812,11 +812,11 @@
         flex: none;
         width: 180px;
         border: none;
-        border-bottom: 1px solid #e3e7ee;
+        border-bottom: 1px solid var(--fx-border);
         padding: 4px 2px;
         font-size: 13px;
         outline: none;
-        color: #2a3340;
+        color: var(--fx-text-strong);
         background: none;
         font-family: inherit;
     }
@@ -824,21 +824,21 @@
     &__detail {
         flex: 1;
         min-width: 0;
-        border: 1px solid #e3e7ee;
+        border: 1px solid var(--fx-border);
         border-radius: 8px;
         padding: 7px 10px;
         font-size: 12.5px;
         outline: none;
-        background: #f8f9fb;
-        color: #2a3340;
+        background: var(--fx-bg-surface);
+        color: var(--fx-text-strong);
         font-family: inherit;
 
         &::placeholder {
-            color: #aab1bf;
+            color: var(--fx-text-subtle);
         }
         &:focus {
-            border-color: var(--fam, #2f6bff);
-            background: #fff;
+            border-color: var(--fam, var(--fx-blue));
+            background: var(--fx-bg-card);
             box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.1);
         }
     }
@@ -849,7 +849,7 @@
         height: 28px;
         border: none;
         background: none;
-        color: #c4b1b1;
+        color: var(--fx-text-subtle);
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -862,8 +862,8 @@
             height: 14px;
         }
         &:hover {
-            color: #d65a5a;
-            background: #fdf4f4;
+            color: var(--fx-red-text);
+            background: var(--fx-red-soft-bg);
         }
     }
 }
@@ -872,8 +872,8 @@
     width: 20px;
     height: 20px;
     flex: none;
-    border: 2px solid #cdd3dd;
-    background: #fff;
+    border: 2px solid var(--fx-border-strong);
+    background: var(--fx-bg-card);
     border-radius: 6px;
     cursor: pointer;
     display: flex;
@@ -889,7 +889,7 @@
 
 .pv-autre {
     margin-top: 11px;
-    border: 1px dashed #d4dae3;
+    border: 1px dashed var(--fx-border-strong);
     background: none;
     font-size: 12px;
     font-weight: 600;
@@ -918,16 +918,16 @@
     justify-content: flex-end;
     gap: 12px;
     padding: 14px 24px;
-    border-top: 1px solid #eceef3;
-    background: #fbfcfd;
+    border-top: 1px solid var(--fx-border);
+    background: var(--fx-bg-surface);
     flex: none;
 }
 
 .pv-btn-cancel {
     padding: 10px 20px;
-    border: 1px solid #d9dde4;
-    background: #fff;
-    color: #3a4453;
+    border: 1px solid var(--fx-border);
+    background: var(--fx-bg-card);
+    color: var(--fx-slate-soft-fg);
     font-weight: 600;
     font-size: 13.5px;
     border-radius: 10px;
@@ -936,7 +936,7 @@
     transition: background 0.12s ease;
 
     &:hover:not(:disabled) {
-        background: #f4f5f7;
+        background: var(--fx-bg-page);
     }
     &:disabled {
         opacity: 0.6;
@@ -950,8 +950,8 @@
     gap: 8px;
     padding: 10px 22px;
     border: none;
-    background: #2f6bff;
-    color: #fff;
+    background: var(--fx-blue);
+    color: var(--fx-text-on-accent);
     font-weight: 600;
     font-size: 13.5px;
     border-radius: 10px;
@@ -965,7 +965,7 @@
         height: 16px;
     }
     &:hover:not(:disabled) {
-        background: #1f57e6;
+        background: var(--fx-blue-strong);
     }
     &:disabled {
         opacity: 0.7;
@@ -977,7 +977,7 @@
     width: 15px;
     height: 15px;
     border: 2px solid rgba(255, 255, 255, 0.4);
-    border-top-color: #fff;
+    border-top-color: var(--fx-bg-card);
     border-radius: 50%;
     animation: pv-spin 0.7s linear infinite;
 
@@ -985,7 +985,7 @@
         width: 13px;
         height: 13px;
         border-color: rgba(59, 130, 246, 0.25);
-        border-top-color: #3b82f6;
+        border-top-color: var(--fx-blue);
     }
 }
 
@@ -1008,7 +1008,7 @@
         flex-direction: row;
         flex-wrap: wrap;
         border-right: none;
-        border-bottom: 1px solid #eceef3;
+        border-bottom: 1px solid var(--fx-border);
         gap: 6px;
 
         &__eyebrow {

@@ -128,8 +128,8 @@ import {
         width: 48px;
         height: 48px;
         border-radius: 50%;
-        background: #e2e8f0;
-        color: #64748b;
+        background: var(--fx-bg-surface-2);
+        color: var(--fx-text-muted);
         font-weight: 700;
         font-size: 1.2rem;
         flex-shrink: 0;
@@ -138,23 +138,23 @@ import {
         margin: 0;
         font-size: 1.3rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
         letter-spacing: -0.015em;
         line-height: 1.2;
       }
       .step__head p {
         margin: 0.3rem 0 0;
         font-size: 0.95rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
         line-height: 1.35;
       }
 
       .picker {
         margin-bottom: 1.35rem;
         padding: 1.15rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 11px;
-        background: #f8fafc;
+        background: var(--fx-bg-surface);
       }
       .picker__row {
         display: grid;
@@ -169,7 +169,7 @@ import {
       .field label {
         font-size: 0.85rem;
         font-weight: 650;
-        color: #334155;
+        color: var(--fx-text-strong);
         margin-bottom: 0.42rem;
       }
 
@@ -187,41 +187,41 @@ import {
         border: 1px solid transparent;
         white-space: nowrap;
       }
-      .btn--primary { background: #3b82f6; color: #ffffff; border-color: #2563eb; }
-      .btn--primary:hover { background: #2563eb; }
+      .btn--primary { background: var(--fx-blue); color: var(--fx-text-on-accent); border-color: var(--fx-blue-strong); }
+      .btn--primary:hover { background: var(--fx-blue-strong); }
 
       .table-wrap {
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 10px;
         overflow: hidden;
       }
       .table-head {
         padding: 0.85rem 1.1rem;
-        background: #f8fafc;
-        border-bottom: 1px solid #e2e8f0;
+        background: var(--fx-bg-surface);
+        border-bottom: 1px solid var(--fx-border);
       }
       .table-head strong {
         font-size: 0.92rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
       }
       .table { width: 100%; border-collapse: collapse; }
       .table th, .table td {
         padding: 0.75rem 1.05rem;
         font-size: 0.92rem;
         text-align: left;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--fx-border);
       }
       .table th {
-        background: #ffffff;
-        color: #64748b;
+        background: var(--fx-bg-card);
+        color: var(--fx-text-muted);
         font-weight: 650;
         font-size: 0.78rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
       .table tbody tr:last-child td { border-bottom: none; }
-      .ref { color: #475569; font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.88rem; }
+      .ref { color: var(--fx-text-muted); font-family: 'JetBrains Mono', 'Menlo', monospace; font-size: 0.88rem; }
       .qty { width: 110px; text-align: right; }
       .act { width: 56px; text-align: right; }
       .btn-icon {
@@ -232,7 +232,7 @@ import {
         border-radius: 7px;
         border: 1px solid transparent;
         background: transparent;
-        color: #ef4444;
+        color: var(--fx-red-text);
         cursor: pointer;
       }
       .btn-icon:hover { background: rgba(239, 68, 68, 0.08); }
@@ -245,18 +245,18 @@ import {
         gap: 0.45rem;
         min-height: 200px;
         padding: 2.5rem 1rem;
-        border: 1px dashed #cbd5e1;
+        border: 1px dashed var(--fx-border-strong);
         border-radius: 10px;
-        color: #64748b;
+        color: var(--fx-text-muted);
         text-align: center;
       }
-      .empty i { font-size: 1.6rem; color: #94a3b8; }
-      .empty strong { font-size: 0.98rem; color: #334155; }
+      .empty i { font-size: 1.6rem; color: var(--fx-text-subtle); }
+      .empty strong { font-size: 0.98rem; color: var(--fx-text-strong); }
       .empty span { font-size: 0.9rem; line-height: 1.4; }
 
       :host ::ng-deep .sav-diag-dropdown { width: 100%; }
       :host ::ng-deep .sav-diag-dropdown .p-dropdown {
-        border-color: #e2e8f0;
+        border-color: var(--fx-border);
         border-radius: 9px;
         min-height: 48px;
       }

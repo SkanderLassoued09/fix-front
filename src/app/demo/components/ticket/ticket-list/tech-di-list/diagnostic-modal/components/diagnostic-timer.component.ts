@@ -27,15 +27,15 @@ import { TimerDisplayState } from '../diagnostic-modal.types';
         gap: 0.45rem;
         padding: 0.32rem 0.65rem;
         border-radius: 8px;
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        color: #475569;
+        background: var(--fx-bg-surface-2);
+        border: 1px solid var(--fx-border);
+        color: var(--fx-text-muted);
         font-size: 0.78rem;
       }
       .sav-diag-timer--running {
         background: rgba(34, 197, 94, 0.1);
         border-color: rgba(34, 197, 94, 0.35);
-        color: #15803d;
+        color: var(--fx-green-soft-fg);
       }
       .sav-diag-timer__value {
         font-variant-numeric: tabular-nums;

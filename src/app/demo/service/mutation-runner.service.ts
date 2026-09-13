@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Apollo } from 'apollo-angular';
-import { MessageService } from 'primeng/api';
 import { firstValueFrom } from 'rxjs';
+import { NotifyService } from '../../shared/ui/notify.service';
 import { filter, take } from 'rxjs/operators';
 
 /** One mutation in a (possibly serialized) chain. */
@@ -49,7 +49,7 @@ export class MutationRunner {
 
     constructor(
         private readonly apollo: Apollo,
-        private readonly toast: MessageService,
+        private readonly notify: NotifyService,
     ) {}
 
     /** True while a run with this key is in flight (for `[disabled]` binding). */
@@ -89,18 +89,19 @@ export class MutationRunner {
                 last = frame?.data;
             }
             if (opts.successToast) {
-                this.toast.add({ severity: 'success', ...opts.successToast });
+                this.notify.success(opts.successToast.detail, {
+                    summary: opts.successToast.summary,
+                });
             }
             return last;
         } catch (err) {
             if (opts.errorToast !== null) {
-                this.toast.add({
-                    severity: 'error',
-                    summary: opts.errorToast?.summary ?? 'Erreur',
-                    detail:
-                        opts.errorToast?.detail ??
-                        'Opération impossible. Réessayez.',
-                });
+                this.notify.error(
+                    opts.errorToast?.detail ?? 'Opération impossible. Réessayez.',
+                    opts.errorToast?.summary
+                        ? { summary: opts.errorToast.summary }
+                        : undefined,
+                );
             }
             throw err;
         } finally {
@@ -114,9 +115,20 @@ export class MutationRunner {
         opts: Omit<RunChainOptions, 'steps'> & {
             mutation: any;
             variables?: Record<string, any>;
+            /**
+             * Same guard as `SafeMutationStep.check`. It used to be silently
+             * dropped here, so single-mutation callers had no way to reject a
+             * 200-with-garbage payload — a backend that returned an Error
+             * object serialized as all-null fields with NO `errors` array was
+             * reported to the user as a success.
+             */
+            check?: SafeMutationStep['check'];
         },
     ): Promise<any> {
-        const { mutation, variables, ...rest } = opts;
-        return this.runChain({ ...rest, steps: [{ mutation, variables }] });
+        const { mutation, variables, check, ...rest } = opts;
+        return this.runChain({
+            ...rest,
+            steps: [{ mutation, variables, check }],
+        });
     }
 }

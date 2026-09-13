@@ -1,0 +1,277 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Jetons de couleur de l'application (clair / sombre)
+   ───────────────────────────────────────────────────────────────────────────
+   Source unique des couleurs du code applicatif. Les valeurs « claires » sont
+   exactement la palette déjà en place (slate/bleu Tailwind) : passer un
+   composant aux jetons ne doit RIEN changer visuellement en mode clair.
+
+   Le crochet sombre est `html.app-dark`, pas `.layout-theme-dark` :
+   `.layout-theme-dark` est posé sur `.layout-wrapper`, or ~29 surcouches
+   `appendTo="body"` (dialogues, listes déroulantes, calendriers, toasts, menu
+   utilisateur) sont rendues HORS de ce wrapper et n'hériteraient pas.
+
+   Les surfaces sombres reprennent celles de lara-dark-blue (ground #111827,
+   card #1f2937) pour que les cartes `sav-*` maison et les `p-card`/`p-dialog`
+   de PrimeNG reposent sur le même plan.
+
+   ┌─ Choisir le bon jeton pour une teinte ────────────────────────────────┐
+   │  --fx-H          aplat : fond de bouton, pastille pleine, série de    │
+   │                  graphique. Reste saturé en sombre → le texte blanc   │
+   │                  posé dessus reste lisible.                           │
+   │  --fx-H-strong   aplat plus soutenu (survol, dégradé).                │
+   │  --fx-H-text     la MÊME teinte en texte ou icône sur un fond de      │
+   │                  carte/page. Éclaircie en sombre, sinon illisible.    │
+   │  --fx-H-soft-*   triplet de pastille (fond teinté / texte / bordure). │
+   │  --fx-text-on-accent  texte posé SUR un aplat --fx-H : blanc partout. │
+   └───────────────────────────────────────────────────────────────────────┘
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Police de l'application — Inter, servie EN LOCAL
+   ───────────────────────────────────────────────────────────────────────────
+   Fichiers repris de `theme/tailwind-light/fonts/` (déjà versionnés, thème
+   jamais chargé) et recopiés dans `assets/fonts/inter/`. Le poids 800 n'existe
+   pas en local : il reste fourni par le <link> Google Fonts d'`index.html`,
+   conservé comme filet.
+
+   `local('')` en premier : force le téléchargement du .woff2 plutôt que de
+   piocher une Inter système d'une version inconnue. `swap` : le texte s'affiche
+   immédiatement dans la police de repli, sans page blanche.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: local(''), url('../../fonts/inter/Inter-Light.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: local(''), url('../../fonts/inter/Inter-Regular.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: local(''), url('../../fonts/inter/Inter-Medium.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: local(''), url('../../fonts/inter/Inter-SemiBold.woff2') format('woff2');
+}
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: local(''), url('../../fonts/inter/Inter-Bold.woff2') format('woff2');
+}
+
+:root {
+    /* ── Police ──────────────────────────────────────────────────────────────
+       Police de TOUTE l'application. Surcharge le `--font-family` du thème
+       PrimeNG, qui pointe sur « Inter var » — une famille dont le @font-face
+       est en 404 (les dossiers `lara-light-blue/` et `lara-dark-blue/` ne
+       contiennent QUE `theme.css`, aucun `fonts/`). L'app retombait donc
+       silencieusement sur le sans-serif générique, d'où la quarantaine de
+       `font-family: 'Inter'` réécrits à la main dans les composants.
+
+       Ce jeton suffit à couvrir l'app : `_main.scss` l'applique à `body`, le
+       thème PrimeNG le lit pour ses composants, et tout le reste hérite — y
+       compris les surcouches `appendTo="body"` (dialogues, listes déroulantes,
+       toasts, menus), qui sont bien des enfants de `body`.
+
+       Le bundle Angular est injecté APRÈS <link id="theme-css"> : à spécificité
+       égale il gagne la cascade, donc la surcharge tient aussi après une
+       bascule clair/sombre. Ne JAMAIS rebundler un theme.css pour autant. */
+    --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto,
+        sans-serif;
+
+    /* ── Surfaces ────────────────────────────────────────────────────────── */
+    --fx-bg-page: #f1f5f9;
+    --fx-bg-card: #ffffff;
+    --fx-bg-surface: #f8fafc;
+    --fx-bg-surface-2: #f1f5f9;
+    --fx-bg-hover: #f1f5f9;
+    --fx-bg-input: #ffffff;
+
+    /* ── Traits ──────────────────────────────────────────────────────────── */
+    --fx-border: #e2e8f0;
+    --fx-border-strong: #cbd5e1;
+
+    /* ── Texte ───────────────────────────────────────────────────────────── */
+    --fx-text: #0f172a;
+    --fx-text-strong: #1e293b;
+    --fx-text-muted: #64748b;
+    --fx-text-muted-strong: #475569;
+    --fx-text-subtle: #94a3b8;
+    /* Texte posé sur un aplat coloré : blanc dans les deux modes, car les
+       aplats --fx-H restent saturés en sombre. */
+    --fx-text-on-accent: #ffffff;
+
+    /* ── Aplats ──────────────────────────────────────────────────────────── */
+    --fx-blue: #3b82f6;
+    --fx-blue-strong: #2563eb;
+    --fx-green: #16a34a;
+    --fx-green-strong: #15803d;
+    --fx-red: #dc2626;
+    --fx-red-strong: #b91c1c;
+    --fx-amber: #d97706;
+    --fx-amber-strong: #b45309;
+    --fx-orange: #f97316;
+    --fx-purple: #7c3aed;
+    --fx-cyan: #0891b2;
+
+    /* ── Teintes en texte / icône sur fond de carte ──────────────────────── */
+    --fx-blue-text: #2563eb;
+    --fx-green-text: #16a34a;
+    --fx-red-text: #dc2626;
+    --fx-amber-text: #b45309;
+    --fx-orange-text: #ea580c;
+    --fx-purple-text: #7c3aed;
+    --fx-cyan-text: #0e7490;
+
+    /* ── Pastilles de statut ─────────────────────────────────────────────────
+       Trois jetons par teinte : en sombre le couple pastel/foncé ne peut pas
+       être simplement assombri, il s'inverse (teinte translucide + texte clair). */
+    --fx-blue-soft-bg: #eff6ff;
+    --fx-blue-soft-fg: #1e40af;
+    --fx-blue-soft-bg-2: #dbeafe;
+    --fx-blue-soft-bd: #bfdbfe;
+
+    --fx-green-soft-bg: #f0fdf4;
+    --fx-green-soft-fg: #14532d;
+    --fx-green-soft-bg-2: #dcfce7;
+    --fx-green-soft-bd: #bbf7d0;
+
+    --fx-red-soft-bg: #fef2f2;
+    --fx-red-soft-fg: #991b1b;
+    --fx-red-soft-bg-2: #fee2e2;
+    --fx-red-soft-bd: #fecaca;
+
+    --fx-amber-soft-bg: #fffbeb;
+    --fx-amber-soft-fg: #92400e;
+    --fx-amber-soft-bg-2: #fef3c7;
+    --fx-amber-soft-bd: #fde68a;
+
+    --fx-purple-soft-bg: #f5f3ff;
+    --fx-purple-soft-fg: #6d28d9;
+    --fx-purple-soft-bg-2: #ede9fe;
+    --fx-purple-soft-bd: #ddd6fe;
+
+    --fx-cyan-soft-bg: #ecfeff;
+    --fx-cyan-soft-bg-2: #cffafe;
+    --fx-cyan-soft-fg: #155e75;
+    --fx-cyan-soft-bd: #a5f3fc;
+
+    --fx-slate-soft-bg: #f1f5f9;
+    --fx-slate-soft-fg: #475569;
+    --fx-slate-soft-bg-2: #e2e8f0;
+    --fx-slate-soft-bd: #e2e8f0;
+
+    /* ── Élévation ───────────────────────────────────────────────────────── */
+    --fx-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+    --fx-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+    --fx-shadow-lg: 0 10px 30px rgba(15, 23, 42, 0.12);
+
+    /* ── Voiles / incrustations ──────────────────────────────────────────── */
+    --fx-overlay-weak: rgba(15, 23, 42, 0.04);
+    --fx-overlay: rgba(15, 23, 42, 0.08);
+}
+
+html.app-dark {
+    /* ── Surfaces ────────────────────────────────────────────────────────── */
+    --fx-bg-page: #111827;
+    --fx-bg-card: #1f2937;
+    --fx-bg-surface: #1a2331;
+    --fx-bg-surface-2: #263244;
+    --fx-bg-hover: #2b3849;
+    --fx-bg-input: #182230;
+
+    /* ── Traits ──────────────────────────────────────────────────────────── */
+    --fx-border: #374151;
+    --fx-border-strong: #4b5563;
+
+    /* ── Texte ───────────────────────────────────────────────────────────── */
+    --fx-text: #e5e7eb;
+    --fx-text-strong: #f9fafb;
+    --fx-text-muted: #b4bbc6;
+    --fx-text-muted-strong: #cbd5e1;
+    --fx-text-subtle: #9ca3af;
+    --fx-text-on-accent: #ffffff;
+
+    /* ── Aplats : volontairement inchangés. Un aplat éclairci porterait mal
+       le texte blanc ; c'est --fx-H-text qui s'éclaircit, pas l'aplat. ──── */
+    --fx-blue: #3b82f6;
+    --fx-blue-strong: #2563eb;
+    --fx-green: #16a34a;
+    --fx-green-strong: #15803d;
+    --fx-red: #dc2626;
+    --fx-red-strong: #b91c1c;
+    --fx-amber: #d97706;
+    --fx-amber-strong: #b45309;
+    --fx-orange: #ea580c;
+    --fx-purple: #7c3aed;
+    --fx-cyan: #0891b2;
+
+    /* ── Teintes en texte / icône : remontées pour tenir sur fond sombre. ── */
+    --fx-blue-text: #60a5fa;
+    --fx-green-text: #4ade80;
+    --fx-red-text: #f87171;
+    --fx-amber-text: #fbbf24;
+    --fx-orange-text: #fb923c;
+    --fx-purple-text: #a78bfa;
+    --fx-cyan-text: #22d3ee;
+
+    /* ── Pastilles de statut : teinte translucide + texte clair. ─────────── */
+    --fx-blue-soft-bg: rgba(59, 130, 246, 0.16);
+    --fx-blue-soft-fg: #93c5fd;
+    --fx-blue-soft-bg-2: rgba(59, 130, 246, 0.26);
+    --fx-blue-soft-bd: rgba(59, 130, 246, 0.35);
+
+    --fx-green-soft-bg: rgba(34, 197, 94, 0.16);
+    --fx-green-soft-fg: #86efac;
+    --fx-green-soft-bg-2: rgba(34, 197, 94, 0.26);
+    --fx-green-soft-bd: rgba(34, 197, 94, 0.35);
+
+    --fx-red-soft-bg: rgba(239, 68, 68, 0.16);
+    --fx-red-soft-fg: #fca5a5;
+    --fx-red-soft-bg-2: rgba(239, 68, 68, 0.26);
+    --fx-red-soft-bd: rgba(239, 68, 68, 0.35);
+
+    --fx-amber-soft-bg: rgba(245, 158, 11, 0.16);
+    --fx-amber-soft-fg: #fcd34d;
+    --fx-amber-soft-bg-2: rgba(245, 158, 11, 0.26);
+    --fx-amber-soft-bd: rgba(245, 158, 11, 0.35);
+
+    --fx-purple-soft-bg: rgba(139, 92, 246, 0.16);
+    --fx-purple-soft-fg: #c4b5fd;
+    --fx-purple-soft-bg-2: rgba(139, 92, 246, 0.26);
+    --fx-purple-soft-bd: rgba(139, 92, 246, 0.35);
+
+    --fx-cyan-soft-bg: rgba(6, 182, 212, 0.16);
+    --fx-cyan-soft-bg-2: rgba(6, 182, 212, 0.26);
+    --fx-cyan-soft-fg: #67e8f9;
+    --fx-cyan-soft-bd: rgba(6, 182, 212, 0.35);
+
+    --fx-slate-soft-bg: rgba(148, 163, 184, 0.14);
+    --fx-slate-soft-fg: #cbd5e1;
+    --fx-slate-soft-bg-2: rgba(148, 163, 184, 0.22);
+    --fx-slate-soft-bd: rgba(148, 163, 184, 0.3);
+
+    /* ── Élévation : en sombre l'ombre porte peu, elle est renforcée. ────── */
+    --fx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --fx-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45);
+    --fx-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
+
+    /* ── Voiles / incrustations ──────────────────────────────────────────── */
+    --fx-overlay-weak: rgba(255, 255, 255, 0.04);
+    --fx-overlay: rgba(255, 255, 255, 0.08);
+}

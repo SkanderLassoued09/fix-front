@@ -7,7 +7,6 @@ import { debounceTime, takeUntil } from 'rxjs/operators';
 import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
-import { ToastModule } from 'primeng/toast';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { InputTextModule } from 'primeng/inputtext';
 import { DiArchiveService } from 'src/app/demo/service/di-archive.service';
@@ -39,7 +38,6 @@ interface Option {
     TableModule,
     ButtonModule,
     TagModule,
-    ToastModule,
     MultiSelectModule,
     InputTextModule,
     DiArchiveDetailModalComponent,

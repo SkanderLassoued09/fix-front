@@ -6,14 +6,18 @@ import {
     OnInit,
     ViewChild,
 } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import {
+    FormControl,
+    FormGroup,
+    ValidatorFn,
+    Validators,
+} from '@angular/forms';
 import { TechRepairListComponent } from '../tech-repair-list/tech-repair-list.component';
 import {
     isDiagRunningStatus,
     isRepairRunningStatus,
 } from 'src/app/layout/api/status-di';
 import { Apollo } from 'apollo-angular';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { TicketService } from 'src/app/demo/service/ticket.service';
 import { MutationRunner } from 'src/app/demo/service/mutation-runner.service';
 import {
@@ -23,7 +27,20 @@ import {
 import { CreateComposantMutationResult } from './tech-di-list-interface';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { PageEvent } from '../../../profile/profile-list/profile-list.interfaces';
-import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
+import {
+    debounceTime,
+    distinctUntilChanged,
+    finalize,
+    Subject,
+    switchMap,
+    takeUntil,
+} from 'rxjs';
+import { TreeNode } from 'primeng/api';
+import {
+    ComposantNodeData,
+    ComposantTreeService,
+    MIN_SEARCH_LENGTH,
+} from 'src/app/demo/service/composant-tree.service';
 import * as moment from 'moment';
 import { environment } from 'src/environments/environment';
 import { TicketRefreshService } from 'src/app/demo/service/ticket-refresh.service';
@@ -38,16 +55,21 @@ import {
     isDiAssignedToMe,
     TechAssignmentKind,
 } from './tech-ownership.util';
+import { resolveComposantName } from './composant-selection.util';
 import {
     AutosaveHint,
     CategoryOption,
-    ComposantOption,
     DiagnosticContext,
     DiagnosticDiSummary,
+    DiagnosticPreviousCycle,
     DiagnosticProgress,
     DiagnosticStep,
     DiagnosticStepKey,
 } from './diagnostic-modal/diagnostic-modal.types';
+import { applyChartTheme } from '../../../../../shared/chart-theme';
+import { LayoutService } from '../../../../../layout/service/app.layout.service';
+import { NotifyService } from '../../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../../shared/ui/confirm.service';
 
 type TechDialogMode = 'diagnostic' | 'repair';
 
@@ -96,13 +118,25 @@ interface PersistedTechDialogState {
 /** Préremplissage du wizard de réparation (DI) + brouillon restitué. */
 interface RepairWizardPrefill {
     di_category_id?: string | null;
-    // `repairPlan` / `worksDone` : le wizard les accepte déjà en entrée ; ils
-    // servent à restituer un brouillon après une fermeture accidentelle.
-    repairPlan?: string;
+    // `worksDone` / `testsDone` : le wizard les accepte déjà en entrée ; ils
+    // servent à restituer un brouillon après une fermeture accidentelle. Les
+    // deux sont OBLIGATOIRES — les oublier ici rebloquerait « Fin réparation »
+    // sur des champs que le technicien avait déjà remplis.
     worksDone?: string;
+    testsDone?: string;
     remarqueExtra?: string;
     parts?: Array<{ nameComposant: string; reference?: string; quantity: number }>;
 }
+
+/**
+ * `Validators.required` accepte «   » : il ne rejette que `null`,
+ * `undefined` et la chaîne VIDE. Or le gate de l'assistant
+ * (`diagNextBlockedReason`) compare sur `.trim()`. Sans ce validateur, une
+ * description faite d'espaces serait déclarée VALIDE par le formulaire (champ
+ * vert) tout en laissant « Suivant » grisé : un blocage sans explication.
+ */
+const notBlank: ValidatorFn = (c) =>
+    String(c.value ?? '').trim() ? null : { required: true };
 
 @Component({
     selector: 'app-tech-di-list',
@@ -145,29 +179,34 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private activeDiagnosticDraft = false;
     private diagCategorySourceRef: any[] | null = null;
     private diagCategoryOptionsCache: CategoryOption[] = [];
-    private diagComposantSourceRef: any[] | null = null;
-    private diagComposantOptionsCache: ComposantOption[] = [];
 
     baseUrl = environment.apiUrl;
     selectedComposants: any[] = [];
     diagFormTech = new FormGroup({
         _idDi: new FormControl(),
         diag_time: new FormControl(),
-        remarqueTech: new FormControl(''),
-        // New diagnostic-modal fields (UI only — not yet wired to backend
-        // mutations). The redesigned wizard separates "description /
-        // symptômes / remarque" into three distinct textareas. The legacy
-        // `finish()` / `finishLogsDi()` mutations still consume only
-        // `remarqueTech`; the other two stay local until the backend is
-        // ready to receive them.
+        remarqueTech: new FormControl('', [Validators.required, notBlank]),
+        // Champs du wizard redessiné, qui éclate « description / symptômes /
+        // remarque » en trois zones de texte.
+        //
+        // `symptomes` reste LOCAL (aucun champ backend, non requis).
+        //
+        // `remarqueExtra` est OBLIGATOIRE et bel et bien persisté : il n'a pas
+        // de champ dédié côté back, il est donc concaténé à la description dans
+        // `composeRemarqueDiagnostic()` et part dans
+        // `remarque_tech_diagnostic`. `notBlank` en plus de `required` :
+        // `required` accepte une chaîne faite uniquement d'espaces.
         symptomes: new FormControl(''),
-        remarqueExtra: new FormControl(''),
+        remarqueExtra: new FormControl('', [Validators.required, notBlank]),
         isPdr: new FormControl(true),
         isReparable: new FormControl(true),
         isErrorFromFixtronix: new FormControl(false),
-        quantity: new FormControl(0),
+        // Le widget déclare `[min]="1"` : démarrer à 0 faisait échouer le
+        // TOUT PREMIER « Ajouter » (toast « quantité valide supérieure à 0 »)
+        // tant que le technicien n'avait pas touché au compteur.
+        quantity: new FormControl(1),
         composantSelectedDropdown: new FormControl(),
-        di_category_id: new FormControl(),
+        di_category_id: new FormControl(null, Validators.required),
         composantSelected: new FormControl(),
     });
 
@@ -197,6 +236,18 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         'neutral';
     diagCanMinimizeVm = false;
 
+    /** Création de catégorie en vol → spinner + bouton désactivé dans le panneau. */
+    diagCategoryCreating = false;
+    /**
+     * Compteur bumpé APRÈS une création (ou une sélection de doublon) réussie.
+     * L'étape « Panne » ferme son panneau quand la valeur change.
+     *
+     * Un signal explicite plutôt qu'une heuristique sur la valeur du
+     * formulaire : en cas d'ÉCHEC le panneau reste ouvert et le terme saisi
+     * n'est pas perdu.
+     */
+    diagCategoryCreatedTick = 0;
+
     /** Motif de blocage du bouton « Suivant » du modal diagnostic (null = pas de
      *  blocage). Gate GÉNÉRIQUE par étape : on ne quitte l'étape courante que si
      *  ses champs REQUIS sont renseignés (mêmes définitions que `diagSteps`). Le
@@ -209,15 +260,107 @@ export class TechDiListComponent implements OnInit, OnDestroy {
      *   - Info / Résumé : aucun gate (lecture seule / bouton « Terminer »).
      *  Garde miroir autoritaire côté back (`changeStatusMagasinEstimation`) contre
      *  tout contournement (saut d'étape via le stepper, appel API direct). */
+    /**
+     * SOURCE UNIQUE de « l'étape Panne est complète ».
+     *
+     * Trois consommateurs doivent rester d'accord, sinon l'écran se contredit :
+     * le bouton « Suivant » (`diagNextBlockedReason`), la pastille ✓ du stepper
+     * (`diagSteps`), et l'état d'erreur par champ de l'étape (piloté par les
+     * `Validators` du formulaire). Un « Suivant » actif au-dessus d'un champ
+     * rouge — ou l'inverse — est un bug de confiance, pas un détail.
+     *
+     * Le `.trim()` reflète exactement `notBlank` posé sur `remarqueTech`.
+     */
+    private get diagFailureComplete(): boolean {
+        const form = this.diagFormTech;
+        const filled = (name: string) =>
+            !!String(form.get(name)?.value ?? '').trim();
+        return (
+            !!form.get('di_category_id')?.value &&
+            filled('remarqueTech') &&
+            // `remarqueExtra` est obligatoire : il DOIT entrer ici en même
+            // temps que son Validator, sinon « Suivant » resterait actif
+            // au-dessus d'un champ rouge (cf. la règle ci-dessus).
+            filled('remarqueExtra')
+        );
+    }
+
+    /** `remarque_tech_diagnostic` = description de la panne + remarque
+     *  technicien.
+     *
+     *  `remarqueExtra` n'a AUCUN champ dédié côté backend. Sans cette
+     *  composition, la remarque — désormais obligatoire — serait saisie par le
+     *  technicien puis jetée à l'envoi. On la range donc sous la description,
+     *  dans le champ que le back et les écrans coordinatrice lisent déjà.
+     *
+     *  Utilisé par les QUATRE constructeurs de payload (les trois sorties de
+     *  clôture + le chemin pause) pour que le texte persisté ne dépende jamais
+     *  du bouton cliqué. */
+    private composeRemarqueDiagnostic(): string {
+        const raw = this.diagFormTech.getRawValue() as Record<string, any>;
+        const description = String(raw['remarqueTech'] ?? '').trim();
+        const extra = String(raw['remarqueExtra'] ?? '').trim();
+        return extra
+            ? `${description}${TechDiListComponent.REMARQUE_TECH_SEPARATOR}${extra}`
+            : description;
+    }
+
+    /** Séparateur partagé par `composeRemarqueDiagnostic` et son inverse. */
+    private static readonly REMARQUE_TECH_SEPARATOR =
+        '\n\nRemarque technicien :\n';
+
+    /** Inverse EXACT de `composeRemarqueDiagnostic` : redécoupe le texte
+     *  persisté en description + remarque technicien.
+     *
+     *  Sans lui, rouvrir un diagnostic mis en pause remettait le texte COMPOSÉ
+     *  dans « description » : la remarque technicien restait vide (« Suivant »
+     *  bloqué), ou la valeur restée en mémoire était recomposée une seconde fois
+     *  à la pause suivante. Coupe à la PREMIÈRE occurrence, sur le texte NON
+     *  rogné — une description vide donne un texte qui commence par le
+     *  séparateur. */
+    private splitRemarqueDiagnostic(stored: unknown): {
+        remarqueTech: string;
+        remarqueExtra: string;
+    } {
+        if (!this.cleanStr(stored)) {
+            return { remarqueTech: '', remarqueExtra: '' };
+        }
+        const text = String(stored);
+        const sep = TechDiListComponent.REMARQUE_TECH_SEPARATOR;
+        const at = text.indexOf(sep);
+        if (at < 0) {
+            return { remarqueTech: text.trim(), remarqueExtra: '' };
+        }
+        return {
+            remarqueTech: text.slice(0, at).trim(),
+            remarqueExtra: text.slice(at + sep.length).trim(),
+        };
+    }
+
+    /** Verdict ÉCRIT du technicien — exigé sur TOUTES les sorties de
+     *  diagnostic (les quatre boutons de clôture), pas seulement sur
+     *  « Suivant ». Renvoie la raison du blocage, ou `null` si tout est bon.
+     *
+     *  Lu via `getRawValue()` : c'est l'idiome de ce formulaire, dont certains
+     *  contrôles sont désactivés dynamiquement (`isPdr`) et disparaissent alors
+     *  de `.value`. */
+    get diagFinishBlockedReason(): string | null {
+        const raw = this.diagFormTech.getRawValue() as Record<string, any>;
+        const filled = (name: string) => !!String(raw[name] ?? '').trim();
+        if (!filled('remarqueTech')) {
+            return 'Renseignez la description de la panne (étape Panne).';
+        }
+        if (!filled('remarqueExtra')) {
+            return 'Renseignez la remarque technicien (étape Panne).';
+        }
+        return null;
+    }
+
     get diagNextBlockedReason(): string | null {
         const form = this.diagFormTech;
         switch (this.activeDiagStep) {
             case 'failure': {
-                const hasCategory = !!form.get('di_category_id')?.value;
-                const hasRemark = !!(form.get('remarqueTech')?.value ?? '')
-                    .toString()
-                    .trim();
-                return hasCategory && hasRemark
+                return this.diagFailureComplete
                     ? null
                     : 'Renseignez la catégorie de panne et la remarque du diagnostic.';
             }
@@ -539,8 +682,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
         return {
             ...base,
-            repairPlan: draft.value?.repairPlan ?? base.repairPlan ?? '',
             worksDone: draft.value?.worksDone ?? base.worksDone ?? '',
+            testsDone: draft.value?.testsDone ?? base.testsDone ?? '',
             remarqueExtra:
                 draft.value?.remarqueExtra ?? base.remarqueExtra ?? '',
             parts: draft.parts?.length ? [...draft.parts] : base.parts ?? [],
@@ -559,16 +702,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         if (!hasWork) {
             return Promise.resolve(true);
         }
-        return new Promise((resolve) => {
-            this.confirmationService.confirm({
-                header: 'Travail non enregistré',
-                message: detail,
-                icon: 'pi pi-exclamation-triangle',
-                acceptLabel: 'Fermer quand même',
-                rejectLabel: 'Annuler',
-                accept: () => resolve(true),
-                reject: () => resolve(false),
-            });
+        return this.confirm.ask('discard', {
+            message: detail,
+            header: 'Travail non enregistré',
+            acceptLabel: 'Fermer quand même',
         });
     }
 
@@ -611,11 +748,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }): Promise<void> {
         const diId = this.selectedRep || (this.di as any)?._idDi;
         if (!diId) {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Erreur',
-                detail: 'DI introuvable.',
-            });
+            this.notify.error('DI introuvable.');
             return;
         }
         const key = `repairFinish:${diId}`;
@@ -827,6 +960,18 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     composantList: Array<any> = [];
     composantSelected: any = null;
     composantCombo: Array<{ nameComposant: string; quantity: number }> = [];
+
+    // ── Picker de composants (arbre du modal diagnostic) ────────────────
+    /** Racines (catégories) ; les enfants arrivent à l'ouverture du nœud. */
+    diagComposantNodes: TreeNode[] = [];
+    /** Arbre ou branche en cours de chargement. */
+    diagTreeLoading = false;
+    /** Recherche serveur en vol. */
+    diagSearching = false;
+    /** Frappe de l'utilisateur dans le filtre de l'arbre. */
+    private readonly diagSearch$ = new Subject<string>();
+    /** Terme courant : '' = mode NAVIGATION (arbre par catégorie). */
+    private diagSearchTerm = '';
     selectedDi_id: any;
     initialOffset: number;
     isFinishedDiag: { [key: string]: boolean } = {};
@@ -939,18 +1084,31 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     emplacement: any;
     _idnum: any;
     allComposants: any[] = [];
+    /** Diagnostics des cycles antérieurs, en lecture seule — cf. `buildPreviousCycles`. */
+    diagPreviousCyclesVm: readonly DiagnosticPreviousCycle[] = [];
 
     constructor(
+        public layoutService: LayoutService,
         private ticketSerice: TicketService,
         private apollo: Apollo,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService,
+        private readonly notify: NotifyService,
+        private readonly confirm: ConfirmService,
         private notificationService: NotificationService,
         private cdr: ChangeDetectorRef,
         private ticketRefreshService: TicketRefreshService,
         private profileService: ProfileService,
         private readonly mutationRunner: MutationRunner,
+        private readonly composantTree: ComposantTreeService,
     ) {
+        // Chart.js dessine sur un canvas : il n'herite pas des variables CSS.
+        // Sans cette reapplication, axes et legende gardent les couleurs de
+        // l'ancien theme apres une bascule clair/sombre.
+        this.layoutService.configUpdate$.subscribe(() => {
+            if (this.options) {
+                this.options = applyChartTheme(this.options);
+            }
+        });
+
         this.idTech = localStorage.getItem('_id');
     }
 
@@ -1103,6 +1261,44 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .pipe(debounceTime(400), takeUntil(this.destroy$))
             .subscribe(() => {
                 this.loadData();
+            });
+
+        // Recherche profonde du picker : 400 ms (même contrat que les listes),
+        // puis interrogation DIRECTE du serveur sur les composants.
+        // `switchMap` et non `mergeMap` : il ANNULE la recherche précédente,
+        // sinon une réponse lente (« re ») écrase une réponse récente
+        // (« resis ») et l'arbre affiche autre chose que ce qui est tapé.
+        this.diagSearch$
+            .pipe(
+                debounceTime(400),
+                distinctUntilChanged(),
+                switchMap((term) => {
+                    this.diagSearchTerm = term;
+                    this.diagSearching = term.length >= MIN_SEARCH_LENGTH;
+                    this.refreshDiagnosticVm();
+                    return this.composantTree.search(
+                        term,
+                        this.addedComposantNames(),
+                    );
+                }),
+                takeUntil(this.destroy$),
+            )
+            .subscribe({
+                next: (nodes) => {
+                    this.diagSearching = false;
+                    // Terme redevenu trop court → on REVIENT à la navigation
+                    // par catégorie plutôt que d'afficher un arbre vide.
+                    if (this.diagSearchTerm.length < MIN_SEARCH_LENGTH) {
+                        this.loadDiagComposantCategories();
+                        return;
+                    }
+                    this.diagComposantNodes = nodes;
+                    this.refreshDiagnosticVm();
+                },
+                error: () => {
+                    this.diagSearching = false;
+                    this.refreshDiagnosticVm();
+                },
             });
 
         this.diagFormTech.valueChanges
@@ -1778,10 +1974,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     saveNewComposant() {
-        this.confirmationService.confirm({
-            message: 'Voulez-vous Ajouter ce composant ?',
-            header: 'Confirmation Ajout',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmCreate({
+            message: 'Voulez-vous ajouter ce composant ?',
+            header: 'Confirmer l’ajout',
+            acceptLabel: 'Ajouter',
             accept: () => {
                 const {
                     name,
@@ -2181,8 +2377,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.repairPrefill = this.withRepairDraft({
                 ...(this.repairPrefill ?? {}),
                 di_category_id: state.repairWizardValue.di_category_id ?? null,
-                repairPlan: state.repairWizardValue.repairPlan ?? '',
                 worksDone: state.repairWizardValue.worksDone ?? '',
+                testsDone: state.repairWizardValue.testsDone ?? '',
                 remarqueExtra: state.repairWizardValue.remarqueExtra ?? '',
                 parts: state.repairWizardParts ?? this.repairPrefill?.parts ?? [],
             });
@@ -2298,6 +2494,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return;
         }
         this.closeOppositeModal('diagnostic');
+        this.resetDiagnosticDraft(di?._id);
 
         try {
             const isRestoringDiagnostic =
@@ -2364,12 +2561,27 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     }
                 });
 
-            this.allComposants = [
-                ...diagnosticData.data.getDiById.di.array_composants,
-                ...(diagnosticData.data.getDiById.logsDi?.flatMap(
-                    (log) => log.array_composants,
-                ) ?? []),
-            ];
+            // Tableau d'HISTORIQUE « Composants originaux & retour ». Il reste
+            // volontairement transverse aux cycles, mais chaque ligne porte
+            // desormais SON cycle : l'ancienne version aplatissait la DI et
+            // tous les logs dans une liste anonyme ou l'on ne pouvait plus dire
+            // a quel flux un composant appartenait — et ou le cycle courant
+            // apparaissait DEUX fois (une via la DI, une via son log).
+            // Source unique : les lignes de cycle (cycle 0 compris) ; repli sur
+            // la DI pour les dossiers anterieurs a la migration.
+            const cycleRows = diagnosticData.data.getDiById.logsDi ?? [];
+            this.allComposants = cycleRows.length
+                ? cycleRows.flatMap((log) =>
+                      (log.array_composants ?? []).map((c) => ({
+                          ...c,
+                          cycleLabel: log.idIgnore
+                              ? `Retour ${log.idIgnore}`
+                              : 'Flux original',
+                      })),
+                  )
+                : (
+                      diagnosticData.data.getDiById.di.array_composants ?? []
+                  ).map((c) => ({ ...c, cycleLabel: 'Flux original' }));
 
             this._idnum = diagnosticData.data.getDiById.di._idnum;
 
@@ -2383,13 +2595,28 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 const detailsDi = diagnosticData.data.getDiById.di;
                 const detailsLogs = diagnosticData.data.getDiById.logsDi;
 
+                // Le cycle est fixé AVANT le préremplissage et lui est TRANSMIS.
+                // `this.ignoreCount` n'était renseigné que plus bas : le
+                // préremplissage lisait donc 0 à la première ouverture (ou le
+                // cycle de la DI ouverte juste avant), et un retour héritait des
+                // composants, de la remarque et de la catégorie du flux original.
+                // La DI fait foi : `logsDi` liste SES cycles.
+                const cycle = Number(
+                    detailsDi?.ignoreCount ?? di.ignoreCount ?? 0,
+                );
+                this.ignoreCount = cycle;
+
                 if (detailsLogs) {
-                    this.processDiagnosticWithLogs(di, detailsLogs);
+                    this.processDiagnosticWithLogs(di, detailsLogs, cycle);
                     this.diData = detailsLogs;
                 } else {
                     this.processDiagnosticWithoutLogs(di, detailsDi);
                     this.diData = detailsDi;
                 }
+                this.diagPreviousCyclesVm = this.buildPreviousCycles(
+                    detailsLogs,
+                    cycle,
+                );
 
                 // Merge the rich DI fields fetched by `getDiById` (title,
                 // status, description, remarque_manager, client, company with
@@ -2422,11 +2649,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
                 this.diStatus = di.status;
-                this.ignoreCount = di.ignoreCount;
 
                 this.diDialogDiag[di._id] = true;
                 this.diagModalVisibleVm = true;
                 this.activeDiagnosticDraft = true;
+                // Les catégories de COMPOSANT n'étaient chargées que par
+                // `openNew()` (création d'un composant) : le picker s'ouvrait
+                // donc sur un arbre vide. Le service met les racines en cache,
+                // un second appel ne refait aucune requête.
+                this.diagSearchTerm = '';
+                this.loadDiagComposantCategories();
                 this.persistActiveDialogState('diagnostic', di);
                 // Les préremplissages patchent en `{ emitEvent: false }` : il faut
                 // réaligner EXPLICITEMENT ce qui dérive de « réparable » (miroir
@@ -2454,25 +2686,137 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         );
     }
 
-    private processDiagnosticWithLogs(di, detailsLogs) {
-        const dataLogs = this.getHighestIdIgnore(detailsLogs);
+    /**
+     * Le dossier du CYCLE COURANT (`idIgnore === di.ignoreCount`), ou `null`.
+     *
+     * Remplace `getHighestIdIgnore()` comme source de pré-remplissage. Prendre
+     * « la ligne au plus grand idIgnore » revenait, à l'ouverture d'un nouveau
+     * cycle dont la ligne est encore vierge, à charger le dossier du cycle
+     * PRÉCÉDENT — sa liste PDR comprise, qui était ensuite renvoyée telle
+     * quelle au serveur. C'est ainsi qu'un retour déclaré SANS PDR se
+     * retrouvait avec les composants du flux original.
+     */
+    private currentCycleLog(logs: any[], cycle: number): any {
+        if (!Array.isArray(logs)) return null;
+        return logs.find((l) => Number(l?.idIgnore) === Number(cycle)) ?? null;
+    }
+
+    /**
+     * Repart d'un diagnostic VIERGE à chaque ouverture.
+     *
+     * Appelé en TÊTE de `diagModal`, avant toute requête : la restitution du
+     * brouillon local (`applyPendingRestoredDialogState`, déclenchée par la
+     * réponse de `getTimeSpent`) arrive donc toujours APRÈS et n'est jamais
+     * effacée. Sans ce reset, les contrôles que le préremplissage ne touche pas
+     * (`symptomes`, `composantSelected`…) gardaient la saisie de la DI ouverte
+     * précédemment. `reset()` remet aussi `dirty` à faux, dont dépend
+     * `diagnosticHasUnsavedWork`. Le toggle PDR éventuellement désactivé est
+     * réactivé en fin de `diagModal` par `syncReparableDerivedState`.
+     *
+     * `symptomes` n'a AUCUN champ serveur : il est conservé quand on rouvre la
+     * MÊME ligne (réduction puis réouverture). Un retour crée une nouvelle ligne
+     * `stats` (index unique `_idDi + ignoreCount`), il n'est donc jamais concerné.
+     */
+    private resetDiagnosticDraft(nextStatId?: string): void {
+        const keptSymptomes =
+            nextStatId && nextStatId === this.selectedDi
+                ? (this.diagFormTech.get('symptomes')?.value ?? '')
+                : '';
+        this.diagFormTech.reset(
+            {
+                _idDi: null,
+                diag_time: null,
+                remarqueTech: '',
+                symptomes: keptSymptomes,
+                remarqueExtra: '',
+                isPdr: true,
+                isReparable: true,
+                isErrorFromFixtronix: false,
+                quantity: 1,
+                composantSelectedDropdown: null,
+                di_category_id: null,
+                composantSelected: null,
+            },
+            { emitEvent: false },
+        );
+        this.composantCombo = [];
+        this.allComposantLogsAndOriginal = [];
+        this.diagPreviousCyclesVm = [];
+    }
+
+    /**
+     * Diagnostics des cycles ANTÉRIEURS au cycle courant, du plus récent au
+     * plus ancien — affichés en LECTURE SEULE sur un retour, jamais repris dans
+     * le formulaire.
+     *
+     * Source : la ligne `logsdis` de chaque cycle, SANS repli sur la DI (miroir
+     * du cycle courant, vidé à l'entrée du retour) : une valeur absente reste
+     * `null` et s'affiche « Non renseigné ». La catégorie reste un id brut,
+     * libellée par l'étape (les catégories arrivent en asynchrone).
+     */
+    private buildPreviousCycles(
+        logs: any[] | null | undefined,
+        cycle: number,
+    ): DiagnosticPreviousCycle[] {
+        if (!(cycle > 0) || !Array.isArray(logs)) {
+            return [];
+        }
+        const bool = (v: unknown): boolean | null =>
+            typeof v === 'boolean' ? v : null;
+        return logs
+            .filter((l) => Number(l?.idIgnore) < cycle)
+            .sort((a, b) => Number(b.idIgnore) - Number(a.idIgnore))
+            .map((l) => {
+                const n = Number(l.idIgnore);
+                return {
+                    cycle: n,
+                    label: n === 0 ? 'Flux original' : `Retour ${n}`,
+                    categoryId: this.cleanStr(l.di_category_id) || null,
+                    reparable: bool(l.can_be_repaired),
+                    pdr: bool(l.contain_pdr),
+                    errorFromFixtronix:
+                        n > 0 ? bool(l.isErrorFromFixtronix) : null,
+                    composants: (l.array_composants ?? []).map((c) => ({
+                        nameComposant: c.nameComposant,
+                        quantity: c.quantity,
+                    })),
+                    remarqueDiagnostic: this.cleanStr(
+                        l.remarque_tech_diagnostic,
+                    ),
+                    remarqueReparation: this.cleanStr(l.remarque_tech_repair),
+                };
+            });
+    }
+
+    private processDiagnosticWithLogs(di, detailsLogs, cycle: number) {
+        // Le cycle courant UNIQUEMENT : jamais celui d'un autre cycle. `cycle`
+        // vient de l'appelant — ne PAS relire `this.ignoreCount`, qui peut encore
+        // porter le cycle de la DI ouverte précédemment.
+        const dataLogs = this.currentCycleLog(detailsLogs, cycle) ?? {};
+        const remarque = this.splitRemarqueDiagnostic(
+            di.remarqueTech || dataLogs.remarque_tech_diagnostic,
+        );
+        // `'true'`/`'false'` : valeurs écrites en base par l'ancien repli
+        // `|| true` (renvoyé au serveur à chaque pause). Ce ne sont pas des
+        // catégories — elles rendaient l'étape « Panne » faussement complète.
+        const categoryId =
+            [di.di_category_id, dataLogs.di_category_id]
+                .map((v) => this.cleanStr(v))
+                .find((v) => v && v !== 'true' && v !== 'false') || null;
 
         this.diagFormTech.patchValue(
             {
                 _idDi: di._id,
                 diag_time: di.diag_time || dataLogs.diag_time || '',
-                remarqueTech:
-                    di.remarqueTech ||
-                    dataLogs.remarque_tech_diagnostic ||
-                    '',
+                remarqueTech: remarque.remarqueTech,
+                remarqueExtra: remarque.remarqueExtra,
                 // `??` et NON `||` : un `false` persisté est une DÉCISION du tech
                 // (« pas de PDR »), pas une absence de valeur. Avec `|| true` tout
                 // `false` était écrasé et le modal s'ouvrait toujours sur Oui, ce
                 // qui obligeait à décocher à la main sur FT-02/05/08. Le défaut
                 // `true` ne s'applique plus qu'à un champ réellement ABSENT.
                 isPdr: di.isPdr ?? dataLogs.contain_pdr ?? true,
-                di_category_id:
-                    di.di_category_id || dataLogs.di_category_id || true,
+                di_category_id: categoryId,
                 isReparable:
                     di.isReparable ?? dataLogs.can_be_repaired ?? true,
                 // RETOUR : le verdict « erreur Fixtronix » (notre faute) DOIT être
@@ -2486,15 +2830,20 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     di.isErrorFromFixtronix ??
                     dataLogs.isErrorFromFixtronix ??
                     false,
-                quantity: di.quantity || 0,
+                quantity: di.quantity || 1,
                 composantSelectedDropdown:
-                    di.composantSelectedDropdown ?? dataLogs.array_composants,
+                    di.composantSelectedDropdown ??
+                    dataLogs.array_composants ??
+                    [],
             },
             { emitEvent: false },
         );
 
-        this.composantCombo = dataLogs.array_composants;
-        this.allComposantLogsAndOriginal = [...dataLogs.array_composants];
+        // Un cycle qui n'a pas encore de composants démarre VIDE. Auparavant la
+        // liste du cycle précédent servait de panier de départ, puis repartait
+        // au serveur au premier enregistrement.
+        this.composantCombo = dataLogs.array_composants ?? [];
+        this.allComposantLogsAndOriginal = [...(dataLogs.array_composants ?? [])];
     }
 
     private processDiagnosticWithoutLogs(di, detailsDi) {
@@ -2502,10 +2851,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             {
                 _idDi: di._id,
                 diag_time: di.diag_time || detailsDi.diag_time || '',
-                remarqueTech:
+                // Redécoupé comme dans `...WithLogs`.
+                ...this.splitRemarqueDiagnostic(
                     this.cleanStr(di.remarqueTech) ||
-                    this.cleanStr(detailsDi.remarque_tech_diagnostic) ||
-                    '',
+                        detailsDi.remarque_tech_diagnostic,
+                ),
                 // `??` et NON `||` — cf. `processDiagnosticWithLogs` : un `false`
                 // persisté doit survivre au préremplissage.
                 isPdr: di.isPdr ?? detailsDi.contain_pdr ?? true,
@@ -2513,7 +2863,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     di.isReparable ?? detailsDi.can_be_repaired ?? true,
                 di_category_id:
                     di.di_category_id || detailsDi.di_category_id || '',
-                quantity: di.quantity || 0,
+                quantity: di.quantity || 1,
                 composantSelectedDropdown:
                     di.composantSelectedDropdown ?? detailsDi.array_composants,
                 // Ce contrôle n'était PAS prérempli ici : il gardait la valeur
@@ -2562,6 +2912,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this._idnum = di._idnum;
         this.selectedRep = di._idDi;
         this.statId = di._id;
+        // Référentiel des catégories de DI : jusqu'ici chargé uniquement par le
+        // chemin diagnostic, si bien que le wizard de réparation travaillait sur
+        // une liste vide et n'affichait jamais la catégorie.
+        this.allCategoryDi();
 
         this.apollo
             .query<any>({
@@ -2616,6 +2970,17 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                                 ignoreCount: 0,
                             }));
 
+                        // La ligne de grille ne porte AUCUN champ DI
+                        // (`diListTech` ne projette que des champs `Stat`) :
+                        // sans cette fusion, description / titre / remarque
+                        // manager arrivaient vides dans le modal. Même geste que
+                        // le chemin diagnostic ; la ligne garde le dernier mot
+                        // sur le statut et le timer, plus frais qu'au détail.
+                        this.repairDiInputVm = this.mapDiToRepairSummary({
+                            ...detailsDi,
+                            ...di,
+                        });
+
                         // B3 — pre-fill the redesigned repair wizard from the DI
                         // so the tech doesn't re-enter category / remark / parts.
                         this.repairPrefill = this.withRepairDraft({
@@ -2640,12 +3005,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                                 reference: c.package ?? '',
                             }),
                         );
-                        // `composantCategory` fournit désormais name=libellé /
-                        // value=_id — l'ancien `_id: c.name` compensait le
-                        // mapping inversé d'avant (double inversion annulée).
-                        this.repairCategories = (
-                            this.composantCategory || []
-                        ).map((c: any) => ({ _id: c.value, category: c.name }));
+                        // Catégories de DI (`DiCategory`), PAS le catalogue
+                        // `Composant_Category` : `di_category_id` pointe un
+                        // DiCategory, alors que `composantCategory` porte des
+                        // ids `C_ComposantN` — l'appariement ne pouvait jamais
+                        // aboutir, d'où « Non définie ». On réutilise la même
+                        // liste que le modal diagnostic.
+                        this.repairCategories = [...this.diagCategoryOptions];
                     }
 
                     this.diagFormTech.patchValue({
@@ -2655,7 +3021,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                         isPdr: di.isPdr || detailsDi.contain_pdr || true,
                         isReparable:
                             di.isReparable || detailsDi.can_be_repaired || true,
-                        quantity: di.quantity || 0,
+                        quantity: di.quantity || 1,
                         composantSelectedDropdown:
                             di.composantSelectedDropdown ??
                             detailsDi.array_composants,
@@ -3338,11 +3704,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                         name: data.createComposant.name,
                     };
                     this.composantList.push(com);
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: `Le composant ${data.createComposant.name} ajouté avec succes`,
-                    });
+                    // Sans ça, la pièce tout juste créée reste invisible dans
+                    // l'arbre tant que le modal n'est pas rouvert.
+                    this.composantTree.invalidate();
+                    this.refreshDiagComposantTree();
+                    this.notify.success(
+            `Le composant ${data.createComposant.name} a été ajouté avec succès.`,
+        );
                 }
             });
     }
@@ -3366,7 +3734,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             reparable: this.diagFormTech.get('isReparable')?.value ?? false,
             isErrorFromFixtronix:
                 this.diagFormTech.get('isErrorFromFixtronix')?.value ?? false,
-            remarqueTech: this.diagFormTech.get('remarqueTech')?.value ?? '',
+            remarqueTech: this.composeRemarqueDiagnostic(),
             di_category_id:
                 this.diagFormTech.get('di_category_id')?.value ?? '',
             composant: this.composantCombo ?? [],
@@ -3489,10 +3857,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     getStatusLabel(status: string): string {
-        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
-        // PRICING) affiché « Pricing » (demande produit).
+        // Affichage BRUT en MAJUSCULES. PRICING_DIAG et son ancienne valeur
+        // PRICING sont ramenés au MÊME libellé « PRICING » : les deux valeurs
+        // coexistent en base (renommage forward-only, sans backfill) et la
+        // colonne « Statut » afficherait sinon deux libellés pour un même état.
         const s = (status ?? '').toString().trim();
-        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'PRICING';
         return s.toUpperCase() || '—';
     }
 
@@ -3580,6 +3950,20 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.techRetourSendFinished = false;
         this.disabledDiagnostiqueRetourValue = false;
 
+        // ── LE SEUL GATING UI RESTANT : le verdict écrit ────────────────────
+        // Aucune sortie de diagnostic ne doit pouvoir clôturer sans remarque.
+        // Les TROIS drapeaux sont pilotés par la MÊME raison, ce qui couvre les
+        // quatre boutons (« Finir le diagnostic », « Terminer (non réparable) »,
+        // « Fin diagnostique retour », « Envoyer vers finir »).
+        //
+        // Écrit APRÈS les remises à `false` ci-dessus : le routage
+        // PDR/réparable ne grise plus rien (il est serveur-autoritaire), donc
+        // c'est bien cette condition, et elle seule, qui décide.
+        const missingRemarks = !!this.diagFinishBlockedReason;
+        this.disabledDiagnostiqueValue = missingRemarks;
+        this.disabledDiagnostiqueRetourValue = missingRemarks;
+        this.techRetourSendFinished = missingRemarks;
+
         this.cdr.detectChanges();
     }
 
@@ -3587,14 +3971,12 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         const formSelection =
             this.diagFormTech.get('composantSelected')?.value ?? null;
         const legacySelection = this.composantSelected ?? null;
-        const selected = formSelection ?? legacySelection?.value ?? legacySelection;
-
-        if (typeof selected === 'string') {
-            return selected.trim() || null;
-        }
-
-        const name = selected?.name ?? selected?.nameComposant ?? null;
-        return typeof name === 'string' && name.trim() ? name.trim() : null;
+        // `legacySelection?.value` : forme { name, value } des anciens dropdowns.
+        const selected =
+            formSelection ?? legacySelection?.value ?? legacySelection;
+        // Toutes les formes acceptées (nœud TreeSelect, option dropdown,
+        // chaîne) sont traitées dans l'util — et testées sans TestBed.
+        return resolveComposantName(selected);
     }
 
     private resolveSelectedQuantity(): number | null {
@@ -3612,12 +3994,135 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     private showComponentAddValidation(detail: string): void {
-        this.messageService.add({
-            severity: 'warn',
-            summary: 'Composant requis',
-            detail,
-            life: 2500,
-        });
+        this.notify.warn(detail, { summary: 'Composant requis' });
+    }
+
+    /** Noms déjà présents dans le tableau — masqués de l'arbre. */
+    private addedComposantNames(): ReadonlySet<string> {
+        return new Set(
+            (this.composantCombo ?? []).map((c) =>
+                String(c?.nameComposant ?? '').trim(),
+            ),
+        );
+    }
+
+    /**
+     * Charge les racines de l'arbre. Appelé à L'OUVERTURE du modal : les
+     * catégories de composant n'étaient jusqu'ici chargées que dans
+     * `openNew()`, c.-à-d. uniquement au moment d'en CRÉER un.
+     */
+    loadDiagComposantCategories(): void {
+        this.diagTreeLoading = true;
+        this.refreshDiagnosticVm();
+        this.composantTree
+            .loadCategories()
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (nodes) => {
+                    this.diagComposantNodes = nodes;
+                    this.diagTreeLoading = false;
+                    this.refreshDiagnosticVm();
+                },
+                error: () => {
+                    this.diagTreeLoading = false;
+                    this.refreshDiagnosticVm();
+                },
+            });
+    }
+
+    /** Ouverture d'une catégorie → charge SA page de composants. */
+    onDiagNodeExpand(node: TreeNode): void {
+        const data = node?.data as ComposantNodeData | undefined;
+        if (data?.kind !== 'category') {
+            return;
+        }
+        // Déjà peuplée (cache, page précédente, ou chargement en cours) :
+        // ne pas re-solliciter. Le nœud « Chargement… » posé juste en dessous
+        // fait aussi office de verrou anti double-requête.
+        if (node.children?.length) {
+            return;
+        }
+        // `TreeNode` n'a PAS de champ `loading` en PrimeNG 17 (c'est un input
+        // du composant `p-tree`, pas une propriété de nœud) : on matérialise
+        // l'attente par un enfant temporaire, remplacé par la vraie page.
+        node.children = [this.diagTreePlaceholder()];
+        this.diagTreeLoading = true;
+        this.refreshDiagnosticVm();
+
+        this.composantTree
+            .loadChildren(data._id, this.addedComposantNames())
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: (children) => {
+                    node.children = children;
+                    this.diagTreeLoading = false;
+                    // Nouvelle RÉFÉRENCE de tableau : les enfants OnPush du
+                    // modal ne voient pas une mutation en profondeur.
+                    this.diagComposantNodes = [...this.diagComposantNodes];
+                    this.refreshDiagnosticVm();
+                },
+                error: () => {
+                    // Vider les enfants relâche le verrou : le tech peut
+                    // replier/déplier pour retenter.
+                    node.children = [];
+                    this.diagTreeLoading = false;
+                    this.refreshDiagnosticVm();
+                },
+            });
+    }
+
+    /** Nœud d'attente affiché sous une catégorie en cours de chargement. */
+    private diagTreePlaceholder(): TreeNode {
+        return {
+            key: 'loading',
+            label: 'Chargement…',
+            leaf: true,
+            selectable: false,
+        };
+    }
+
+
+    /** Frappe dans le filtre de l'arbre — débouncée par l'abonnement ngOnInit. */
+    onDiagComposantSearch(term: string): void {
+        this.diagSearch$.next(String(term ?? '').trim());
+    }
+
+    /**
+     * Reconstruit l'arbre après ajout/retrait d'un composant, en conservant le
+     * mode courant (recherche ou navigation).
+     */
+    private refreshDiagComposantTree(): void {
+        if (this.diagSearchTerm.length >= MIN_SEARCH_LENGTH) {
+            this.composantTree
+                .search(this.diagSearchTerm, this.addedComposantNames())
+                .pipe(takeUntil(this.destroy$))
+                .subscribe((nodes) => {
+                    this.diagComposantNodes = nodes;
+                    this.refreshDiagnosticVm();
+                });
+            return;
+        }
+        // Navigation : recharger seulement les branches DÉJÀ ouvertes, depuis
+        // le cache du service (aucune requête réseau).
+        const expanded = this.diagComposantNodes.filter(
+            (n) => n.expanded && n.children?.length,
+        );
+        if (!expanded.length) {
+            this.diagComposantNodes = [...this.diagComposantNodes];
+            this.refreshDiagnosticVm();
+            return;
+        }
+        for (const node of expanded) {
+            const data = node.data as ComposantNodeData;
+            this.composantTree
+                .loadChildren(data._id, this.addedComposantNames())
+                .pipe(takeUntil(this.destroy$))
+                .subscribe((children) => {
+                    node.children = children;
+                    this.diagComposantNodes = [...this.diagComposantNodes];
+                    this.refreshDiagnosticVm();
+                });
+        }
     }
 
     comboComposantandQuantity(): void {
@@ -3646,17 +4151,30 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             ...(this.composantCombo ?? []),
             composantSelected,
         ];
-        this.composantList = (this.composantList ?? []).filter(
-            (composant) => composant?.name !== selectedName,
-        );
-
+        // ⚠️ ORDRE IMPORTANT : vider la sélection AVANT de reconstruire
+        // l'arbre. Le setter `options` de `p-treeSelect` appelle
+        // `updateTreeState()`, qui fait `resetExpandedNodes()` dès qu'une
+        // valeur est sélectionnée — remplacer les nœuds en premier REPLIERAIT
+        // donc toutes les catégories à chaque ajout, obligeant le technicien à
+        // rouvrir la sienne pour ajouter la pièce suivante.
         this.composantSelected = null;
         this.diagFormTech.patchValue(
             {
                 composantSelected: null,
+                // Revenir à 1, pas à 0 : le compteur doit rester dans son
+                // domaine (`[min]="1"`) pour que l'ajout suivant parte bien.
+                quantity: 1,
             },
             { emitEvent: false },
         );
+
+        // On ne retire PLUS le composant de `composantList` : cette liste n'est
+        // plus la source du picker (l'arbre est paginé côté serveur), et la
+        // muter perdait définitivement la ligne si le tech retirait ensuite le
+        // composant du tableau. Le masquage se fait à la CONSTRUCTION des
+        // nœuds, contre `composantCombo` — donc réversible.
+        this.refreshDiagComposantTree();
+
         this.updateDisableValues();
         this.refreshDiagnosticVm();
     }
@@ -3696,10 +4214,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     retourEnvoyerVersFinir() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation Fin DI',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmValidate({
+            message: 'Voulez-vous terminer et enregistrer ce diagnostic ?',
+            header: 'Terminer le diagnostic',
+            acceptLabel: 'Terminer',
             accept: () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
@@ -3712,7 +4230,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     // jamais → DI bloquée en INDIAGNOSTIC. getRawValue rend `false`.
                     pdr: !!this.diagFormTech.getRawValue().isPdr,
                     reparable: !!this.diagFormTech.getRawValue().isReparable,
-                    remarqueTech: this.diagFormTech.value.remarqueTech,
+                    remarqueTech: this.composeRemarqueDiagnostic(),
                     isErrorFromFixtronix:
                         this.diagFormTech.value.isErrorFromFixtronix ?? false,
                     di_category_id: this.diagFormTech.value.di_category_id,
@@ -3762,10 +4280,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     saveLogsDi() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation Diagnostique',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer les modifications ?',
+            header: 'Confirmer le diagnostic',
             accept: () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
@@ -3786,7 +4303,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                         !!this.diagFormTech.getRawValue().isPdr &&
                         this.composantCombo.length > 0,
                     reparable: !!this.diagFormTech.getRawValue().isReparable,
-                    remarqueTech: this.diagFormTech.value.remarqueTech,
+                    remarqueTech: this.composeRemarqueDiagnostic(),
                     isErrorFromFixtronix:
                         this.diagFormTech.value.isErrorFromFixtronix ?? false,
                     di_category_id: this.diagFormTech.value.di_category_id,
@@ -3855,10 +4372,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     changeStatusPending3() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous Envoyer directement aux coordinator ?',
-            header: 'Confirmation Diagnostique sans composants',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSend({
+            message: 'Envoyer directement au coordinateur, sans composant ?',
+            header: 'Diagnostic sans composants',
             accept: () => {
                 this.apollo
                     .mutate<any>({
@@ -3874,16 +4390,17 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     techFinishDiag(opts: { notReparable?: boolean } = {}) {
         const isNotReparable = !!opts.notReparable;
-        this.confirmationService.confirm({
+        const ask = isNotReparable
+            ? this.confirm.confirmDiscard.bind(this.confirm)
+            : this.confirm.confirmSave.bind(this.confirm);
+        ask({
             message: isNotReparable
-                ? 'Marquer ce DI comme non réparable et clôturer ?'
-                : 'Voulez vous confirmer les changements',
+                ? 'Marquer cette DI comme non réparable et la clôturer ?'
+                : 'Voulez-vous enregistrer les modifications ?',
             header: isNotReparable
                 ? 'Clôture non réparable'
-                : 'Confirmation Diagnostique',
-            icon: isNotReparable
-                ? 'pi pi-times-circle'
-                : 'pi pi-exclamation-triangle',
+                : 'Confirmer le diagnostic',
+            acceptLabel: isNotReparable ? 'Clôturer' : undefined,
             accept: async () => {
                 const dataDiag = {
                     _idDi: this.selectedDi_id,
@@ -3904,7 +4421,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     reparable: isNotReparable
                         ? false
                         : this.diagFormTech.value.isReparable,
-                    remarqueTech: this.diagFormTech.value.remarqueTech,
+                    remarqueTech: this.composeRemarqueDiagnostic(),
                     di_category_id: this.diagFormTech.value.di_category_id,
                     isErrorFromFixtronix:
                         this.diagFormTech.value.isErrorFromFixtronix ?? false,
@@ -4285,10 +4802,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     finishReparation() {
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer les changements',
-            header: 'Confirmation Reperation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmSave({
+            message: 'Voulez-vous enregistrer les modifications ?',
+            header: 'Confirmer la réparation',
             accept: () => {
                 if (!this.isFinishedRep) {
                     this.isFinishedRep = {};
@@ -4335,11 +4851,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 console.error('Error reading file:', reader.error);
             };
         }
-        this.messageService.add({
-            severity: 'info',
-            summary: 'Fichier enregistré',
-            detail: 'Fichier a été ajouter avec succès',
-        });
+        this.notify.success('Le fichier a été enregistré.');
     }
 
     uploadFile(base64: string) {
@@ -4371,22 +4883,15 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     }
 
     deleteSelectedProducts(): void {
-        this.confirmationService.confirm({
-            message: 'Voulez vous supprimer ce composant de la liste',
-            header: 'Confirm',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmDelete({
+            message: 'Voulez-vous supprimer ce composant de la liste ?',
             accept: () => {
                 this.composantCombo = this.composantCombo.filter(
                     (val) => !this.selectedComposants.includes(val),
                 );
 
                 this.selectedComposants = [];
-                this.messageService.add({
-                    severity: 'success',
-                    summary: 'Successful',
-                    detail: 'Products Deleted',
-                    life: 1000,
-                });
+                this.notify.success('Les composants sélectionnés ont été supprimés.');
             },
         });
     }
@@ -4452,8 +4957,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         ATTENTE_CONFIRMATION_COORDINATION:
             'En attente confirmation Coordination',
         PENDING2: 'En attente prix',
-        PRICING: 'Pricing',
-        PRICING_DIAG: 'Pricing',
+        PRICING: 'PRICING',
+        PRICING_DIAG: 'PRICING',
         WAITING_DEVIS: 'Approval — attente devis',
         WAITING_BC: 'Approval — attente BC',
         NEGOTIATION1: 'Approval',
@@ -4586,20 +5091,6 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         return this.diagCategoryOptionsCache;
     }
 
-    /** Composants — adapt the existing list. */
-    private get diagComposantOptions(): ComposantOption[] {
-        const list: any[] = this.composantList ?? [];
-        if (list === this.diagComposantSourceRef) {
-            return this.diagComposantOptionsCache;
-        }
-
-        this.diagComposantSourceRef = list;
-        this.diagComposantOptionsCache = list.map((c) => ({
-            _id: c._id ?? c.name ?? '',
-            name: c.name ?? c.nameComposant ?? '',
-        }));
-        return this.diagComposantOptionsCache;
-    }
 
     /** "Oui / Non / Non défini" for boolean form values. */
     private booleanLabel(value: unknown): string {
@@ -4639,11 +5130,14 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             isErrorFromFixtronix:
                 !!this.diagFormTech.get('isErrorFromFixtronix')?.value,
             composantCombo: this.composantCombo ?? [],
-            composantOptions: this.diagComposantOptions,
+            composantNodes: this.diagComposantNodes,
+            composantTreeLoading: this.diagTreeLoading,
+            composantSearching: this.diagSearching,
             categories: this.diagCategoryOptions,
             disabledFinish: !!this.disabledDiagnostiqueValue,
             disabledRetour: !!this.disabledDiagnostiqueRetourValue,
             retourSendFinished: !!(this as any).techRetourSendFinished,
+            previousCycles: this.diagPreviousCyclesVm,
         };
     }
 
@@ -4651,9 +5145,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     get diagSteps(): readonly DiagnosticStep[] {
         const form = this.diagFormTech;
         const hasInfo = !!this.di?._idnum;
-        const hasFailure =
-            !!form.get('di_category_id')?.value &&
-            !!(form.get('remarqueTech')?.value ?? '').trim();
+        const hasFailure = this.diagFailureComplete;
         const hasComponentsDecision =
             form.get('isPdr')?.value === false ||
             (this.composantCombo ?? []).length > 0;
@@ -4898,12 +5390,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     onDiagMinimize(): void {
         if (!this.canMinimizeDiagnostic()) {
-            this.messageService.add({
-                severity: 'warn',
-                summary: 'Diagnostic actif',
-                detail: 'Mettez le diagnostic en pause avant de réduire la fenêtre.',
-                life: 2500,
-            });
+            this.notify.warn(
+                'Mettez le diagnostic en pause avant de réduire la fenêtre.',
+                { summary: 'Diagnostic actif' },
+            );
             return;
         }
 
@@ -4929,11 +5419,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         } catch {
             // best-effort — don't break the UX if persistence is unavailable
         }
-        this.messageService?.add?.({
-            severity: 'success',
+        this.notify.success('Vos modifications sont sauvegardées localement.', {
             summary: 'Brouillon enregistré',
-            detail: 'Vos modifications sont sauvegardées localement.',
-            life: 2500,
         });
     }
 
@@ -4941,25 +5428,155 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         try {
             this.comboComposantandQuantity();
         } catch {
-            this.messageService.add({
-                severity: 'error',
-                summary: 'Ajout impossible',
-                detail: 'Le composant n’a pas pu être ajouté. Vérifiez la sélection et la quantité.',
-                life: 3000,
-            });
+            this.notify.error(
+                'Le composant n’a pas pu être ajouté. Vérifiez la sélection et la quantité.',
+                { summary: 'Ajout impossible' },
+            );
         }
+    }
+
+    /** Correction de quantité sur une ligne DÉJÀ ajoutée (étape Composants).
+     *
+     *  On REMPLACE le tableau au lieu de muter la ligne : tout l'aval est
+     *  OnPush et s'appuie sur l'égalité de référence du snapshot
+     *  `DiagnosticContext`. Une mutation en place laisserait le total
+     *  « N pièces », le résumé et la sidebar sur l'ancienne valeur.
+     *
+     *  ⚠️ La quantité part BRUTE dans le document GraphQL
+     *  (`ticket.service.ts` — `quantity: ${el.quantity}`, sans coercition) :
+     *  une valeur non finie y produirait une ERREUR DE PARSING, pas une erreur
+     *  de validation. D'où la normalisation ici, dernier point de passage avant
+     *  `composantCombo` (le widget émet `null` dès qu'on vide le champ).
+     *
+     *  `refreshDiagComposantTree()` n'est PAS appelé : l'arbre ne masque que
+     *  par NOM (`addedComposantNames`) — une quantité ne le concerne pas. */
+    onDiagComposantQuantityChange(change: {
+        nameComposant: string;
+        quantity: number;
+    }): void {
+        const quantity = Math.max(1, Math.floor(Number(change.quantity) || 1));
+        this.composantCombo = (this.composantCombo ?? []).map((c) =>
+            c.nameComposant === change.nameComposant ? { ...c, quantity } : c,
+        );
+        // Sauvegarde explicite : `diagnosticHasUnsavedWork()` compare des
+        // LONGUEURS de tableau, une édition de quantité ne changerait donc pas
+        // son verdict et le brouillon resterait périmé.
+        this.persistActiveDialogState();
+        this.updateDisableValues?.();
+        this.refreshDiagnosticVm();
     }
 
     onDiagRemoveComposant(name: string): void {
         this.composantCombo = (this.composantCombo ?? []).filter(
             (c) => c.nameComposant !== name,
         );
+        // Le composant retiré du tableau doit REDEVENIR sélectionnable.
+        this.refreshDiagComposantTree();
         this.updateDisableValues?.();
         this.refreshDiagnosticVm();
     }
 
     onDiagCreateComposant(): void {
         (this as any).openNew?.();
+    }
+
+    /**
+     * Création d'une catégorie de diagnostic DEPUIS le dropdown de l'étape
+     * « Panne » (le technicien a tapé un libellé qui n'existe pas).
+     *
+     * Reprend le chemin éprouvé de `createQuickCategory()`
+     * (composant-management) : doublon connu localement → on SÉLECTIONNE au
+     * lieu d'un aller-retour, sinon mutation via `MutationRunner`
+     * (anti double-submit + erreur toujours toastée).
+     */
+    async onDiagCreateCategory(rawName: string): Promise<void> {
+        const name = (rawName ?? '').trim();
+        if (!name) return;
+
+        // Même règle de comparaison que le back : nom trimé, insensible à la
+        // casse. On évite l'appel ET on donne ce qui était vraiment voulu.
+        const known = this.diagCategoryOptions.find(
+            (c) =>
+                (c.category ?? '').trim().toLocaleLowerCase() ===
+                name.toLocaleLowerCase(),
+        );
+        if (known) {
+            this.selectDiagCategory(known._id);
+            this.diagCategoryCreatedTick++;
+            // Succès et non `info` : l'utilisateur voulait une catégorie, il
+            // l'a. Le `summary` dit qu'elle a été retrouvée, pas créée.
+            this.notify.success(`« ${known.category} » a été sélectionnée.`, {
+                summary: 'Catégorie déjà existante',
+            });
+            this.refreshDiagnosticVm();
+            return;
+        }
+
+        try {
+            const data = await this.mutationRunner.run({
+                // Clé NEUVE : le registre des mutations en vol est GLOBAL
+                // (service root) — partager une clé ferait avaler ce clic dès
+                // qu'une création tourne ailleurs.
+                key: 'diagCreateDiCategory',
+                mutation: this.ticketSerice.addCatgoryDi(name),
+                // Le back a déjà renvoyé un Error sérialisé en `{_id: null}`
+                // SANS tableau `errors`, que le runner prenait pour un succès.
+                check: (d: any) =>
+                    d?.createDiCategory?._id
+                        ? undefined
+                        : 'Création impossible : la catégorie n’a pas été enregistrée.',
+                // Toast décidé plus bas : `created` dit si c'était une vraie
+                // création ou un doublon rattrapé côté serveur.
+                errorToast: null,
+                onLoading: (v: boolean) => {
+                    this.diagCategoryCreating = v;
+                    this.refreshDiagnosticVm();
+                },
+            });
+
+            const created = data.createDiCategory;
+            // ⚠️ NOUVEAU tableau, JAMAIS `.push()` : `diagCategoryOptions`
+            // compare `list === this.diagCategorySourceRef` et renverrait son
+            // cache périmé — la catégorie n'apparaîtrait jamais dans la liste.
+            this.categorieDiListDropDown = [
+                ...(this.categorieDiListDropDown ?? []),
+                { category: created.category ?? name, value: created._id },
+            ];
+            this.selectDiagCategory(created._id);
+            this.diagCategoryCreatedTick++; // ferme le panneau du dropdown
+            // Les DEUX branches sont un succès du point de vue de l'utilisateur
+            // (la catégorie est sélectionnée dans les deux cas) : même vert, et
+            // c'est le `summary` qui dit si elle a été créée ou retrouvée.
+            // L'ancienne branche `info` peignait en bleu une opération réussie.
+            this.notify.success(
+                created.created === false
+                    ? `« ${created.category} » a été sélectionnée.`
+                    : (created.category ?? name),
+                {
+                    summary:
+                        created.created === false
+                            ? 'Catégorie déjà existante'
+                            : 'Catégorie créée',
+                },
+            );
+            this.refreshDiagnosticVm();
+        } catch (err) {
+            if ((err as Error)?.message === 'mutation-in-flight') return;
+            this.notify.error(
+                'La catégorie n’a pas pu être créée. Réessayez.',
+                { summary: 'Création impossible' },
+            );
+            // Conflit alors que la liste locale était périmée (catégorie créée
+            // ailleurs entre-temps) : on relit, le 2e essai tombera sur la
+            // branche `known` et sélectionnera.
+            this.allCategoryDi();
+        }
+    }
+
+    /** Sélectionne une catégorie dans le formulaire de diagnostic. */
+    private selectDiagCategory(id: string): void {
+        this.diagFormTech.patchValue({ di_category_id: id });
+        this.diagFormTech.get('di_category_id')?.markAsDirty();
     }
 
     onDiagFinish(): void {

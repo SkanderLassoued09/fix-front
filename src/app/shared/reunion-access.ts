@@ -1,5 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { landingRouteForRole } from './landing-route';
 
 /**
  * Rôles autorisés à accéder à la fonctionnalité Réunion (menu, route ET
@@ -29,10 +30,14 @@ export function canAccessReunion(role: string | null | undefined): boolean {
 export function reunionRoleGuard(): CanActivateFn {
   return () => {
     const router = inject(Router);
-    if (canAccessReunion(localStorage.getItem('role'))) {
+    const role = localStorage.getItem('role');
+    if (canAccessReunion(role)) {
       return true;
     }
-    router.navigate(['/']);
+    // On renvoie vers la page d'accueil DU RÔLE, pas vers `/` : le tableau de
+    // bord est réservé aux admins, un TECH refusé y aurait rebondi aussitôt
+    // (le guard central l'en écarte lui aussi).
+    router.navigateByUrl(landingRouteForRole(role));
     return false;
   };
 }

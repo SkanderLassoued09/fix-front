@@ -1,185 +1,810 @@
-/* Composant management — aligned with the app's other list tables
-   (design system: Inter, blue #3b82f6 / #2563eb, red #dc2626. No purple). */
+// ═══════════════════════════════════════════════════════
+//  CATALOGUE COMPOSANTS  ·  composant-management.component.scss
+//  Light ERP / SAV design — copie du gabarit des autres listes
+//  (client-list / profile-list). Le `sav-*` n'existe que dans les
+//  SCSS de composants : c'est la convention en place, il est déjà
+//  dupliqué sur les 7 listes de l'app.
+// ═══════════════════════════════════════════════════════
 
-.cm-shell {
-    font-family: 'Inter', sans-serif;
-    padding: 1.5rem;
-    background: #f8fafc;
-    min-height: calc(100vh - 4rem);
-    color: #0f172a;
+$bg-page: var(--fx-bg-page);
+$bg-card: var(--fx-bg-card);
+$bg-surface: var(--fx-bg-surface);
+$bg-row-hover: var(--fx-bg-hover);
+$bg-input: var(--fx-bg-input);
+$border: var(--fx-border);
+$text-primary: var(--fx-text-strong);
+$text-secondary: var(--fx-text-muted);
+$text-muted: var(--fx-text-subtle);
+$accent-blue: #2563eb;
+$accent-blue-hover: var(--fx-blue-strong);
+$white: #ffffff;
+$green: #16a34a;
+$red: var(--fx-red-text);
+$purple: #7c3aed;
+
+.sav-page {
+    background: $bg-page;
+    min-height: 100vh;
+    padding: 1.5rem 1.75rem;
+    /* Suit la police globale de l'app (--font-family, cf. _tokens.scss).
+       Imposait "Segoe UI" auparavant, ce qui sortait ces pages d'Inter. */
+    font-family: inherit;
+    color: $text-primary;
 }
 
-.cm-header {
+.sav-page-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
+}
 
-    &__text {
-        flex: 1 1 auto;
-        min-width: 220px;
+.sav-page-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    h2 {
+        font-size: 1.35rem;
+        font-weight: 600;
+        margin: 0;
+        color: $text-primary;
+        letter-spacing: -0.01em;
     }
 
-    &__actions {
-        display: flex;
-        align-items: center;
-        gap: 0.65rem;
+    .pi {
+        color: var(--fx-blue-text);
+        font-size: 1.1rem;
+    }
+}
+
+.sav-page-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+::ng-deep .sav-btn-new {
+    background: var(--fx-blue-strong) !important;
+    border: none !important;
+    color: var(--fx-text-on-accent) !important;
+    font-size: 0.82rem !important;
+    padding: 0.45rem 1rem !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3) !important;
+
+    &:hover {
+        background: $accent-blue-hover !important;
+    }
+}
+
+.sav-table-wrapper {
+    background: $bg-card;
+    border-radius: 10px;
+    border: 1px solid $border;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+::ng-deep .sav-main-table {
+    .p-datatable-thead > tr.sav-thead-row > th.sav-th {
+        background: $bg-surface !important;
+        color: $text-secondary !important;
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+        padding: 0.6rem 0.75rem !important;
+        border-bottom: 1px solid $border !important;
+        border-right: none !important;
+        white-space: nowrap;
+    }
+
+    .p-datatable-thead > tr.sav-filter-row > th.sav-th-filter {
+        background: $bg-card !important;
+        padding: 0.35rem 0.5rem !important;
+        border-bottom: 1px solid $border !important;
+        border-right: none !important;
+    }
+}
+
+.sav-filter-input {
+    width: 100%;
+    background: $bg-input !important;
+    border: 1px solid $border !important;
+    border-radius: 4px !important;
+    color: $text-primary !important;
+    font-size: 0.75rem !important;
+    padding: 0.3rem 0.55rem !important;
+    outline: none;
+    transition: border-color 0.15s;
+
+    &:focus {
+        border-color: var(--fx-blue-strong) !important;
+        box-shadow: none !important;
+    }
+
+    &::placeholder {
+        color: $text-muted !important;
+        font-size: 0.73rem;
+    }
+}
+
+::ng-deep .sav-main-table .p-datatable-tbody > tr.sav-row {
+    background: $bg-card !important;
+    border-left: 3px solid transparent;
+    transition: background 0.12s;
+
+    & > td.sav-td {
+        background: transparent !important;
+        color: $text-primary !important;
+        font-size: 0.82rem !important;
+        padding: 0.55rem 0.75rem !important;
+        border-bottom: 1px solid $border !important;
+        border-right: none !important;
+        vertical-align: middle;
+    }
+
+    &:hover > td.sav-td {
+        background: $bg-row-hover !important;
+    }
+}
+
+.sav-th-actions {
+    width: 96px;
+    text-align: center !important;
+}
+
+.sav-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    min-width: 96px;
+}
+
+.sav-icon-btn {
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    border-radius: 6px !important;
+    background: $bg-surface !important;
+    border: 1px solid $border !important;
+    color: $text-secondary !important;
+    font-size: 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    transition:
+        background 0.12s,
+        color 0.12s,
+        border-color 0.12s,
+        box-shadow 0.12s;
+
+    &:hover {
+        background: var(--fx-bg-card) !important;
+        color: $text-primary !important;
+        border-color: var(--fx-border-strong) !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    &:disabled {
+        opacity: 0.35 !important;
+        cursor: not-allowed !important;
+    }
+
+    &--success:hover {
+        border-color: rgba(22, 163, 74, 0.35) !important;
+        color: var(--fx-green-text) !important;
+        background: var(--fx-green-soft-bg) !important;
+    }
+
+    &--danger:hover {
+        border-color: rgba(220, 38, 38, 0.35) !important;
+        color: $red !important;
+        background: var(--fx-red-soft-bg) !important;
+    }
+}
+
+::ng-deep .p-tag.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1;
+    border: none !important;
+
+    &::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
         flex-shrink: 0;
     }
 }
 
-.cm-title {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #0f172a;
-    letter-spacing: -0.01em;
-}
+/* Statuts composant — valeurs RÉELLEMENT persistées : « En stock »,
+   « Interne », « Externe » (cf. `magasin-di-list.component.ts`). Le libellé
+   contient une espace, d'où le mappage vers une classe via `statusClass()`. */
+::ng-deep .composant-INSTOCK {
+    background: var(--fx-green-soft-bg-2) !important;
+    color: var(--fx-green-soft-fg) !important;
 
-.cm-subtitle {
-    margin: 0.2rem 0 0;
-    font-size: 0.88rem;
-    color: #64748b;
-}
-
-.cm-search {
-    :host ::ng-deep input.p-inputtext {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 0.55rem 0.75rem 0.55rem 2.1rem;
-        font-size: 0.9rem;
-        min-width: 22rem;
-
-        &:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-        }
-    }
-    :host ::ng-deep .pi-search {
-        color: #94a3b8;
+    &::before {
+        background: var(--fx-green);
     }
 }
 
-.cm-table {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+::ng-deep .composant-INTERN {
+    background: var(--fx-blue-soft-bg-2) !important;
+    color: var(--fx-blue-soft-fg) !important;
 
-    :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
-        background: #f8fafc;
-        color: #475569;
-        font-weight: 700;
-        font-size: 0.8rem;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-        border-bottom: 1px solid #e2e8f0;
-        padding: 0.75rem 0.85rem;
-    }
-    :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
-        padding: 0.7rem 0.85rem;
-        font-size: 0.9rem;
-        border-bottom: 1px solid #f1f5f9;
-        color: #0f172a;
-    }
-    :host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
-        background: #f8fafc;
-    }
-    :host ::ng-deep .p-paginator {
-        background: #ffffff;
-        border-top: 1px solid #e2e8f0;
-        padding: 0.5rem;
+    &::before {
+        background: var(--fx-blue);
     }
 }
 
-/* Long uuid reference — muted, monospace, truncated so it doesn't blow up the row. */
-.cm-ref {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 0.78rem;
-    color: #94a3b8;
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+::ng-deep .composant-EXTERN {
+    background: var(--fx-amber-soft-bg-2) !important;
+    color: var(--fx-amber-soft-fg) !important;
+
+    &::before {
+        background: var(--fx-amber);
+    }
 }
 
-.cm-status {
-    display: inline-block;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: #2563eb;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
+::ng-deep .composant-UNKNOWN {
+    background: var(--fx-bg-surface-2) !important;
+    color: var(--fx-text-strong) !important;
+
+    &::before {
+        background: var(--fx-border-strong);
+    }
 }
 
-.cm-empty {
-    padding: 1.5rem;
-    color: #64748b;
+.sav-empty {
     text-align: center;
-    font-size: 0.92rem;
-}
+    padding: 3rem 1rem !important;
+    color: $text-muted !important;
+    font-size: 0.85rem;
 
-.cm-actions {
-    text-align: right;
-    white-space: nowrap;
-}
-
-.cm-row-btn {
-    :host ::ng-deep & {
-        padding: 0.4rem !important;
-        width: 34px !important;
-        height: 34px !important;
-        border-radius: 8px !important;
-        margin-left: 0.35rem !important;
+    /* PAS de `display: flex` ici : le <td> doit rester une cellule de tableau,
+       sinon son colspan est ignoré sous `table-layout: fixed`. */
+    &__inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
     }
-    :host ::ng-deep &--edit {
-        background: #eff6ff !important;
-        color: #2563eb !important;
-        border: 1px solid #bfdbfe !important;
+
+    .pi {
+        font-size: 2rem;
+        color: $text-muted;
+    }
+}
+
+.sav-paginator-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-top: 1px solid $border;
+    background: $bg-surface;
+}
+
+.sav-count {
+    font-size: 0.75rem;
+    color: $text-secondary;
+}
+
+::ng-deep .sav-paginator {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+
+    .p-paginator-element {
+        background: var(--fx-bg-card) !important;
+        border: 1px solid $border !important;
+        color: $text-secondary !important;
+        border-radius: 4px !important;
+        min-width: 28px !important;
+        height: 28px !important;
+        font-size: 0.78rem !important;
+        margin: 0 2px !important;
 
         &:hover {
-            background: #dbeafe !important;
+            background: $bg-surface !important;
+            color: $text-primary !important;
         }
-    }
-    :host ::ng-deep &--del {
-        background: #fef2f2 !important;
-        color: #dc2626 !important;
-        border: 1px solid #fecaca !important;
 
-        &:hover {
-            background: #fee2e2 !important;
+        &.p-highlight {
+            background: var(--fx-blue-strong) !important;
+            border-color: var(--fx-blue-strong) !important;
+            color: var(--fx-text-on-accent) !important;
         }
     }
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   « Modifier le composant » modal — same design system as the create
-   modal (Inter · blue #3b82f6/#2563eb · slate · no purple).
-   ══════════════════════════════════════════════════════════════════ */
-.cu-form {
-    font-family: 'Inter', sans-serif;
-    color: #0f172a;
-    padding-top: 0.25rem;
+::ng-deep .sav-dialog {
+    .p-dialog {
+        background: $bg-card !important;
+        border: 1px solid $border !important;
+        border-radius: 10px !important;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12) !important;
+    }
+
+    .p-dialog-header {
+        background: $bg-surface !important;
+        border-bottom: 1px solid $border !important;
+        padding: 0.85rem 1.25rem !important;
+        border-radius: 10px 10px 0 0 !important;
+
+        .p-dialog-title {
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
+            color: $text-primary !important;
+        }
+
+        .p-dialog-header-icon {
+            color: $text-secondary !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 5px !important;
+
+            &:hover {
+                background: $border !important;
+                color: $text-primary !important;
+            }
+        }
+    }
+
+    .p-dialog-content {
+        background: $bg-card !important;
+        padding: 1.25rem !important;
+        color: $text-primary !important;
+    }
+
+    .p-dialog-footer {
+        border-top: 1px solid $border !important;
+        padding: 0.85rem 1.25rem !important;
+    }
 }
 
-.cu-grid {
+.sav-create-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sav-fieldset {
+    border: 1px solid $border;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0;
+
+    legend {
+        padding: 0 0.35rem;
+        color: $text-secondary;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+}
+
+.sav-two-col {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem 1rem;
+    gap: 0.85rem;
 }
-@media (max-width: 520px) {
-    .cu-grid {
+
+.sav-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.sav-label {
+    color: $text-secondary;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.sav-input,
+::ng-deep .sav-input {
+    width: 100% !important;
+    background: $bg-input !important;
+    border: 1px solid $border !important;
+    border-radius: 6px !important;
+    color: $text-primary !important;
+    font-size: 0.84rem !important;
+    padding: 0.48rem 0.65rem !important;
+    box-shadow: none !important;
+
+    &:focus {
+        border-color: var(--fx-blue-strong) !important;
+        box-shadow: none !important;
+    }
+}
+
+/* `styleClass` de p-inputNumber / p-calendar atterrit sur le WRAPPER PrimeNG
+   LUI-MÊME (l'élément porte à la fois `.p-calendar` et `.sav-calendar`), pas sur
+   un ancêtre : d'où les sélecteurs en `&.` autant qu'en descendant. On cible
+   l'input interne, sinon la bordure serait dessinée deux fois. Mêmes valeurs
+   visuelles que `.sav-input`. */
+::ng-deep .sav-number,
+::ng-deep .sav-calendar {
+    width: 100% !important;
+
+    &.p-inputnumber,
+    &.p-calendar,
+    .p-inputnumber,
+    .p-calendar {
+        width: 100% !important;
+    }
+
+    .p-inputtext {
+        width: 100% !important;
+        background: $bg-input !important;
+        border: 1px solid $border !important;
+        border-radius: 6px !important;
+        color: $text-primary !important;
+        font-size: 0.84rem !important;
+        padding: 0.48rem 0.65rem !important;
+        box-shadow: none !important;
+
+        &:focus {
+            border-color: var(--fx-blue-strong) !important;
+            box-shadow: none !important;
+        }
+    }
+}
+
+/* Calendrier avec icône : sans cette règle le déclencheur garde le bleu plein
+   de PrimeNG, seul aplat de couleur des formulaires de l'app. L'input perd son
+   arrondi à droite, le bouton reprend la bordure du champ. */
+::ng-deep .sav-calendar.p-calendar-w-btn,
+::ng-deep .sav-calendar .p-calendar-w-btn {
+    .p-inputtext {
+        border-right: none !important;
+        border-radius: 6px 0 0 6px !important;
+    }
+
+    .p-datepicker-trigger,
+    .p-datepicker-trigger.p-button {
+        background: $bg-surface !important;
+        border: 1px solid $border !important;
+        border-radius: 0 6px 6px 0 !important;
+        color: $text-secondary !important;
+        width: 36px !important;
+        box-shadow: none !important;
+
+        &:hover {
+            background: var(--fx-bg-card) !important;
+            color: $text-primary !important;
+            border-color: var(--fx-border-strong) !important;
+        }
+
+        &:focus {
+            box-shadow: none !important;
+        }
+    }
+}
+
+::ng-deep .sav-dropdown {
+    width: 100% !important;
+
+    .p-dropdown {
+        width: 100% !important;
+        border: 1px solid $border !important;
+        border-radius: 6px !important;
+        box-shadow: none !important;
+    }
+
+    .p-dropdown-label {
+        font-size: 0.84rem !important;
+        color: $text-primary !important;
+    }
+}
+
+/* Champ + bouton d'ouverture accolé (le « Lien »). */
+.sav-input-action {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+
+    .sav-input {
+        border-radius: 6px 0 0 6px !important;
+        border-right: none !important;
+    }
+
+    &__btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        flex-shrink: 0;
+        background: $bg-surface;
+        border: 1px solid $border;
+        border-radius: 0 6px 6px 0;
+        color: $text-secondary;
+        text-decoration: none;
+        transition: background 0.12s, color 0.12s, border-color 0.12s;
+
+        &:hover {
+            background: var(--fx-bg-card);
+            color: $text-primary;
+            border-color: var(--fx-border-strong);
+        }
+
+        /* Pas de lien saisi : le bouton ne doit ni cliquer ni attirer l'œil. */
+        &.disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+    }
+}
+
+/* ── Variante « dropdown + bouton » du champ à action accolée ──────────
+   `.sav-input-action` ne sait styler qu'un `<input class="sav-input">`.
+   `styleClass="sav-dropdown"` de PrimeNG atterrit sur le DIV INTERNE
+   `.p-dropdown` (`[class]="styleClass"` posé sur le même noeud que
+   `[ngClass]="containerClass"`) : il porte le `_ngcontent` de PrimeNG et non
+   le nôtre → `::ng-deep` obligatoire, ET sélecteur COMPOSÉ. Le
+   `.sav-dropdown .p-dropdown` du bloc plus haut est, lui, mort : il n'existe
+   aucun `.p-dropdown` DANS un `.p-dropdown`.
+   Même principe que `.sav-calendar.p-calendar-w-btn`. */
+.sav-input-action > p-dropdown {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+:host ::ng-deep .sav-input-action .sav-dropdown.p-dropdown {
+    border-radius: 6px 0 0 6px !important;
+    border-right: 0 !important;
+}
+
+/* Bouton « + » accolé au dropdown catégorie. `pButton` pose les classes
+   `.p-button` du thème dessus — élément réel de CE template, donc classe
+   simple, mais `!important` pour passer devant le thème (comme `.sav-icon-btn`). */
+.sav-input-action__btn--add {
+    width: 36px !important;
+    min-width: 36px !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+    background: $bg-surface !important;
+    border: 1px solid $border !important;
+    border-radius: 0 6px 6px 0 !important;
+    color: $text-secondary !important;
+    box-shadow: none !important;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+
+    &:enabled:hover {
+        background: var(--fx-green-soft-bg) !important;
+        border-color: var(--fx-green-soft-bd) !important;
+        color: var(--fx-green-text) !important;
+    }
+
+    &:focus {
+        box-shadow: none !important;
+    }
+
+    &:disabled {
+        opacity: 0.4 !important;
+        cursor: not-allowed !important;
+    }
+
+    /* Panneau déplié : l'état actif se voit sans changer d'icône. */
+    &.is-open {
+        background: var(--fx-blue-soft-bg) !important;
+        border-color: var(--fx-blue-soft-bd) !important;
+        color: var(--fx-blue-text) !important;
+    }
+}
+
+/* ── Panneau « nouvelle catégorie » déplié sous le dropdown ────────────
+   Volontairement HORS de `.sav-input-action` : la règle `.sav-input` de ce
+   wrapper coupe la bordure droite, ce qui casserait le champ du panneau.
+   Colonne étroite (moitié de `.sav-two-col`) ⇒ champ pleine largeur puis
+   boutons sur leur propre ligne, alignés à droite. */
+.sav-quick-cat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.45rem;
+    padding: 0.6rem 0.65rem 0.65rem;
+    border: 1px dashed $border;
+    border-radius: 8px;
+    background: $bg-surface;
+
+    &__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.4rem;
+    }
+
+    &__btn {
+        border-radius: 6px !important;
+        font-size: 0.78rem !important;
+        font-weight: 600 !important;
+        padding: 0.35rem 0.7rem !important;
+        box-shadow: none !important;
+
+        &:disabled {
+            opacity: 0.45 !important;
+            cursor: not-allowed !important;
+        }
+    }
+
+    /* Vert « success » : même sémantique que `.cat-btn--create` du modal
+       catégories, métriques réduites (bouton d'appoint, pas action de pied). */
+    &__btn--create {
+        background: var(--fx-green) !important;
+        border: 0 !important;
+        color: var(--fx-text-on-accent) !important;
+
+        &:enabled:hover {
+            background: var(--fx-green-strong) !important;
+        }
+    }
+
+    &__btn--ghost {
+        background: transparent !important;
+        border: 1px solid $border !important;
+        color: $text-secondary !important;
+
+        &:enabled:hover {
+            background: var(--fx-bg-card) !important;
+            color: $text-primary !important;
+            border-color: var(--fx-border-strong) !important;
+        }
+    }
+}
+
+/* Lien vers la fiche technique déjà stockée. */
+.sav-fiche-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    align-self: flex-start;
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--fx-blue-text);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.sav-field-hint {
+    color: $text-muted;
+    font-size: 0.72rem;
+}
+
+.sav-field-error {
+    color: $red;
+    font-size: 0.72rem;
+}
+
+.sav-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .sav-page {
+        padding: 1rem;
+    }
+
+    .sav-page-header,
+    .sav-paginator-wrapper {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .sav-page-actions {
+        width: 100%;
+    }
+
+    ::ng-deep .sav-btn-new {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .sav-two-col {
         grid-template-columns: 1fr;
     }
 }
 
-.cu-field {
+/* ═══════════════════════════════════════════════════════════════
+   Styles des modals de CRÉATION, déplacés depuis magasin-di-list
+   (`cc-*` = modal composant d'origine, `cat-*` = modal catégorie).
+   Déjà convertis en tokens `var(--fx-*)` par la passe dark-mode :
+   ne pas réintroduire de littéral hexadécimal ici.
+   ═══════════════════════════════════════════════════════════════ */
+/* Enveloppe du dialog « Création nouveau composant ».
+   `cc-dialog` (styleClass du p-dialog) n'avait aucune règle : sans max-height,
+   les 3 sections + le footer dépassent 700px et le modal sortait de l'écran
+   sur un portable 768px, sans moyen d'atteindre « Ajouter ». Même recette que
+   .co-modal-dialog (company-list.component.scss). */
+::ng-deep .cc-dialog.p-dialog {
+    max-height: 92vh;
+
+    .p-dialog-content {
+        overflow-y: auto;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   « Création nouveau composant » modal — sectioned, responsive redesign.
+   Design system: Inter · blue #3b82f6/#2563eb · green #16a34a ·
+   amber #b45309 · red #dc2626 · slate text. No purple.
+   ══════════════════════════════════════════════════════════════════ */
+.cc-form {
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    color: var(--fx-text);
+}
+
+.cc-section {
+    border: 1px solid var(--fx-border);
+    border-radius: 12px;
+    padding: 1rem 1.1rem 1.15rem;
+    background: var(--fx-bg-card);
+
+    &__head {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.9rem;
+    }
+    &__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--fx-blue-strong);
+        flex: none;
+        &--green {
+            background: var(--fx-green);
+        }
+        &--amber {
+            background: var(--fx-amber-strong);
+        }
+    }
+    &__title {
+        margin: 0;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--fx-text-muted-strong);
+    }
+}
+
+.cc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1rem;
+}
+/* Le dialog fait 680px (maxWidth: 100vw - 2rem) : à 600px de viewport il
+   mesure encore ~568px et resterait sur 2 colonnes. On bascule à 720px. */
+@media (max-width: 720px) {
+    .cc-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cc-field {
     display: flex;
     flex-direction: column;
     gap: 0.35rem;
@@ -189,89 +814,369 @@
     }
 }
 
-.cu-label {
+.cc-label {
     font-size: 0.8rem;
     font-weight: 600;
-    color: #475569;
+    color: var(--fx-text-muted-strong);
 }
 
-.cu-form {
-    /* Every control fills its column. inputnumber/calendar become flex rows so
-       their inner <input> SHRINKS (flex:1 + width:1% + min-width:0) and the
-       currency text / calendar icon never overlap or overflow (that overflow
-       was the source of the horizontal scrollbar). box-sizing keeps padding
-       inside the declared width. */
-    :host ::ng-deep .p-inputnumber,
-    :host ::ng-deep .p-calendar {
+.cc-readonly {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--fx-text);
+    background: var(--fx-bg-surface);
+    border: 1px dashed var(--fx-border);
+    border-radius: 8px;
+    padding: 0.5rem 0.65rem;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    word-break: break-all;
+}
+
+.cc-pdf {
+    margin-top: 0.5rem;
+}
+
+/* PrimeNG inputs — consistent full width, slate border, blue focus ring.
+   `:host` DOIT ouvrir le sélecteur. Imbriqué dans `.cc-form { … }`, Sass émet
+   `.cc-form :host …` : `:host` se retrouve en position descendante alors que
+   l'hôte est un ANCÊTRE de .cc-form → le bloc entier ne matchait jamais et les
+   contrôles gardaient les largeurs/hauteurs par défaut du thème (grille en
+   dents de scie). Ne pas ré-imbriquer. */
+:host ::ng-deep .cc-form {
+    /* Flex inputnumber/calendar so the inner <input> shrinks and the currency
+       text / calendar icon never overlap or overflow the column (no horizontal
+       scroll). box-sizing keeps padding inside the declared width. */
+    .p-inputnumber,
+    .p-calendar {
         display: flex;
         width: 100%;
     }
-    :host ::ng-deep .cu-input,
-    :host ::ng-deep .p-dropdown {
+    .cc-input,
+    .p-dropdown {
         width: 100%;
         box-sizing: border-box;
     }
-    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
-    :host ::ng-deep .p-calendar .p-inputtext {
+    .p-inputnumber .p-inputnumber-input,
+    .p-calendar .p-inputtext {
         flex: 1 1 auto;
         width: 1%;
         min-width: 0;
         box-sizing: border-box;
     }
-    :host ::ng-deep .p-calendar .p-datepicker-trigger {
+    .p-calendar .p-datepicker-trigger {
         flex: 0 0 auto;
     }
 
-    /* Borders / radius / focus — design system. */
-    :host ::ng-deep .cu-input,
-    :host ::ng-deep .p-dropdown,
-    :host ::ng-deep .p-inputnumber .p-inputnumber-input,
-    :host ::ng-deep .p-calendar .p-inputtext {
+    /* Une seule hauteur de contrôle — celle de .cc-readonly (40px) — sinon le
+       padding du thème (0.75rem / 1rem) donne 46-50px et les deux colonnes de
+       la grille ne s'alignent pas ligne à ligne. */
+    .cc-input,
+    .p-inputnumber .p-inputnumber-input,
+    .p-calendar .p-inputtext {
+        height: 40px !important;
+        padding: 0 0.65rem !important;
+    }
+    .p-dropdown {
+        height: 40px;
+        display: flex;
+        align-items: center;
+    }
+    .p-dropdown .p-dropdown-label {
+        display: flex;
+        align-items: center;
+        padding: 0 0.65rem !important;
+    }
+    .p-calendar .p-datepicker-trigger {
+        height: 40px;
+    }
+
+    .cc-input,
+    .p-dropdown,
+    .p-inputnumber .p-inputnumber-input,
+    .p-calendar .p-inputtext {
         border-radius: 8px !important;
-        border: 1px solid #e2e8f0 !important;
+        border: 1px solid var(--fx-border) !important;
         font-size: 0.9rem;
     }
-    :host ::ng-deep .cu-input:focus,
-    :host ::ng-deep .p-inputnumber-input:focus,
-    :host ::ng-deep .p-calendar .p-inputtext:focus,
-    :host ::ng-deep .p-dropdown.p-focus {
-        border-color: #3b82f6 !important;
+    .cc-input:focus,
+    .p-inputnumber-input:focus,
+    .p-calendar .p-inputtext:focus,
+    .p-dropdown.p-focus {
+        border-color: var(--fx-blue) !important;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    /* « Ajouter PDF » (p-fileUpload mode="basic") : .cc-field est un flex
+       column en align-items: stretch, le bouton s'étirait donc sur toute la
+       colonne pleine tout en gardant les métriques p-button du thème. */
+    .p-fileupload-choose {
+        align-self: flex-start;
+        height: 40px;
+        padding: 0 1rem !important;
+        font-size: 0.9rem !important;
     }
 }
 
-.cu-footer {
+/* Footer — Annuler (ghost) left; Supprimer (danger) + Ajouter (primary) right. */
+.cc-footer {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    gap: 0.6rem;
-    width: 100%;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--fx-border);
+
+    &__right {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
 }
 
-.cu-btn {
+.cc-btn {
     :host ::ng-deep & {
         border-radius: 8px !important;
         font-weight: 600 !important;
         font-size: 0.9rem !important;
-        padding: 0.55rem 1.1rem !important;
+        padding: 0.55rem 1rem !important;
     }
     :host ::ng-deep &--ghost {
         background: transparent !important;
-        color: #64748b !important;
-        border: 1px solid #e2e8f0 !important;
+        color: var(--fx-text-muted) !important;
+        border: 1px solid var(--fx-border) !important;
         &:hover {
-            background: #f8fafc !important;
+            background: var(--fx-bg-surface) !important;
+        }
+    }
+    :host ::ng-deep &--danger {
+        background: var(--fx-red-soft-bg) !important;
+        color: var(--fx-red-text) !important;
+        border: 1px solid var(--fx-red-soft-bd) !important;
+        &:hover {
+            background: var(--fx-red-soft-bg-2) !important;
         }
     }
     :host ::ng-deep &--primary {
-        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
-        color: #ffffff !important;
+        background: linear-gradient(90deg, var(--fx-blue) 0%, var(--fx-blue-strong) 100%) !important;
+        color: var(--fx-text-on-accent) !important;
         border: 0 !important;
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
     }
-    :host ::ng-deep &--primary.p-disabled,
-    :host ::ng-deep &--primary:disabled {
-        opacity: 0.55 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   « Création Catégorie Composants » (DIALOG 2) — aligné sur le
+   langage `cc-*` de « Création nouveau composant ».
+
+   ⚠ Écrire les surcharges PrimeNG soit en CLASSE SIMPLE, soit en
+   `::ng-deep` de PREMIER NIVEAU. Nicher `:host ::ng-deep .x` dans un
+   bloc de classe compile en `.parent :host ::ng-deep .x`, sélecteur
+   qui ne matche jamais (`:host` ne peut pas être un descendant) —
+   c'est le cas du bloc `.cc-form { :host ::ng-deep … }` ci-dessus,
+   qui est mort. La forme `.cc-btn { :host ::ng-deep & { … } }`, elle,
+   est correcte car `&` remonte le sélecteur parent.
+
+   Ici les `<input pInputText>` / `<button pButton>` sont de vrais
+   éléments de CE template : une classe simple suffit et évite une
+   fuite de style globale.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Ligne de création : champ extensible + bouton, alignés par le bas.
+   Remplace les `style="display:flex;gap:.5rem"` / `style="flex:1"`. */
+.cat-add-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.75rem;
+}
+@media (max-width: 520px) {
+    .cat-add-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cat-input {
+    width: 100%;
+    border-radius: 8px !important;
+    border: 1px solid var(--fx-border) !important;
+    font-size: 0.9rem !important;
+    padding: 0.55rem 0.7rem !important;
+    color: var(--fx-text) !important;
+
+    &::placeholder {
+        color: var(--fx-text-subtle) !important;
+    }
+    &:focus {
+        border-color: var(--fx-blue) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+    }
+}
+
+/* Vert « success » : conserve la sémantique de l'ancien `p-button-success`
+   et distingue l'ajout en ligne des actions du pied de modal. */
+.cat-btn--create {
+    background: var(--fx-green) !important;
+    border: 0 !important;
+    color: var(--fx-text-on-accent) !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    padding: 0.55rem 1rem !important;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.22) !important;
+
+    &:enabled:hover {
+        background: var(--fx-green-strong) !important;
+    }
+    &:disabled {
+        opacity: 0.45 !important;
         box-shadow: none !important;
+        cursor: not-allowed !important;
+    }
+}
+
+.cat-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.55rem 0 0;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--fx-red-text);
+
+    .pi {
+        font-size: 0.85rem;
+    }
+}
+
+.cat-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--fx-blue-text);
+    background: var(--fx-blue-soft-bg-2);
+    border-radius: 999px;
+    padding: 0.25rem 0.5rem;
+}
+
+/* En-tête de section propre à CE modal : titre + compteur + recherche.
+   `flex-wrap` scopé à `.cat-form` pour ne pas toucher DIALOG 3. */
+.cat-form .cc-section__head {
+    flex-wrap: wrap;
+    row-gap: 0.5rem;
+}
+
+/* Poussée à droite dans `.cc-section__head` (flex). */
+.cat-search {
+    margin-left: auto;
+
+    .pi-search {
+        color: var(--fx-text-subtle);
+        font-size: 0.8rem;
+    }
+    input {
+        width: 190px;
+        max-width: 40vw;
+        border-radius: 8px !important;
+        border: 1px solid var(--fx-border) !important;
+        font-size: 0.82rem !important;
+        padding: 0.4rem 0.6rem 0.4rem 2rem !important;
+
+        &::placeholder {
+            color: var(--fx-text-subtle) !important;
+        }
+        &:focus {
+            border-color: var(--fx-blue) !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+        }
+    }
+}
+
+/* Doit rester APRÈS le bloc `.cat-search` ci-dessus : même spécificité,
+   c'est donc l'ordre qui tranche. Sous 520px la recherche prend sa
+   propre ligne en pleine largeur. */
+@media (max-width: 520px) {
+    .cat-search {
+        margin-left: 0;
+        width: 100%;
+
+        input {
+            width: 100%;
+            max-width: none;
+        }
+    }
+}
+
+.cat-table-wrapper {
+    border: 1px solid var(--fx-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--fx-bg-card);
+}
+
+.cat-actions-th {
+    width: 96px;
+    text-align: center !important;
+}
+
+.cat-actions-cell {
+    text-align: center;
+}
+
+.cat-empty {
+    text-align: center;
+    padding: 2.25rem 1rem !important;
+    color: var(--fx-text-subtle) !important;
+    font-size: 0.85rem;
+
+    .pi {
+        display: block;
+        font-size: 1.6rem;
+        margin-bottom: 0.45rem;
+        color: var(--fx-text-subtle);
+    }
+}
+
+/* `.cc-footer` est en `space-between` (2 groupes de boutons) ; ici un
+   seul bouton, donc aligné à droite. */
+.cat-footer {
+    justify-content: flex-end;
+}
+
+/* Variante danger de `.sav-icon-btn` (l.308) — absente de ce fichier,
+   elle n'existait que dans `ticket-list.component.scss`. */
+.sav-icon-btn--danger {
+    background: var(--fx-red-soft-bg) !important;
+    border-color: var(--fx-red-soft-bd) !important;
+    color: var(--fx-red-text) !important;
+
+    &:hover {
+        background: var(--fx-red-soft-bg-2) !important;
+        border-color: var(--fx-red-soft-bd) !important;
+        color: var(--fx-red-soft-fg) !important;
+    }
+}
+
+/* Paginateur interne au p-table → `::ng-deep` obligatoire. */
+::ng-deep .cat-table .p-paginator {
+    background: var(--fx-bg-surface) !important;
+    border: 0 !important;
+    border-top: 1px solid var(--fx-border) !important;
+    padding: 0.3rem 0.5rem !important;
+
+    .p-paginator-pages .p-paginator-page,
+    .p-paginator-first,
+    .p-paginator-prev,
+    .p-paginator-next,
+    .p-paginator-last {
+        min-width: 1.9rem !important;
+        height: 1.9rem !important;
+        font-size: 0.78rem !important;
+        border-radius: 6px !important;
+    }
+    .p-paginator-pages .p-paginator-page.p-highlight {
+        background: var(--fx-blue-soft-bg-2) !important;
+        color: var(--fx-blue-text) !important;
     }
 }

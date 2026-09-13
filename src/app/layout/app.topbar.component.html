@@ -41,6 +41,26 @@
             Your connection is slow. Performance may be affected.
         </div>
 
+        <!-- ── Bascule clair / sombre ────────────────────────────────────────
+             Masquee pour l'instant (`showThemeToggle`). Tout le reste du mode
+             sombre est en place : rendre le bouton visible suffit a l'activer. -->
+        <button
+            *ngIf="showThemeToggle"
+            type="button"
+            class="p-link layout-topbar-button"
+            (click)="layoutService.toggleColorScheme()"
+            [attr.aria-pressed]="layoutService.isDarkMode()"
+            [attr.aria-label]="
+                layoutService.isDarkMode() ? 'Passer en mode clair' : 'Passer en mode sombre'
+            "
+            [title]="layoutService.isDarkMode() ? 'Mode clair' : 'Mode sombre'"
+        >
+            <i
+                class="pi"
+                [ngClass]="layoutService.isDarkMode() ? 'pi-sun' : 'pi-moon'"
+            ></i>
+        </button>
+
         <!-- ── Cloche notifications ERP (compteur non-lus + panneau) ───────── -->
         <div class="topbar-bell">
             <button
@@ -156,81 +176,191 @@
             ></p-menu>
         </div>
     </div>
-    <p-dialog
-        header="Déconnexion"
-        [modal]="true"
-        [(visible)]="visible"
-        [position]="position"
-        [style]="{ width: '25rem' }"
-    >
-        <span class="p-text-secondary block mb-5">
-            Voulez-vous vous déconnecter&nbsp;?
-        </span>
+    <!-- ══════════════════════════════════════════════════════════════════
+         MODALES DU MENU UTILISATEUR
+         `appendTo="body"` est OBLIGATOIRE : ce template est imbriqué dans
+         `.layout-topbar`, qui est `position: fixed; z-index: 997; height: 5rem`
+         (_topbar.scss:1). Sans cela le masque et le dialogue restent piégés
+         dans ce contexte d'empilement — rognés par une barre de 5rem. Le
+         `p-menu` ci-dessus s'en échappe pour la même raison.
+         Habillage : bloc `.fx-udlg` en fin de `_topbar.scss`.
+    ═══════════════════════════════════════════════════════════════════ -->
 
-        <div class="flex justify-content-end gap-2">
-            <p-button
-                label="Annuler"
-                severity="secondary"
-                (onClick)="visible = false"
-            />
-            <p-button
-                label="Se déconnecter"
-                icon="pi pi-sign-out"
-                (onClick)="yes()"
-            />
-        </div>
-    </p-dialog>
+    <!-- ── Mon profil : identité en lecture seule + mot de passe ───────────── -->
     <p-dialog
-        header="Notifications"
+        [(visible)]="profileDialog"
         [modal]="true"
-        [(visible)]="visibleNotification"
-        [position]="positionNotification"
-        [style]="{ width: '25rem' }"
-        [contentStyle]="{ 'overflow-y': 'auto' }"
-        resizable="true"
+        [draggable]="false"
+        [resizable]="false"
+        [showHeader]="false"
+        appendTo="body"
+        [closeOnEscape]="!pwdBusy"
+        [dismissableMask]="!pwdBusy"
+        [style]="{ width: '30rem', maxWidth: '94vw' }"
+        styleClass="fx-udlg-panel"
     >
-        <ng-container *ngFor="let notification of allNotification">
-            <p-card class="flex justify-content-between">
-                <p>type: {{ notification.type }}</p>
-                <p>title: {{ notification.message }}</p>
-
-                <p-button
-                    icon="pi pi-check"
-                    (onClick)="markAsSeen(notification._id)"
-                    [disabled]="disabledButtons[notification._id]"
-                />
-                <ng-container
-                    *ngIf="notification.type === 'CONFIRMATION_COMPOSANT'"
+        <div class="fx-udlg">
+            <header class="fx-udlg__head">
+                <span class="fx-udlg__tile" aria-hidden="true">
+                    <i class="pi pi-user-edit"></i>
+                </span>
+                <div class="fx-udlg__titles">
+                    <h3 class="fx-udlg__title">Mon profil</h3>
+                    <p class="fx-udlg__subtitle">Identité et mot de passe</p>
+                </div>
+                <button
+                    type="button"
+                    class="fx-udlg__close"
+                    aria-label="Fermer"
+                    [disabled]="pwdBusy"
+                    (click)="profileDialog = false"
                 >
-                    <p-button
-                        label="Consulter les composants"
-                        (onClick)="
-                            getComposant(notification._id, notification._idDoc)
-                        "
-                    >
-                    </p-button>
-                </ng-container>
-            </p-card>
-            <!-- Add Button -->
-        </ng-container>
+                    <i class="pi pi-times"></i>
+                </button>
+            </header>
+
+            <!-- Identité : mêmes `initials` / `roleLabel` que le chip de la
+                 topbar. Le dégradé est redéclaré dans `.fx-udlg__avatar` — la
+                 règle `topbar-user__avatar` est imbriquée sous `.topbar-user`
+                 et ne porte donc PAS jusqu'ici (dialogue `appendTo="body"`). -->
+            <div class="fx-udlg__identity">
+                <p-avatar
+                    [label]="initials"
+                    shape="circle"
+                    styleClass="fx-udlg__avatar"
+                ></p-avatar>
+                <div class="fx-udlg__identity-meta">
+                    <span class="fx-udlg__identity-name">{{ userName }}</span>
+                    <span class="fx-udlg__identity-role">{{ roleLabel }}</span>
+                </div>
+            </div>
+
+            <p class="fx-udlg__section-label">Changer le mot de passe</p>
+
+            <div class="fx-udlg__body">
+                <div class="fx-udlg__field">
+                    <label for="pwd-current" class="fx-udlg__label">
+                        Mot de passe actuel
+                    </label>
+                    <p-password
+                        inputId="pwd-current"
+                        [(ngModel)]="pwdForm.current"
+                        (ngModelChange)="onPwdInput()"
+                        [feedback]="false"
+                        [toggleMask]="true"
+                        [disabled]="pwdBusy"
+                        autocomplete="current-password"
+                    ></p-password>
+                </div>
+
+                <div class="fx-udlg__field">
+                    <label for="pwd-next" class="fx-udlg__label">
+                        Nouveau mot de passe
+                    </label>
+                    <p-password
+                        inputId="pwd-next"
+                        [(ngModel)]="pwdForm.next"
+                        (ngModelChange)="onPwdInput()"
+                        [feedback]="false"
+                        [toggleMask]="true"
+                        [disabled]="pwdBusy"
+                        autocomplete="new-password"
+                    ></p-password>
+                    <small class="fx-udlg__hint">
+                        {{ PWD_MIN }} caractères minimum.
+                    </small>
+                </div>
+
+                <div class="fx-udlg__field">
+                    <label for="pwd-confirm" class="fx-udlg__label">Confirmer</label>
+                    <p-password
+                        inputId="pwd-confirm"
+                        [(ngModel)]="pwdForm.confirm"
+                        (ngModelChange)="onPwdInput()"
+                        (keydown.enter)="submitPasswordChange()"
+                        [feedback]="false"
+                        [toggleMask]="true"
+                        [disabled]="pwdBusy"
+                        autocomplete="new-password"
+                    ></p-password>
+                </div>
+
+                <!-- Règle client non satisfaite, ou refus renvoyé par le serveur.
+                     Sans ce message, l'utilisateur ne saurait ni pourquoi le bouton
+                     reste grisé, ni que son mot de passe actuel est faux. -->
+                <p *ngIf="pwdMessage" class="fx-udlg__error">
+                    <i class="pi pi-exclamation-circle"></i>
+                    <span>{{ pwdMessage }}</span>
+                </p>
+            </div>
+
+            <footer class="fx-udlg__footer">
+                <p-button
+                    label="Annuler"
+                    severity="secondary"
+                    [outlined]="true"
+                    [disabled]="pwdBusy"
+                    (onClick)="profileDialog = false"
+                />
+                <p-button
+                    label="Enregistrer"
+                    icon="pi pi-check"
+                    severity="success"
+                    [loading]="pwdBusy"
+                    [disabled]="pwdSubmitDisabled"
+                    (onClick)="submitPasswordChange()"
+                />
+            </footer>
+        </div>
     </p-dialog>
 
+    <!-- ── Déconnexion : confirmation centrée ──────────────────────────────── -->
     <p-dialog
-        header="Composant"
+        [(visible)]="visible"
         [modal]="true"
-        [(visible)]="openModalComposant"
-        [style]="{ width: '25rem' }"
-        [contentStyle]="{ 'overflow-y': 'auto' }"
-        resizable="false"
+        [draggable]="false"
+        [resizable]="false"
+        [showHeader]="false"
+        appendTo="body"
+        [style]="{ width: '26rem', maxWidth: '94vw' }"
+        styleClass="fx-udlg-panel"
     >
-        <div>
-            <h1>Array of composant</h1>
-            <p-button
-                label="confirmer les composant"
-                (onClick)="confirmAndSendItBackToMagasin()"
-            >
-            </p-button>
+        <div class="fx-udlg">
+            <header class="fx-udlg__head">
+                <span class="fx-udlg__tile" aria-hidden="true">
+                    <i class="pi pi-sign-out"></i>
+                </span>
+                <div class="fx-udlg__titles">
+                    <h3 class="fx-udlg__title">Déconnexion</h3>
+                    <p class="fx-udlg__subtitle">
+                        {{ userName }} · {{ roleLabel }}
+                    </p>
+                </div>
+            </header>
+
+            <div class="fx-udlg__body">
+                <p class="fx-udlg__text">
+                    Voulez-vous vous déconnecter&nbsp;? Votre session sera fermée.
+                </p>
+            </div>
+
+            <footer class="fx-udlg__footer">
+                <!-- `autofocus` sur « Annuler » : le focus initial ne doit pas
+                     tomber sur l'action qui fait sortir de l'application. -->
+                <p-button
+                    label="Annuler"
+                    severity="secondary"
+                    [outlined]="true"
+                    autofocus
+                    (onClick)="visible = false"
+                />
+                <p-button
+                    label="Se déconnecter"
+                    icon="pi pi-sign-out"
+                    severity="danger"
+                    (onClick)="yes()"
+                />
+            </footer>
         </div>
-        <!-- Add Button -->
     </p-dialog>
 </div>

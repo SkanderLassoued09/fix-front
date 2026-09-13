@@ -8,7 +8,6 @@ import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { TooltipModule } from 'primeng/tooltip';
-import { MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 import { PdfDropzoneComponent } from '../../magasin-di-list/pdf-dropzone/pdf-dropzone.component';
 import {
@@ -19,6 +18,7 @@ import {
   ImportReport,
   TierDecision,
 } from 'src/app/demo/service/di-import.service';
+import { NotifyService } from '../../../../../shared/ui/notify.service';
 
 /**
  * Import DI en bloc — workflow en 5 états :
@@ -81,7 +81,7 @@ export class DiImportComponent implements OnDestroy {
 
   constructor(
     private readonly importSvc: DiImportService,
-    private readonly message: MessageService,
+    private readonly notify: NotifyService,
   ) {}
 
   ngOnDestroy(): void {
@@ -120,11 +120,10 @@ export class DiImportComponent implements OnDestroy {
   onFileSelected(file: File): void {
     if (!file) return;
     if (!/\.xlsx$/i.test(file.name)) {
-      this.message.add({
-        severity: 'error',
-        summary: 'Format invalide',
-        detail: 'Un fichier .xlsx est attendu.',
-      });
+      this.notify.error(
+          'Un fichier .xlsx est attendu.',
+          { summary: 'Format invalide' },
+      );
       return;
     }
     this.file = file;
@@ -152,22 +151,16 @@ export class DiImportComponent implements OnDestroy {
         this.report = r;
         this.phase = 'verification';
         if (r.enTeteInvalide) {
-          this.message.add({
-            severity: 'error',
-            summary: 'En-tête invalide',
-            detail:
+          this.notify.error(
               r.erreurs?.[0]?.motifs?.[0] ??
               'Colonnes obligatoires manquantes (N° DI, Désignation, N° Série, Client).',
-          });
+              { summary: 'En-tête invalide' },
+          );
         }
       },
       error: (e) => {
         this.loading = false;
-        this.message.add({
-          severity: 'error',
-          summary: "Échec de l'aperçu",
-          detail: this.errMsg(e),
-        });
+        this.notify.error(this.errMsg(e), { summary: "Échec de l'aperçu" });
       },
     });
   }
@@ -232,11 +225,10 @@ export class DiImportComponent implements OnDestroy {
       next: (ref) => {
         if (!ref.jobId) {
           this.phase = 'verification';
-          this.message.add({
-            severity: 'error',
-            summary: 'Fichier rejeté',
-            detail: ref.report?.erreurs?.[0]?.motifs?.[0] ?? 'Aucune ligne exécutable.',
-          });
+          this.notify.error(
+              ref.report?.erreurs?.[0]?.motifs?.[0] ?? 'Aucune ligne exécutable.',
+              { summary: 'Fichier rejeté' },
+          );
           return;
         }
         this.jobId = ref.jobId;
@@ -252,11 +244,7 @@ export class DiImportComponent implements OnDestroy {
       },
       error: (e) => {
         this.phase = 'verification';
-        this.message.add({
-          severity: 'error',
-          summary: "Échec du démarrage",
-          detail: this.errMsg(e),
-        });
+        this.notify.error(this.errMsg(e), { summary: "Échec du démarrage" });
       },
     });
   }

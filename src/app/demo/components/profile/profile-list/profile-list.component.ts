@@ -4,13 +4,14 @@ import { ROLES } from '../constant/role-constants';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Apollo } from 'apollo-angular';
 import { ProfileService } from 'src/app/demo/service/profile.service';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import {
     AllProfileQueryResponse,
     PageEvent,
     ProfileAddMutationResponse,
 } from './profile-list.interfaces';
 import { debounceTime, finalize, Subject } from 'rxjs';
+import { NotifyService } from '../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../shared/ui/confirm.service';
 
 @Component({
     selector: 'app-profile-list',
@@ -65,8 +66,8 @@ export class ProfileListComponent {
     constructor(
         private apollo: Apollo,
         private profileService: ProfileService,
-        private messageService: MessageService,
-        private confirmationService: ConfirmationService,
+        private readonly notify: NotifyService,
+        private readonly confirm: ConfirmService,
     ) {
         this.roles = ROLES;
     }
@@ -159,29 +160,17 @@ export class ProfileListComponent {
             .subscribe({
                 next: ({ data, errors }) => {
                     if (data) {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'Le profil ajouté avec succés',
-                        });
+                        this.notify.success('Le profil a été ajouté avec succès.');
                         this.loadData(); // Reload data after adding
                         this.staffForm.reset();
                         this.visible = false;
                     }
                     if (errors) {
-                        this.messageService.add({
-                            severity: 'error',
-                            summary: 'Error',
-                            detail: "Erreur lors de l'ajout du profil",
-                        });
+                        this.notify.error("Erreur lors de l'ajout du profil");
                     }
                 },
                 error: () => {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: "Erreur lors de l'ajout du profil",
-                    });
+                    this.notify.error("Erreur lors de l'ajout du profil");
                 },
             });
     }
@@ -256,11 +245,7 @@ export class ProfileListComponent {
                             this.findIndexById(this.profileData._id)
                         ] = this.profileData;
 
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Success',
-                            detail: 'Le profil a changé avec succé',
-                        });
+                        this.notify.success('Le profil a été modifié avec succès.');
                         this.profileDialog = false;
                         this.submitted = false;
                         this.loadData(); // Reload data after update
@@ -288,10 +273,8 @@ export class ProfileListComponent {
     }
 
     deleteProfile(_id: string) {
-        this.confirmationService.confirm({
-            message: 'Êtes-vous sûr de vouloir supprimer ce profil?',
-            header: 'Confirmation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmDelete({
+            message: 'Voulez-vous supprimer ce profil ?',
             accept: () => {
                 this.deleteProfileConfirmed(_id);
             },
@@ -307,12 +290,7 @@ export class ProfileListComponent {
                         return el._id === _id;
                     });
                     this.profileList.splice(index, 1);
-                    this.messageService.add({
-                        severity: 'success',
-                        summary: 'Succès',
-                        detail: 'Profil supprimé',
-                        life: 3000,
-                    });
+                    this.notify.success('Le profil a été supprimé.');
                     this.loadData(); // Reload data after delete
                 }
             });

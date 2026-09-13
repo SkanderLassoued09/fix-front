@@ -52,8 +52,8 @@
                     <sav-repair-summary-step
                         *ngSwitchCase="'summary'"
                         [di]="ctx.di"
-                        [repairPlan]="repairPlan"
                         [categoryLabel]="categoryLabel"
+                        [blockedReason]="blockedReason"
                         [parts]="ctx.parts"
                         [repairSuccess]="repairSuccess"
                         [testsValidated]="testsValidated"

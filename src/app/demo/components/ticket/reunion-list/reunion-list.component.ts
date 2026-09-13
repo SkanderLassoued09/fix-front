@@ -16,11 +16,11 @@ import { TooltipModule } from 'primeng/tooltip';
 import { ReunionPvService } from 'src/app/demo/service/reunion-pv.service';
 import { ReunionPvPdfService } from 'src/app/demo/service/reunion-pv-pdf.service';
 import { ProfileService } from 'src/app/demo/service/profile.service';
-import { MessageService } from 'primeng/api';
 import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-modal.component';
 import { ReunionPvDetailsModalComponent } from '../shared/reunion-pv-details-modal/reunion-pv-details-modal.component';
 import { canAccessReunion } from 'src/app/shared/reunion-access';
 import { TableCellTruncateDirective } from '../../../../shared/table-cell-truncate.directive';
+import { NotifyService } from '../../../../shared/ui/notify.service';
 
 interface ReunionRow {
     _id: string;
@@ -97,7 +97,7 @@ export class ReunionListComponent implements OnInit {
         private readonly reunionPvGql: ReunionPvService,
         private readonly profileService: ProfileService,
         private readonly pdf: ReunionPvPdfService,
-        private readonly toast: MessageService,
+        private readonly notify: NotifyService,
         private readonly cdr: ChangeDetectorRef,
         private readonly route: ActivatedRoute,
     ) {}
@@ -179,20 +179,18 @@ export class ReunionListComponent implements OnInit {
                 .then((r: any) => r ?? {});
             const pv = data?.reunionPV;
             if (!pv) {
-                this.toast.add({
-                    severity: 'error',
-                    summary: 'PV introuvable',
-                    detail: 'Impossible de charger ce procès-verbal.',
-                });
+                this.notify.error(
+                    'Impossible de charger ce procès-verbal.',
+                    { summary: 'PV introuvable' },
+                );
                 return;
             }
             await this.pdf.generateAndDownload(pv, this.profileNames);
         } catch {
-            this.toast.add({
-                severity: 'error',
-                summary: 'Téléchargement impossible',
-                detail: 'Réessayez dans un instant.',
-            });
+            this.notify.error(
+                'Réessayez dans un instant.',
+                { summary: 'Téléchargement impossible' },
+            );
         } finally {
             this.downloadingIds.delete(row._id);
             this.cdr.detectChanges();

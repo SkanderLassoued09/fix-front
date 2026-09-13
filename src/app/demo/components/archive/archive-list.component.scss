@@ -1,13 +1,13 @@
 :host {
-    --arch-blue: #3b82f6;
-    --arch-blue-strong: #2563eb;
-    --arch-green: #16a34a;
-    --arch-amber: #b45309;
+    --arch-blue: var(--fx-blue-text);
+    --arch-blue-strong: var(--fx-blue-text);
+    --arch-green: var(--fx-green-text);
+    --arch-amber: var(--fx-amber-text);
     --arch-red: #dc2626;
-    --arch-slate: #475569;
-    --arch-ink: #0f172a;
-    --arch-muted: #64748b;
-    --arch-border: #e2e8f0;
+    --arch-slate: var(--fx-text-muted-strong);
+    --arch-ink: var(--fx-text);
+    --arch-muted: var(--fx-text-muted);
+    --arch-border: var(--fx-border);
     font-family: "Inter", system-ui, -apple-system, sans-serif;
     display: block;
 }
@@ -47,7 +47,7 @@
 .arch-count {
     font-size: 0.8rem;
     color: var(--arch-muted);
-    background: #f1f5f9;
+    background: var(--fx-bg-surface-2);
     border: 1px solid var(--arch-border);
     padding: 0.3rem 0.7rem;
     border-radius: 999px;
@@ -62,7 +62,7 @@
     flex-wrap: wrap;
     padding: 0.9rem 1rem;
     margin-bottom: 0.9rem;
-    background: #fff;
+    background: var(--fx-bg-card);
     border: 1px solid var(--arch-border);
     border-radius: 12px;
 }
@@ -103,7 +103,7 @@
     gap: 0.4rem;
     padding: 0.4rem 0.85rem;
     border-radius: 10px;
-    background: #f1f5f9;
+    background: var(--fx-bg-surface-2);
     border: 1px solid var(--arch-border);
     color: var(--arch-slate);
 
@@ -123,8 +123,8 @@
     }
 
     &--filtered {
-        background: #eff6ff;
-        border-color: #bfdbfe;
+        background: var(--fx-blue-soft-bg);
+        border-color: var(--fx-blue-soft-bd);
         color: var(--arch-blue-strong);
 
         i,
@@ -135,7 +135,7 @@
 }
 
 .arch-table-wrap {
-    background: #fff;
+    background: var(--fx-bg-card);
     border: 1px solid var(--arch-border);
     border-radius: 12px;
     overflow-x: auto; /* many file columns → horizontal scroll */
@@ -143,7 +143,7 @@
 
 /* ── Per-column filter row ───────────────────────────────────────────────── */
 :host ::ng-deep .arch-filter-row th {
-    background: #fbfcfe !important;
+    background: var(--fx-bg-surface) !important;
     padding: 0.4rem 0.5rem !important;
     border-top: 1px solid var(--arch-border);
     text-transform: none !important;
@@ -165,9 +165,9 @@
 }
 /* « Documents manquants » chips read as an amber warning, facture as risk. */
 :host ::ng-deep .arch-ms--missing .p-multiselect-token {
-    background: #fffbeb;
+    background: var(--fx-amber-soft-bg);
     color: var(--arch-amber);
-    border: 1px solid #fde68a;
+    border: 1px solid var(--fx-amber-soft-bd);
     font-weight: 600;
 }
 :host ::ng-deep .arch-colfilter-ms {
@@ -176,7 +176,7 @@
 
 :host ::ng-deep .arch-table {
     th {
-        background: #f8fafc !important;
+        background: var(--fx-bg-surface) !important;
         color: var(--arch-ink) !important;
         font-size: 0.74rem !important;
         text-transform: uppercase;
@@ -184,7 +184,7 @@
     }
     td {
         font-size: 0.84rem;
-        color: #1e293b;
+        color: var(--fx-text-strong);
     }
     .arch-ref {
         font-variant-numeric: tabular-nums;
@@ -214,14 +214,14 @@
     font-size: 0.78rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    background: #fffbeb;
+    background: var(--fx-amber-soft-bg);
     color: var(--arch-amber);
-    border: 1px solid #fde68a;
+    border: 1px solid var(--fx-amber-soft-bd);
 
     &--full {
-        background: #f0fdf4;
+        background: var(--fx-green-soft-bg);
         color: var(--arch-green);
-        border-color: #bbf7d0;
+        border-color: var(--fx-green-soft-bd);
     }
 }
 

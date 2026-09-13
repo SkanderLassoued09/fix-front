@@ -105,9 +105,9 @@ import {
             }
             .dz {
                 position: relative;
-                border: 1.5px dashed #c7d2e0;
+                border: 1.5px dashed var(--fx-border-strong);
                 border-radius: 12px;
-                background: #fafbfd;
+                background: var(--fx-bg-surface);
                 cursor: pointer;
                 padding: 22px 16px;
                 outline: none;
@@ -115,31 +115,31 @@ import {
                     box-shadow 0.15s, transform 0.12s;
             }
             .dz:hover:not(.dz--filled):not(.dz--error) {
-                border-color: #3b82f6;
-                background: #eff6ff;
+                border-color: var(--fx-blue);
+                background: var(--fx-blue-soft-bg);
             }
             .dz:focus-visible {
-                border-color: #3b82f6;
+                border-color: var(--fx-blue);
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
             }
             .dz--drag {
                 border-style: solid;
-                border-color: #3b82f6;
-                background: #eff6ff;
+                border-color: var(--fx-blue);
+                background: var(--fx-blue-soft-bg);
                 box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.13);
                 transform: scale(1.01);
             }
             .dz--filled {
                 border-style: solid;
-                border-color: #e2e8f0;
-                background: #fff;
+                border-color: var(--fx-border);
+                background: var(--fx-bg-card);
                 cursor: default;
                 padding: 10px 12px;
             }
             .dz--error {
                 border-style: solid;
-                border-color: #fecaca;
-                background: #fef2f2;
+                border-color: var(--fx-red-soft-bd);
+                background: var(--fx-red-soft-bg);
             }
 
             .dz__input {
@@ -158,24 +158,24 @@ import {
                 text-align: center;
             }
             .dz__icon {
-                color: #2563eb;
+                color: var(--fx-blue-text);
                 font-size: 24px;
             }
             .dz__title {
                 font-size: 13px;
                 font-weight: 600;
-                color: #1e293b;
+                color: var(--fx-text-strong);
                 margin-top: 8px;
             }
             .dz__sub {
                 font-size: 11.5px;
-                color: #94a3b8;
+                color: var(--fx-text-subtle);
                 margin-top: 3px;
             }
             .dz__error {
                 font-size: 12px;
                 font-weight: 600;
-                color: #dc2626;
+                color: var(--fx-red-text);
                 margin-top: 4px;
             }
 
@@ -190,8 +190,8 @@ import {
                 width: 34px;
                 height: 34px;
                 border-radius: 8px;
-                background: #fef2f2;
-                color: #dc2626;
+                background: var(--fx-red-soft-bg);
+                color: var(--fx-red-text);
                 display: grid;
                 place-items: center;
                 font-size: 16px;
@@ -206,14 +206,14 @@ import {
             .dz__name {
                 font-size: 13px;
                 font-weight: 600;
-                color: #0f172a;
+                color: var(--fx-text);
                 white-space: nowrap;
                 overflow: hidden;
                 text-overflow: ellipsis;
             }
             .dz__size {
                 font-size: 11.5px;
-                color: #64748b;
+                color: var(--fx-text-muted);
                 margin-top: 1px;
             }
             .dz__actions {
@@ -223,9 +223,9 @@ import {
                 flex: none;
             }
             .dz__change {
-                border: 1px solid #e2e8f0;
-                background: #fff;
-                color: #2563eb;
+                border: 1px solid var(--fx-border);
+                background: var(--fx-bg-card);
+                color: var(--fx-blue-text);
                 border-radius: 7px;
                 padding: 5px 10px;
                 font-size: 12px;
@@ -235,13 +235,13 @@ import {
                 transition: background 0.12s, border-color 0.12s;
             }
             .dz__change:hover {
-                background: #eff6ff;
-                border-color: #3b82f6;
+                background: var(--fx-blue-soft-bg);
+                border-color: var(--fx-blue);
             }
             .dz__remove {
                 border: none;
                 background: transparent;
-                color: #64748b;
+                color: var(--fx-text-muted);
                 width: 28px;
                 height: 28px;
                 border-radius: 7px;
@@ -251,8 +251,8 @@ import {
                 transition: background 0.12s, color 0.12s;
             }
             .dz__remove:hover {
-                background: #fef2f2;
-                color: #dc2626;
+                background: var(--fx-red-soft-bg);
+                color: var(--fx-red-text);
             }
 
             /* Visually-hidden live region */

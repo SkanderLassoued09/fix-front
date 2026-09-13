@@ -13,7 +13,6 @@ import {
     STATUS_DI,
 } from 'src/app/layout/api/status-di';
 import { environment } from 'src/environments/environment';
-import { ConfirmationService, MessageService } from 'primeng/api';
 import { PageEvent } from '../../profile/profile-list/profile-list.interfaces';
 import { NotificationService } from 'src/app/demo/service/notification.service';
 import { debounceTime, finalize, Subject, takeUntil } from 'rxjs';
@@ -37,9 +36,38 @@ import {
     phaseEntry as sharedPhaseEntry,
     isPhaseBehindCurrent as sharedIsPhaseBehind,
     computePhaseState as sharedComputePhaseState,
-    computePhaseDuration as sharedComputePhaseDuration,
     formatDuration as sharedFormatDuration,
+    phaseOfStatus as sharedPhaseOfStatus,
 } from '../shared/status-timeline.util';
+import { applyChartTheme } from '../../../../shared/chart-theme';
+import { LayoutService } from '../../../../layout/service/app.layout.service';
+import { NotifyService } from '../../../../shared/ui/notify.service';
+import { ConfirmService } from '../../../../shared/ui/confirm.service';
+
+/** Les 5 étapes du panneau « Contrôles par étape » du modal Coordination. */
+export type CoordFlowStep =
+    | 'diagnostic'
+    | 'magasin'
+    | 'admin'
+    | 'repair'
+    | 'closure';
+
+/** `skipped` = étape qui n'aura JAMAIS lieu pour cette DI (pas « pas encore »). */
+export type CoordFlowStepState = 'done' | 'current' | 'skipped' | 'pending';
+
+export const COORD_FLOW_STEP_LABEL: Record<CoordFlowStepState, string> = {
+    done: 'Terminé',
+    current: 'En attente',
+    skipped: 'Sauté',
+    pending: 'Non démarrée',
+};
+
+export const COORD_FLOW_STEP_ICON: Record<CoordFlowStepState, string> = {
+    done: 'pi pi-check-circle',
+    current: 'pi pi-clock',
+    skipped: 'pi pi-angle-double-right',
+    pending: 'pi pi-minus-circle',
+};
 
 @Component({
     selector: 'app-coordinator-di-list',
@@ -47,12 +75,13 @@ import {
     styleUrl: './coordinator-di-list.component.scss',
 })
 export class CoordinatorDiListComponent implements OnDestroy {
-    // Search state tracking
-    private currentSearchField: string = '';
-    private currentSearchValue: string = '';
+    // Filtres de colonnes CUMULATIFS : searchKey → valeur saisie (trimée).
+    private columnFilters: Record<string, string> = {};
     private searchSubject$ = new Subject<void>();
     private destroy$ = new Subject<void>();
-    private lastSearchKey = '';
+    /** Jeton anti-réponse périmée : seule la DERNIÈRE requête de `loadData`
+     *  (recherche, pagination, notification) peut écrire la liste. */
+    private loadSeq = 0;
 
     visible: boolean = false;
     products!: Product[];
@@ -180,36 +209,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
     // + one Retour #N per ignoreCount), with per-segment timeline + motif.
     /** All LogsDi snapshots for the open DI, sorted by `idIgnore` ASC. */
     flowLogsDi: any[] = [];
-    /** Active segment in the flow-history tabs.
-     *  0 = Flow Original ; 1..N = Retour #N. Defaults to the latest open
-     *  segment so the modal lands on the currently-active cycle. */
-    selectedFlowSegment = 0;
-
-    /** Timeline MÉMOÏSÉE du segment courant. `getSegmentStages()` est coûteux
-     *  (reconstruit un tableau + ~8 calculs par phase) : l'appeler directement
-     *  dans le `*ngFor` du template le ré-exécutait à CHAQUE cycle de détection
-     *  de changement → le modal figeait le navigateur (freeze + RAM). On le
-     *  recalcule UNIQUEMENT quand les données changent (ouverture, chargement des
-     *  logs, changement de segment) via `refreshTimeline()`. */
-    segmentStages: Array<{
-        key: string;
-        label: string;
-        state: 'done' | 'current' | 'pending' | 'skipped';
-        badgeLabel: string;
-        rawStatus: string | null;
-        actor: string;
-        timestamp: string | null;
-        duration: { text: string; ongoing: boolean } | null;
-    }> = [];
-
-    /** Recalcule la timeline mémoïsée (à appeler quand di/logs/segment changent). */
-    private refreshTimeline(): void {
-        this.segmentStages = this.getSegmentStages();
-    }
-
-    /** trackBy stable → le `*ngFor` de la timeline ne recrée pas le DOM. */
-    trackByStageKey = (_: number, s: { key: string }) => s.key;
-
     /** Techniciens diagnostic sélectionnables — MÉMOÏSÉ (le getter recréait un
      *  tableau à chaque cycle de détection → le p-dropdown re-traitait ses
      *  options en boucle). Recalculé à l'ouverture du modal + au chargement des
@@ -306,17 +305,27 @@ export class CoordinatorDiListComponent implements OnDestroy {
     private deepLinkConsumer?: DeepLinkConsumer;
 
     constructor(
+        public layoutService: LayoutService,
         private ticketSerice: TicketService,
         private apollo: Apollo,
-        private messageservice: MessageService,
-        private confirmationService: ConfirmationService,
+        private readonly notify: NotifyService,
+        private readonly confirm: ConfirmService,
         private notificationService: NotificationService,
         private ticketRefreshService: TicketRefreshService,
         private mutationRunner: MutationRunner,
         private route: ActivatedRoute,
         private router: Router,
         private diDetail: DiDetailService,
-    ) {}
+    ) {
+        // Chart.js dessine sur un canvas : il n'herite pas des variables CSS.
+        // Sans cette reapplication, axes et legende gardent les couleurs de
+        // l'ancien theme apres une bascule clair/sombre.
+        this.layoutService.configUpdate$.subscribe(() => {
+            if (this.basicOptions) {
+                this.basicOptions = applyChartTheme(this.basicOptions);
+            }
+        });
+}
 
     /** Ouvre le modal d'annulation (repart d'un formulaire vierge). */
     openCancelDialog() {
@@ -435,18 +444,14 @@ export class CoordinatorDiListComponent implements OnDestroy {
         if (!di?._id || di.status !== 'ANNULER') return;
         const blocked = this.reactivateBlockedReason;
         if (blocked) {
-            this.messageservice.add({
-                severity: 'warn',
-                summary: 'Réactivation impossible',
-                detail: blocked,
-            });
+            this.notify.warn(blocked, { summary: 'Réactivation impossible' });
             return;
         }
         const prev = this.reactivablePreviousStatus;
-        this.confirmationService.confirm({
+        this.confirm.confirmSave({
             message: `Réactiver cette DI et la remettre en « ${prev} » ? L'annulation sera défaite (action tracée).`,
             header: 'Réactiver la DI',
-            icon: 'pi pi-refresh',
+            acceptLabel: 'Réactiver',
             accept: () => {
                 this.reactivateBusy = true;
                 this.apollo
@@ -455,24 +460,21 @@ export class CoordinatorDiListComponent implements OnDestroy {
                     })
                     .subscribe({
                         next: () => {
-                            this.messageservice.add({
-                                severity: 'success',
-                                summary: 'DI réactivée',
-                                detail: `Remise en « ${prev} ».`,
-                            });
+                            this.notify.success(
+                                `Remise en « ${prev} ».`,
+                                { summary: 'DI réactivée' },
+                            );
                             this.reactivateBusy = false;
                             this.loadData();
                             this.diDialog = false;
                         },
                         error: (e) => {
                             this.reactivateBusy = false;
-                            this.messageservice.add({
-                                severity: 'error',
-                                summary: 'Réactivation refusée',
-                                detail:
-                                    e?.message ??
+                            this.notify.error(
+                                e?.message ??
                                     'La réactivation a échoué.',
-                            });
+                                { summary: 'Réactivation refusée' },
+                            );
                         },
                     });
             },
@@ -572,32 +574,60 @@ export class CoordinatorDiListComponent implements OnDestroy {
      */
     loadData() {
         this.isLoading = true;
+        // Une réponse lente d'une requête DÉPASSÉE ne doit ni écraser la liste
+        // ni éteindre le chargement de la requête en cours.
+        const seq = ++this.loadSeq;
+        const isCurrent = () => seq === this.loadSeq;
 
-        const hasActiveSearch =
-            this.currentSearchField &&
-            this.currentSearchValue &&
-            this.currentSearchValue.trim().length > 0;
+        const searches = Object.entries(this.columnFilters).map(
+            ([field, value]) => ({ field, value }),
+        );
 
-        if (hasActiveSearch) {
-            // Perform search
+        if (searches.length) {
+            // Perform search — saisie en variable GraphQL, jamais interpolée
             this.apollo
                 .query<any>({
                     query: this.ticketSerice.searchCoordinatorDI(
-                        this.currentSearchField,
-                        this.currentSearchValue,
                         this.first,
                         this.rows,
                     ),
+                    variables: { search: searches },
                     fetchPolicy: 'no-cache',
                 })
-                .pipe(finalize(() => (this.isLoading = false)))
-                .subscribe(({ data }) => {
-                    if (data && data.searchCoordinatorDI) {
-                        this.diList = data.searchCoordinatorDI.di;
-                        this.diListCount =
-                            data.searchCoordinatorDI.totalDiCount;
-                        this.updateCounters();
-                    }
+                .pipe(
+                    finalize(() => {
+                        if (isCurrent()) this.isLoading = false;
+                    }),
+                )
+                .subscribe({
+                    // `errorPolicy: 'all'` (graphql.modules) livre les erreurs
+                    // GraphQL dans `next`, pas dans `error` : sans ce test la
+                    // recherche échouait sans le moindre toast.
+                    next: ({ data, errors }) => {
+                        if (!isCurrent()) return;
+                        if (errors?.length) {
+                            this.notify.error(
+                                errors[0]?.message ||
+                                    'La recherche a échoué. Réessayez.',
+                                { summary: 'Erreur de recherche' },
+                            );
+                            return;
+                        }
+                        if (data?.searchCoordinatorDI) {
+                            this.diList = data.searchCoordinatorDI.di;
+                            this.diListCount =
+                                data.searchCoordinatorDI.totalDiCount;
+                            this.updateCounters();
+                        }
+                    },
+                    error: (error) => {
+                        if (!isCurrent()) return;
+                        this.notify.error(
+                            error?.message ||
+                                'La recherche a échoué. Réessayez.',
+                            { summary: 'Erreur de recherche' },
+                        );
+                    },
                 });
         } else {
             // Regular data fetch
@@ -609,8 +639,13 @@ export class CoordinatorDiListComponent implements OnDestroy {
                     ),
                     fetchPolicy: 'no-cache',
                 })
-                .pipe(finalize(() => (this.isLoading = false)))
+                .pipe(
+                    finalize(() => {
+                        if (isCurrent()) this.isLoading = false;
+                    }),
+                )
                 .subscribe(({ data }) => {
+                    if (!isCurrent()) return;
                     console.log('🌶[*************data]:', data);
 
                     if (data && data.get_coordinatorDI) {
@@ -623,10 +658,12 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     getStatusLabel(status: string): string {
-        // Affichage BRUT en MAJUSCULES, SAUF PRICING_DIAG (+ ancienne valeur
-        // PRICING) affiché « Pricing » (demande produit).
+        // Affichage BRUT en MAJUSCULES. PRICING_DIAG et son ancienne valeur
+        // PRICING sont ramenés au MÊME libellé « PRICING » : les deux valeurs
+        // coexistent en base (renommage forward-only, sans backfill) et la
+        // colonne « Statut » afficherait sinon deux libellés pour un même état.
         const s = (status ?? '').toString().trim();
-        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'Pricing';
+        if (s === 'PRICING_DIAG' || s === 'PRICING') return 'PRICING';
         return s.toUpperCase() || '—';
     }
 
@@ -676,35 +713,29 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     /**
-     * Handle column search
+     * Handle column search — filtres CUMULATIFS : chaque colonne garde sa
+     * valeur ; vider une colonne ne retire QUE son propre filtre.
      */
     onColumnSearch(field: string, value: string) {
-        const v = value?.trim();
         const f = field?.trim();
-        const searchKey = `${f || ''}:${v || ''}`;
+        if (!f) return;
+        const v = value?.trim() ?? '';
+        if ((this.columnFilters[f] ?? '') === v) return;
 
-        if (searchKey === this.lastSearchKey) {
-            return;
-        }
-
-        this.lastSearchKey = searchKey;
-
-        if (v && v.length > 0 && f && f.length > 0) {
-            // Set search state
-            this.currentSearchField = f;
-            this.currentSearchValue = v;
-            this.first = 0; // Reset to first page on new search
-
-            // Trigger search
-            this.searchSubject$.next();
+        if (v) {
+            this.columnFilters[f] = v;
         } else {
-            // Clear search state
-            this.currentSearchField = '';
-            this.currentSearchValue = '';
-
-            // Load regular data
-            this.loadData();
+            delete this.columnFilters[f];
         }
+        this.first = 0; // Reset to first page on new search
+        // Debounced for typing AND clearing (clearing used to fire at once and
+        // could race a pending search).
+        this.searchSubject$.next();
+    }
+
+    /** Dernier rang affiché dans le compteur « a–b sur N résultats ». */
+    get rangeEnd(): number {
+        return Math.min(this.first + this.rows, this.diListCount || 0);
     }
 
     formatCell(row: any, field: string): string {
@@ -903,10 +934,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
         this.gotComposantFromMagasinCondition = di.gotComposantFromMagasin;
         this.techSearchTerm = '';
         this.fetchTechAvgRepair();
-        // Pull the LogsDi snapshots for this DI's past retour cycles (motif +
-        // date + status per cycle). Empty array on `ignoreCount === 0`; the
-        // timeline still renders the Flow Original segment.
-        this.fetchFlowLogsDi(di._id, Number(di.ignoreCount ?? 0));
+        // Snapshots LogsDi des cycles retour — ne sert plus qu'au repli de la
+        // date de retour dans la bannière (cf. fetchFlowLogsDi).
+        this.fetchFlowLogsDi(di._id);
         if (di.logs && di.logs.length > 0) {
             const highestIgnoreLog = di.logs.reduce((prev, current) =>
                 prev.idIgnore > current.idIgnore ? prev : current,
@@ -975,15 +1005,18 @@ export class CoordinatorDiListComponent implements OnDestroy {
 
     // ── Retour-aware flow helpers (Flow Original + Retour #1/2/3) ─────────
 
-    /** Pull all LogsDi snapshots for the open DI. The flow-history left
-     *  column reads from `this.flowLogsDi` for retour motif/date/status.
-     *  Pre-selects the most recent open segment so the modal lands on the
-     *  active cycle (Flow Original when ignoreCount=0, Retour #N otherwise). */
-    private fetchFlowLogsDi(_idDi: string, ignoreCount: number) {
+    /**
+     * Charge les snapshots LogsDi de la DI ouverte.
+     *
+     * ⚠️ Cette requête SURVIT au retrait de la colonne « Historique du flow »,
+     * qui en était pourtant la consommatrice principale : `flowLogsDi` alimente
+     * encore `diLatestRetour`, dont dépend le REPLI de `diRetourDate`
+     * (`di.retourDate ?? diLatestRetour.createdAt`) affiché dans la BANNIÈRE de
+     * statut. La supprimer ferait silencieusement disparaître la date de retour
+     * sur les DI héritées dépourvues de `di.retourDate`.
+     */
+    private fetchFlowLogsDi(_idDi: string) {
         this.flowLogsDi = [];
-        this.selectedFlowSegment = ignoreCount > 0 ? ignoreCount : 0;
-        // Rendu immédiat du segment actif (n'a pas besoin des logs).
-        this.refreshTimeline();
         if (!_idDi) return;
         this.apollo
             .query<any>({
@@ -995,8 +1028,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
                 this.flowLogsDi = [...logs].sort(
                     (a, b) => (a.idIgnore ?? 0) - (b.idIgnore ?? 0),
                 );
-                // Les logs des cycles retour sont arrivés → on recalcule.
-                this.refreshTimeline();
             });
     }
 
@@ -1010,16 +1041,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
     get diLatestRetour(): any | null {
         if (!this.flowLogsDi?.length) return null;
         return this.flowLogsDi[this.flowLogsDi.length - 1];
-    }
-
-    /** Motif = the reason captured on the DI at retour time (falls back to the
-     *  legacy `LogsDi.comment` snapshot field). */
-    get diRetourMotif(): string {
-        return (
-            this.di?.retourReason ||
-            this.diLatestRetour?.comment ||
-            'Motif non renseigné'
-        );
     }
 
     /** Date du retour = `DI.retourDate` (falls back to the latest LogsDi). */
@@ -1038,170 +1059,40 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return '';
     }
 
-    /** Tab segments above the timeline: "Flow Original" + one "Retour #N"
-     *  per opened retour cycle. Current segment = the highest open one. */
-    get flowSegments(): Array<{
-        idx: number;
-        label: string;
-        state: 'done' | 'current';
-    }> {
-        const total = this.diRetourCount;
-        const segs: Array<{
-            idx: number;
-            label: string;
-            state: 'done' | 'current';
-        }> = [];
-        segs.push({
-            idx: 0,
-            label: 'Flow Original',
-            state: total === 0 ? 'current' : 'done',
-        });
-        for (let i = 1; i <= total; i++) {
-            segs.push({
-                idx: i,
-                label: `Retour #${i}`,
-                state: i === total ? 'current' : 'done',
-            });
-        }
-        return segs;
-    }
-
-    /** Effective status for the SELECTED segment. Active segment reads live
-     *  `di.status` ; closed segments read the status captured on their
-     *  LogsDi snapshot. */
-    private getSegmentStatus(segIdx: number): string {
-        if (segIdx === this.diRetourCount) return this.di?.status ?? '';
-        const log = this.flowLogsDi.find((l) => l.idIgnore === segIdx);
-        return log?.status ?? 'FINISHED';
-    }
-
-    /** Timeline stages for the currently selected segment. State + sub-status
-     *  badge + sub-status list (for the active row) + actor + timestamp. */
-    getSegmentStages(): Array<{
-        key: string;
-        label: string;
-        state: 'done' | 'current' | 'pending' | 'skipped';
-        badgeLabel: string;
-        rawStatus: string | null;
-        actor: string;
-        timestamp: string | null;
-        duration: { text: string; ongoing: boolean } | null;
-    }> {
-        const segIdx = this.selectedFlowSegment;
-        const isActive = segIdx === this.diRetourCount;
-        const status = this.getSegmentStatus(segIdx);
-        const log = isActive
-            ? null
-            : this.flowLogsDi.find((l) => l.idIgnore === segIdx);
-
-        return this.BASE_PHASES.map((phase) => {
-            const state = this.computePhaseState(phase, status, isActive);
-            // Raw enum `subStatus`/`subStatusList` intentionally NOT returned:
-            // the timeline shows only the human label + French badge + the
-            // transition timestamp — never internal status codes.
-            return {
-                key: phase.key,
-                label: this.statusRaw(phase.key),
-                state,
-                badgeLabel: this.computePhaseBadgeLabel(phase, status, state),
-                // Valeur brute EXACTE de `di.status` stockée en base (legacy
-                // affiché tel quel → repère les DI pré-migration). Phase EN COURS
-                // → statut courant (aligné sur le libellé, montre la valeur
-                // legacy éventuelle) ; phase FRANCHIE → statut d'ENTRÉE depuis
-                // `statusHistory` (apparié à la date affichée) ; sinon rien.
-                // Segments d'historique (retours) : pas d'historique par phase.
-                // current → statut courant stocké (legacy visible) ; done → valeur
-                // réelle depuis `statusHistory`, sinon la valeur CANONIQUE (`key`,
-                // pas la variante `_Pause` qui sert d'ancre) ; pending → canonique.
-                rawStatus: !isActive
-                    ? null
-                    : state === 'current'
-                      ? status || null
-                      : state === 'done'
-                        ? this.phaseEntry(phase.key)?.status ?? phase.key
-                        : phase.key,
-                actor: this.computePhaseActor(
-                    phase.group,
-                    state,
-                    isActive,
-                    log,
-                ),
-                timestamp: isActive
-                    ? this.computePhaseTimestamp(phase.key, state)
-                    : this.formatDateTime(log?.createdAt) || null,
-                // Écart (durée dans la phase) : uniquement pour le segment ACTIF,
-                // dérivé des `at` de `statusHistory`. Les segments d'historique
-                // (retours, depuis logsDi) n'ont pas d'historique par phase → null.
-                duration: isActive
-                    ? this.computePhaseDuration(phase.key, state)
-                    : null,
-            };
-        });
-    }
-
-    /** Best-effort actor per stage. Diagnostic/Réparation = techDiag/techRep
-     *  (live) or the snapshot's workers (history) ; Magasin =
-     *  `componentsConfirmedBy` ; Admin = `pricingRequestSentBy`. Fallbacks
-     *  keep the UI from rendering raw nulls. */
-    /** Acteur affiché — UNIQUEMENT le TECHNICIEN, sur les étapes diagnostic /
-     *  réparation. Les autres familles (création, magasin, admin, clôture)
-     *  n'affichent aucun acteur. Chaîne vide → la ligne acteur est masquée. */
-    private computePhaseActor(
-        group: string,
-        state: 'done' | 'current' | 'pending' | 'skipped',
-        isActive: boolean,
-        log: any | null,
-    ): string {
-        // 'skipped' (étape jamais atteinte) → aucun acteur : c'est la CAUSE de
-        // l'anomalie « DIAGNOSTIC_Pause : auteur sans date » — l'ancien état,
-        // déduit de l'ordre, marquait l'étape 'done' et affichait `techDiag`
-        // alors qu'AUCUNE entrée `statusHistory` (donc aucune date) n'existait.
-        if (state === 'pending' || state === 'skipped') return '';
-        let tech: string | undefined;
-        if (group === 'diagnostic') {
-            tech = isActive
-                ? this.formatTableValueFallback(this.di?.techDiag)
-                : this.formatTableValueFallback(
-                      log?.current_workers_ids?.[0],
-                  ) || this.formatTableValueFallback(this.di?.techDiag);
-        } else if (group === 'repair') {
-            tech = this.formatTableValueFallback(this.di?.techRep);
-        } else {
-            return '';
-        }
-        // Pas de tech réel (null → 'N/A') → aucune ligne acteur.
-        return tech && tech !== 'N/A' ? tech : '';
-    }
-
-    /** Progression `franchies / N`. On NE compte QUE les étapes réellement
-     *  franchies (state 'done'). N = étapes du CHEMIN RÉEL = total MOINS les
-     *  'skipped' (étapes sautées, jamais atteintes) : une étape sautée ne doit
-     *  ni gonfler le numérateur ni le dénominateur. `+ 0.5×current` = remplissage
-     *  fluide de la barre pour l'étape en cours. */
-    get flowProgress(): { done: number; total: number; pct: number } {
-        const stages = this.segmentStages;
-        const realPath = stages.filter((s) => s.state !== 'skipped');
-        const total = realPath.length || 5;
-        const done = realPath.filter((s) => s.state === 'done').length;
-        const current = realPath.filter((s) => s.state === 'current').length;
-        const effective = done + (current > 0 ? 0.5 : 0);
-        return {
-            done,
-            total,
-            pct: Math.round((effective / total) * 100),
-        };
-    }
-
-    /** Set the active flow segment from the tab header. Pure view-state. */
-    selectFlowSegment(idx: number) {
-        if (idx < 0 || idx > this.diRetourCount) return;
-        this.selectedFlowSegment = idx;
-        this.refreshTimeline();
-    }
-
     /** Status pill for the top banner — French label via the existing map. */
     get diCurrentStatusLabel(): string {
         return this.statusRaw(this.di?.status);
+    }
+
+    /**
+     * Teinte de la pastille de statut de la bannière, dérivée de la FAMILLE du
+     * statut (même source que l'état des étapes) plutôt que d'une couleur figée :
+     * la pastille dit donc où en est la DI, pas seulement qu'elle existe.
+     */
+    get diCurrentStatusTone(): string {
+        const status = this.di?.status;
+        if (!status) return 'cf-pill--slate';
+        if (status === STATUS_DI.ANNULER) return 'cf-pill--slate';
+        if (
+            [STATUS_DI.RETOUR1, STATUS_DI.RETOUR2, STATUS_DI.RETOUR3].includes(
+                status,
+            )
+        ) {
+            return 'cf-pill--red';
+        }
+        if (status === STATUS_DI.IRREPARABLE) return 'cf-pill--red';
+        switch (sharedPhaseOfStatus(status)?.group) {
+            case 'diagnostic':
+            case 'repair':
+                return 'cf-pill--green';
+            case 'magasin':
+            case 'admin':
+                return 'cf-pill--amber';
+            case 'closed':
+                return 'cf-pill--green';
+            default:
+                return 'cf-pill--blue';
+        }
     }
 
     formatDateTime(value: any): string {
@@ -1239,7 +1130,15 @@ export class CoordinatorDiListComponent implements OnDestroy {
         return formatted && formatted !== '—' && formatted !== 'N/A' ? formatted : 'N/A';
     }
 
-    getFlowStepState(step: 'diagnostic' | 'admin' | 'magasin' | 'repair') {
+    /**
+     * État d'une des 5 étapes du panneau « Contrôles par étape ».
+     *
+     * `current` est ce qui permet à la coordinatrice de repérer d'un coup d'œil
+     * l'étape qui l'attend ; `skipped` distingue une étape RÉELLEMENT sautée
+     * (DI sans composant, raccourci « retour sans pièces ») d'une étape pas
+     * encore atteinte — les deux affichaient « En attente » auparavant.
+     */
+    getFlowStepState(step: CoordFlowStep): CoordFlowStepState {
         const status = this.di?.status;
         const afterDiagnostic = [
             STATUS_DI.PENDING2,
@@ -1274,32 +1173,87 @@ export class CoordinatorDiListComponent implements OnDestroy {
         // été réparé, l'étape « réparation » ne doit pas s'afficher « faite ».
         const afterRepair = [STATUS_DI.FINISHED, STATUS_DI.RETOUR1, STATUS_DI.RETOUR2, STATUS_DI.RETOUR3];
 
-        if (step === 'diagnostic') {
-            return afterDiagnostic.includes(status) ? 'done' : 'pending';
-        }
+        // Étape « en cours » = celle dont la FAMILLE contient le statut vivant.
+        // La correspondance statut → famille n'est pas réécrite ici : elle vient
+        // de `BASE_PHASES.group` (status-timeline.util), source unique partagée
+        // avec le dossier détaillé — un statut legacy ou une variante `_Pause`
+        // y est déjà rattaché à la bonne famille.
+        const isCurrent = step === this.currentFlowStep;
 
-        if (step === 'admin') {
-            return this.adminSentAt || afterAdmin.includes(status)
-                ? 'done'
-                : 'pending';
+        if (step === 'diagnostic') {
+            if (afterDiagnostic.includes(status)) return 'done';
+            return isCurrent ? 'current' : 'pending';
         }
 
         if (step === 'magasin') {
-            return this.magasinConfirmedAt ||
+            // DI sans composant, ou raccourci « retour sans pièces » : la phase
+            // magasin n'aura JAMAIS lieu — « sautée », pas « en attente ».
+            if (this.componentStepSkipped || this.di?.needsDevisBeforeRepair) {
+                return 'skipped';
+            }
+            if (
+                this.magasinConfirmedAt ||
                 this.componentConfirmedFromCoordinator === 'DEFAULT'
-                ? 'done'
-                : 'pending';
+            ) {
+                return 'done';
+            }
+            return isCurrent ? 'current' : 'pending';
         }
 
-        return afterRepair.includes(status) ? 'done' : 'pending';
+        if (step === 'admin') {
+            // Raccourci « retour sans pièces » : tarification sautée aussi, la
+            // coordinatrice envoie directement en réparation avec le devis.
+            if (this.di?.needsDevisBeforeRepair) return 'skipped';
+            if (this.adminSentAt || afterAdmin.includes(status)) return 'done';
+            return isCurrent ? 'current' : 'pending';
+        }
+
+        if (step === 'closure') {
+            if (status === STATUS_DI.FINISHED) return 'done';
+            return isCurrent ? 'current' : 'pending';
+        }
+
+        if (afterRepair.includes(status)) return 'done';
+        return isCurrent ? 'current' : 'pending';
     }
 
-    getFlowStepLabel(step: 'diagnostic' | 'admin' | 'magasin' | 'repair') {
-        return this.getFlowStepState(step) === 'done' ? 'Terminé' : 'En attente';
+    /**
+     * Famille de l'étape à laquelle appartient le statut courant, traduite dans
+     * le vocabulaire des 5 étapes du modal. `closed` couvre à la fois la clôture
+     * documentaire et les états terminaux (FINISHED / IRREPARABLE).
+     */
+    private get currentFlowStep(): CoordFlowStep | null {
+        const status = this.di?.status;
+        if (!status) return null;
+        const group = sharedPhaseOfStatus(status)?.group;
+        switch (group) {
+            case 'diagnostic':
+                return 'diagnostic';
+            case 'magasin':
+                return 'magasin';
+            case 'admin':
+                return 'admin';
+            case 'repair':
+                return 'repair';
+            case 'closed':
+                return 'closure';
+            default:
+                // CREATED, RETOUR1/2/3, ANNULER : hors des 5 étapes — aucune
+                // n'est « en cours ».
+                return null;
+        }
     }
 
-    getFlowStepClass(step: 'diagnostic' | 'admin' | 'magasin' | 'repair') {
-        return `sav-flow-step--${this.getFlowStepState(step)}`;
+    getFlowStepLabel(step: CoordFlowStep): string {
+        return COORD_FLOW_STEP_LABEL[this.getFlowStepState(step)];
+    }
+
+    getFlowStepIcon(step: CoordFlowStep): string {
+        return COORD_FLOW_STEP_ICON[this.getFlowStepState(step)];
+    }
+
+    getFlowStepClass(step: CoordFlowStep): string {
+        return `cf-step--${this.getFlowStepState(step)}`;
     }
 
     /**
@@ -1312,12 +1266,18 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *   admin      → di.pricingRequestSentAt
      *   magasin    → di.componentsConfirmedAt
      *   repair     → none stored per-step → always null (hidden)
+     *   closure    → di.statusUpdatedAt, mais SEULEMENT à FINISHED (sinon
+     *                `statusUpdatedAt` daterait d'une transition sans rapport)
      *
      * Previously this method fell back to `di.updatedAt` for "done" steps,
      * which was misleading — updatedAt is the last write of ANY field,
      * not the moment the step completed.
      */
-    getFlowTimestamp(step: 'diagnostic' | 'admin' | 'magasin' | 'repair'): string | null {
+    getFlowTimestamp(step: CoordFlowStep): string | null {
+        if (step === 'closure' && this.di?.status === STATUS_DI.FINISHED) {
+            const at = this.di?.statusUpdatedAt || this.di?.updatedAt;
+            return at ? this.formatDateTime(at) : null;
+        }
         if (step === 'admin' && this.adminSentAt) {
             return this.formatDateTime(this.adminSentAt);
         }
@@ -1619,18 +1579,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
      *  - phase `done`    → jusqu'à l'entrée de la phase suivante atteinte (figé) ;
      *  - phase `current` → depuis l'entrée jusqu'à MAINTENANT (« en cours ») ;
      *  - `pending` / entrée absente / pas de borne → null (affiché « — »). */
-    private computePhaseDuration(
-        phaseKey: string,
-        state: 'done' | 'current' | 'pending' | 'skipped',
-    ): { text: string; ongoing: boolean } | null {
-        const d = sharedComputePhaseDuration(
-            this.sanitizedHistory(),
-            phaseKey,
-            state,
-        );
-        return d ? { text: d.text, ongoing: d.ongoing } : null;
-    }
-
     /** Millisecondes → durée humaine FR compacte : « 2 j 4 h », « 3 h 15 min »,
      *  « 12 min », « moins d'1 min ». La durée est un DELTA → indépendante du
      *  fuseau (l'instant courant = heure locale de la machine). */
@@ -1803,10 +1751,6 @@ export class CoordinatorDiListComponent implements OnDestroy {
         }
     }
 
-    saveProduct() {
-        this.diDialog = false;
-    }
-
     hideDialog() {
         this.diDialog = false;
     }
@@ -1905,21 +1849,17 @@ export class CoordinatorDiListComponent implements OnDestroy {
                     this.selectedTechDiagModel = null;
                     console.log('emitter');
 
-                    this.messageservice.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail: `DI Envoyer au technicien`,
-                    });
+                    this.notify.success('La DI a été envoyée au technicien.');
                 }
             });
     }
 
     selectedTechDiag(data) {
         console.log('slected tech for diagnostic');
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer ce Technicien',
-            header: 'Confirmation Diagnostique',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmValidate({
+            message: 'Confirmer ce technicien pour le diagnostic ?',
+            header: 'Affectation du technicien',
+            acceptLabel: 'Affecter',
             accept: () => {
                 this.sendDiToDiag(
                     this.selectedDi,
@@ -1932,10 +1872,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
 
     selectedTechRep(data) {
         console.log('select tech for rep');
-        this.confirmationService.confirm({
-            message: 'Voulez vous confirmer le Technicien',
-            header: 'Confirmation Réperation',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmValidate({
+            message: 'Confirmer ce technicien pour la réparation ?',
+            header: 'Affectation du technicien',
+            acceptLabel: 'Affecter',
             accept: () => {
                 this.apollo
                     .mutate<ConfigRepAffectationMutationResponse>({
@@ -1970,11 +1910,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
         reader.onerror = () => {
             this.repairDevisBase64 = null;
             this.repairDevisName = null;
-            this.messageservice.add({
-                severity: 'error',
-                summary: 'Fichier non chargé',
-                detail: 'Le PDF n’a pas pu être préparé.',
-            });
+            this.notify.error(
+                'Le PDF n’a pas pu être préparé.',
+                { summary: 'Fichier non chargé' },
+            );
         };
         reader.readAsDataURL(file);
     }
@@ -1985,21 +1924,18 @@ export class CoordinatorDiListComponent implements OnDestroy {
     sendToRepairWithDevis() {
         const techId = this.selectedRepTechForDevis?._id;
         if (!techId || !this.repairDevisBase64) {
-            this.messageservice.add({
-                severity: 'warn',
-                summary: 'Envoi impossible',
-                detail: 'Sélectionnez un technicien et joignez le devis.',
-            });
+            this.notify.warn(
+                'Sélectionnez un technicien et joignez le devis.',
+                { summary: 'Envoi impossible' },
+            );
             return;
         }
         if (this.sendingRepairWithDevis) return;
 
-        this.confirmationService.confirm({
-            message:
-                'Envoyer en réparation avec le devis joint ? Le magasin et la ' +
+        this.confirm.confirmSend({
+            message: 'Envoyer en réparation avec le devis joint ? Le magasin et la ' +
                 'tarification ont été sautés (retour sans pièces).',
-            header: 'Confirmation réparation',
-            icon: 'pi pi-exclamation-triangle',
+            header: 'Envoyer en réparation',
             accept: () => {
                 this.sendingRepairWithDevis = true;
                 this.apollo
@@ -2015,11 +1951,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
                     .subscribe({
                         next: ({ data }) => {
                             if (data) {
-                                this.messageservice.add({
-                                    severity: 'success',
-                                    summary: 'Envoyée en réparation',
-                                    detail: 'Devis joint et technicien affecté.',
-                                });
+                                this.notify.success(
+                                    'Devis joint et technicien affecté.',
+                                    { summary: 'Envoyée en réparation' },
+                                );
                                 this.selectedRepTechForDevis = null;
                                 this.repairDevisBase64 = null;
                                 this.repairDevisName = null;
@@ -2030,13 +1965,11 @@ export class CoordinatorDiListComponent implements OnDestroy {
                         },
                         error: (err) => {
                             this.sendingRepairWithDevis = false;
-                            this.messageservice.add({
-                                severity: 'error',
-                                summary: 'Envoi échoué',
-                                detail:
-                                    err?.message ??
+                            this.notify.error(
+                                err?.message ??
                                     'La réparation n’a pas pu être lancée.',
-                            });
+                                { summary: 'Envoi échoué' },
+                            );
                         },
                     });
             },
@@ -2044,10 +1977,8 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     changestatusToPricing(_data) {
-        this.confirmationService.confirm({
-            message: "Envoyer aux admins pour l'affectation de prix",
-            header: "Confirmation d'envoie",
-            icon: 'pi pi-question-circle',
+        this.confirm.confirmSend({
+            message: "Envoyer aux administrateurs pour l'affectation du prix ?",
             accept: () => {
                 if (this.adminSentAt || this.pricingRequestInFlight) {
                     return;
@@ -2075,10 +2006,9 @@ export class CoordinatorDiListComponent implements OnDestroy {
     }
 
     gotcomposantfromMagasin() {
-        this.confirmationService.confirm({
-            message: 'Confirmer les composants',
-            header: 'Confirmation Magasin',
-            icon: 'pi pi-exclamation-triangle',
+        this.confirm.confirmValidate({
+            message: 'Confirmer les composants de cette DI ?',
+            header: 'Confirmation des composants',
             accept: () => {
                 if (this.magasinConfirmedAt || this.componentsConfirmInFlight) {
                     return;
@@ -2107,12 +2037,10 @@ export class CoordinatorDiListComponent implements OnDestroy {
                                 this.di = { ...this.di, ...updated };
                                 this.loadData();
                                 this.reperationCondition = true;
-                                this.messageservice.add({
-                                    severity: 'success',
-                                    summary: 'Composants confirmés',
-                                    detail:
-                                        'La réception des composants a été confirmée.',
-                                });
+                                this.notify.success(
+                                    'La réception des composants a été confirmée.',
+                                    { summary: 'Composants confirmés' },
+                                );
                             }
                         },
                         // Plus d'échec silencieux : toute erreur de la mutation
@@ -2120,13 +2048,11 @@ export class CoordinatorDiListComponent implements OnDestroy {
                         // le message serveur au lieu de ne rien faire.
                         error: (err) => {
                             this.isLoading = false;
-                            this.messageservice.add({
-                                severity: 'error',
-                                summary: 'Échec de la confirmation',
-                                detail:
-                                    err?.message ??
+                            this.notify.error(
+                                err?.message ??
                                     'La confirmation des composants a échoué.',
-                            });
+                                { summary: 'Échec de la confirmation' },
+                            );
                         },
                     });
             },

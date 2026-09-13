@@ -11,71 +11,71 @@
 
 .product-badge {
     &.status-instock {
-        background: #C8E6C9;
-        color: #256029;
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
     }
 
     &.status-outofstock {
-        background: #FFCDD2;
-        color: #C63737;
+        background: var(--fx-red-soft-bg-2);
+        color: var(--fx-red-soft-fg);
     }
 
     &.status-lowstock {
-        background: #FEEDAF;
-        color: #8A5340;
+        background: var(--fx-amber-soft-bg-2);
+        color: var(--fx-amber-soft-fg);
     }
 }
 
 .customer-badge {
     &.status-qualified {
-        background: #C8E6C9;
-        color: #256029;
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
     }
 
     &.status-unqualified {
-        background: #FFCDD2;
-        color: #C63737;
+        background: var(--fx-red-soft-bg-2);
+        color: var(--fx-red-soft-fg);
     }
 
     &.status-negotiation {
-        background: #FEEDAF;
-        color: #8A5340;
+        background: var(--fx-amber-soft-bg-2);
+        color: var(--fx-amber-soft-fg);
     }
 
     &.status-new {
-        background: #B3E5FC;
-        color: #23547B;
+        background: var(--fx-blue-soft-bg-2);
+        color: var(--fx-slate-soft-fg);
     }
 
     &.status-renewal {
-        background: #ECCFFF;
-        color: #694382;
+        background: var(--fx-purple-soft-bg-2);
+        color: var(--fx-purple-soft-fg);
     }
 
     &.status-proposal {
-        background: #FFD8B2;
-        color: #805B36;
+        background: var(--fx-amber-soft-bg-2);
+        color: var(--fx-amber-soft-fg);
     }
 }
 
 .order-badge {
     &.order-delivered {
-        background: #C8E6C9;
-        color: #256029;
+        background: var(--fx-green-soft-bg-2);
+        color: var(--fx-green-soft-fg);
     }
 
     &.order-cancelled {
-        background: #FFCDD2;
-        color: #C63737;
+        background: var(--fx-red-soft-bg-2);
+        color: var(--fx-red-soft-fg);
     }
 
     &.order-pending {
-        background: #FEEDAF;
-        color: #8A5340;
+        background: var(--fx-amber-soft-bg-2);
+        color: var(--fx-amber-soft-fg);
     }
 
     &.order-returned {
-        background: #ECCFFF;
-        color: #694382;
+        background: var(--fx-purple-soft-bg-2);
+        color: var(--fx-purple-soft-fg);
     }
 }

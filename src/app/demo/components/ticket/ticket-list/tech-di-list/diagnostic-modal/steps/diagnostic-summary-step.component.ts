@@ -10,6 +10,7 @@ import {
   ComposantEntry,
   DiagnosticDiSummary,
 } from '../diagnostic-modal.types';
+import { DIAG_STEP_STYLES } from './diagnostic-step.styles';
 
 /**
  * Step 5 · Résumé — final review + the submit-now actions.
@@ -24,7 +25,7 @@ import {
   template: `
     <div class="step">
       <header class="step__head">
-        <span class="step__num">5</span>
+        <span class="step__num">{{ stepNumber }}</span>
         <div>
           <h3>Résumé</h3>
           <p>Vérifiez le diagnostic avant de le finaliser.</p>
@@ -84,6 +85,16 @@ import {
         </ul>
       </section>
 
+      <!-- Pourquoi les boutons sont gris. Indispensable ici : le stepper
+           autorise la navigation libre, on peut donc arriver au Résumé sans
+           avoir rempli l'étape Panne. Un tooltip sur bouton désactivé ne
+           s'affiche pas de façon fiable (cf. le même choix dans la barre de
+           navigation du modal). -->
+      <p class="notice" *ngIf="blockedReason">
+        <i class="pi pi-exclamation-triangle"></i>
+        {{ blockedReason }}
+      </p>
+
       <div class="actions">
         <button
           *ngIf="isRetour"
@@ -135,36 +146,37 @@ import {
     </div>
   `,
   styles: [
+    DIAG_STEP_STYLES,
     `
-      :host { display: block; }
-      .step { padding: 1.25rem 1.5rem; }
-      .step__head { display: flex; align-items: flex-start; gap: 0.7rem; margin-bottom: 1.1rem; }
-      .step__num {
-        display: inline-grid;
-        place-items: center;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        background: #e2e8f0;
-        color: #64748b;
-        font-weight: 700;
-        font-size: 0.92rem;
-        flex-shrink: 0;
+      /* Condition à lever avant de clôturer — même idiome ambre que l'étape
+         Composants, dont la classe .notice est locale et ne vit donc pas dans
+         le gabarit partagé. */
+      .notice {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin: 0 0 0.9rem;
+        padding: 0.5rem 0.7rem;
+        border-radius: 7px;
+        background: var(--fx-amber-soft-bg);
+        color: var(--fx-amber-text);
+        font-size: 0.78rem;
+        font-weight: 600;
+        line-height: 1.35;
       }
-      .step__head h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #0f172a; }
-      .step__head p { margin: 0.15rem 0 0; font-size: 0.82rem; color: #64748b; }
+      .notice .pi { font-size: 0.8rem; flex-shrink: 0; }
 
       .card {
         margin-bottom: 0.9rem;
         padding: 1rem 1.1rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 8px;
-        background: #ffffff;
+        background: var(--fx-bg-card);
       }
       .card__title {
         font-size: 0.8rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
         margin-bottom: 0.5rem;
       }
       .card__row {
@@ -173,7 +185,7 @@ import {
         gap: 0.75rem;
         padding-bottom: 0.75rem;
         margin-bottom: 0.75rem;
-        border-bottom: 1px dashed #e2e8f0;
+        border-bottom: 1px dashed var(--fx-border);
       }
       .card__row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
       .card__row--cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -181,7 +193,7 @@ import {
         display: block;
         font-size: 0.66rem;
         font-weight: 650;
-        color: #64748b;
+        color: var(--fx-text-muted);
         text-transform: uppercase;
         letter-spacing: 0.06em;
       }
@@ -190,12 +202,12 @@ import {
         margin-top: 0.18rem;
         font-size: 0.86rem;
         font-weight: 650;
-        color: #0f172a;
+        color: var(--fx-text);
       }
       .card__row p {
         margin: 0.18rem 0 0;
         font-size: 0.82rem;
-        color: #334155;
+        color: var(--fx-text-strong);
         line-height: 1.45;
       }
 
@@ -209,16 +221,16 @@ import {
         text-transform: uppercase;
         letter-spacing: 0.04em;
       }
-      .pill.tone-yes { background: rgba(34, 197, 94, 0.14); color: #15803d; }
-      .pill.tone-no { background: rgba(239, 68, 68, 0.12); color: #b91c1c; }
-      .pill.tone-neutral { background: #f1f5f9; color: #64748b; }
+      .pill.tone-yes { background: rgba(34, 197, 94, 0.14); color: var(--fx-green-soft-fg); }
+      .pill.tone-no { background: rgba(239, 68, 68, 0.12); color: var(--fx-red-soft-fg); }
+      .pill.tone-neutral { background: var(--fx-bg-surface-2); color: var(--fx-text-muted); }
 
       .comp-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
       .comp-list li {
         display: flex;
         justify-content: space-between;
         padding: 0.45rem 0.6rem;
-        border: 1px solid #f1f5f9;
+        border: 1px solid var(--fx-border);
         border-radius: 6px;
         font-size: 0.8rem;
       }
@@ -240,26 +252,28 @@ import {
         cursor: pointer;
         border: 1px solid transparent;
       }
-      .btn--primary { background: #3b82f6; color: #ffffff; border-color: #2563eb; }
-      .btn--primary:hover:not(:disabled) { background: #2563eb; }
+      .btn--primary { background: var(--fx-blue); color: var(--fx-text-on-accent); border-color: var(--fx-blue-strong); }
+      .btn--primary:hover:not(:disabled) { background: var(--fx-blue-strong); }
       .btn--outline {
-        background: #ffffff;
-        color: #0f172a;
-        border-color: #e2e8f0;
+        background: var(--fx-bg-card);
+        color: var(--fx-text);
+        border-color: var(--fx-border);
       }
-      .btn--outline:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; }
+      .btn--outline:hover:not(:disabled) { background: var(--fx-bg-surface); border-color: var(--fx-border-strong); }
       .btn--danger {
-        background: #dc2626;
-        color: #ffffff;
-        border-color: #dc2626;
+        background: var(--fx-red);
+        color: var(--fx-text-on-accent);
+        border-color: var(--fx-red);
       }
-      .btn--danger:hover:not(:disabled) { background: #b91c1c; border-color: #b91c1c; }
+      .btn--danger:hover:not(:disabled) { background: var(--fx-red-strong); border-color: var(--fx-red); }
       .btn:disabled { opacity: 0.55; cursor: not-allowed; }
     `,
   ],
 })
 export class DiagnosticSummaryStepComponent {
   @Input({ required: true }) di!: DiagnosticDiSummary;
+  /** Numéro affiché — vient du MÊME tableau `steps` que le stepper de gauche. */
+  @Input() stepNumber = 0;
   @Input() description: string = '';
   @Input() categoryLabel: string = '';
   @Input() reparableLabel: string = 'Non défini';
@@ -272,6 +286,8 @@ export class DiagnosticSummaryStepComponent {
    *  the primaryDisabled but a host can choose to keep it always-enabled when
    *  the form is partially filled (no composant required on this path). */
   @Input() notReparableDisabled: boolean = false;
+  /** Raison du grisage des boutons de clôture (`null` = rien ne bloque). */
+  @Input() blockedReason: string | null = null;
 
   @Output() finishDiag = new EventEmitter<void>();
   @Output() finishRetour = new EventEmitter<void>();

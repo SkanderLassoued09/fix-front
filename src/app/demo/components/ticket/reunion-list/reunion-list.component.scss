@@ -4,9 +4,9 @@
 .reu-shell {
     font-family: 'Inter', sans-serif;
     padding: 1.5rem;
-    background: #f8fafc;
+    background: var(--fx-bg-surface);
     min-height: calc(100vh - 4rem);
-    color: #0f172a;
+    color: var(--fx-text);
 }
 
 .reu-header {
@@ -34,39 +34,39 @@
     margin: 0;
     font-size: 1.4rem;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--fx-text);
     letter-spacing: -0.01em;
 }
 
 .reu-subtitle {
     margin: 0.2rem 0 0;
     font-size: 0.88rem;
-    color: #64748b;
+    color: var(--fx-text-muted);
 }
 
 .reu-search {
     :host ::ng-deep input.p-inputtext {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: var(--fx-bg-card);
+        border: 1px solid var(--fx-border);
         border-radius: 8px;
         padding: 0.55rem 0.75rem 0.55rem 2.1rem;
         font-size: 0.9rem;
         min-width: 22rem;
 
         &:focus {
-            border-color: #3b82f6;
+            border-color: var(--fx-blue);
             box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
         }
     }
     :host ::ng-deep .pi-search {
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
     }
 }
 
 .reu-cta {
     :host ::ng-deep & {
-        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%) !important;
-        color: #ffffff !important;
+        background: linear-gradient(90deg, var(--fx-blue) 0%, var(--fx-blue-strong) 100%) !important;
+        color: var(--fx-text-on-accent) !important;
         border: 0 !important;
         font-weight: 700 !important;
         box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
@@ -74,37 +74,37 @@
 }
 
 .reu-table {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--fx-bg-card);
+    border: 1px solid var(--fx-border);
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 
     :host ::ng-deep .p-datatable .p-datatable-thead > tr > th {
-        background: #f8fafc;
-        color: #475569;
+        background: var(--fx-bg-surface);
+        color: var(--fx-text-muted-strong);
         font-weight: 700;
         font-size: 0.8rem;
         letter-spacing: 0.04em;
         text-transform: uppercase;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--fx-border);
         padding: 0.75rem 0.85rem;
     }
     :host ::ng-deep .p-datatable .p-datatable-tbody > tr > td {
         padding: 0.75rem 0.85rem;
         font-size: 0.9rem;
-        border-bottom: 1px solid #f1f5f9;
-        color: #0f172a;
+        border-bottom: 1px solid var(--fx-border);
+        color: var(--fx-text);
     }
     :host ::ng-deep .p-datatable .p-datatable-tbody > tr:hover {
-        background: #f8fafc;
+        background: var(--fx-bg-surface);
     }
 }
 
 .reu-ref {
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 0.85rem;
-    color: #2563eb;
+    color: var(--fx-blue-text);
     font-weight: 600;
 }
 
@@ -113,9 +113,9 @@
 }
 
 .reu-di-chip {
-    background: #eff6ff;
-    color: #2563eb;
-    border: 1px solid #bfdbfe;
+    background: var(--fx-blue-soft-bg);
+    color: var(--fx-blue-text);
+    border: 1px solid var(--fx-blue-soft-bd);
     padding: 0.15rem 0.55rem;
     border-radius: 999px;
     font-size: 0.78rem;
@@ -128,20 +128,20 @@
     border-radius: 999px;
     font-size: 0.78rem;
     font-weight: 700;
-    color: #b45309;
-    background: #fef3c7;
-    border: 1px solid #fde68a;
+    color: var(--fx-amber-text);
+    background: var(--fx-amber-soft-bg-2);
+    border: 1px solid var(--fx-amber-soft-bd);
 
     &[data-niveau='3'] {
-        color: #dc2626;
-        background: #fee2e2;
-        border-color: #fecaca;
+        color: var(--fx-red-text);
+        background: var(--fx-red-soft-bg-2);
+        border-color: var(--fx-red-soft-bd);
     }
 }
 
 .reu-empty {
     padding: 1.5rem;
-    color: #64748b;
+    color: var(--fx-text-muted);
     text-align: center;
     font-size: 0.92rem;
 }
@@ -161,21 +161,21 @@
 
 .reu-row-btn {
     :host ::ng-deep &--view {
-        background: #eff6ff !important;
-        color: #2563eb !important;
-        border: 1px solid #bfdbfe !important;
+        background: var(--fx-blue-soft-bg) !important;
+        color: var(--fx-blue-text) !important;
+        border: 1px solid var(--fx-blue-soft-bd) !important;
 
         &:hover {
-            background: #dbeafe !important;
+            background: var(--fx-blue-soft-bg-2) !important;
         }
     }
     :host ::ng-deep &--pdf {
-        background: #ecfdf5 !important;
-        color: #16a34a !important;
-        border: 1px solid #bbf7d0 !important;
+        background: var(--fx-green-soft-bg) !important;
+        color: var(--fx-green-text) !important;
+        border: 1px solid var(--fx-green-soft-bd) !important;
 
         &:hover {
-            background: #dcfce7 !important;
+            background: var(--fx-green-soft-bg-2) !important;
         }
     }
 }

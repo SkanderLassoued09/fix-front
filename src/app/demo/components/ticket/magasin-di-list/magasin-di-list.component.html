@@ -2,8 +2,6 @@
     <!-- <i class="pi pi-spinner" style="font-size: 3rem"></i> -->
     <p-progressSpinner ariaLabel="loading" />
 </p-blockUI>
-<p-toast></p-toast>
-<p-confirmDialog></p-confirmDialog>
 
 <div class="sav-page">
     <!-- ═══════════ CHART ═══════════ -->
@@ -20,34 +18,6 @@
         <div class="sav-page-title">
             <i class="pi pi-box"></i>
             <h2>Magasin / Composants</h2>
-        </div>
-        <div class="sav-header-actions">
-            <!-- Même style que le bouton « + Nouveau » (création DI) de l'app :
-                 action principale pleine, actions secondaires en outline. -->
-            <button
-                pButton
-                type="button"
-                icon="pi pi-plus"
-                label="Créer un composant"
-                class="sav-btn-new"
-                (click)="showDialogcomposantCreation()"
-            ></button>
-            <button
-                pButton
-                type="button"
-                icon="pi pi-book"
-                label="Nouvelle catégorie"
-                class="sav-btn-new sav-btn-new--outline"
-                (click)="showDialogCategoryComposant()"
-            ></button>
-            <button
-                pButton
-                type="button"
-                icon="pi pi-cog"
-                label="Management composants"
-                class="sav-btn-new sav-btn-new--outline"
-                (click)="directToComposantManagement()"
-            ></button>
         </div>
     </div>
 
@@ -173,7 +143,8 @@
 
         <div class="sav-paginator-wrapper">
             <span class="sav-count"
-                >1–{{ rows }} sur {{ diListCount }} résultats</span
+                >{{ diListCount ? first + 1 : 0 }}–{{ rangeEnd }} sur
+                {{ diListCount || 0 }} résultats</span
             >
             <p-paginator
                 (onPageChange)="onPageChange($event)"
@@ -397,7 +368,7 @@
                                                 optionLabel="name"
                                                 optionValue="value"
                                                 placeholder="Choisir catégorie"
-                                                emptyMessage="Aucune catégorie — créez-en une via « Nouvelle catégorie »."
+                                                emptyMessage="Aucune catégorie — créez-en une depuis « Catalogue composants »."
                                                 appendTo="body"
                                                 styleClass="cmp-dd"
                                                 [style]="{ width: '100%' }"
@@ -612,10 +583,11 @@
 
                     <!-- Footer interne du pane -->
                     <div class="cmp-detail__foot" *ngIf="activeLine">
-                        <span class="cmp-detail__hint"
-                            >Validez pour figer ce composant et le retirer de la
-                            liste.</span
-                        >
+                        <span class="cmp-detail__hint">{{
+                            saveNeedsAttention
+                                ? 'Enregistrez vos modifications avant de valider.'
+                                : 'Validez pour figer ce composant et le retirer de la liste.'
+                        }}</span>
                         <button
                             type="button"
                             class="cmp-validate"
@@ -630,6 +602,25 @@
 
             <!-- ─────────── Footer modal ─────────── -->
             <footer class="cmp-foot">
+                <!-- Rappel « pensez à enregistrer » : texte TOUJOURS visible
+                     plutôt qu'un pTooltip — TooltipModule n'est pas importé par
+                     TicketListModule (les `pTooltip` de cette page sont inertes)
+                     et un tooltip sur bouton désactivé ne s'affiche pas de façon
+                     fiable. Même parti-pris que le bandeau de blocage du modal
+                     de diagnostic. -->
+                <span
+                    class="cmp-foot__hint"
+                    *ngIf="saveReminder"
+                    [class.cmp-foot__hint--ready]="saveNeedsAttention"
+                    role="status"
+                >
+                    <i
+                        class="pi"
+                        [class.pi-exclamation-triangle]="saveNeedsAttention"
+                        [class.pi-info-circle]="!saveNeedsAttention"
+                    ></i>
+                    {{ saveReminder }}
+                </span>
                 <button
                     type="button"
                     class="cmp-btn cmp-btn--cancel"
@@ -640,6 +631,7 @@
                 <button
                     type="button"
                     class="cmp-btn cmp-btn--save"
+                    [class.cmp-btn--attention]="saveNeedsAttention"
                     [disabled]="!formUpdateComposant.valid"
                     (click)="updateComposant()"
                 >
@@ -657,285 +649,6 @@
         </div>
     </p-dialog>
 
-    <!-- ═══════════ DIALOG 2 — CRÉATION CATÉGORIE COMPOSANT ═══════════ -->
-    <p-dialog
-        [(visible)]="openCreationCategoryComposantModal"
-        header="Création Catégorie Composants"
-        [modal]="true"
-        [draggable]="false"
-        [resizable]="false"
-        styleClass="sav-dialog"
-        [style]="{ width: '560px' }"
-    >
-        <div class="sav-create-form">
-            <form [formGroup]="addCategoryCompsant" class="sav-form-row">
-                <label class="sav-label">Nom de la catégorie</label>
-                <div style="display: flex; gap: 0.5rem">
-                    <input
-                        formControlName="categoryName"
-                        pInputText
-                        class="sav-textarea"
-                        style="flex: 1"
-                        placeholder="Nom catégorie"
-                    />
-                    <button
-                        pButton
-                        type="button"
-                        label="Créer"
-                        icon="pi pi-plus"
-                        class="p-button-success"
-                        [disabled]="
-                            !addCategoryCompsant.get('categoryName').value
-                        "
-                        (click)="addNewCategoryComposant()"
-                    ></button>
-                </div>
-            </form>
-
-            <p-table
-                [columns]="colCategoryComposants"
-                [value]="composantCatgorieList"
-                styleClass="p-datatable-sm sav-modal-table"
-                [tableStyle]="{ 'min-width': '100%' }"
-            >
-                <ng-template pTemplate="header" let-columns>
-                    <tr>
-                        <th *ngFor="let col of columns">{{ col.header }}</th>
-                        <th>Actions</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-rowData let-columns="columns">
-                    <tr>
-                        <td *ngFor="let col of columns; trackBy: trackByColumn">
-                            {{ formatCell(rowData, col.field) }}
-                        </td>
-                        <td>
-                            <button
-                                pButton
-                                icon="pi pi-trash"
-                                class="sav-icon-btn"
-                                (click)="deleteCategorycomposant(rowData)"
-                            ></button>
-                        </td>
-                    </tr>
-                </ng-template>
-            </p-table>
-        </div>
-    </p-dialog>
-
-    <!-- ═══════════ DIALOG 3 — CRÉATION NOUVEAU COMPOSANT ═══════════ -->
-    <p-dialog
-        [(visible)]="openCreationComposantModal"
-        header="Création nouveau composant"
-        [modal]="true"
-        [draggable]="false"
-        [resizable]="false"
-        styleClass="sav-dialog cc-dialog"
-        [style]="{ width: '680px', maxWidth: 'calc(100vw - 2rem)' }"
-    >
-        <form [formGroup]="composantMagasin" class="cc-form">
-            <!-- ── Identification ──────────────────────────────────── -->
-            <section class="cc-section">
-                <div class="cc-section__head">
-                    <span class="cc-section__dot"></span>
-                    <h4 class="cc-section__title">Identification</h4>
-                </div>
-                <div class="cc-grid">
-                    <div class="cc-field cc-field--full">
-                        <label class="cc-label">Choisir un composant</label>
-                        <p-dropdown
-                            [options]="composantList"
-                            optionLabel="name"
-                            optionValue="name"
-                            [filter]="true"
-                            filterBy="name"
-                            [showClear]="true"
-                            placeholder="Choisir composant"
-                            (onFilter)="onComposantFilter($event)"
-                            (onChange)="selectedDropDownComposant($event)"
-                            (onClear)="clearDropDown()"
-                            styleClass="cc-dropdown"
-                            [style]="{ width: '100%' }"
-                        ></p-dropdown>
-                    </div>
-
-                    <div class="cc-field">
-                        <label class="cc-label">Identifiant</label>
-                        <div class="cc-readonly">
-                            {{ composantMagasin.get("_id")?.value || "—" }}
-                        </div>
-                    </div>
-
-                    <div class="cc-field">
-                        <label class="cc-label">Nom du composant</label>
-                        <input pInputText formControlName="name" class="cc-input" />
-                    </div>
-
-                    <div class="cc-field">
-                        <label class="cc-label">Catégorie</label>
-                        <!-- optionValue = "value" (_id de la catégorie), pas le
-                             libellé. L'ancien template d'item référençait
-                             `rowData` (inexistant hors de la table) → le panneau
-                             plantait au rendu : impossible de choisir une
-                             catégorie dans ce modal. -->
-                        <p-dropdown
-                            [options]="composantCategory"
-                            optionLabel="name"
-                            optionValue="value"
-                            placeholder="Choisir catégorie"
-                            emptyMessage="Aucune catégorie — créez-en une via « Nouvelle catégorie »."
-                            formControlName="category_composant_id"
-                            styleClass="cc-dropdown"
-                            [style]="{ width: '100%' }"
-                        >
-                            <ng-template let-option pTemplate="item">
-                                <p-tag [value]="option.name"></p-tag>
-                            </ng-template>
-                        </p-dropdown>
-                    </div>
-
-                    <div class="cc-field">
-                        <label class="cc-label">Package</label>
-                        <input
-                            pInputText
-                            formControlName="packageComposant"
-                            class="cc-input"
-                        />
-                    </div>
-                </div>
-            </section>
-
-            <!-- ── Prix & stock ────────────────────────────────────── -->
-            <section class="cc-section">
-                <div class="cc-section__head">
-                    <span class="cc-section__dot cc-section__dot--green"></span>
-                    <h4 class="cc-section__title">Prix &amp; stock</h4>
-                </div>
-                <div class="cc-grid">
-                    <div class="cc-field">
-                        <label class="cc-label">Prix d'achat</label>
-                        <p-inputNumber
-                            formControlName="prix_achat"
-                            mode="currency"
-                            currency="TND"
-                            styleClass="cc-number"
-                        ></p-inputNumber>
-                    </div>
-                    <div class="cc-field">
-                        <label class="cc-label">Prix de vente</label>
-                        <p-inputNumber
-                            formControlName="prix_vente"
-                            mode="currency"
-                            currency="TND"
-                            styleClass="cc-number"
-                        ></p-inputNumber>
-                    </div>
-                    <div class="cc-field">
-                        <label class="cc-label">Quantité en stock</label>
-                        <p-inputNumber
-                            mode="decimal"
-                            formControlName="quantity_stocked"
-                            styleClass="cc-number"
-                        ></p-inputNumber>
-                    </div>
-                    <div class="cc-field">
-                        <label class="cc-label">Statut</label>
-                        <p-dropdown
-                            [options]="statusComposant"
-                            formControlName="status"
-                            optionLabel="name"
-                            optionValue="value"
-                            placeholder="Choisir état"
-                            styleClass="cc-dropdown"
-                            [style]="{ width: '100%' }"
-                        >
-                            <ng-template let-option pTemplate="item">
-                                <p-tag
-                                    [value]="option.name"
-                                    [severity]="getSeverity(option.name)"
-                                ></p-tag>
-                            </ng-template>
-                        </p-dropdown>
-                    </div>
-                    <div class="cc-field">
-                        <label class="cc-label">Date d'arrivage</label>
-                        <p-calendar
-                            dateFormat="dd.mm.yy"
-                            formControlName="coming_date"
-                            styleClass="cc-calendar"
-                            [style]="{ width: '100%' }"
-                        ></p-calendar>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ── Documents & liens ───────────────────────────────── -->
-            <section class="cc-section">
-                <div class="cc-section__head">
-                    <span class="cc-section__dot cc-section__dot--amber"></span>
-                    <h4 class="cc-section__title">Documents &amp; liens</h4>
-                </div>
-                <div class="cc-grid">
-                    <div class="cc-field cc-field--full">
-                        <label class="cc-label">Lien</label>
-                        <input pInputText formControlName="link" class="cc-input" />
-                    </div>
-                    <div class="cc-field cc-field--full">
-                        <label class="cc-label">Fiche technique (PDF)</label>
-                        <p-fileUpload
-                            mode="basic"
-                            chooseLabel="Ajouter PDF"
-                            chooseIcon="pi pi-upload"
-                            name="ficheTechnique"
-                            accept="application/pdf"
-                            maxFileSize="1000000"
-                            [customUpload]="true"
-                            [auto]="true"
-                            (uploadHandler)="onUpload($event, 'addComposant')"
-                        ></p-fileUpload>
-                        <div *ngIf="composantMagasin.value.pdf" class="cc-pdf">
-                            <p-image
-                                [src]="baseUrl + composantMagasin.value.pdf"
-                                width="60"
-                                [preview]="true"
-                                styleClass="sav-thumb"
-                            ></p-image>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ── Actions ─────────────────────────────────────────── -->
-            <footer class="cc-footer">
-                <button
-                    pButton
-                    type="button"
-                    label="Annuler"
-                    icon="pi pi-times"
-                    class="cc-btn cc-btn--ghost"
-                    (click)="annulerMagasinEstimation()"
-                ></button>
-                <div class="cc-footer__right">
-                    <button
-                        pButton
-                        type="button"
-                        label="Supprimer"
-                        icon="pi pi-trash"
-                        class="cc-btn cc-btn--danger"
-                        (click)="deletComposant()"
-                    ></button>
-                    <button
-                        pButton
-                        type="button"
-                        [label]="isToUpdate ? 'Mettre à jour' : 'Ajouter'"
-                        icon="pi pi-plus"
-                        class="cc-btn cc-btn--primary"
-                        (click)="addComposant()"
-                    ></button>
-                </div>
-            </footer>
-        </form>
-    </p-dialog>
 
     <!-- « Affectation finale » — la page « Gestion des composants »
          (ex-route details/:id) rendue EN MODAL. Même composant, même
@@ -945,11 +658,12 @@
         [(visible)]="detailsComposantModal"
         [modal]="true"
         [draggable]="false"
-        [dismissableMask]="true"
+        [resizable]="false"
+        [closable]="false"
+        [dismissableMask]="false"
         [showHeader]="false"
-        [contentStyle]="{ padding: '0', 'border-radius': '18px', overflow: 'hidden' }"
-        [style]="{ width: '92vw', maxWidth: '1040px' }"
-        [breakpoints]="{ '960px': '96vw' }"
+        styleClass="af-fin-dialog"
+        [style]="{ width: '1040px', maxWidth: '96vw' }"
     >
         <app-details-composant
             *ngIf="detailsComposantModal"

@@ -101,8 +101,8 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
      */
     @Input() prefill: {
         di_category_id?: string | null;
-        repairPlan?: string;
         worksDone?: string;
+        testsDone?: string;
         remarqueExtra?: string;
         parts?: RepairPartEntry[];
     } | null = null;
@@ -114,12 +114,11 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     // ───────────────────────────────────────────────────────────────
     repairForm: FormGroup = this.fb.group({
         di_category_id: [null, Validators.required],
-        repairPlan: ['', [Validators.required, Validators.maxLength(1000)]],
         remarqueExtra: ['', Validators.maxLength(1000)],
         partSelected: [null],
         quantity: [1, [Validators.min(1)]],
         worksDone: ['', [Validators.required, Validators.maxLength(1000)]],
-        testsDone: ['', Validators.maxLength(1000)],
+        testsDone: ['', [Validators.required, Validators.maxLength(1000)]],
         repairSuccess: [null],
         testsValidated: [null],
         warranty: [null],
@@ -188,8 +187,11 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
                     this.prefill.di_category_id ??
                     this.repairForm.get('di_category_id')?.value ??
                     null,
-                repairPlan: this.prefill.repairPlan ?? '',
                 worksDone: this.prefill.worksDone ?? '',
+                // `testsDone` est OBLIGATOIRE : sans ce rappel, minimiser puis
+                // rouvrir effacerait la saisie du technicien ET rebloquerait
+                // « Fin réparation » sur un champ qu'il avait déjà rempli.
+                testsDone: this.prefill.testsDone ?? '',
                 remarqueExtra: this.prefill.remarqueExtra ?? '',
             });
             this.parts = [...(this.prefill.parts ?? [])];
@@ -404,14 +406,29 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         return c || co || '';
     }
 
+    /**
+     * Libellé de la catégorie de la DI.
+     *
+     * Tolère l'ID **ou** le LIBELLÉ dans `di_category_id` : les projections
+     * divergent (la vue coordination y met le libellé, `getDiById` l'id) et les
+     * DI héritées stockent directement le libellé. Même tolérance que
+     * `optionValue()` du modal détail — un `===` strict sur l'id affichait
+     * « Non définie » sur toutes ces DI.
+     *
+     * Dernier recours : la valeur brute. Montrer un libellé hérité vaut mieux
+     * que « Non définie » quand la donnée est là mais hors référentiel.
+     */
     get categoryLabel(): string {
-        const id = this.repairForm.get('di_category_id')?.value;
-        const found = this.categories.find((c) => c._id === id);
-        return found?.category ?? '';
-    }
-
-    get repairPlanValue(): string {
-        return (this.repairForm.get('repairPlan')?.value as string) || '';
+        const raw = String(
+            this.repairForm.get('di_category_id')?.value ?? '',
+        ).trim();
+        if (!raw) return '';
+        const byId = this.categories.find((c) => String(c._id) === raw);
+        if (byId) return byId.category;
+        const byLabel = this.categories.find(
+            (c) => String(c.category) === raw,
+        );
+        return byLabel ? byLabel.category : raw;
     }
 
     get repairSuccessLabel(): RepairBadgeValue {
@@ -462,26 +479,46 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         return 'Non défini';
     }
 
-    private computeFinishDisabled(): boolean {
-        // The wizard is reduced to « Travaux & tests » + « Résumé », so the gate
-        // only requires what those steps collect: the works description and the
-        // two yes/no validations. di_category_id / repairPlan are prefilled,
-        // display-only, and NOT part of the finish payload, so they must not
-        // block closure (otherwise an empty prefill would freeze « Fin réparation »).
-        const requiredFilled = !!(
-            this.repairForm.get('worksDone')?.value as string
-        )?.trim();
+    /** Valeur d'un contrôle texte, espaces retirés. `Validators.required` seul
+     *  laisse passer une chaîne d'espaces — la garde doit donc trimer. */
+    private trimmedValue(control: string): string {
+        return ((this.repairForm.get(control)?.value as string) ?? '').trim();
+    }
+
+    /**
+     * PREMIÈRE raison qui empêche de clôturer, ou `null` si tout est réuni.
+     *
+     * SOURCE UNIQUE de la règle de clôture : `computeFinishDisabled()` en
+     * dérive et le résumé l'affiche sous le bouton désactivé. Auparavant le
+     * bouton se grisait sans rien dire — le technicien devait deviner quel
+     * champ manquait.
+     *
+     * Le wizard est réduit à « Travaux & tests » + « Résumé » : la garde ne
+     * porte donc QUE sur ce que ces étapes collectent. `di_category_id` est
+     * pré-rempli et purement informatif, il ne doit pas bloquer la clôture
+     * (un pré-remplissage vide gèlerait « Fin réparation »).
+     */
+    get finishBlockedReason(): string | null {
+        if (!this.trimmedValue('worksDone')) {
+            return 'Renseignez les travaux effectués.';
+        }
+        if (!this.trimmedValue('testsDone')) {
+            return 'Renseignez les tests effectués.';
+        }
         const success = this.repairForm.get('repairSuccess')?.value;
+        if (success !== true && success !== false) {
+            return 'Indiquez si la réparation est réussie.';
+        }
         const tests = this.repairForm.get('testsValidated')?.value;
-        // Also disabled while a finish is in flight (anti double-submit).
-        return (
-            this.finishing ||
-            !(
-                requiredFilled &&
-                (success === true || success === false) &&
-                (tests === true || tests === false)
-            )
-        );
+        if (tests !== true && tests !== false) {
+            return 'Indiquez si les tests sont validés.';
+        }
+        return null;
+    }
+
+    private computeFinishDisabled(): boolean {
+        // `finishing` = clôture déjà en vol (anti double-soumission).
+        return this.finishing || this.finishBlockedReason !== null;
     }
 
     // ───────────────────────────────────────────────────────────────

@@ -134,30 +134,30 @@ import {
       .sav-diag-sidebar {
         height: 100%;
         padding: 1.5rem 1.15rem;
-        background: #ffffff;
-        border-left: 1px solid #e2e8f0;
+        background: var(--fx-bg-card);
+        border-left: 1px solid var(--fx-border);
         overflow-y: auto;
       }
       .sav-diag-sidebar__head h3 {
         margin: 0 0 1.15rem;
         font-size: 1.1rem;
         font-weight: 700;
-        color: #0f172a;
+        color: var(--fx-text);
         letter-spacing: -0.01em;
       }
       .sav-diag-sidebar__block {
         padding: 1rem 1.05rem;
         margin-bottom: 0.85rem;
-        border: 1px solid #edf2f7;
+        border: 1px solid var(--fx-border);
         border-radius: 12px;
-        background: #ffffff;
+        background: var(--fx-bg-card);
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
       }
       .sav-diag-sidebar__block:last-child { margin-bottom: 0; }
       .sav-diag-sidebar__sectionLabel {
         font-size: 0.78rem;
         font-weight: 700;
-        color: #64748b;
+        color: var(--fx-text-muted);
         letter-spacing: 0.08em;
         margin-bottom: 0.75rem;
       }
@@ -166,18 +166,18 @@ import {
         align-items: center;
         gap: 0.55rem;
         font-size: 0.95rem;
-        color: #0f172a;
+        color: var(--fx-text);
         line-height: 1.3;
       }
-      .sav-diag-sidebar__row i { color: #64748b; font-size: 0.95rem; }
+      .sav-diag-sidebar__row i { color: var(--fx-text-muted); font-size: 0.95rem; }
       .sav-diag-sidebar__row strong { font-weight: 650; }
       .sav-diag-sidebar__desc {
         margin: 0.6rem 0 0;
         font-size: 0.88rem;
-        color: #64748b;
+        color: var(--fx-text-muted);
         line-height: 1.5;
       }
-      .sav-diag-sidebar__faded { color: #94a3b8 !important; font-style: italic; }
+      .sav-diag-sidebar__faded { color: var(--fx-text-subtle) !important; font-style: italic; }
 
       .sav-diag-sidebar__contacts {
         display: grid;
@@ -187,9 +187,9 @@ import {
       }
       .sav-diag-sidebar__contact {
         padding: 0.6rem 0.75rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--fx-border);
         border-radius: 9px;
-        background: #f8fafc;
+        background: var(--fx-bg-surface);
       }
       .sav-diag-sidebar__contact-head {
         display: flex;
@@ -199,11 +199,11 @@ import {
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: #1d4ed8;
+        color: var(--fx-blue-soft-fg);
         margin-bottom: 0.35rem;
       }
       .sav-diag-sidebar__contact-head i {
-        color: #2563eb;
+        color: var(--fx-blue-text);
         font-size: 0.78rem;
       }
       .sav-diag-sidebar__contact-row {
@@ -211,45 +211,45 @@ import {
         align-items: center;
         gap: 0.45rem;
         font-size: 0.83rem;
-        color: #1e293b;
+        color: var(--fx-text-strong);
         padding: 2px 0;
       }
       .sav-diag-sidebar__contact-row i {
-        color: #94a3b8;
+        color: var(--fx-text-subtle);
         font-size: 0.78rem;
         width: 12px;
       }
       .sav-diag-sidebar__contact-link {
-        color: #2563eb;
+        color: var(--fx-blue-text);
         text-decoration: none;
       }
       .sav-diag-sidebar__contact-link:hover {
-        color: #1d4ed8;
+        color: var(--fx-blue-soft-fg);
         text-decoration: underline;
       }
       .sav-diag-sidebar__note {
         margin-top: 0.6rem;
         padding: 0.55rem 0.7rem;
-        border-left: 3px solid #2563eb;
-        background: #f8fafc;
+        border-left: 3px solid var(--fx-blue-strong);
+        background: var(--fx-bg-surface);
         border-radius: 0 8px 8px 0;
       }
-      .sav-diag-sidebar__note--admin { border-left-color: #1d4ed8; }
-      .sav-diag-sidebar__note--diag { border-left-color: #3b82f6; }
-      .sav-diag-sidebar__note--rep { border-left-color: #b45309; }
+      .sav-diag-sidebar__note--admin { border-left-color: var(--fx-blue-strong); }
+      .sav-diag-sidebar__note--diag { border-left-color: var(--fx-blue); }
+      .sav-diag-sidebar__note--rep { border-left-color: var(--fx-amber); }
       .sav-diag-sidebar__note small {
         display: block;
         font-size: 0.7rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        color: #64748b;
+        color: var(--fx-text-muted);
         margin-bottom: 0.2rem;
       }
       .sav-diag-sidebar__note p {
         margin: 0;
         font-size: 0.85rem;
-        color: #1e293b;
+        color: var(--fx-text-strong);
         line-height: 1.4;
         white-space: pre-wrap;
         word-break: break-word;

@@ -8,13 +8,13 @@ $accent: #2f6bff;
 $accent-tint: #eef3ff;
 $accent-dark: #1f57e6;
 
-$card: #ffffff;
-$body-bg: #f7f8fb;
-$surface: #fafbfc;
+$card: var(--fx-bg-card);
+$body-bg: var(--fx-bg-page);
+$surface: var(--fx-bg-surface);
 
-$border: #eceef3;
-$border-2: #e7eaef;
-$border-in: #e3e7ee;
+$border: var(--fx-border);
+$border-2: var(--fx-border);
+$border-in: var(--fx-border);
 
 $ink: #1f2733;
 $ink-body: #3a4453;
@@ -25,7 +25,7 @@ $muted: #8a93a3;
 $muted-2: #9aa2b1;
 $muted-3: #7b8497;
 $label: #8b93a3;
-$faint: #aab1bf;
+$faint: var(--fx-text-subtle);
 
 $cyan: #0e9bc4;
 $green: #1f9d73;
@@ -108,8 +108,8 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     height: 46px;
     flex: none;
     border-radius: 12px;
-    background: linear-gradient(135deg, #eaf1ff, #dbe6ff);
-    color: $accent;
+    background: linear-gradient(135deg, var(--fx-blue-soft-bg), var(--fx-blue-soft-bg-2));
+    color: var(--fx-blue-text);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -155,7 +155,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     justify-content: center;
     transition: background 0.15s;
     &:hover {
-        background: #f1f2f4;
+        background: var(--fx-bg-surface-2);
     }
     .pi {
         font-size: 0.9rem;
@@ -205,7 +205,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         width: 10px;
     }
     &::-webkit-scrollbar-thumb {
-        background: #d6dae2;
+        background: var(--fx-border-strong);
         border-radius: 9px;
     }
     &::-webkit-scrollbar-track {
@@ -242,12 +242,12 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     align-items: flex-start;
     gap: 11px;
     margin-top: 14px;
-    border: 1px solid #d7e6ff;
-    background: #f4f8ff;
+    border: 1px solid var(--fx-blue-soft-bd);
+    background: var(--fx-blue-soft-bg);
     border-radius: 12px;
     padding: 12px 15px;
     &__ico {
-        color: $accent;
+        color: var(--fx-blue-text);
         font-size: 1.05rem;
         margin-top: 1px;
         flex: none;
@@ -261,7 +261,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         line-height: 1.5;
         color: $ink-body;
         strong {
-            color: $accent;
+            color: var(--fx-blue-text);
             font-weight: 700;
         }
     }
@@ -274,7 +274,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     padding: 4px 11px;
     border-radius: 999px;
     background: $accent-tint;
-    color: $accent;
+    color: var(--fx-blue-text);
     font-size: 11.5px;
     font-weight: 600;
     .pi {
@@ -331,7 +331,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     color: $muted-2;
     &--on {
         background: $accent-tint;
-        color: $accent;
+        color: var(--fx-blue-text);
     }
 }
 .pvd-add {
@@ -339,9 +339,9 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    border: 1px solid #cfdcff;
-    background: #f4f7ff;
-    color: $accent;
+    border: 1px solid var(--fx-blue-soft-bd);
+    background: var(--fx-blue-soft-bg);
+    color: var(--fx-blue-text);
     font-weight: 600;
     font-size: 12.5px;
     padding: 7px 12px;
@@ -353,7 +353,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         font-size: 0.7rem;
     }
     &:hover {
-        background: #e9f0ff;
+        background: var(--fx-blue-soft-bg);
     }
 }
 
@@ -421,7 +421,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     padding: 3px 10px;
     border-radius: 8px;
     background: $accent-tint;
-    color: $accent;
+    color: var(--fx-blue-text);
     font-size: 12.5px;
     font-weight: 700;
     .pi {
@@ -435,9 +435,9 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         display: grid;
         grid-template-columns: 40px 1fr 120px;
         padding: 9px 18px;
-        background: #fafbfd;
-        border-top: 1px solid #eef0f3;
-        border-bottom: 1px solid #eef0f3;
+        background: var(--fx-bg-surface);
+        border-top: 1px solid var(--fx-border);
+        border-bottom: 1px solid var(--fx-border);
         font-size: 10.5px;
         letter-spacing: 0.6px;
         font-weight: 700;
@@ -448,7 +448,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         display: grid;
         grid-template-columns: 40px 1fr 120px;
         padding: 11px 18px;
-        border-bottom: 1px solid #f4f5f8;
+        border-bottom: 1px solid var(--fx-border);
         align-items: center;
         &:last-child {
             border-bottom: 0;
@@ -489,16 +489,16 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     color: $purple;
 }
 .pvd-av--1 {
-    background: #eef4ff;
-    color: #2563eb;
+    background: var(--fx-blue-soft-bg);
+    color: var(--fx-blue-text);
 }
 .pvd-av--2 {
     background: $green-tint;
     color: $green-pill;
 }
 .pvd-av--3 {
-    background: #fff3e0;
-    color: #d97706;
+    background: var(--fx-amber-soft-bg);
+    color: var(--fx-amber-text);
 }
 .pvd-pres {
     display: inline-flex;
@@ -574,19 +574,19 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     font-size: 13.5px;
     font-family: inherit;
     color: $ink;
-    background: #f8f9fb;
+    background: var(--fx-bg-surface);
     outline: none;
     transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
     &::placeholder {
         color: $faint;
     }
     &:focus {
-        border-color: $accent;
-        background: #fff;
+        border-color: var(--fx-blue);
+        background: var(--fx-bg-card);
         box-shadow: 0 0 0 3px rgba(47, 107, 255, 0.12);
     }
     &:disabled {
-        background: #f1f3f6;
+        background: var(--fx-bg-page);
         color: $muted-3;
         cursor: default;
     }
@@ -610,14 +610,14 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     justify-content: center;
     transition: background 0.15s;
     &:hover {
-        background: #fbeaea;
+        background: var(--fx-red-soft-bg);
     }
     .pi {
         font-size: 0.85rem;
     }
 }
 .pvd-empty {
-    border: 1px dashed #d8dde5;
+    border: 1px dashed var(--fx-border);
     border-radius: 11px;
     padding: 18px;
     text-align: center;
@@ -670,7 +670,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         gap: 5px;
         font-size: 12px;
         font-weight: 700;
-        color: $accent;
+        color: var(--fx-blue-text);
         text-decoration: none;
         .pi {
             font-size: 0.7rem;
@@ -698,7 +698,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     width: 100% !important;
     border-radius: 9px !important;
     border-color: $border-in !important;
-    background: #f8f9fb !important;
+    background: var(--fx-bg-surface) !important;
     font-size: 13px !important;
 }
 :host ::ng-deep .pvd-cal {
@@ -737,14 +737,14 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         padding-top: 9px;
         font-size: 13px;
         font-weight: 700;
-        color: #2a3340;
+        color: var(--fx-text-strong);
     }
     &__dot {
         width: 9px;
         height: 9px;
         flex: none;
         border-radius: 50%;
-        background: $accent;
+        background: var(--fx-blue);
     }
     &__area {
         border-left-width: 3px;
@@ -753,42 +753,42 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     // Family colours (mo/mt/mi/ma/me)
     &--mo {
         .pvd-fam__dot {
-            background: #2f6bff;
+            background: var(--fx-blue);
         }
         .pvd-fam__area {
-            border-left-color: #2f6bff;
+            border-left-color: var(--fx-blue);
         }
     }
     &--mt {
         .pvd-fam__dot {
-            background: #1f9d73;
+            background: var(--fx-green-strong);
         }
         .pvd-fam__area {
-            border-left-color: #1f9d73;
+            border-left-color: var(--fx-green);
         }
     }
     &--mi {
         .pvd-fam__dot {
-            background: #d8567a;
+            background: var(--fx-red);
         }
         .pvd-fam__area {
-            border-left-color: #d8567a;
+            border-left-color: var(--fx-red);
         }
     }
     &--ma {
         .pvd-fam__dot {
-            background: #7c6fe0;
+            background: var(--fx-blue);
         }
         .pvd-fam__area {
-            border-left-color: #7c6fe0;
+            border-left-color: var(--fx-blue);
         }
     }
     &--me {
         .pvd-fam__dot {
-            background: #e8943a;
+            background: var(--fx-amber);
         }
         .pvd-fam__area {
-            border-left-color: #e8943a;
+            border-left-color: var(--fx-amber);
         }
     }
 }
@@ -821,14 +821,14 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     &--cancel {
         background: $card !important;
         color: $ink-body !important;
-        border: 1px solid #d9dde4 !important;
+        border: 1px solid var(--fx-border) !important;
         &:hover {
-            background: #f4f5f7 !important;
+            background: var(--fx-bg-page) !important;
         }
     }
     &--pdf {
         background: $green !important;
-        color: #fff !important;
+        color: var(--fx-text-on-accent) !important;
         border: 0 !important;
         box-shadow: 0 4px 14px rgba(31, 157, 115, 0.28) !important;
         &:hover {
@@ -836,20 +836,20 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
         }
     }
     &--save {
-        background: #f4f7ff !important;
-        color: $accent !important;
-        border: 1px solid #cfdcff !important;
+        background: var(--fx-blue-soft-bg) !important;
+        color: var(--fx-blue-text) !important;
+        border: 1px solid var(--fx-blue-soft-bd) !important;
         &:hover {
-            background: #e9f0ff !important;
+            background: var(--fx-blue-soft-bg) !important;
         }
     }
     &--finalize {
         background: $ink-strong !important;
-        color: #fff !important;
+        color: var(--fx-text-on-accent) !important;
         border: 0 !important;
         box-shadow: 0 4px 14px rgba(43, 52, 64, 0.3) !important;
         &:hover {
-            background: #1c232d !important;
+            background: var(--fx-text-strong) !important;
         }
     }
 }
@@ -883,7 +883,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     }
 }
 :host ::ng-deep body.pvd-printing {
-    background: #fff !important;
+    background: var(--fx-bg-card) !important;
 }
 @media print {
     .pvd-card {
@@ -892,7 +892,7 @@ $mono: "JetBrains Mono", ui-monospace, monospace;
     .pvd-body {
         max-height: none !important;
         overflow: visible !important;
-        background: #fff !important;
+        background: var(--fx-bg-card) !important;
     }
     .avoid-break {
         break-inside: avoid;
