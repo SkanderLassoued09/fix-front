@@ -1411,11 +1411,9 @@
             </ng-container>
 
             <!-- ══════════ ONGLET 5 — LIENS ══════════ -->
+            <!-- Documents du cycle uniquement. PV, alertes et rappels de stagnation
+                 ne s'affichent plus ici (toujours imprimés dans l'export PDF). -->
             <ng-container *ngIf="activeTab === 'liens'">
-                <div class="di-loading" *ngIf="linksLoading">
-                    <i class="pi pi-spin pi-spinner"></i> Chargement des éléments liés…
-                </div>
-
                 <section class="di-sec avoid-break">
                     <div class="di-label">Documents — dépôt</div>
                     <div class="di-table di-table--2">
@@ -1438,87 +1436,6 @@
                         Tunis).
                     </p>
                 </section>
-
-                <section class="di-sec avoid-break" *ngIf="pvs.length">
-                    <div class="di-label di-label--inline">
-                        PV de réunion <span class="di-pill">{{ pvs.length }}</span>
-                    </div>
-                    <div class="di-table di-table--4">
-                        <div class="di-table__head">
-                            <span>Référence</span><span>Titre</span><span>Date</span>
-                            <span>Statut</span>
-                        </div>
-                        <div class="di-table__row" *ngFor="let pv of pvs">
-                            <span class="di-mono">{{ pv.reference }}</span>
-                            <span>
-                                {{ pv.titre }}
-                                <em *ngIf="pv.contexteRetour?.niveau">
-                                    — retour {{ pv.contexteRetour.niveau }}</em
-                                >
-                            </span>
-                            <span class="di-mono">{{ fmtDate(pv.dateReunion) }}</span>
-                            <span>{{ pv.statut }}</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="di-sec avoid-break" *ngIf="alerts.length">
-                    <div class="di-label di-label--inline">
-                        Alertes opérationnelles
-                        <span class="di-pill">{{ alerts.length }}</span>
-                    </div>
-                    <div class="di-table di-table--4">
-                        <div class="di-table__head">
-                            <span>Type</span><span>Sévérité</span><span>Créée le</span>
-                            <span>Résolue</span>
-                        </div>
-                        <div class="di-table__row" *ngFor="let a of alerts">
-                            <span>{{ a.type }}</span>
-                            <span>{{ a.severity }}</span>
-                            <span class="di-mono">{{ fmtDate(a.createdAt) }}</span>
-                            <span class="di-mono">{{
-                                a.resolvedAt ? fmtDate(a.resolvedAt) : "ouverte"
-                            }}</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="di-sec avoid-break" *ngIf="stagnations.length">
-                    <div class="di-label di-label--inline">
-                        Rappels de stagnation
-                        <span class="di-pill">{{ stagnations.length }}</span>
-                    </div>
-                    <div class="di-table">
-                        <div class="di-table__head">
-                            <span>Jour</span><span>Statut concerné</span><span>Ancienneté</span>
-                        </div>
-                        <div class="di-table__row" *ngFor="let st of stagnations">
-                            <span class="di-mono">{{ st.date }}</span>
-                            <span>{{ st.status }}</span>
-                            <span>{{ st.ageHours != null ? st.ageHours + " h" : "—" }}</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="di-sec avoid-break" *ngIf="auditTrail.length">
-                    <div class="di-label di-label--inline">
-                        Traces d'audit <span class="di-pill">{{ auditTrail.length }}</span>
-                    </div>
-                    <div class="di-table">
-                        <div class="di-table__head">
-                            <span>Type</span><span>Message</span><span>Le</span>
-                        </div>
-                        <div class="di-table__row" *ngFor="let a of auditTrail">
-                            <span>{{ a.type }}</span>
-                            <span>{{ a.message }}</span>
-                            <span class="di-mono">{{ fmtDate(a.createdAt) }}</span>
-                        </div>
-                    </div>
-                </section>
-
-                <p class="di-empty" *ngIf="!linksLoading && !hasAnyLink">
-                    Aucun PV, alerte ou rappel rattaché à ce dossier.
-                </p>
             </ng-container>
         </div>
 

@@ -1945,22 +1945,7 @@ export class TicketService {
         `;
     }
 
-    /** Traces d'audit de la DI (dont `DI_REACTIVATED`). */
-    getDiAuditTrail(diId: string) {
-        return gql`
-            query {
-                getAuditByDi(diId: "${diId}", limit: 100) {
-                    _id
-                    type
-                    message
-                    isSeen
-                    createdAt
-                }
-            }
-        `;
-    }
-
-    /** PV de réunion rattachés à la DI (résumé pour l'onglet « Liens »). */
+    /** PV de réunion rattachés à la DI (export PDF + motif du bandeau « Retour N »). */
     getDiReunionPvs(diId: string) {
         return gql`
             query {

@@ -186,12 +186,13 @@ export class DiInfoModalComponent implements OnChanges {
     // source n'existe.
     private events: any[] = [];
 
-    // ── Liens (onglet 5) ─────────────────────────────────────────────────────
-    linksLoading = false;
+    // ── Éléments rattachés (PV, alertes, rappels de stagnation) ──────────────
+    // Plus affichés dans l'onglet Liens (documents seulement), mais toujours
+    // chargés : l'export PDF les imprime et le motif du bandeau « Retour N »
+    // se lit dans les PV.
     pvs: any[] = [];
     alerts: any[] = [];
     stagnations: any[] = [];
-    auditTrail: any[] = [];
 
     // ── Édition ADMIN_TECH ───────────────────────────────────────────────────
     /** Rôle courant, lu une fois (même source que le reste de l'app). */
@@ -273,15 +274,16 @@ export class DiInfoModalComponent implements OnChanges {
         this.pvs = [];
         this.alerts = [];
         this.stagnations = [];
-        this.auditTrail = [];
         this.cancelEdit();
     }
 
     private ensureTabLoaded(tab: DiInfoTab): void {
-        if (!this.di?._id || this.loaded.has(tab)) return;
+        // Seul « Temps & chrono » a un chargement propre. L'onglet Liens n'affiche
+        // plus que les documents du cycle (déjà dans `di`) : `liens` n'est PAS
+        // marqué chargé ici, sinon `loadAllTabs` sauterait PV et alertes du PDF.
+        if (tab !== 'temps' || !this.di?._id || this.loaded.has(tab)) return;
         this.loaded.add(tab);
-        if (tab === 'temps') void this.loadTimes();
-        else if (tab === 'liens') void this.loadLinks();
+        void this.loadTimes();
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -398,13 +400,12 @@ export class DiInfoModalComponent implements OnChanges {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Onglet Liens
+    // Éléments rattachés — pour l'export PDF et le motif « Retour N »
     // ─────────────────────────────────────────────────────────────────────────
 
     private loadLinks(): Promise<void> {
         const diId = this.di?._id;
         if (!diId) return Promise.resolve();
-        this.linksLoading = true;
         const idNum = String(this.di?._idnum ?? '').trim();
 
         // Chaque source est indépendante : l'échec de l'une ne doit pas priver
@@ -428,7 +429,6 @@ export class DiInfoModalComponent implements OnChanges {
         const jobs = [
             pull(this.ticket.getDiReunionPvs(diId), (d) => (this.pvs = d?.reunionPVs ?? [])),
             pull(this.ticket.getDiAlerts(diId), (d) => (this.alerts = d?.listDiAlerts ?? [])),
-            pull(this.ticket.getDiAuditTrail(diId), (d) => (this.auditTrail = d?.getAuditByDi ?? [])),
         ];
         if (idNum) {
             jobs.push(
@@ -439,21 +439,7 @@ export class DiInfoModalComponent implements OnChanges {
             );
         }
 
-        return Promise.all(jobs).then(() => {
-            if (this.di?._id === diId) {
-                this.linksLoading = false;
-                this.cdr.markForCheck();
-            }
-        });
-    }
-
-    get hasAnyLink(): boolean {
-        return !!(
-            this.pvs.length ||
-            this.alerts.length ||
-            this.stagnations.length ||
-            this.auditTrail.length
-        );
+        return Promise.all(jobs).then(() => undefined);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
