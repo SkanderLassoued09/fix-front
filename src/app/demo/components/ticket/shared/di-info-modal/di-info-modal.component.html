@@ -331,6 +331,44 @@
                                     activeContainPdr ? "PDR dispo" : "Sans PDR"
                                 }}</strong>
                             </div>
+                            <div class="di-kv__row">
+                                <span>Réparation réussie</span>
+                                <strong
+                                    [attr.data-tone]="
+                                        activeRepairSuccess === true
+                                            ? 'ok'
+                                            : activeRepairSuccess === false
+                                              ? 'ko'
+                                              : 'muted'
+                                    "
+                                    >{{
+                                        activeRepairSuccess === true
+                                            ? "Oui"
+                                            : activeRepairSuccess === false
+                                              ? "Non"
+                                              : "Non renseigné"
+                                    }}</strong
+                                >
+                            </div>
+                            <div class="di-kv__row">
+                                <span>Tests validés</span>
+                                <strong
+                                    [attr.data-tone]="
+                                        activeTestsValidated === true
+                                            ? 'ok'
+                                            : activeTestsValidated === false
+                                              ? 'ko'
+                                              : 'muted'
+                                    "
+                                    >{{
+                                        activeTestsValidated === true
+                                            ? "Oui"
+                                            : activeTestsValidated === false
+                                              ? "Non"
+                                              : "Non renseigné"
+                                    }}</strong
+                                >
+                            </div>
                         </div>
                     </div>
 

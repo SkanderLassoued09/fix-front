@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { gql } from 'apollo-angular';
 import { CreateDiInput } from '../components/ticket/ticket-list/ticket-list.interface';
-import { gqlStr } from './gql-escape.util';
+import { gqlDateLiteral, gqlStr } from './gql-escape.util';
 
 /**
  * SÉLECTION UNIQUE des champs d'une DI pour les vues coordinatrice (liste
@@ -100,6 +100,8 @@ const COORDINATOR_DI_FIELDS = `
         final_price
         can_be_repaired
         contain_pdr
+        repair_success
+        tests_validated
         array_composants {
             nameComposant
             quantity
@@ -809,9 +811,9 @@ export class TicketService {
                     createComposantInput: {
                         name: ${gqlStr(composantName)}
                         package: ${gqlStr(packageComposant)}
-                        category_composant_id:"${category_composant_id}"
+                        category_composant_id: ${gqlStr(category_composant_id)}
                         link: ${gqlStr(link)}
-                        pdf: "${pdf ?? null}"
+                        pdf: ${gqlStr(pdf)}
                     }
                 ) {
                     _id
@@ -953,12 +955,29 @@ export class TicketService {
     /** Safe variant of `finishReparation` — escapes the remark (quotes/newlines)
      *  so a tech's free text can't break the GraphQL document. Used by the
      *  redesigned repair wizard's « Fin réparation ». */
-    finishReparationSafe(diId: string, remarque: string) {
+    finishReparationSafe(
+        diId: string,
+        remarque: string,
+        checks: {
+            repairSuccess?: boolean | null;
+            testsValidated?: boolean | null;
+        } = {},
+    ) {
+        // Oui/Non du wizard : seules les réponses données partent (un argument
+        // absent laisse la valeur enregistrée intacte côté serveur).
+        const checkArgs = [
+            typeof checks.repairSuccess === 'boolean'
+                ? `, repairSuccess: ${checks.repairSuccess}`
+                : '',
+            typeof checks.testsValidated === 'boolean'
+                ? `, testsValidated: ${checks.testsValidated}`
+                : '',
+        ].join('');
         return gql`
             mutation {
                 tech_finishReperation(_id: ${JSON.stringify(diId)}, remarque: ${JSON.stringify(
                     remarque ?? '',
-                )}) {
+                )}${checkArgs}) {
                     status
                 }
             }
@@ -1205,19 +1224,11 @@ export class TicketService {
             const x = Number(v);
             return Number.isFinite(x) ? x : null;
         };
-        // Date → a STABLE `YYYY-MM-DD` literal (local parts, no TZ shift). The
-        // form holds a Date object; sending its raw toString() rewrote
-        // coming_date into a noisy locale string on every save.
-        const d = (v: unknown) => {
-            if (!v) return s('');
-            const dt = v instanceof Date ? v : new Date(v as any);
-            if (isNaN(dt.getTime())) return s(String(v));
-            const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(
-                2,
-                '0',
-            )}-${String(dt.getDate()).padStart(2, '0')}`;
-            return s(iso);
-        };
+        // Date → a STABLE `YYYY-MM-DD` literal (no TZ shift). The form holds a
+        // Date object; sending its raw toString() rewrote coming_date into a
+        // noisy locale string on every save, and an Invalid Date wrote the text
+        // « Invalid Date » — both now serialize to "" (left untouched by the back).
+        const d = gqlDateLiteral;
         // Send `_id` when we have it so the backend matches the exact row
         // (required for the « Nom » edit to persist). Omit it for legacy
         // callers without an id (backend falls back to matching by name).
@@ -2282,9 +2293,11 @@ export class TicketService {
 
     addComposantMagasin(composantData: any) {
         // Littéraux sûrs (mêmes garanties que `updateComposant`) : un nombre
-        // absent → null (et non le littéral invalide `undefined`, qui rendait
-        // le document GraphQL imparsable → échec silencieux), une chaîne avec
-        // guillemets/retours ligne ne casse plus le document.
+        // non numérique → null (et non le littéral invalide `undefined`, qui
+        // rendait le document GraphQL imparsable → échec silencieux), que le
+        // serveur INITIALISE à 0 (prix à 0 = « pas de prix ») ; une chaîne avec
+        // guillemets/retours ligne ne casse plus le document ; la date part en
+        // `YYYY-MM-DD` (et non en `Date.toString()`).
         const s = (v: unknown) =>
             JSON.stringify(v === null || v === undefined ? '' : String(v));
         const n = (v: unknown) => {
@@ -2299,7 +2312,7 @@ export class TicketService {
       package: ${s(composantData.packageComposant)}
       prix_achat: ${n(composantData.prix_achat)}
       prix_vente: ${n(composantData.prix_vente)}
-      coming_date: ${s(composantData.coming_date)}
+      coming_date: ${gqlDateLiteral(composantData.coming_date)}
       link: ${s(composantData.link)}
       quantity_stocked: ${n(composantData.quantity_stocked)}
       pdf: ${s(composantData.pdf)}

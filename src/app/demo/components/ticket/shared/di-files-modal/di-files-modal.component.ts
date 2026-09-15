@@ -17,6 +17,8 @@ import { docHref } from '../doc-href.util';
 import { NotifyService } from '../../../../../shared/ui/notify.service';
 import { ConfirmService } from '../../../../../shared/ui/confirm.service';
 
+type AfDocKey = 'BC' | 'BL' | 'Facture' | 'Devis';
+
 /**
  * Les 4 documents de cycle, dans l'ordre d'affichage. Constante de MODULE (et
  * non champ d'instance) pour que les getters de présentation soient des
@@ -24,7 +26,7 @@ import { ConfirmService } from '../../../../../shared/ui/confirm.service';
  * `Object.create(prototype)`, sans TestBed ni injection.
  */
 const AFFECTATION_DOC_TYPES: ReadonlyArray<{
-    key: 'BC' | 'BL' | 'Facture' | 'Devis';
+    key: AfDocKey;
     tag: string;
     label: string;
     field: 'bon_de_commande' | 'bon_de_livraison' | 'facture' | 'devis';
@@ -34,6 +36,33 @@ const AFFECTATION_DOC_TYPES: ReadonlyArray<{
     { key: 'Facture', tag: 'FAC', label: 'Facture', field: 'facture' },
     { key: 'Devis', tag: 'DEV', label: 'Devis', field: 'devis' },
 ];
+
+/**
+ * Emplacements de dépôt, dans l'ordre d'affichage ET d'enregistrement.
+ *  - Clôture documentaire (WAITING_BL … FINISHED) : BL puis Facture.
+ *  - DI IRRÉPARABLE : les 4 documents. Devis AVANT BC : le back refuse un BC
+ *    sans devis (`BC_REQUIRES_DEVIS`), la chaîne doit donc déposer le devis
+ *    d'abord quand les deux partent ensemble.
+ */
+const CLOSING_UPLOAD_KEYS: ReadonlyArray<AfDocKey> = ['BL', 'Facture'];
+const IRREPARABLE_UPLOAD_KEYS: ReadonlyArray<AfDocKey> = [
+    'Devis',
+    'BC',
+    'BL',
+    'Facture',
+];
+
+export interface AfUploadSlot {
+    key: AfDocKey;
+    tag: string;
+    label: string;
+    /** Document déjà présent sur la DI : dépôt DÉFINITIVEMENT fermé (sur une
+     *  DI irréparable, le back refuse aussi le second dépôt). */
+    filled: boolean;
+    /** Prérequis manquant : Facture sans BL (WAITING_BL), BC sans devis. */
+    locked: boolean;
+    lockHint: string;
+}
 
 /**
  * MODALE « AFFECTATION DES FICHIERS » — composant PARTAGÉ.
@@ -85,23 +114,22 @@ export class DiFilesModalComponent implements OnChanges {
     /** Émis après un enregistrement réussi. */
     @Output() saved = new EventEmitter<void>();
 
-    // ── État interne (identique à l'ancien état de ticket-list) ─────────────
+    // ── État interne, par emplacement ───────────────────────────────────────
     finishedData: any = null;
-    selectedBL: string = '';
-    selectedFacture: string = '';
-    blLoading = false;
-    factureLoading = false;
-    blBtnDisabled = false;
-    factureBtnDisabled = false;
+    /** Aperçu (data-URL) du fichier en attente. */
+    selected: Partial<Record<AfDocKey, string>> = {};
+    /** Lecture du fichier en cours. */
+    slotLoading: Partial<Record<AfDocKey, boolean>> = {};
     isLoading = false;
 
-    /** Cache base64 par type, pour que l'unique « Enregistrer » du pied
-     *  persiste BL ET Facture en une cascade. */
-    affectationBase64: Record<string, string> = {};
-    /** Nom + taille réels du fichier en attente, par emplacement. */
-    afSelectedMeta: Record<string, { name: string; size: number }> = {};
-    /** Surbrillance de survol par emplacement (visuel seul). */
-    afDragActive: Record<string, boolean> = {};
+    /** Cache base64, pour que l'unique « Enregistrer » du pied persiste tous
+     *  les emplacements en attente en une cascade. */
+    affectationBase64: Partial<Record<AfDocKey, string>> = {};
+    /** Nom + taille réels du fichier en attente. */
+    afSelectedMeta: Partial<Record<AfDocKey, { name: string; size: number }>> =
+        {};
+    /** Surbrillance de survol (visuel seul). */
+    afDragActive: Partial<Record<AfDocKey, boolean>> = {};
 
     readonly docHref = docHref;
 
@@ -130,15 +158,11 @@ export class DiFilesModalComponent implements OnChanges {
      *  singleton réutilisé d'une notification à l'autre). */
     private resetState(): void {
         this.finishedData = null;
-        this.selectedBL = '';
-        this.selectedFacture = '';
+        this.selected = {};
+        this.slotLoading = {};
         this.affectationBase64 = {};
         this.afSelectedMeta = {};
         this.afDragActive = {};
-        this.blLoading = false;
-        this.factureLoading = false;
-        this.blBtnDisabled = false;
-        this.factureBtnDisabled = false;
         this.isLoading = false;
     }
 
@@ -214,20 +238,64 @@ export class DiFilesModalComponent implements OnChanges {
         return Array.isArray(row?.documents) ? row.documents : [];
     }
 
-    /** Fichiers sélectionnés mais pas encore enregistrés. */
-    get affectationPendingCount(): number {
-        return (this.selectedBL ? 1 : 0) + (this.selectedFacture ? 1 : 0);
+    /**
+     * Emplacements de dépôt de la DI courante (voir `CLOSING_UPLOAD_KEYS` /
+     * `IRREPARABLE_UPLOAD_KEYS`).
+     *
+     * `filled` lit le MIROIR de la DI, c'est-à-dire le cycle COURANT : c'est bien
+     * là que le prochain dépôt écrirait (`writeCurrentCycleDoc`). Une fois rempli,
+     * l'emplacement ne se rouvre plus — il n'y a pas de remplacement.
+     */
+    get uploadSlots(): AfUploadSlot[] {
+        const di = this.filesSelected;
+        const irreparable = di?.status === 'IRREPARABLE';
+        const keys = irreparable ? IRREPARABLE_UPLOAD_KEYS : CLOSING_UPLOAD_KEYS;
+        return keys.map((key) => {
+            const t = AFFECTATION_DOC_TYPES.find((d) => d.key === key)!;
+            const filled = !!di?.[t.field];
+            let lockHint = '';
+            if (!filled && key === 'Facture' && di?.status === 'WAITING_BL') {
+                // Séquence de clôture : l'upload du BL fait passer la DI en
+                // WAITING_FACTURE (transition auto back), qui rouvre la Facture.
+                lockHint = "Téléversez d'abord le Bon de livraison (BL).";
+            } else if (
+                !filled &&
+                irreparable &&
+                key === 'BC' &&
+                !di?.devis &&
+                !this.affectationBase64?.['Devis']
+            ) {
+                lockHint = "Téléversez d'abord le devis.";
+            }
+            return {
+                key,
+                tag: t.tag,
+                label: t.label,
+                filled,
+                locked: !!lockHint,
+                lockHint,
+            };
+        });
     }
 
-    /** Séquence documentaire de clôture : la Facture ne peut être téléversée
-     *  qu'APRÈS le BL. Tant que la DI est en `WAITING_BL` (BL absent), le slot
-     *  Facture est VERROUILLÉ ; l'upload du BL fait passer la DI en
-     *  `WAITING_FACTURE` (transition auto back) → au ré-affichage le slot
-     *  s'ouvre. Les DI legacy (`CLOSING`/`ATTENTE_BL_FACTURE`) et `FINISHED`
-     *  ne sont PAS verrouillées (ancien flux BL+Facture ensemble / gestion
-     *  a posteriori). */
-    get factureSlotLocked(): boolean {
-        return this.filesSelected?.status === 'WAITING_BL';
+    /** Emplacements dont le fichier partira au prochain « Enregistrer », dans
+     *  l'ordre de la chaîne (celui de `uploadSlots`). */
+    get pendingUploadKeys(): AfDocKey[] {
+        return this.uploadSlots
+            .filter(
+                (s) =>
+                    !s.filled && !s.locked && !!this.affectationBase64?.[s.key],
+            )
+            .map((s) => s.key);
+    }
+
+    /** Fichiers sélectionnés mais pas encore enregistrés. */
+    get affectationPendingCount(): number {
+        return this.pendingUploadKeys.length;
+    }
+
+    trackSlot(_: number, s: AfUploadSlot): string {
+        return s.key;
     }
 
     /**
@@ -366,17 +434,17 @@ export class DiFilesModalComponent implements OnChanges {
     }
 
     // ─── Sélection de fichier (glisser-déposer + sélecteur) ─────────────────
-    onAfDragOver(ev: DragEvent, key: string) {
+    onAfDragOver(ev: DragEvent, key: AfDocKey) {
         ev.preventDefault();
         this.afDragActive = { ...this.afDragActive, [key]: true };
     }
 
-    onAfDragLeave(ev: DragEvent, key: string) {
+    onAfDragLeave(ev: DragEvent, key: AfDocKey) {
         ev.preventDefault();
         this.afDragActive = { ...this.afDragActive, [key]: false };
     }
 
-    onAfDrop(ev: DragEvent, key: string) {
+    onAfDrop(ev: DragEvent, key: AfDocKey) {
         ev.preventDefault();
         this.afDragActive = { ...this.afDragActive, [key]: false };
         const all = Array.from(ev.dataTransfer?.files ?? []);
@@ -393,7 +461,7 @@ export class DiFilesModalComponent implements OnChanges {
         this.takeFile(files[0], key);
     }
 
-    onAfPicker(ev: Event, key: string) {
+    onAfPicker(ev: Event, key: AfDocKey) {
         const input = ev.target as HTMLInputElement;
         const files = Array.from(input.files ?? []);
         if (files.length) this.takeFile(files[0], key);
@@ -402,29 +470,25 @@ export class DiFilesModalComponent implements OnChanges {
     }
 
     /**
-     * Prend en compte un fichier pour un emplacement ('BL' | 'Facture') :
-     * aperçu local + base64 mis en cache pour l'enregistrement du pied.
+     * Prend en compte un fichier pour un emplacement : aperçu local + base64
+     * mis en cache pour l'enregistrement du pied.
      *
      * N'appelle PAS le `onUpload` de `ticket-list` : celui-ci est un aiguillage
-     * multi-types (BC / Devis / image compris) couplé à l'état de cette page, et
-     * il alimente le `payload` legacy que cette modale n'utilise pas. Seuls les
-     * deux emplacements BL et Facture nous concernent ici.
+     * multi-types couplé à l'état de cette page, et il alimente le `payload`
+     * legacy que cette modale n'utilise pas.
      */
-    private takeFile(file: File, key: string): void {
-        // Emplacement verrouillé une fois le document présent sur la DI : on
-        // ignore toute nouvelle sélection (couvre le drop, que `[disabled]` ne
-        // bloque pas).
-        const already =
-            (key === 'BL' && !!this.filesSelected?.bon_de_livraison) ||
-            (key === 'Facture' && !!this.filesSelected?.facture);
-        if (already) return;
+    takeFile(file: File, key: AfDocKey): void {
+        // Emplacement rempli (document déjà sur la DI) ou verrouillé : on ignore
+        // toute nouvelle sélection (couvre le drop, que `[disabled]` ne bloque
+        // pas).
+        const slot = this.uploadSlots.find((s) => s.key === key);
+        if (!slot || slot.filled || slot.locked) return;
 
         this.afSelectedMeta = {
             ...this.afSelectedMeta,
             [key]: { name: file.name, size: file.size },
         };
-        if (key === 'BL') this.blLoading = true;
-        else this.factureLoading = true;
+        this.slotLoading = { ...this.slotLoading, [key]: true };
         this.isLoading = true;
 
         const reader = new FileReader();
@@ -437,13 +501,8 @@ export class DiFilesModalComponent implements OnChanges {
             };
             // L'aperçu réutilise la data-URL : pas d'`URL.createObjectURL`, donc
             // rien à révoquer (l'ancien flux fuyait un blob par sélection).
-            if (key === 'BL') {
-                this.selectedBL = base64;
-                this.blLoading = false;
-            } else {
-                this.selectedFacture = base64;
-                this.factureLoading = false;
-            }
+            this.selected = { ...this.selected, [key]: base64 };
+            this.slotLoading = { ...this.slotLoading, [key]: false };
             this.isLoading = false;
             this.notify.info(
                 'Cliquez sur « Enregistrer » pour le téléverser.',
@@ -452,28 +511,35 @@ export class DiFilesModalComponent implements OnChanges {
         };
         reader.onerror = (error) => {
             console.error('File read error:', error);
-            this.blLoading = false;
-            this.factureLoading = false;
+            this.slotLoading = { ...this.slotLoading, [key]: false };
             this.isLoading = false;
         };
     }
 
-    /** Retire UN emplacement en attente sans toucher à l'autre : vide l'aperçu
-     *  et le base64 caché pour que la zone de dépôt revienne (remplacement). */
-    clearAffectationSlot(type: 'BL' | 'Facture') {
+    /** Retire UN emplacement en attente sans toucher aux autres : la zone de
+     *  dépôt revient. Un emplacement qui en DÉPENDAIT (BC en attente dont on
+     *  retire le devis) est vidé aussi — il redevient verrouillé, et son fichier
+     *  serait refusé par le back. */
+    clearAffectationSlot(key: AfDocKey) {
+        this.dropPending(key);
+        for (const s of this.uploadSlots) {
+            if (s.locked && this.affectationBase64[s.key]) {
+                this.dropPending(s.key);
+            }
+        }
+    }
+
+    private dropPending(key: AfDocKey): void {
         const next = { ...this.affectationBase64 };
-        delete next[type];
+        delete next[key];
         this.affectationBase64 = next;
         const meta = { ...this.afSelectedMeta };
-        delete meta[type];
+        delete meta[key];
         this.afSelectedMeta = meta;
-        if (type === 'BL') {
-            this.selectedBL = '';
-            this.blLoading = false;
-        } else {
-            this.selectedFacture = '';
-            this.factureLoading = false;
-        }
+        const sel = { ...this.selected };
+        delete sel[key];
+        this.selected = sel;
+        this.slotLoading = { ...this.slotLoading, [key]: false };
     }
 
     /** Taille lisible : `n o` / `n Ko` / `n,nn Mo`. */
@@ -485,28 +551,42 @@ export class DiFilesModalComponent implements OnChanges {
         return `${(n / (1024 * 1024)).toFixed(2).replace('.', ',')} Mo`;
     }
 
-    /** Unique « Enregistrer » : persiste tous les fichiers en attente (BL
-     *  et/ou Facture) en une cascade, un seul confirm, un seul toast.
+    /** Mutation de dépôt d'un emplacement. */
+    private uploadMutation(key: AfDocKey, id: string, pdf: string): any {
+        switch (key) {
+            case 'Devis':
+                return this.ticketService.addDevis(id, pdf);
+            case 'BC':
+                return this.ticketService.addBC(id, pdf);
+            case 'BL':
+                return this.ticketService.addBL(id, pdf);
+            default:
+                return this.ticketService.addFacture(id, pdf);
+        }
+    }
+
+    /** Unique « Enregistrer » : persiste tous les fichiers en attente en une
+     *  cascade (ordre Devis → BC → BL → Facture), un seul confirm, un seul toast.
      *  `MutationRunner` gère l'anti-double-clic et la remise à zéro du spinner. */
     saveAffectationFichiers() {
         const id = this.filesSelected?._id;
         if (!id) return;
-        const bl = this.affectationBase64['BL'];
-        const fac = this.affectationBase64['Facture'];
-        if (!bl && !fac) {
+        const keys = this.pendingUploadKeys;
+        if (!keys.length) {
             this.close();
             return;
         }
-        const count = (bl ? 1 : 0) + (fac ? 1 : 0);
+        const count = keys.length;
         this.confirm.confirmSave({
             message: `Enregistrer ${count} fichier${count > 1 ? 's' : ''} ?`,
             accept: async () => {
-                const steps: Array<{ mutation: any }> = [];
-                if (bl) steps.push({ mutation: this.ticketService.addBL(id, bl) });
-                if (fac)
-                    steps.push({
-                        mutation: this.ticketService.addFacture(id, fac),
-                    });
+                const steps = keys.map((key) => ({
+                    mutation: this.uploadMutation(
+                        key,
+                        id,
+                        this.affectationBase64[key] as string,
+                    ),
+                }));
                 try {
                     await this.mutationRunner.runChain({
                         key: `affectationFichiers:${id}`,

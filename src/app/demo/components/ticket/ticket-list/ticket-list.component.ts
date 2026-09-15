@@ -39,6 +39,7 @@ import { DiDetailService } from 'src/app/demo/service/di-detail.service';
 import { DiFilesService } from 'src/app/demo/service/di-files.service';
 import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
 import { canOpenApproval } from '../shared/di-approval.eligibility';
+import { canAffectFiles } from '../shared/di-files-modal/di-files.eligibility';
 import {
     formatTableValue,
     isLocationColumn,
@@ -463,10 +464,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     get prixFinalCanConfirm(): boolean {
-        // Diagnostic NON PAYANT : aucun prix de diagnostic (price = 0) → on
-        // n'exige PAS `price > 0`, sinon « Confirmer le prix final » resterait
-        // bloqué après l'upload devis + BC.
-        const priceOk = this.negoNonPayant || Number(this.price) > 0;
+        // Un diagnostic facturé à 0 est légitime PARTOUT (flux original, retour,
+        // irréparable) : seul un prix ABSENT bloque « Confirmer le prix final »
+        // (sinon une DI tarifée à 0 resterait bloquée après l'upload devis + BC).
+        // Diagnostic NON PAYANT : aucun prix de diagnostic exigé.
+        const price = this.toMoney(this.price);
+        const priceOk = this.negoNonPayant || (price != null && price >= 0);
         return this.bcReady && this.devisReady && priceOk && !this.isLoading;
     }
 
@@ -534,7 +537,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
      *  ET estimation > 0). Quand c'est vrai, l'estimation est la RÉFÉRENCE : le
      *  champ est VERROUILLÉ (non modifiable) et l'aide au calcul (bornes 150–500)
      *  est tue. On exige > 0 pour ne jamais verrouiller sur une estimation
-     *  nulle/absente (qui bloquerait la soumission — `reelValid` exige p > 0).
+     *  nulle/absente (champ grisé ET vide → soumission bloquée).
      *  Jamais en retour « Facturer le diagnostic ? » : l'estimation de création
      *  vaut pour le cycle 0 ; repassé Payant, l'admin doit pouvoir SAISIR le
      *  prix du diagnostic retour (sinon champ grisé ET prix vide → bloqué). */
@@ -547,9 +550,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
     get reelValid(): boolean {
         // (c) Bornes SOUPLES : la soumission n'exige plus 150–500, seulement un
-        // montant POSITIF (l'estimation de création peut être hors bornes).
+        // montant SAISI, positif ou nul — 0 est accepté partout (flux original,
+        // retour, irréparable ; demande utilisateur 2026-09-15). Un champ VIDE
+        // reste invalide : il faut saisir une valeur, 0 compris.
+        if (this.price == null) return false;
         const p = Number(this.price);
-        return Number.isFinite(p) && p > 0;
+        return Number.isFinite(p) && p >= 0;
     }
     /** Hors des bornes recommandées 150–500 TND → avertissement non bloquant. */
     get reelOutOfBounds(): boolean {
@@ -558,6 +564,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
     get reelState(): 'idle' | 'ok' | 'warn' {
         const p = Number(this.price);
+        if (this.price != null && p === 0) return 'ok';
         if (!Number.isFinite(p) || p <= 0) return 'idle';
         // Prix issu de l'estimation → référence, jamais d'état « hors bornes ».
         if (this.diagPriceFromEstimate) return 'ok';
@@ -573,14 +580,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
     get isIrreparable(): boolean {
         return this.seletedRow?.can_be_repaired === false;
     }
-    /** Toggle « Facturer le diagnostic ? » : RETOUR erreur CLIENT (non-Fixtronix)
-     *  réparable. Les erreurs Fixtronix ne passent pas par Pricing. */
+    /** Toggle « Facturer le diagnostic ? » : tout RETOUR réparable arrivé en
+     *  tarification, erreur client OU Fixtronix (un retour Fixtronix n'y arrive
+     *  qu'avec des pièces ; sans pièces il part en PENDING3 direct). */
     get showPricingPayantToggle(): boolean {
-        return (
-            this.ignoreCountPricing > 0 &&
-            this.isErrorFromFixtronix !== true &&
-            !this.isIrreparable
-        );
+        return this.ignoreCountPricing > 0 && !this.isIrreparable;
+    }
+    /** Retour « Non payant » : RIEN n'est facturé — diagnostic ET réparation
+     *  grisés, enregistrés à 0 par « Valider le prix ». */
+    get pricingRetourFree(): boolean {
+        return this.showPricingPayantToggle && !this.pricingDiagnosticPayant;
     }
     get repState(): 'idle' | 'ok' | 'err' {
         const r = Number(this.repairEstimate);
@@ -614,6 +623,12 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
     /** Aide contextuelle sous l'étape 2 (estimation réparation). */
     get repHelp(): { text: string; char: string; tone: string } {
+        if (this.pricingRetourFree)
+            return {
+                text: 'Non payant : aucune réparation facturée',
+                char: 'i',
+                tone: 'idle',
+            };
         return this.repState === 'ok'
             ? { text: 'Estimation enregistrée', char: '✓', tone: 'ok' }
             : {
@@ -633,7 +648,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     } {
         // DI irréparable : l'estimation est masquée → on ne l'exige pas et on ne
         // l'affiche pas comme manquante ; seul le coût du diagnostic compte.
-        const repRequired = !this.isIrreparable;
+        // Retour NON PAYANT : rien n'est facturé, la réparation est grisée.
+        const repRequired = !this.isIrreparable && !this.pricingRetourFree;
         // Diagnostic NON PAYANT : aucun coût de diagnostic à saisir/vérifier →
         // on ne l'exige pas et on ne montre pas l'avertissement « Vérifiez le
         // coût du diagnostic ». Miroir de `priceOk` (pricingSubmitDisabled).
@@ -669,7 +685,8 @@ export class TicketListComponent implements OnInit, OnDestroy {
     /** « Valider le prix » : coût diagnostic valide, estimation valide SAUF si la
      *  DI est irréparable (champ masqué → non requis), + aucune requête en vol. */
     get pricingSubmitDisabled(): boolean {
-        const repOk = this.isIrreparable || this.repValid;
+        const repOk =
+            this.isIrreparable || this.pricingRetourFree || this.repValid;
         // Non payant : aucun prix diagnostic requis → on n'exige pas `reelValid`
         // (le plancher 150 ne s'applique pas).
         const priceOk = !this.pricingDiagnosticPayant || this.reelValid;
@@ -737,6 +754,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
 
     /** Règle UNIQUE du bouton « Approval (devis/BC) » et du deep-link `approval`. */
     readonly canOpenApproval = canOpenApproval;
+    readonly canAffectFiles = canAffectFiles;
 
     constructor(
         public layoutService: LayoutService,
@@ -2585,7 +2603,7 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * RETOUR erreur CLIENT (non-Fixtronix, réparable) : bascule « facturer le
+     * RETOUR réparable (erreur client ou Fixtronix) : bascule « facturer le
      * diagnostic ? » du modal Pricing. Persiste le flag DI `diagnosticPayant`
      * AVANT toute validation de prix (setDiagnosticPayant est verrouillé une fois
      * price>0). Le routage n'en dépend PAS. Non payant ⇒ on efface le prix (le
@@ -2596,7 +2614,10 @@ export class TicketListComponent implements OnInit, OnDestroy {
         const id = this.current_id;
         if (!id) return;
         if (!this.pricingDiagnosticPayant) {
+            // Non payant : rien n'est facturé → les deux saisies sont vidées
+            // (et grisées dans le modal).
             this.price = null;
+            this.repairEstimate = null;
         } else if (
             this.price == null &&
             Number(this.pricingDiagnosticEstimate) > 0
@@ -2625,9 +2646,15 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 const id = this.current_id;
                 // Non payant : on NE facture PAS le diagnostic (le back rejette
                 // tout prix positif) → on saute l'étape prix.
+                // RETOUR « Non payant » : RIEN n'est facturé — diagnostic ET
+                // réparation enregistrés à 0 (le cycle affiche 0, pas « Non
+                // renseigné »).
+                const retourFree = this.pricingRetourFree;
                 const priceSteps = this.pricingDiagnosticPayant
                     ? [{ mutation: this.ticketSerice.pricing(id, this.price) }]
-                    : [];
+                    : retourFree
+                      ? [{ mutation: this.ticketSerice.pricing(id, 0) }]
+                      : [];
                 // Persist the repair estimate (dedicated field, no status
                 // change) between the price save and the transition — only when
                 // the admin entered one. Backend clears it on a non-finite value.
@@ -2638,7 +2665,9 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 const hasRepair =
                     Number.isFinite(this.repairEstimate) &&
                     this.repairEstimate != null;
-                const estimateSteps = !hasRepair
+                const estimateSteps = retourFree
+                    ? [{ mutation: this.ticketSerice.setRepairEstimate(id, 0) }]
+                    : !hasRepair
                     ? []
                     : !this.pricingDiagnosticPayant && !this.isIrreparable
                       ? [

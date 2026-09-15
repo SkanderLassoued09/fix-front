@@ -95,6 +95,13 @@
                             <ng-container *ngSwitchCase="'coming_date'">
                                 {{ getFormattedDate(rowData.coming_date) }}
                             </ng-container>
+                            <!-- Prix : 0 = « pas de prix » (valeur initiale) → « — ». -->
+                            <ng-container *ngSwitchCase="'prix_achat'">
+                                {{ formatPrice(rowData.prix_achat) }}
+                            </ng-container>
+                            <ng-container *ngSwitchCase="'prix_vente'">
+                                {{ formatPrice(rowData.prix_vente) }}
+                            </ng-container>
                             <!-- Catégorie : on affiche le LIBELLÉ, la base
                                  stocke l'`_id` (`C_ComposantN`). -->
                             <ng-container

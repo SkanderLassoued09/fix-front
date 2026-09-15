@@ -213,6 +213,19 @@ describe('enrichComposants', () => {
         expect(l.stock).toBe(250);
     });
 
+    it('traite un prix à 0 (valeur initiale du catalogue) comme « non tarifé »', () => {
+        const idx = buildComposantIndex([
+            { _id: 'Cmp9', name: 'Pièce neuve', prix_achat: 0, prix_vente: 0, quantity_stocked: 0 } as any,
+        ]);
+        const [line] = enrichComposants([{ nameComposant: 'Pièce neuve', quantity: 2 } as any], idx);
+
+        expect(line.prixVente).toBeNull();
+        expect(line.prixAchat).toBeNull();
+        expect(line.lineTotal).toBeNull();
+        expect(line.stock).toBe(0); // un stock à 0 reste une vraie valeur
+        expect(composantsPricedCount([line])).toBe(0);
+    });
+
     it('ne casse pas sur une liste vide ou absente', () => {
         expect(enrichComposants([], index)).toEqual([]);
         expect(enrichComposants(null, index)).toEqual([]);

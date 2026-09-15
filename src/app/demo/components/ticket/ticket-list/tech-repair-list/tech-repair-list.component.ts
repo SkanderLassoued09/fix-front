@@ -89,6 +89,8 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     @Output() finishClicked = new EventEmitter<{
         remarque: string;
         parts: RepairPartEntry[];
+        repairSuccess: boolean | null;
+        testsValidated: boolean | null;
     }>();
 
     /** True while the host's finish mutation chain is in flight — disables the
@@ -360,9 +362,14 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         // we do NOT close here (so a failure keeps the modal open + editable).
         if (this.finishing || this.computeFinishDisabled()) return;
         this.stopTimer();
+        const raw = this.repairForm.getRawValue();
         this.finishClicked.emit({
             remarque: this.buildRepairRemark(),
             parts: [...this.parts],
+            repairSuccess:
+                typeof raw.repairSuccess === 'boolean' ? raw.repairSuccess : null,
+            testsValidated:
+                typeof raw.testsValidated === 'boolean' ? raw.testsValidated : null,
         });
     }
 

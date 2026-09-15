@@ -547,8 +547,9 @@ export class ComposantManagementComponent implements OnInit {
             _id: composant._id,
             name: composant.name,
             package: composant.package,
-            prix_achat: composant.prix_achat,
-            prix_vente: composant.prix_vente,
+            // 0 = « pas de prix » (valeur initiale) → champ vide à l'écran.
+            prix_achat: Number(composant.prix_achat) > 0 ? composant.prix_achat : null,
+            prix_vente: Number(composant.prix_vente) > 0 ? composant.prix_vente : null,
             coming_date: composant.coming_date
                 ? new Date(composant.coming_date)
                 : null,
@@ -1046,6 +1047,11 @@ export class ComposantManagementComponent implements OnInit {
             return TABLE_EMPTY_VALUE;
         }
         return formatTableValue({ value }, 'value');
+    }
+
+    /** Prix : `0` est la valeur initiale d'un composant créé sans prix → « — ». */
+    formatPrice(value: any): string {
+        return Number(value) > 0 ? this.formatValue(value) : TABLE_EMPTY_VALUE;
     }
 
     /** Un statut réellement renseigné ? Sinon on n'affiche pas de pastille vide. */

@@ -1320,20 +1320,12 @@
                             (click)="openTicketDetails(rowData)"
                         ></button>
 
-                        <!-- Fichiers : en ATTENTE_BL_FACTURE (upload BL+Facture →
-                             clôture auto) ET sur les DI déjà FINISHED (gestion
-                             des fichiers a posteriori / rétro-compat). -->
+                        <!-- Fichiers : clôture documentaire (BL + Facture), DI
+                             FINISHED (a posteriori) et TOUTE DI IRREPARABLE (les 4
+                             documents). Règle partagée avec le deep-link :
+                             `canAffectFiles` (di-files.eligibility.ts). -->
                         <button
-                            *ngIf="
-                                rowData.status === 'WAITING_BL' ||
-                                rowData.status === 'WAITING_FACTURE' ||
-                                rowData.status === 'CLOSING' ||
-                                rowData.status === 'ATTENTE_BL_FACTURE' ||
-                                rowData.status === 'FINISHED' ||
-                                (rowData.status === 'IRREPARABLE' &&
-                                    rowData.ignoreCount > 0 &&
-                                    rowData.isErrorFromFixtronix !== true)
-                            "
+                            *ngIf="canAffectFiles(rowData)"
                             pButton
                             pTooltip="Fichiers"
                             tooltipPosition="top"
@@ -2171,18 +2163,18 @@
             </section>
         </div>
 
-        <!-- RETOUR erreur CLIENT (non-Fixtronix) réparable arrivant en Pricing :
-             décision « facturer le diagnostic ? » (flag diagnosticPayant),
-             prise ICI en Pricing. Les cas erreur Fixtronix ne passent PAS par
-             Pricing (PENDING3 ou IRREPARABLE directs, non facturés), donc le
-             toggle ne les concerne pas. Ne change PAS le routage.
+        <!-- RETOUR réparable arrivant en Pricing (erreur client OU Fixtronix ;
+             un retour Fixtronix n'y arrive qu'avec des pièces) : décision
+             « facturer le diagnostic ? » (flag diagnosticPayant), prise ICI.
+             Non payant = RIEN facturé : les deux saisies sont grisées.
+             Ne change PAS le routage.
              Bande pleine largeur, HORS de la grille des étapes : en cellule de
              grille, elle poussait l'étape 1 à droite et l'étape 2 seule dessous. -->
         <div *ngIf="showPricingPayantToggle" class="pricing-facturer">
             <div class="pricing-facturer__text">
                 <span class="pricing-facturer__label">Facturer le diagnostic&nbsp;?</span>
                 <span class="pricing-facturer__hint">
-                    Retour dû au client : ce diagnostic peut être facturé ou offert.
+                    Payant : diagnostic (0 accepté) + réparation. Non payant : rien n'est facturé.
                 </span>
             </div>
             <p-toggleButton
@@ -2228,9 +2220,15 @@
                     <span class="pricing-step__suffix">TND</span>
                 </div>
                 <div *ngIf="!pricingDiagnosticPayant" class="pricing-nonpayant">
-                    <i class="pi pi-gift"></i> Diagnostic <strong>non payant</strong>
-                    — non facturé au client. Le temps de diagnostic reste mesuré
-                    (coût interne).
+                    <ng-container *ngIf="pricingRetourFree; else diagOnlyFree">
+                        <i class="pi pi-gift"></i> Retour <strong>non payant</strong>
+                        — ni le diagnostic ni la réparation ne sont facturés au client.
+                    </ng-container>
+                    <ng-template #diagOnlyFree>
+                        <i class="pi pi-gift"></i> Diagnostic <strong>non payant</strong>
+                        — non facturé au client. Le temps de diagnostic reste mesuré
+                        (coût interne).
+                    </ng-template>
                 </div>
                 <div
                     *ngIf="
@@ -2302,6 +2300,7 @@
                         locale="fr-TN"
                         placeholder="0"
                         styleClass="pricing-step__input"
+                        [disabled]="pricingRetourFree"
                     ></p-inputNumber>
                     <span class="pricing-step__suffix">TND</span>
                 </div>

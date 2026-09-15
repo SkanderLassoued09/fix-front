@@ -93,6 +93,13 @@ function toNumberOrNull(v: any): number | null {
     return Number.isFinite(n) ? n : null;
 }
 
+/** Prix : nombre > 0, ou `null`. `0` est la valeur INITIALE d'un composant créé
+ *  sans prix (2026-09-15) : il signifie « pas de prix », jamais « gratuit ». */
+function toPriceOrNull(v: any): number | null {
+    const n = toNumberOrNull(v);
+    return n !== null && n > 0 ? n : null;
+}
+
 /** Arrondi monétaire à 3 décimales (TND), comme `di-finance.util`. */
 function round3(n: number): number {
     return Math.round(n * 1000) / 1000;
@@ -212,7 +219,7 @@ export function enrichComposants(
         const name = cleanComposantValue(line?.nameComposant);
         const quantity = Number(line?.quantity ?? 0) || 0;
         const cat = index.get(name.toLowerCase());
-        const prixVente = toNumberOrNull(cat?.prix_vente);
+        const prixVente = toPriceOrNull(cat?.prix_vente);
         return {
             name,
             quantity,
@@ -221,7 +228,7 @@ export function enrichComposants(
             ref: cleanComposantValue(cat?._id),
             package: cleanComposantValue(cat?.package),
             categoryRaw: cleanComposantValue(cat?.category_composant_id),
-            prixAchat: toNumberOrNull(cat?.prix_achat),
+            prixAchat: toPriceOrNull(cat?.prix_achat),
             prixVente,
             comingDate: cleanComposantValue(cat?.coming_date),
             link: cleanComposantValue(cat?.link),

@@ -166,8 +166,10 @@ export class MagasinDiListComponent implements OnDestroy {
             name: new FormControl(null, Validators.required),
             package: new FormControl(null, Validators.required),
             category_composant_id: new FormControl(null, Validators.required),
-            prix_achat: new FormControl(null, Validators.required),
-            prix_vente: new FormControl(null, Validators.required),
+            // 0 = « pas de prix » (valeur initiale d'un composant créé sans prix) :
+            // `required` laisserait passer 0, d'où le minimum strictement positif.
+            prix_achat: new FormControl(null, [Validators.required, Validators.min(0.001)]),
+            prix_vente: new FormControl(null, [Validators.required, Validators.min(0.001)]),
             coming_date: new FormControl(null, Validators.required),
             // OPTIONNEL : forcer un lien poussait les utilisateurs à coller
             // n'importe quelle URL (ex. celle de la page) pour passer la

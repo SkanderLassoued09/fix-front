@@ -376,3 +376,73 @@ describe('TicketListComponent — modal « Modifier la DI »', () => {
         expect(c.loadData).not.toHaveBeenCalled();
     });
 });
+
+/**
+ * Tarification — « Prix du diagnostic à facturer ? » accepte 0 PARTOUT (flux
+ * original, retour, irréparable) : « Valider le prix » s'active dès qu'un
+ * montant positif OU NUL est saisi ; un champ VIDE reste bloquant.
+ * Getters purs, exercés sur le prototype (même idiome que plus haut).
+ */
+describe('TicketListComponent — prix du diagnostic à 0', () => {
+    function makePricing(state: Record<string, any> = {}): any {
+        const c: any = Object.create(TicketListComponent.prototype);
+        c.price = null;
+        c.repairEstimate = null;
+        c.pricingDiagnosticPayant = true;
+        c.pricingDiagnosticEstimate = null;
+        c.ignoreCountPricing = 0;
+        c.seletedRow = { can_be_repaired: true };
+        c.isLoading = false;
+        c.dataById = null;
+        c.selectedRowInNegociate2 = null;
+        Object.assign(c, state);
+        return c;
+    }
+
+    function withDocsReady(c: any): any {
+        Object.defineProperty(c, 'bcReady', { value: true });
+        Object.defineProperty(c, 'devisReady', { value: true });
+        return c;
+    }
+
+    it('flux original, payant : 0 + estimation → « Valider le prix » actif', () => {
+        const c = makePricing({ price: 0, repairEstimate: 300 });
+        expect(c.reelValid).toBeTrue();
+        expect(c.reelState).toBe('ok');
+        expect(c.pricingStatus.text).toBe('Tout est prêt');
+        expect(c.pricingSubmitDisabled).toBeFalse();
+    });
+
+    it('champ vide : toujours bloquant (il faut saisir une valeur, 0 compris)', () => {
+        const c = makePricing({ price: null, repairEstimate: 300 });
+        expect(c.reelValid).toBeFalse();
+        expect(c.pricingSubmitDisabled).toBeTrue();
+    });
+
+    it('irréparable : 0 suffit (aucune estimation de réparation)', () => {
+        const c = makePricing({
+            price: 0,
+            seletedRow: { can_be_repaired: false },
+        });
+        expect(c.pricingSubmitDisabled).toBeFalse();
+    });
+
+    it('retour payant : 0 reste accepté', () => {
+        const c = makePricing({
+            price: 0,
+            repairEstimate: 300,
+            ignoreCountPricing: 1,
+        });
+        expect(c.pricingSubmitDisabled).toBeFalse();
+    });
+
+    it('montant négatif : refusé', () => {
+        const c = makePricing({ price: -1, repairEstimate: 300 });
+        expect(c.pricingSubmitDisabled).toBeTrue();
+    });
+
+    it('« Confirmer le prix final » : une DI du flux original tarifée à 0 n’est pas bloquée', () => {
+        expect(withDocsReady(makePricing({ price: 0 })).prixFinalCanConfirm).toBeTrue();
+        expect(withDocsReady(makePricing({ price: null })).prixFinalCanConfirm).toBeFalse();
+    });
+});

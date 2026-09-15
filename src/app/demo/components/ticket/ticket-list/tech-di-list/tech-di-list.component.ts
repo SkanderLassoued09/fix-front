@@ -950,6 +950,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     async onRepairModalFinish(payload: {
         remarque: string;
         parts: Array<{ nameComposant: string; quantity: number }>;
+        repairSuccess?: boolean | null;
+        testsValidated?: boolean | null;
     }): Promise<void> {
         const diId = this.selectedRep || (this.di as any)?._idDi;
         if (!diId) {
@@ -988,6 +990,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                         mutation: this.ticketSerice.finishReparationSafe(
                             diId,
                             remark,
+                            {
+                                repairSuccess: payload?.repairSuccess,
+                                testsValidated: payload?.testsValidated,
+                            },
                         ),
                     },
                     { mutation: this.ticketSerice.changeFinishStatus(diId) },

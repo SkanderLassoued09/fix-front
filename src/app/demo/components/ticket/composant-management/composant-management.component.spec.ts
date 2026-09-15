@@ -128,6 +128,14 @@ describe('ComposantManagementComponent — cellules vides', () => {
     expect(c.formatValue('DIP-8')).toBe('DIP-8');
   });
 
+  it('prix à 0 (valeur initiale) ou absent → « — » ; un vrai prix est affiché', () => {
+    const c = makeComponent([]);
+    expect(c.formatPrice(0)).toBe('—');
+    expect(c.formatPrice(null)).toBe('—');
+    expect(c.formatPrice('')).toBe('—');
+    expect(c.formatPrice(12.5)).toBe(c.formatValue(12.5));
+  });
+
   it('pas de pastille quand le statut est absent', () => {
     const c = makeComponent([]);
     expect(c.hasStatus('Interne')).toBeTrue();

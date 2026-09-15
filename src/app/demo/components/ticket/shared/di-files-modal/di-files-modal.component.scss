@@ -372,6 +372,12 @@ $af-mono: "JetBrains Mono", ui-monospace, monospace;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
 }
+// 4 emplacements sur une DI irréparable : 2×2, empilés sur téléphone.
+@media (max-width: 520px) {
+    .af-upload-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
 .af-upload-cell {
     display: flex;
     flex-direction: column;

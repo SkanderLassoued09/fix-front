@@ -901,6 +901,18 @@ export class DiInfoModalComponent implements OnChanges {
         return !!this.cycleSnapshot?.contain_pdr;
     }
 
+    /** « Réparation réussie ? » du wizard réparation, pour ce cycle. */
+    get activeRepairSuccess(): boolean | null {
+        const v = this.cycleSnapshot?.repair_success;
+        return v === true || v === false ? v : null;
+    }
+
+    /** « Tests validés ? » du wizard réparation, pour ce cycle. */
+    get activeTestsValidated(): boolean | null {
+        const v = this.cycleSnapshot?.tests_validated;
+        return v === true || v === false ? v : null;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Documents (vrais noms de fichier) — par cycle
     // ─────────────────────────────────────────────────────────────────────────
