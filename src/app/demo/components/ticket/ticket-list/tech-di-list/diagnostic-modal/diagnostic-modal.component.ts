@@ -90,6 +90,8 @@ export class DiagnosticModalComponent {
   /** Raison du grisage des boutons de CLÔTURE (étape Résumé) — parallèle de
    *  `nextBlockedReason`, qui grise « Suivant ». `null` = rien ne bloque. */
   @Input() finishBlockedReason: string | null = null;
+  /** Horodatage du brouillon navigateur restauré (bandeau), sinon null. */
+  @Input() draftRestoredAt: number | null = null;
 
   @Output() pauseClicked = new EventEmitter<void>();
   @Output() minimizeClicked = new EventEmitter<void>();
@@ -113,6 +115,8 @@ export class DiagnosticModalComponent {
   @Output() sendToFinishRetour = new EventEmitter<void>();
   /** Non-réparable shortcut → straight to FINISHED (skip composant/magasin). */
   @Output() finishDiagNotReparable = new EventEmitter<void>();
+  /** « Ignorer le brouillon » : revenir aux valeurs enregistrées du dossier. */
+  @Output() discardDraft = new EventEmitter<void>();
 
   /** Visible<->parent two-way support — keeps the existing [(visible)] pattern compatible. */
   @Output() visibleChange = new EventEmitter<boolean>();

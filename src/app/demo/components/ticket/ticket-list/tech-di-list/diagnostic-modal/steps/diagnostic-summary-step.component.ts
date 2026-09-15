@@ -97,7 +97,7 @@ import { DIAG_STEP_STYLES } from './diagnostic-step.styles';
 
       <div class="actions">
         <button
-          *ngIf="isRetour"
+          *ngIf="isRetour && showSendToFinishRetour"
           type="button"
           class="btn btn--outline"
           [disabled]="retourSendDisabled"
@@ -292,6 +292,14 @@ export class DiagnosticSummaryStepComponent {
   @Output() finishDiag = new EventEmitter<void>();
   @Output() finishRetour = new EventEmitter<void>();
   @Output() sendToFinishRetour = new EventEmitter<void>();
+
+  /**
+   * « Envoyer vers finir » MASQUÉ à la demande de l'utilisateur (2026-09-15).
+   * Rien n'est bloqué : « Fin diagnostique retour » route aussi un retour NON
+   * réparable vers IRREPARABLE (backstop serveur de `changeStatusPending2`).
+   * Repasser à `true` pour le réafficher — la sortie et le handler hôte restent.
+   */
+  readonly showSendToFinishRetour = false;
   /** Non-réparable shortcut → parent invokes the cascade with a
    *  `changeFinishStatus` transition step (status goes straight to FINISHED). */
   @Output() finishDiagNotReparable = new EventEmitter<void>();

@@ -138,3 +138,37 @@
         font-weight: 600;
     }
 }
+
+/* Brouillon navigateur restauré — même gabarit que le bandeau retour, en bleu. */
+.sav-diag-draft-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--fx-blue-soft-bg);
+    border-bottom: 1px solid var(--fx-blue-soft-bd);
+    color: var(--fx-blue-text);
+
+    &__txt {
+        flex: 1 1 auto;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    &__btn {
+        flex: 0 0 auto;
+        padding: 4px 10px;
+        border: 1px solid var(--fx-blue-soft-bd);
+        border-radius: 8px;
+        background: var(--fx-bg-card);
+        color: var(--fx-blue-text);
+        font: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+            background: var(--fx-blue-soft-bg-2);
+        }
+    }
+}

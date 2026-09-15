@@ -82,6 +82,8 @@ export class RepairModalComponent {
   @Input() elapsedLabel: string = '—';
   @Input() headerStatusTone: 'running' | 'paused' | 'info' | 'neutral' = 'info';
   @Input() canMinimize: boolean = false;
+  /** Horodatage du brouillon navigateur restauré (bandeau), sinon null. */
+  @Input() draftRestoredAt: number | null = null;
 
   @Output() pauseClicked = new EventEmitter<void>();
   @Output() minimizeClicked = new EventEmitter<void>();
@@ -89,6 +91,8 @@ export class RepairModalComponent {
   @Output() addPart = new EventEmitter<void>();
   @Output() removePart = new EventEmitter<string>();
   @Output() finishRepair = new EventEmitter<void>();
+  /** « Ignorer le brouillon » : revenir aux valeurs enregistrées du dossier. */
+  @Output() discardDraft = new EventEmitter<void>();
   @Output() visibleChange = new EventEmitter<boolean>();
 
   /** "Clôture (à venir)" rows fed to the shared sidebar component. */

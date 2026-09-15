@@ -10,6 +10,7 @@ import {
     SimpleChanges,
 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Subscription, debounceTime } from 'rxjs';
 
 import {
     CategoryOption,
@@ -105,7 +106,31 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         testsDone?: string;
         remarqueExtra?: string;
         parts?: RepairPartEntry[];
+        /** Brouillon navigateur restauré par l'hôte. */
+        repairSuccess?: boolean | null;
+        testsValidated?: boolean | null;
+        warranty?: boolean | null;
+        step?: RepairStepKey;
+        restoredDraft?: boolean;
     } | null = null;
+
+    /** Horodatage du brouillon restauré (bandeau « Brouillon restauré »), sinon null. */
+    @Input() draftRestoredAt: number | null = null;
+
+    /**
+     * Saisie modifiée (débouncée) — l'hôte l'écrit dans le brouillon navigateur
+     * (`tech-form-draft.store`). JAMAIS émis par le préremplissage.
+     */
+    @Output() draftChange = new EventEmitter<{
+        value: Record<string, unknown>;
+        parts: RepairPartEntry[];
+        step: RepairStepKey;
+    }>();
+
+    /** « Ignorer le brouillon » cliqué dans le bandeau. */
+    @Output() discardDraft = new EventEmitter<void>();
+
+    private draftSub: Subscription | null = null;
 
     activeRepairStep: RepairStepKey = 'works';
 
@@ -172,6 +197,11 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
     ngOnInit(): void {
         this.renderTimer();
         if (this.visible) this.startTimer();
+        // Frappe du technicien → brouillon navigateur (le préremplissage patche
+        // sans émettre, il ne déclenche donc rien).
+        this.draftSub = this.repairForm.valueChanges
+            .pipe(debounceTime(300))
+            .subscribe(() => this.flushDraft());
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -182,19 +212,32 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         // open; a new object reference is passed only on open, so timer ticks
         // never clobber the tech's edits).
         if (changes['prefill'] && this.prefill) {
-            this.repairForm.patchValue({
-                di_category_id:
-                    this.prefill.di_category_id ??
-                    this.repairForm.get('di_category_id')?.value ??
-                    null,
-                worksDone: this.prefill.worksDone ?? '',
-                // `testsDone` est OBLIGATOIRE : sans ce rappel, minimiser puis
-                // rouvrir effacerait la saisie du technicien ET rebloquerait
-                // « Fin réparation » sur un champ qu'il avait déjà rempli.
-                testsDone: this.prefill.testsDone ?? '',
-                remarqueExtra: this.prefill.remarqueExtra ?? '',
-            });
+            // RESET complet, pas un patch : le wizard reste monté d'une DI à
+            // l'autre, et un patch laissait les bascules Oui/Non (et la catégorie)
+            // de la DI précédente. Sans émission : le préremplissage n'est pas une
+            // saisie et ne doit pas créer de brouillon.
+            this.repairForm.reset(
+                {
+                    di_category_id: this.prefill.di_category_id ?? null,
+                    remarqueExtra: this.prefill.remarqueExtra ?? '',
+                    partSelected: null,
+                    quantity: 1,
+                    worksDone: this.prefill.worksDone ?? '',
+                    // `testsDone` est OBLIGATOIRE : l'oublier rebloquerait « Fin
+                    // réparation » sur un champ que le technicien avait rempli.
+                    testsDone: this.prefill.testsDone ?? '',
+                    repairSuccess: this.prefill.repairSuccess ?? null,
+                    testsValidated: this.prefill.testsValidated ?? null,
+                    warranty: this.prefill.warranty ?? null,
+                },
+                { emitEvent: false },
+            );
+            if (this.prefill.restoredDraft) {
+                // Brouillon restauré = travail non envoyé : réduire doit demander.
+                this.repairForm.markAsDirty();
+            }
             this.parts = [...(this.prefill.parts ?? [])];
+            this.activeRepairStep = this.prefill.step ?? 'works';
         }
         if (changes['elapsedBaseMs'] || changes['runStartedAtMs']) {
             // Re-derive the display from the server-provided anchor. open,
@@ -212,6 +255,7 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
 
     ngOnDestroy(): void {
         this.stopTimer();
+        this.draftSub?.unsubscribe();
     }
 
     // ───────────────────────────────────────────────────────────────
@@ -259,6 +303,7 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
 
     onRepairStepChange(next: RepairStepKey): void {
         this.activeRepairStep = next;
+        this.flushDraft();
     }
 
     onRepairAddPart(): void {
@@ -283,6 +328,7 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         this.parts = [...without, next];
         this.repairForm.get('partSelected')?.reset();
         this.repairForm.get('quantity')?.setValue(1);
+        this.flushDraft();
         // TODO: persist part addition through TicketService when ready.
     }
 
@@ -290,7 +336,21 @@ export class TechRepairListComponent implements OnInit, OnDestroy, OnChanges {
         this.parts = this.parts.filter(
             (p) => p.nameComposant !== nameComposant,
         );
+        this.flushDraft();
         // TODO: persist removal through TicketService.
+    }
+
+    /**
+     * Émet la saisie courante pour le brouillon navigateur. Appelé aussi par
+     * l'hôte, sans attendre le debounce, avant un rafraîchissement ou une
+     * fermeture d'onglet.
+     */
+    flushDraft(): void {
+        this.draftChange.emit({
+            value: this.repairForm.getRawValue(),
+            parts: [...this.parts],
+            step: this.activeRepairStep,
+        });
     }
 
     onRepairFinish(): void {

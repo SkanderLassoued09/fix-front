@@ -30,6 +30,22 @@
             </span>
         </div>
 
+        <!-- Saisie non envoyée retrouvée après un rafraîchissement / une fermeture. -->
+        <div *ngIf="draftRestoredAt" class="sav-diag-draft-banner" role="status">
+            <i class="pi pi-history" aria-hidden="true"></i>
+            <span class="sav-diag-draft-banner__txt">
+                Brouillon restauré — saisie non envoyée du
+                {{ draftRestoredAt | date: "dd/MM/yyyy 'à' HH:mm" }}.
+            </span>
+            <button
+                type="button"
+                class="sav-diag-draft-banner__btn"
+                (click)="discardDraft.emit()"
+            >
+                Ignorer le brouillon
+            </button>
+        </div>
+
         <sav-diag-info-strip
             [di]="ctx.di"
             [clientLine]="clientLine"

@@ -38,6 +38,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { DiDetailService } from 'src/app/demo/service/di-detail.service';
 import { DiFilesService } from 'src/app/demo/service/di-files.service';
 import { DeepLinkConsumer } from 'src/app/demo/service/deep-link-consumer';
+import { canOpenApproval } from '../shared/di-approval.eligibility';
 import {
     formatTableValue,
     isLocationColumn,
@@ -127,17 +128,19 @@ export class TicketListComponent implements OnInit, OnDestroy {
         diagnosticPayant: new FormControl(true),
         diagnosticEstimate: new FormControl(null),
     });
+    /** Modal « Modifier la DI » — mêmes champs que `creationDiForm`, sans le
+     *  statut (il a ses propres boutons). */
     updateDiForm = new FormGroup({
         title: new FormControl('', [Validators.required]),
         description: new FormControl('', [Validators.required]),
-        typeClient: new FormControl(),
-        status: new FormControl(),
+        nSerie: new FormControl(),
+        location: new FormControl(),
+        typeClient: new FormControl('CLIENT'),
         client_id: new FormControl(),
         company_id: new FormControl(),
-        nSerie: new FormControl(),
-        category: new FormControl(),
-        location: new FormControl(),
         remarqueManager: new FormControl(),
+        diagnosticPayant: new FormControl(true),
+        diagnosticEstimate: new FormControl(null),
     });
     tarif_Techs = new FormGroup({
         tarifFromAdmin: new FormControl(),
@@ -336,8 +339,16 @@ export class TicketListComponent implements OnInit, OnDestroy {
     imageDropFile: File | null = null;
 
     ticketDetailsInfo: boolean;
+    /** DI ouverte dans « Modifier la DI » — lue seulement : la saisie vit dans
+     *  `updateDiForm`, la ligne du tableau n'est jamais mutée. */
     selectedTicket: any;
     updateticketView: boolean;
+    /** Input du formulaire à l'ouverture : seuls les écarts sont envoyés. */
+    private editBaseline: Record<string, any> = {};
+    /** Photo de remplacement déposée (valeur contrôlée de la dropzone) et sa data-URL. */
+    editImageDropFile: File | null = null;
+    editImagePayload = '';
+    savingEditDi = false;
     selectedRowInNegociate1: any;
     selectedRowInNegociate2: any;
     first: number = 0;
@@ -523,11 +534,15 @@ export class TicketListComponent implements OnInit, OnDestroy {
      *  ET estimation > 0). Quand c'est vrai, l'estimation est la RÉFÉRENCE : le
      *  champ est VERROUILLÉ (non modifiable) et l'aide au calcul (bornes 150–500)
      *  est tue. On exige > 0 pour ne jamais verrouiller sur une estimation
-     *  nulle/absente (qui bloquerait la soumission — `reelValid` exige p > 0). */
+     *  nulle/absente (qui bloquerait la soumission — `reelValid` exige p > 0).
+     *  Jamais en retour « Facturer le diagnostic ? » : l'estimation de création
+     *  vaut pour le cycle 0 ; repassé Payant, l'admin doit pouvoir SAISIR le
+     *  prix du diagnostic retour (sinon champ grisé ET prix vide → bloqué). */
     get diagPriceFromEstimate(): boolean {
         return (
             this.pricingDiagnosticPayant &&
-            Number(this.pricingDiagnosticEstimate) > 0
+            Number(this.pricingDiagnosticEstimate) > 0 &&
+            !this.showPricingPayantToggle
         );
     }
     get reelValid(): boolean {
@@ -557,6 +572,15 @@ export class TicketListComponent implements OnInit, OnDestroy {
      *  bloquer la soumission sur un champ caché. */
     get isIrreparable(): boolean {
         return this.seletedRow?.can_be_repaired === false;
+    }
+    /** Toggle « Facturer le diagnostic ? » : RETOUR erreur CLIENT (non-Fixtronix)
+     *  réparable. Les erreurs Fixtronix ne passent pas par Pricing. */
+    get showPricingPayantToggle(): boolean {
+        return (
+            this.ignoreCountPricing > 0 &&
+            this.isErrorFromFixtronix !== true &&
+            !this.isIrreparable
+        );
     }
     get repState(): 'idle' | 'ok' | 'err' {
         const r = Number(this.repairEstimate);
@@ -708,8 +732,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
     totalDiCount: any;
     isLoading: boolean = true;
 
-    /** Deep-link notification → ouverture des modales pricing / négociation 2. */
+    /** Deep-link notification → ouverture des modales pricing / négociation 1 et 2. */
     private deepLinkConsumer?: DeepLinkConsumer;
+
+    /** Règle UNIQUE du bouton « Approval (devis/BC) » et du deep-link `approval`. */
+    readonly canOpenApproval = canOpenApproval;
 
     constructor(
         public layoutService: LayoutService,
@@ -747,12 +774,15 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.notificationService.startWorker();
 
         // Deep-link notification : ?di=&action= → ouvre pricing / négociation 2
-        // (openers qui MUTENT le statut → gardés par statut), sinon détail.
+        // (openers qui MUTENT le statut → gardés par statut) ou, pour une
+        // notification de devis/BC, « Approval (devis/BC) » — chargée par id,
+        // d'où `approval` en action sans ligne. Sinon détail.
         this.deepLinkConsumer = new DeepLinkConsumer(
             this.route,
             this.router,
             () => this.diList,
             (row, diId, action) => this.openFromParams(row, diId, action),
+            ['approval'],
         );
         this.deepLinkConsumer.listen(this.destroy$);
 
@@ -826,6 +856,13 @@ export class TicketListComponent implements OnInit, OnDestroy {
             this.showDialogForNegociate2(row);
             return;
         }
+        // Notification de document (devis / BC attendu) : la DI est chargée par
+        // son id et la modale ne s'ouvre QUE si le document est encore attendu —
+        // sinon rien (décision produit).
+        if (action === 'approval') {
+            this.openApprovalById(diId);
+            return;
+        }
         // Deep-link hérité `?action=affectation` (lien partagé, favori). On ne
         // dépend PLUS de `row` : il était quasiment toujours `null`, la DI visée
         // n'étant pas dans les 10 lignes chargées. Le service récupère la DI par
@@ -835,6 +872,41 @@ export class TicketListComponent implements OnInit, OnDestroy {
             return;
         }
         this.diDetail.openById(diId);
+    }
+
+    /**
+     * Deep-link `approval` : charge la DI avec un statut FRAIS (la notification
+     * peut être périmée, et une DI en attente de devis est rarement parmi les 10
+     * lignes chargées), puis ouvre « Approval (devis/BC) » si un devis ou un BC
+     * est encore attendu ; sinon un simple avis, aucune modale.
+     */
+    private openApprovalById(diId: string): void {
+        this.apollo
+            .query<any>({
+                query: this.ticketSerice.getDiDetail(diId),
+                fetchPolicy: 'network-only',
+            })
+            .pipe(takeUntil(this.destroy$))
+            .subscribe({
+                next: ({ data }) => {
+                    const di = data?.getDiDetail ?? null;
+                    if (!di) {
+                        this.notify.error("Cette DI n'existe plus.", {
+                            summary: 'DI introuvable',
+                        });
+                        return;
+                    }
+                    if (!canOpenApproval(di)) {
+                        this.notify.info(
+                            'Plus aucun document à téléverser pour cette DI.',
+                        );
+                        return;
+                    }
+                    this.showDialogForNegociate1(di);
+                },
+                error: () =>
+                    this.notify.error("Impossible d'ouvrir le dossier. Réessayez."),
+            });
     }
 
     /**
@@ -1067,8 +1139,40 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.openAddDiModal = true;
     }
 
+    /** Ouvre « Modifier la DI » prérempli avec tout ce qui a été saisi à la
+     *  création. Le formulaire est DÉTACHÉ de la ligne : Annuler ne la mute pas. */
     updateDi(rowDataTicket: any) {
-        this.selectedTicket = rowDataTicket ?? {};
+        const di = rowDataTicket ?? {};
+        this.selectedTicket = di;
+        const companyId = this.isRealRef(di.company_id) ? di.company_id : null;
+        const clientId = this.isRealRef(di.client_id) ? di.client_id : null;
+        // Une recherche de société a pu remplacer la liste : sans l'option, la
+        // présélection resterait vide.
+        if (
+            companyId &&
+            !(this.companiesListDropDown ?? []).some(
+                (c: any) => c?.value === companyId,
+            )
+        ) {
+            this.companiesListDropDown = [
+                { company_name: di.company_name || companyId, value: companyId },
+                ...(this.companiesListDropDown ?? []),
+            ];
+        }
+        this.updateDiForm.reset({
+            title: di.title ?? '',
+            description: di.description ?? '',
+            nSerie: di.nSerie ?? '',
+            location: this.isRealRef(di.location_id) ? di.location_id : null,
+            typeClient: companyId ? 'COMPANY' : 'CLIENT',
+            client_id: clientId,
+            company_id: companyId,
+            remarqueManager: di.remarque_manager ?? '',
+            diagnosticPayant: di.diagnosticPayant !== false,
+            diagnosticEstimate: di.diagnosticEstimate ?? null,
+        });
+        this.onEditImageRemoved();
+        this.editBaseline = this.buildUpdateDiInfoInput();
         this.updateticketView = true;
     }
 
@@ -1084,8 +1188,11 @@ export class TicketListComponent implements OnInit, OnDestroy {
         this.modalRetour3Info = !this.modalRetour3Info;
     }
 
+    /** Annuler / fermeture de « Modifier la DI » (aussi branché sur `onHide`) :
+     *  rien n'a été écrit, on jette seulement la photo en attente. */
     cancelUpdateDi() {
-        this.openUpdateModal = false;
+        this.updateticketView = false;
+        this.onEditImageRemoved();
     }
 
     showDialogCategoryDI() {
@@ -1569,34 +1676,170 @@ export class TicketListComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Enregistre « Modifier la DI » : seuls les champs modifiés partent (le
+     * journal `DI_EDITED` ne liste que de vrais changements). Un refus serveur
+     * (statut, client/société, verrou de tarification) est affiché tel quel et
+     * le modal reste ouvert. Succès → rechargement : noms client/société et
+     * emplacement sont calculés côté serveur.
+     */
     saveUpdateTicket() {
-        const { _id, title, description, remarque_manager } =
-            this.selectedTicket;
-        const extractedData = { _id, title, description, remarque_manager };
+        const _id = this.selectedTicket?._id;
+        if (!_id || !this.canSaveEditDi) return;
+        const input = this.changedDiInfoFields(
+            this.editBaseline,
+            this.buildUpdateDiInfoInput(),
+        );
+        if (Object.keys(input).length === 1) {
+            this.cancelUpdateDi();
+            return;
+        }
 
         this.confirm.confirmSave({
             message: 'Voulez-vous enregistrer les modifications ?',
             header: 'Mise à jour de la DI',
-            accept: () => {
-                this.apollo
-                    .mutate<any>({
-                        mutation: this.ticketSerice.updateTicket(extractedData),
-                    })
-                    .subscribe(({ data, loading }) => {
-                        this.isLoading = loading;
-                        if (data) {
-                            if (this.selectedTicket._id) {
-                                this.diList[
-                                    this.findIndexById(this.selectedTicket._id)
-                                ] = this.selectedTicket;
-
-                                this.notify.success('La DI a été modifiée.');
-                                this.updateticketView = false;
-                            }
-                        }
+            accept: async () => {
+                try {
+                    await this.mutationRunner.run({
+                        key: `updateDiInfo:${_id}`,
+                        mutation: this.ticketSerice.updateDiInfo(),
+                        variables: { input },
+                        successToast: {
+                            summary: 'DI modifiée',
+                            detail: 'La DI a été modifiée.',
+                        },
+                        errorToast: null,
+                        onLoading: (v) => (this.savingEditDi = v),
                     });
+                } catch (err: any) {
+                    if (err?.message !== 'mutation-in-flight') {
+                        this.notify.error(
+                            err?.message ||
+                                'Échec de la modification. Réessayez.',
+                            { summary: 'Modification impossible' },
+                        );
+                    }
+                    return;
+                }
+                this.cancelUpdateDi();
+                this.loadData();
             },
         });
+    }
+
+    /** Input `updateDiInfo` COMPLET depuis le formulaire : la partie non
+     *  choisie part à `null`, l'estimation aussi si non payant, la photo
+     *  seulement si une nouvelle a été déposée. */
+    buildUpdateDiInfoInput(): Record<string, any> {
+        const v = this.updateDiForm.getRawValue();
+        const isCompany = v.typeClient === 'COMPANY';
+        const payant = v.diagnosticPayant !== false;
+        const input: Record<string, any> = {
+            _id: this.selectedTicket?._id,
+            title: (v.title ?? '').trim(),
+            description: (v.description ?? '').trim(),
+            nSerie: (v.nSerie ?? '').trim(),
+            location_id: v.location ?? null,
+            client_id: isCompany ? null : (v.client_id ?? null),
+            company_id: isCompany ? (v.company_id ?? null) : null,
+            remarque_manager: (v.remarqueManager ?? '').trim(),
+            diagnosticPayant: payant,
+            diagnosticEstimate: payant ? (v.diagnosticEstimate ?? null) : null,
+        };
+        if (this.editImagePayload) input['image'] = this.editImagePayload;
+        return input;
+    }
+
+    /** Ne garde que les champs qui diffèrent de l'ouverture du modal (+ `_id`).
+     *  Client et société voyagent ensemble : le back exige UNE seule partie. */
+    changedDiInfoFields(
+        baseline: Record<string, any>,
+        next: Record<string, any>,
+    ): Record<string, any> {
+        const input: Record<string, any> = { _id: next['_id'] };
+        for (const [key, value] of Object.entries(next)) {
+            if (key === '_id') continue;
+            if (
+                JSON.stringify(baseline?.[key] ?? null) !==
+                JSON.stringify(value ?? null)
+            ) {
+                input[key] = value;
+            }
+        }
+        if ('client_id' in input || 'company_id' in input) {
+            input['client_id'] = next['client_id'];
+            input['company_id'] = next['company_id'];
+        }
+        return input;
+    }
+
+    /** « Enregistrer » : champs obligatoires + photo déposée entièrement lue. */
+    get canSaveEditDi(): boolean {
+        const v = this.updateDiForm.getRawValue();
+        const partyOk =
+            v.typeClient === 'COMPANY' ? !!v.company_id : !!v.client_id;
+        const imageReady = !this.editImageDropFile || !!this.editImagePayload;
+        return (
+            !!(v.title ?? '').trim() &&
+            !!(v.description ?? '').trim() &&
+            partyOk &&
+            imageReady &&
+            !this.savingEditDi
+        );
+    }
+
+    /** Photo actuelle via le proxy back (fichier Drive privé) — même règle que
+     *  `DiInfoModalComponent.imageProxyUrl`. */
+    get editImageProxyUrl(): string {
+        const raw = String(this.selectedTicket?.image ?? '').trim();
+        const id = this.selectedTicket?._id ?? '';
+        if (!raw || raw === '-' || !id) return '';
+        const base = (environment.apiUrl ?? '').replace(/\/$/, '');
+        return `${base}/di/${id}/image`;
+    }
+
+    get editImageViewUrl(): string {
+        const v = String(this.selectedTicket?.image ?? '').trim();
+        return /^https?:\/\//i.test(v) ? v : '';
+    }
+
+    /** Photo de remplacement : état PROPRE au modal d'édition — `payload` est
+     *  partagé par la création et les BC/Devis. */
+    onEditImageSelected(file: File) {
+        if (!file) return;
+        this.editImageDropFile = file;
+        this.editImagePayload = '';
+        const reader = new FileReader();
+        reader.onload = () => {
+            // Fichier retiré ou remplacé pendant la lecture : on l'ignore.
+            if (this.editImageDropFile !== file) return;
+            this.editImagePayload = reader.result as string;
+            this.cdr.markForCheck();
+        };
+        reader.onerror = () => {
+            if (this.editImageDropFile !== file) return;
+            this.onEditImageRemoved();
+            this.notify.error("L'image n'a pas pu être préparée.", {
+                summary: 'Fichier non chargé',
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
+    onEditImageRemoved() {
+        this.editImageDropFile = null;
+        this.editImagePayload = '';
+    }
+
+    /** `createDi` écrit littéralement « null » / « undefined » pour une
+     *  référence absente. */
+    private isRealRef(value: unknown): value is string {
+        return (
+            typeof value === 'string' &&
+            value.trim() !== '' &&
+            value !== 'null' &&
+            value !== 'undefined'
+        );
     }
 
     findIndexById(_id: string): number {
@@ -2342,17 +2585,23 @@ export class TicketListComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * RETOUR erreur Fixtronix SANS PDR (réparable) : bascule « facturer le
+     * RETOUR erreur CLIENT (non-Fixtronix, réparable) : bascule « facturer le
      * diagnostic ? » du modal Pricing. Persiste le flag DI `diagnosticPayant`
      * AVANT toute validation de prix (setDiagnosticPayant est verrouillé une fois
      * price>0). Le routage n'en dépend PAS. Non payant ⇒ on efface le prix (le
-     * back rejette tout prix positif en non payant).
+     * back rejette tout prix positif en non payant) ; Payant ⇒ champ rouvert,
+     * pré-rempli (modifiable) avec l'estimation de création s'il est vide.
      */
     onPricingPayantToggle(): void {
         const id = this.current_id;
         if (!id) return;
         if (!this.pricingDiagnosticPayant) {
             this.price = null;
+        } else if (
+            this.price == null &&
+            Number(this.pricingDiagnosticEstimate) > 0
+        ) {
+            this.price = this.pricingDiagnosticEstimate;
         }
         this.apollo
             .mutate<any>({
@@ -2596,6 +2845,31 @@ export class TicketListComponent implements OnInit, OnDestroy {
                 return 'danger';
             default:
                 return 'warn';
+        }
+    }
+
+    /** Icône du bouton Approval : un gate documentaire = une icône (plus de `$`,
+     *  réservé à « Affecter prix »). Défaut = legacy NEGOTIATION1/ATTENTE_BC_DEVIS
+     *  + IRREPARABLE retour. */
+    approvalActionIcon(status: string): string {
+        switch (status) {
+            case 'WAITING_DEVIS':
+                return 'pi pi-file-edit';
+            case 'WAITING_BC':
+                return 'pi pi-file-check';
+            default:
+                return 'pi pi-file';
+        }
+    }
+
+    approvalActionTooltip(status: string): string {
+        switch (status) {
+            case 'WAITING_DEVIS':
+                return 'Attente devis';
+            case 'WAITING_BC':
+                return 'Attente BC';
+            default:
+                return 'Approval (devis/BC)';
         }
     }
 

@@ -241,7 +241,7 @@
             </header>
 
             <!-- ── Banner ────────────────────────────────────── -->
-            <section class="cf-banner">
+            <section class="cf-banner" [class.cf-banner--split]="!!techDiagSplit.remarque">
                 <div class="cf-banner__row">
                     <div class="cf-banner__status">
                         <span class="cf-banner__label">Statut actuel</span>
@@ -273,16 +273,30 @@
                         <span class="cf-banner__label">Remarque administration</span>
                         <p>{{ remarque_manager || "Aucune remarque" }}</p>
                     </div>
-                    <div class="cf-banner__remark">
-                        <span class="cf-banner__label">Remarque technicien</span>
-                        <p>
-                            {{
-                                remarque_tech_diagnostic ||
-                                    remarque_tech_repair ||
-                                    "Aucune remarque"
-                            }}
-                        </p>
-                    </div>
+                    <!-- `remarque_tech_diagnostic` composé par le formulaire de
+                         diagnostic : description de la panne | remarque technicien -->
+                    <ng-container *ngIf="techDiagSplit.remarque; else techRemarkSingle">
+                        <div class="cf-banner__remark">
+                            <span class="cf-banner__label">Description de la panne</span>
+                            <p>{{ techDiagSplit.description || "—" }}</p>
+                        </div>
+                        <div class="cf-banner__remark">
+                            <span class="cf-banner__label">Remarque technicien</span>
+                            <p>{{ techDiagSplit.remarque }}</p>
+                        </div>
+                    </ng-container>
+                    <ng-template #techRemarkSingle>
+                        <div class="cf-banner__remark">
+                            <span class="cf-banner__label">Remarque technicien</span>
+                            <p>
+                                {{
+                                    remarque_tech_diagnostic ||
+                                        remarque_tech_repair ||
+                                        "Aucune remarque"
+                                }}
+                            </p>
+                        </div>
+                    </ng-template>
                 </div>
             </section>
 

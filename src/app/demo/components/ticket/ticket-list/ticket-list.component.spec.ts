@@ -219,3 +219,160 @@ describe('TicketListComponent — base du prix final', () => {
         });
     });
 });
+
+/**
+ * Modal « Modifier la DI » : formulaire détaché de la ligne, préremplissage
+ * complet et input envoyé à `updateDiInfo`. Instance RÉELLE (les initialiseurs
+ * de champs créent `updateDiForm`) avec dépendances bouchonnées — ni TestBed,
+ * ni Apollo.
+ */
+describe('TicketListComponent — modal « Modifier la DI »', () => {
+    let runner: { run: jasmine.Spy };
+    let accepted: Promise<void> | undefined;
+
+    const COMPANY_ROW = {
+        _id: 'DI_1',
+        title: 'Ecran',
+        description: 'Ne s allume plus',
+        nSerie: 'SN1',
+        client_id: 'null', // chaîne littérale écrite par createDi
+        company_id: 'CO1',
+        company_name: 'ACME',
+        location_id: 'L1',
+        remarque_manager: '',
+        diagnosticPayant: true,
+        diagnosticEstimate: 150,
+        image: '',
+    };
+
+    function makeComponent(): any {
+        runner = { run: jasmine.createSpy('run').and.resolveTo({}) };
+        accepted = undefined;
+        const c: any = new (TicketListComponent as any)(
+            { configUpdate$: { subscribe: () => ({}) } }, // layoutService
+            { updateDiInfo: () => 'UPDATE_DI_INFO' }, // ticketSerice
+            {}, // apollo
+            { markForCheck() {} }, // cdr
+            { success() {}, error: jasmine.createSpy('error') }, // notify
+            {}, // notificationService
+            {}, // config
+            { confirmSave: (o: any) => (accepted = o.accept()) }, // confirm
+            {}, // ticketRefreshService
+            runner, // mutationRunner
+            {}, // route
+            {}, // router
+            {}, // diDetail
+            {}, // diFiles
+        );
+        c.loadData = jasmine.createSpy('loadData');
+        c.companiesListDropDown = [];
+        return c;
+    }
+
+    const sentInput = () => runner.run.calls.mostRecent().args[0].variables.input;
+
+    it('préremplit une DI société (référence « null » héritée ignorée)', () => {
+        const c = makeComponent();
+        c.updateDi({ ...COMPANY_ROW });
+        const v = c.updateDiForm.getRawValue();
+        expect(c.updateticketView).toBeTrue();
+        expect(v.typeClient).toBe('COMPANY');
+        expect(v.company_id).toBe('CO1');
+        expect(v.client_id).toBeNull();
+        expect(v.location).toBe('L1');
+        expect(v.nSerie).toBe('SN1');
+        expect(v.diagnosticEstimate).toBe(150);
+        // Liste de sociétés sans l'option : injectée pour que la présélection s'affiche.
+        expect(c.companiesListDropDown).toContain(
+            jasmine.objectContaining({ value: 'CO1', company_name: 'ACME' }),
+        );
+    });
+
+    it('Annuler ferme le modal sans toucher la ligne', () => {
+        const c = makeComponent();
+        const row = { ...COMPANY_ROW };
+        c.updateDi(row);
+        c.updateDiForm.patchValue({ title: 'Modifié' });
+        c.cancelUpdateDi();
+        expect(c.updateticketView).toBeFalse();
+        expect(row.title).toBe('Ecran');
+    });
+
+    it('sans modification : aucune mutation, modal fermé', () => {
+        const c = makeComponent();
+        c.updateDi({ ...COMPANY_ROW });
+        c.saveUpdateTicket();
+        expect(accepted).toBeUndefined();
+        expect(runner.run).not.toHaveBeenCalled();
+        expect(c.updateticketView).toBeFalse();
+    });
+
+    it('société → client : les deux parties partent, la société à null', async () => {
+        const c = makeComponent();
+        c.updateDi({ ...COMPANY_ROW });
+        c.updateDiForm.patchValue({ typeClient: 'CLIENT', client_id: 'CL9' });
+        c.saveUpdateTicket();
+        await accepted;
+        expect(sentInput()).toEqual({
+            _id: 'DI_1',
+            client_id: 'CL9',
+            company_id: null,
+        });
+        expect(c.loadData).toHaveBeenCalled();
+        expect(c.updateticketView).toBeFalse();
+    });
+
+    it('non payant : estimation envoyée à null', async () => {
+        const c = makeComponent();
+        c.updateDi({ ...COMPANY_ROW });
+        c.updateDiForm.patchValue({ diagnosticPayant: false });
+        c.saveUpdateTicket();
+        await accepted;
+        expect(sentInput()).toEqual({
+            _id: 'DI_1',
+            diagnosticPayant: false,
+            diagnosticEstimate: null,
+        });
+    });
+
+    it('photo envoyée seulement si une nouvelle a été déposée', async () => {
+        const c = makeComponent();
+        c.updateDi({ ...COMPANY_ROW });
+        c.updateDiForm.patchValue({ nSerie: 'SN2' });
+        c.saveUpdateTicket();
+        await accepted;
+        expect(sentInput()).toEqual({ _id: 'DI_1', nSerie: 'SN2' });
+
+        c.updateDi({ ...COMPANY_ROW });
+        c.editImageDropFile = new File(['x'], 'p.png', { type: 'image/png' });
+        c.editImagePayload = 'data:image/png;base64,eA==';
+        c.saveUpdateTicket();
+        await accepted;
+        expect(sentInput()).toEqual({
+            _id: 'DI_1',
+            image: 'data:image/png;base64,eA==',
+        });
+    });
+
+    it('photo déposée mais pas encore lue : enregistrement bloqué', () => {
+        const c = makeComponent();
+        c.updateDi({ ...COMPANY_ROW });
+        c.editImageDropFile = new File(['x'], 'p.png', { type: 'image/png' });
+        expect(c.canSaveEditDi).toBeFalse();
+    });
+
+    it('refus serveur : message affiché, modal laissé ouvert', async () => {
+        const c = makeComponent();
+        runner.run.and.rejectWith(new Error('DI non modifiable à ce stade'));
+        c.updateDi({ ...COMPANY_ROW });
+        c.updateDiForm.patchValue({ title: 'Autre' });
+        c.saveUpdateTicket();
+        await accepted;
+        expect(c.notify.error).toHaveBeenCalledWith(
+            'DI non modifiable à ce stade',
+            jasmine.anything(),
+        );
+        expect(c.updateticketView).toBeTrue();
+        expect(c.loadData).not.toHaveBeenCalled();
+    });
+});

@@ -458,12 +458,13 @@ export class TicketService {
         `;
     }
 
-    updateTicket(data: any) {
+    /** Modal « Modifier la DI » : infos saisies à la création. Mutation gardée
+     *  côté serveur (rôle + statut CREATED/PENDING1) et journalisée
+     *  (`DI_EDITED`). Variables typées : aucune saisie interpolée. */
+    updateDiInfo() {
         return gql`
-            mutation {
-                updateDi(
-                    UpdateDi: { _id: "${data._id}", title: ${gqlStr(data.title)}, description: ${gqlStr(data.description)},remarque_manager: ${gqlStr(data.remarque_manager)} }
-                ) {
+            mutation ($input: UpdateDiInfoInput!) {
+                updateDiInfo(input: $input) {
                     _id
                 }
             }
@@ -1271,10 +1272,35 @@ export class TicketService {
         `;
     }
 
-    totalComposant(_id: string) {
+    /** Σ prix_vente × qté des pièces. Sans `idIgnore` : cycle COURANT de la DI ;
+     *  avec : le cycle demandé (modal « Dossier », cycle affiché). */
+    totalComposant(_id: string, idIgnore?: number) {
+        const cycleArg =
+            idIgnore === undefined || idIgnore === null
+                ? ''
+                : `, idIgnore: ${Number(idIgnore)}`;
         return gql`
             {
-                calculateTicketComposantPrice(_id: "${_id}")
+                calculateTicketComposantPrice(_id: "${_id}"${cycleArg})
+            }
+        `;
+    }
+
+    /** Pièces du cycle au prix de CHAQUE phase : `diag` (prix enregistré à la
+     *  validation magasin, à défaut prix actuel), `rep` (prix enregistré en fin
+     *  de réparation, à défaut prix actuel), `diagRecorded` (toutes enregistrées). */
+    totalComposantByPhase(_id: string, idIgnore?: number) {
+        const cycleArg =
+            idIgnore === undefined || idIgnore === null
+                ? ''
+                : `, idIgnore: ${Number(idIgnore)}`;
+        return gql`
+            {
+                calculateTicketComposantPriceByPhase(_id: "${_id}"${cycleArg}) {
+                    diag
+                    rep
+                    diagRecorded
+                }
             }
         `;
     }

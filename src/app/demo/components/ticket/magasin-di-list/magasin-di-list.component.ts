@@ -989,11 +989,13 @@ export class MagasinDiListComponent implements OnDestroy {
     }
 
     /**
-     * Bouton « Enregistrer » en aplat ambre + reflet animé sur sa face :
-     * modifié ET réellement enregistrable.
-     * On ne fait jamais briller un bouton désactivé — formulaire incomplet,
-     * le rappel bascule sur « Complétez les champs obligatoires ».
-     * Même condition qui GRISE « Valider ce composant » (`canValidateActive`).
+     * Bouton « Enregistrer » ACTIF, en aplat ambre + reflet animé sur sa
+     * face : modifié ET réellement enregistrable. Rien de modifié (ouverture,
+     * après sauvegarde) ou formulaire incomplet → « Enregistrer » grisé ; dans
+     * ce dernier cas le rappel bascule sur « Complétez les champs
+     * obligatoires ».
+     * Même condition qui GRISE « Valider ce composant » (`canValidateActive`) :
+     * les deux boutons ne sont jamais actifs en même temps.
      */
     get saveNeedsAttention(): boolean {
         return this.hasUnsavedComposant && this.formUpdateComposant.valid;
@@ -1276,6 +1278,9 @@ export class MagasinDiListComponent implements OnDestroy {
      * stop and exactly one toast must show.
      */
     updateComposant() {
+        // Rien de modifié : le bouton est grisé (`saveNeedsAttention`), ce
+        // garde couvre un appel résiduel.
+        if (!this.hasUnsavedComposant) return;
         if (this.formUpdateComposant.invalid) {
             this.formUpdateComposant.markAllAsTouched();
             this.notify.warn(

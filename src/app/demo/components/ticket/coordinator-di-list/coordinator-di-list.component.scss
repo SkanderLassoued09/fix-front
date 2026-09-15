@@ -2193,6 +2193,11 @@ $cf-surface: var(--fx-bg-surface);
     align-items: start;
     gap: 0.75rem;
 }
+// Remarque diagnostic composée : « Description de la panne » et « Remarque
+// technicien » occupent chacune leur colonne.
+.cf-banner--split {
+    grid-template-columns: minmax(200px, 0.8fr) repeat(3, minmax(0, 1fr));
+}
 .cf-banner__row {
     display: flex;
     align-items: flex-start;

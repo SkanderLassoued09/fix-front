@@ -632,7 +632,7 @@
                     type="button"
                     class="cmp-btn cmp-btn--save"
                     [class.cmp-btn--attention]="saveNeedsAttention"
-                    [disabled]="!formUpdateComposant.valid"
+                    [disabled]="!saveNeedsAttention"
                     (click)="updateComposant()"
                 >
                     <i class="pi pi-save"></i> Enregistrer

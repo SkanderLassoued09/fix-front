@@ -75,16 +75,7 @@
                         [disabled]="saving"
                         (onClick)="cancelEdit()"
                     ></p-button>
-                    <p-button
-                        *ngIf="!editing"
-                        label="Exporter PDF"
-                        icon="pi pi-file-pdf"
-                        severity="secondary"
-                        [outlined]="true"
-                        [loading]="downloading"
-                        [disabled]="downloading || !di"
-                        (onClick)="exportPdf()"
-                    ></p-button>
+                    <!-- « Exporter PDF » vit dans le pied, à côté de « Fermer ». -->
                     <!-- Fermer est bloqué pendant l'édition : « Annuler » est
                          juste à côté, on n'efface pas une saisie en silence. -->
                     <button
@@ -194,7 +185,7 @@
             >
                 <strong><i class="pi pi-ban"></i> DI annulée</strong>
                 <span *ngIf="di?.annuleLe">
-                    le {{ di?.annuleLe | date: "dd/MM/yyyy HH:mm" }}</span
+                    le {{ fmtDate(di?.annuleLe) }}</span
                 >
                 <span *ngIf="di?.annulePar"> par {{ di?.annulePar }}</span>
                 <span *ngIf="di?.annulationMotif">
@@ -234,7 +225,7 @@
             <div *ngIf="hasRetourInfo" class="di-retour-banner">
                 <strong><i class="pi pi-replay"></i> Dossier retourné</strong>
                 <span *ngIf="di?.retourDate">
-                    le {{ di?.retourDate | date: "dd/MM/yyyy HH:mm" }}</span
+                    le {{ fmtDate(di?.retourDate) }}</span
                 >
                 <span *ngIf="di?.retourReason">
                     — motif : {{ di?.retourReason }}</span
@@ -259,13 +250,11 @@
                         <span class="di-diag-history__meta">
                             <ng-container *ngIf="a.assignedAt"
                                 >affecté le
-                                {{
-                                    a.assignedAt | date: "dd/MM/yyyy HH:mm"
-                                }}</ng-container
+                                {{ fmtDate(a.assignedAt) }}</ng-container
                             >
                             <ng-container *ngIf="a.abandonedAt">
                                 → abandonné le
-                                {{ a.abandonedAt | date: "dd/MM/yyyy HH:mm" }}
+                                {{ fmtDate(a.abandonedAt) }}
                                 <ng-container *ngIf="a.motif"
                                     >(motif&nbsp;: {{ a.motif }})</ng-container
                                 >
@@ -273,7 +262,8 @@
                                     par {{ a.abandonedBy }}</ng-container
                                 >
                                 <ng-container *ngIf="a.diagTime">
-                                    — {{ a.diagTime }}</ng-container
+                                    — a travaillé
+                                    {{ cumulLabel(a.diagTime) }}</ng-container
                                 >
                             </ng-container>
                             <span
@@ -287,376 +277,23 @@
                 </ol>
             </div>
 
-            <!-- ── Deux colonnes ─────────────────────────────── -->
+            <!-- ── Description en carte pleine largeur, puis fiches État · Équipe ·
+                 Temps passé · Contacts en une rangée : plus de colonne à moitié
+                 vide quand la description est courte. Le parcours du dossier vit
+                 dans « Temps & chrono ». -->
             <div class="di-grid">
-                <!-- COLONNE GAUCHE -->
-                <div class="di-main">
-                    <!-- Écart entre statuts -->
-                    <!-- Étape non atteinte ≠ étape inconnue : quand le cycle
-                         n'a aucune transition, on le DIT plutôt que de masquer
-                         la section (l'utilisateur croyait à une info manquante). -->
-                    <section
-                        class="di-sec avoid-break"
-                        *ngIf="!timelineRows.length"
-                    >
-                        <div class="di-label">Écart entre statuts</div>
-                        <p class="di-empty">
-                            Aucune transition enregistrée pour ce cycle.
-                        </p>
-                    </section>
-
-                    <section
-                        class="di-sec avoid-break"
-                        *ngIf="timelineRows.length"
-                    >
-                        <div class="di-label">Écart entre statuts</div>
-                        <div class="di-steps">
-                            <div
-                                class="di-step"
-                                *ngFor="let r of visibleTimelineRows"
-                            >
-                                <span
-                                    class="di-step__marker"
-                                    [attr.data-state]="r.state"
-                                ></span>
-                                <div class="di-step__body">
-                                    <div class="di-step__top">
-                                        <span class="di-step__status">{{
-                                            r.rawStatus
-                                        }}</span>
-                                        <span
-                                            class="di-origin"
-                                            *ngIf="r.reconstructed"
-                                            title="Date déduite de la création et du dernier changement de statut, pas observée en direct"
-                                            >reconstruit</span
-                                        >
-                                        <span class="di-step__date di-mono">{{
-                                            r.date || "—"
-                                        }}</span>
-                                    </div>
-                                    <div
-                                        class="di-step__dur"
-                                        [class.di-step__dur--anom]="r.anomalous"
-                                        [class.di-step__dur--ongoing]="
-                                            r.duration?.ongoing
-                                        "
-                                    >
-                                        <ng-container
-                                            *ngIf="r.duration; else noDur"
-                                        >
-                                            <span *ngIf="r.duration.ongoing"
-                                                >en cours · </span
-                                            >{{ r.duration.text }}
-                                        </ng-container>
-                                        <ng-template #noDur>—</ng-template>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <button
-                            type="button"
-                            class="di-steps__more no-print"
-                            *ngIf="timelineHiddenCount > 0"
-                            (click)="toggleTimeline()"
-                        >
-                            {{
-                                timelineExpanded
-                                    ? "Réduire"
-                                    : "Tout afficher · " +
-                                      timelineHiddenCount +
-                                      " autres étapes"
-                            }}
-                        </button>
-                    </section>
-
-                    <!-- Description -->
-                    <section class="di-sec avoid-break" *ngIf="di?.description">
+                <!-- Description -->
+                <div class="di-main" *ngIf="di?.description">
+                    <section class="di-sec avoid-break">
                         <div class="di-label">Description</div>
                         <div class="di-desc">{{ di?.description }}</div>
                     </section>
-
-                    <!-- Composants — une CARTE par composant : toutes les
-                         données du catalogue (statut, prix, arrivage, stock,
-                         fiche, lien) jointes par NOM. -->
-                    <section
-                        class="di-sec avoid-break"
-                        *ngIf="composantLines.length"
-                    >
-                        <div class="di-label di-label--inline">
-                            Composants
-                            <span class="di-pill">{{
-                                composantLines.length
-                            }}</span>
-                            <span
-                                class="di-origin"
-                                *ngIf="originLabel('array_composants') as o"
-                                >{{ o }}</span
-                            >
-                            <span class="di-origin" *ngIf="catalogLoading"
-                                >catalogue en cours…</span
-                            >
-                        </div>
-                        <div class="di-comp">
-                            <article
-                                class="di-comp__card"
-                                *ngFor="
-                                    let c of composantLines;
-                                    trackBy: trackComposantLine
-                                "
-                                [class.di-comp__card--orphan]="!c.found"
-                            >
-                                <header class="di-comp__card-head">
-                                    <span class="di-comp__ico">
-                                        <i class="pi pi-box"></i>
-                                    </span>
-                                    <div class="di-comp__id">
-                                        <div class="di-comp__name">
-                                            {{ c.name || "—" }}
-                                        </div>
-                                        <div
-                                            class="di-comp__sub"
-                                            *ngIf="c.found"
-                                        >
-                                            <span>{{ c.package || "—" }}</span>
-                                            <span class="di-comp__sep">·</span>
-                                            <span>{{
-                                                composantCategoryLabel(c)
-                                            }}</span>
-                                            <ng-container *ngIf="c.ref">
-                                                <span class="di-comp__sep"
-                                                    >·</span
-                                                >
-                                                <span class="di-mono"
-                                                    >Réf. {{ c.ref }}</span
-                                                >
-                                            </ng-container>
-                                        </div>
-                                    </div>
-                                    <span
-                                        class="di-comp__status"
-                                        [attr.data-status]="
-                                            statusComposantKey(c)
-                                        "
-                                        >{{ statusComposantLabel(c) }}</span
-                                    >
-                                </header>
-
-                                <div class="di-comp__kv">
-                                    <div class="di-comp__cell">
-                                        <span>Qté demandée</span>
-                                        <strong class="di-mono">{{
-                                            c.quantity
-                                        }}</strong>
-                                    </div>
-                                    <div class="di-comp__cell">
-                                        <span>Stock</span>
-                                        <strong>
-                                            <span
-                                                class="di-comp__stock"
-                                                *ngIf="
-                                                    c.stock !== null;
-                                                    else stockInconnu
-                                                "
-                                                [attr.data-health]="
-                                                    stockHealthOf(c)
-                                                "
-                                            >
-                                                <i
-                                                    class="di-comp__stock-dot"
-                                                ></i
-                                                >{{ stockLabelOf(c) }}
-                                            </span>
-                                            <ng-template #stockInconnu
-                                                >—</ng-template
-                                            >
-                                        </strong>
-                                    </div>
-                                    <div class="di-comp__cell">
-                                        <span>Date d'arrivage</span>
-                                        <strong>{{
-                                            comingDateLabel(c)
-                                        }}</strong>
-                                    </div>
-                                    <div class="di-comp__cell">
-                                        <span>PU achat</span>
-                                        <strong class="di-mono">{{
-                                            fmtMoney(c.prixAchat)
-                                        }}</strong>
-                                    </div>
-                                    <div class="di-comp__cell">
-                                        <span>PU vente</span>
-                                        <strong class="di-mono">{{
-                                            fmtMoney(c.prixVente)
-                                        }}</strong>
-                                    </div>
-                                    <div
-                                        class="di-comp__cell di-comp__cell--total"
-                                    >
-                                        <span>Total ligne</span>
-                                        <strong class="di-mono">{{
-                                            fmtMoney(c.lineTotal)
-                                        }}</strong>
-                                    </div>
-                                </div>
-
-                                <footer
-                                    class="di-comp__card-foot"
-                                    *ngIf="c.pdf || c.link || c.isUpdated"
-                                >
-                                    <a
-                                        class="di-doc"
-                                        *ngIf="c.pdf"
-                                        [href]="composantPdfHref(c)"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <span class="di-doc__ico">
-                                            <i class="pi pi-file-pdf"></i>
-                                        </span>
-                                        <span class="di-doc__name"
-                                            >Fiche technique</span
-                                        >
-                                    </a>
-                                    <a
-                                        class="di-doc"
-                                        *ngIf="c.link"
-                                        [href]="c.link"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <span class="di-doc__ico">
-                                            <i class="pi pi-external-link"></i>
-                                        </span>
-                                        <span class="di-doc__name"
-                                            >Lien fournisseur</span
-                                        >
-                                    </a>
-                                    <span
-                                        class="di-comp__flag"
-                                        *ngIf="c.isUpdated"
-                                    >
-                                        <i class="pi pi-check"></i> Traité par
-                                        le magasin
-                                    </span>
-                                </footer>
-
-                                <p
-                                    class="di-comp__orphan"
-                                    *ngIf="!c.found && !catalogLoading"
-                                >
-                                    Composant absent du catalogue : seuls le nom
-                                    saisi sur le dossier et la quantité sont
-                                    connus.
-                                </p>
-                            </article>
-
-                            <div class="di-comp__total">
-                                <span
-                                    >Total composants ·
-                                    {{ selectedCycleLabel }}</span
-                                >
-                                <strong class="di-mono">{{
-                                    fmtMoney(composantLinesTotal)
-                                }}</strong>
-                            </div>
-                        </div>
-                        <p class="di-comp__note" *ngIf="composantLinesPartial">
-                            Total calculé sur {{ composantLinesPriced }} ligne(s)
-                            sur {{ composantLines.length }} — les autres n'ont
-                            pas de prix de vente au catalogue.
-                        </p>
-                    </section>
-
-                    <section
-                        class="di-sec avoid-break"
-                        *ngIf="!composantLines.length"
-                    >
-                        <div class="di-label">Composants</div>
-                        <p class="di-empty">Aucun composant pour ce cycle.</p>
-                    </section>
-
-                    <!-- Remarques -->
-                    <section class="di-sec avoid-break" *ngIf="hasAnyRemarque">
-                        <div class="di-label">
-                            Remarques
-                            <span
-                                class="di-origin"
-                                *ngIf="originLabel('remarque_tech_diagnostic') as o"
-                                >{{ o }}</span
-                            >
-                        </div>
-                        <div class="di-remarks">
-                            <div
-                                class="di-remark di-remark--admin"
-                                *ngIf="activeRemarques.admin"
-                            >
-                                <div class="di-remark__head">
-                                    Remarque administration
-                                </div>
-                                <div class="di-remark__body">
-                                    {{ activeRemarques.admin }}
-                                </div>
-                            </div>
-                            <div
-                                class="di-remark di-remark--diag"
-                                *ngIf="activeRemarques.diag"
-                            >
-                                <div class="di-remark__head">
-                                    Remarque tech diagnostique
-                                </div>
-                                <div class="di-remark__body">
-                                    {{ activeRemarques.diag }}
-                                </div>
-                            </div>
-                            <div
-                                class="di-remark di-remark--rep"
-                                *ngIf="activeRemarques.rep"
-                            >
-                                <div class="di-remark__head">
-                                    Remarque tech réparation
-                                </div>
-                                <div class="di-remark__body">
-                                    {{ activeRemarques.rep }}
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Remarques que le bloc ci-dessus n'affiche pas (4 des 7
-                         étaient persistées sans jamais sortir). -->
-                    <section class="di-sec avoid-break" *ngIf="hasExtraRemarques">
-                        <div class="di-label">Autres remarques</div>
-                        <div class="di-remarks">
-                            <div
-                                class="di-remark"
-                                *ngFor="let r of extraRemarques"
-                            >
-                                <div class="di-remark__head">{{ r.label }}</div>
-                                <div class="di-remark__body">{{ r.value }}</div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Commentaire libre -->
-                    <section class="di-sec avoid-break" *ngIf="activeComment">
-                        <div class="di-label">Commentaire</div>
-                        <div class="di-desc">{{ activeComment }}</div>
-                    </section>
-
-                    <!-- Photo du problème — fichier Drive PRIVÉ, servi par le
-                         proxy back (`GET /di/:id/image`). -->
-                    <section
-                        class="di-sec avoid-break no-print"
-                        *ngIf="imageProxyUrl || imageViewUrl"
-                    >
-                        <app-di-image
-                            [imageUrl]="imageProxyUrl"
-                            [viewUrl]="imageViewUrl"
-                        ></app-di-image>
-                    </section>
                 </div>
 
-                <!-- COLONNE DROITE -->
+                <!-- Fiches : UN panneau, colonnes alignées, mêmes lignes
+                     libellé → valeur partout (plus de pastilles ni d'avatars).
+                     Les documents vivent dans la modale « Affectation des
+                     Fichiers » et, datés, dans l'onglet Liens. -->
                 <aside class="di-side">
                     <!-- État -->
                     <div class="di-sec avoid-break">
@@ -668,235 +305,397 @@
                                 >{{ o }}</span
                             >
                         </div>
-                        <div class="di-state">
-                            <span
-                                class="di-state__chip"
-                                [attr.data-kind]="
-                                    activeCanBeRepaired === true
-                                        ? 'ok'
-                                        : activeCanBeRepaired === false
-                                          ? 'ko'
-                                          : 'muted'
-                                "
-                            >
-                                <i
-                                    [class]="
+                        <div class="di-kv di-kv--sm">
+                            <div class="di-kv__row">
+                                <span>Réparation</span>
+                                <strong
+                                    [attr.data-tone]="
                                         activeCanBeRepaired === true
-                                            ? 'pi pi-check'
+                                            ? 'ok'
                                             : activeCanBeRepaired === false
-                                              ? 'pi pi-times'
-                                              : 'pi pi-minus'
+                                              ? 'ko'
+                                              : 'muted'
                                     "
-                                ></i>
-                                {{
-                                    activeCanBeRepaired === true
-                                        ? "Réparable"
-                                        : activeCanBeRepaired === false
-                                          ? "Non réparable"
-                                          : "Réparable ?"
-                                }}
-                            </span>
-                            <span
-                                class="di-state__chip"
-                                [attr.data-kind]="
-                                    activeContainPdr ? 'accent' : 'muted'
-                                "
-                            >
-                                {{ activeContainPdr ? "PDR dispo" : "Sans PDR" }}
-                            </span>
+                                    >{{
+                                        activeCanBeRepaired === true
+                                            ? "Réparable"
+                                            : activeCanBeRepaired === false
+                                              ? "Non réparable"
+                                              : "Non renseigné"
+                                    }}</strong
+                                >
+                            </div>
+                            <div class="di-kv__row">
+                                <span>Pièces de rechange</span>
+                                <strong [attr.data-tone]="activeContainPdr ? 'info' : 'muted'">{{
+                                    activeContainPdr ? "PDR dispo" : "Sans PDR"
+                                }}</strong>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="di-side__sep"></div>
 
                     <!-- Équipe -->
                     <div class="di-sec avoid-break">
                         <div class="di-label di-label--sm">Équipe</div>
-                        <div class="di-team">
-                            <div class="di-team__row">
-                                <span
-                                    class="di-team__avatar di-team__avatar--creator"
-                                >
-                                    {{ initials(di?.createdBy) }}
-                                </span>
-                                <div class="di-team__meta">
-                                    <span class="di-team__role">Créé par</span>
-                                    <span class="di-team__name">{{
-                                        displayName(di?.createdBy)
-                                    }}</span>
-                                </div>
+                        <div class="di-kv di-kv--sm">
+                            <div class="di-kv__row">
+                                <span>Créé par</span><strong>{{ displayName(di?.createdBy) }}</strong>
                             </div>
-                            <div
-                                class="di-team__row"
-                                *ngIf="displayName(di?.techDiag) !== '—'"
-                            >
-                                <span
-                                    class="di-team__avatar di-team__avatar--diag"
-                                >
-                                    {{ initials(di?.techDiag) }}
-                                </span>
-                                <div class="di-team__meta">
-                                    <span class="di-team__role"
-                                        >Tech. diagnostic</span
-                                    >
-                                    <span class="di-team__name">{{
-                                        displayName(di?.techDiag)
-                                    }}</span>
-                                </div>
+                            <div class="di-kv__row" *ngIf="displayName(di?.techDiag) !== '—'">
+                                <span>Tech. diagnostic</span
+                                ><strong>{{ displayName(di?.techDiag) }}</strong>
                             </div>
-                            <div
-                                class="di-team__row"
-                                *ngIf="displayName(di?.techRep) !== '—'"
-                            >
-                                <span
-                                    class="di-team__avatar di-team__avatar--rep"
-                                >
-                                    {{ initials(di?.techRep) }}
-                                </span>
-                                <div class="di-team__meta">
-                                    <span class="di-team__role"
-                                        >Tech. réparation</span
-                                    >
-                                    <span class="di-team__name">{{
-                                        displayName(di?.techRep)
-                                    }}</span>
-                                </div>
+                            <div class="di-kv__row" *ngIf="displayName(di?.techRep) !== '—'">
+                                <span>Tech. réparation</span
+                                ><strong>{{ displayName(di?.techRep) }}</strong>
                             </div>
                         </div>
                     </div>
 
                     <!-- Temps passé (conditionnel) -->
-                    <ng-container *ngIf="hasTemps">
-                        <div class="di-side__sep"></div>
-                        <div class="di-sec avoid-break">
-                            <div class="di-label di-label--sm">Temps passé</div>
-                            <div class="di-times">
-                                <div class="di-times__row">
-                                    <span>Diagnostic</span>
-                                    <strong>{{ tempsDiagLabel }}</strong>
-                                </div>
-                                <div class="di-times__row">
-                                    <span>Réparation</span>
-                                    <strong>{{ tempsRepLabel }}</strong>
-                                </div>
+                    <div class="di-sec avoid-break" *ngIf="hasTemps">
+                        <div class="di-label di-label--sm">Temps passé</div>
+                        <div class="di-kv di-kv--sm">
+                            <div class="di-kv__row">
+                                <span>Diagnostic</span><strong>{{ tempsDiagLabel }}</strong>
                             </div>
-                        </div>
-                    </ng-container>
-
-                    <div class="di-side__sep"></div>
-
-                    <!-- Documents (présents + absents signalés) -->
-                    <div class="di-sec avoid-break">
-                        <div class="di-label di-label--sm">
-                            Documents
-                            <span
-                                class="di-origin"
-                                *ngIf="originLabel('devis') as o"
-                                >{{ o }}</span
-                            >
-                        </div>
-                        <div class="di-docs">
-                            <ng-container *ngFor="let d of docSlots">
-                                <a
-                                    *ngIf="d.href; else absentDoc"
-                                    [href]="d.href"
-                                    target="_blank"
-                                    rel="noopener"
-                                    class="di-doc"
-                                    [title]="d.label"
-                                >
-                                    <span class="di-doc__ico">
-                                        <i class="pi pi-file-pdf"></i>
-                                    </span>
-                                    <span class="di-doc__name">{{
-                                        d.label
-                                    }}</span>
-                                </a>
-                                <ng-template #absentDoc>
-                                    <span
-                                        class="di-doc di-doc--absent"
-                                        [title]="d.label + ' — absent'"
-                                    >
-                                        <span class="di-doc__ico">
-                                            <i class="pi pi-file"></i>
-                                        </span>
-                                        <span class="di-doc__name"
-                                            >{{ d.label }}
-                                            <em>absent</em></span
-                                        >
-                                    </span>
-                                </ng-template>
-                            </ng-container>
+                            <div class="di-kv__row">
+                                <span>Réparation</span><strong>{{ tempsRepLabel }}</strong>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Contacts du tiers — peuplés par `getDiDetail` -->
-                    <ng-container *ngIf="hasContact">
-                        <div class="di-side__sep"></div>
-                        <div class="di-sec avoid-break">
-                            <div class="di-label di-label--sm">
-                                Contacts —
-                                {{ contact?.kind === "COMPANY" ? "Société" : "Client" }}
+                    <div class="di-sec di-sec--contact avoid-break" *ngIf="hasContact">
+                        <div class="di-label di-label--sm">
+                            Contacts —
+                            {{ contact?.kind === "COMPANY" ? "Société" : "Client" }}
+                        </div>
+                        <div class="di-kv di-kv--sm">
+                            <div class="di-kv__row" *ngIf="contact?.name">
+                                <span>Nom</span><strong>{{ contact.name }}</strong>
                             </div>
-                            <div class="di-kv di-kv--sm">
-                                <div class="di-kv__row" *ngIf="contact?.name">
-                                    <span>Nom</span><strong>{{ contact.name }}</strong>
-                                </div>
-                                <div class="di-kv__row" *ngIf="contact?.phone">
-                                    <span>Téléphone</span><strong>{{ contact.phone }}</strong>
-                                </div>
-                                <div class="di-kv__row" *ngIf="contact?.email">
-                                    <span>Email</span><strong>{{ contact.email }}</strong>
-                                </div>
-                                <div class="di-kv__row" *ngIf="contact?.fax">
-                                    <span>Fax</span><strong>{{ contact.fax }}</strong>
-                                </div>
-                                <div class="di-kv__row" *ngIf="contact?.address">
-                                    <span>Adresse</span><strong>{{ contact.address }}</strong>
-                                </div>
-                                <div class="di-kv__row" *ngIf="contact?.region">
-                                    <span>Région</span><strong>{{ contact.region }}</strong>
-                                </div>
-                                <div class="di-kv__row" *ngIf="contact?.mf">
-                                    <span>Matricule fiscal</span><strong>{{ contact.mf }}</strong>
-                                </div>
+                            <div class="di-kv__row" *ngIf="contact?.phone">
+                                <span>Téléphone</span><strong>{{ contact.phone }}</strong>
+                            </div>
+                            <div class="di-kv__row" *ngIf="contact?.email">
+                                <span>Email</span><strong>{{ contact.email }}</strong>
+                            </div>
+                            <div class="di-kv__row" *ngIf="contact?.fax">
+                                <span>Fax</span><strong>{{ contact.fax }}</strong>
+                            </div>
+                            <div class="di-kv__row" *ngIf="contact?.address">
+                                <span>Adresse</span><strong>{{ contact.address }}</strong>
+                            </div>
+                            <div class="di-kv__row" *ngIf="contact?.region">
+                                <span>Région</span><strong>{{ contact.region }}</strong>
+                            </div>
+                            <div class="di-kv__row" *ngIf="contact?.mf">
+                                <span>Matricule fiscal</span><strong>{{ contact.mf }}</strong>
                             </div>
                         </div>
-                    </ng-container>
-
-                    <!-- Drapeaux qui pilotent le routage du dossier -->
-                    <ng-container *ngIf="flags.length">
-                        <div class="di-side__sep"></div>
-                        <div class="di-sec avoid-break">
-                            <div class="di-label di-label--sm">Drapeaux</div>
-                            <div class="di-kv di-kv--sm">
-                                <div class="di-kv__row" *ngFor="let f of flags">
-                                    <span>{{ f.label }}</span>
-                                    <strong [attr.data-tone]="f.tone">{{ f.value }}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </ng-container>
-
-                    <!-- Jalons datés + acteur (déjà résolus côté serveur) -->
-                    <ng-container *ngIf="milestones.length">
-                        <div class="di-side__sep"></div>
-                        <div class="di-sec avoid-break">
-                            <div class="di-label di-label--sm">Jalons</div>
-                            <div class="di-kv di-kv--sm">
-                                <div class="di-kv__row" *ngFor="let m of milestones">
-                                    <span>{{ m.label }}</span>
-                                    <strong>{{ m.date }} · {{ m.actor }}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </ng-container>
+                    </div>
                 </aside>
             </div>
 
+            <!-- Composants — PLEINE LARGEUR sous les deux colonnes, deux cartes
+                 par ligne. Une CARTE par composant : toutes les données du
+                 catalogue (statut, prix, arrivage, stock, fiche, lien) jointes
+                 par NOM. -->
+            <section
+                class="di-sec avoid-break"
+                *ngIf="composantLines.length"
+            >
+                <div class="di-label di-label--inline">
+                    Composants
+                    <span class="di-pill">{{
+                        composantLines.length
+                    }}</span>
+                    <span
+                        class="di-origin"
+                        *ngIf="originLabel('array_composants') as o"
+                        >{{ o }}</span
+                    >
+                    <span class="di-origin" *ngIf="catalogLoading"
+                        >catalogue en cours…</span
+                    >
+                </div>
+                <div class="di-comp">
+                    <article
+                        class="di-comp__card"
+                        *ngFor="
+                            let c of composantLines;
+                            trackBy: trackComposantLine
+                        "
+                        [class.di-comp__card--orphan]="!c.found"
+                    >
+                        <header class="di-comp__card-head">
+                            <span class="di-comp__ico">
+                                <i class="pi pi-box"></i>
+                            </span>
+                            <div class="di-comp__id">
+                                <div class="di-comp__name">
+                                    {{ c.name || "—" }}
+                                </div>
+                                <div
+                                    class="di-comp__sub"
+                                    *ngIf="c.found"
+                                >
+                                    <span>{{ c.package || "—" }}</span>
+                                    <span class="di-comp__sep">·</span>
+                                    <span>{{
+                                        composantCategoryLabel(c)
+                                    }}</span>
+                                    <ng-container *ngIf="c.ref">
+                                        <span class="di-comp__sep"
+                                            >·</span
+                                        >
+                                        <span class="di-mono"
+                                            >Réf. {{ c.ref }}</span
+                                        >
+                                    </ng-container>
+                                </div>
+                            </div>
+                            <span
+                                class="di-comp__status"
+                                [attr.data-status]="
+                                    statusComposantKey(c)
+                                "
+                                >{{ statusComposantLabel(c) }}</span
+                            >
+                        </header>
+
+                        <div class="di-comp__kv">
+                            <div class="di-comp__cell">
+                                <span>Qté demandée</span>
+                                <strong class="di-mono">{{
+                                    c.quantity
+                                }}</strong>
+                            </div>
+                            <div class="di-comp__cell">
+                                <span>Stock</span>
+                                <strong>
+                                    <span
+                                        class="di-comp__stock"
+                                        *ngIf="
+                                            c.stock !== null;
+                                            else stockInconnu
+                                        "
+                                        [attr.data-health]="
+                                            stockHealthOf(c)
+                                        "
+                                    >
+                                        <i
+                                            class="di-comp__stock-dot"
+                                        ></i
+                                        >{{ stockLabelOf(c) }}
+                                    </span>
+                                    <ng-template #stockInconnu
+                                        >—</ng-template
+                                    >
+                                </strong>
+                            </div>
+                            <div class="di-comp__cell">
+                                <span>Date d'arrivage</span>
+                                <strong>{{
+                                    comingDateLabel(c)
+                                }}</strong>
+                            </div>
+                            <div class="di-comp__cell">
+                                <span>PU achat</span>
+                                <strong class="di-mono">{{
+                                    fmtMoney(c.prixAchat)
+                                }}</strong>
+                            </div>
+                            <div class="di-comp__cell">
+                                <span>PU vente</span>
+                                <strong class="di-mono">{{
+                                    fmtMoney(c.prixVente)
+                                }}</strong>
+                            </div>
+                            <div
+                                class="di-comp__cell di-comp__cell--total"
+                            >
+                                <span>Total ligne</span>
+                                <strong class="di-mono">{{
+                                    fmtMoney(c.lineTotal)
+                                }}</strong>
+                            </div>
+                        </div>
+
+                        <footer
+                            class="di-comp__card-foot"
+                            *ngIf="c.pdf || c.link || c.isUpdated"
+                        >
+                            <a
+                                class="di-doc"
+                                *ngIf="c.pdf"
+                                [href]="composantPdfHref(c)"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <span class="di-doc__ico">
+                                    <i class="pi pi-file-pdf"></i>
+                                </span>
+                                <span class="di-doc__name"
+                                    >Fiche technique</span
+                                >
+                            </a>
+                            <a
+                                class="di-doc"
+                                *ngIf="c.link"
+                                [href]="c.link"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <span class="di-doc__ico">
+                                    <i class="pi pi-external-link"></i>
+                                </span>
+                                <span class="di-doc__name"
+                                    >Lien fournisseur</span
+                                >
+                            </a>
+                            <span
+                                class="di-comp__flag"
+                                *ngIf="c.isUpdated"
+                            >
+                                <i class="pi pi-check"></i> Traité par
+                                le magasin
+                            </span>
+                        </footer>
+
+                        <p
+                            class="di-comp__orphan"
+                            *ngIf="!c.found && !catalogLoading"
+                        >
+                            Composant absent du catalogue : seuls le nom
+                            saisi sur le dossier et la quantité sont
+                            connus.
+                        </p>
+                    </article>
+
+                    <div class="di-comp__total">
+                        <span
+                            >Total composants ·
+                            {{ selectedCycleLabel }}</span
+                        >
+                        <strong class="di-mono">{{
+                            fmtMoney(composantLinesTotal)
+                        }}</strong>
+                    </div>
+                </div>
+                <p class="di-comp__note" *ngIf="composantLinesPartial">
+                    Total calculé sur {{ composantLinesPriced }} ligne(s)
+                    sur {{ composantLines.length }} — les autres n'ont
+                    pas de prix de vente au catalogue.
+                </p>
+            </section>
+
+            <section
+                class="di-sec avoid-break"
+                *ngIf="!composantLines.length"
+            >
+                <div class="di-label">Composants</div>
+                <p class="di-empty">Aucun composant pour ce cycle.</p>
+            </section>
+
+            <!-- Remarques, commentaire et photo : PLEINE LARGEUR sous les deux
+                 colonnes, en grille de cartes ; un texte long est replié à
+                 4 lignes (« Voir plus ») pour que le bloc tienne sans défiler. -->
+            <section class="di-sec di-notes avoid-break" *ngIf="hasAnyNote">
+                <div class="di-label">
+                    Remarques
+                    <span
+                        class="di-origin"
+                        *ngIf="originLabel('remarque_tech_diagnostic') as o"
+                        >{{ o }}</span
+                    >
+                </div>
+                <div class="di-notes__grid">
+                    <div class="di-remark di-remark--admin" *ngIf="activeRemarques.admin">
+                        <div class="di-remark__head">Remarque administration</div>
+                        <ng-container
+                            *ngTemplateOutlet="noteBody; context: { $implicit: activeRemarques.admin, key: 'admin' }"
+                        ></ng-container>
+                    </div>
+
+                    <div class="di-remark di-remark--diag" *ngIf="activeRemarques.diag">
+                        <div class="di-remark__head">Remarque tech diagnostique</div>
+                        <ng-container *ngIf="!activeDiagSplit.remarque">
+                            <ng-container
+                                *ngTemplateOutlet="noteBody; context: { $implicit: activeDiagSplit.description, key: 'diag' }"
+                            ></ng-container>
+                        </ng-container>
+                        <ng-container *ngIf="activeDiagSplit.remarque">
+                            <div class="di-remark__part" *ngIf="activeDiagSplit.description">
+                                <div class="di-remark__sub">Description de la panne</div>
+                                <ng-container
+                                    *ngTemplateOutlet="noteBody; context: { $implicit: activeDiagSplit.description, key: 'diagDesc' }"
+                                ></ng-container>
+                            </div>
+                            <div class="di-remark__part">
+                                <div class="di-remark__sub">Remarque technicien</div>
+                                <ng-container
+                                    *ngTemplateOutlet="noteBody; context: { $implicit: activeDiagSplit.remarque, key: 'diagRem' }"
+                                ></ng-container>
+                            </div>
+                        </ng-container>
+                    </div>
+
+                    <div class="di-remark di-remark--rep" *ngIf="activeRemarques.rep">
+                        <div class="di-remark__head">Remarque tech réparation</div>
+                        <ng-container
+                            *ngTemplateOutlet="noteBody; context: { $implicit: activeRemarques.rep, key: 'rep' }"
+                        ></ng-container>
+                    </div>
+
+                    <!-- Remarques que les trois cartes ci-dessus n'affichent pas. -->
+                    <div class="di-remark" *ngFor="let r of extraRemarques">
+                        <div class="di-remark__head">{{ r.label }}</div>
+                        <ng-container
+                            *ngTemplateOutlet="noteBody; context: { $implicit: r.value, key: 'x:' + r.label }"
+                        ></ng-container>
+                    </div>
+
+                    <div class="di-remark di-remark--comment" *ngIf="activeComment">
+                        <div class="di-remark__head">Commentaire</div>
+                        <ng-container
+                            *ngTemplateOutlet="noteBody; context: { $implicit: activeComment, key: 'comment' }"
+                        ></ng-container>
+                    </div>
+
+                    <!-- Photo du problème — fichier Drive PRIVÉ, servi par le
+                         proxy back (`GET /di/:id/image`). -->
+                    <div
+                        class="di-remark di-notes__photo no-print"
+                        *ngIf="imageProxyUrl || imageViewUrl"
+                    >
+                        <app-di-image
+                            [imageUrl]="imageProxyUrl"
+                            [viewUrl]="imageViewUrl"
+                        ></app-di-image>
+                    </div>
+                </div>
+
+                <ng-template #noteBody let-text let-key="key">
+                    <div
+                        class="di-remark__body"
+                        [class.di-remark__body--clamp]="isLongNote(text) && !isNoteOpen(key)"
+                    >{{ text }}</div>
+                    <button
+                        type="button"
+                        class="di-remark__more no-print"
+                        *ngIf="isLongNote(text)"
+                        (click)="toggleNote(key)"
+                    >
+                        {{ isNoteOpen(key) ? "Voir moins" : "Voir plus" }}
+                    </button>
+                </ng-template>
+            </section>
+
             </ng-container>
 
-            <!-- ══════════ ONGLET 4 — FINANCES (tableau inchangé) ══════════ -->
+            <!-- ══════════ ONGLET 4 — FINANCES ══════════ -->
             <ng-container *ngIf="activeTab === 'finances'">
             <!-- ── Finances (pleine largeur) ─────────────────── -->
             <section class="di-finance avoid-break">
@@ -905,6 +704,7 @@
                     <div class="di-fin-head">
                         <span>Phase</span>
                         <span>Coût réel</span>
+                        <span>Composants</span>
                         <span>Facturé</span>
                         <span>Écart</span>
                     </div>
@@ -916,6 +716,9 @@
                         <span class="di-fin-phase">{{ f.phase }}</span>
                         <span class="di-mono">{{
                             f.coutReel == null ? "—" : formatTnd3(f.coutReel)
+                        }}</span>
+                        <span class="di-mono">{{
+                            f.composants == null ? "—" : formatTnd3(f.composants)
                         }}</span>
                         <span
                             class="di-mono"
@@ -947,7 +750,9 @@
                                 >
                                     {{ f.ecart.montant >= 0 ? "+" : ""
                                     }}{{ formatTnd3(f.ecart.montant) }}
-                                    <span class="di-fin-pct"
+                                    <span
+                                        class="di-fin-pct"
+                                        *ngIf="f.ecart.percent != null"
                                         >({{ f.ecart.montant >= 0 ? "+" : ""
                                         }}{{
                                             f.ecart.percent | number: "1.0-1"
@@ -964,64 +769,10 @@
                         ><strong>Diagnostic non payant</strong> — le coût réel
                         reste un coût interne assumé, non facturé au client.<br
                     /></span>
-                    Réparation non facturée séparément — seule une estimation
-                    existe ({{
-                        di?.repairEstimate == null
-                            ? "—"
-                            : formatTnd3(di?.repairEstimate)
-                    }}), pas de prix de réparation facturé en base. Écart calculé
-                    contre max(plancher 150&nbsp;TND, coût réel).
-                </div>
-            </section>
-
-            <!-- Estimations saisies à la création / tarification, en regard du
-                 réel : elles existaient en base sans jamais être affichées. -->
-            <section class="di-sec avoid-break">
-                <div class="di-label">Estimations &amp; prix enregistrés</div>
-                <div class="di-kv">
-                    <div class="di-kv__row">
-                        <span>Estimation diagnostic</span>
-                        <strong>{{ fmtMoney(di?.diagnosticEstimate) }}</strong>
-                    </div>
-                    <div class="di-kv__row">
-                        <span>Prix diagnostic facturé</span>
-                        <strong>{{ fmtMoney(di?.price) }}</strong>
-                    </div>
-                    <div class="di-kv__row">
-                        <span>Estimation réparation</span>
-                        <strong>{{ fmtMoney(di?.repairEstimate) }}</strong>
-                    </div>
-                    <div class="di-kv__row">
-                        <span>Prix final</span>
-                        <strong>{{ fmtMoney(di?.final_price) }}</strong>
-                    </div>
-                    <div class="di-kv__row">
-                        <span>Diagnostic payant</span>
-                        <strong>{{ di?.diagnosticPayant === false ? "Non" : "Oui" }}</strong>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Volet commercial — persisté sur la DI, jamais montré jusqu'ici. -->
-            <section class="di-sec avoid-break" *ngIf="hasCommercial">
-                <div class="di-label">Commercial</div>
-                <div class="di-kv">
-                    <div class="di-kv__row" *ngIf="di?.discount != null">
-                        <span>Remise (%)</span>
-                        <strong>{{ di?.discount }}</strong>
-                    </div>
-                    <div class="di-kv__row" *ngIf="di?.discount_value != null">
-                        <span>Remise (valeur)</span>
-                        <strong>{{ fmtMoney(di?.discount_value) }}</strong>
-                    </div>
-                    <div class="di-kv__row" *ngIf="di?.type_client">
-                        <span>Type de client</span>
-                        <strong>{{ di?.type_client }}</strong>
-                    </div>
-                    <div class="di-kv__row" *ngIf="di?.service_quality">
-                        <span>Qualité de service</span>
-                        <strong>{{ di?.service_quality }}</strong>
-                    </div>
+                    Coût réel = temps × taux horaire (calcul ERP). Composants =
+                    Σ prix de vente × quantité. Facturé = montants saisis (prix
+                    diagnostic, estimation réparation). Écart = Facturé − (Coût
+                    réel + Composants).
                 </div>
             </section>
             </ng-container>
@@ -1261,126 +1012,395 @@
                 </div>
             </ng-container>
 
-            <!-- ══════════ ONGLET 2 — JOURNAL ══════════ -->
+            <!-- ══════════ ONGLET 2 — TEMPS & CHRONO ══════════ -->
             <ng-container *ngIf="activeTab === 'temps'">
                 <div class="di-loading" *ngIf="timeLoading">
                     <i class="pi pi-spin pi-spinner"></i> Chargement du journal de travail…
                 </div>
 
-                <section class="di-sec avoid-break">
-                    <div class="di-label">Cumuls du cycle affiché</div>
-                    <div class="di-kv">
-                        <div class="di-kv__row">
-                            <span>Diagnostic</span>
-                            <strong>{{ tempsDiagLabel }}</strong>
-                        </div>
-                        <div class="di-kv__row">
-                            <span>Réparation</span>
-                            <strong>{{ tempsRepLabel }}</strong>
-                        </div>
-                        <div class="di-kv__row" *ngIf="hasOpenLeg">
-                            <span>Chrono en cours depuis</span>
-                            <strong>{{
-                                fmtDate(
-                                    statDetail?.diagRunStartedAt ||
-                                        statDetail?.repRunStartedAt
-                                )
-                            }}</strong>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="di-sec avoid-break" *ngIf="diagSegments.length">
+                <!-- Parcours du dossier : lecture SIMPLE (état, 5 grandes
+                     étapes, temps par phase, passages). Le détail à la seconde
+                     (horodatages serveur) reste disponible, replié. -->
+                <section class="di-sec avoid-break di-flow">
                     <div class="di-label di-label--inline">
-                        Segments de travail — diagnostic
-                        <span class="di-pill">{{ diagSegments.length }}</span>
+                        Parcours du dossier
+                        <span
+                            class="di-origin"
+                            *ngIf="flowSlice.inferredStart"
+                            title="L'historique ne contient pas l'entrée « Retour » de ce cycle : son début est estimé à l'ouverture du dossier de retour."
+                            >début estimé</span
+                        >
                     </div>
-                    <p class="di-note">
-                        Chaque segment est fermé par le serveur : c'est la pièce
-                        justificative du temps facturé.
+
+                    <p class="di-empty" *ngIf="!statusFlow.steps.length">
+                        Aucun changement de statut enregistré pour ce cycle<ng-container
+                            *ngIf="flowSlice.unknownStart"
+                        >
+                            (début du cycle inconnu)</ng-container
+                        >.
                     </p>
-                    <div class="di-table">
-                        <div class="di-table__head">
-                            <span>Début</span><span>Fin</span><span>Durée</span>
+
+                    <ng-container *ngIf="statusFlow.steps.length">
+                        <ng-container *ngIf="flowOverview as ov">
+                            <!-- 1. Où en est le dossier -->
+                            <div class="di-flow-head">
+                                <ng-container
+                                    *ngTemplateOutlet="flowStateTpl; context: { $implicit: ov }"
+                                ></ng-container>
+                                <span>
+                                    Durée totale
+                                    <strong>{{ fmtDur(ov.totalMs) }}</strong>
+                                    <ng-container *ngIf="ov.longest as lg">
+                                        · Le plus long :
+                                        <strong>{{ lg.label }}</strong> ({{
+                                            lg.shareLabel
+                                        }})</ng-container
+                                    >
+                                    <ng-container *ngIf="ov.afterEndMs !== null">
+                                        · retour ouvert
+                                        {{ fmtDur(ov.afterEndMs) }} plus tard</ng-container
+                                    >
+                                </span>
+                            </div>
+
+                            <!-- 2. Pauses du cycle : compteur + détail de chaque pause, une carte
+                                 par étape (le tableau « Temps passé par étape » a été retiré). -->
+                            <ng-container *ngIf="ov.bars.length">
+                                <div class="di-label di-label--sm">Pauses</div>
+
+                                <!-- Compteur de pauses du cycle : combien, combien de temps,
+                                     la plus longue, et par étape. Calculé par
+                                     `buildPhaseTable` (pauseSummary). -->
+                                <div class="di-pause-sum" *ngIf="phaseTable.pauseSummary as ps">
+                                    <ng-container *ngIf="ps.count; else noCyclePause">
+                                        <div class="di-pause-sum__tiles">
+                                            <div class="di-pause-sum__tile">
+                                                <span class="di-pause-sum__k">Nombre de pauses</span>
+                                                <span class="di-pause-sum__v">{{ ps.count }}</span>
+                                            </div>
+                                            <div class="di-pause-sum__tile">
+                                                <span class="di-pause-sum__k">Temps total en pause</span>
+                                                <span class="di-pause-sum__v">{{ fmtGap(ps.totalMs) }}</span>
+                                            </div>
+                                            <div class="di-pause-sum__tile" *ngIf="ps.longestMs !== null">
+                                                <span class="di-pause-sum__k">Pause la plus longue</span>
+                                                <span class="di-pause-sum__v">{{ fmtGap(ps.longestMs) }}</span>
+                                            </div>
+                                        </div>
+                                        <ul class="di-pause-sum__phases">
+                                            <li *ngFor="let b of ps.byPhase" [attr.data-group]="b.group">
+                                                <i aria-hidden="true"></i>
+                                                <span
+                                                    ><strong>{{ b.label }}</strong> : {{ b.count }} pause{{
+                                                        b.count > 1 ? "s" : ""
+                                                    }}
+                                                    · {{ fmtGap(b.ms) }} en pause ({{ b.shareLabel }} de
+                                                    l'étape)</span
+                                                >
+                                            </li>
+                                            <li class="di-pause-sum__live" *ngIf="ps.ongoing as op">
+                                                <i class="pi pi-pause-circle" aria-hidden="true"></i>
+                                                <span
+                                                    >Pause en cours depuis le {{ fmtDateS(op.startAt) }} ({{
+                                                        fmtGap(op.ms)
+                                                    }})</span
+                                                >
+                                            </li>
+                                        </ul>
+                                    </ng-container>
+                                    <ng-template #noCyclePause>
+                                        <p class="di-pause-sum__none">
+                                            <i class="pi pi-pause-circle" aria-hidden="true"></i>
+                                            Aucune pause sur ce cycle.
+                                        </p>
+                                    </ng-template>
+                                </div>
+                                <ng-container *ngFor="let r of phaseTable.rows">
+                                    <!-- Une carte par étape : chaque pause (mise en pause → reprise,
+                                         durée), total, plus longue, part de l'étape. -->
+                                    <div
+                                        class="di-pauses"
+                                        *ngIf="r.pauses.length"
+                                        [attr.data-group]="r.group"
+                                    >
+                                        <div class="di-pauses__summary">
+                                            <i class="pi pi-pause-circle" aria-hidden="true"></i>
+                                            <span
+                                                ><strong
+                                                    >{{ r.pauses.length }} pause{{
+                                                        r.pauses.length > 1 ? "s" : ""
+                                                    }}</strong
+                                                >
+                                                en {{ r.label | lowercase }}</span
+                                            >
+                                            <span
+                                                >· temps total en pause
+                                                <strong>{{ fmtGap(r.pauseMs) }}</strong></span
+                                            >
+                                            <span *ngIf="r.pauses.length > 1 && r.longestPauseMs !== null"
+                                                >· la plus longue
+                                                <strong>{{ fmtGap(r.longestPauseMs) }}</strong></span
+                                            >
+                                            <span
+                                                >· soit <strong>{{ r.pauseShareLabel }}</strong> du temps de
+                                                l'étape</span
+                                            >
+                                        </div>
+                                        <div class="di-pauses__table">
+                                            <div class="di-pauses__head">
+                                                <span>N°</span>
+                                                <span>Mise en pause</span>
+                                                <span>Reprise</span>
+                                                <span>Durée</span>
+                                            </div>
+                                            <div class="di-pauses__row" *ngFor="let p of r.pauses">
+                                                <span class="di-mono">Pause {{ p.index }}</span>
+                                                <span class="di-mono">{{ fmtDateS(p.startAt) }}</span>
+                                                <span class="di-mono">
+                                                    <ng-container *ngIf="p.endAt; else pauseOpen">{{
+                                                        fmtDateS(p.endAt)
+                                                    }}</ng-container>
+                                                </span>
+                                                <span class="di-mono">
+                                                    <strong>{{
+                                                        p.ms === null ? "durée inconnue" : fmtGap(p.ms)
+                                                    }}</strong>
+                                                    <span
+                                                        class="di-origin di-origin--warn"
+                                                        *ngIf="p.long"
+                                                        title="Pause de plus de 48 h"
+                                                        >long</span
+                                                    >
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </ng-container>
+                                <ng-template #pauseOpen
+                                    ><span class="di-pauses__live">en pause</span></ng-template
+                                >
+                            </ng-container>
+                        </ng-container>
+
+                        <p class="di-note di-note--warn" *ngIf="statusFlow.currentMismatch">
+                            <i class="pi pi-exclamation-triangle"></i>
+                            <span
+                                >Le statut actuel « {{ statusLabel(di?.status) }} »
+                                n'apparaît pas dans l'historique : la durée de la
+                                dernière étape est inconnue.</span
+                            >
+                        </p>
+
+                        <!-- 4. Détail technique : chaque changement, à la seconde -->
+                        <button
+                            type="button"
+                            class="di-steps__more di-flow-detail__toggle no-print"
+                            [attr.aria-expanded]="flowExpanded"
+                            (click)="toggleFlow()"
+                        >
+                            <i
+                                class="pi"
+                                [class.pi-chevron-down]="!flowExpanded"
+                                [class.pi-chevron-up]="flowExpanded"
+                            ></i>
+                            {{
+                                flowExpanded
+                                    ? "Masquer le détail technique"
+                                    : "Détail technique · " +
+                                      statusFlow.steps.length +
+                                      (statusFlow.steps.length > 1
+                                          ? " changements"
+                                          : " changement")
+                            }}
+                        </button>
+
+                        <div class="di-flow-detail" *ngIf="flowExpanded">
+                        <p class="di-note">
+                            Du
+                            <strong class="di-mono">{{
+                                fmtDateS(statusFlow.startAt)
+                            }}</strong>
+                            au
+                            <strong class="di-mono">{{
+                                statusFlow.ongoing
+                                    ? "maintenant"
+                                    : fmtDateS(statusFlow.endAt)
+                            }}</strong>
+                            · amplitude <strong>{{ fmtGap(statusFlow.spanMs) }}</strong>.
+                            Chaque écart est mesuré entre deux horodatages du
+                            serveur, à la seconde.
+                        </p>
+
+                        <div class="di-steps">
+                            <div
+                                class="di-step"
+                                *ngFor="let s of statusFlow.steps; trackBy: trackStep"
+                            >
+                                <span
+                                    class="di-step__marker di-step__marker--flow"
+                                    [attr.data-group]="s.group"
+                                    [class.di-step__marker--pause]="s.isPause"
+                                    [class.di-step__marker--live]="s.ongoing"
+                                ></span>
+                                <div class="di-step__body">
+                                    <div class="di-step__top">
+                                        <span class="di-step__status"
+                                            >{{ s.label }}
+                                            <code class="di-code" *ngIf="showRawCode(s)">{{
+                                                s.status
+                                            }}</code>
+                                            <span
+                                                class="di-origin"
+                                                *ngIf="s.dupCount > 1"
+                                                title="Statut réécrit {{
+                                                    s.dupCount
+                                                }} fois de suite par le serveur — fusionné en une seule étape"
+                                                >×{{ s.dupCount }}</span
+                                            >
+                                            <span
+                                                class="di-origin"
+                                                *ngIf="s.reconstructed"
+                                                title="Date déduite de la création et du dernier changement de statut, pas observée en direct"
+                                                >reconstruit</span
+                                            ></span
+                                        >
+                                        <span class="di-step__date di-mono">{{
+                                            fmtDateS(s.enteredAt)
+                                        }}</span>
+                                    </div>
+                                    <div
+                                        class="di-step__dur"
+                                        [class.di-step__dur--anom]="s.long"
+                                        [class.di-step__dur--ongoing]="s.ongoing"
+                                        [ngSwitch]="s.endKind"
+                                    >
+                                        <ng-container *ngSwitchCase="'next'"
+                                            >↓ écart {{ fmtGap(s.ms) }}</ng-container
+                                        >
+                                        <ng-container *ngSwitchCase="'boundary'"
+                                            >↓ {{ fmtGap(s.ms) }} jusqu'à l'ouverture du
+                                            cycle suivant</ng-container
+                                        >
+                                        <ng-container *ngSwitchCase="'ongoing'"
+                                            >en cours · {{ fmtGap(s.ms) }}</ng-container
+                                        >
+                                        <ng-container *ngSwitchCase="'terminal'"
+                                            >statut final</ng-container
+                                        >
+                                        <ng-container *ngSwitchDefault
+                                            >durée inconnue (aucune transition suivante
+                                            enregistrée)</ng-container
+                                        >
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="di-table__row" *ngFor="let g of diagSegments">
-                            <span class="di-mono">{{ fmtDate(g.startedAt) }}</span>
-                            <span class="di-mono">{{ fmtDate(g.stoppedAt) }}</span>
-                            <span>{{ segmentDuration(g) }}</span>
                         </div>
-                    </div>
+                    </ng-container>
                 </section>
 
-                <section class="di-sec avoid-break" *ngIf="repSegments.length">
-                    <div class="di-label di-label--inline">
-                        Segments de travail — réparation
-                        <span class="di-pill">{{ repSegments.length }}</span>
-                    </div>
-                    <div class="di-table">
-                        <div class="di-table__head">
-                            <span>Début</span><span>Fin</span><span>Durée</span>
+                <!-- Les chronos diagnostic / réparation (segments serveur) ont été
+                     retirés de l'onglet ; `chrono` reste calculé pour l'export PDF. -->
+                <ng-container *ngIf="chrono as ch">
+                    <!-- Affectations diagnostic : qui a travaillé combien -->
+                    <section class="di-sec avoid-break" *ngIf="ch.assignments.rows.length">
+                        <div class="di-label di-label--inline">
+                            Affectations diagnostic
+                            <span class="di-pill">{{ ch.assignments.rows.length }}</span>
                         </div>
-                        <div class="di-table__row" *ngFor="let g of repSegments">
-                            <span class="di-mono">{{ fmtDate(g.startedAt) }}</span>
-                            <span class="di-mono">{{ fmtDate(g.stoppedAt) }}</span>
-                            <span>{{ segmentDuration(g) }}</span>
+                        <div class="di-table di-table--5 di-table--stack">
+                            <div class="di-table__head">
+                                <span>Technicien</span>
+                                <span>Affecté le</span>
+                                <span>Fin d'affectation</span>
+                                <span
+                                    title="Temps de diagnostic déjà enregistré sur ce cycle quand le technicien a été affecté"
+                                    >Déjà cumulé à l'affectation</span
+                                >
+                                <span title="Temps ajouté au cumul par ce technicien"
+                                    >Temps travaillé</span
+                                >
+                            </div>
+                            <div class="di-table__row" *ngFor="let a of ch.assignments.rows">
+                                <span data-label="Technicien">{{ a.tech }}</span>
+                                <span data-label="Affecté le" class="di-mono">{{
+                                    fmtDateS(a.assignedAt)
+                                }}</span>
+                                <span data-label="Fin d'affectation">
+                                    <ng-container *ngIf="a.abandonedAt; else noAbandon">
+                                        <span class="di-mono"
+                                            >Abandon le {{ fmtDateS(a.abandonedAt) }}</span
+                                        >
+                                        <small
+                                            class="di-cell-sub"
+                                            *ngIf="a.motif || a.abandonedBy"
+                                            >{{ a.motif ? "motif : " + a.motif : ""
+                                            }}{{ a.motif && a.abandonedBy ? " · " : ""
+                                            }}{{
+                                                a.abandonedBy ? "par " + a.abandonedBy : ""
+                                            }}</small
+                                        >
+                                    </ng-container>
+                                    <ng-template #noAbandon>Aucun abandon</ng-template>
+                                </span>
+                                <span data-label="Déjà cumulé" class="di-mono">{{
+                                    fmtWork(a.alreadyMs)
+                                }}</span>
+                                <span data-label="Temps travaillé">
+                                    <span class="di-mono">{{ fmtWork(a.workedMs) }}</span>
+                                    <small class="di-cell-sub" *ngIf="a.running"
+                                        >chrono en cours</small
+                                    >
+                                    <small
+                                        class="di-cell-sub"
+                                        *ngIf="a.workedSource === 'computed' && !a.anomaly"
+                                        >calculé</small
+                                    >
+                                    <span
+                                        class="di-origin di-origin--warn"
+                                        *ngIf="a.anomaly"
+                                        [title]="a.anomaly"
+                                        >à vérifier</span
+                                    >
+                                </span>
+                            </div>
+                            <div
+                                class="di-table__row di-table__row--total"
+                                *ngIf="ch.assignments.totalWorkedMs !== null"
+                            >
+                                <span>Σ temps travaillés</span>
+                                <span></span>
+                                <span></span>
+                                <span data-label="Cumul du cycle" class="di-mono"
+                                    >cumul {{ fmtWork(ch.assignments.storedMs) }}</span
+                                >
+                                <span data-label="Σ temps travaillés" class="di-mono">{{
+                                    fmtWork(ch.assignments.totalWorkedMs)
+                                }}</span>
+                            </div>
                         </div>
-                    </div>
-                </section>
-
-                <section class="di-sec avoid-break" *ngIf="pauseLogs.length">
-                    <div class="di-label di-label--inline">
-                        Pauses
-                        <span class="di-pill">{{ pauseLogs.length }}</span>
-                    </div>
-                    <div class="di-table">
-                        <div class="di-table__head">
-                            <span>Type</span><span>Début</span><span>Fin</span>
-                        </div>
-                        <div class="di-table__row" *ngFor="let p of pauseLogs">
-                            <span>{{ p.pauseType === "rep" ? "Réparation" : "Diagnostic" }}</span>
-                            <span class="di-mono">{{ fmtDate(p.pauseStart) }}</span>
-                            <span class="di-mono">{{
-                                p.pauseEnd ? fmtDate(p.pauseEnd) : "en cours"
-                            }}</span>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="di-sec avoid-break" *ngIf="statAssignments.length">
-                    <div class="di-label">Affectations diagnostic (détail)</div>
-                    <div class="di-table di-table--5">
-                        <div class="di-table__head">
-                            <span>Technicien</span><span>Affecté</span><span>Abandon</span>
-                            <span>Cumul au départ</span><span>Contribution</span>
-                        </div>
-                        <div class="di-table__row" *ngFor="let a of statAssignments">
-                            <span>{{ displayName(a.tech) }}</span>
-                            <span class="di-mono">{{ fmtDate(a.assignedAt) }}</span>
-                            <span class="di-mono">{{
-                                a.abandonedAt ? fmtDate(a.abandonedAt) : "—"
-                            }}</span>
-                            <span class="di-mono">{{ a.diagTimeStart || "—" }}</span>
-                            <span class="di-mono">{{ a.diagTime || "—" }}</span>
-                        </div>
-                    </div>
-                </section>
+                    </section>
+                </ng-container>
 
                 <section class="di-sec avoid-break" *ngIf="cycleStats.length">
                     <div class="di-label">Récapitulatif par cycle</div>
-                    <div class="di-table di-table--5">
+                    <div class="di-table di-table--5 di-table--stack">
                         <div class="di-table__head">
                             <span>Cycle</span><span>Diagnostic</span><span>Réparation</span>
                             <span>Tech. diag</span><span>Tech. répa</span>
                         </div>
                         <div class="di-table__row" *ngFor="let c of cycleStats">
-                            <span>{{
+                            <span data-label="Cycle">{{
                                 c.ignoreCount ? "Retour " + c.ignoreCount : "Flux original"
                             }}</span>
-                            <span class="di-mono">{{ c.diag_time || "—" }}</span>
-                            <span class="di-mono">{{ c.rep_time || "—" }}</span>
-                            <span>{{ displayName(c.techDiag) }}</span>
-                            <span>{{ displayName(c.techRep) }}</span>
+                            <span data-label="Diagnostic" class="di-mono" [title]="c.diag_time || ''">{{
+                                cumulLabel(c.diag_time)
+                            }}</span>
+                            <span data-label="Réparation" class="di-mono" [title]="c.rep_time || ''">{{
+                                cumulLabel(c.rep_time)
+                            }}</span>
+                            <span data-label="Tech. diag">{{ displayName(c.techDiag) }}</span>
+                            <span data-label="Tech. répa">{{ displayName(c.techRep) }}</span>
                         </div>
                     </div>
                 </section>
@@ -1398,9 +1418,9 @@
 
                 <section class="di-sec avoid-break">
                     <div class="di-label">Documents — dépôt</div>
-                    <div class="di-table">
+                    <div class="di-table di-table--2">
                         <div class="di-table__head">
-                            <span>Document</span><span>Déposé le</span><span>Par</span>
+                            <span>Document</span><span>Déposé le</span>
                         </div>
                         <div class="di-table__row" *ngFor="let d of docSlots">
                             <span>
@@ -1409,13 +1429,13 @@
                                 </a>
                                 <em *ngIf="!d.href">{{ d.label }} — absent</em>
                             </span>
-                            <span class="di-mono">{{ docTrace(d.type)?.date || "—" }}</span>
-                            <span>{{ displayName(docTrace(d.type)?.actor) }}</span>
+                            <span class="di-mono">{{ d.date || "—" }}</span>
                         </div>
                     </div>
                     <p class="di-note">
-                        Date et auteur sont reconstitués depuis le journal ERP : le
-                        stockage Drive ne les retient pas.
+                        Date lue dans le nom standard du fichier
+                        (<span class="di-mono">Nom_Type_JJ-MM-AAAA_HH-mm-ss</span>, heure de
+                        Tunis).
                     </p>
                 </section>
 
@@ -1529,3 +1549,31 @@
         </footer>
     </div>
 </p-dialog>
+
+<!-- État du dossier en une pastille — partagé par l'onglet Dossier et
+     « Temps & chrono » (déclaré à la racine pour être visible des deux). -->
+<ng-template #flowStateTpl let-ov>
+    <span
+        class="di-flow-state"
+        [attr.data-state]="ov.state"
+        [attr.data-status]="ov.lastStatus"
+        [ngSwitch]="ov.state"
+    >
+        <ng-container *ngSwitchCase="'finished'"
+            ><i class="pi pi-check-circle"></i>{{ ov.lastLabel }} le
+            {{ fmtDate(ov.lastAt) }}</ng-container
+        >
+        <ng-container *ngSwitchCase="'cancelled'"
+            ><i class="pi pi-ban"></i>{{ ov.lastLabel }} le
+            {{ fmtDate(ov.lastAt) }}</ng-container
+        >
+        <ng-container *ngSwitchCase="'ongoing'"
+            ><i class="pi pi-clock"></i>En cours : {{ ov.lastPhase }} depuis
+            {{ fmtDur(ov.sinceMs) }}</ng-container
+        >
+        <ng-container *ngSwitchDefault
+            ><i class="pi pi-minus-circle"></i>Dernier statut : {{ ov.lastLabel }}
+            ({{ fmtDate(ov.lastAt) }})</ng-container
+        >
+    </span>
+</ng-template>

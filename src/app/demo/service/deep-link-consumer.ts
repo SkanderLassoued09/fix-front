@@ -14,6 +14,10 @@ import { takeUntil } from 'rxjs/operators';
  *
  * L'URL est nettoyée dès qu'un deep-link est consommé (`replaceUrl`) pour éviter
  * toute ré-ouverture (les modales pricing/négo MUTENT le statut à l'ouverture).
+ *
+ * `rowless` : actions que la page ouvre À PARTIR DE L'ID seul (elle charge la DI
+ * elle-même) → consommées immédiatement, sans attendre la ligne (jusqu'à 3,2 s
+ * perdues quand la DI n'est pas dans la page chargée).
  */
 export class DeepLinkConsumer {
     private attempts = 0;
@@ -30,6 +34,7 @@ export class DeepLinkConsumer {
             diId: string,
             action: string,
         ) => void,
+        private readonly rowless: readonly string[] = [],
     ) {}
 
     /** À appeler dans `ngOnInit` ; se désabonne via le `destroy$` de la page. */
@@ -53,6 +58,11 @@ export class DeepLinkConsumer {
 
     private tryConsume(diId: string, action: string): void {
         if (this.destroyed) return;
+        if (this.rowless.includes(action)) {
+            this.clearUrl();
+            this.onOpen(null, diId, action);
+            return;
+        }
         const row = (this.getRows() ?? []).find((d: any) => d?._id === diId);
         if (row) {
             this.clearUrl();

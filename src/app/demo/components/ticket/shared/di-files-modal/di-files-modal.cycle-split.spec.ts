@@ -79,6 +79,37 @@ describe('DiFilesModal — « Fichiers principaux » = cycle 0', () => {
         expect(dev.statusLabel).toBe('Disponible');
     });
 
+    it('DI en RETOUR : cartes nommées avec le nom STANDARD des fichiers du cycle 0', () => {
+        // `di.logs` (projection COORDINATOR_DI_FIELDS) porte les `documents` de
+        // chaque ligne de cycle ; `getAllLogsByDi` (finishedData) ne les a pas.
+        const c = make(
+            {
+                ignoreCount: 1,
+                documents: [
+                    { type: 'Devis', name: 'CLIENT_Devis_15-09-2026_11-01-20.pdf', webViewLink: 'https://drive/devis-retour1' },
+                ],
+                logs: [
+                    {
+                        idIgnore: 0,
+                        documents: [
+                            { type: 'Devis', name: 'CLIENT_Devis_15-09-2026_10-28-36.pdf', webViewLink: 'https://drive/devis-origine' },
+                            { type: 'BC', name: 'CLIENT_BC_15-09-2026_10-28-44.pdf', webViewLink: 'https://drive/bc-origine' },
+                        ],
+                    },
+                    { idIgnore: 1, documents: [] },
+                ],
+            },
+            [CYCLE0, CYCLE1],
+        );
+        const byTag = Object.fromEntries(c.affectationMainCards.map((x: any) => [x.tag, x]));
+        expect(byTag['DEV'].title).toBe('CLIENT_Devis_15-09-2026_10-28-36.pdf');
+        expect(byTag['DEV'].href).toBe('https://drive/devis-origine');
+        expect(byTag['BC'].title).toBe('CLIENT_BC_15-09-2026_10-28-44.pdf');
+        // Lien nu sans nom stocké : libellé générique, jamais le nom d'un autre cycle.
+        expect(byTag['FAC'].title).toBe('Facture');
+        expect(c.affectationMainCards.some((x: any) => /11-01-20/.test(x.title))).toBe(false);
+    });
+
     it('DI en retour SANS ligne de cycle 0 : « Manquant », jamais les fichiers du retour', () => {
         // Cas des DI héritées : le cycle 0 n'a jamais été archivé, ses documents
         // sont perdus. Mieux vaut « Manquant » que présenter ceux du retour.

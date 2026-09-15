@@ -22,5 +22,7 @@
     (addPart)="onRepairAddPart()"
     (removePart)="onRepairRemovePart($event)"
     (finishRepair)="onRepairFinish()"
+    [draftRestoredAt]="draftRestoredAt"
+    (discardDraft)="discardDraft.emit()"
 ></app-repair-modal>
 </ng-container>

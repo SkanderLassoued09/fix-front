@@ -43,6 +43,7 @@ import { applyChartTheme } from '../../../../shared/chart-theme';
 import { LayoutService } from '../../../../layout/service/app.layout.service';
 import { NotifyService } from '../../../../shared/ui/notify.service';
 import { ConfirmService } from '../../../../shared/ui/confirm.service';
+import { splitRemarqueDiagnostic } from '../shared/remarque-diagnostic.util';
 
 /** Les 5 étapes du panneau « Contrôles par étape » du modal Coordination. */
 export type CoordFlowStep =
@@ -153,6 +154,11 @@ export class CoordinatorDiListComponent implements OnDestroy {
     remarque_magasin: string;
     remarque_coordinator: string;
     remarqueTech: string;
+    /** `remarque_tech_diagnostic` redécoupé comme le compose le formulaire de
+     *  diagnostic : description de la panne, puis remarque technicien. */
+    get techDiagSplit(): { description: string; remarque: string } {
+        return splitRemarqueDiagnostic(this.remarque_tech_diagnostic);
+    }
     selectedDiLocation: any;
     selectedTechDiagModel: null;
     isConfirmed: any;

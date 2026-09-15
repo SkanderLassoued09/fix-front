@@ -1377,22 +1377,14 @@
                             (click)="showDialogForPricing(rowData)"
                         ></button>
 
-                        <!-- Approval (devis/BC) — split WAITING_DEVIS/WAITING_BC
-                             (+ legacy NEGOTIATION1/ATTENTE_BC_DEVIS non migrés). -->
+                        <!-- Approval (devis/BC) — même règle que le deep-link des
+                             notifications de document (`di-approval.eligibility.ts`). -->
                         <button
-                            *ngIf="
-                                rowData.status === 'WAITING_DEVIS' ||
-                                rowData.status === 'WAITING_BC' ||
-                                rowData.status === 'NEGOTIATION1' ||
-                                rowData.status === 'ATTENTE_BC_DEVIS' ||
-                                (rowData.status === 'IRREPARABLE' &&
-                                    rowData.ignoreCount > 0 &&
-                                    rowData.isErrorFromFixtronix !== true)
-                            "
+                            *ngIf="canOpenApproval(rowData)"
                             pButton
-                            pTooltip="Négociation"
+                            [pTooltip]="approvalActionTooltip(rowData.status)"
                             tooltipPosition="top"
-                            icon="pi pi-dollar"
+                            [icon]="approvalActionIcon(rowData.status)"
                             class="sav-icon-btn sav-icon-btn--warn"
                             (click)="showDialogForNegociate1(rowData)"
                         ></button>
@@ -2186,10 +2178,7 @@
              toggle ne les concerne pas. Ne change PAS le routage.
              Bande pleine largeur, HORS de la grille des étapes : en cellule de
              grille, elle poussait l'étape 1 à droite et l'étape 2 seule dessous. -->
-        <div
-            *ngIf="ignoreCountPricing > 0 && isErrorFromFixtronix !== true && !isIrreparable"
-            class="pricing-facturer"
-        >
+        <div *ngIf="showPricingPayantToggle" class="pricing-facturer">
             <div class="pricing-facturer__text">
                 <span class="pricing-facturer__label">Facturer le diagnostic&nbsp;?</span>
                 <span class="pricing-facturer__hint">
@@ -2252,7 +2241,11 @@
                 >
                     Estimation à la création :
                     <strong>{{ formatTnd3(pricingDiagnosticEstimate) }}</strong>
-                    — prix verrouillé (non modifiable).
+                    {{
+                        diagPriceFromEstimate
+                            ? "— prix verrouillé (non modifiable)."
+                            : "— modifiable."
+                    }}
                 </div>
                 <!-- Avertissement bornes 150–500 : UNIQUEMENT en saisie manuelle
                      SANS estimation (tu quand le prix vient de l'estimation, qui
@@ -2453,73 +2446,253 @@
 <!-- ═══════════════════════════════════════════════
      MODAL — MODIFIER DI
 ════════════════════════════════════════════════ -->
+<!-- Mêmes blocs que « Créer DI » : tout ce qui est saisi à la création est
+     modifiable ici (sauf le statut, qui a ses boutons). Formulaire DÉTACHÉ de
+     la ligne : Annuler ne laisse aucune trace dans le tableau. -->
 <p-dialog
     header="Modifier la DI"
     [(visible)]="updateticketView"
     [modal]="true"
-    [style]="{ width: '480px' }"
+    [style]="{ width: '620px' }"
     [draggable]="false"
+    [resizable]="false"
     styleClass="sav-dialog"
+    (onHide)="cancelUpdateDi()"
 >
-    <ng-template pTemplate="content">
-        <div class="sav-create-form">
-            <input type="hidden" [(ngModel)]="selectedTicket._id" />
+    <form [formGroup]="updateDiForm" class="sav-create-form">
+        <fieldset class="sav-fieldset">
+            <legend>Informations Générales</legend>
 
             <div class="sav-form-row">
-                <label class="sav-label" for="edit-title">Titre</label>
+                <label class="sav-label" for="edit-title"
+                    >Titre <span class="sav-required">*</span></label
+                >
                 <input
-                    type="text"
-                    [(ngModel)]="selectedTicket.title"
-                    pInputText
+                    formControlName="title"
                     id="edit-title"
+                    type="text"
                     class="sav-input"
-                    required
-                    autofocus
+                    placeholder="Titre de la DI"
+                    (keydown)="blockSpecialCharacters($event)"
                 />
             </div>
 
             <div class="sav-form-row">
-                <label class="sav-label" for="edit-desc">Description</label>
+                <label class="sav-label" for="edit-desc"
+                    >Description <span class="sav-required">*</span></label
+                >
                 <textarea
+                    formControlName="description"
                     id="edit-desc"
                     rows="3"
-                    [(ngModel)]="selectedTicket.description"
-                    pInputTextarea
                     class="sav-textarea"
-                    required
+                    placeholder="Décrivez le problème..."
+                    (paste)="onPaste($event)"
+                    (keydown.enter)="$event.preventDefault()"
                 ></textarea>
             </div>
 
             <div class="sav-form-row">
-                <label class="sav-label" for="edit-remarque"
-                    >Remarque Administration</label
-                >
-                <textarea
-                    id="edit-remarque"
-                    rows="2"
-                    [(ngModel)]="selectedTicket.remarque_manager"
-                    pInputTextarea
-                    class="sav-textarea"
-                ></textarea>
+                <label class="sav-label" for="edit-nSerie">N° Série</label>
+                <input
+                    formControlName="nSerie"
+                    id="edit-nSerie"
+                    type="text"
+                    class="sav-input"
+                    placeholder="Numéro de série"
+                />
             </div>
 
-            <div class="sav-dialog-footer">
-                <p-button
-                    (click)="cancelUpdateDi()"
-                    icon="pi pi-times"
-                    label="Annuler"
-                    severity="danger"
-                    [outlined]="true"
-                    size="small"
-                ></p-button>
-                <p-button
-                    (click)="saveUpdateTicket()"
-                    icon="pi pi-check"
-                    label="Enregistrer"
-                    size="small"
-                ></p-button>
+            <div class="sav-form-row">
+                <label class="sav-label" for="edit-location">Emplacement</label>
+                <p-dropdown
+                    id="edit-location"
+                    [options]="locationDropDown"
+                    formControlName="location"
+                    optionLabel="location_name"
+                    optionValue="value"
+                    [showClear]="true"
+                    placeholder="Choisir emplacement"
+                    styleClass="sav-dropdown"
+                    [style]="{ width: '100%' }"
+                >
+                    <ng-template pTemplate="selectedItem" let-location>
+                        <div class="location-option" *ngIf="location">
+                            <span>{{ location.location_name || "—" }}</span>
+                            <span
+                                class="location-occupancy"
+                                [ngClass]="getLocationOccupancyClass(location)"
+                            >
+                                {{ getLocationOccupancyLabel(location) }}
+                            </span>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="item" let-location>
+                        <div class="location-option">
+                            <span>{{ location.location_name || "—" }}</span>
+                            <span
+                                class="location-occupancy"
+                                [ngClass]="getLocationOccupancyClass(location)"
+                            >
+                                {{ getLocationOccupancyLabel(location) }}
+                            </span>
+                        </div>
+                    </ng-template>
+                </p-dropdown>
+            </div>
+        </fieldset>
+
+        <!-- Client / Société -->
+        <div class="sav-radio-row">
+            <span class="sav-label">Type</span>
+            <div class="sav-radio-group">
+                <p-radioButton
+                    formControlName="typeClient"
+                    value="CLIENT"
+                    inputId="rb_edit_client"
+                ></p-radioButton>
+                <label for="rb_edit_client" class="sav-radio-label"
+                    >Client</label
+                >
+
+                <p-radioButton
+                    formControlName="typeClient"
+                    value="COMPANY"
+                    inputId="rb_edit_company"
+                ></p-radioButton>
+                <label for="rb_edit_company" class="sav-radio-label"
+                    >Société</label
+                >
             </div>
         </div>
-    </ng-template>
+
+        <!-- Filtre LOCAL (pas de `onFilter`) : la recherche serveur remplace la
+             liste par des options sans `value`, que la sélection ignore. -->
+        <div
+            class="sav-form-row"
+            *ngIf="updateDiForm.get('typeClient')?.value === 'COMPANY'"
+        >
+            <label class="sav-label"
+                >Société <span class="sav-required">*</span></label
+            >
+            <p-dropdown
+                [options]="companiesListDropDown"
+                formControlName="company_id"
+                optionLabel="company_name"
+                optionValue="value"
+                [filter]="true"
+                filterBy="company_name"
+                [showClear]="true"
+                placeholder="Choisir société"
+                styleClass="sav-dropdown"
+                [style]="{ width: '100%' }"
+            ></p-dropdown>
+        </div>
+
+        <div
+            class="sav-form-row"
+            *ngIf="updateDiForm.get('typeClient')?.value !== 'COMPANY'"
+        >
+            <label class="sav-label"
+                >Client <span class="sav-required">*</span></label
+            >
+            <p-dropdown
+                [options]="clientListDropDown"
+                formControlName="client_id"
+                optionLabel="label"
+                optionValue="value"
+                [showClear]="true"
+                placeholder="Choisir client"
+                styleClass="sav-dropdown"
+                [style]="{ width: '100%' }"
+            ></p-dropdown>
+        </div>
+
+        <div class="sav-form-row">
+            <label class="sav-label" for="edit-remarque"
+                >Remarque Administration</label
+            >
+            <textarea
+                id="edit-remarque"
+                rows="2"
+                pInputTextarea
+                formControlName="remarqueManager"
+                class="sav-textarea"
+                placeholder="Remarque optionnelle..."
+                (keydown.enter)="$event.preventDefault()"
+            ></textarea>
+        </div>
+
+        <div class="sav-form-row">
+            <label class="sav-label">Diagnostic payant ?</label>
+            <p-toggleButton
+                formControlName="diagnosticPayant"
+                onLabel="Payant"
+                offLabel="Non payant (gratuit)"
+                onIcon="pi pi-check"
+                offIcon="pi pi-gift"
+                styleClass="sav-toggle"
+            ></p-toggleButton>
+        </div>
+        <div
+            class="sav-form-row"
+            *ngIf="updateDiForm.get('diagnosticPayant')?.value"
+        >
+            <label class="sav-label" for="edit-diagnosticEstimate"
+                >Estimation du prix du diagnostic (TND)</label
+            >
+            <p-inputNumber
+                inputId="edit-diagnosticEstimate"
+                formControlName="diagnosticEstimate"
+                mode="decimal"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="3"
+                [min]="0"
+                placeholder="ex. 150"
+                styleClass="w-full"
+            ></p-inputNumber>
+        </div>
+
+        <!-- Photo actuelle (proxy back, fichier Drive privé) ; en déposer une
+             nouvelle la remplace à l'enregistrement. -->
+        <div class="sav-form-row">
+            <app-di-image
+                *ngIf="updateticketView && editImageProxyUrl && !editImageDropFile"
+                [imageUrl]="editImageProxyUrl"
+                [viewUrl]="editImageViewUrl"
+            ></app-di-image>
+            <app-pdf-dropzone
+                acceptKind="image"
+                accept="image/*"
+                [title]="
+                    editImageProxyUrl ? 'Remplacer l\'image' : 'Ajouter une image'
+                "
+                thumbIcon="pi pi-image"
+                ariaLabel="Remplacer l'image de la DI"
+                [maxSizeMo]="5"
+                [value]="editImageDropFile"
+                (fileSelected)="onEditImageSelected($event)"
+                (fileRemoved)="onEditImageRemoved()"
+            ></app-pdf-dropzone>
+        </div>
+
+        <div class="sav-dialog-footer">
+            <p-button
+                (onClick)="cancelUpdateDi()"
+                label="Annuler"
+                severity="danger"
+                [outlined]="true"
+                size="small"
+            ></p-button>
+            <p-button
+                (onClick)="saveUpdateTicket()"
+                icon="pi pi-check"
+                label="Enregistrer"
+                size="small"
+                [loading]="savingEditDi"
+                [disabled]="!canSaveEditDi"
+            ></p-button>
+        </div>
+    </form>
 </p-dialog>
 

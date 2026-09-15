@@ -93,7 +93,7 @@ function toNumberOrNull(v: any): number | null {
     return Number.isFinite(n) ? n : null;
 }
 
-/** Arrondi monétaire à 3 décimales (TND), comme `coutRepair` dans le modal. */
+/** Arrondi monétaire à 3 décimales (TND), comme `di-finance.util`. */
 function round3(n: number): number {
     return Math.round(n * 1000) / 1000;
 }

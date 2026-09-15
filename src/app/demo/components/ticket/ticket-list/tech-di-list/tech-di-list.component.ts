@@ -13,6 +13,18 @@ import {
     Validators,
 } from '@angular/forms';
 import { TechRepairListComponent } from '../tech-repair-list/tech-repair-list.component';
+import { RepairStepKey } from '../tech-repair-list/repair-modal/repair-modal.types';
+import {
+    DiagnosticDraftData,
+    RepairDraftData,
+    clearTechDraft,
+    draftContentEquals,
+    loadTechDraft,
+    purgeExpiredTechDrafts,
+    saveTechDraft,
+    toDiagnosticDraft,
+    toRepairDraft,
+} from './tech-form-draft.store';
 import {
     isDiagRunningStatus,
     isRepairRunningStatus,
@@ -106,13 +118,9 @@ interface PersistedTechDialogState {
     autoPaused?: boolean;
     status?: string;
     statSnapshot?: any;
-    diagFormValue?: any;
+    /** Remarque de l'ancien formulaire hôte. La SAISIE des wizards (diagnostic,
+     *  réparation) n'est plus ici : elle vit dans `tech-form-draft.store`. */
     repairFormValue?: any;
-    /** Brouillon du wizard de RÉPARATION (travaux, bascules) + pièces saisies.
-     *  Distinct de `repairFormValue`, qui ne porte que la remarque de l'hôte. */
-    repairWizardValue?: any;
-    repairWizardParts?: any[];
-    composantCombo?: any[];
 }
 
 /** Préremplissage du wizard de réparation (DI) + brouillon restitué. */
@@ -126,6 +134,13 @@ interface RepairWizardPrefill {
     testsDone?: string;
     remarqueExtra?: string;
     parts?: Array<{ nameComposant: string; reference?: string; quantity: number }>;
+    /** Brouillon navigateur restauré : bascules Oui/Non et étape du wizard. */
+    repairSuccess?: boolean | null;
+    testsValidated?: boolean | null;
+    warranty?: boolean | null;
+    step?: RepairStepKey;
+    /** Vrai quand ce préremplissage vient d'un brouillon (saisie non envoyée). */
+    restoredDraft?: boolean;
 }
 
 /**
@@ -155,18 +170,17 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     private hasAttemptedDialogRestore = false;
     private pendingRestoredDialogState: PersistedTechDialogState | null = null;
     /**
-     * Brouillon VIVANT du wizard de réparation, tenu À PART de
-     * `pendingRestoredDialogState` — ce dernier est vidé dès la première
-     * restitution et n'était alimenté qu'au démarrage (lecture du localStorage).
-     * Résultat : fermer puis rouvrir la réparation DANS LA MÊME SESSION ne
-     * restituait rien. Ce brouillon-ci survit à la fermeture jusqu'à la clôture
-     * effective de la réparation.
+     * Brouillons NAVIGATEUR des wizards (`tech-form-draft.store`) : ligne stats
+     * suivie, valeurs serveur à l'ouverture (référence pour « Ignorer le
+     * brouillon » et pour ne jamais enregistrer un brouillon identique au
+     * dossier) et horodatage du brouillon restauré (bandeau du modal).
      */
-    private repairDraft: {
-        diId: string;
-        value: any;
-        parts: any[];
-    } | null = null;
+    private diagDraftStatId: string | null = null;
+    private diagDraftBaseline: DiagnosticDraftData | null = null;
+    diagDraftRestoredAt: number | null = null;
+    private repairDraftStatId: string | null = null;
+    private repairDraftBaseline: RepairDraftData | null = null;
+    repairDraftRestoredAt: number | null = null;
     // Part 4 — lifecycle auto-pause. `autoPausedByLifecycle` tracks an in-memory
     // pause we triggered on page-hide so we can auto-resume on return.
     // `dialogAutoPaused` is the flag we persist so a refresh-restore also resumes.
@@ -494,6 +508,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.diDialogRep = false;
             this.repairDiInputVm = null;
         } else {
+            // Dernière sauvegarde du brouillon diagnostic avant que le formulaire
+            // partagé ne serve à la réparation.
+            this.detachDiagnosticDraft();
             // Tear down any open diagnostic modal. We can't rely on
             // `selectedDi` here because the caller (`repModal`) has already
             // reassigned it to the repair DI's id by the time we run, so
@@ -667,27 +684,214 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         return !!this.showRepairModal && !!this.repairWizard?.hasUnsavedWork;
     }
 
+    // ─── Brouillons navigateur : la saisie non envoyée survit au rafraîchissement ───
+
+    /** Technicien connecté : cloisonne les brouillons sur un poste partagé. */
+    private get draftTechId(): string | null {
+        try {
+            return (
+                localStorage.getItem('_id') || localStorage.getItem('username')
+            );
+        } catch {
+            return null;
+        }
+    }
+
+    private currentDiagnosticDraft(): DiagnosticDraftData {
+        // getRawValue : `.value` OMET `isPdr` quand la DI est non réparable.
+        return toDiagnosticDraft(
+            this.diagFormTech.getRawValue(),
+            this.composantCombo,
+            this.activeDiagStep,
+        );
+    }
+
     /**
-     * Superpose le brouillon de réparation au préremplissage issu de la DI.
-     *
-     * `repModal` (requête `getDiById`) et la restitution après rechargement
-     * (`getTimeSpentRep`) arrivent par DEUX callbacks asynchrones indépendants :
-     * sans cette superposition, celui qui arrivait en dernier écrasait la saisie
-     * du technicien par les valeurs de la DI.
+     * Restaure le brouillon du diagnostic — appelé par `diagModal` APRÈS le
+     * préremplissage serveur. L'ancienne restitution arrivait AVANT (réponse de
+     * `getTimeSpent`), se faisait écraser par `getDiById` puis ré-enregistrer :
+     * la saisie était perdue au rafraîchissement.
      */
-    private withRepairDraft(base: RepairWizardPrefill): RepairWizardPrefill {
-        const draft = this.repairDraft;
-        if (!draft || draft.diId !== this.selectedRep) {
+    private applyDiagnosticDraft(statId: string): void {
+        this.diagDraftStatId = statId;
+        this.diagDraftBaseline = this.currentDiagnosticDraft();
+        this.diagDraftRestoredAt = null;
+        const saved = loadTechDraft<DiagnosticDraftData>(
+            this.draftTechId,
+            'diagnostic',
+            statId,
+        );
+        if (!saved || draftContentEquals(saved.data, this.diagDraftBaseline)) {
+            return;
+        }
+        this.patchDiagnosticDraft(saved.data);
+        // Saisie restaurée = travail non envoyé : fermer doit encore demander.
+        this.diagFormTech.markAsDirty();
+        this.diagDraftRestoredAt = saved.savedAt;
+    }
+
+    private patchDiagnosticDraft(d: DiagnosticDraftData): void {
+        this.diagFormTech.patchValue(
+            {
+                remarqueTech: d.remarqueTech,
+                remarqueExtra: d.remarqueExtra,
+                symptomes: d.symptomes,
+                isPdr: d.isPdr,
+                isReparable: d.isReparable,
+                isErrorFromFixtronix: d.isErrorFromFixtronix,
+                di_category_id: d.di_category_id,
+            },
+            { emitEvent: false },
+        );
+        this.composantCombo = d.composants.map((c) => ({ ...c }));
+        // L'étape « Composants » n'existe pas sans PDR.
+        const step = (d.step || 'info') as DiagnosticStepKey;
+        this.activeDiagStep =
+            step === 'components' && !d.isPdr ? 'validation' : step;
+    }
+
+    /** Enregistre la saisie du diagnostic OUVERT ; identique au dossier → aucun brouillon. */
+    private saveDiagnosticDraft(): void {
+        const statId = this.diagDraftStatId;
+        if (!statId || statId !== this.selectedDi || !this.diagDraftBaseline) {
+            return;
+        }
+        const current = this.currentDiagnosticDraft();
+        if (draftContentEquals(current, this.diagDraftBaseline)) {
+            clearTechDraft(this.draftTechId, 'diagnostic', statId);
+            return;
+        }
+        saveTechDraft(this.draftTechId, 'diagnostic', statId, current);
+    }
+
+    /** Dernière sauvegarde, puis plus aucune : le formulaire va servir ailleurs. */
+    private detachDiagnosticDraft(): void {
+        this.saveDiagnosticDraft();
+        this.diagDraftStatId = null;
+        this.diagDraftBaseline = null;
+        this.diagDraftRestoredAt = null;
+    }
+
+    /** Diagnostic ENVOYÉ avec succès : son brouillon n'a plus lieu d'être. */
+    private dropDiagnosticDraft(statId: string | null | undefined): void {
+        clearTechDraft(this.draftTechId, 'diagnostic', statId);
+        if (this.diagDraftStatId === statId) {
+            this.diagDraftStatId = null;
+            this.diagDraftBaseline = null;
+            this.diagDraftRestoredAt = null;
+        }
+    }
+
+    /** « Ignorer le brouillon » (bandeau du modal) : retour aux valeurs du dossier. */
+    onDiagDiscardDraft(): void {
+        const statId = this.diagDraftStatId;
+        const baseline = this.diagDraftBaseline;
+        if (!statId || !baseline) {
+            return;
+        }
+        clearTechDraft(this.draftTechId, 'diagnostic', statId);
+        this.patchDiagnosticDraft({ ...baseline, step: 'info' });
+        this.diagFormTech.markAsPristine();
+        this.diagDraftRestoredAt = null;
+        this.syncReparableDerivedState(
+            this.diagFormTech.get('isReparable')?.value,
+        );
+        this.refreshDiagComposantTree();
+        this.updateDisableValues();
+        this.refreshDiagnosticVm();
+    }
+
+    /**
+     * Superpose le brouillon navigateur au préremplissage de la réparation —
+     * appelé UNE fois, quand `getDiById` a répondu : plus de course avec la
+     * restitution du chrono, qui écrasait la saisie.
+     */
+    private withStoredRepairDraft(
+        statId: string,
+        base: RepairWizardPrefill,
+    ): RepairWizardPrefill {
+        this.repairDraftStatId = statId;
+        this.repairDraftBaseline = toRepairDraft({ ...base }, base.parts, 'works');
+        this.repairDraftRestoredAt = null;
+        const saved = loadTechDraft<RepairDraftData>(
+            this.draftTechId,
+            'repair',
+            statId,
+        );
+        if (!saved || draftContentEquals(saved.data, this.repairDraftBaseline)) {
             return base;
         }
+        const d = saved.data;
+        this.repairDraftRestoredAt = saved.savedAt;
         return {
             ...base,
-            worksDone: draft.value?.worksDone ?? base.worksDone ?? '',
-            testsDone: draft.value?.testsDone ?? base.testsDone ?? '',
-            remarqueExtra:
-                draft.value?.remarqueExtra ?? base.remarqueExtra ?? '',
-            parts: draft.parts?.length ? [...draft.parts] : base.parts ?? [],
+            worksDone: d.worksDone,
+            testsDone: d.testsDone,
+            remarqueExtra: d.remarqueExtra,
+            repairSuccess: d.repairSuccess,
+            testsValidated: d.testsValidated,
+            warranty: d.warranty,
+            parts: d.parts.map((p) => ({ ...p })),
+            step: (d.step || 'works') as RepairStepKey,
+            restoredDraft: true,
         };
+    }
+
+    /** Saisie du wizard de réparation (émise par lui, débouncée). */
+    onRepairDraftChange(snapshot: {
+        value: Record<string, unknown>;
+        parts: ReadonlyArray<{
+            nameComposant: string;
+            reference?: string;
+            quantity: number;
+        }>;
+        step: string;
+    }): void {
+        const statId = this.repairDraftStatId;
+        if (!statId || statId !== this.statId || !this.repairDraftBaseline) {
+            return;
+        }
+        const current = toRepairDraft(
+            snapshot.value,
+            snapshot.parts,
+            snapshot.step,
+        );
+        if (draftContentEquals(current, this.repairDraftBaseline)) {
+            clearTechDraft(this.draftTechId, 'repair', statId);
+            return;
+        }
+        saveTechDraft(this.draftTechId, 'repair', statId, current);
+    }
+
+    /** « Ignorer le brouillon » côté réparation : nouveau préremplissage = dossier. */
+    onRepairDiscardDraft(): void {
+        const statId = this.repairDraftStatId;
+        const baseline = this.repairDraftBaseline;
+        if (!statId || !baseline) {
+            return;
+        }
+        clearTechDraft(this.draftTechId, 'repair', statId);
+        this.repairDraftRestoredAt = null;
+        this.repairPrefill = {
+            di_category_id: this.repairPrefill?.di_category_id ?? null,
+            worksDone: baseline.worksDone,
+            testsDone: baseline.testsDone,
+            remarqueExtra: baseline.remarqueExtra,
+            parts: baseline.parts.map((p) => ({ ...p })),
+            repairSuccess: null,
+            testsValidated: null,
+            warranty: null,
+            step: 'works',
+        };
+    }
+
+    /** Écrit IMMÉDIATEMENT les brouillons ouverts (rafraîchissement, onglet masqué) :
+     *  la sauvegarde courante est débouncée. */
+    private flushFormDrafts(): void {
+        this.saveDiagnosticDraft();
+        if (this.showRepairModal) {
+            this.repairWizard?.flushDraft();
+        }
     }
 
     /**
@@ -723,6 +927,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         if (!ok) {
             return;
         }
+        this.repairWizard?.flushDraft();
         this.persistActiveDialogState('repair');
         this.stopRepairTimer();
         this.onRepairModalVisibleChange(false);
@@ -753,6 +958,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         }
         const key = `repairFinish:${diId}`;
         if (this.mutationRunner.isBusy(key)) return; // anti double-submit
+        const draftStatId = this.repairDraftStatId ?? this.statId;
         const remark = payload?.remarque ?? '';
         const parts = (payload?.parts ?? []).map((p) => ({
             nameComposant: p.nameComposant,
@@ -801,7 +1007,10 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.diDialogRep = false;
             this.repairDiInputVm = null;
             this.repairPrefill = null;
-            this.repairDraft = null;
+            clearTechDraft(this.draftTechId, 'repair', draftStatId);
+            this.repairDraftStatId = null;
+            this.repairDraftBaseline = null;
+            this.repairDraftRestoredAt = null;
             this.clearPersistedDialogState('repair');
             this.loadData();
             this.requestTechListRefresh('action:repair-finish');
@@ -1305,6 +1514,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             .pipe(debounceTime(150), takeUntil(this.destroy$))
             .subscribe(() => {
                 this.persistActiveDialogState();
+                this.saveDiagnosticDraft();
                 // Recalcule le GATING des boutons de fin à CHAQUE changement de
                 // bascule. Sans ça, `updateDisableValues()` ne tournait qu'à
                 // l'ouverture du modal : décocher « réparable » laissait « Fin
@@ -1345,6 +1555,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             this.onDocumentVisibilityChange,
         );
         window.addEventListener('beforeunload', this.onWindowBeforeUnload);
+
+        // Brouillons navigateur de plus de 7 jours : on fait le ménage.
+        purgeExpiredTechDrafts();
 
         // Initial load
         this.loadData();
@@ -2128,28 +2341,11 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                       status: status || snapshot.status,
                   }
                 : snapshot,
-            diagFormValue: this.diagFormTech.value,
+            // La SAISIE des wizards n'est plus ici : elle vit dans
+            // `tech-form-draft.store` (une entrée par DI, JSON sûr). Cet état ne
+            // porte plus que le chrono et le mode du dialogue ouvert.
             repairFormValue: this.remarque.value,
-            // Le wizard possède son propre FormGroup : sans ça, fermer la
-            // réparation perdait les travaux saisis et les pièces ajoutées
-            // (le composant portait un `// TODO: persist active draft`).
-            repairWizardValue: this.repairWizard?.repairForm?.value ?? null,
-            repairWizardParts: this.repairWizard
-                ? [...this.repairWizard.parts]
-                : null,
-            composantCombo: this.composantCombo || [],
         };
-
-        // On ne remplace JAMAIS un brouillon par un formulaire vierge : la
-        // sauvegarde périodique (1 Hz) tourne aussi sur un wizard qui vient
-        // d'être réhydraté par `patchValue` (donc non « dirty »).
-        if (activeMode === 'repair' && this.repairWizard?.hasUnsavedWork) {
-            this.repairDraft = {
-                diId,
-                value: this.repairWizard.repairForm.value,
-                parts: [...this.repairWizard.parts],
-            };
-        }
 
         try {
             localStorage.setItem(
@@ -2213,6 +2409,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             // beforeunload (refresh/fermeture), où laisser courir le chrono
             // facturerait l'absence.
             this.persistActiveDialogState();
+            this.flushFormDrafts();
         } else if (document.visibilityState === 'visible') {
             // Retour d'onglet : re-render IMMÉDIAT depuis les ancres (le tick
             // de rendu était throttlé en arrière-plan — sans ceci l'affichage
@@ -2228,6 +2425,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
     };
 
     private readonly onWindowBeforeUnload = (e: BeforeUnloadEvent): void => {
+        // Saisie non envoyée : écrite MAINTENANT, qu'une DI tourne ou non.
+        this.flushFormDrafts();
         // Une DI EN COURS (non pausée) au moment de fermer/rafraîchir : on AVERTIT
         // l'utilisateur (dialogue natif « Quitter le site ? ») ET on gèle en
         // best-effort (l'ancre est repliée côté serveur s'il part quand même, donc
@@ -2364,34 +2563,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return;
         }
 
-        if (state.diagFormValue) {
-            this.diagFormTech.patchValue(state.diagFormValue, {
-                emitEvent: false,
-            });
-        }
-
-        // Brouillon du wizard : on le réinjecte via `repairPrefill`, l'entrée que
-        // le wizard consomme déjà à l'ouverture (`ngOnChanges`). Rouvrir une
-        // réparation fermée par erreur restitue donc la saisie.
-        if (mode === 'repair' && state.repairWizardValue) {
-            this.repairPrefill = this.withRepairDraft({
-                ...(this.repairPrefill ?? {}),
-                di_category_id: state.repairWizardValue.di_category_id ?? null,
-                worksDone: state.repairWizardValue.worksDone ?? '',
-                testsDone: state.repairWizardValue.testsDone ?? '',
-                remarqueExtra: state.repairWizardValue.remarqueExtra ?? '',
-                parts: state.repairWizardParts ?? this.repairPrefill?.parts ?? [],
-            });
-        }
-
+        // La SAISIE des wizards est restaurée par `tech-form-draft.store`, APRÈS
+        // le préremplissage serveur (`applyDiagnosticDraft`,
+        // `withStoredRepairDraft`) : ici, seuls le chrono et le statut sont repris.
         if (state.repairFormValue) {
             this.remarque.patchValue(state.repairFormValue, {
                 emitEvent: false,
             });
-        }
-
-        if (state.composantCombo) {
-            this.composantCombo = state.composantCombo;
         }
 
         // Restore from accumulated elapsed time, NOT from the previous
@@ -2494,6 +2672,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return;
         }
         this.closeOppositeModal('diagnostic');
+        // Sauvegarde le brouillon du diagnostic précédent AVANT de vider le formulaire.
+        this.detachDiagnosticDraft();
         this.resetDiagnosticDraft(di?._id);
 
         try {
@@ -2649,6 +2829,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 this.imageValue = detailsDi.image;
                 this.selectedDi_id = di._idDi;
                 this.diStatus = di.status;
+                // Brouillon navigateur : APRÈS le préremplissage serveur, pour
+                // qu'aucune réponse ne vienne l'écraser.
+                this.applyDiagnosticDraft(di._id);
 
                 this.diDialogDiag[di._id] = true;
                 this.diagModalVisibleVm = true;
@@ -2908,6 +3091,16 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // transitioning the DI back to INREPARATION on the next refresh.
         // The user must explicitly click Reprendre to end the pause. The
         // resume call lives in `onRepairModalPause()`.
+        // Brouillons : sauvegarde du diagnostic ouvert (le formulaire partagé est
+        // réinitialisé plus bas) et de la réparation précédente ; le brouillon de
+        // CETTE DI est rechargé quand `getDiById` répond.
+        this.detachDiagnosticDraft();
+        if (this.showRepairModal) {
+            this.repairWizard?.flushDraft();
+        }
+        this.repairDraftStatId = null;
+        this.repairDraftBaseline = null;
+        this.repairDraftRestoredAt = null;
         this.getDataStatsByIdDi(di._idDi);
         this._idnum = di._idnum;
         this.selectedRep = di._idDi;
@@ -2983,7 +3176,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
                         // B3 — pre-fill the redesigned repair wizard from the DI
                         // so the tech doesn't re-enter category / remark / parts.
-                        this.repairPrefill = this.withRepairDraft({
+                        // …puis le brouillon navigateur de CETTE ligne stats par-dessus.
+                        this.repairPrefill = this.withStoredRepairDraft(di._id, {
                             di_category_id: detailsDi.di_category_id ?? null,
                             remarqueExtra:
                                 di.remarque_tech_repair ||
@@ -4175,6 +4369,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // nœuds, contre `composantCombo` — donc réversible.
         this.refreshDiagComposantTree();
 
+        this.saveDiagnosticDraft();
         this.updateDisableValues();
         this.refreshDiagnosticVm();
     }
@@ -4238,6 +4433,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 };
 
                 this.lap();
+                const draftStatId = this.selectedDi;
 
                 this.apollo
                     .mutate<any>({
@@ -4249,6 +4445,8 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                         if (data) {
                             this.disable = data.tech_startDiagnostic;
                             this.cdr.detectChanges();
+                            // Diagnostic enregistré : le brouillon n'a plus lieu d'être.
+                            this.dropDiagnosticDraft(draftStatId);
                             this.changeStatusToFinish(dataDiag._idDi);
                         }
                     });
@@ -4311,6 +4509,9 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                 };
 
                 this.lap();
+                // Le brouillon n'est retiré qu'une fois le diagnostic ENREGISTRÉ
+                // (un échec réseau laisse la saisie récupérable).
+                const draftStatId = this.selectedDi;
 
                 if (dataDiag.pdr) {
                     this.apollo
@@ -4324,6 +4525,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
+                                this.dropDiagnosticDraft(draftStatId);
                                 this.changeStatusMagasinEstimation(
                                     dataDiag._idDi,
                                 );
@@ -4340,6 +4542,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                             if (data) {
                                 this.disable = data.tech_startDiagnostic;
                                 this.cdr.detectChanges();
+                                this.dropDiagnosticDraft(draftStatId);
                                 this.changeStatusToPending2(dataDiag._idDi);
                             }
                         });
@@ -4495,6 +4698,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
                     });
                     this.startStopwatch();
                     this.getComposant();
+                    this.dropDiagnosticDraft(this.selectedDi);
                     this.diDialogDiag[this.selectedDi] = false;
                     this.clearPersistedDialogState('diagnostic');
                 } catch {
@@ -5397,6 +5601,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
             return;
         }
 
+        this.saveDiagnosticDraft();
         this.persistActiveDialogState('diagnostic');
         // Couper l'intervalle : la fermeture ne l'arrêtait JAMAIS, il continuait à
         // tourner à 1 Hz en fond (persist + refreshDiagnosticVm) sur un modal clos.
@@ -5410,12 +5615,13 @@ export class TechDiListComponent implements OnInit, OnDestroy {
 
     onDiagStepChange(step: DiagnosticStepKey): void {
         this.activeDiagStep = step;
+        this.saveDiagnosticDraft();
         this.refreshDiagnosticVm();
     }
 
     onDiagSaveDraft(): void {
         try {
-            this.persistActiveDialogState?.('diagnostic');
+            this.saveDiagnosticDraft();
         } catch {
             // best-effort — don't break the UX if persistence is unavailable
         }
@@ -5461,7 +5667,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         // Sauvegarde explicite : `diagnosticHasUnsavedWork()` compare des
         // LONGUEURS de tableau, une édition de quantité ne changerait donc pas
         // son verdict et le brouillon resterait périmé.
-        this.persistActiveDialogState();
+        this.saveDiagnosticDraft();
         this.updateDisableValues?.();
         this.refreshDiagnosticVm();
     }
@@ -5470,6 +5676,7 @@ export class TechDiListComponent implements OnInit, OnDestroy {
         this.composantCombo = (this.composantCombo ?? []).filter(
             (c) => c.nameComposant !== name,
         );
+        this.saveDiagnosticDraft();
         // Le composant retiré du tableau doit REDEVENIR sélectionnable.
         this.refreshDiagComposantTree();
         this.updateDisableValues?.();

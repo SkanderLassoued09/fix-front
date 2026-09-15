@@ -20,6 +20,7 @@ import { environment } from 'src/environments/environment';
 import { DiImageComponent } from '../di-image/di-image.component';
 import { ComposantCatalogService, ComposantCatalog } from 'src/app/demo/service/composant-catalog.service';
 import { docHref } from '../doc-href.util';
+import { splitRemarqueDiagnostic } from '../remarque-diagnostic.util';
 import {
     DiComposantLine,
     ComposantStatusKey,
@@ -33,16 +34,48 @@ import {
     formatComingDate,
     cleanComposantValue,
 } from '../composant-enrichment.util';
+import { buildFinanceRows, FinanceRow } from '../di-finance.util';
+import { parseStandardDocName } from '../doc-file-name.util';
 import {
-    buildCycleTimeline,
-    buildRawTimeline,
+    buildAssignmentRows,
+    buildFlowOverview,
+    buildLegacyPauseRows,
+    buildPhasePassages,
+    buildPhaseTable,
+    buildStatusFlow,
+    buildWorkJournal,
+    pauseSourceFor,
     sanitizeHistory,
-    sliceHistoryByCycle,
+    sliceHistoryForCycle,
     formatTimelineDate,
     formatDuration,
-    RawTimelineRow,
-    TimelineRow,
+    labelForStatus,
+    AssignmentSummary,
+    CycleHistorySlice,
+    FlowOverview,
+    LegacyPauseRow,
+    PhasePassage,
+    PhaseTable,
+    StatusFlow,
+    StatusFlowStep,
+    WorkJournal,
 } from '../status-timeline.util';
+import {
+    DateInput,
+    fmtDateTime,
+    fmtDurationPrecise,
+    fmtHhmmss,
+} from 'src/app/shared/date-time.util';
+
+/** Chrono d'un cycle : journal de travail par phase, pauses héritées et
+ *  affectations — tout ce que l'onglet « Temps & chrono » (et le PDF) montre. */
+export interface DiChrono {
+    diag: WorkJournal;
+    rep: WorkJournal;
+    pauseSource: { diag: 'history' | 'legacy' | 'none'; rep: 'history' | 'legacy' | 'none' };
+    legacyPauses: { diag: LegacyPauseRow[]; rep: LegacyPauseRow[] };
+    assignments: AssignmentSummary;
+}
 
 /** Onglets du dossier. `dossier` = la vue historique, inchangée. */
 // `journal` n'est plus un onglet AFFICHÉ : il subsiste comme clé de chargement
@@ -79,18 +112,39 @@ export class DiInfoModalComponent implements OnChanges {
     @Input() visible = false;
     @Output() visibleChange = new EventEmitter<boolean>();
 
-    /** Plancher de facturation du diagnostic (borne basse 150 TND, front-only —
-     *  cf. modal de tarification). L'écart se calcule contre max(plancher, coût). */
-    private static readonly FLOOR = 150;
-    /** Seuil « durée anormale » (rouge) — FIXE 48 h pour cette version. */
+    /** Seuil « écart anormal » entre deux statuts (rouge) — FIXE 48 h. */
     private static readonly ANOMALY_MS = 48 * 3600 * 1000;
-    /** Nombre d'étapes visibles avant « Tout afficher ». */
-    private static readonly TIMELINE_PREVIEW = 5;
 
     /** Cycle actuellement consulté : 0 = flux original ; N = après le N-ième retour. */
     selectedCycle = 0;
-    /** Section « Écart entre statuts » dépliée (au-delà des 5 premières). */
-    timelineExpanded = false;
+    /** Détail technique du parcours (chaque changement, à la seconde) déplié. */
+    flowExpanded = false;
+    /** « Maintenant » FIGÉ des durées en cours : capturé à l'ouverture, au
+     *  changement de cycle et au chargement des temps.
+     *  Un `Date.now()` lu dans un getter changerait à chaque détection (NG0100)
+     *  et recalculerait le parcours en boucle. */
+    nowMs = Date.now();
+    private _flowKey = '';
+    private _flowDi: any = null;
+    private _flowStat: any = null;
+    private _flowSlice: CycleHistorySlice = {
+        entries: [],
+        boundaryAt: null,
+        inferredStart: false,
+        unknownStart: false,
+    };
+    private _flow: StatusFlow = {
+        steps: [],
+        startAt: null,
+        endAt: null,
+        spanMs: 0,
+        ongoing: false,
+        currentMismatch: false,
+    };
+    private _passages: PhasePassage[] = [];
+    private _overview: FlowOverview = buildFlowOverview(this._flow);
+    private _phaseTable: PhaseTable = buildPhaseTable([], this._overview);
+    private _chrono: DiChrono | null = null;
 
     // ── Coûts (ledger Stat + taux Tarif + coût composants) — par cycle ─────────
     costLoading = false;
@@ -98,6 +152,8 @@ export class DiInfoModalComponent implements OnChanges {
     diagSeconds = 0;
     repSeconds = 0;
     tarif = 0;
+    /** Σ prix_vente × qté DU CYCLE AFFICHÉ, calculé serveur : les composants
+     *  soft-supprimés y restent tarifés, alors que le catalogue front les exclut. */
     composantCost = 0;
     downloading = false;
 
@@ -126,8 +182,8 @@ export class DiInfoModalComponent implements OnChanges {
     cycleStats: any[] = [];
 
     // ── Événements ERP (plus d'onglet, mais toujours consommés) ──────────────
-    // Alimentent `retourContext` (motif du bandeau « Retour N ») et `docTrace`
-    // (« Déposé le / Par » de l'onglet Liens). Aucune autre source n'existe.
+    // Alimentent `retourContext` (motif du bandeau « Retour N »). Aucune autre
+    // source n'existe.
     private events: any[] = [];
 
     // ── Liens (onglet 5) ─────────────────────────────────────────────────────
@@ -166,7 +222,7 @@ export class DiInfoModalComponent implements OnChanges {
             // Nouvelle DI → ouvrir sur le cycle COURANT (le plus récent), replier
             // la timeline, réinitialiser le sélecteur.
             this.selectedCycle = this.cycleCount;
-            this.timelineExpanded = false;
+            this.flowExpanded = false;
             // Nouveau dossier → tout ce qui a été chargé pour le PRÉCÉDENT est
             // périmé. Sans ce reset, l'onglet Journal afficherait l'historique
             // de la DI d'avant.
@@ -176,6 +232,7 @@ export class DiInfoModalComponent implements OnChanges {
         }
         const id = this.di?._id;
         if (id && this.visible) {
+            this.nowMs = Date.now();
             this.fetchCosts();
             void this.ensureCatalog();
             // Un onglet autre que « Dossier » peut rester actif d'une ouverture
@@ -230,8 +287,7 @@ export class DiInfoModalComponent implements OnChanges {
     // ─────────────────────────────────────────────────────────────────────────
     // Événements ERP (SystemEvent) — l'onglet Journal a été RETIRÉ, mais ces
     // événements alimentent encore le motif du bandeau « Retour N »
-    // (`retourContext`) et les traces de dépôt de documents (`docTrace`), qui
-    // n'ont aucune autre source.
+    // (`retourContext`), qui n'a aucune autre source.
     // ─────────────────────────────────────────────────────────────────────────
 
     private loadJournal(): Promise<void> {
@@ -276,27 +332,35 @@ export class DiInfoModalComponent implements OnChanges {
         const diId = this.di?._id;
         if (!diId) return Promise.resolve();
         this.timeLoading = true;
+        // Le chrono affiché est TOUJOURS celui du cycle sélectionné : l'ancien
+        // est vidé pendant la requête, et une réponse arrivée après un
+        // changement de cycle (ou de dossier) est ignorée.
+        const cycle = this.selectedCycle;
+        this.statDetail = null;
+        const isCurrent = () =>
+            this.di?._id === diId && this.selectedCycle === cycle;
 
         const detail = new Promise<void>((resolve) => {
             this.apollo
                 .query<any>({
                     query: this.ticket.getStatDetailByDI_ID(
                         diId,
-                        this.selectedCycle > 0 ? this.selectedCycle : undefined,
+                        cycle > 0 ? cycle : undefined,
                     ),
                     fetchPolicy: 'network-only',
                 })
                 .subscribe({
                     next: ({ data }) => {
-                        if (this.di?._id === diId) {
+                        if (isCurrent()) {
                             this.statDetail = data?.getInfoStatByIdDi ?? null;
+                            this.nowMs = Date.now();
                             this.timeLoading = false;
                             this.cdr.markForCheck();
                         }
                         resolve();
                     },
                     error: () => {
-                        if (this.di?._id === diId) {
+                        if (isCurrent()) {
                             this.statDetail = null;
                             this.timeLoading = false;
                             this.cdr.markForCheck();
@@ -331,30 +395,6 @@ export class DiInfoModalComponent implements OnChanges {
         });
 
         return Promise.all([detail, perCycle]).then(() => undefined);
-    }
-
-    get diagSegments(): any[] {
-        return this.statDetail?.diagSegments ?? [];
-    }
-    get repSegments(): any[] {
-        return this.statDetail?.repSegments ?? [];
-    }
-    get pauseLogs(): any[] {
-        return this.statDetail?.pauseLogs ?? [];
-    }
-    get statAssignments(): any[] {
-        return this.statDetail?.diagAssignments ?? [];
-    }
-    get hasOpenLeg(): boolean {
-        return !!(this.statDetail?.diagRunStartedAt || this.statDetail?.repRunStartedAt);
-    }
-
-    /** Durée d'un segment fermé — « — » tant qu'il n'est pas borné. */
-    segmentDuration(seg: any): string {
-        const a = new Date(seg?.startedAt).getTime();
-        const b = new Date(seg?.stoppedAt).getTime();
-        if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return '—';
-        return formatDuration(b - a);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -416,35 +456,6 @@ export class DiInfoModalComponent implements OnChanges {
         );
     }
 
-    /**
-     * Date + acteur d'upload d'un document, reconstitués depuis le journal ERP
-     * (`DI_DOC_BC` / `DI_DOC_DEVIS` / `DI_DOC_BL`). La table `driveDocs` ne
-     * retient ni l'un ni l'autre : c'est la seule source disponible. `null`
-     * quand le journal ne porte rien pour ce type.
-     */
-    docTrace(type: string): { date: string | null; actor: string | null } | null {
-        // Pas de `Facture` : le back n'émet volontairement PAS de
-        // `DI_DOC_FACTURE` (il ferait doublon avec `DI_DOC_BL`). La ligne
-        // Facture reste donc sans date ni auteur — c'est exact, pas un oubli.
-        const code = {
-            BC: 'DI_DOC_BC',
-            Devis: 'DI_DOC_DEVIS',
-            BL: 'DI_DOC_BL',
-        }[type];
-        if (!code) return null;
-        const hit = this.events
-            .filter((e) => e?.type === code)
-            .sort(
-                (a, b) =>
-                    new Date(b?.createdAt).getTime() - new Date(a?.createdAt).getTime(),
-            )[0];
-        if (!hit) return null;
-        return {
-            date: formatTimelineDate(hit.createdAt),
-            actor: hit.actorName ? String(hit.actorName) : null,
-        };
-    }
-
     // ─────────────────────────────────────────────────────────────────────────
     // Cycles de retour
     // ─────────────────────────────────────────────────────────────────────────
@@ -479,7 +490,8 @@ export class DiInfoModalComponent implements OnChanges {
         // cycle que celui affiché.
         if (this.editing) return;
         this.selectedCycle = n;
-        this.timelineExpanded = false;
+        this.flowExpanded = false;
+        this.nowMs = Date.now();
         // Les composants sont PAR CYCLE : la mémoïsation doit tomber avec lui.
         this._linesKey = null;
         this.fetchCosts();
@@ -557,39 +569,154 @@ export class DiInfoModalComponent implements OnChanges {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Écart entre statuts (timeline) — réutilise le calcul du modal Coordination
+    // Parcours des statuts + chrono (onglet « Temps & chrono ») — calculs PURS
+    // du util, mémoïsés : la vue les relit à chaque détection.
     // ─────────────────────────────────────────────────────────────────────────
 
-    /** Toutes les étapes RÉELLEMENT atteintes dans le cycle sélectionné. */
-    get timelineRows(): TimelineRow[] {
-        const segments = sliceHistoryByCycle(this.di?.statusHistory);
-        const slice = segments[this.selectedCycle] ?? [];
-        const currentStatus = this.isActiveCycle ? this.di?.status ?? null : null;
-        return buildCycleTimeline(
-            slice,
-            currentStatus,
+    /** Ouverture de chaque cycle d'après sa ligne `logsdis` — sert à découper
+     *  l'historique quand l'entrée RETOUR{n} manque (près de la moitié des DI
+     *  en retour). Une ligne reconstruite porte la date de la MIGRATION, pas
+     *  celle du retour : elle est ignorée. */
+    private get cycleStartHints(): DateInput[] {
+        const logs: any[] = Array.isArray(this.di?.logs) ? this.di.logs : [];
+        const hints: DateInput[] = [];
+        for (let n = 1; n <= this.cycleCount; n++) {
+            const row = logs.find(
+                (l) => Number(l?.idIgnore) === n && l?.reconstructed !== true,
+            );
+            hints[n] = row?.openedAt ?? row?.createdAt ?? row?.retourDate ?? null;
+        }
+        return hints;
+    }
+
+    /** Tranche, parcours, barre et chrono — recalculés seulement quand le
+     *  dossier, le Stat, le cycle, le statut ou le « maintenant » changent. */
+    private ensureFlow(): void {
+        const di = this.di;
+        const key = `${this.selectedCycle}#${this.cycleCount}#${di?.status ?? ''}#${this.nowMs}`;
+        if (
+            key === this._flowKey &&
+            di === this._flowDi &&
+            this.statDetail === this._flowStat
+        ) {
+            return;
+        }
+        this._flowKey = key;
+        this._flowDi = di;
+        this._flowStat = this.statDetail;
+
+        const status = this.isActiveCycle ? di?.status ?? null : null;
+        const slice = sliceHistoryForCycle(
+            di?.statusHistory,
+            this.selectedCycle,
+            this.cycleCount,
+            this.cycleStartHints,
+        );
+        const flow = buildStatusFlow(
+            slice.entries,
+            status,
+            slice.boundaryAt,
+            this.nowMs,
             DiInfoModalComponent.ANOMALY_MS,
         );
+        this._flowSlice = slice;
+        this._flow = flow;
+        this._passages = buildPhasePassages(flow, DiInfoModalComponent.ANOMALY_MS);
+        this._overview = buildFlowOverview(flow, this._passages);
+        this._phaseTable = buildPhaseTable(this._passages, this._overview, flow);
+
+        // Sans Stat chargé, pas de chrono : tous les passages « en diagnostic »
+        // paraîtraient « sans segment » le temps de la requête.
+        const s = this.statDetail;
+        if (!s) {
+            this._chrono = null;
+            return;
+        }
+        const history = sanitizeHistory(di?.statusHistory);
+        const journal = (kind: 'diag' | 'rep') =>
+            buildWorkJournal({
+                kind,
+                segments: kind === 'diag' ? s.diagSegments : s.repSegments,
+                history,
+                flow,
+                assignments: kind === 'diag' ? s.diagAssignments : null,
+                openAnchor: kind === 'diag' ? s.diagRunStartedAt : s.repRunStartedAt,
+                storedCumul: kind === 'diag' ? s.diag_time : s.rep_time,
+                now: this.nowMs,
+            });
+        const legacyDiag = buildLegacyPauseRows(s.pauseLogs, 'diag', status, this.nowMs);
+        const legacyRep = buildLegacyPauseRows(s.pauseLogs, 'rep', status, this.nowMs);
+        this._chrono = {
+            diag: journal('diag'),
+            rep: journal('rep'),
+            pauseSource: {
+                diag: pauseSourceFor('diag', flow, legacyDiag),
+                rep: pauseSourceFor('rep', flow, legacyRep),
+            },
+            legacyPauses: { diag: legacyDiag, rep: legacyRep },
+            assignments: buildAssignmentRows(
+                s.diagAssignments,
+                s.diag_time,
+                s.diagRunStartedAt,
+                this.nowMs,
+            ),
+        };
     }
 
-    /** Étapes affichées (5 par défaut, tout si déplié). */
-    get visibleTimelineRows(): TimelineRow[] {
-        const rows = this.timelineRows;
-        return this.timelineExpanded
-            ? rows
-            : rows.slice(0, DiInfoModalComponent.TIMELINE_PREVIEW);
+    get flowSlice(): CycleHistorySlice {
+        this.ensureFlow();
+        return this._flowSlice;
+    }
+    get statusFlow(): StatusFlow {
+        this.ensureFlow();
+        return this._flow;
+    }
+    /** État, durée totale et temps par phase — onglet Dossier ET Temps. */
+    get flowOverview(): FlowOverview {
+        this.ensureFlow();
+        return this._overview;
+    }
+    get chrono(): DiChrono | null {
+        this.ensureFlow();
+        return this._chrono;
     }
 
-    get timelineHiddenCount(): number {
-        return Math.max(
-            0,
-            this.timelineRows.length - DiInfoModalComponent.TIMELINE_PREVIEW,
-        );
+    /** Tableau descriptif « Temps passé par étape » (onglet Temps & chrono). */
+    get phaseTable(): PhaseTable {
+        this.ensureFlow();
+        return this._phaseTable;
     }
 
-    toggleTimeline(): void {
-        this.timelineExpanded = !this.timelineExpanded;
+    toggleFlow(): void {
+        this.flowExpanded = !this.flowExpanded;
     }
+
+    /** Date à la seconde (heure de Tunis). */
+    fmtDateS(v: DateInput): string {
+        return fmtDateTime(v, { seconds: true });
+    }
+    /** Écart entre statuts — jours compris. */
+    fmtGap(ms: number | null | undefined): string {
+        return fmtDurationPrecise(ms);
+    }
+    /** Temps de TRAVAIL — en heures, comme le temps facturé. */
+    fmtWork(ms: number | null | undefined): string {
+        return fmtDurationPrecise(ms, { days: false });
+    }
+    /** Cumul « HH:MM:SS » persisté → libellé exact (valeur brute si illisible). */
+    cumulLabel(v: string | null | undefined): string {
+        return fmtHhmmss(v, { fallback: String(v ?? '').trim() || '—' });
+    }
+    /** Durée arrondie pour la vue simple (« 21 j 23 h », « 1 h 27 min »). */
+    fmtDur(ms: number | null | undefined): string {
+        return ms === null || ms === undefined ? '—' : formatDuration(ms);
+    }
+    /** Le code brut n'est montré que s'il diffère du libellé. */
+    showRawCode(s: StatusFlowStep): boolean {
+        return labelForStatus(s.status) !== s.status;
+    }
+    trackStep = (_: number, s: StatusFlowStep): string =>
+        `${s.index}#${s.enteredAt.getTime()}`;
 
     // ─────────────────────────────────────────────────────────────────────────
     // Bande de faits + sections snapshot (par cycle)
@@ -739,6 +866,41 @@ export class DiInfoModalComponent implements OnChanges {
         };
     }
 
+    /** `remarque_tech_diagnostic` redécoupé comme le compose le formulaire de
+     *  diagnostic : description de la panne, puis remarque technicien. */
+    get activeDiagSplit(): { description: string; remarque: string } {
+        return splitRemarqueDiagnostic(this.activeRemarques.diag);
+    }
+
+    /** Cartes de remarque dépliées (« Voir plus »), clés préfixées par la DI
+     *  pour qu'un autre dossier n'hérite pas de l'état. */
+    private readonly openNotes = new Set<string>();
+
+    /** Texte qui dépasse les 4 lignes d'une carte de la grille Remarques. */
+    isLongNote(text: string | null | undefined): boolean {
+        const t = String(text ?? '');
+        return t.length > 170 || t.split('\n').length > 4;
+    }
+
+    isNoteOpen(key: string): boolean {
+        return this.openNotes.has(`${this.di?._id}:${key}`);
+    }
+
+    toggleNote(key: string): void {
+        const k = `${this.di?._id}:${key}`;
+        if (!this.openNotes.delete(k)) this.openNotes.add(k);
+    }
+
+    /** Au moins une carte dans la grille Remarques (remarque, commentaire ou photo). */
+    get hasAnyNote(): boolean {
+        return (
+            this.hasAnyRemarque ||
+            this.hasExtraRemarques ||
+            !!this.activeComment ||
+            !!(this.imageProxyUrl || this.imageViewUrl)
+        );
+    }
+
     get hasAnyRemarque(): boolean {
         const r = this.activeRemarques;
         return !!(r.admin || r.diag || r.rep);
@@ -770,7 +932,7 @@ export class DiInfoModalComponent implements OnChanges {
 
     /**
      * Les 4 emplacements documents DU CYCLE sélectionné : présent (nom réel +
-     * lien) ou absent (`href: null`, signalé à l'écran).
+     * lien + date de dépôt) ou absent (`href: null`, signalé à l'écran).
      *
      * UN SEUL chemin pour tous les cycles, cycle 0 compris : on lit les
      * `documents[]` de la ligne de cycle, dérivés de SON `driveDocs`. Avant,
@@ -779,22 +941,39 @@ export class DiInfoModalComponent implements OnChanges {
      * `nameFor()` qui allait chercher le NOM du fichier dans `di.documents`,
      * c'est-à-dire dans le flux original. D'où « le même fichier » affiché sur
      * deux cycles différents.
+     *
+     * Seule exception, sûre : le cycle COURANT retombe sur `di.documents`, car
+     * le miroir DI ne porte que ce cycle-là (vidé à chaque retour). En base,
+     * 7 lignes de cycle sur 74 seulement nomment leurs fichiers : sans ce repli,
+     * le nom — et donc la date — manquait presque partout.
+     *
+     * Date de dépôt : lue dans le NOM STANDARD du fichier (`parseStandardDocName`).
+     * Le journal ERP n'en datait qu'une partie, jamais la facture, sans auteur.
      */
     get docSlots(): Array<{
         type: string;
         label: string;
         href: string | null;
+        date: string | null;
     }> {
         const src = this.cycleSnapshot;
         const docs: any[] = Array.isArray(src?.documents) ? src.documents : [];
+        const mirror: any[] =
+            this.isActiveCycle && Array.isArray(this.di?.documents) ? this.di.documents : [];
         return this.DOC_TYPES.map((t) => {
-            const ref = docs.find((d: any) => d?.type === t.type);
+            const ref =
+                docs.find((d: any) => d?.type === t.type) ??
+                mirror.find((d: any) => d?.type === t.type);
             const href =
                 String(ref?.webViewLink || src?.[t.scalar] || '').trim() || null;
-            const label = href
-                ? String(ref?.name ?? '').trim() || t.label
-                : t.label;
-            return { type: t.type, label, href };
+            const name = href ? String(ref?.name ?? '').trim() : '';
+            const parsed = parseStandardDocName(name);
+            return {
+                type: t.type,
+                label: name || t.label,
+                href,
+                date: parsed ? formatTimelineDate(parsed.uploadedAt) : null,
+            };
         });
     }
 
@@ -819,7 +998,7 @@ export class DiInfoModalComponent implements OnChanges {
         return p[0] * 3600 + p[1] * 60 + p[2];
     }
 
-    /** Charge temps diag/répa (Stat DU CYCLE), taux, coût composants (DI). */
+    /** Charge temps diag/répa (Stat DU CYCLE), taux, coût composants (DU CYCLE). */
     private fetchCosts(): void {
         const diId = this.di?._id;
         if (!diId) return;
@@ -852,7 +1031,9 @@ export class DiInfoModalComponent implements OnChanges {
                 this.cdr.markForCheck();
             });
         this.apollo
-            .query<any>({ query: this.ticket.totalComposant(diId) })
+            .query<any>({
+                query: this.ticket.totalComposant(diId, this.selectedCycle),
+            })
             .subscribe(({ data }) => {
                 if (this._costsKey !== key) return;
                 this.composantCost =
@@ -873,47 +1054,41 @@ export class DiInfoModalComponent implements OnChanges {
         return this.diagSeconds > 0 || this.repSeconds > 0;
     }
 
-    /** Coût calculé DIAGNOSTIC = main-d'œuvre (temps diag × taux). */
+    /** Coût réel DIAGNOSTIC = main-d'œuvre (temps diag × taux). */
     get coutDiag(): number {
         return Math.round(((this.diagSeconds * this.tarif) / 3600) * 1000) / 1000;
     }
-    /** Coût calculé RÉPARATION = main-d'œuvre (temps répa × taux) + pièces. */
-    get coutRepair(): number {
-        const labor = (this.repSeconds * this.tarif) / 3600;
-        return Math.round((labor + this.composantCost) * 1000) / 1000;
-    }
-    /** Prix facturé DIAGNOSTIC du cycle : `di.price` (cycle 0) ou `log.price`. */
-    get factureDiag(): number {
-        return Number(this.cycleSnapshot?.price);
+    /** Coût réel RÉPARATION = main-d'œuvre SEULE (temps répa × taux). Les pièces
+     *  ont leur propre colonne (`composantCost`). */
+    get coutRepLabor(): number {
+        return Math.round(((this.repSeconds * this.tarif) / 3600) * 1000) / 1000;
     }
 
     /**
-     * Écart = facturé − max(plancher, coût). Le plancher 150 TND est un comportement
-     * de facturation LÉGITIME (pas une marge) : on ne le compte donc pas comme un
-     * écart. On garde le coût BRUT visible ailleurs (colonne « Coût réel »).
+     * Montant DU CYCLE AFFICHÉ : la ligne de log d'abord, la DI en repli
+     * UNIQUEMENT sur le cycle actif. Au cycle 0 la ligne est un squelette sans
+     * montant, et `repairEstimate` n'est écrit que sur la DI jusqu'à la clôture
+     * du cycle (`carryCycleMoneyToLog`). Absence testée explicitement :
+     * `Number(null) === 0`, or 0 est un montant légitime (non payant).
      */
-    private computeEcart(
-        facture: number,
-        cout: number,
-    ): {
-        absent: boolean;
-        montant: number;
-        percent: number;
-        tone: 'pos' | 'neg' | 'neutral';
-    } {
-        if (!Number.isFinite(facture) || facture <= 0) {
-            return { absent: true, montant: 0, percent: 0, tone: 'neutral' };
-        }
-        const basis = Math.max(DiInfoModalComponent.FLOOR, cout);
-        const montant = Math.round((facture - basis) * 1000) / 1000;
-        const percent = basis > 0 ? (montant / basis) * 100 : 0;
-        const tone: 'pos' | 'neg' | 'neutral' =
-            Math.abs(montant) < 0.5 && Math.abs(percent) < 1
-                ? 'neutral'
-                : montant > 0
-                  ? 'pos'
-                  : 'neg';
-        return { absent: false, montant, percent, tone };
+    private cycleMoney(key: 'price' | 'repairEstimate'): number | null {
+        const fromLog = this.moneyOrNull(this.cycleSnapshot?.[key]);
+        if (fromLog !== null) return fromLog;
+        return this.isActiveCycle ? this.moneyOrNull(this.di?.[key]) : null;
+    }
+    private moneyOrNull(value: any): number | null {
+        if (value === null || value === undefined || value === '') return null;
+        const n = Number(value);
+        return Number.isFinite(n) ? n : null;
+    }
+
+    /** Facturé DIAGNOSTIC du cycle = prix saisi en tarification. */
+    get factureDiag(): number | null {
+        return this.cycleMoney('price');
+    }
+    /** Facturé RÉPARATION du cycle = estimation réparation saisie en tarification. */
+    get factureRep(): number | null {
+        return this.cycleMoney('repairEstimate');
     }
 
     /** Diagnostic NON PAYANT (flag DI) : le « facturé » n'est pas 0 mais
@@ -922,46 +1097,18 @@ export class DiInfoModalComponent implements OnChanges {
         return this.di?.diagnosticPayant === false;
     }
 
-    /** Lignes du tableau Finances : Diagnostic, Réparation, Total. Réparation
-     *  facturée = « — » (n'existe pas en base). Diagnostic non payant → « Non
-     *  facturé » (jamais 0,000, jamais d'écart −150). Écart contre max(plancher,
-     *  coût) sinon. */
-    get financeRows(): Array<{
-        phase: string;
-        coutReel: number | null;
-        facture: number | null;
-        ecart: ReturnType<DiInfoModalComponent['computeEcart']> | null;
-        isTotal?: boolean;
-        nonPayant?: boolean;
-    }> {
-        const np = this.diagNonPayant;
-        const facture = this.factureDiag;
-        const factureCell = np || !Number.isFinite(facture) ? null : facture;
-        const coutTotal =
-            Math.round((this.coutDiag + this.coutRepair) * 1000) / 1000;
-        return [
-            {
-                phase: 'Diagnostic',
-                coutReel: this.coutDiag,
-                facture: factureCell,
-                ecart: np ? null : this.computeEcart(facture, this.coutDiag),
-                nonPayant: np,
-            },
-            {
-                phase: 'Réparation',
-                coutReel: this.coutRepair,
-                facture: null, // pas de prix réparation facturé en base
-                ecart: null,
-            },
-            {
-                phase: 'Total',
-                coutReel: coutTotal,
-                facture: factureCell,
-                ecart: np ? null : this.computeEcart(facture, coutTotal),
-                isTotal: true,
-                nonPayant: np,
-            },
-        ];
+    /** Lignes du tableau Finances (cf. `buildFinanceRows`) : Écart = Facturé −
+     *  (Coût réel + Composants), sans plancher. Diagnostic non payant → « Non
+     *  facturé » (jamais 0,000). */
+    get financeRows(): FinanceRow[] {
+        return buildFinanceRows({
+            diagLabor: this.coutDiag,
+            repLabor: this.coutRepLabor,
+            composants: this.composantCost,
+            factureDiag: this.factureDiag,
+            factureRep: this.factureRep,
+            nonPayant: this.diagNonPayant,
+        });
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -1031,9 +1178,9 @@ export class DiInfoModalComponent implements OnChanges {
         );
     }
 
-    /** Date FR courte — réutilise le formateur du util (cohérent avec la timeline). */
+    /** Date FR courte (Luxon, heure de Tunis) — le même formateur partout. */
     fmtDate(at: any): string {
-        return formatTimelineDate(at) ?? '—';
+        return fmtDateTime(at);
     }
 
     onVisibleChange(v: boolean) {
@@ -1059,6 +1206,8 @@ export class DiInfoModalComponent implements OnChanges {
             // attente, un export déclenché juste après l'ouverture partirait avec
             // des colonnes vides.
             await this.ensureCatalog();
+            // Durées en cours calculées à l'instant de l'export.
+            this.nowMs = Date.now();
             await this.diPdf.generateAndDownload(this.di, {
                 cycles: this.buildPdfCycles(),
                 finance: this.financeRows,
@@ -1078,13 +1227,11 @@ export class DiInfoModalComponent implements OnChanges {
                     })),
                 },
                 times: {
-                    diagLabel: this.tempsDiagLabel,
-                    repLabel: this.tempsRepLabel,
-                    diagSegments: this.diagSegments,
-                    repSegments: this.repSegments,
-                    pauseLogs: this.pauseLogs,
+                    cycleLabel: this.selectedCycleLabel,
+                    diagCumul: this.statDetail?.diag_time ?? null,
+                    repCumul: this.statDetail?.rep_time ?? null,
+                    chrono: this.chrono,
                     cycleStats: this.cycleStats,
-                    segmentDuration: (seg: any) => this.segmentDuration(seg),
                 },
                 links: {
                     pvs: this.pvs,
@@ -1106,8 +1253,7 @@ export class DiInfoModalComponent implements OnChanges {
             jobs.push(tab === 'temps' ? this.loadTimes() : this.loadLinks());
         }
         // L'onglet Journal a été retiré, mais ses ÉVÉNEMENTS restent nécessaires :
-        // `docTrace()` (« Déposé le / Par » de l'onglet Liens) et le motif du
-        // bandeau « Retour N » n'ont aucune autre source. On les charge donc en
+        // le motif du bandeau « Retour N » n'a aucune autre source. On les charge donc en
         // silence, sans onglet ni section PDF.
         if (!this.loaded.has('journal')) {
             this.loaded.add('journal');
@@ -1117,30 +1263,43 @@ export class DiInfoModalComponent implements OnChanges {
     }
 
 
-    /** Construit, pour le PDF, la timeline de CHAQUE cycle (tout déplié). Les coûts
-     *  chargés (Stat/Tarif) ne concernent que le cycle courant ; le PDF affiche donc
-     *  le détail des coûts pour le cycle affiché et le parcours pour tous. */
+    /** Construit, pour le PDF, le parcours de CHAQUE cycle (tout déplié), avec
+     *  le même découpage et les mêmes écarts que l'onglet. Le chrono (Stat) ne
+     *  concerne que le cycle affiché ; le parcours, lui, couvre tous les cycles. */
     private buildPdfCycles(): Array<{
         n: number;
         label: string;
-        timeline: TimelineRow[];
+        flow: StatusFlow;
+        inferredStart: boolean;
     }> {
-        const segments = sliceHistoryByCycle(this.di?.statusHistory);
         const count = this.cycleCount;
-        const out: Array<{ n: number; label: string; timeline: TimelineRow[] }> =
-            [];
+        const hints = this.cycleStartHints;
+        const out: Array<{
+            n: number;
+            label: string;
+            flow: StatusFlow;
+            inferredStart: boolean;
+        }> = [];
         for (let n = 0; n <= count; n++) {
-            const slice = segments[n] ?? [];
-            if (n > 0 && !slice.length) continue; // cycle sans parcours → masqué
+            const slice = sliceHistoryForCycle(
+                this.di?.statusHistory,
+                n,
+                count,
+                hints,
+            );
+            if (n > 0 && !slice.entries.length) continue; // cycle sans parcours → masqué
             const isActive = n >= count;
             out.push({
                 n,
                 label: n === 0 ? 'Flux original' : `Retour ${n}`,
-                timeline: buildCycleTimeline(
-                    slice,
+                flow: buildStatusFlow(
+                    slice.entries,
                     isActive ? this.di?.status ?? null : null,
+                    slice.boundaryAt,
+                    this.nowMs,
                     DiInfoModalComponent.ANOMALY_MS,
                 ),
+                inferredStart: slice.inferredStart,
             });
         }
         return out;
@@ -1281,59 +1440,6 @@ export class DiInfoModalComponent implements OnChanges {
     /** Commentaire libre du cycle — champ persisté jamais affiché jusqu'ici. */
     get activeComment(): string {
         return String(this.cycleSnapshot?.comment ?? '').trim();
-    }
-
-    /** Drapeaux et jalons — uniquement ceux qui portent une information. */
-    get flags(): Array<{ label: string; value: string; tone: string }> {
-        const out: Array<{ label: string; value: string; tone: string }> = [];
-        const s2 = this.cycleSnapshot ?? {};
-        if (s2.isErrorFromFixtronix === true) {
-            out.push({ label: 'Erreur Fixtronix', value: 'Oui', tone: 'ko' });
-        }
-        if (this.di?.needsDevisBeforeRepair === true) {
-            out.push({ label: 'Devis requis avant réparation', value: 'Oui', tone: 'warn' });
-        }
-        if (this.di?.diagnosticPayant === false) {
-            out.push({ label: 'Diagnostic', value: 'Non payant', tone: 'muted' });
-        }
-        if (s2.confirmationComposant) {
-            out.push({
-                label: 'Confirmation composants',
-                value: String(s2.confirmationComposant),
-                tone: 'info',
-            });
-        }
-        const h = this.di?.handleSendingNotificationBetweenCoordinatorAndMagasin;
-        if (h && h !== 'DEFAULT') {
-            out.push({ label: 'Dossier détenu par', value: String(h), tone: 'info' });
-        }
-        if (this.di?.isSentToCoordinator === true) {
-            out.push({ label: 'Liste envoyée à la coordination', value: 'Oui', tone: 'info' });
-        }
-        if (this.di?.isConfirmedComponentFromCoordinator === true) {
-            out.push({ label: 'Composants confirmés', value: 'Oui', tone: 'ok' });
-        }
-        return out;
-    }
-
-    /** Jalons datés avec leur acteur (déjà résolus en noms côté serveur). */
-    get milestones(): Array<{ label: string; date: string; actor: string }> {
-        const out: Array<{ label: string; date: string; actor: string }> = [];
-        if (this.di?.pricingRequestSentAt) {
-            out.push({
-                label: 'Demande de tarification',
-                date: this.fmtDate(this.di.pricingRequestSentAt),
-                actor: this.displayName(this.di.pricingRequestSentBy),
-            });
-        }
-        if (this.di?.componentsConfirmedAt) {
-            out.push({
-                label: 'Composants confirmés',
-                date: this.fmtDate(this.di.componentsConfirmedAt),
-                actor: this.displayName(this.di.componentsConfirmedBy),
-            });
-        }
-        return out;
     }
 
     /**
@@ -1638,21 +1744,15 @@ export class DiInfoModalComponent implements OnChanges {
         return this.formatTnd3(v);
     }
 
-    get hasCommercial(): boolean {
-        return (
-            this.di?.discount != null ||
-            this.di?.discount_value != null ||
-            !!this.di?.type_client ||
-            !!this.di?.service_quality
-        );
-    }
-
     get hasAnyTimeDetail(): boolean {
+        const c = this.chrono;
         return !!(
-            this.diagSegments.length ||
-            this.repSegments.length ||
-            this.pauseLogs.length ||
-            this.statAssignments.length ||
+            this.statusFlow.steps.length ||
+            c?.diag.hasData ||
+            c?.rep.hasData ||
+            c?.legacyPauses.diag.length ||
+            c?.legacyPauses.rep.length ||
+            c?.assignments.rows.length ||
             this.cycleStats.length ||
             this.hasTemps
         );

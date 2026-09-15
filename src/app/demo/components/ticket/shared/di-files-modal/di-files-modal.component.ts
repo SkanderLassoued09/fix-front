@@ -196,6 +196,24 @@ export class DiFilesModalComponent implements OnChanges {
         return logs.find((l: any) => Number(l?.idIgnore ?? 0) === 0) ?? null;
     }
 
+    /**
+     * `documents[]` du CYCLE 0 : les VRAIS noms de ses fichiers (nom standard
+     * `{Nom}_{Type}_{JJ-MM-AAAA}_{HH-mm-ss}`), dérivés de SON `driveDocs` par le
+     * back (`withCycleDocuments`).
+     *
+     * Lus sur `di.logs` : la projection `COORDINATOR_DI_FIELDS` les porte sur les
+     * deux chemins d'ouverture (trombone et deep-link), alors que
+     * `getAllLogsByDi` rend des lignes brutes, sans `documents`.
+     */
+    private get cycle0Documents(): any[] {
+        const loaded = this.cycle0Log?.documents;
+        if (Array.isArray(loaded) && loaded.length) return loaded;
+        const row = (this.filesSelected?.logs ?? []).find(
+            (l: any) => Number(l?.idIgnore ?? 0) === 0,
+        );
+        return Array.isArray(row?.documents) ? row.documents : [];
+    }
+
     /** Fichiers sélectionnés mais pas encore enregistrés. */
     get affectationPendingCount(): number {
         return (this.selectedBL ? 1 : 0) + (this.selectedFacture ? 1 : 0);
@@ -222,10 +240,14 @@ export class DiFilesModalComponent implements OnChanges {
      * fichiers du retour sous « principaux », et les mêmes fichiers
      * réapparaissaient dans la frise juste en dessous.
      *
-     * La source est donc la ligne `logsdis` du cycle 0. Au cycle 0 cette ligne
-     * et le miroir disent la même chose : on garde le miroir (il porte les vrais
-     * noms Drive via `documents[]`, que la requête `getAllLogsByDi` n'expose
-     * pas). En retour, seule la ligne de cycle 0 fait foi.
+     * La source est donc la ligne `logsdis` du cycle 0. En retour, seule cette
+     * ligne fait foi.
+     *
+     * NOM affiché = le nom STANDARD du fichier, comme dans la frise des retours :
+     * d'abord les `documents[]` de la ligne de cycle 0 (`cycle0Documents`) —
+     * lecture PAR TYPE sûre, ce sont ses propres fichiers. Au cycle 0, le miroir
+     * EST ce cycle : repli sur `di.documents`. Un fichier hérité sans nom stocké
+     * (lien nu, pas de `driveDocs`) garde le libellé générique.
      */
     get affectationMainCards(): Array<{
         tag: string;
@@ -240,9 +262,16 @@ export class DiFilesModalComponent implements OnChanges {
         for (const d of this.filesSelected?.documents ?? []) {
             if (d?.type) byType.set(String(d.type), d);
         }
+        const cycle0ByType = new Map<string, any>();
+        for (const d of this.cycle0Documents) {
+            if (d?.type) cycle0ByType.set(String(d.type), d);
+        }
         return AFFECTATION_DOC_TYPES.map((t) => {
             // En retour on lit l'URL sur le cycle 0 ; hors retour, le miroir.
-            const doc = isRetour ? null : byType.get(t.key);
+            // Le nom vient d'abord des documents DU cycle 0, jamais du miroir
+            // en retour (il décrit le retour).
+            const doc =
+                cycle0ByType.get(t.key) ?? (isRetour ? null : byType.get(t.key));
             const scalar = isRetour
                 ? log?.[t.field]
                 : this.filesSelected?.[t.field];

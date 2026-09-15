@@ -46,6 +46,7 @@ import { TechRepairListComponent } from './tech-repair-list/tech-repair-list.com
 import { RepairModalComponent } from './tech-repair-list/repair-modal/repair-modal.component';
 import { PdfDropzoneComponent } from '../magasin-di-list/pdf-dropzone/pdf-dropzone.component';
 import { DiInfoModalComponent } from '../shared/di-info-modal/di-info-modal.component';
+import { DiImageComponent } from '../shared/di-image/di-image.component';
 import { ReunionPvModalComponent } from '../shared/reunion-pv-modal/reunion-pv-modal.component';
 import { DiImportComponent } from '../shared/di-import/di-import.component';
 import { DiArchiveDetailModalComponent } from '../shared/di-archive-detail-modal/di-archive-detail-modal.component';
@@ -108,6 +109,7 @@ import { TableCellTruncateDirective } from '../../../../shared/table-cell-trunca
         RepairModalComponent,
         PdfDropzoneComponent,
         DiInfoModalComponent,
+        DiImageComponent,
         ReunionPvModalComponent,
         DiImportComponent,
         DiArchiveDetailModalComponent,

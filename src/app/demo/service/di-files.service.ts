@@ -50,16 +50,28 @@ export class DiFilesService {
     }
 
     /**
-     * Deep-link notification → charge la DI par son id puis ouvre.
+     * Deep-link → charge la DI par son id puis ouvre.
      *
      * `network-only` est IMPORTANT : l'alerte BL se réarme à chaque passe du
      * cron, le statut en cache n'est donc pas digne de confiance.
+     *
+     * `onIneligible` — plus rien à joindre à cette DI :
+     *  - `'detail'` (défaut, lien hérité `?action=affectation`) : ouvre le dossier ;
+     *  - `'nothing'` (notification de document) : AUCUNE modale, un simple avis.
+     *    La modale n'apparaît alors qu'une fois l'éligibilité confirmée, pour ne
+     *    pas flasher une modale qui se refermerait aussitôt.
      */
-    openById(diId: string): void {
+    openById(
+        diId: string,
+        opts: { onIneligible?: 'detail' | 'nothing' } = {},
+    ): void {
         if (!diId) return;
-        this.loading$.next(true);
+        const onlyIfEligible = opts.onIneligible === 'nothing';
         this.di$.next(null);
-        this.visible$.next(true);
+        if (!onlyIfEligible) {
+            this.loading$.next(true);
+            this.visible$.next(true);
+        }
         this.apollo
             .query<any>({
                 query: this.ticket.getDiDetail(diId),
@@ -79,16 +91,23 @@ export class DiFilesService {
                         return;
                     }
                     if (!canAffectFiles(di)) {
-                        // Course normale : un collègue a téléversé le BL entre
-                        // l'alerte et le clic. On bascule sur le dossier plutôt
-                        // que d'afficher une modale d'upload sans objet —
-                        // « jamais un clic mort ».
+                        // Course normale : un collègue a téléversé le document
+                        // entre l'alerte et le clic.
                         this.visible$.next(false);
                         this.di$.next(null);
+                        if (onlyIfEligible) {
+                            this.notify.info(
+                                'Plus aucun fichier à téléverser pour cette DI.',
+                            );
+                            return;
+                        }
+                        // Lien hérité : on bascule sur le dossier plutôt que
+                        // d'afficher une modale d'upload sans objet.
                         this.diDetail.openById(diId);
                         return;
                     }
                     this.di$.next(di);
+                    this.visible$.next(true);
                 },
                 error: () => {
                     this.loading$.next(false);

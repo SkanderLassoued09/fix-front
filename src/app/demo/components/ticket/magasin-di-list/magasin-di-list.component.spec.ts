@@ -116,4 +116,19 @@ describe('MagasinDiListComponent — rappel « Enregistrer »', () => {
         expect(component.saveNeedsAttention).toBeFalse();
         expect(component.canValidateActive).toBeTrue();
     });
+
+    // « Enregistrer » est lié à `[disabled]="!saveNeedsAttention"`.
+    it('« Enregistrer » et « Valider » jamais actifs en même temps', () => {
+        fillValidForm(); // ouverture : rien de modifié
+        expect(component.saveNeedsAttention).toBeFalse(); // Enregistrer grisé
+        expect(component.canValidateActive).toBeTrue();
+
+        component.formUpdateComposant.markAsDirty(); // saisie valide
+        expect(component.saveNeedsAttention).toBeTrue();
+        expect(component.canValidateActive).toBeFalse();
+
+        component.formUpdateComposant.patchValue({ package: null }); // requis vidé
+        expect(component.saveNeedsAttention).toBeFalse();
+        expect(component.canValidateActive).toBeFalse();
+    });
 });

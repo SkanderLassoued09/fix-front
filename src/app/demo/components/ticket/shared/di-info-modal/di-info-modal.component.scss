@@ -328,31 +328,42 @@
     }
 }
 
-/* ── Grille deux colonnes ── */
+/* ── Dossier : description en carte pleine largeur, puis fiches en rangée ──
+   (plus de colonne gauche à moitié vide quand la description est courte). */
 .di-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    gap: 1rem;
-    align-items: start;
-}
-.di-main,
-.di-side {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    min-width: 0;
 }
+.di-main {
+    min-width: 0;
+    background: var(--fx-bg-card);
+    border: 1px solid var(--di-line);
+    border-left: 3px solid var(--fx-blue-strong);
+    border-radius: 12px;
+    padding: 0.7rem 0.9rem 0.8rem;
+}
+/* Fiches État · Équipe · Temps passé · Contacts : UN panneau, une colonne par
+   fiche (autant de colonnes que de fiches présentes : jamais de trou), filet
+   entre les colonnes, même hauteur. Contacts, plus dense, occupe deux parts. */
 .di-side {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    min-width: 0;
     background: var(--di-bg-soft);
     border: 1px solid var(--di-line);
     border-radius: 12px;
-    padding: 0.85rem;
-    gap: 0.5rem;
-}
-.di-side__sep {
-    height: 1px;
-    background: var(--di-line);
-    margin: 0.15rem 0;
+
+    > .di-sec {
+        padding: 0.75rem 0.9rem;
+    }
+    > .di-sec + .di-sec {
+        border-left: 1px solid var(--di-line);
+    }
+    > .di-sec--contact {
+        grid-column: span 2;
+    }
 }
 
 .di-sec {
@@ -491,8 +502,10 @@
    pastilles sont bâties sur les triplets `--fx-*-soft-*`, donc valides aussi en
    thème sombre (contrairement aux littéraux de `composant-management`). */
 .di-comp {
-    display: flex;
-    flex-direction: column;
+    /* Pleine largeur sous les deux colonnes : deux cartes par ligne, chacune
+       la moitié du dossier (une seule colonne sous 720 px). */
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.6rem;
 
     &__card {
@@ -708,6 +721,17 @@
     }
 }
 
+/* Le total couvre les deux colonnes de cartes. */
+.di-comp__total {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+    .di-comp {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 480px) {
     .di-comp__kv {
         grid-template-columns: minmax(0, 1fr);
@@ -749,121 +773,83 @@
         color: var(--di-slate-700);
         white-space: pre-line;
     }
-}
-
-/* État */
-.di-state {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    &__chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        font-size: 0.78rem;
-        font-weight: 600;
-        padding: 0.25rem 0.6rem;
-        border-radius: 999px;
-        border: 1px solid var(--di-line);
-        &[data-kind='ok'] {
-            color: var(--fx-green-text);
-            background: var(--fx-green-soft-bg-2);
-            border-color: var(--fx-green-soft-bd);
-        }
-        &[data-kind='ko'] {
-            color: var(--di-red);
-            background: var(--fx-red-soft-bg-2);
-            border-color: var(--fx-red-soft-bd);
-        }
-        &[data-kind='accent'] {
-            color: var(--fx-blue-text);
-            background: var(--fx-blue-soft-bg-2);
-            border-color: var(--fx-blue-soft-bd);
-        }
-        &[data-kind='muted'] {
-            color: var(--di-slate-500);
-            background: var(--fx-bg-card);
-        }
+    /* Remarque diagnostic composée : description de la panne | remarque technicien */
+    &__part + &__part {
+        margin-top: 0.45rem;
+        padding-top: 0.45rem;
+        border-top: 1px dashed var(--di-line);
     }
-}
-
-/* Équipe */
-.di-team {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    &__row {
-        display: flex;
-        align-items: center;
-        gap: 0.55rem;
-    }
-    &__avatar {
-        flex: 0 0 auto;
-        width: 32px;
-        height: 32px;
-        border-radius: 8px;
-        display: grid;
-        place-items: center;
+    &__sub {
         font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--fx-text-subtle);
+        margin-bottom: 0.1rem;
+    }
+    &--comment {
+        border-left-color: var(--fx-border-strong);
+    }
+    /* Texte long replié à 4 lignes, déplié par « Voir plus » */
+    &__body--clamp {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 4;
+        overflow: hidden;
+    }
+    &__more {
+        margin-top: 0.2rem;
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--fx-blue-text);
+        cursor: pointer;
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+/* Remarques, commentaire et photo — grille pleine largeur sous les 2 colonnes */
+.di-notes {
+    margin-top: 1rem;
+}
+.di-notes__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    align-items: start;
+    gap: 0.55rem;
+}
+.di-notes__photo {
+    ::ng-deep .di-photo__label {
+        font-size: 0.7rem;
         font-weight: 700;
-        color: var(--fx-text-on-accent);
-        &--creator {
-            background: var(--fx-border-strong);
-        }
-        &--diag {
-            background: var(--fx-amber-strong);
-        }
-        &--rep {
-            background: var(--fx-green);
-        }
-    }
-    &__meta {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-    }
-    &__role {
-        font-size: 0.68rem;
         text-transform: uppercase;
         letter-spacing: 0.4px;
         color: var(--fx-text-subtle);
-        font-weight: 600;
+        margin-bottom: 0.2rem;
     }
-    &__name {
-        font-size: 0.84rem;
-        font-weight: 600;
-        color: var(--di-ink);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    // `app-di-image` dans le sélecteur : à spécificité égale, les styles du
+    // composant enfant (injectés après) l'emportaient.
+    ::ng-deep app-di-image .di-photo__frame {
+        max-width: none;
+    }
+    // Vignette recadrée ; le clic ouvre toujours l'image entière (lightbox).
+    ::ng-deep app-di-image .di-photo__frame img {
+        height: 140px;
+        max-height: 140px;
+        object-fit: cover;
     }
 }
-
-/* Temps passé */
-.di-times {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-    &__row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.84rem;
-        span {
-            color: var(--di-slate-500);
-        }
-        strong {
-            color: var(--di-ink);
-            font-variant-numeric: tabular-nums;
-        }
+@media print {
+    .di-remark__body--clamp {
+        display: block;
+        -webkit-line-clamp: unset;
+        overflow: visible;
     }
 }
 
-/* Documents */
-.di-docs {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
+/* Liens documentaires (fiche technique, lien fournisseur des composants) */
 .di-doc {
     display: flex;
     align-items: center;
@@ -926,10 +912,9 @@
 .di-fin-head,
 .di-fin-row {
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
-            0,
-            1.4fr
-        );
+    grid-template-columns:
+        minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)
+        minmax(0, 1.4fr);
     gap: 0.5rem;
     padding: 0.5rem 0.7rem;
     align-items: center;
@@ -1009,16 +994,21 @@
     }
 }
 
-/* ── Responsive : colonnes empilées, faits en 2 colonnes ── */
+/* ── Responsive : faits en 2 colonnes, fiches empilées (filet horizontal) ── */
 @media (max-width: 820px) {
-    .di-grid {
-        grid-template-columns: minmax(0, 1fr);
-    }
     .di-facts {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    .di-head__actions .p-button {
-        display: none; /* export reste dispo dans le pied */
+    .di-side {
+        grid-auto-flow: row;
+        grid-auto-columns: auto;
+        > .di-sec--contact {
+            grid-column: auto;
+        }
+        > .di-sec + .di-sec {
+            border-left: 0;
+            border-top: 1px solid var(--di-line);
+        }
     }
 }
 @media (max-width: 480px) {
@@ -1247,6 +1237,11 @@
             color: var(--fx-text-subtle);
             font-style: normal;
         }
+    }
+
+    &--2 &__head,
+    &--2 &__row {
+        grid-template-columns: minmax(0, 2fr) minmax(8rem, 1fr);
     }
 
     &--4 &__head,
@@ -1555,4 +1550,322 @@
     color: var(--fx-text-subtle);
     font-size: 0.72rem;
     font-style: normal;
+}
+
+/* ── Parcours du dossier (onglet Temps & chrono + résumé Dossier) ───────── */
+
+/* Couleur de la PHASE, portée par une seule variable `--g` tirée des jetons du
+   thème (mode sombre automatique). Palette vérifiée (daltonisme, contraste,
+   clair ET sombre) : diagnostic bleu, magasin cyan, devis ambre, réparation
+   violet, clôture vert — l'ancien couple ambre/orange devis/réparation était
+   indiscernable. Chaque couleur est TOUJOURS doublée d'un libellé. */
+.di-step__marker--flow,
+.di-pauses,
+.di-pause-sum__phases li {
+    --g: var(--fx-text-subtle);
+
+    &[data-group='created'] {
+        --g: var(--fx-border-strong);
+    }
+    &[data-group='diagnostic'] {
+        --g: var(--fx-blue-strong);
+    }
+    &[data-group='magasin'] {
+        --g: var(--fx-cyan);
+    }
+    &[data-group='admin'] {
+        --g: var(--fx-amber);
+    }
+    &[data-group='repair'] {
+        --g: var(--fx-purple);
+    }
+    &[data-group='closed'] {
+        --g: var(--fx-green);
+    }
+    &[data-group='retour'] {
+        --g: var(--fx-slate-soft-fg);
+    }
+    &[data-group='cancelled'] {
+        --g: var(--fx-red);
+    }
+}
+
+/* État du dossier : pastille + faits en une ligne. */
+.di-flow-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    margin: 2px 0 16px;
+    font-size: 0.82rem;
+    color: var(--di-slate-500);
+
+    strong {
+        color: var(--di-ink);
+        font-weight: 600;
+    }
+}
+
+.di-flow-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border: 1px solid var(--fx-slate-soft-bd);
+    border-radius: 999px;
+    background: var(--fx-slate-soft-bg);
+    color: var(--fx-slate-soft-fg);
+    font-size: 0.8rem;
+    font-weight: 600;
+
+    i {
+        font-size: 0.8rem;
+    }
+
+    &[data-state='finished']:not([data-status='IRREPARABLE']) {
+        border-color: var(--fx-green-soft-bd);
+        background: var(--fx-green-soft-bg);
+        color: var(--fx-green-soft-fg);
+    }
+    &[data-state='ongoing'] {
+        border-color: var(--fx-blue-soft-bd);
+        background: var(--fx-blue-soft-bg);
+        color: var(--fx-blue-soft-fg);
+    }
+    &[data-state='cancelled'] {
+        border-color: var(--fx-red-soft-bd);
+        background: var(--fx-red-soft-bg);
+        color: var(--fx-red-soft-fg);
+    }
+}
+
+/* Détail des pauses d'une étape : une carte par étape, bordure gauche à la
+   couleur de la phase (`--g`). Le tableau défile seul sur écran étroit. */
+.di-pauses {
+    margin-bottom: 0.6rem;
+    padding: 0.55rem 0.75rem 0.65rem;
+    border: 1px solid var(--di-line);
+    border-left: 3px solid var(--g);
+    border-radius: 9px;
+    background: var(--di-bg-soft);
+    overflow-x: auto;
+
+    &__summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem;
+        margin-bottom: 0.45rem;
+        font-size: 0.78rem;
+        color: var(--di-slate-700);
+        i {
+            color: var(--g);
+        }
+        strong {
+            color: var(--di-ink);
+            font-weight: 700;
+        }
+    }
+    &__table {
+        min-width: 32rem;
+        border: 1px solid var(--di-line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--fx-bg-card);
+    }
+    &__head,
+    &__row {
+        display: grid;
+        grid-template-columns: 4.5rem minmax(9.5rem, 1.3fr) minmax(9.5rem, 1.3fr) minmax(7rem, 1fr);
+        gap: 0.6rem;
+        padding: 0.35rem 0.65rem;
+        align-items: center;
+        font-size: 0.76rem;
+    }
+    &__head {
+        background: var(--di-bg-soft2);
+        font-size: 0.64rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--fx-text-subtle);
+    }
+    &__row {
+        border-top: 1px solid var(--di-line);
+        color: var(--di-slate-700);
+        strong {
+            color: var(--di-ink);
+            font-weight: 600;
+        }
+    }
+    &__live {
+        color: var(--fx-blue-text);
+        font-weight: 600;
+    }
+}
+
+/* Compteur de pauses du cycle, au-dessus des cartes de pauses. */
+.di-pause-sum {
+    margin: 0 0 0.75rem;
+
+    &__tiles {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+        gap: 0.5rem;
+    }
+    &__tile {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+        min-width: 0;
+        padding: 0.5rem 0.7rem;
+        border: 1px solid var(--di-line);
+        border-radius: 10px;
+        background: var(--di-bg-soft);
+    }
+    &__k {
+        font-size: 0.66rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        color: var(--fx-text-subtle);
+    }
+    &__v {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: var(--di-ink);
+    }
+    &__phases {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1rem;
+        margin: 0.5rem 0 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.76rem;
+        color: var(--di-slate-500);
+
+        li {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        i {
+            flex: 0 0 auto;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--g);
+        }
+        strong {
+            color: var(--di-ink);
+            font-weight: 600;
+        }
+    }
+    &__live {
+        color: var(--fx-blue-text);
+        font-weight: 600;
+
+        i.pi {
+            width: auto;
+            height: auto;
+            background: none;
+            font-size: 0.8rem;
+        }
+    }
+    &__none {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin: 0;
+        font-size: 0.78rem;
+        color: var(--di-slate-500);
+    }
+}
+
+/* Détail technique, replié par défaut. */
+.di-flow-detail__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    i {
+        font-size: 0.7rem;
+    }
+}
+.di-flow-detail {
+    margin-top: 10px;
+    padding: 10px 12px 4px;
+    border: 1px solid var(--di-line);
+    border-radius: 8px;
+    background: var(--di-bg-soft);
+}
+
+.di-step__marker--flow {
+    border-color: var(--g);
+    background: var(--g);
+
+    &.di-step__marker--pause {
+        background: var(--fx-bg-card);
+    }
+    &.di-step__marker--live {
+        box-shadow: 0 0 0 3px var(--fx-blue-soft-bg);
+    }
+}
+
+/* Code brut d'un statut / d'un cumul, en appoint du libellé lisible. */
+.di-code {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 5px;
+    border-radius: 4px;
+    background: var(--di-bg-soft2);
+    color: var(--di-slate-500);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+/* Cause d'un début/fin, motif… sous la valeur principale d'une cellule. */
+.di-cell-sub {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    color: var(--fx-text-subtle);
+}
+
+.di-origin--warn {
+    border-color: var(--fx-amber-soft-bd);
+    background: var(--fx-amber-soft-bg);
+    color: var(--fx-amber-soft-fg);
+}
+
+.di-table {
+    &__row--total {
+        background: var(--di-bg-soft2);
+        font-weight: 600;
+    }
+}
+
+@media (max-width: 600px) {
+    .di-table--stack .di-table__head {
+        display: none;
+    }
+    .di-table--stack .di-table__row {
+        grid-template-columns: 1fr 1fr;
+    }
+    .di-table--stack .di-table__row > span[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        font-size: 0.62rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--fx-text-subtle);
+    }
+    .di-step__top {
+        flex-wrap: wrap;
+    }
 }
